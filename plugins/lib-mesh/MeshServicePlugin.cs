@@ -18,34 +18,48 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     public override string DisplayName => "Mesh Service";
 
     private IMeshStateManager? _stateManager;
-    private bool _useLocalRouting;
-    private MeshServiceConfiguration? _cachedConfig;
 
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring mesh service dependencies");
 
-        // Get configuration to check for local routing mode
-        // Cache the provider to avoid multiple builds and ensure consistent config
-        var tempProvider = services.BuildServiceProvider();
-        _cachedConfig = tempProvider.GetService<MeshServiceConfiguration>();
-        var config = _cachedConfig;
-        _useLocalRouting = config?.UseLocalRouting ?? false;
-
-        if (_useLocalRouting)
+        // Register IMeshInstanceIdentifier - the canonical source of this node's identity.
+        // Priority: MESH_INSTANCE_ID env var > --force-service-id CLI > random GUID.
+        services.AddSingleton<IMeshInstanceIdentifier>(sp =>
         {
-            Logger?.LogWarning(
-                "Mesh using LOCAL ROUTING mode. All service calls will route locally (no state store)!");
+            var meshConfig = sp.GetRequiredService<MeshServiceConfiguration>();
+            if (!string.IsNullOrEmpty(meshConfig.InstanceId)
+                && Guid.TryParse(meshConfig.InstanceId, out var configuredId))
+            {
+                return new DefaultMeshInstanceIdentifier(configuredId);
+            }
 
-            // Register LocalMeshStateManager (no state store connection)
-            services.AddSingleton<IMeshStateManager, LocalMeshStateManager>();
-        }
-        else
+            var appConfig = sp.GetRequiredService<IServiceConfiguration>();
+            return new DefaultMeshInstanceIdentifier(appConfig.ForceServiceId);
+        });
+
+        // Register IMeshStateManager via factory delegate that checks config at resolution time.
+        // Avoids BuildServiceProvider anti-pattern - config is resolved when the singleton is
+        // first requested, not during ConfigureServices. Follows established Actor/Asset plugin pattern.
+        services.AddSingleton<IMeshStateManager>(sp =>
         {
-            // Register MeshStateManager as Singleton (uses lib-state for Redis access)
-            // Uses IStateStoreFactory for consistent infrastructure access per IMPLEMENTATION TENETS
-            services.AddSingleton<IMeshStateManager, MeshStateManager>();
-        }
+            var config = sp.GetRequiredService<MeshServiceConfiguration>();
+            if (config.UseLocalRouting)
+            {
+                sp.GetRequiredService<ILogger<MeshServicePlugin>>().LogWarning(
+                    "Mesh using LOCAL ROUTING mode. All service calls will route locally (no state store)!");
+
+                return new LocalMeshStateManager(
+                    config,
+                    sp.GetRequiredService<ILogger<LocalMeshStateManager>>(),
+                    sp.GetRequiredService<IMeshInstanceIdentifier>());
+            }
+
+            return new MeshStateManager(
+                sp.GetRequiredService<IStateStoreFactory>(),
+                sp.GetRequiredService<ILogger<MeshStateManager>>(),
+                sp.GetRequiredService<ITelemetryProvider>());
+        });
 
         // Register active health checking background service
         services.AddHostedService<MeshHealthCheckService>();
@@ -65,6 +79,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
             var configuration = sp.GetRequiredService<MeshServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
 
             return new MeshInvocationClient(
                 stateManager,
@@ -73,7 +88,8 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
                 messageSubscriber,
                 configuration,
                 logger,
-                telemetryProvider);
+                telemetryProvider,
+                instanceIdentifier);
         });
 
         Logger?.LogDebug("Service dependencies configured");
@@ -81,9 +97,11 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("Starting Mesh service{Mode}", _useLocalRouting ? " (local routing)" : "");
-
         var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+        var meshConfig = serviceProvider.GetRequiredService<MeshServiceConfiguration>();
+
+        Logger?.LogInformation("Starting Mesh service{Mode}", meshConfig.UseLocalRouting ? " (local routing)" : "");
+
         _stateManager = serviceProvider.GetRequiredService<IMeshStateManager>();
 
         if (!await _stateManager.InitializeAsync(CancellationToken.None))
@@ -113,16 +131,16 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Get app configuration for app-id
         var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
-        var meshConfig = _cachedConfig ?? serviceProvider.GetRequiredService<MeshServiceConfiguration>();
+        var meshConfig = serviceProvider.GetRequiredService<MeshServiceConfiguration>();
         var appId = appConfig.EffectiveAppId;
 
         // Endpoint host defaults to app-id for Docker Compose compatibility (hostname = service name)
         var endpointHost = meshConfig.EndpointHost ?? appConfig.EffectiveAppId;
         var endpointPort = meshConfig.EndpointPort > 0 ? meshConfig.EndpointPort : 80;
 
-        // Use the shared Program.ServiceGUID for consistent instance identification
-        // This ensures mesh endpoint and heartbeat use the same instance ID
-        var instanceId = Program.ServiceGUID;
+        // Use the registered IMeshInstanceIdentifier for consistent instance identification
+        var instanceIdentifier = serviceProvider.GetRequiredService<IMeshInstanceIdentifier>();
+        var instanceId = instanceIdentifier.InstanceId;
 
         var endpoint = new MeshEndpoint
         {

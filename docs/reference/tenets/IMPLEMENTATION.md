@@ -66,35 +66,79 @@ Registration is idempotent. Handlers are isolated (one throwing doesn't prevent 
 
 ## Tenet 7: Error Handling (STANDARDIZED)
 
-**Rule**: Wrap all external calls in try-catch, use specific exception types where available.
+**Rule**: Use specific exception types where available. Let unexpected exceptions propagate to the generated controller's catch-all boundary.
 
-### Standard Try-Catch Pattern
+### Generated Controller Exception Boundary (DO NOT DUPLICATE)
+
+The generated controller wraps **every** service method call in a try-catch that handles:
+- `ApiException` → logs warning, returns 503
+- `Exception` → logs error, calls `TryPublishErrorAsync`, records telemetry error, returns 500
 
 ```csharp
+// GENERATED CONTROLLER (auto-generated, do NOT replicate in service code):
 try
 {
-    var result = await _stateStore.GetAsync(key, ct);
-    if (result == null) return (StatusCodes.NotFound, null);
-    return (StatusCodes.OK, result);
+    var (statusCode, result) = await _implementation.GetAccountAsync(body, cancellationToken);
+    return ConvertToActionResult(statusCode, result);
+}
+catch (ApiException ex_)
+{
+    logger_.LogWarning(ex_, "Dependency error in {Endpoint}", "post:account/get");
+    activity_?.SetStatus(ActivityStatusCode.Error, "Dependency error");
+    return StatusCode(503);
+}
+catch (Exception ex_)
+{
+    logger_.LogError(ex_, "Unexpected error in {Endpoint}", "post:account/get");
+    await messageBus_.TryPublishErrorAsync("account", "GetAccount", ...);
+    activity_?.SetStatus(ActivityStatusCode.Error, ex_.Message);
+    return StatusCode(500);
+}
+```
+
+**Service methods do NOT need top-level try-catch blocks.** If a state store, message bus, or lock provider call throws an unexpected exception inside a service method, it propagates to the generated controller which already handles logging, error event publishing, telemetry, and HTTP 500 response. Adding redundant try-catches in service methods would either swallow exceptions the controller should see, or catch-and-rethrow for no benefit.
+
+### When Service-Level Try-Catch IS Required
+
+Service methods need their own try-catch in exactly two situations:
+
+**1. Inter-service calls via generated clients** (e.g., `IItemClient`, `ICharacterClient`):
+```csharp
+// CORRECT: Catch ApiException on inter-service calls to map status codes
+try
+{
+    var (status, character) = await _characterClient.GetCharacterAsync(request, ct);
+    if (status != StatusCodes.OK) return (status, null);
+    // ... use character
 }
 catch (ApiException ex)
 {
-    _logger.LogWarning(ex, "Service call failed with status {Status}", ex.StatusCode);
+    _logger.LogWarning(ex, "Character service call failed with status {Status}", ex.StatusCode);
     return ((StatusCodes)ex.StatusCode, null);
 }
-catch (Exception ex)
+```
+
+**2. Specific recovery logic** (e.g., partial failure in a loop, graceful degradation):
+```csharp
+// CORRECT: Catch around a specific operation where you want to recover, not crash
+foreach (var id in accountIds)
 {
-    _logger.LogError(ex, "Failed operation {Operation}", operationName);
-    await _messageBus.TryPublishErrorAsync(
-        serviceId: _configuration.ServiceId ?? "unknown",
-        operation: operationName, errorType: ex.GetType().Name, message: ex.Message);
-    return (StatusCodes.InternalServerError, null);
+    try
+    {
+        var account = await accountStore.GetAsync(key, ct);
+        results.Add(account);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to load account {AccountId}", id);
+        failures.Add(new BulkOperationFailure { AccountId = id, Error = ex.Message });
+    }
 }
 ```
 
 ### When ApiException Handling Applies
 
-The `ApiException` catch is ONLY required for **inter-service calls** (generated clients like `IItemClient`, `IServiceNavigator`, `IMeshClient`). NOT required for state store operations, message bus operations, lock provider operations, or local business logic.
+The `ApiException` catch is ONLY required for **inter-service calls** (generated clients like `IItemClient`, `IServiceNavigator`, `IMeshClient`). NOT required for state store operations, message bus operations, lock provider operations, or local business logic. For these, let exceptions propagate to the generated controller.
 
 ### Error Event Publishing
 
@@ -102,6 +146,43 @@ The `ApiException` catch is ONLY required for **inter-service calls** (generated
 
 **Emit for**: Unexpected exceptions, infrastructure failures, programming errors caught at runtime.
 **Do NOT emit for**: Validation (400), authentication (401), authorization (403), not found (404), conflicts (409).
+
+### Instance Identity in Error Events (MANDATORY)
+
+Every `ServiceErrorEvent` carries three identity fields that distinguish **which node** emitted the error in a distributed deployment:
+
+| Field | Source | What It Identifies |
+|-------|--------|--------------------|
+| `serviceId` | `IMeshInstanceIdentifier.InstanceId` | The unique node/process (e.g., "which of the 5 Character nodes") |
+| `serviceName` | Caller-provided string | The logical service (e.g., "character", "mesh", "messaging") |
+| `appId` | `IServiceConfiguration.EffectiveAppId` | The deployment identity (e.g., "bannou", "bannou-npc-pool-3") |
+
+**Callers MUST NOT provide instance identity.** The `TryPublishErrorAsync` method injects `serviceId` and `appId` internally from `IMeshInstanceIdentifier` and `IServiceConfiguration`. Callers provide only the logical `serviceName` and operational context:
+
+```csharp
+// CORRECT: Pass logical service name, let the bus handle instance identity
+await _messageBus.TryPublishErrorAsync(
+    "character",                    // serviceName: logical service
+    "DeleteCharacter",              // operation: what failed
+    ex.GetType().Name,              // errorType: exception class
+    ex.Message,                     // message: human-readable
+    dependency: "state",            // optional: external dependency involved
+    endpoint: "redis:character",    // optional: specific endpoint
+    stack: ex.StackTrace);          // optional: stack trace
+
+// FORBIDDEN: Never construct ServiceErrorEvent directly
+var errorEvent = new ServiceErrorEvent   // NO! Only RabbitMQMessageBus does this
+{
+    ServiceId = Guid.NewGuid(),          // NO! Instance ID comes from IMeshInstanceIdentifier
+    ServiceName = "character",
+    AppId = "bannou",                    // NO! AppId comes from IServiceConfiguration
+    // ...
+};
+```
+
+**Why this matters**: In a distributed deployment with multiple instances of the same service, `serviceId` (from `IMeshInstanceIdentifier`) is the only way to correlate errors to the specific node that produced them. Using `Guid.NewGuid()`, fixed strings, or configuration-based values would make error events useless for debugging multi-node issues.
+
+**`IMeshInstanceIdentifier` priority**: `MESH_INSTANCE_ID` env var > `--force-service-id` CLI > random GUID (stable for process lifetime). Registered as singleton by lib-mesh (L0).
 
 ### Error Granularity & Log Levels
 
@@ -133,6 +214,59 @@ return (StatusCodes.BadRequest, new CompileResponse { Success = false, Errors = 
 // CORRECT: Null payload, status code tells the story
 return (StatusCodes.BadRequest, null);
 ```
+
+### No Filler Properties in Success Responses (ABSOLUTE)
+
+The same principle applies to success responses: **every property in a response type MUST provide information the caller cannot derive from the status code alone.** A 200 OK already communicates "the operation succeeded." Properties that merely restate this fact are filler — they exist because someone assumed a response object needed fields in it, not because the caller needs the data.
+
+**Filler properties are FORBIDDEN in response schemas.** If removing a property would leave the caller with exactly the same information (because the status code already communicated it), that property should not exist.
+
+#### Filler Patterns (FORBIDDEN)
+
+| Pattern | Example | Why It's Filler |
+|---------|---------|-----------------|
+| **Success boolean** | `locked: true`, `deleted: true`, `executed: true` | 200 OK already says the operation succeeded |
+| **Confirmation message** | `message: "Registration complete"` | Human-readable restatement of 200 OK |
+| **Action timestamp** | `registeredAt`, `recompiledAt`, `executedAt` | Confirms "yes, this happened just now" — obvious from receiving 200 OK |
+| **Request echo** | `appId` echoed back from the request | Caller already knows what they sent |
+| **Healthy boolean** | `healthy: true` on a health endpoint | If the service answered 200, it's healthy |
+| **Observability metrics** | `failedPushCount`, `totalTokenCount` | Internal operational metrics, not caller-actionable data |
+
+#### What IS Meaningful (REQUIRED to keep)
+
+| Pattern | Example | Why It's Meaningful |
+|---------|---------|---------------------|
+| **Resource ID** | `contractId` on a create response | Caller needs this to reference the resource |
+| **Computed state** | `healthyCount`, `totalCount` on a list | Derived values caller couldn't compute from request |
+| **Entity timestamps** | `createdAt` on a GET response | Part of the entity's stored state, not a confirmation |
+| **Changed state** | `newPhase`, `capabilities` | Side effects the caller needs to know about |
+| **Operational data** | `nextHeartbeatSeconds`, `ttlSeconds` | Caller needs this to schedule future actions |
+| **Cache/version info** | `version`, `etag` | Caller needs this for cache invalidation or optimistic concurrency |
+
+#### The Litmus Test
+
+> **"If I deleted this property from the response, would the caller lose any information they didn't already have from the status code and their own request?"**
+
+- **YES** → Property is meaningful. Keep it.
+- **NO** → Property is filler. Remove it from the schema.
+
+#### When a Response Would Be Empty
+
+If removing all filler leaves a response with zero properties, the response type should still exist in the schema (NSwag requires it), but it should be an empty object with a description explaining that the status code is the response:
+
+```yaml
+LockContractResponse:
+  type: object
+  description: Empty response. HTTP 200 confirms the lock succeeded.
+  properties: {}
+```
+
+```csharp
+// Implementation returns the empty response type
+return (StatusCodes.OK, new LockContractResponse());
+```
+
+This is cleaner than inventing filler fields to make the response "look" like it has content.
 
 ---
 
@@ -303,7 +437,7 @@ var maxResults = Math.Min(body.Limit, _configuration.MaxResultsPerQuery);
 
 Document with code comments explaining the exception:
 
-1. **Assembly Loading Control**: `SERVICES_ENABLED`, `*_SERVICE_ENABLED/DISABLED` in `PluginLoader.cs`/`IBannouService.cs` (required before DI container available)
+1. **Assembly Loading Control**: `*_SERVICE_ENABLED` in `PluginLoader.cs`/`IBannouService.cs` (required before DI container available; master kill switch `BANNOU_SERVICES_ENABLED` reads from `Program.Configuration`)
 2. **Test Harness Control**: `DAEMON_MODE`, `PLUGIN` in test projects
 3. **Orchestrator Environment Forwarding**: `Environment.GetEnvironmentVariables()` in `OrchestratorService.cs` (forwards config to deployed containers via strict whitelist)
 4. **Integration Test Runners**: `BANNOU_HTTP_ENDPOINT`, `BANNOU_APP_ID` in `http-tester/`/`edge-tester/` (standalone harnesses without DI access, use `AppConstants.ENV_*`)
@@ -322,7 +456,7 @@ Environment.GetEnvironmentVariable("...");  // Use config class
 
 ## Tenet 23: Async Method Pattern (MANDATORY)
 
-**Rule**: All methods returning `Task` or `Task<T>` MUST use `async` and contain at least one `await`. Non-async Task-returning methods have different exception handling, incomplete stack traces, and broken `using` semantics.
+**Rule**: All methods returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>` MUST use `async` and contain at least one `await`. Non-async methods returning these types have different exception handling (synchronous throw vs captured in task), incomplete stack traces, and broken `using` semantics. This applies equally to `ValueTask` variants — `ValueTask.FromResult` in a non-async method has the same problems as `Task.FromResult`.
 
 ```csharp
 // CORRECT
@@ -337,6 +471,23 @@ public Task<AccountResponse> GetAccountAsync(Guid accountId)
 {
     var account = _stateStore.GetAsync($"account:{accountId}").Result; // BLOCKS!
     return Task.FromResult(MapToResponse(account));
+}
+
+// WRONG: Exceptions thrown before the return propagate synchronously
+public ValueTask<ActionResult> ExecuteAsync(ActionNode action, CancellationToken ct)
+{
+    var param = GetParam(action) ?? throw new InvalidOperationException("missing"); // Synchronous throw!
+    DoWork(param);
+    return ValueTask.FromResult(ActionResult.Continue);
+}
+
+// CORRECT: async ensures exceptions are captured in the ValueTask
+public async ValueTask<ActionResult> ExecuteAsync(ActionNode action, CancellationToken ct)
+{
+    var param = GetParam(action) ?? throw new InvalidOperationException("missing"); // Captured in ValueTask
+    DoWork(param);
+    await Task.CompletedTask;
+    return ActionResult.Continue;
 }
 ```
 
@@ -580,6 +731,11 @@ Services that need to create spans must have access to `ITelemetryProvider`. Thi
 | Generic catch returning 500 | T7 | Catch ApiException specifically |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Success boolean in response (`locked: true`, `deleted: true`) | T8 | Remove from schema; 200 OK already confirms success |
+| Confirmation message string in response | T8 | Remove from schema; status code communicates result |
+| Action timestamp in response (`executedAt`, `registeredAt`) | T8 | Remove from schema unless it represents stored entity state |
+| Request field echoed in response | T8 | Remove from schema; caller already knows what they sent |
+| Observability metrics in response (`failedPushCount`) | T8 | Remove or move to a dedicated diagnostics endpoint |
 | Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | T9 | Use shared/deterministic values |
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |

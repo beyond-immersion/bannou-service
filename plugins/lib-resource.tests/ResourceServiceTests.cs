@@ -26,6 +26,7 @@ public class ResourceServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<ResourceService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ResourceServiceConfiguration _configuration;
     private readonly Mock<ICacheableStateStore<ResourceReferenceEntry>> _mockRefStore;
     private readonly Mock<IStateStore<GracePeriodRecord>> _mockGraceStore;
@@ -69,6 +70,7 @@ public class ResourceServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<ResourceService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockRefStore = new Mock<ICacheableStateStore<ResourceReferenceEntry>>();
         _mockGraceStore = new Mock<IStateStore<GracePeriodRecord>>();
@@ -291,7 +293,8 @@ public class ResourceServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            seededProviders ?? Array.Empty<ISeededResourceProvider>());
+            seededProviders ?? Array.Empty<ISeededResourceProvider>(),
+            _mockTelemetryProvider.Object);
     }
 
     private void ClearCaptures()
@@ -2871,6 +2874,591 @@ public class ResourceServiceTests
             Assert.NotNull(endpoint.Permissions);
             Assert.NotEmpty(endpoint.Permissions);
         }
+    }
+
+    #endregion
+
+    #region Decompression Tests
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_AllCallbacksSucceed_PublishesEventWithAllSucceeded()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        // Setup archive in store
+        var archive = new ResourceArchiveModel
+        {
+            ArchiveId = archiveId,
+            ResourceType = "character",
+            ResourceId = resourceId,
+            Version = 1,
+            Entries = new List<ArchiveEntryModel>
+            {
+                new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow },
+                new() { SourceType = "character-history", ServiceName = "character-history", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            SourceDataDeleted = true
+        };
+
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archive);
+
+        // Setup compress callbacks with decompression endpoints
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-personality", priority: 0),
+            CreateCompressCallback("character-history", priority: 10)
+        });
+
+        // Setup successful API calls
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        Assert.Equal(archiveId, response.ArchiveId);
+        Assert.Equal(2, response.CallbackResults.Count);
+        Assert.All(response.CallbackResults, r => Assert.True(r.Success));
+
+        // Verify event published with succeeded/failed arrays
+        var decompressedEvent = _capturedPublishedEvents
+            .Where(e => e.Topic == "resource.decompressed")
+            .Select(e => e.Event)
+            .Cast<ResourceDecompressedEvent>()
+            .Single();
+
+        Assert.Equal(2, decompressedEvent.EntriesCount);
+        Assert.Equal(2, decompressedEvent.SucceededSourceTypes.Count);
+        Assert.Contains("character-personality", decompressedEvent.SucceededSourceTypes);
+        Assert.Contains("character-history", decompressedEvent.SucceededSourceTypes);
+        Assert.Empty(decompressedEvent.FailedSourceTypes);
+    }
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_PartialFailure_EventIncludesFailedSourceTypes()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        var archive = new ResourceArchiveModel
+        {
+            ArchiveId = archiveId,
+            ResourceType = "character",
+            ResourceId = resourceId,
+            Version = 1,
+            Entries = new List<ArchiveEntryModel>
+            {
+                new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow },
+                new() { SourceType = "character-history", ServiceName = "character-history", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            SourceDataDeleted = true
+        };
+
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archive);
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-personality", priority: 0),
+            CreateCompressCallback("character-history", priority: 10)
+        });
+
+        // First callback succeeds, second fails
+        var callCount = 0;
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount == 1)
+                    return new PreboundApiResult
+                    {
+                        SubstitutionSucceeded = true,
+                        Result = new RawApiResult { StatusCode = 200, ResponseBody = "{}", Duration = TimeSpan.FromMilliseconds(50) }
+                    };
+                return new PreboundApiResult
+                {
+                    SubstitutionSucceeded = true,
+                    Result = new RawApiResult { StatusCode = 500, ErrorMessage = "Internal error", Duration = TimeSpan.FromMilliseconds(50) }
+                };
+            });
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success); // All must succeed for Success=true
+
+        // Event should still be published (any success)
+        var decompressedEvent = _capturedPublishedEvents
+            .Where(e => e.Topic == "resource.decompressed")
+            .Select(e => e.Event)
+            .Cast<ResourceDecompressedEvent>()
+            .Single();
+
+        Assert.Equal(2, decompressedEvent.EntriesCount);
+        Assert.Single(decompressedEvent.SucceededSourceTypes);
+        Assert.Single(decompressedEvent.FailedSourceTypes);
+    }
+
+    [Fact]
+    public async Task ExecuteDecompressAsync_AllCallbacksFail_NoEventPublished()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        var archive = new ResourceArchiveModel
+        {
+            ArchiveId = archiveId,
+            ResourceType = "character",
+            ResourceId = resourceId,
+            Version = 1,
+            Entries = new List<ArchiveEntryModel>
+            {
+                new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            SourceDataDeleted = true
+        };
+
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(archive);
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-personality", priority: 0)
+        });
+
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 500, ErrorMessage = "Fail", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        var request = new ExecuteDecompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteDecompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.DoesNotContain(_capturedPublishedEvents, e => e.Topic == "resource.decompressed");
+    }
+
+    #endregion
+
+    #region List/Remove Cleanup Callback Tests
+
+    [Fact]
+    public async Task ListCleanupCallbacksAsync_WithResourceTypeFilter_ReturnsMatchingCallbacks()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Setup callback index with source types for "character"
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-resource-types", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "character" });
+
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-index:character", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { "actor", "encounter" });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup-by-character",
+                PayloadTemplate = "{}",
+                RegisteredAt = DateTimeOffset.UtcNow
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:encounter", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "encounter",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "character-encounter",
+                CallbackEndpoint = "/character-encounter/cleanup-by-character",
+                PayloadTemplate = "{}",
+                RegisteredAt = DateTimeOffset.UtcNow
+            });
+
+        var request = new ListCleanupCallbacksRequest
+        {
+            ResourceType = "character"
+        };
+
+        // Act
+        var (status, response) = await service.ListCleanupCallbacksAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.TotalCount);
+        Assert.Equal(2, response.Callbacks.Count);
+    }
+
+    [Fact]
+    public async Task RemoveCleanupCallbackAsync_ExistingCallback_ReturnsWasRegisteredTrue()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CleanupCallbackDefinition
+            {
+                ResourceType = "character",
+                SourceType = "actor",
+                OnDeleteAction = OnDeleteAction.CASCADE,
+                ServiceName = "actor",
+                CallbackEndpoint = "/actor/cleanup-by-character",
+                PayloadTemplate = "{}"
+            });
+
+        _mockCleanupStore
+            .Setup(s => s.DeleteAsync("callback:character:actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockCallbackIndexStore
+            .Setup(s => s.RemoveFromSetAsync("callback-index:character", "actor", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>("callback-index:character", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>()); // Empty after removal
+
+        _mockCallbackIndexStore
+            .Setup(s => s.RemoveFromSetAsync("callback-resource-types", "character", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        var request = new RemoveCleanupCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "actor"
+        };
+
+        // Act
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.WasRegistered);
+    }
+
+    [Fact]
+    public async Task RemoveCleanupCallbackAsync_NonExistent_ReturnsWasRegisteredFalse()
+    {
+        // Arrange
+        var service = CreateService();
+
+        // Cleanup store returns null (not found)
+        _mockCleanupStore
+            .Setup(s => s.GetAsync("callback:character:nonexistent", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CleanupCallbackDefinition?)null);
+
+        var request = new RemoveCleanupCallbackRequest
+        {
+            ResourceType = "character",
+            SourceType = "nonexistent"
+        };
+
+        // Act
+        var (status, response) = await service.RemoveCleanupCallbackAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.WasRegistered);
+    }
+
+    #endregion
+
+    #region Get Archive Tests
+
+    [Fact]
+    public async Task GetArchiveAsync_ExistingArchive_ReturnsFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+        var archiveId = Guid.NewGuid();
+
+        _mockArchiveStore
+            .Setup(s => s.GetAsync($"archive:character:{resourceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ResourceArchiveModel
+            {
+                ArchiveId = archiveId,
+                ResourceType = "character",
+                ResourceId = resourceId,
+                Version = 1,
+                Entries = new List<ArchiveEntryModel>
+                {
+                    new() { SourceType = "character-personality", ServiceName = "character-personality", Data = "dGVzdA==", CompressedAt = DateTimeOffset.UtcNow }
+                },
+                CreatedAt = DateTimeOffset.UtcNow,
+                SourceDataDeleted = false
+            });
+
+        var request = new GetArchiveRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Found);
+        Assert.NotNull(response.Archive);
+        Assert.Equal(archiveId, response.Archive.ArchiveId);
+    }
+
+    [Fact]
+    public async Task GetArchiveAsync_NotFound_ReturnsFoundFalse()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Archive store returns null (default setup)
+
+        var request = new GetArchiveRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId
+        };
+
+        // Act
+        var (status, response) = await service.GetArchiveAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Found);
+        Assert.Null(response.Archive);
+    }
+
+    #endregion
+
+    #region Dry-Run Pre-Check Tests
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_DryRun_WithActiveReferences_ReportsNotEligible()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // Add active references
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>
+        {
+            new() { SourceType = "actor", SourceId = Guid.NewGuid().ToString(), RegisteredAt = DateTimeOffset.UtcNow }
+        };
+
+        // No callbacks registered (empty index)
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.DryRun);
+        Assert.False(response.Success);
+        Assert.Contains("active reference", response.AbortReason);
+    }
+
+    [Fact]
+    public async Task ExecuteCleanupAsync_DryRun_GracePeriodNotPassed_ReportsNotEligible()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        // No references (refcount = 0)
+        var setKey = $"character:{resourceId}:sources";
+        _simulatedSets[setKey] = new HashSet<ResourceReferenceEntry>();
+
+        // Grace period just started (not passed yet)
+        var graceRecord = new GracePeriodRecord
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            ZeroTimestamp = DateTimeOffset.UtcNow // Just now - grace period hasn't passed
+        };
+
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(graceRecord);
+
+        // No callbacks registered
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ExecuteCleanupRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DryRun = true
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCleanupAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.DryRun);
+        Assert.False(response.Success);
+        Assert.NotNull(response.AbortReason);
+        // Should mention grace period not passed
+        Assert.Contains("Grace period", response.AbortReason, StringComparison.OrdinalIgnoreCase);
+    }
+
+    #endregion
+
+    #region DeleteSourceDataPolicy Tests
+
+    [Fact]
+    public async Task ExecuteCompressAsync_WithDeleteSourceDataPolicy_UsesSpecifiedPolicy()
+    {
+        // Arrange
+        var service = CreateService();
+        var resourceId = Guid.NewGuid();
+
+        SetupCompressCallbacksForResourceType("character", new[]
+        {
+            CreateCompressCallback("character-base", priority: 0)
+        });
+
+        SetupSuccessfulLock();
+
+        // Setup successful compress callback
+        _mockNavigator
+            .Setup(n => n.ExecutePreboundApiAsync(
+                It.IsAny<PreboundApiDefinition>(),
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PreboundApiResult
+            {
+                SubstitutionSucceeded = true,
+                Result = new RawApiResult { StatusCode = 200, ResponseBody = "{\"data\": \"test\"}", Duration = TimeSpan.FromMilliseconds(50) }
+            });
+
+        // Setup empty ref set (so cleanup can proceed)
+        _simulatedSets[$"character:{resourceId}:sources"] = new HashSet<ResourceReferenceEntry>();
+
+        // Setup grace period passed
+        _mockGraceStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GracePeriodRecord
+            {
+                ResourceType = "character",
+                ResourceId = resourceId,
+                ZeroTimestamp = DateTimeOffset.UtcNow.AddHours(-2)
+            });
+
+        // No cleanup callbacks registered
+        _mockCallbackIndexStore
+            .Setup(s => s.GetSetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ExecuteCompressRequest
+        {
+            ResourceType = "character",
+            ResourceId = resourceId,
+            DeleteSourceData = true,
+            DeleteSourceDataPolicy = CleanupPolicy.ALL_REQUIRED
+        };
+
+        // Act
+        var (status, response) = await service.ExecuteCompressAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Success);
+        // Compression completed and archive was saved
+        Assert.NotEmpty(_capturedArchiveSaves);
+        // Verify delete source data also ran (cleanup called after compression)
+        Assert.True(response.SourceDataDeleted);
     }
 
     #endregion

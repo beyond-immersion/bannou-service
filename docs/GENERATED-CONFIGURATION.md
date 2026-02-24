@@ -48,7 +48,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `ACTOR_DEFAULT_ACTORS_PER_NODE` | int | `100` | Default capacity per pool node |
-| `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval for periodic state saves (0 to disable) |
+| `ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS` | int | `60` | Default interval in seconds for periodic state saves |
 | `ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES` | int | `60` | Default expiration time in minutes for actor memories |
 | `ACTOR_DEFAULT_TICK_INTERVAL_MS` | int | `100` | Default behavior loop interval in milliseconds |
 | `ACTOR_DEPLOYMENT_MODE` | string | `bannou` | Actor deployment mode: bannou (local dev), pool-per-type, sh... |
@@ -57,7 +57,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_GOAP_MAX_PLAN_DEPTH` | int | `10` | Maximum depth for GOAP planning search |
 | `ACTOR_GOAP_PLAN_TIMEOUT_MS` | int | `50` | Maximum time allowed for GOAP planning in milliseconds |
 | `ACTOR_GOAP_REPLAN_THRESHOLD` | double | `0.3` | Threshold for triggering GOAP replanning when goal relevance... |
-| `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | int | `10` | Pool node heartbeat frequency |
+| `ACTOR_HEARTBEAT_INTERVAL_SECONDS` | int | `10` | Pool node heartbeat frequency in seconds |
 | `ACTOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `30` | Mark node unhealthy after this many seconds without heartbea... |
 | `ACTOR_LOCAL_MODE_APP_ID` | string | `bannou` | App ID used when running in local/bannou deployment mode |
 | `ACTOR_LOCAL_MODE_NODE_ID` | string | `bannou-local` | Node ID used when running in local/bannou deployment mode |
@@ -68,6 +68,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
 | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
+| `ACTOR_POOL_CONCURRENCY_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency operations... |
 | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
 | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
@@ -285,6 +286,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHARACTER_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for acquiring distributed locks during ch... |
 | `CHARACTER_MAX_PAGE_SIZE` | int | `100` | Maximum page size for list queries |
 | `CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating realm character index (... |
+| `CHARACTER_REF_COUNT_UPDATE_MAX_RETRIES` | int | `3` | Maximum retry attempts when updating reference count data (o... |
 
 ### Character Encounter
 
@@ -345,6 +347,11 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CHAT_BAN_EXPIRY_BATCH_SIZE` | int | `1000` | Maximum expired ban records processed per worker cycle |
+| `CHAT_BAN_EXPIRY_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for expired bans |
+| `CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS` | int | `120` | Distributed lock expiry for ban expiry batch cycle |
+| `CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the ban expiry worker begins its first ... |
+| `CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE` | int | `100` | Page size for paginated contract-room queries during contrac... |
 | `CHAT_DEFAULT_CONTRACT_BREACH_ACTION` | string | `Lock` | Default action when a breach is detected on governing contra... |
 | `CHAT_DEFAULT_CONTRACT_EXPIRED_ACTION` | string | `Archive` | Default action when governing contract expires naturally |
 | `CHAT_DEFAULT_CONTRACT_FULFILLED_ACTION` | string | `Archive` | Default action when governing contract is fulfilled |
@@ -353,12 +360,24 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHAT_DEFAULT_RATE_LIMIT_PER_MINUTE` | int | `60` | Default messages per minute per participant when room type d... |
 | `CHAT_EPHEMERAL_MESSAGE_TTL_MINUTES` | int | `60` | TTL for messages in ephemeral (Redis) rooms |
 | `CHAT_IDLE_ROOM_CLEANUP_INTERVAL_MINUTES` | int | `60` | How often the background worker checks for idle rooms |
+| `CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS` | int | `120` | Distributed lock expiry for idle room cleanup batch cycle |
 | `CHAT_IDLE_ROOM_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Initial delay before the idle room cleanup worker begins its... |
 | `CHAT_IDLE_ROOM_TIMEOUT_MINUTES` | int | `1440` | Minutes of inactivity before a room is eligible for auto-cle... |
 | `CHAT_LOCK_EXPIRY_SECONDS` | int | `15` | Distributed lock expiry for chat room and participant mutati... |
+| `CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS` | int | `1000` | Safety cap on total rooms processed per contract lifecycle e... |
 | `CHAT_MAX_PINNED_MESSAGES_PER_ROOM` | int | `10` | Maximum pinned messages per room |
 | `CHAT_MAX_ROOM_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum custom room types per game service |
 | `CHAT_MESSAGE_HISTORY_PAGE_SIZE` | int | `50` | Default page size for message history queries |
+| `CHAT_MESSAGE_RETENTION_BATCH_SIZE` | int | `500` | Maximum expired messages to delete per room per cleanup cycl... |
+| `CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES` | int | `360` | How often the background worker checks for expired persisten... |
+| `CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock expiry for message retention cleanup cycle |
+| `CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE` | int | `1000` | Maximum rooms per type to process per retention cleanup cycl... |
+| `CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS` | int | `1000` | Maximum room types with retention configuration to process p... |
+| `CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS` | int | `60` | Initial delay before the message retention cleanup worker be... |
+| `CHAT_SERVER_SALT` | string | `bannou-dev-chat-salt-change-in-production` | Server salt for session shortcut GUID generation per IMPLEME... |
+| `CHAT_TYPING_TIMEOUT_SECONDS` | int | `5` | Seconds of inactivity before typing indicator auto-expires |
+| `CHAT_TYPING_WORKER_BATCH_SIZE` | int | `100` | Maximum expired entries processed per worker cycle |
+| `CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS` | int | `1000` | How often the typing expiry worker checks for stale typing e... |
 
 ### Collection
 
@@ -375,23 +394,28 @@ This document lists all configuration options defined in Bannou's configuration 
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval in seconds between broadcast registry heartbeat ref... |
+| `CONNECT_BROADCAST_INTERNAL_URL` | string | **REQUIRED** | WebSocket URL where this instance accepts inter-node broadca... |
+| `CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS` | int | `90` | Threshold in seconds after which a broadcast registry entry ... |
 | `CONNECT_BUFFER_SIZE` | int | `65536` | Size of message buffers in bytes |
 | `CONNECT_COMPANION_ROOM_MODE` | string | `Disabled` | How Connect manages companion chat rooms (Disabled, AutoJoin... |
 | `CONNECT_COMPRESSION_ENABLED` | bool | `false` | Enable Brotli compression for outbound WebSocket payloads ab... |
 | `CONNECT_COMPRESSION_QUALITY` | int | `1` | Brotli compression quality level (0=no compression, 1=fastes... |
 | `CONNECT_COMPRESSION_THRESHOLD_BYTES` | int | `1024` | Minimum payload size in bytes before compression is applied ... |
 | `CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS` | int | `30` | Interval in seconds between connection cleanup runs |
-| `CONNECT_CONNECTION_MODE` | string | `external` | Connection mode: external (default, no broadcast), relayed (... |
+| `CONNECT_CONNECTION_MODE` | string | `External` | Connection mode: External (default, no broadcast), Relayed (... |
 | `CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds when waiting for connection closure durin... |
 | `CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS` | int | `30` | Default timeout in seconds for RPC calls when not specified |
 | `CONNECT_ENABLE_CLIENT_TO_CLIENT_ROUTING` | bool | `true` | Enable routing messages between WebSocket clients |
-| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages |
+| `CONNECT_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Interval between heartbeat messages in seconds |
 | `CONNECT_HEARTBEAT_TTL_SECONDS` | int | `300` | Heartbeat data TTL in Redis in seconds (default 5 minutes) |
 | `CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES` | int | `30` | Timeout in minutes after which inactive connections are clea... |
-| `CONNECT_INTERNAL_AUTH_MODE` | string | `service-token` | Auth mode for internal connections: service-token (validate ... |
+| `CONNECT_INTERNAL_AUTH_MODE` | string | `ServiceToken` | Auth mode for internal connections: ServiceToken (validate X... |
 | `CONNECT_INTERNAL_SERVICE_TOKEN` | string | **REQUIRED** | Secret for X-Service-Token validation when InternalAuthMode ... |
+| `CONNECT_MAX_CHANNEL_NUMBER` | int | `1000` | Maximum allowed channel number in WebSocket binary messages.... |
 | `CONNECT_MAX_CONCURRENT_CONNECTIONS` | int | `10000` | Maximum number of concurrent WebSocket connections |
 | `CONNECT_MAX_MESSAGES_PER_MINUTE` | int | `1000` | Rate limit for messages per minute per client |
+| `CONNECT_MULTINODE_BROADCAST_MODE` | string | `None` | Multi-node broadcast directionality (None disables broadcast... |
 | `CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for pending messages awaiting acknowledgm... |
 | `CONNECT_RATE_LIMIT_WINDOW_MINUTES` | int | `1` | Rate limit window in minutes |
 | `CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES` | int | `1` | Additional minutes added to reconnection window on each exte... |
@@ -415,8 +439,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CONTRACT_MAX_MILESTONES_PER_TEMPLATE` | int | `50` | Maximum number of milestones allowed in a template |
 | `CONTRACT_MAX_PARTIES_PER_CONTRACT` | int | `20` | Maximum number of parties allowed in a single contract |
 | `CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE` | int | `10` | Maximum number of prebound APIs per milestone |
-| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between milestone deadline checks in seconds (defau... |
-| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first milestone deadline check in secon... |
+| `CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS` | int | `300` | Interval between contract expiration checks in seconds, cove... |
+| `CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS` | int | `30` | Startup delay before first contract expiration check in seco... |
 | `CONTRACT_PREBOUND_API_BATCH_SIZE` | int | `10` | Number of prebound APIs to execute in parallel |
 | `CONTRACT_PREBOUND_API_TIMEOUT_MS` | int | `30000` | Timeout for individual prebound API calls in milliseconds |
 | `CONTRACT_TERMS_MERGE_MODE` | string | `shallow` | How instance terms merge with template terms (shallow=replac... |
@@ -747,6 +771,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESH_HEALTH_CHECK_STARTUP_DELAY_SECONDS` | int | `10` | Delay in seconds before health check service starts probing ... |
 | `MESH_HEALTH_CHECK_TIMEOUT_SECONDS` | int | `5` | Timeout for health check requests |
 | `MESH_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Recommended interval between heartbeats |
+| `MESH_INSTANCE_ID` | string | **REQUIRED** | Explicit mesh node identity override. When set, this value i... |
 | `MESH_LOAD_BALANCING_STATE_MAX_APP_IDS` | int | `0` | Maximum number of app-ids to track in load balancing state (... |
 | `MESH_LOAD_THRESHOLD_PERCENT` | int | `80` | Load percentage above which an endpoint is considered high-l... |
 | `MESH_MAX_RETRIES` | int | `3` | Maximum retry attempts for failed service calls |
@@ -767,6 +792,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_CONNECTION_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay for connection retries in milliseconds |
 | `MESSAGING_CONNECTION_RETRY_COUNT` | int | `5` | Number of connection retry attempts |
 | `MESSAGING_CONNECTION_RETRY_DELAY_MS` | int | `1000` | Delay between connection retry attempts in milliseconds |
+| `MESSAGING_DEAD_LETTER_CONSUMER_ENABLED` | bool | `true` | Enable dead letter consumer background service for logging a... |
+| `MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before dead letter consumer starts subscrib... |
 | `MESSAGING_DEAD_LETTER_EXCHANGE` | string | `bannou-dlx` | Dead letter exchange name for failed messages |
 | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | int | `100000` | Maximum messages in dead letter queue before oldest dropped |
 | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | string | `drop-head` | Behavior when DLX queue exceeds max length (drop-head drops ... |
@@ -774,7 +801,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_DEFAULT_AUTO_ACK` | bool | `false` | Default auto-acknowledge setting for subscriptions |
 | `MESSAGING_DEFAULT_EXCHANGE` | string | `bannou` | Default exchange name for publishing |
 | `MESSAGING_DEFAULT_PREFETCH_COUNT` | int | `10` | Default prefetch count for subscriptions |
-| `MESSAGING_ENABLE_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
+| `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` | bool | `true` | Enable RabbitMQ publisher confirms for reliability. When ena... |
 | `MESSAGING_ENABLE_PUBLISH_BATCHING` | bool | `false` | Enable batched publishing for high-throughput scenarios. Whe... |
 | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | int | `86400` | TTL in seconds for external HTTP callback subscriptions (def... |
 | `MESSAGING_MAX_CONCURRENT_CHANNEL_CREATION` | int | `50` | Maximum concurrent channel creation requests (backpressure s... |
@@ -795,6 +822,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `MESSAGING_RETRY_DELAY_MS` | int | `5000` | Base delay between retry attempts in milliseconds (doubles w... |
 | `MESSAGING_RETRY_MAX_ATTEMPTS` | int | `5` | Maximum retry attempts before discarding message to dead-let... |
 | `MESSAGING_RETRY_MAX_BACKOFF_MS` | int | `60000` | Maximum backoff delay between retries in milliseconds (caps ... |
+| `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | int | `10` | Maximum seconds to wait for graceful subscription cleanup du... |
 | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | int | `2` | Delay in seconds before starting subscription recovery servi... |
 | `MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS` | int | `6` | Interval in hours between subscription TTL refresh operation... |
 | `MESSAGING_USE_INMEMORY` | bool | `false` | Use in-memory messaging instead of RabbitMQ. Messages are NO... |
@@ -873,10 +901,10 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `PERMISSION_CACHE_TTL_SECONDS` | int | `0` | In-memory permission cache TTL in seconds. Cached capabiliti... |
 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
 | `PERMISSION_ROLE_HIERARCHY` | string[] | `['anonymous', 'user', 'developer', 'admin']` | Ordered role hierarchy from lowest to highest privilege. Ind... |
-| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `86400` | Redis TTL in seconds for session permission data keys (state... |
+| `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `600` | Redis TTL in seconds for session permission data keys (state... |
+| `PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed locks during session stat... |
 
 ### Puppetmaster
 
@@ -1177,9 +1205,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 890
-- **Required (no default)**: 52
-- **Optional (has default)**: 838
+- **Total properties**: 918
+- **Required (no default)**: 54
+- **Optional (has default)**: 864
 
 ## Environment Variable Naming Convention
 

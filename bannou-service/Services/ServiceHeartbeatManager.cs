@@ -31,9 +31,9 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
     /// <summary>
     /// Unique instance identifier for this bannou application instance.
-    /// Uses the shared Program.ServiceGUID for consistent identification across mesh and heartbeat.
+    /// Sourced from <see cref="IMeshInstanceIdentifier"/> via the mesh infrastructure.
     /// </summary>
-    public Guid InstanceId => Program.ServiceGUID;
+    public Guid InstanceId { get; }
 
     /// <summary>
     /// The app-id for this instance. Resolved from configuration.
@@ -57,13 +57,16 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         ILogger<ServiceHeartbeatManager> logger,
         PluginLoader pluginLoader,
         IServiceAppMappingResolver mappingResolver,
+        IMeshInstanceIdentifier instanceIdentifier,
         AppConfiguration configuration)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _pluginLoader = pluginLoader ?? throw new ArgumentNullException(nameof(pluginLoader));
         _mappingResolver = mappingResolver ?? throw new ArgumentNullException(nameof(mappingResolver));
+        ArgumentNullException.ThrowIfNull(instanceIdentifier);
         ArgumentNullException.ThrowIfNull(configuration);
+        InstanceId = instanceIdentifier.InstanceId;
 
         // Subscribe to mapping changes to suppress/resume heartbeats for services routed elsewhere
         _mappingResolver.MappingChanged += OnMappingChanged;

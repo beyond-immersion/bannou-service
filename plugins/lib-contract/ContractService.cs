@@ -8,11 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-
-[assembly: InternalsVisibleTo("lib-contract.tests")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -36,6 +32,7 @@ public partial class ContractService : IContractService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ContractService> _logger;
     private readonly ContractServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes
     private const string TEMPLATE_PREFIX = "template:";
@@ -80,27 +77,6 @@ public partial class ContractService : IContractService
     }
 
     /// <summary>
-    /// Safely extracts a GUID from a proposed action object.
-    /// Handles JsonElement objects from JSON deserialization.
-    /// </summary>
-    /// <param name="proposedAction">The proposed action object.</param>
-    /// <param name="key">The property key to look up.</param>
-    /// <returns>The parsed GUID, or null if not found or parsing fails.</returns>
-    private static Guid? GetProposedActionGuid(object? proposedAction, string key)
-    {
-        if (proposedAction is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Object)
-        {
-            if (element.TryGetProperty(key, out var prop) &&
-                prop.ValueKind == System.Text.Json.JsonValueKind.String &&
-                Guid.TryParse(prop.GetString(), out var guid))
-            {
-                return guid;
-            }
-        }
-        return null;
-    }
-
-    /// <summary>
     /// Initializes a new instance of the ContractService.
     /// </summary>
     public ContractService(
@@ -110,7 +86,8 @@ public partial class ContractService : IContractService
         IDistributedLockProvider lockProvider,
         ILogger<ContractService> logger,
         ContractServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _navigator = navigator;
@@ -118,6 +95,7 @@ public partial class ContractService : IContractService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class if needed
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -211,9 +189,7 @@ public partial class ContractService : IContractService
                 OnComplete = m.OnComplete?.Select(MapPreboundApiToModel).ToList(),
                 OnExpire = m.OnExpire?.Select(MapPreboundApiToModel).ToList()
             }).ToList(),
-            DefaultEnforcementMode = body.DefaultEnforcementMode != default
-                ? body.DefaultEnforcementMode
-                : _configuration.DefaultEnforcementMode,
+            DefaultEnforcementMode = body.DefaultEnforcementMode ?? _configuration.DefaultEnforcementMode,
             Transferable = body.Transferable,
             GameMetadata = body.GameMetadata,
             IsActive = true,
@@ -568,6 +544,7 @@ public partial class ContractService : IContractService
             ContractId = contractId,
             TemplateId = body.TemplateId,
             TemplateCode = template.Code,
+            TemplateName = template.Name,
             Status = ContractStatus.Draft,
             Parties = parties,
             Terms = mergedTerms,
@@ -720,6 +697,7 @@ public partial class ContractService : IContractService
                 {
                     await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
                     await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractExpiredEventAsync(model, cancellationToken);
                 }
 
                 return (StatusCodes.BadRequest, null);
@@ -767,6 +745,9 @@ public partial class ContractService : IContractService
                     model.Status = ContractStatus.Active;
                     model.Milestones[0].Status = MilestoneStatus.Active;
                     model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
+
+                    // Initialize payment schedule tracking for active contracts
+                    InitializePaymentSchedule(model);
                 }
                 else
                 {
@@ -1013,9 +994,74 @@ public partial class ContractService : IContractService
             return (StatusCodes.NotFound, null);
         }
 
+        // Lazy activation enforcement: check if pending contract has reached its effectiveFrom date
+        if (model.Status == ContractStatus.Pending && model.EffectiveFrom.HasValue
+            && model.EffectiveFrom.Value <= DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation(
+                "Contract {ContractId} has reached effectiveFrom {EffectiveFrom}, transitioning from Pending to Active",
+                body.ContractId, model.EffectiveFrom);
+
+            if (model.Milestones?.Count > 0)
+            {
+                model.Status = ContractStatus.Active;
+                model.Milestones[0].Status = MilestoneStatus.Active;
+                model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
+
+                // Initialize payment schedule tracking for newly activated contracts
+                InitializePaymentSchedule(model);
+            }
+            else
+            {
+                // No milestones means contract is immediately fulfilled
+                model.Status = ContractStatus.Fulfilled;
+            }
+
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            var activatedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (activatedEtag != null)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+
+                if (model.Status == ContractStatus.Fulfilled)
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                    await PublishContractFulfilledEventAsync(model, cancellationToken);
+                }
+                else
+                {
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                    await PublishContractActivatedEventAsync(model, cancellationToken);
+                }
+
+                // Update etag for subsequent operations in this method
+                etag = activatedEtag;
+            }
+        }
+
+        // Lazy expiration enforcement: check if contract has passed its effectiveUntil date
+        if (model.Status == ContractStatus.Active && model.EffectiveUntil.HasValue
+            && model.EffectiveUntil.Value <= DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation(
+                "Contract {ContractId} has passed effectiveUntil {EffectiveUntil}, transitioning to Expired",
+                body.ContractId, model.EffectiveUntil);
+
+            model.Status = ContractStatus.Expired;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+            if (expiredEtag != null)
+            {
+                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                await PublishContractExpiredEventAsync(model, cancellationToken);
+            }
+        }
+
         // Lazy deadline enforcement: check all active milestones for overdue status
         var anyProcessed = false;
-        if (model.Milestones != null)
+        if (model.Status == ContractStatus.Active && model.Milestones != null)
         {
             foreach (var milestone in model.Milestones)
             {
@@ -1599,10 +1645,10 @@ public partial class ContractService : IContractService
                     case ConstraintType.TimeCommitment:
                         if (contract.Terms.TimeCommitment == true)
                         {
-                            var timeCommitmentType = contract.Terms.TimeCommitmentType ?? "partial";
+                            var timeCommitmentType = contract.Terms.TimeCommitmentType ?? TimeCommitmentType.Partial;
 
                             // Only exclusive commitments can conflict
-                            if (timeCommitmentType == "exclusive")
+                            if (timeCommitmentType == TimeCommitmentType.Exclusive)
                             {
                                 // Check against all other active exclusive contracts
                                 foreach (var otherContract in activeContracts)
@@ -1613,8 +1659,8 @@ public partial class ContractService : IContractService
                                     if (otherContract.Terms?.TimeCommitment != true)
                                         continue;
 
-                                    var otherTimeCommitmentType = otherContract.Terms.TimeCommitmentType ?? "partial";
-                                    if (otherTimeCommitmentType != "exclusive")
+                                    var otherTimeCommitmentType = otherContract.Terms.TimeCommitmentType ?? TimeCommitmentType.Partial;
+                                    if (otherTimeCommitmentType != TimeCommitmentType.Exclusive)
                                         continue;
 
                                     // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
@@ -1642,7 +1688,7 @@ public partial class ContractService : IContractService
                 {
                     ContractId = contract.ContractId,
                     TemplateCode = contract.TemplateCode,
-                    TemplateName = null, // Would need to load template
+                    TemplateName = contract.TemplateName,
                     Status = contract.Status,
                     Role = party.Role,
                     EffectiveUntil = contract.EffectiveUntil
@@ -1708,9 +1754,9 @@ public partial class ContractService : IContractService
             {
                 ContractId = c.ContractId,
                 TemplateCode = c.TemplateCode,
-                TemplateName = null,
+                TemplateName = c.TemplateName,
                 Status = c.Status,
-                Role = party?.Role ?? "unknown",
+                Role = party?.Role,
                 EffectiveUntil = c.EffectiveUntil
             };
         }).ToList();
@@ -1875,6 +1921,8 @@ public partial class ContractService : IContractService
         string trigger,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecutePreboundApisBatchedAsync");
         var executed = 0;
         var batchSize = _configuration.PreboundApiBatchSize;
 
@@ -1895,6 +1943,8 @@ public partial class ContractService : IContractService
         string trigger,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ExecutePreboundApiAsync");
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeoutCts.CancelAfter(_configuration.PreboundApiTimeoutMs);
         var effectiveCt = timeoutCts.Token;
@@ -1961,7 +2011,9 @@ public partial class ContractService : IContractService
                         ServiceName = api.ServiceName,
                         Endpoint = api.Endpoint,
                         StatusCode = result.Result.StatusCode,
-                        ValidationOutcome = validationResult.Outcome.ToString(),
+                        ValidationOutcome = validationResult.Outcome == Utilities.ValidationOutcome.PermanentFailure
+                            ? ValidationOutcome.PermanentFailure
+                            : ValidationOutcome.TransientFailure,
                         FailureReason = validationResult.FailureReason
                     });
                     return;
@@ -2097,19 +2149,6 @@ public partial class ContractService : IContractService
         };
     }
 
-    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
-    {
-        await _messageBus.TryPublishErrorAsync(
-            "contract",
-            operation,
-            "unexpected_exception",
-            ex.Message,
-            dependency: null,
-            endpoint: endpoint,
-            details: null,
-            stack: ex.StackTrace);
-    }
-
     /// <summary>
     /// Processes an overdue milestone with lazy deadline enforcement.
     /// Returns true if the milestone was processed (and contract may have been modified).
@@ -2119,6 +2158,9 @@ public partial class ContractService : IContractService
         MilestoneInstanceModel milestone,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ProcessOverdueMilestoneAsync");
+
         // Only process active milestones with deadlines
         if (milestone.Status != MilestoneStatus.Active || !milestone.ActivatedAt.HasValue)
             return false;
@@ -2216,6 +2258,9 @@ public partial class ContractService : IContractService
         string description,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.ReportBreachInternalAsync");
+
         var breachId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -2223,8 +2268,8 @@ public partial class ContractService : IContractService
         {
             BreachId = breachId,
             ContractId = contract.ContractId,
-            BreachingEntityId = Guid.Empty, // System-initiated
-            BreachingEntityType = EntityType.Account, // Placeholder for system
+            BreachingEntityId = null, // System-initiated breach has no specific entity
+            BreachingEntityType = null, // System-initiated breach has no specific entity
             BreachType = breachType,
             BreachedTermOrMilestone = breachedMilestoneCode,
             Description = description,
@@ -2260,6 +2305,9 @@ public partial class ContractService : IContractService
         ContractInstanceModel contract,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.CheckBreachThresholdAsync");
+
         var threshold = contract.Terms?.BreachThreshold ?? 0;
         if (threshold <= 0) return;
 
@@ -2293,6 +2341,9 @@ public partial class ContractService : IContractService
         int threshold,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.TerminateContractDueToBreachThresholdAsync");
+
         var reason = $"Breach threshold exceeded ({breachCount}/{threshold})";
         var previousStatus = contract.Status;
 
@@ -2318,8 +2369,8 @@ public partial class ContractService : IContractService
         // Publish termination event (system-initiated, breach-related)
         await PublishContractTerminatedEventAsync(
             contract,
-            terminatedById: Guid.Empty,
-            terminatedByType: EntityType.Account, // System placeholder
+            terminatedById: null, // System-initiated termination has no specific entity
+            terminatedByType: null,
             reason: reason,
             wasBreachRelated: true,
             cancellationToken);
@@ -2726,7 +2777,7 @@ public partial class ContractService : IContractService
     }
 
     private async Task PublishContractTerminatedEventAsync(
-        ContractInstanceModel model, Guid terminatedById, EntityType terminatedByType,
+        ContractInstanceModel model, Guid? terminatedById, EntityType? terminatedByType,
         string? reason, bool wasBreachRelated, CancellationToken ct)
     {
         await _messageBus.TryPublishAsync("contract.terminated", new ContractTerminatedEvent
@@ -2739,6 +2790,125 @@ public partial class ContractService : IContractService
             Reason = reason,
             WasBreachRelated = wasBreachRelated
         });
+    }
+
+    /// <summary>
+    /// Publishes a contract expired event when a contract reaches its effectiveUntil date
+    /// or its consent window expires.
+    /// </summary>
+    private async Task PublishContractExpiredEventAsync(ContractInstanceModel model, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishContractExpiredEventAsync");
+
+        await _messageBus.TryPublishAsync("contract.expired", new ContractExpiredEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateCode = model.TemplateCode,
+            EffectiveUntil = model.EffectiveUntil ?? DateTimeOffset.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Publishes a payment due event for a contract with recurring or one-time payment terms.
+    /// </summary>
+    internal async Task PublishPaymentDueEventAsync(ContractInstanceModel model, int paymentNumber, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.contract", "ContractService.PublishPaymentDueEventAsync");
+
+        var parties = model.Parties?.Select(p => new PartyInfo
+        {
+            EntityId = p.EntityId,
+            EntityType = p.EntityType,
+            Role = p.Role
+        }).ToList();
+
+        await _messageBus.TryPublishAsync("contract.payment.due", new ContractPaymentDueEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = model.ContractId,
+            TemplateCode = model.TemplateCode,
+            PaymentSchedule = model.Terms?.PaymentSchedule ?? PaymentSchedule.OneTime,
+            PaymentFrequency = model.Terms?.PaymentFrequency,
+            PaymentNumber = paymentNumber,
+            Parties = parties
+        });
+    }
+
+    #endregion
+
+    #region Payment Schedule
+
+    /// <summary>
+    /// Initializes payment schedule tracking when a contract becomes active.
+    /// Sets NextPaymentDue based on the payment schedule type in the contract terms.
+    /// </summary>
+    private void InitializePaymentSchedule(ContractInstanceModel model)
+    {
+        var schedule = model.Terms?.PaymentSchedule;
+        if (schedule == null || schedule == PaymentSchedule.MilestoneBased)
+        {
+            // milestone_based payments are handled by existing prebound APIs, no background tracking
+            return;
+        }
+
+        // For one_time and recurring: first payment is due at activation
+        model.NextPaymentDue = model.EffectiveFrom ?? DateTimeOffset.UtcNow;
+        model.PaymentsDuePublished = 0;
+    }
+
+    /// <summary>
+    /// Checks if a payment is due for an active contract and publishes the event.
+    /// Advances NextPaymentDue for recurring schedules or clears it for one-time.
+    /// Returns true if the model was modified and needs to be saved.
+    /// </summary>
+    internal bool CheckAndAdvancePaymentSchedule(ContractInstanceModel model, DateTimeOffset now)
+    {
+        if (model.NextPaymentDue == null || model.NextPaymentDue > now)
+        {
+            return false;
+        }
+
+        var schedule = model.Terms?.PaymentSchedule;
+        model.PaymentsDuePublished++;
+        model.LastPaymentAt = now;
+
+        if (schedule == PaymentSchedule.Recurring)
+        {
+            // Advance to next payment period
+            var frequency = ParseIsoDuration(model.Terms?.PaymentFrequency);
+            if (frequency != null)
+            {
+                // Advance from the previous due date (not from now) to prevent drift
+                model.NextPaymentDue = model.NextPaymentDue.Value.Add(frequency.Value);
+
+                // If we've fallen behind multiple periods, catch up to the next future due date
+                while (model.NextPaymentDue <= now)
+                {
+                    model.NextPaymentDue = model.NextPaymentDue.Value.Add(frequency.Value);
+                    // Only count one payment due event per check cycle to avoid spam
+                }
+            }
+            else
+            {
+                // Recurring with no frequency is invalid configuration; clear to prevent infinite loop
+                _logger.LogWarning(
+                    "Contract {ContractId} has recurring payment schedule but no valid PaymentFrequency, disabling payment tracking",
+                    model.ContractId);
+                model.NextPaymentDue = null;
+            }
+        }
+        else
+        {
+            // one_time: clear after first publication
+            model.NextPaymentDue = null;
+        }
+
+        return true;
     }
 
     #endregion

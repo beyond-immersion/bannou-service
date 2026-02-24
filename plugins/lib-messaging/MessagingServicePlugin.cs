@@ -75,7 +75,8 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var channelManager = sp.GetRequiredService<IChannelManager>();
             var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
-            return new MessageRetryBuffer(channelManager, msgConfig, logger);
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            return new MessageRetryBuffer(channelManager, msgConfig, logger, telemetryProvider);
         });
         services.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
@@ -90,8 +91,9 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
             var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
             // NullTelemetryProvider is registered by default; lib-telemetry overrides it when enabled
             var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+            var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
 
-            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+            return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider, instanceIdentifier);
         });
 
         // Use factory registration to pass telemetry provider and message bus
@@ -128,6 +130,12 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         // Recovers external HTTP callback subscriptions from lib-state on startup
         services.AddHostedService<MessagingSubscriptionRecoveryService>();
         Logger?.LogDebug("Registered MessagingSubscriptionRecoveryService for external subscription recovery");
+
+        // Register dead letter consumer for monitoring/logging
+        // Only registers for RabbitMQ mode (dead letters don't exist in in-memory mode)
+        // Enabled/disabled check happens inside ExecuteAsync (reads config at runtime)
+        services.AddHostedService<DeadLetterConsumerService>();
+        Logger?.LogDebug("Registered DeadLetterConsumerService for dead letter monitoring");
 
         Logger?.LogDebug("Messaging service dependencies configured");
     }

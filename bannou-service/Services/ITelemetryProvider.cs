@@ -169,6 +169,11 @@ public static class TelemetryComponents
     /// Service mesh operations (lib-mesh).
     /// </summary>
     public const string Mesh = "bannou.mesh";
+
+    /// <summary>
+    /// Telemetry service operations (lib-telemetry).
+    /// </summary>
+    public const string Telemetry = "bannou.telemetry";
 }
 
 /// <summary>

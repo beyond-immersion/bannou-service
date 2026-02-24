@@ -176,17 +176,18 @@ export class ActorProxy {
    * Start an encounter managed by an Event Brain actor
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
-   * @returns Promise that completes when the event is sent.
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
    */
-  async startEncounterEventAsync(
+  async startEncounterAsync(
     request: Schemas['StartEncounterRequest'],
-    channel: number = 0
-  ): Promise<void> {
-    return this.client.sendEventAsync<Schemas['StartEncounterRequest']>(
-      '/actor/encounter/start',
-      request,
-      channel
-    );
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['StartEncounterResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['StartEncounterRequest'],
+      Schemas['StartEncounterResponse']
+    >('/actor/encounter/start', request, channel, timeout);
   }
 
   /**

@@ -514,6 +514,10 @@ paths:
       responses:
         '200':
           description: Encounter started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartEncounterResponse'
   /actor/encounter/update-phase:
     post:
       operationId: UpdateEncounterPhase
@@ -1156,7 +1160,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1182,7 +1185,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1214,7 +1216,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -1234,7 +1235,7 @@ paths:
       responses:
         '302':
           description: Redirect to OAuth provider
-      x-manual-implementation: true
+      x-controller-only: true
   /auth/oauth/{provider}/callback:
     post:
       summary: Complete OAuth2 flow (browser redirect callback)
@@ -1249,7 +1250,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -1281,7 +1281,6 @@ paths:
       - Steam
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1307,7 +1306,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1337,7 +1335,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1365,7 +1362,6 @@ paths:
       - Authentication
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1390,7 +1386,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1414,7 +1409,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1442,7 +1436,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1460,7 +1453,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -1482,7 +1474,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       responses:
         '200':
           description: List of available providers
@@ -1502,7 +1493,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1532,7 +1522,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1566,7 +1555,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -1601,7 +1589,6 @@ paths:
       - MFA
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -15521,6 +15508,7 @@ components:
       - createdAt
       - emailVerified
       - roles
+      - authMethods
       properties:
         accountId:
           type: string
@@ -15566,7 +15554,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
         mfaEnabled:
           type: boolean
           default: false
@@ -15902,7 +15891,6 @@ components:
       - category
       - status
       - startedAt
-      - loopIterations
       properties:
         actorId:
           type: string
@@ -15947,7 +15935,11 @@ components:
         loopIterations:
           type: integer
           format: int64
-          description: Number of behavior loop iterations executed
+          nullable: true
+          description: >-
+            Number of behavior loop iterations executed. Null when the actor is
+            running on a remote pool node and the iteration count is not locally
+            available.
     ActorSize:
       type: string
       description: Size classification affecting cover requirements and passage 
@@ -16028,6 +16020,7 @@ components:
             Static template-level cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated
             subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -16154,7 +16147,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
     AddMemberRequest:
       type: object
       description: Request to add a character to a faction
@@ -16220,6 +16214,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type
         status:
           allOf:
@@ -16229,10 +16224,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Number of items per page
     AdminStatsResponse:
       type: object
@@ -16535,7 +16533,8 @@ components:
         otherTrackers:
           type: object
           additionalProperties: true
-          description: Configuration for other analytics trackers
+          description: Configuration for other analytics trackers. No Bannou 
+            plugin reads specific keys from this field by convention.
     AnswerPeerRequest:
       type: object
       additionalProperties: false
@@ -17130,7 +17129,8 @@ components:
           nullable: true
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/AuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -17189,6 +17189,13 @@ components:
             type: string
           nullable: true
           description: List of roles assigned to the authenticated user
+    AuthType:
+      type: string
+      enum:
+      - oauth
+      - ticket
+      description: Authentication mechanism type (oauth = browser redirect, 
+        ticket = game client token)
     AuthoringCheckoutRequest:
       type: object
       description: Request to checkout for authoring
@@ -17396,29 +17403,6 @@ components:
           type: string
           nullable: true
           description: Type of the related entity (if any)
-    BackstoryElementSnapshot:
-      description: Single backstory element
-      type: object
-      additionalProperties: false
-      required:
-      - elementType
-      - key
-      - value
-      - strength
-      properties:
-        elementType:
-          type: string
-          description: Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)
-        key:
-          type: string
-          description: Machine-readable key (homeland, past_job, etc.)
-        value:
-          type: string
-          description: Machine-readable value (northlands, blacksmith, etc.)
-        strength:
-          type: number
-          format: float
-          description: How strongly this affects behavior (0.0 to 1.0)
     BackstoryElementType:
       type: string
       description: |
@@ -17462,17 +17446,19 @@ components:
           nullable: true
           description: When this backstory was last modified
     BackstorySnapshot:
-      description: Snapshot of backstory for enriched response
       type: object
       additionalProperties: false
+      description: Snapshot of a backstory element
       required:
-      - elements
+      - elementType
+      - key
       properties:
-        elements:
-          type: array
-          items:
-            $ref: '#/components/schemas/BackstoryElementSnapshot'
-          description: List of backstory elements
+        elementType:
+          type: string
+          description: Backstory element type (e.g., TRAUMA, GOAL)
+        key:
+          type: string
+          description: Backstory element key
     BalanceQuery:
       type: object
       description: A single balance query
@@ -17538,10 +17524,12 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 500
           description: Optional reason for the ban
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Ban duration in minutes (null for permanent)
     BatchBalanceResult:
       type: object
@@ -17771,6 +17759,22 @@ components:
           type: string
           nullable: true
           description: Sender display name
+    BatchMessageFailure:
+      type: object
+      additionalProperties: false
+      description: Details of a single message that failed in a batch send 
+        operation
+      required:
+      - index
+      - error
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed message in the request 
+            messages array
+        error:
+          type: string
+          description: Human-readable error reason
     BehaviorTreeData:
       type: object
       additionalProperties: false
@@ -17802,6 +17806,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to bind
         characterId:
           type: string
@@ -18099,7 +18104,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
     BoardResponse:
       type: object
       description: Board instance with all fields
@@ -18430,8 +18436,6 @@ components:
       required:
       - breachId
       - contractId
-      - breachingEntityId
-      - breachingEntityType
       - breachType
       - status
       - detectedAt
@@ -18447,10 +18451,15 @@ components:
         breachingEntityId:
           type: string
           format: uuid
-          description: Entity that breached
+          nullable: true
+          description: Entity that breached (null for system-initiated breaches 
+            such as deadline enforcement)
         breachingEntityType:
-          $ref: '#/components/schemas/EntityType'
-          description: Type of breaching entity
+          allOf:
+          - $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Type of breaching entity (null for system-initiated 
+            breaches)
         breachType:
           $ref: '#/components/schemas/BreachType'
           description: Type of breach
@@ -19383,17 +19392,19 @@ components:
             Example: "Brave and loyal, somewhat hot-tempered with a strong sense of justice"
         keyBackstoryPoints:
           type: array
+          nullable: true
           items:
             type: string
           description: |
-            Key backstory elements as text.
+            Key backstory elements as text. Null when compression did not include backstory data.
             Example: ["Trained by the Knights Guild", "Born in the Northlands"]
         majorLifeEvents:
           type: array
+          nullable: true
           items:
             type: string
           description: |
-            Significant life events as text.
+            Significant life events as text. Null when compression did not include history data.
             Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
         familySummary:
           type: string
@@ -19422,6 +19433,7 @@ components:
       - birthDate
       - deathDate
       - status
+      - createdAt
       properties:
         characterId:
           type: string
@@ -19447,7 +19459,8 @@ components:
           format: date-time
           description: In-game death timestamp (required for compression)
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status (must be dead for compression)
         familySummary:
           type: string
@@ -19606,6 +19619,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         characters:
           type: array
@@ -19726,7 +19741,8 @@ components:
           nullable: true
           description: In-game death timestamp
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
         createdAt:
           type: string
@@ -19925,7 +19941,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     ChatRoomStatus:
       type: string
       description: Current state of a chat room
@@ -20292,11 +20309,8 @@ components:
       - both
     ClauseDistributionResult:
       type: object
-      description: |
-        Outcome of a single clause distribution during contract execution.
-        Used in ContractExecutedEvent to provide per-clause success/failure details.
-        Deliberately excludes wallet/container IDs - consumers tracking these should
-        correlate via clauseId to their own records.
+      description: Per-clause distribution outcome during contract execution; 
+        excludes wallet/container IDs so consumers correlate via clauseId
       additionalProperties: false
       required:
       - clauseId
@@ -20315,9 +20329,8 @@ components:
             fee)
         assetType:
           type: string
-          description: |
-            Descriptive type of asset involved (e.g., "currency", "item").
-            Provides human-readable context for what was transferred.
+          description: Descriptive type of asset involved (e.g. "currency", 
+            "item") providing human-readable context
         amount:
           type: number
           description: Quantity transferred (currency amount, item count, etc.)
@@ -20375,7 +20388,7 @@ components:
       description: Response from character cleanup operation
       required:
       - actorsCleanedUp
-      - success
+      - actorIds
       properties:
         actorsCleanedUp:
           type: integer
@@ -20385,9 +20398,6 @@ components:
           items:
             type: string
           description: IDs of actors that were cleaned up
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
     CleanupByEntityRequest:
       description: Request to end all relationships referencing a deleted entity
         during cascading resource cleanup
@@ -20671,7 +20681,6 @@ components:
       - sessionId
       - capabilities
       - version
-      - generatedAt
       properties:
         sessionId:
           type: string
@@ -20694,10 +20703,6 @@ components:
         version:
           type: integer
           description: Capability manifest version (increments on changes)
-        generatedAt:
-          type: string
-          format: date-time
-          description: When this capability manifest was generated
         expiresAt:
           type: string
           format: date-time
@@ -20726,13 +20731,7 @@ components:
           type: string
           description: API endpoint path (e.g., "/account/create")
         method:
-          type: string
-          enum:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - PATCH
+          $ref: '#/components/schemas/HttpMethodType'
           description: HTTP method for this endpoint
         description:
           type: string
@@ -21065,42 +21064,6 @@ components:
           format: date-time
           nullable: true
           description: When these preferences were last modified
-    CombatPreferencesSnapshot:
-      description: Snapshot of combat preferences for enriched response
-      type: object
-      additionalProperties: false
-      required:
-      - style
-      - preferredRange
-      - groupRole
-      - riskTolerance
-      - retreatThreshold
-      - protectAllies
-      properties:
-        style:
-          type: string
-          description: Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER,
-            TACTICAL)
-        preferredRange:
-          type: string
-          description: Preferred engagement distance (MELEE, CLOSE, MEDIUM, 
-            RANGED)
-        groupRole:
-          type: string
-          description: Role in group combat (FRONTLINE, SUPPORT, FLANKER, 
-            LEADER, SOLO)
-        riskTolerance:
-          type: number
-          format: float
-          description: Willingness to take risky actions (0.0 to 1.0)
-        retreatThreshold:
-          type: number
-          format: float
-          description: Health percentage at which retreat is considered (0.0 to 
-            1.0)
-        protectAllies:
-          type: boolean
-          description: Whether to prioritize ally protection
     CombatStyle:
       type: string
       description: |
@@ -22380,6 +22343,7 @@ components:
       required:
       - contractId
       - templateId
+      - templateCode
       - status
       - parties
       - createdAt
@@ -22603,7 +22567,6 @@ components:
       - contractId
       - templateCode
       - status
-      - role
       properties:
         contractId:
           type: string
@@ -22621,7 +22584,9 @@ components:
           description: Current status
         role:
           type: string
-          description: Entity's role in contract
+          nullable: true
+          description: Entity's role in contract (null if party record not found
+            due to data inconsistency)
         effectiveUntil:
           type: string
           format: date-time
@@ -22639,6 +22604,7 @@ components:
       - maxParties
       - partyRoles
       - defaultEnforcementMode
+      - transferable
       - isActive
       - createdAt
       properties:
@@ -22754,9 +22720,10 @@ components:
           nullable: true
           description: Whether this contract has a time commitment clause
         timeCommitmentType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/TimeCommitmentType'
           nullable: true
-          description: Type of time commitment (exclusive or partial)
+          description: Type of time commitment for scheduling constraints
         clauses:
           type: array
           nullable: true
@@ -23044,10 +23011,12 @@ components:
       properties:
         category:
           type: string
+          minLength: 1
           description: Category identifier (e.g., "npc-brain", "world-admin", 
             "cron-cleanup")
         behaviorRef:
           type: string
+          minLength: 1
           description: Reference to behavior in lib-assets (e.g., 
             "asset://behaviors/npc-brain-v1")
         configuration:
@@ -23092,6 +23061,7 @@ components:
             Applied as the first layer in the three-layer override composition
             (template, instance, ABML metadata). Structure defined by ICognitionOverride
             interface hierarchy in bannou-service/Behavior/.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateArchiveRequest:
       description: Request to create a point-in-time snapshot of namespace 
         documentation
@@ -23284,7 +23254,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the bundle (null if none)
+          description: Custom metadata for the bundle (null if none). No Bannou 
+            plugin reads specific keys from this field by convention.
     CreateBundleResponse:
       description: Response with bundle creation status and estimated size
       type: object
@@ -24278,7 +24249,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the metabundle
+          description: Custom metadata for the metabundle. No Bannou plugin 
+            reads specific keys from this field by convention.
     CreateMetabundleResponse:
       type: object
       additionalProperties: false
@@ -24432,6 +24404,8 @@ components:
       properties:
         roomTypeCode:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Room type code determining message format and validation
         sessionId:
           type: string
@@ -24446,10 +24420,12 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Participant limit override (null uses type default)
         contractFulfilledAction:
           allOf:
@@ -24478,7 +24454,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     CreateScenarioDefinitionRequest:
       type: object
       additionalProperties: false
@@ -24885,7 +24862,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     CreditCurrencyResponse:
       type: object
       description: Result of credit operation
@@ -25254,7 +25232,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form metadata
+          description: Free-form metadata. No Bannou plugin reads specific keys 
+            from this field by convention.
     CustomAffordance:
       type: object
       description: Custom affordance definition for novel scenarios
@@ -25388,7 +25367,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     DebitCurrencyResponse:
       type: object
       description: Result of debit operation
@@ -25693,12 +25673,8 @@ components:
       additionalProperties: false
       description: Response confirming template deletion
       required:
-      - deleted
       - stoppedActorCount
       properties:
-        deleted:
-          type: boolean
-          description: Whether the template was successfully deleted
         stoppedActorCount:
           type: integer
           description: Number of running actors that were stopped
@@ -26233,12 +26209,8 @@ components:
       additionalProperties: false
       properties:
         deviceType:
-          type: string
-          enum:
-          - desktop
-          - mobile
-          - tablet
-          - console
+          allOf:
+          - $ref: '#/components/schemas/DeviceType'
           nullable: true
           description: Category of the device
         platform:
@@ -26253,6 +26225,15 @@ components:
           type: string
           nullable: true
           description: Version of the client application
+    DeviceType:
+      type: string
+      enum:
+      - desktop
+      - mobile
+      - tablet
+      - console
+      description: Category of client device used for authentication or session 
+        tracking
     DiscardRequest:
       type: object
       description: Request to discard checkout
@@ -26656,7 +26637,8 @@ components:
         minimumRequirements:
           type: object
           additionalProperties: true
-          description: Minimum system requirements for the client
+          description: Minimum system requirements for the client. No Bannou 
+            plugin reads specific keys from this field by convention.
     DownloadsResponse:
       description: Collection of available game client downloads by platform
       type: object
@@ -27095,6 +27077,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
     EndEncounterResponse:
       type: object
@@ -27163,7 +27146,8 @@ components:
           nullable: true
           description: In-game death timestamp
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status of the character
         createdAt:
           type: string
@@ -27174,23 +27158,10 @@ components:
           format: date-time
           nullable: true
           description: Real-world last update timestamp
-        personality:
-          $ref: '#/components/schemas/PersonalitySnapshot'
-          nullable: true
-          description: Personality traits (included if includePersonality=true)
-        backstory:
-          $ref: '#/components/schemas/BackstorySnapshot'
-          nullable: true
-          description: Backstory elements (included if includeBackstory=true)
         familyTree:
           $ref: '#/components/schemas/FamilyTreeResponse'
           nullable: true
           description: Family relationships (included if includeFamilyTree=true)
-        combatPreferences:
-          $ref: '#/components/schemas/CombatPreferencesSnapshot'
-          nullable: true
-          description: Combat preferences (included if 
-            includeCombatPreferences=true)
     EnterGardenRequest:
       type: object
       description: Request to enter the garden
@@ -27395,7 +27366,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary custom data for game-specific metadata
+          description: Arbitrary custom data for game-specific metadata. No 
+            Bannou plugin reads specific keys from this field by convention.
     EntryTemplateResponse:
       type: object
       description: Entry template with all fields
@@ -28362,6 +28334,13 @@ components:
           default: false
           description: If true, invoke cleanup callbacks after successful 
             archival
+        deleteSourceDataPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: |
+            Cleanup policy for source data deletion after archival.
+            Only applies when deleteSourceData is true.
+            If not specified, uses the configured DefaultCleanupPolicy.
         compressionPolicy:
           $ref: '#/components/schemas/CompressionPolicy'
           nullable: true
@@ -28436,18 +28415,17 @@ components:
           description: Idempotency key for the execution
     ExecuteContractResponse:
       type: object
-      description: Response from executing a contract
+      description: Response from executing a contract. HTTP 200 confirms 
+        execution completed.
       additionalProperties: false
       required:
-      - executed
       - alreadyExecuted
+      - contractId
       properties:
-        executed:
-          type: boolean
-          description: Whether execution was successful
         alreadyExecuted:
           type: boolean
-          description: True if this was a repeat call (idempotency)
+          description: True if this was a repeat call (idempotency). When false,
+            this is a fresh execution.
         contractId:
           type: string
           format: uuid
@@ -28459,11 +28437,6 @@ components:
           nullable: true
           description: Per-clause distribution outcomes with success/failure 
             details
-        executedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When execution occurred
     ExecuteConversionRequest:
       type: object
       description: Request to execute a currency conversion
@@ -28942,6 +28915,7 @@ components:
       required:
       - characterId
       - relationshipType
+      - isAlive
       properties:
         characterId:
           type: string
@@ -28962,6 +28936,12 @@ components:
       description: Family relationships for a character
       type: object
       additionalProperties: false
+      required:
+      - parents
+      - children
+      - siblings
+      - spouses
+      - pastLives
       properties:
         parents:
           type: array
@@ -30624,24 +30604,10 @@ components:
           type: string
           format: uuid
           description: ID of the character to retrieve
-        includePersonality:
-          type: boolean
-          default: false
-          description: Include personality traits from character-personality 
-            service
-        includeBackstory:
-          type: boolean
-          default: false
-          description: Include backstory elements from character-history service
         includeFamilyTree:
           type: boolean
           default: false
           description: Include family relationships from relationship service
-        includeCombatPreferences:
-          type: boolean
-          default: false
-          description: Include combat preferences from character-personality 
-            service
     GetEntityLocationRequest:
       description: Request to query an entity's current location
       type: object
@@ -33045,6 +33011,10 @@ components:
         Information about a hazard in range.
         Core properties are schema-defined; additionalProperties allows game-specific
         hazard data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - hazardType
+      - distance
+      - severity
       properties:
         hazardType:
           type: string
@@ -33291,6 +33261,15 @@ components:
       - captured
       - released
       - expired
+    HttpMethodType:
+      type: string
+      description: HTTP method for endpoint invocation
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
     InitializeRealmClockRequest:
       type: object
       additionalProperties: false
@@ -33401,6 +33380,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: Target actor to inject perception into
         perception:
           description: Perception data to inject
@@ -33410,12 +33390,8 @@ components:
       additionalProperties: false
       description: Response confirming perception injection
       required:
-      - queued
       - queueDepth
       properties:
-        queued:
-          type: boolean
-          description: Whether the perception was successfully queued
         queueDepth:
           type: integer
           description: Current depth of the perception queue
@@ -33974,6 +33950,7 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable display name
         role:
           allOf:
@@ -34377,7 +34354,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou 
+            plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -36335,10 +36313,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     ListRoomTypesResponse:
       type: object
@@ -36372,6 +36353,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type code
         sessionId:
           type: string
@@ -36386,10 +36368,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     ListRoomsResponse:
       type: object
@@ -37436,15 +37421,13 @@ components:
           description: Optional idempotency key for the operation
     LockContractResponse:
       type: object
-      description: Response from locking a contract
+      description: Response from locking a contract. HTTP 200 confirms the lock 
+        was acquired.
       additionalProperties: false
       required:
-      - locked
       - contractId
+      - guardianId
       properties:
-        locked:
-          type: boolean
-          description: Whether the contract was locked
         contractId:
           type: string
           format: uuid
@@ -37453,10 +37436,6 @@ components:
           type: string
           format: uuid
           description: Guardian entity ID
-        lockedAt:
-          type: string
-          format: date-time
-          description: When the contract was locked
     LoginRequest:
       description: Request to authenticate a user with email and password 
         credentials
@@ -37474,6 +37453,8 @@ components:
         password:
           type: string
           format: password
+          minLength: 1
+          maxLength: 128
           description: User password for authentication
         rememberMe:
           type: boolean
@@ -37872,6 +37853,8 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Maximum number of messages to return
     MessageHistoryResponse:
       type: object
@@ -37915,6 +37898,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     MfaEnableRequest:
       type: object
@@ -37978,6 +37962,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
     MidiEvent:
       x-sdk-type: BeyondImmersion.Bannou.MusicTheory.Output.MidiEvent
@@ -38621,6 +38606,7 @@ components:
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Mute duration in minutes (null for permanent)
     NarrativeEffect:
       type: object
@@ -38709,6 +38695,11 @@ components:
         Information about a nearby object perceived by the character.
         Core properties are schema-defined; additionalProperties allows game-specific
         object data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - objectId
+      - objectType
+      - distance
+      - direction
       properties:
         objectId:
           type: string
@@ -39167,7 +39158,8 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata for the page
+          description: Custom metadata for the page. No Bannou plugin reads 
+            specific keys from this field by convention.
         seo:
           $ref: '#/components/schemas/SEOMetadata'
           description: Search engine optimization settings for the page
@@ -39432,6 +39424,7 @@ components:
       properties:
         role:
           type: string
+          minLength: 1
           maxLength: 64
           description: Role identifier (employer, employee, buyer, seller, etc.)
         minCount:
@@ -39489,6 +39482,7 @@ components:
           type: string
           format: password
           minLength: 8
+          maxLength: 128
           description: New password to set for the account
     PasswordResetRequest:
       description: Request to initiate a password reset by sending a reset link 
@@ -39567,11 +39561,13 @@ components:
       properties:
         perceptionType:
           type: string
+          minLength: 1
           description: |
             Perception type. Common values: visual, auditory, tactile, olfactory,
             proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
         sourceId:
           type: string
+          minLength: 1
           description: ID of the entity causing this perception
         sourceType:
           allOf:
@@ -39670,24 +39666,6 @@ components:
           format: date-time
           nullable: true
           description: When this personality was last modified
-    PersonalitySnapshot:
-      description: Snapshot of personality traits for enriched response
-      type: object
-      additionalProperties: false
-      required:
-      - traits
-      - version
-      properties:
-        traits:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Trait values keyed by trait name (OPENNESS, 
-            AGREEABLENESS, etc.)
-        version:
-          type: integer
-          description: Personality version number (increments on evolution)
     PerspectiveResponse:
       type: object
       description: Response containing a perspective
@@ -40134,17 +40112,21 @@ components:
           nullable: true
           description: Human-readable description
         executionMode:
-          type: string
-          enum:
-          - sync
-          - async
-          - fire_and_forget
+          allOf:
+          - $ref: '#/components/schemas/PreboundApiExecutionMode'
           default: sync
           description: How to execute the API call
         responseValidation:
           $ref: '#/components/schemas/ResponseValidation'
           nullable: true
           description: Optional validation rules for the response
+    PreboundApiExecutionMode:
+      type: string
+      description: How to execute a prebound API call
+      enum:
+      - sync
+      - async
+      - fire_and_forget
     PredictedMutation:
       type: object
       additionalProperties: false
@@ -40320,10 +40302,7 @@ components:
           example: "Discord"
           description: Human-readable name for the provider
         authType:
-          type: string
-          enum:
-          - oauth
-          - ticket
+          $ref: '#/components/schemas/AuthType'
           description: Authentication mechanism (oauth = browser redirect, 
             ticket = game client token)
         authUrl:
@@ -42496,6 +42475,7 @@ components:
           type: string
           description: Password for the account (will be hashed)
           minLength: 8
+          maxLength: 128
           format: password
           example: "SecurePassword123!"
         email:
@@ -42542,14 +42522,20 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-z][a-z0-9_]*$'
           description: Unique room type code (e.g., "text", "guild_board", 
             "trade_posting")
         displayName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Human-readable name for the room type
         description:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional description of the room type
         gameServiceId:
           type: string
@@ -42570,10 +42556,12 @@ components:
         defaultMaxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Default participant limit (null uses service default)
         retentionDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Message retention in days (null uses service default)
         defaultContractTemplateId:
           type: string
@@ -42586,12 +42574,14 @@ components:
         rateLimitPerMinute:
           type: integer
           nullable: true
+          minimum: 1
           description: Messages per minute per participant (null uses service 
             default)
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     RegisterSchemaRequest:
       type: object
       description: Request to register a new save data schema with optional 
@@ -43868,33 +43858,28 @@ components:
           description: When this snapshot will expire
     ResponseValidation:
       type: object
-      description: |
-        Validation rules for API responses with three-outcome model.
-        Used by lib-contract to validate clause conditions without
-        understanding the specific API semantics.
+      description: Validation rules for API responses with three-outcome model 
+        (success, permanent failure, transient failure)
       additionalProperties: false
       properties:
         successConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that must ALL pass for success.
-            If any fail, checks permanent failure conditions.
+          description: Conditions that must ALL pass for success; if any fail, 
+            checks permanent failure conditions
         permanentFailureConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that indicate permanent failure (clause violated).
-            Checked when success conditions fail.
+          description: Conditions that indicate permanent failure (clause 
+            violated); checked when success conditions fail
         transientFailureStatusCodes:
           type: array
           items:
             type: integer
-          description: |
-            HTTP status codes that indicate transient failure (retry later).
-            Default: [408, 429, 502, 503, 504]
+          description: HTTP status codes indicating transient failure for retry 
+            (default 408, 429, 502, 503, 504)
     RestoreBundleRequest:
       type: object
       additionalProperties: false
@@ -44045,7 +44030,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
@@ -45315,10 +45301,14 @@ components:
           description: Room ID to search in (must be a persistent room)
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Full-text search query string
         limit:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Maximum number of results to return
     SearchMessagesResponse:
       type: object
@@ -45878,13 +45868,21 @@ components:
     SendMessageBatchResponse:
       type: object
       additionalProperties: false
-      description: Result of a batch message send operation
+      description: Result of a batch message send operation with per-message 
+        failure tracking
       required:
       - messageCount
+      - failed
       properties:
         messageCount:
           type: integer
-          description: Number of messages sent
+          description: Number of messages successfully sent
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchMessageFailure'
+          description: Details of messages that failed to send (empty array when
+            all succeeded)
     SendMessageContent:
       type: object
       additionalProperties: false
@@ -46176,20 +46174,17 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: |
-            Key-value pairs for template substitution.
-            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+          description: Key-value pairs for template substitution (keys follow 
+            pattern EscrowId, PartyA_EscrowWalletId, etc.)
     SetTemplateValuesResponse:
       type: object
-      description: Response from setting template values
+      description: Response from setting template values. HTTP 200 confirms 
+        values were set.
       additionalProperties: false
       required:
-      - updated
       - contractId
+      - valueCount
       properties:
-        updated:
-          type: boolean
-          description: Whether values were updated
         contractId:
           type: string
           format: uuid
@@ -46795,6 +46790,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor that will manage this 
             encounter
         encounterId:
@@ -46803,6 +46799,7 @@ components:
           description: Unique identifier for this encounter
         encounterType:
           type: string
+          minLength: 1
           description: Type of encounter (e.g., "combat", "conversation", 
             "choreography")
         participants:
@@ -46818,6 +46815,11 @@ components:
           description: >-
             Game-specific encounter initialization data passed to ABML behavior scope.
             No Bannou plugin reads specific keys from this field by convention.
+    StartEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the encounter was started.
+      properties: {}
     StartWatcherRequest:
       type: object
       additionalProperties: false
@@ -47139,6 +47141,7 @@ components:
           type: string
           pattern: '^[0-9A-Fa-f]+$'
           minLength: 16
+          maxLength: 2048
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -47156,6 +47159,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to stop
         graceful:
           type: boolean
@@ -47166,12 +47170,8 @@ components:
       additionalProperties: false
       description: Response confirming actor stop operation
       required:
-      - stopped
       - finalStatus
       properties:
-        stopped:
-          type: boolean
-          description: Whether the actor was successfully stopped
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
@@ -47998,6 +47998,12 @@ components:
       - match_accepted
       - cancelled
       - expired
+    TimeCommitmentType:
+      type: string
+      description: Type of time commitment for scheduling constraints
+      enum:
+      - exclusive
+      - partial
     TimeRatioChangeReason:
       type: string
       description: Why the time ratio was changed
@@ -48191,15 +48197,15 @@ components:
           description: Optional idempotency key for the operation
     TransferContractPartyResponse:
       type: object
-      description: Response from transferring a party role
+      description: Response from transferring a party role. HTTP 200 confirms 
+        the transfer succeeded.
       additionalProperties: false
       required:
-      - transferred
       - contractId
+      - role
+      - fromEntityId
+      - toEntityId
       properties:
-        transferred:
-          type: boolean
-          description: Whether the transfer was successful
         contractId:
           type: string
           format: uuid
@@ -48263,7 +48269,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     TransferCurrencyResponse:
       type: object
       description: Result of transfer operation
@@ -48615,15 +48622,12 @@ components:
           description: Optional idempotency key for the operation
     UnlockContractResponse:
       type: object
-      description: Response from unlocking a contract
+      description: Response from unlocking a contract. HTTP 200 confirms the 
+        contract was unlocked.
       additionalProperties: false
       required:
-      - unlocked
       - contractId
       properties:
-        unlocked:
-          type: boolean
-          description: Whether the contract was unlocked
         contractId:
           type: string
           format: uuid
@@ -48973,6 +48977,7 @@ components:
             Updated cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated
             subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateBoardTemplateRequest:
       type: object
       description: Request to update mutable fields of a board template
@@ -49293,9 +49298,11 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
         phase:
           type: string
+          minLength: 1
           description: New phase name for the encounter
     UpdateEncounterPhaseResponse:
       type: object
@@ -49350,7 +49357,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated custom data (merged with existing)
+          description: Updated custom data (merged with existing). No Bannou 
+            plugin reads specific keys from this field by convention.
     UpdateEntryTemplateRequest:
       type: object
       description: Request to update mutable fields of an entry template
@@ -49638,7 +49646,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated game-specific metadata
+          description: Updated game-specific metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
     UpdateMemberRoleRequest:
       type: object
       description: Request to update a member's role
@@ -49738,6 +49747,7 @@ components:
           description: ID of the account to update
         passwordHash:
           type: string
+          maxLength: 255
           description: New pre-hashed password from Auth service
     UpdatePhaseConfigRequest:
       type: object
@@ -49798,7 +49808,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
     UpdateQuestDefinitionRequest:
       type: object
       description: Request to update quest definition metadata
@@ -49931,15 +49942,18 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Updated room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Updated participant limit
         metadata:
           type: string
           nullable: true
-          description: Updated JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou 
+            plugin reads specific keys from this field by convention.
     UpdateRoomTypeRequest:
       type: object
       additionalProperties: false
@@ -50759,18 +50773,16 @@ components:
           description: The territory location that matched (for inclusive) or 
             conflicted (for exclusive)
     ValidateTokenResponse:
-      description: Response from token validation containing validity status and
-        associated account details
+      description: Response from token validation containing associated account 
+        details. HTTP 200 confirms the token is valid; 401 indicates invalid or 
+        expired.
       type: object
       additionalProperties: false
       required:
-      - valid
       - accountId
       - sessionKey
+      - remainingTime
       properties:
-        valid:
-          type: boolean
-          description: Whether the token is valid and not expired
         accountId:
           type: string
           format: uuid
@@ -50812,16 +50824,13 @@ components:
         jsonPath:
           type: string
           nullable: true
-          description: |
-            JsonPath expression to extract value from response.
-            Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-            Example: "$.balance", "$.items[0].status"
+          description: JsonPath expression to extract value from response 
+            (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance")
         expectedValue:
           type: string
           nullable: true
-          description: |
-            Expected value for comparison conditions.
-            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+          description: Expected value for comparison conditions with type 
+            coercion ("true"/"false" for booleans, numeric strings for numbers)
         operator:
           $ref: '#/components/schemas/ComparisonOperator'
           nullable: true

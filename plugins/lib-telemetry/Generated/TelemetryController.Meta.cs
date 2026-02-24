@@ -40,17 +40,12 @@ public partial class TelemetryController
         "TelemetryHealthResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Response containing telemetry exporter health status",
+            "description": "Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.",
             "required": [
-                "healthy",
                 "tracingEnabled",
                 "metricsEnabled"
             ],
             "properties": {
-                "healthy": {
-                    "type": "boolean",
-                    "description": "Overall health status of telemetry subsystem"
-                },
                 "tracingEnabled": {
                     "type": "boolean",
                     "description": "Whether distributed tracing export is enabled"
@@ -157,6 +152,7 @@ public partial class TelemetryController
                 "serviceName",
                 "serviceNamespace",
                 "deploymentEnvironment",
+                "otlpEndpoint",
                 "otlpProtocol"
             ],
             "properties": {
@@ -175,7 +171,7 @@ public partial class TelemetryController
                 },
                 "serviceName": {
                     "type": "string",
-                    "description": "Service name used for telemetry identification"
+                    "description": "Service name used for telemetry identification (resolved from config or effective app-id)"
                 },
                 "serviceNamespace": {
                     "type": "string",
@@ -187,14 +183,21 @@ public partial class TelemetryController
                 },
                 "otlpEndpoint": {
                     "type": "string",
-                    "nullable": true,
-                    "description": "Configured OTLP endpoint"
+                    "description": "Configured OTLP endpoint (always set, defaults to http://localhost:4317)"
                 },
                 "otlpProtocol": {
-                    "type": "string",
+                    "$ref": "#/$defs/OtlpProtocol",
                     "description": "OTLP transport protocol (grpc or http)"
                 }
             }
+        },
+        "OtlpProtocol": {
+            "type": "string",
+            "enum": [
+                "grpc",
+                "http"
+            ],
+            "description": "OTLP transport protocol"
         }
     }
 }

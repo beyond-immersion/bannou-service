@@ -321,7 +321,7 @@ def generate_env_example(config_by_service: dict) -> str:
         "# Service Enable/Disable Flags (Loading Control)",
         "# These control which services are loaded at startup",
         "# =============================================================================",
-        "SERVICES_ENABLED=true",
+        "BANNOU_SERVICES_ENABLED=true",
         "AUTH_SERVICE_ENABLED=true",
         "ACCOUNT_SERVICE_ENABLED=true",
         "PERMISSION_SERVICE_ENABLED=true",
@@ -329,7 +329,7 @@ def generate_env_example(config_by_service: dict) -> str:
         "ORCHESTRATOR_SERVICE_ENABLED=true",
         "BEHAVIOR_SERVICE_ENABLED=true",
         "ACTOR_SERVICE_ENABLED=true",
-        "# Add {SERVICE}_SERVICE_DISABLED=true to explicitly disable a service",
+        "# Add {SERVICE}_SERVICE_ENABLED=false to explicitly disable a service",
         "",
     ])
 

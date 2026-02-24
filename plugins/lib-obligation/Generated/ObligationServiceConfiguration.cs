@@ -63,10 +63,8 @@ public enum NormResolutionMode
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ObligationService))]
-public class ObligationServiceConfiguration : IServiceConfiguration
+public class ObligationServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// TTL in minutes for obligation manifest cache entries per character

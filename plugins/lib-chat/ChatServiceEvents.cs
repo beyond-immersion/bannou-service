@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
+
 namespace BeyondImmersion.BannouService.Chat;
 
 /// <summary>
@@ -50,6 +51,9 @@ public partial class ChatService
     /// <param name="evt">The contract fulfilled event data.</param>
     public async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.HandleContractFulfilled");
+
         _logger.LogInformation("Received contract fulfilled event for contract {ContractId}", evt.ContractId);
 
         try
@@ -76,6 +80,9 @@ public partial class ChatService
     /// <param name="evt">The contract breach detected event data.</param>
     public async Task HandleContractBreachDetectedAsync(ContractBreachDetectedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.HandleContractBreachDetected");
+
         _logger.LogInformation("Received contract breach detected event for contract {ContractId}", evt.ContractId);
 
         try
@@ -102,6 +109,9 @@ public partial class ChatService
     /// <param name="evt">The contract terminated event data.</param>
     public async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.HandleContractTerminated");
+
         _logger.LogInformation("Received contract terminated event for contract {ContractId}", evt.ContractId);
 
         try
@@ -128,6 +138,9 @@ public partial class ChatService
     /// <param name="evt">The contract expired event data.</param>
     public async Task HandleContractExpiredAsync(ContractExpiredEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.HandleContractExpired");
+
         _logger.LogInformation("Received contract expired event for contract {ContractId}", evt.ContractId);
 
         try
@@ -156,13 +169,39 @@ public partial class ChatService
     /// <returns>List of rooms bound to the contract.</returns>
     private async Task<List<ChatRoomModel>> FindRoomsByContractIdAsync(Guid contractId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.FindRoomsByContractId");
+
         var conditions = new List<QueryCondition>
         {
             new() { Path = "$.ContractId", Operator = QueryOperator.Equals, Value = contractId.ToString() },
             new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true },
         };
 
-        var result = await _roomStore.JsonQueryPagedAsync(conditions, 0, 100, cancellationToken: ct);
-        return result.Items.Select(i => i.Value).ToList();
+        var batchSize = _configuration.ContractRoomQueryBatchSize;
+        var maxResults = _configuration.MaxContractRoomQueryResults;
+        var allRooms = new List<ChatRoomModel>();
+        var offset = 0;
+
+        do
+        {
+            var result = await _roomStore.JsonQueryPagedAsync(conditions, offset, batchSize, cancellationToken: ct);
+            allRooms.AddRange(result.Items.Select(i => i.Value));
+            offset += result.Items.Count;
+
+            if (allRooms.Count >= maxResults)
+            {
+                _logger.LogWarning(
+                    "Contract room query for contract {ContractId} reached safety cap of {MaxResults} rooms (processed: {ProcessedCount}, total available: {TotalCount})",
+                    contractId, maxResults, allRooms.Count, result.TotalCount);
+                break;
+            }
+
+            if (!result.HasMore)
+                break;
+        }
+        while (true);
+
+        return allRooms;
     }
 }

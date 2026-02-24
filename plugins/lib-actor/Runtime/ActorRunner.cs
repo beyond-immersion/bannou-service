@@ -39,6 +39,7 @@ public sealed class ActorRunner : IActorRunner
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
     private readonly ICognitionBuilder _cognitionBuilder;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private AbmlDocument? _behavior;
     private ICognitionPipeline? _cognitionPipeline;
@@ -153,6 +154,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
     /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
         string actorId,
@@ -170,6 +172,7 @@ public sealed class ActorRunner : IActorRunner
         IExpressionEvaluator expressionEvaluator,
         ICognitionBuilder cognitionBuilder,
         ILogger<ActorRunner> logger,
+        ITelemetryProvider telemetryProvider,
         object? initialState)
     {
         ActorId = actorId;
@@ -187,6 +190,7 @@ public sealed class ActorRunner : IActorRunner
         _expressionEvaluator = expressionEvaluator;
         _cognitionBuilder = cognitionBuilder;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
         // Create bounded perception queue with DropOldest behavior
         _perceptionQueue = Channel.CreateBounded<PerceptionData>(
@@ -209,6 +213,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Start");
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
@@ -224,6 +229,28 @@ public sealed class ActorRunner : IActorRunner
 
         _logger.LogInformation("Starting actor {ActorId} (template: {TemplateId}, category: {Category})",
             ActorId, TemplateId, Category);
+
+        // Eagerly initialize behavior and cognition pipeline (fail-fast on config errors).
+        // Configuration errors (missing behavior document, unresolvable cognition template)
+        // are detected here instead of in the background loop, making them deterministic
+        // and preventing Error → Running → Error oscillation.
+        try
+        {
+            await InitializeBehaviorAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Status = ActorStatus.Error;
+            _logger.LogError(ex, "Actor {ActorId} failed to initialize behavior during startup", ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "InitializeBehavior",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { ActorId, TemplateId, BehaviorRef = _template.BehaviorRef },
+                stack: ex.StackTrace);
+            throw;
+        }
 
         // Create cancellation token for the loop
         _loopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -271,6 +298,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task StopAsync(bool graceful = true, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Stop");
         if (_disposed)
             return;
 
@@ -328,6 +356,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.BindCharacter");
         if (_disposed)
             throw new ObjectDisposedException(nameof(ActorRunner));
 
@@ -518,6 +547,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.Dispose");
         if (_disposed)
             return;
 
@@ -554,6 +584,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task RunBehaviorLoopAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.RunBehaviorLoop");
         var tickInterval = TimeSpan.FromMilliseconds(_template.TickIntervalMs > 0
             ? _template.TickIntervalMs
             : _config.DefaultTickIntervalMs);
@@ -662,6 +693,7 @@ public sealed class ActorRunner : IActorRunner
     private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(
         ICognitionPipeline pipeline, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ExecuteCognitionPhase");
         // 1. Drain perception queue into a list for batch processing
         var perceptions = new List<object>();
         while (_perceptionQueue.Reader.TryRead(out var perception))
@@ -771,6 +803,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task ProcessPerceptionsAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ProcessPerceptions");
         var processedCount = 0;
 
         while (_perceptionQueue.Reader.TryRead(out var perception))
@@ -808,8 +841,7 @@ public sealed class ActorRunner : IActorRunner
             _logger.LogDebug("Actor {ActorId} processed {Count} perceptions", ActorId, processedCount);
         }
 
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -831,7 +863,12 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="ct">Cancellation token.</param>
     private async Task ExecuteBehaviorTickAsync(CognitionResult? cognitionResult, CancellationToken ct)
     {
-        // 1. Lazy-load behavior document on first tick
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.ExecuteBehaviorTick");
+        // 1. Re-initialize behavior after hot-reload invalidation.
+        // Initial load happens eagerly in StartAsync. This path only triggers when
+        // InvalidateCachedBehavior() sets _behavior = null for hot-reload.
+        // Failures here are transient (new behavior may still be deploying), so we
+        // catch and skip rather than crashing the loop.
         if (_behavior == null)
         {
             if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
@@ -842,49 +879,25 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
-                _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
-                    ActorId, _template.BehaviorRef);
+                await InitializeBehaviorAsync(ct);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, "Actor {ActorId} failed to load behavior from {BehaviorRef}",
-                    ActorId, _template.BehaviorRef);
-                await _messageBus.TryPublishErrorAsync(
-                    "actor",
-                    "LoadBehavior",
-                    ex.GetType().Name,
-                    ex.Message,
-                    details: new { ActorId, BehaviorRef = _template.BehaviorRef },
-                    stack: ex.StackTrace);
-                return;
-            }
-
-            // Verify behavior was loaded (loader might return null without throwing)
-            if (_behavior == null)
-            {
-                _logger.LogWarning("Actor {ActorId} behavior loader returned null for {BehaviorRef}",
+                _logger.LogWarning(ex,
+                    "Actor {ActorId} failed to re-initialize behavior after hot-reload from {BehaviorRef}, will retry next tick",
                     ActorId, _template.BehaviorRef);
                 return;
             }
-
-            // Extract and cache GOAP metadata from behavior document (one-time on load)
-            if (GoapMetadataConverter.HasGoapContent(_behavior))
-            {
-                (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
-                _logger.LogInformation(
-                    "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
-                    ActorId, _goapGoals.Count, _goapActions.Count);
-            }
-
-            // Build cognition pipeline using three-tier resolution (per IMPLEMENTATION TENETS):
-            // 1. Actor template config (primary)
-            // 2. ABML metadata (override)
-            // 3. Category default mapping (fallback)
-            BuildCognitionPipeline();
         }
 
-        // 2. Create scope with current actor state
+        // 2. Guard: behavior must be loaded by this point (either from StartAsync or hot-reload above)
+        if (_behavior == null)
+        {
+            _logger.LogDebug("Actor {ActorId} has no loaded behavior, skipping tick", ActorId);
+            return;
+        }
+
+        // 3. Create scope with current actor state
         var scope = await CreateExecutionScopeAsync(ct);
 
         // Inject cognition results into scope for behavior access
@@ -895,7 +908,7 @@ public sealed class ActorRunner : IActorRunner
             scope.SetValue("_cognition_affected_goals", cognitionResult.AffectedGoals);
         }
 
-        // 3. Resolve start flow: on_tick (primary) → main (fallback)
+        // 4. Resolve start flow: on_tick (primary) → main (fallback)
         var startFlow = _behavior.Flows.ContainsKey("on_tick") ? "on_tick" : "main";
         var result = await _executor.ExecuteAsync(_behavior, startFlow, scope, ct);
 
@@ -957,6 +970,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task<VariableScope> CreateExecutionScopeAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.CreateExecutionScope");
         var scope = new VariableScope();
 
         // Agent identity
@@ -1248,6 +1262,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task PublishStateUpdateIfNeededAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.PublishStateUpdateIfNeeded");
         if (!_state.HasPendingChanges || CharacterId == null)
             return;
 
@@ -1303,6 +1318,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task PersistStateAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.PersistState");
         var snapshot = GetStateSnapshot();
 
         for (int attempt = 0; attempt <= _config.MemoryStoreMaxRetries; attempt++)
@@ -1424,6 +1440,58 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <summary>
+    /// Loads the behavior document, extracts GOAP metadata, and builds the cognition pipeline.
+    /// Called eagerly from <see cref="StartAsync"/> for fail-fast initialization, and again
+    /// from <see cref="ExecuteBehaviorTickAsync"/> after hot-reload invalidation.
+    /// </summary>
+    /// <remarks>
+    /// Exceptions propagate to the caller. During <see cref="StartAsync"/>, this causes a
+    /// startup failure (Status = Error, exception re-thrown). During hot-reload in the behavior
+    /// loop, the caller catches and treats failures as transient (retry on next tick).
+    /// </remarks>
+    /// <param name="ct">Cancellation token.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the behavior document cannot be loaded (loader returns null) or the
+    /// specified cognition template is unresolvable (configuration error).
+    /// </exception>
+    private async Task InitializeBehaviorAsync(CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.InitializeBehavior");
+        if (string.IsNullOrWhiteSpace(_template.BehaviorRef))
+        {
+            _logger.LogDebug("Actor {ActorId} has no behavior reference, running without behavior", ActorId);
+            return;
+        }
+
+        _behavior = await _behaviorLoader.GetDocumentAsync(_template.BehaviorRef, ct);
+
+        if (_behavior == null)
+        {
+            throw new InvalidOperationException(
+                $"Behavior loader returned null for '{_template.BehaviorRef}' for actor '{ActorId}'. " +
+                "Check that the behavior document exists and is accessible.");
+        }
+
+        _logger.LogInformation("Actor {ActorId} loaded behavior from {BehaviorRef}",
+            ActorId, _template.BehaviorRef);
+
+        // Extract and cache GOAP metadata from behavior document (one-time on load)
+        if (GoapMetadataConverter.HasGoapContent(_behavior))
+        {
+            (_goapGoals, _goapActions) = GoapMetadataConverter.ExtractAll(_behavior);
+            _logger.LogInformation(
+                "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
+                ActorId, _goapGoals.Count, _goapActions.Count);
+        }
+
+        // Build cognition pipeline using three-tier resolution:
+        // 1. Actor template config (primary)
+        // 2. ABML metadata (override)
+        // 3. Category default mapping (fallback)
+        BuildCognitionPipeline();
+    }
+
+    /// <summary>
     /// Builds the cognition pipeline using three-tier template resolution.
     /// Resolution order: actor template config → ABML metadata → category default.
     /// </summary>
@@ -1506,6 +1574,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task SetupPerceptionSubscriptionAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.SetupPerceptionSubscription");
         if (!CharacterId.HasValue)
             return;
 
@@ -1559,6 +1628,7 @@ public sealed class ActorRunner : IActorRunner
     /// </summary>
     private async Task HandlePerceptionEventAsync(CharacterPerceptionEvent evt, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorRunner.HandlePerceptionEvent");
         // Track source app-id for routing state updates back to the game server
         _lastSourceAppId = evt.SourceAppId;
 
@@ -1578,7 +1648,6 @@ public sealed class ActorRunner : IActorRunner
         _logger.LogDebug("Actor {ActorId} received perception from {SourceAppId} (type: {Type})",
             ActorId, evt.SourceAppId, perception.PerceptionType);
 
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        await Task.CompletedTask;
     }
 }

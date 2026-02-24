@@ -55,6 +55,7 @@ The `evaluate_consequences` cognition stage (opt-in via `conscience: true` ABML 
 | lib-messaging (`IEventConsumer`) | Behavior/personality cache invalidation, pool node management events |
 | lib-mesh (`IMeshInvocationClient`) | Forwarding requests to remote pool nodes in distributed mode |
 | lib-resource (`IResourceClient`) | Character reference cleanup via x-references pattern |
+| lib-character (`ICharacterClient`) | Realm lookup on actor spawn (L2 same-layer dependency) |
 | `IEnumerable<IVariableProviderFactory>` | DI-discovered providers from L3/L4 services (see below) |
 | `IEnumerable<IBehaviorDocumentProvider>` | DI-discovered behavior document providers (see below) |
 | `ICognitionBuilder` | Builds cognition pipelines from templates with override composition |
@@ -82,14 +83,19 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 3. ActorRunner discovers all factories via `IEnumerable<IVariableProviderFactory>` injection
 4. Each factory creates providers on-demand with graceful degradation
 
-**Registered Provider Factories** (from L3/L4 plugins):
-| Factory | Provider | Owning Plugin |
-|---------|----------|---------------|
-| `PersonalityProviderFactory` | `personality` | lib-character-personality |
-| `CombatPreferencesProviderFactory` | `combat_preferences` | lib-character-personality |
-| `BackstoryProviderFactory` | `backstory` | lib-character-history |
-| `EncountersProviderFactory` | `encounters` | lib-character-encounter |
-| `QuestProviderFactory` | `quest` | lib-quest |
+**Registered Provider Factories** (discovered via `IEnumerable<IVariableProviderFactory>` DI injection):
+
+| Factory | Provider Namespace | Owning Plugin | Layer |
+|---------|-------------------|---------------|-------|
+| `PersonalityProviderFactory` | `personality` | lib-character-personality | L4 |
+| `CombatPreferencesProviderFactory` | `combat` | lib-character-personality | L4 |
+| `BackstoryProviderFactory` | `backstory` | lib-character-history | L4 |
+| `EncountersProviderFactory` | `encounters` | lib-character-encounter | L4 |
+| `ObligationProviderFactory` | `obligations` | lib-obligation | L4 |
+| `FactionProviderFactory` | `faction` | lib-faction | L4 |
+| `QuestProviderFactory` | `quest` | lib-quest | L2 |
+| `SeedProviderFactory` | `seed` | lib-seed | L2 |
+| `LocationContextProviderFactory` | `location` | lib-location | L2 |
 
 **Character Brain vs Event Brain Data Access**
 
@@ -137,7 +143,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers cover personality, combat preferences, backstory, encounters, and quests. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL). Spatial context ([#145](https://github.com/beyond-immersion/bannou-service/issues/145)): coarse-grained zone/region awareness (10s TTL) for GOAP planning -- actors need "am I in hostile territory?" not frame-by-frame coordinates.
+Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location (see Registered Provider Factories table above). The `world` provider namespace is defined in `variable-providers.yaml` (for `${world.*}` expressions) but lib-worldstate does not yet implement `IVariableProviderFactory`. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 
@@ -167,7 +173,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 
 | Dependent | Relationship |
 |-----------|-------------|
-| (none in production) | Actor service is a terminal consumer; other services publish perceptions to it |
+| lib-puppetmaster | Calls `IActorClient.InjectPerceptionAsync` to inject perceptions into running actors; calls `IActorClient.ListActorsAsync` to enumerate actors for behavior cache invalidation after asset updates |
 
 ---
 
@@ -215,6 +221,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Pool node came online |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Pool node health update |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Pool node shutting down |
+| `actor.pool-node.unhealthy` | `PoolNodeUnhealthyEvent` | PoolHealthMonitor detected heartbeat timeout; node removed from pool |
 | `actor.instance.character-bound` | `ActorCharacterBoundEvent` | Actor bound to a character (via BindActorCharacter API or on startup when spawned with a characterId) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Actor status transition |
 | `actor.instance.completed` | `ActorCompletedEvent` | Actor finished execution |
@@ -337,12 +344,18 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | `IStateStoreFactory` | Singleton | 4 state store access |
 | `IMessageBus` | Scoped | Event publishing, pool commands |
 | `IEventConsumer` | Scoped | Cache invalidation, pool events |
+| `IMeshInvocationClient` | Scoped | Forwarding requests to remote pool nodes in distributed mode |
+| `IResourceClient` | Scoped | Character reference cleanup via x-references pattern |
+| `ICharacterClient` | Scoped | Realm lookup on actor spawn (L2 same-layer) |
+| `ITelemetryProvider` | Singleton | Span instrumentation for async methods |
 | `ActorRunnerFactory` | Singleton | Creates ActorRunner instances |
 | `ActorRegistry` | Singleton | Local actor instance tracking |
 | `ICognitionBuilder` | Singleton | Builds cognition pipelines from templates + overrides |
 | `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
 | `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
 | `FallbackBehaviorProvider` | Singleton | Returns null for missing behaviors after logging warning (Priority 0) |
+| `IDocumentExecutorFactory` | Singleton | Creates document executors for ABML behavior execution |
+| `IScheduledEventManager` | Singleton | Per-node delayed event timer management |
 | `ActorPoolManager` | Singleton | Pool node management (control plane) |
 | `ActorPoolNodeWorker` | Hosted (BackgroundService) | Pool node command listener |
 | `HeartbeatEmitter` | Singleton | Pool node heartbeat publisher (started/stopped by ActorPoolNodeWorker) |
@@ -640,6 +653,9 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/391 -->
 5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
+6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
+7. **Worldstate variable provider**: `world` provider namespace is defined in `variable-providers.yaml` but lib-worldstate does not yet implement `IVariableProviderFactory` to provide `${world.*}` expressions (game time, calendar, season data).
 
 ---
 
@@ -647,7 +663,11 @@ Actor State Model
 
 ### Bugs (Fix Immediately)
 
-No bugs identified.
+1. **T29 violation: `cognitionOverrides` uses `additionalProperties: true` but is deserialized to typed `CognitionOverrides`**: The `cognitionOverrides` field on `CreateActorTemplateRequest`, `UpdateActorTemplateRequest`, and `ActorTemplateResponse` is defined as an opaque metadata bag but `ActorTemplateData.DeserializeCognitionOverrides()` explicitly calls `BannouJson.Deserialize<CognitionOverrides>()` to convert it to a fully typed record with 5 discriminated `ICognitionOverride` subtypes. Should be a typed schema with `oneOf`/discriminator pattern.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/462 -->
+
+2. **T29 violation: `initialState` uses `additionalProperties: true` but is deserialized to `ActorStateSnapshot`**: `SpawnActorRequest.initialState` is marked opaque but `ActorRunner.InitializeFromState()` casts it to `ActorStateSnapshot` and reads `.Feelings`, `.Goals`, `.Memories`, `.WorkingMemory`, `.CognitionOverrides`. Schema description contradicts itself. Should define `ActorStateSnapshot` (or API-appropriate subset) as a typed schema.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/463 -->
 
 ### Intentional Quirks
 
@@ -681,24 +701,8 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**ActorRunner._encounter field lacks synchronization**~~: **FIXED** (2026-02-11) - All `_encounter` access points now use local variable capture to prevent TOCTOU NullReferenceException. Reference reads are atomic per ECMA-334; capturing to a local before accessing properties prevents the race between EndEncounter (nulling `_encounter`) and the behavior loop (reading encounter properties). No lock needed — the pattern avoids contention on the behavior loop hot path.
-
-2. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+1. **Pool node capacity is self-reported**: No external validation of claimed capacity.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/394 -->
-
-3. ~~**Perception subscription per-character**~~: **MOVED TO QUIRK #10** (2026-02-11) - Moved to Intentional Quirks with expanded documentation covering per-actor `SubscribeDynamicAsync` pattern, topic format, pool mode distribution, and testing alternative.
-
-4. ~~**Memory cleanup is per-tick**~~: **MOVED TO QUIRK #11** (2026-02-11) - Moved to Intentional Quirks with corrected documentation. Original claimed "Working memory cleared between perceptions" which is inaccurate — working memory persists across ticks, new perceptions overwrite by key.
-
-5. ~~**Template index optimistic concurrency**~~: **FIXED** (2026-02-11) - Template index updates (create/delete) now retry up to 3 times on optimistic concurrency conflict. Each retry re-reads the index to resolve the conflict. Without this, concurrent template creates/deletes could permanently orphan templates from the index, breaking list and auto-spawn operations.
-
-6. ~~**Encounter phase strings unvalidated**~~: **MOVED TO QUIRK #12** (2026-02-11) - Moved to Intentional Quirks with expanded documentation explaining why phases are intentionally unvalidated (ABML behavior scripts define encounter-type-specific phase semantics).
-
-7. ~~**Fresh options query waits approximately one tick**~~: **MOVED TO QUIRK #13** (2026-02-11) - Moved to Intentional Quirks with expanded documentation explaining why the approximate wait is acceptable and what the alternatives would be.
-
-8. ~~**Auto-spawn failure returns NotFound**~~: **MOVED TO QUIRK #14** (2026-02-11) - Moved to Intentional Quirks with documentation explaining why NotFound is the correct response from the caller's perspective.
-
-9. ~~**ListActors nodeId filter not implemented**~~: **FIXED** (2026-02-11) - Bannou mode now compares nodeId against LocalModeNodeId (returns empty on mismatch). Pool mode queries `IActorPoolManager.ListActorsByNodeAsync` with category/status/characterId filtering. Also fixed T23 violation (method is now async).
 
 ---
 
@@ -706,19 +710,13 @@ No bugs identified.
 
 ### Completed
 
-- (2026-02-11) Fixed template index optimistic concurrency: added retry loop (3 attempts) to `UpdateTemplateIndexAsync` helper for both create and delete paths. Without retry, concurrent template mutations could permanently orphan templates from the index.
-- (2026-02-11) Moved "Memory cleanup is per-tick" from Design Considerations to Intentional Quirks (#11) with corrected documentation. Fixed inaccuracy: working memory is NOT cleared between perceptions (persists across ticks, overwrites by key).
-- (2026-02-11) Moved "Perception subscription per-character" from Design Considerations to Intentional Quirks (#10) with expanded documentation covering per-actor SubscribeDynamicAsync pattern, topic format, pool mode distribution, and testing alternative.
-- (2026-02-11) Moved "Single-threaded behavior loop" from Design Considerations to Intentional Quirks (#8) with improved documentation clarifying GoapPlanTimeoutMs is a budget hint, not an enforced timeout.
-- (2026-02-11) Moved "State persistence is periodic" from Design Considerations to Intentional Quirks (#9) with expanded documentation covering event-driven real-time path, graceful shutdown persistence, and crash recovery implications.
-- (2026-02-11) Moved "Encounter phase strings unvalidated" from Design Considerations to Intentional Quirks (#12) with expanded documentation explaining ABML-driven phase semantics and why server-side validation would violate the extensibility model.
-- (2026-02-11) Moved "Fresh options query waits approximately one tick" from Design Considerations to Intentional Quirks (#13) with expanded documentation covering why the approximate wait is acceptable, alternatives considered (TaskCompletionSource synchronization), and the caller's ability to use freshness levels or re-query.
-- (2026-02-11) Moved "Auto-spawn failure returns NotFound" from Design Considerations to Intentional Quirks (#14) with documentation explaining why NotFound is the correct caller-facing response (auto-spawn is an implementation detail) and noting the concurrent auto-spawn edge case.
-- (2026-02-11) Fixed missing behavior cache invalidation on template update (issue #391 side finding). Added `actor-template.updated` event subscription. Handler checks `ChangedFields` for `behaviorRef`, invalidates `BehaviorDocumentLoader` provider caches, and signals running actors on this node via `IActorRunner.InvalidateCachedBehavior()` to reload on next tick. This fixes hot-reload across all nodes (each node receives the event via RabbitMQ and invalidates locally).
+- **2026-02-13**: Wired CognitionBuilder into ActorRunner ([#422](https://github.com/beyond-immersion/bannou-service/issues/422)). Two-phase tick execution (cognition pipeline then ABML behavior). Template resolution: actor config → ABML metadata → category defaults. Three-layer override composition (template + instance). TOCTOU-safe pipeline capture. Perception loss prevention on pipeline failure.
 
-- **2026-02-13**: Wired CognitionBuilder into ActorRunner ([#422](https://github.com/beyond-immersion/bannou-service/issues/422)). Two-phase tick execution (cognition pipeline then ABML behavior). Template resolution: actor config → ABML metadata → category defaults. Three-layer override composition (template + instance). Added `CognitionTemplateId` and `CognitionOverrides` to `ActorTemplateData` and `ActorStateSnapshot`. Added `CognitionTemplate` and `Conscience` metadata fields to `DocumentMetadata`. Added `evaluate_consequences` stage slot to humanoid template (forward-compatible for #410). Standardized on `on_tick` flow name, removed `process_tick`. TOCTOU-safe pipeline capture. Perception loss prevention on pipeline failure.
+- **2026-02-16**: Dynamic character binding. Added `POST /actor/bind-character` endpoint with `BindActorCharacterRequest`/`BindActorCharacterResponse`, `ActorCharacterBoundEvent`, and `BindActorCharacterCommand` pool command. Enables progressive entity awakening.
 
-- **2026-02-16**: Dynamic character binding. Added `POST /actor/bind-character` endpoint with `BindActorCharacterRequest`/`BindActorCharacterResponse`. Added `ActorCharacterBoundEvent` on topic `actor.instance.character-bound`. Added `BindActorCharacterCommand` pool command on topic `actor.node.{appId}.bind-character`. ActorRunner `CharacterId` is now `{ get; private set; }` -- `BindCharacterAsync` sets it, establishes per-character perception subscription, and publishes bound event. Bound event also emits on `StartAsync` when spawned with an initial characterId (does not emit when spawned without one). Pool mode: `ActorPoolNodeWorker` subscribes to bind-character topic and forwards to local runner; `IActorPoolManager.UpdateActorCharacterAsync` updates assignment without side effects. Bannou mode: calls runner directly. Enables progressive entity awakening -- divine actors and dungeon cores can start as event brains and transition to character brains at runtime.
+- **2026-02-23**: L3-hardening audit (19 items). Schema fixes: removed T8 filler booleans from responses, consolidated duplicate `Position3D`/`ChoreographyPosition` types, fixed NRT compliance across API and events schemas, consolidated inline enums to shared types (`ActorExitReason`, `ActorDeploymentMode`, `ActorPoolNodeType`), added `x-event-publications` declarations, added validation keywords to all configuration properties, added `minLength: 1` to required request string fields, added `StartEncounterResponse` body, fixed `cognitionOverrides` metadata bag descriptions. Code fixes: fixed dangling scoped service reference in `ActorServicePlugin.OnStartAsync`, replaced `Guid.Empty` sentinels with nullable `Guid?` in event fields, added ETag retry loops for non-atomic index operations in `ActorPoolManager`, fixed T23 `Task.FromResult`/`ValueTask.FromResult` patterns to use async/await, replaced hardcoded `"bannou"` fallbacks with configuration property references (T21), changed generic `Exception` catch to `ApiException` in `ResolveRealmIdAsync` (T7), made `LoopIterations` nullable for remote actors (T8), fixed `IAsyncDisposable` and timer disposal patterns (T24), added missing `CancellationToken` to draining event publish. Telemetry: added T30 `ITelemetryProvider.StartActivity` spans to ~80 async methods across 22 files (ActorRunner, ActorPoolManager, ActorPoolNodeWorker, HeartbeatEmitter, PoolHealthMonitor, ActorService, ActorServiceEvents, BehaviorDocumentLoader, SeededBehaviorProvider, FallbackBehaviorProvider, ActorRunnerFactory pass-through, ActorServicePlugin lifecycle, and all 9 ABML action handlers + ScheduledEventManager).
+
+- **2026-02-23**: Variable provider documentation audit. Updated Registered Provider Factories table: added 4 missing providers (seed, obligations, location, faction), fixed `combat_preferences` → `combat` provider name, added layer column. Updated planned future providers paragraph: removed spatial context (now implemented as `LocationContextProviderFactory`), noted `world` provider defined but not implemented. Added Potential Extensions #6 (currency/inventory/relationships, #147) and #7 (worldstate provider).
 
 ### Implementation Gaps
 

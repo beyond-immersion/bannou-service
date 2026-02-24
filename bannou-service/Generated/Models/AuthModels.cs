@@ -77,6 +77,172 @@ public enum EmailProvider
 #pragma warning restore CS1591
 
 /// <summary>
+/// Category of client device used for authentication or session tracking
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeviceType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"desktop")]
+    Desktop = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"mobile")]
+    Mobile = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"tablet")]
+    Tablet = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"console")]
+    Console = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Authentication mechanism type (oauth = browser redirect, ticket = game client token)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"oauth")]
+    Oauth = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ticket")]
+    Ticket = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for session invalidation
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionInvalidatedEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Logout")]
+    Logout = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountDeleted")]
+    AccountDeleted = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SecurityRevocation")]
+    SecurityRevocation = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AdminAction")]
+    AdminAction = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SessionExpired")]
+    SessionExpired = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for session update
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SessionUpdatedEventReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RoleChanged")]
+    RoleChanged = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AuthorizationChanged")]
+    AuthorizationChanged = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SubscriptionChanged")]
+    SubscriptionChanged = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason why the login attempt failed
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AuthLoginFailedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCredentials")]
+    InvalidCredentials = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountDisabled")]
+    AccountDisabled = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountLocked")]
+    AccountLocked = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AccountNotFound")]
+    AccountNotFound = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RateLimited")]
+    RateLimited = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Who triggered the MFA disable action
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaDisabledBy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Self")]
+    Self = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Admin")]
+    Admin = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Method used for MFA verification
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaVerificationMethod
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Totp")]
+    Totp = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RecoveryCode")]
+    RecoveryCode = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for MFA verification failure
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MfaFailedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"InvalidCode")]
+    InvalidCode = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ExpiredChallenge")]
+    ExpiredChallenge = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"NoRecoveryCodesRemaining")]
+    NoRecoveryCodesRemaining = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Response containing the OAuth authorization URL for redirect
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -130,8 +296,9 @@ public partial class LoginRequest
     /// User password for authentication
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("password")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string Password { get; set; } = default!;
 
     /// <summary>
@@ -171,7 +338,7 @@ public partial class RegisterRequest
     [System.Text.Json.Serialization.JsonPropertyName("password")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 8)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 8)]
     public string Password { get; set; } = default!;
 
     /// <summary>
@@ -323,7 +490,7 @@ public partial class SteamVerifyRequest
     [System.Text.Json.Serialization.JsonPropertyName("ticket")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 16)]
+    [System.ComponentModel.DataAnnotations.StringLength(2048, MinimumLength = 16)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[0-9A-Fa-f]+$")]
     public string Ticket { get; set; } = default!;
 
@@ -353,17 +520,11 @@ public partial class RefreshRequest
 }
 
 /// <summary>
-/// Response from token validation containing validity status and associated account details
+/// Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ValidateTokenResponse
 {
-
-    /// <summary>
-    /// Whether the token is valid and not expired
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("valid")]
-    public bool Valid { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier for the account associated with the token
@@ -498,7 +659,7 @@ public partial class DeviceInfo
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deviceType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeviceInfoDeviceType? DeviceType { get; set; } = default!;
+    public DeviceType? DeviceType { get; set; } = default!;
 
     /// <summary>
     /// Operating system or platform name
@@ -559,7 +720,7 @@ public partial class PasswordResetConfirmRequest
     [System.Text.Json.Serialization.JsonPropertyName("newPassword")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 8)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 8)]
     public string NewPassword { get; set; } = default!;
 
 }
@@ -702,6 +863,7 @@ public partial class MfaDisableRequest
     /// Single-use recovery code (format xxxx-xxxx)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9]{4}-[a-z0-9]{4}$")]
     public string? RecoveryCode { get; set; } = default!;
 
 }
@@ -756,6 +918,7 @@ public partial class MfaVerifyRequest
     /// Single-use recovery code (format xxxx-xxxx)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recoveryCode")]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z0-9]{4}-[a-z0-9]{4}$")]
     public string? RecoveryCode { get; set; } = default!;
 
 }
@@ -807,7 +970,7 @@ public partial class ProviderInfo
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProviderInfoAuthType AuthType { get; set; } = default!;
+    public AuthType AuthType { get; set; } = default!;
 
     /// <summary>
     /// URL to initiate OAuth authentication (null for ticket-based auth like Steam)
@@ -867,18 +1030,6 @@ public partial class RevocationListResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<RevokedAccountEntry> RevokedAccounts { get; set; } = new System.Collections.ObjectModel.Collection<RevokedAccountEntry>();
-
-    /// <summary>
-    /// Number of pending failed pushes awaiting retry
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("failedPushCount")]
-    public int FailedPushCount { get; set; } = default!;
-
-    /// <summary>
-    /// Total revoked tokens in store (may be null if count unavailable)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalTokenCount")]
-    public int? TotalTokenCount { get; set; } = default!;
 
 }
 
@@ -971,40 +1122,6 @@ public partial class RevokedAccountEntry
     public string Reason { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeviceInfoDeviceType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"desktop")]
-    Desktop = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"mobile")]
-    Mobile = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"tablet")]
-    Tablet = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"console")]
-    Console = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ProviderInfoAuthType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"oauth")]
-    Oauth = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ticket")]
-    Ticket = 1,
-
-}
-#pragma warning restore CS1591
 
 
 

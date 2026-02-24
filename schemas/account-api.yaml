@@ -543,6 +543,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address to look up
 
     GetAuthMethodsRequest:
@@ -583,10 +584,12 @@ components:
       - externalId
       properties:
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string
+          maxLength: 255
           description: External ID from the provider
 
     CreateAccountRequest:
@@ -597,10 +600,12 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           nullable: true
           description: Email address for the new account. Null for OAuth/Steam accounts without email.
         passwordHash:
           type: string
+          maxLength: 255
           nullable: true
           description: Pre-hashed password from Auth service
         displayName:
@@ -616,13 +621,15 @@ components:
           type: array
           items:
             type: string
+            maxLength: 50
+          maxItems: 20
           nullable: true
           description: List of roles assigned to the account (null defaults to empty)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     UpdateAccountRequest:
       type: object
@@ -644,13 +651,15 @@ components:
           type: array
           items:
             type: string
+            maxLength: 50
+          maxItems: 20
           nullable: true
           description: Updated list of roles for the account (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     UpdateProfileRequest:
       type: object
@@ -672,7 +681,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
 
     UpdatePasswordRequest:
       type: object
@@ -688,6 +697,7 @@ components:
           description: ID of the account to update
         passwordHash:
           type: string
+          maxLength: 255
           description: New pre-hashed password from Auth service
 
     UpdateMfaRequest:
@@ -747,6 +757,7 @@ components:
         newEmail:
           type: string
           format: email
+          maxLength: 254
           description: New email address for the account
 
     AddAuthMethodRequest:
@@ -756,17 +767,19 @@ components:
       required:
       - accountId
       - provider
+      - externalId
       properties:
         accountId:
           type: string
           format: uuid
           description: ID of the account to add auth method to
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type to add
         externalId:
           type: string
-          nullable: true
+          maxLength: 255
           description: External user ID from the OAuth provider
         displayName:
           type: string
@@ -783,6 +796,7 @@ components:
       - createdAt
       - emailVerified
       - roles
+      - authMethods
       properties:
         accountId:
           type: string
@@ -827,7 +841,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
         mfaEnabled:
           type: boolean
           default: false
@@ -857,7 +871,8 @@ components:
           nullable: true
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/AuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -886,7 +901,8 @@ components:
           format: uuid
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Faction;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(FactionService))]
-public class FactionServiceConfiguration : IServiceConfiguration
+public class FactionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Which seed type code this service manages for faction growth

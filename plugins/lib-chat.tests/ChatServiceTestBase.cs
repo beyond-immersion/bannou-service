@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -33,6 +34,8 @@ public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigura
     protected readonly Mock<IContractClient> MockContractClient;
     protected readonly Mock<IResourceClient> MockResourceClient;
     protected readonly Mock<IPermissionClient> MockPermissionClient;
+    protected readonly Mock<IEntitySessionRegistry> MockEntitySessionRegistry;
+    protected readonly Mock<ITelemetryProvider> MockTelemetryProvider;
 
     // State store mocks (private protected: internal model types not visible outside assembly)
     private protected readonly Mock<IJsonQueryableStateStore<ChatRoomTypeModel>> MockRoomTypeStore;
@@ -63,6 +66,8 @@ public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigura
         MockContractClient = new Mock<IContractClient>();
         MockResourceClient = new Mock<IResourceClient>();
         MockPermissionClient = new Mock<IPermissionClient>();
+        MockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        MockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Initialize state store mocks
         MockRoomTypeStore = new Mock<IJsonQueryableStateStore<ChatRoomTypeModel>>();
@@ -150,7 +155,9 @@ public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfigura
             MockEventConsumer.Object,
             MockContractClient.Object,
             MockResourceClient.Object,
-            MockPermissionClient.Object);
+            MockPermissionClient.Object,
+            MockEntitySessionRegistry.Object,
+            MockTelemetryProvider.Object);
     }
 
     // ============================================================================

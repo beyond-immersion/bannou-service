@@ -778,7 +778,14 @@
         },
         "responses": {
           "200": {
-            "description": "Encounter started successfully"
+            "description": "Encounter started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartEncounterResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1685,8 +1692,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1728,8 +1734,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1772,8 +1777,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "parameters": [
@@ -1807,7 +1811,7 @@
             "description": "Redirect to OAuth provider"
           }
         },
-        "x-manual-implementation": true
+        "x-controller-only": true
       }
     },
     "/auth/oauth/{provider}/callback": {
@@ -1820,8 +1824,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "parameters": [
@@ -1868,8 +1871,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -1911,8 +1913,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -1960,8 +1961,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2005,8 +2005,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2046,8 +2045,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2085,8 +2083,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2130,8 +2127,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -2160,8 +2156,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -2191,8 +2186,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "responses": {
@@ -2219,8 +2213,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2262,8 +2255,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2311,8 +2303,7 @@
         ],
         "x-permissions": [
           {
-            "role": "user",
-            "states": {}
+            "role": "user"
           }
         ],
         "parameters": [
@@ -2360,8 +2351,7 @@
         ],
         "x-permissions": [
           {
-            "role": "anonymous",
-            "states": {}
+            "role": "anonymous"
           }
         ],
         "requestBody": {
@@ -23437,7 +23427,8 @@
           "accountId",
           "createdAt",
           "emailVerified",
-          "roles"
+          "roles",
+          "authMethods"
         ],
         "properties": {
           "accountId": {
@@ -23494,7 +23485,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata associated with the account"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "mfaEnabled": {
             "type": "boolean",
@@ -23915,8 +23906,7 @@
           "templateId",
           "category",
           "status",
-          "startedAt",
-          "loopIterations"
+          "startedAt"
         ],
         "properties": {
           "actorId": {
@@ -23972,7 +23962,8 @@
           "loopIterations": {
             "type": "integer",
             "format": "int64",
-            "description": "Number of behavior loop iterations executed"
+            "nullable": true,
+            "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
           }
         }
       },
@@ -24061,7 +24052,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -24221,7 +24212,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -24303,6 +24294,7 @@
           "roomTypeCode": {
             "type": "string",
             "nullable": true,
+            "maxLength": 100,
             "description": "Filter by room type"
           },
           "status": {
@@ -24317,11 +24309,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 50,
+            "minimum": 1,
+            "maximum": 200,
             "description": "Number of items per page"
           }
         }
@@ -24695,7 +24690,7 @@
           "otherTrackers": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Configuration for other analytics trackers"
+            "description": "Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -25426,7 +25421,11 @@
             "description": "Unique identifier for the authentication method"
           },
           "provider": {
-            "$ref": "#/components/schemas/AuthProvider",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthProvider"
+              }
+            ],
             "description": "Authentication provider type"
           },
           "externalId": {
@@ -25500,6 +25499,14 @@
             "description": "List of roles assigned to the authenticated user"
           }
         }
+      },
+      "AuthType": {
+        "type": "string",
+        "enum": [
+          "oauth",
+          "ticket"
+        ],
+        "description": "Authentication mechanism type (oauth = browser redirect, ticket = game client token)"
       },
       "AuthoringCheckoutRequest": {
         "type": "object",
@@ -25749,36 +25756,6 @@
           }
         }
       },
-      "BackstoryElementSnapshot": {
-        "description": "Single backstory element",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "elementType",
-          "key",
-          "value",
-          "strength"
-        ],
-        "properties": {
-          "elementType": {
-            "type": "string",
-            "description": "Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.)"
-          },
-          "key": {
-            "type": "string",
-            "description": "Machine-readable key (homeland, past_job, etc.)"
-          },
-          "value": {
-            "type": "string",
-            "description": "Machine-readable value (northlands, blacksmith, etc.)"
-          },
-          "strength": {
-            "type": "number",
-            "format": "float",
-            "description": "How strongly this affects behavior (0.0 to 1.0)"
-          }
-        }
-      },
       "BackstoryElementType": {
         "type": "string",
         "description": "Types of backstory elements. Each type represents a different aspect\nof the character's background that influences behavior.\n",
@@ -25830,19 +25807,21 @@
         }
       },
       "BackstorySnapshot": {
-        "description": "Snapshot of backstory for enriched response",
         "type": "object",
         "additionalProperties": false,
+        "description": "Snapshot of a backstory element",
         "required": [
-          "elements"
+          "elementType",
+          "key"
         ],
         "properties": {
-          "elements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BackstoryElementSnapshot"
-            },
-            "description": "List of backstory elements"
+          "elementType": {
+            "type": "string",
+            "description": "Backstory element type (e.g., TRAUMA, GOAL)"
+          },
+          "key": {
+            "type": "string",
+            "description": "Backstory element key"
           }
         }
       },
@@ -25927,11 +25906,13 @@
           "reason": {
             "type": "string",
             "nullable": true,
+            "maxLength": 500,
             "description": "Optional reason for the ban"
           },
           "durationMinutes": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Ban duration in minutes (null for permanent)"
           }
         }
@@ -26237,6 +26218,25 @@
           }
         }
       },
+      "BatchMessageFailure": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Details of a single message that failed in a batch send operation",
+        "required": [
+          "index",
+          "error"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Zero-based index of the failed message in the request messages array"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason"
+          }
+        }
+      },
       "BehaviorTreeData": {
         "type": "object",
         "additionalProperties": false,
@@ -26269,6 +26269,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the actor to bind"
           },
           "characterId": {
@@ -26634,7 +26635,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -27053,8 +27054,6 @@
         "required": [
           "breachId",
           "contractId",
-          "breachingEntityId",
-          "breachingEntityType",
           "breachType",
           "status",
           "detectedAt"
@@ -27073,11 +27072,17 @@
           "breachingEntityId": {
             "type": "string",
             "format": "uuid",
-            "description": "Entity that breached"
+            "nullable": true,
+            "description": "Entity that breached (null for system-initiated breaches such as deadline enforcement)"
           },
           "breachingEntityType": {
-            "$ref": "#/components/schemas/EntityType",
-            "description": "Type of breaching entity"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              }
+            ],
+            "nullable": true,
+            "description": "Type of breaching entity (null for system-initiated breaches)"
           },
           "breachType": {
             "$ref": "#/components/schemas/BreachType",
@@ -28241,17 +28246,19 @@
           },
           "keyBackstoryPoints": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Key backstory elements as text.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
+            "description": "Key backstory elements as text. Null when compression did not include backstory data.\nExample: [\"Trained by the Knights Guild\", \"Born in the Northlands\"]\n"
           },
           "majorLifeEvents": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             },
-            "description": "Significant life events as text.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
+            "description": "Significant life events as text. Null when compression did not include history data.\nExample: [\"Fought in the Battle of Stormgate (Hero)\", \"Survived the Great Flood\"]\n"
           },
           "familySummary": {
             "type": "string",
@@ -28277,7 +28284,8 @@
           "speciesId",
           "birthDate",
           "deathDate",
-          "status"
+          "status",
+          "createdAt"
         ],
         "properties": {
           "characterId": {
@@ -28310,7 +28318,11 @@
             "description": "In-game death timestamp (required for compression)"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status (must be dead for compression)"
           },
           "familySummary": {
@@ -28503,7 +28515,9 @@
           "characters",
           "totalCount",
           "page",
-          "pageSize"
+          "pageSize",
+          "hasNextPage",
+          "hasPreviousPage"
         ],
         "properties": {
           "characters": {
@@ -28657,7 +28671,11 @@
             "description": "In-game death timestamp"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status of the character"
           },
           "createdAt": {
@@ -28910,7 +28928,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -29385,7 +29403,7 @@
       },
       "ClauseDistributionResult": {
         "type": "object",
-        "description": "Outcome of a single clause distribution during contract execution.\nUsed in ContractExecutedEvent to provide per-clause success/failure details.\nDeliberately excludes wallet/container IDs - consumers tracking these should\ncorrelate via clauseId to their own records.\n",
+        "description": "Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId",
         "additionalProperties": false,
         "required": [
           "clauseId",
@@ -29406,7 +29424,7 @@
           },
           "assetType": {
             "type": "string",
-            "description": "Descriptive type of asset involved (e.g., \"currency\", \"item\").\nProvides human-readable context for what was transferred.\n"
+            "description": "Descriptive type of asset involved (e.g. \"currency\", \"item\") providing human-readable context"
           },
           "amount": {
             "type": "number",
@@ -29483,7 +29501,7 @@
         "description": "Response from character cleanup operation",
         "required": [
           "actorsCleanedUp",
-          "success"
+          "actorIds"
         ],
         "properties": {
           "actorsCleanedUp": {
@@ -29496,10 +29514,6 @@
               "type": "string"
             },
             "description": "IDs of actors that were cleaned up"
-          },
-          "success": {
-            "type": "boolean",
-            "description": "Whether cleanup completed successfully"
           }
         }
       },
@@ -29856,8 +29870,7 @@
         "required": [
           "sessionId",
           "capabilities",
-          "version",
-          "generatedAt"
+          "version"
         ],
         "properties": {
           "sessionId": {
@@ -29883,11 +29896,6 @@
           "version": {
             "type": "integer",
             "description": "Capability manifest version (increments on changes)"
-          },
-          "generatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When this capability manifest was generated"
           },
           "expiresAt": {
             "type": "string",
@@ -29922,14 +29930,7 @@
             "description": "API endpoint path (e.g., \"/account/create\")"
           },
           "method": {
-            "type": "string",
-            "enum": [
-              "GET",
-              "POST",
-              "PUT",
-              "DELETE",
-              "PATCH"
-            ],
+            "$ref": "#/components/schemas/HttpMethodType",
             "description": "HTTP method for this endpoint"
           },
           "description": {
@@ -30302,47 +30303,6 @@
             "format": "date-time",
             "nullable": true,
             "description": "When these preferences were last modified"
-          }
-        }
-      },
-      "CombatPreferencesSnapshot": {
-        "description": "Snapshot of combat preferences for enriched response",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "style",
-          "preferredRange",
-          "groupRole",
-          "riskTolerance",
-          "retreatThreshold",
-          "protectAllies"
-        ],
-        "properties": {
-          "style": {
-            "type": "string",
-            "description": "Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL)"
-          },
-          "preferredRange": {
-            "type": "string",
-            "description": "Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED)"
-          },
-          "groupRole": {
-            "type": "string",
-            "description": "Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO)"
-          },
-          "riskTolerance": {
-            "type": "number",
-            "format": "float",
-            "description": "Willingness to take risky actions (0.0 to 1.0)"
-          },
-          "retreatThreshold": {
-            "type": "number",
-            "format": "float",
-            "description": "Health percentage at which retreat is considered (0.0 to 1.0)"
-          },
-          "protectAllies": {
-            "type": "boolean",
-            "description": "Whether to prioritize ally protection"
           }
         }
       },
@@ -31909,6 +31869,7 @@
         "required": [
           "contractId",
           "templateId",
+          "templateCode",
           "status",
           "parties",
           "createdAt"
@@ -32186,8 +32147,7 @@
         "required": [
           "contractId",
           "templateCode",
-          "status",
-          "role"
+          "status"
         ],
         "properties": {
           "contractId": {
@@ -32210,7 +32170,8 @@
           },
           "role": {
             "type": "string",
-            "description": "Entity's role in contract"
+            "nullable": true,
+            "description": "Entity's role in contract (null if party record not found due to data inconsistency)"
           },
           "effectiveUntil": {
             "type": "string",
@@ -32232,6 +32193,7 @@
           "maxParties",
           "partyRoles",
           "defaultEnforcementMode",
+          "transferable",
           "isActive",
           "createdAt"
         ],
@@ -32376,9 +32338,13 @@
             "description": "Whether this contract has a time commitment clause"
           },
           "timeCommitmentType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimeCommitmentType"
+              }
+            ],
             "nullable": true,
-            "description": "Type of time commitment (exclusive or partial)"
+            "description": "Type of time commitment for scheduling constraints"
           },
           "clauses": {
             "type": "array",
@@ -32739,10 +32705,12 @@
         "properties": {
           "category": {
             "type": "string",
+            "minLength": 1,
             "description": "Category identifier (e.g., \"npc-brain\", \"world-admin\", \"cron-cleanup\")"
           },
           "behaviorRef": {
             "type": "string",
+            "minLength": 1,
             "description": "Reference to behavior in lib-assets (e.g., \"asset://behaviors/npc-brain-v1\")"
           },
           "configuration": {
@@ -32780,7 +32748,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -33010,7 +32978,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata for the bundle (null if none)"
+            "description": "Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34201,7 +34169,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Custom metadata for the metabundle"
+            "description": "Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34383,6 +34351,8 @@
         "properties": {
           "roomTypeCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Room type code determining message format and validation"
           },
           "sessionId": {
@@ -34400,11 +34370,13 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Human-readable room name"
           },
           "maxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Participant limit override (null uses type default)"
           },
           "contractFulfilledAction": {
@@ -34446,7 +34418,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata for client rendering hints"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34936,7 +34908,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35391,7 +35363,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form metadata"
+            "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35550,7 +35522,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -35929,14 +35901,9 @@
         "additionalProperties": false,
         "description": "Response confirming template deletion",
         "required": [
-          "deleted",
           "stoppedActorCount"
         ],
         "properties": {
-          "deleted": {
-            "type": "boolean",
-            "description": "Whether the template was successfully deleted"
-          },
           "stoppedActorCount": {
             "type": "integer",
             "description": "Number of running actors that were stopped"
@@ -36630,12 +36597,10 @@
         "additionalProperties": false,
         "properties": {
           "deviceType": {
-            "type": "string",
-            "enum": [
-              "desktop",
-              "mobile",
-              "tablet",
-              "console"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              }
             ],
             "nullable": true,
             "description": "Category of the device"
@@ -36656,6 +36621,16 @@
             "description": "Version of the client application"
           }
         }
+      },
+      "DeviceType": {
+        "type": "string",
+        "enum": [
+          "desktop",
+          "mobile",
+          "tablet",
+          "console"
+        ],
+        "description": "Category of client device used for authentication or session tracking"
       },
       "DiscardRequest": {
         "type": "object",
@@ -37161,7 +37136,7 @@
           "minimumRequirements": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Minimum system requirements for the client"
+            "description": "Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -37714,6 +37689,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor managing the encounter"
           }
         }
@@ -37798,7 +37774,11 @@
             "description": "In-game death timestamp"
           },
           "status": {
-            "$ref": "#/components/schemas/CharacterStatus",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CharacterStatus"
+              }
+            ],
             "description": "Current lifecycle status of the character"
           },
           "createdAt": {
@@ -37812,25 +37792,10 @@
             "nullable": true,
             "description": "Real-world last update timestamp"
           },
-          "personality": {
-            "$ref": "#/components/schemas/PersonalitySnapshot",
-            "nullable": true,
-            "description": "Personality traits (included if includePersonality=true)"
-          },
-          "backstory": {
-            "$ref": "#/components/schemas/BackstorySnapshot",
-            "nullable": true,
-            "description": "Backstory elements (included if includeBackstory=true)"
-          },
           "familyTree": {
             "$ref": "#/components/schemas/FamilyTreeResponse",
             "nullable": true,
             "description": "Family relationships (included if includeFamilyTree=true)"
-          },
-          "combatPreferences": {
-            "$ref": "#/components/schemas/CombatPreferencesSnapshot",
-            "nullable": true,
-            "description": "Combat preferences (included if includeCombatPreferences=true)"
           }
         }
       },
@@ -38082,7 +38047,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Arbitrary custom data for game-specific metadata"
+            "description": "Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -39236,6 +39201,11 @@
             "default": false,
             "description": "If true, invoke cleanup callbacks after successful archival"
           },
+          "deleteSourceDataPolicy": {
+            "$ref": "#/components/schemas/CleanupPolicy",
+            "nullable": true,
+            "description": "Cleanup policy for source data deletion after archival.\nOnly applies when deleteSourceData is true.\nIf not specified, uses the configured DefaultCleanupPolicy.\n"
+          },
           "compressionPolicy": {
             "$ref": "#/components/schemas/CompressionPolicy",
             "nullable": true,
@@ -39329,20 +39299,16 @@
       },
       "ExecuteContractResponse": {
         "type": "object",
-        "description": "Response from executing a contract",
+        "description": "Response from executing a contract. HTTP 200 confirms execution completed.",
         "additionalProperties": false,
         "required": [
-          "executed",
-          "alreadyExecuted"
+          "alreadyExecuted",
+          "contractId"
         ],
         "properties": {
-          "executed": {
-            "type": "boolean",
-            "description": "Whether execution was successful"
-          },
           "alreadyExecuted": {
             "type": "boolean",
-            "description": "True if this was a repeat call (idempotency)"
+            "description": "True if this was a repeat call (idempotency). When false, this is a fresh execution."
           },
           "contractId": {
             "type": "string",
@@ -39356,12 +39322,6 @@
             },
             "nullable": true,
             "description": "Per-clause distribution outcomes with success/failure details"
-          },
-          "executedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "When execution occurred"
           }
         }
       },
@@ -39943,7 +39903,8 @@
         "additionalProperties": false,
         "required": [
           "characterId",
-          "relationshipType"
+          "relationshipType",
+          "isAlive"
         ],
         "properties": {
           "characterId": {
@@ -39970,6 +39931,13 @@
         "description": "Family relationships for a character",
         "type": "object",
         "additionalProperties": false,
+        "required": [
+          "parents",
+          "children",
+          "siblings",
+          "spouses",
+          "pastLives"
+        ],
         "properties": {
           "parents": {
             "type": "array",
@@ -42088,25 +42056,10 @@
             "format": "uuid",
             "description": "ID of the character to retrieve"
           },
-          "includePersonality": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include personality traits from character-personality service"
-          },
-          "includeBackstory": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include backstory elements from character-history service"
-          },
           "includeFamilyTree": {
             "type": "boolean",
             "default": false,
             "description": "Include family relationships from relationship service"
-          },
-          "includeCombatPreferences": {
-            "type": "boolean",
-            "default": false,
-            "description": "Include combat preferences from character-personality service"
           }
         }
       },
@@ -45171,6 +45124,11 @@
         "type": "object",
         "additionalProperties": true,
         "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
+        "required": [
+          "hazardType",
+          "distance",
+          "severity"
+        ],
         "properties": {
           "hazardType": {
             "type": "string",
@@ -45478,6 +45436,17 @@
           "expired"
         ]
       },
+      "HttpMethodType": {
+        "type": "string",
+        "description": "HTTP method for endpoint invocation",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "PATCH"
+        ]
+      },
       "InitializeRealmClockRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -45607,6 +45576,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "Target actor to inject perception into"
           },
           "perception": {
@@ -45620,14 +45590,9 @@
         "additionalProperties": false,
         "description": "Response confirming perception injection",
         "required": [
-          "queued",
           "queueDepth"
         ],
         "properties": {
-          "queued": {
-            "type": "boolean",
-            "description": "Whether the perception was successfully queued"
-          },
           "queueDepth": {
             "type": "integer",
             "description": "Current depth of the perception queue"
@@ -46309,6 +46274,7 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Human-readable display name"
           },
           "role": {
@@ -46812,7 +46778,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game-specific metadata for this license node"
+            "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -49362,11 +49328,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Number of items per page"
           }
         }
@@ -49411,6 +49380,7 @@
           "roomTypeCode": {
             "type": "string",
             "nullable": true,
+            "maxLength": 100,
             "description": "Filter by room type code"
           },
           "sessionId": {
@@ -49431,11 +49401,14 @@
           "page": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Page number (zero-based)"
           },
           "pageSize": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Number of items per page"
           }
         }
@@ -50795,17 +50768,13 @@
       },
       "LockContractResponse": {
         "type": "object",
-        "description": "Response from locking a contract",
+        "description": "Response from locking a contract. HTTP 200 confirms the lock was acquired.",
         "additionalProperties": false,
         "required": [
-          "locked",
-          "contractId"
+          "contractId",
+          "guardianId"
         ],
         "properties": {
-          "locked": {
-            "type": "boolean",
-            "description": "Whether the contract was locked"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -50815,11 +50784,6 @@
             "type": "string",
             "format": "uuid",
             "description": "Guardian entity ID"
-          },
-          "lockedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the contract was locked"
           }
         }
       },
@@ -50841,6 +50805,8 @@
           "password": {
             "type": "string",
             "format": "password",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "User password for authentication"
           },
           "rememberMe": {
@@ -51326,6 +51292,8 @@
           "limit": {
             "type": "integer",
             "default": 50,
+            "minimum": 1,
+            "maximum": 200,
             "description": "Maximum number of messages to return"
           }
         }
@@ -51381,6 +51349,7 @@
           "recoveryCode": {
             "type": "string",
             "nullable": true,
+            "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
             "description": "Single-use recovery code (format xxxx-xxxx)"
           }
         }
@@ -51457,6 +51426,7 @@
           "recoveryCode": {
             "type": "string",
             "nullable": true,
+            "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
             "description": "Single-use recovery code (format xxxx-xxxx)"
           }
         }
@@ -52253,6 +52223,7 @@
           "durationMinutes": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Mute duration in minutes (null for permanent)"
           }
         }
@@ -52359,6 +52330,12 @@
         "type": "object",
         "additionalProperties": true,
         "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
+        "required": [
+          "objectId",
+          "objectType",
+          "distance",
+          "direction"
+        ],
         "properties": {
           "objectId": {
             "type": "string",
@@ -52926,7 +52903,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Custom metadata for the page"
+            "description": "Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention."
           },
           "seo": {
             "$ref": "#/components/schemas/SEOMetadata",
@@ -53269,6 +53246,7 @@
         "properties": {
           "role": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 64,
             "description": "Role identifier (employer, employee, buyer, seller, etc.)"
           },
@@ -53342,6 +53320,7 @@
             "type": "string",
             "format": "password",
             "minLength": 8,
+            "maxLength": 128,
             "description": "New password to set for the account"
           }
         }
@@ -53433,10 +53412,12 @@
         "properties": {
           "perceptionType": {
             "type": "string",
+            "minLength": 1,
             "description": "Perception type. Common values: visual, auditory, tactile, olfactory,\nproprioceptive, spatial. Use \"spatial\" for schema-less spatial data in 'data' field.\n"
           },
           "sourceId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the entity causing this perception"
           },
           "sourceType": {
@@ -53544,29 +53525,6 @@
             "format": "date-time",
             "nullable": true,
             "description": "When this personality was last modified"
-          }
-        }
-      },
-      "PersonalitySnapshot": {
-        "description": "Snapshot of personality traits for enriched response",
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "traits",
-          "version"
-        ],
-        "properties": {
-          "traits": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "number",
-              "format": "float"
-            },
-            "description": "Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.)"
-          },
-          "version": {
-            "type": "integer",
-            "description": "Personality version number (increments on evolution)"
           }
         }
       },
@@ -54135,11 +54093,10 @@
             "description": "Human-readable description"
           },
           "executionMode": {
-            "type": "string",
-            "enum": [
-              "sync",
-              "async",
-              "fire_and_forget"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreboundApiExecutionMode"
+              }
             ],
             "default": "sync",
             "description": "How to execute the API call"
@@ -54150,6 +54107,15 @@
             "description": "Optional validation rules for the response"
           }
         }
+      },
+      "PreboundApiExecutionMode": {
+        "type": "string",
+        "description": "How to execute a prebound API call",
+        "enum": [
+          "sync",
+          "async",
+          "fire_and_forget"
+        ]
       },
       "PredictedMutation": {
         "type": "object",
@@ -54372,11 +54338,7 @@
             "description": "Human-readable name for the provider"
           },
           "authType": {
-            "type": "string",
-            "enum": [
-              "oauth",
-              "ticket"
-            ],
+            "$ref": "#/components/schemas/AuthType",
             "description": "Authentication mechanism (oauth = browser redirect, ticket = game client token)"
           },
           "authUrl": {
@@ -57121,6 +57083,7 @@
             "type": "string",
             "description": "Password for the account (will be hashed)",
             "minLength": 8,
+            "maxLength": 128,
             "format": "password",
             "example": "SecurePassword123!"
           },
@@ -57179,15 +57142,21 @@
         "properties": {
           "code": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^[a-z][a-z0-9_]*$",
             "description": "Unique room type code (e.g., \"text\", \"guild_board\", \"trade_posting\")"
           },
           "displayName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Human-readable name for the room type"
           },
           "description": {
             "type": "string",
             "nullable": true,
+            "maxLength": 1000,
             "description": "Optional description of the room type"
           },
           "gameServiceId": {
@@ -57216,11 +57185,13 @@
           "defaultMaxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Default participant limit (null uses service default)"
           },
           "retentionDays": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Message retention in days (null uses service default)"
           },
           "defaultContractTemplateId": {
@@ -57236,12 +57207,13 @@
           "rateLimitPerMinute": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Messages per minute per participant (null uses service default)"
           },
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata for client rendering hints"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -58812,7 +58784,7 @@
       },
       "ResponseValidation": {
         "type": "object",
-        "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+        "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
         "additionalProperties": false,
         "properties": {
           "successConditions": {
@@ -58820,21 +58792,21 @@
             "items": {
               "$ref": "#/components/schemas/ValidationCondition"
             },
-            "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+            "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
           },
           "permanentFailureConditions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ValidationCondition"
             },
-            "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+            "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
           },
           "transientFailureStatusCodes": {
             "type": "array",
             "items": {
               "type": "integer"
             },
-            "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+            "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
           }
         }
       },
@@ -59030,7 +59002,7 @@
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Arbitrary JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           },
           "status": {
             "$ref": "#/components/schemas/RoomTypeStatus",
@@ -60582,11 +60554,15 @@
           },
           "query": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Full-text search query string"
           },
           "limit": {
             "type": "integer",
             "default": 20,
+            "minimum": 1,
+            "maximum": 100,
             "description": "Maximum number of results to return"
           }
         }
@@ -61296,14 +61272,22 @@
       "SendMessageBatchResponse": {
         "type": "object",
         "additionalProperties": false,
-        "description": "Result of a batch message send operation",
+        "description": "Result of a batch message send operation with per-message failure tracking",
         "required": [
-          "messageCount"
+          "messageCount",
+          "failed"
         ],
         "properties": {
           "messageCount": {
             "type": "integer",
-            "description": "Number of messages sent"
+            "description": "Number of messages successfully sent"
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchMessageFailure"
+            },
+            "description": "Details of messages that failed to send (empty array when all succeeded)"
           }
         }
       },
@@ -61662,23 +61646,19 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Key-value pairs for template substitution.\nKeys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.\n"
+            "description": "Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)"
           }
         }
       },
       "SetTemplateValuesResponse": {
         "type": "object",
-        "description": "Response from setting template values",
+        "description": "Response from setting template values. HTTP 200 confirms values were set.",
         "additionalProperties": false,
         "required": [
-          "updated",
-          "contractId"
+          "contractId",
+          "valueCount"
         ],
         "properties": {
-          "updated": {
-            "type": "boolean",
-            "description": "Whether values were updated"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -62414,6 +62394,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor that will manage this encounter"
           },
           "encounterId": {
@@ -62423,6 +62404,7 @@
           },
           "encounterType": {
             "type": "string",
+            "minLength": 1,
             "description": "Type of encounter (e.g., \"combat\", \"conversation\", \"choreography\")"
           },
           "participants": {
@@ -62440,6 +62422,12 @@
             "description": "Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
           }
         }
+      },
+      "StartEncounterResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Empty response. HTTP 200 confirms the encounter was started.",
+        "properties": {}
       },
       "StartWatcherRequest": {
         "type": "object",
@@ -62817,6 +62805,7 @@
             "type": "string",
             "pattern": "^[0-9A-Fa-f]+$",
             "minLength": 16,
+            "maxLength": 2048,
             "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
             "example": "140000006A7B3C8E..."
           },
@@ -62837,6 +62826,7 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the actor to stop"
           },
           "graceful": {
@@ -62851,14 +62841,9 @@
         "additionalProperties": false,
         "description": "Response confirming actor stop operation",
         "required": [
-          "stopped",
           "finalStatus"
         ],
         "properties": {
-          "stopped": {
-            "type": "boolean",
-            "description": "Whether the actor was successfully stopped"
-          },
           "finalStatus": {
             "description": "Final status of the actor after stopping",
             "$ref": "#/components/schemas/ActorStatus"
@@ -63909,6 +63894,14 @@
           "expired"
         ]
       },
+      "TimeCommitmentType": {
+        "type": "string",
+        "description": "Type of time commitment for scheduling constraints",
+        "enum": [
+          "exclusive",
+          "partial"
+        ]
+      },
       "TimeRatioChangeReason": {
         "type": "string",
         "description": "Why the time ratio was changed",
@@ -64145,17 +64138,15 @@
       },
       "TransferContractPartyResponse": {
         "type": "object",
-        "description": "Response from transferring a party role",
+        "description": "Response from transferring a party role. HTTP 200 confirms the transfer succeeded.",
         "additionalProperties": false,
         "required": [
-          "transferred",
-          "contractId"
+          "contractId",
+          "role",
+          "fromEntityId",
+          "toEntityId"
         ],
         "properties": {
-          "transferred": {
-            "type": "boolean",
-            "description": "Whether the transfer was successful"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -64234,7 +64225,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Free-form transaction metadata"
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -64672,17 +64663,12 @@
       },
       "UnlockContractResponse": {
         "type": "object",
-        "description": "Response from unlocking a contract",
+        "description": "Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.",
         "additionalProperties": false,
         "required": [
-          "unlocked",
           "contractId"
         ],
         "properties": {
-          "unlocked": {
-            "type": "boolean",
-            "description": "Whether the contract was unlocked"
-          },
           "contractId": {
             "type": "string",
             "format": "uuid",
@@ -65119,7 +65105,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+            "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -65522,10 +65508,12 @@
         "properties": {
           "actorId": {
             "type": "string",
+            "minLength": 1,
             "description": "ID of the Event Brain actor managing the encounter"
           },
           "phase": {
             "type": "string",
+            "minLength": 1,
             "description": "New phase name for the encounter"
           }
         }
@@ -65596,7 +65584,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Updated custom data (merged with existing)"
+            "description": "Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -65957,7 +65945,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Updated game-specific metadata"
+            "description": "Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -66084,6 +66072,7 @@
           },
           "passwordHash": {
             "type": "string",
+            "maxLength": 255,
             "description": "New pre-hashed password from Auth service"
           }
         }
@@ -66161,7 +66150,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated custom metadata for the account"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -66338,17 +66327,19 @@
           "displayName": {
             "type": "string",
             "nullable": true,
+            "maxLength": 200,
             "description": "Updated room name"
           },
           "maxParticipants": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Updated participant limit"
           },
           "metadata": {
             "type": "string",
             "nullable": true,
-            "description": "Updated JSON metadata"
+            "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -67368,19 +67359,15 @@
         }
       },
       "ValidateTokenResponse": {
-        "description": "Response from token validation containing validity status and associated account details",
+        "description": "Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.",
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "valid",
           "accountId",
-          "sessionKey"
+          "sessionKey",
+          "remainingTime"
         ],
         "properties": {
-          "valid": {
-            "type": "boolean",
-            "description": "Whether the token is valid and not expired"
-          },
           "accountId": {
             "type": "string",
             "format": "uuid",
@@ -67432,12 +67419,12 @@
           "jsonPath": {
             "type": "string",
             "nullable": true,
-            "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+            "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
           },
           "expectedValue": {
             "type": "string",
             "nullable": true,
-            "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+            "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
           },
           "operator": {
             "$ref": "#/components/schemas/ComparisonOperator",

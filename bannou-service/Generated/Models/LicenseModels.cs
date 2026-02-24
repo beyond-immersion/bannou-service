@@ -200,7 +200,7 @@ public partial class BoardNodeState
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific metadata for this license node
+    /// Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -640,7 +640,7 @@ public partial class AddLicenseDefinitionRequest
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific metadata for this license node
+    /// Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -715,7 +715,7 @@ public partial class UpdateLicenseDefinitionRequest
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Updated game-specific metadata
+    /// Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -830,7 +830,7 @@ public partial class LicenseDefinitionResponse
     public string? Description { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific metadata for this license node
+    /// Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

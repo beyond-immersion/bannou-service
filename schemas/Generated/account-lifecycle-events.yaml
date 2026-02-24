@@ -62,11 +62,14 @@ components:
           format: date-time
           nullable: true
           description: "Timestamp when the account was last updated"
-        metadata: &id009
+        mfaEnabled: &id009
+          type: boolean
+          description: "Whether multi-factor authentication is enabled for the account"
+        metadata: &id010
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional metadata associated with the account"
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
     AccountUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -94,7 +97,8 @@ components:
         authMethods: *id006
         createdAt: *id007
         updatedAt: *id008
-        metadata: *id009
+        mfaEnabled: *id009
+        metadata: *id010
         changedFields:
           type: array
           items:
@@ -126,7 +130,8 @@ components:
         authMethods: *id006
         createdAt: *id007
         updatedAt: *id008
-        metadata: *id009
+        mfaEnabled: *id009
+        metadata: *id010
         deletedReason:
           type: string
           nullable: true

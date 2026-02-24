@@ -549,13 +549,14 @@ paths:
         \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
         \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
         \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
-        for this license node\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"x\",\n                \"y\"\n     \
-        \       ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n        \
-        \        \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Vertical grid
-        coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
+        for this license node. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -579,16 +580,16 @@ paths:
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
         of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
-        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
-        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this definition
+        was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add a license definition to a board template\",\n    \"description\": \"\
         Add a license definition (node) to a board template at a specific grid position.\\nEach definition has a unique code
         within the template, a grid position, an LP cost,\\nand a reference to the item template that is created when the
@@ -651,16 +652,16 @@ paths:
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
         of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
-        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
-        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this definition
+        was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a license definition\",\n    \"description\": \"Get a license definition
         by board template ID and license code.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getLicenseDefinition\"\n}"
@@ -727,16 +728,16 @@ paths:
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
         of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
-        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
-        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this definition
+        was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all license definitions for a board template\",\n    \"description\"\
         : \"Returns the full grid layout of all license definitions for a board template.\",\n    \"tags\": [\n        \"\
         Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listLicenseDefinitions\"\n}"
@@ -783,7 +784,8 @@ paths:
         \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Updated description\"\
         \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
         \     \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"Updated game-specific metadata\"\n                }\n            }\n        }\n    }\n}"
+        : \"Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention.\"\n      \
+        \          }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LicenseDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"LicenseDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"License definition with all fields\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -807,16 +809,16 @@ paths:
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
         of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
-        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
-        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this definition
+        was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a license definition\",\n    \"description\": \"Update mutable fields
         of a license definition. Position and code are immutable\\nafter creation.\\n\",\n    \"tags\": [\n        \"Definition\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateLicenseDefinition\"\n}"
@@ -880,16 +882,16 @@ paths:
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
         of what this license grants\"\n                },\n                \"metadata\": {\n                    \"type\":
         \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": true,\n      \
-        \              \"description\": \"Game-specific metadata for this license node\"\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When this definition was created\"\n                }\n            }\n   \
-        \     },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        \              \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this definition
+        was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a license definition from a board template\",\n    \"description\"\
         : \"Remove a license definition from a board template. Blocked if any board\\ninstances have this license unlocked.\\\
         n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"removeLicenseDefinition\"\
@@ -1352,18 +1354,18 @@ paths:
         \    \"nullable\": true,\n                    \"description\": \"Human-readable description of what this license grants\"\
         \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
         \     \"nullable\": true,\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"Game-specific metadata for this license node\"\n                }\n            }\n        },\n        \"GridPosition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"x\",\n           \
-        \     \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n             \
-        \   },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        },\n        \"LicenseStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Unlock status of a license node on a board.\\
-        n- locked: Not adjacent to any unlocked node (cannot be unlocked)\\n- unlockable: Adjacent to an unlocked node or
-        is a starting node (can be unlocked)\\n- unlocked: Already unlocked (item placed at this position)\\n\",\n       \
-        \     \"enum\": [\n                \"locked\",\n                \"unlockable\",\n                \"unlocked\"\n  \
-        \          ]\n        }\n    }\n}"
+        : \"Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"x\",\n                \"y\"\n            ],\n           \
+        \ \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n                    \"\
+        description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n                \"y\": {\n     \
+        \               \"type\": \"integer\",\n                    \"description\": \"Vertical grid coordinate (zero-indexed)\"\
+        \n                }\n            }\n        },\n        \"LicenseStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Unlock status of a license node on a board.\\n- locked: Not adjacent to any unlocked
+        node (cannot be unlocked)\\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\\n-
+        unlocked: Already unlocked (item placed at this position)\\n\",\n            \"enum\": [\n                \"locked\"\
+        ,\n                \"unlockable\",\n                \"unlocked\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get full board state\",\n    \"description\": \"Get the full board state:
         all defined license positions with unlock status\\n(unlocked, locked, unlockable) and adjacency info. Primary endpoint
         for\\nclient UI rendering.\\n\",\n    \"tags\": [\n        \"Gameplay\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -1427,13 +1429,14 @@ paths:
         \                  \"description\": \"Human-readable description of what this license grants\"\n                },\n\
         \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
         \                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific metadata
-        for this license node\"\n                }\n            }\n        },\n        \"GridPosition\": {\n            \"\
-        type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"x\",\n                \"y\"\n     \
-        \       ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"integer\",\n\
-        \                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n                },\n        \
-        \        \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Vertical grid
-        coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
+        for this license node. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A position on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n              \
+        \  \"x\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
+        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
+        \       }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedBoardTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"SeedBoardTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of bulk seeding a board template\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1466,16 +1469,16 @@ paths:
         \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Human-readable description of what this license grants\"\n                },\n                \"metadata\": {\n\
         \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Game-specific metadata for this license node\"\n                },\n\
-        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this definition was created\"\n                }\n            }\n \
-        \       },\n        \"GridPosition\": {\n            \"type\": \"object\",\n            \"description\": \"A position
-        on the board grid (zero-indexed)\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"x\",\n                \"y\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Horizontal grid coordinate
-        (zero-indexed)\"\n                },\n                \"y\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific metadata for this license node. No Bannou plugin reads
+        specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this definition was created\"\n                }\n            }\n        },\n        \"GridPosition\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A position on the board grid (zero-indexed)\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"x\",\n             \
+        \   \"y\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Horizontal grid coordinate (zero-indexed)\"\n               \
+        \ },\n                \"y\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Vertical grid coordinate (zero-indexed)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk seed a board template with license definitions\",\n    \"description\"\
         : \"Bulk seed a board template with license definitions from a JSON payload.\\nTwo-pass: creates definitions, then
         resolves prerequisite references.\\n\",\n    \"tags\": [\n        \"BoardTemplate\"\n    ],\n    \"deprecated\": false,\n\
@@ -1706,7 +1709,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this 
+            field by convention.
     CreateBoardTemplateRequest:
       type: object
       description: Request to create a new board template
@@ -2005,7 +2009,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this 
+            field by convention.
     GetLicenseDefinitionRequest:
       type: object
       description: Request to get a license definition by board template ID and code
@@ -2055,7 +2060,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Updated game-specific metadata
+          description: Updated game-specific metadata. No Bannou plugin reads specific keys from this field by 
+            convention.
     RemoveLicenseDefinitionRequest:
       type: object
       description: Request to remove a license definition from a board template
@@ -2130,7 +2136,8 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game-specific metadata for this license node
+          description: Game-specific metadata for this license node. No Bannou plugin reads specific keys from this 
+            field by convention.
         createdAt:
           type: string
           format: date-time

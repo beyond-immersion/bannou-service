@@ -28,11 +28,14 @@ x-service-configuration:
       description: RabbitMQ server hostname
       env: MESSAGING_RABBITMQ_HOST
       default: "rabbitmq"
+      minLength: 1
     RabbitMQPort:
       type: integer
       description: RabbitMQ server port
       env: MESSAGING_RABBITMQ_PORT
       default: 5672
+      minimum: 1
+      maximum: 65535
     RabbitMQUsername:
       type: string
       description: RabbitMQ username
@@ -53,26 +56,33 @@ x-service-configuration:
       description: Default exchange name for publishing
       env: MESSAGING_DEFAULT_EXCHANGE
       default: "bannou"
+      minLength: 1
     EnablePublisherConfirms:
       type: boolean
       description: Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
-      env: MESSAGING_ENABLE_CONFIRMS
+      env: MESSAGING_ENABLE_PUBLISHER_CONFIRMS
       default: true
     ConnectionRetryCount:
       type: integer
       description: Number of connection retry attempts
       env: MESSAGING_CONNECTION_RETRY_COUNT
       default: 5
+      minimum: 0
+      maximum: 100
     ConnectionRetryDelayMs:
       type: integer
       description: Delay between connection retry attempts in milliseconds
       env: MESSAGING_CONNECTION_RETRY_DELAY_MS
       default: 1000
+      minimum: 100
+      maximum: 30000
     ConnectionMaxBackoffMs:
       type: integer
       description: Maximum backoff delay for connection retries in milliseconds
       env: MESSAGING_CONNECTION_MAX_BACKOFF_MS
       default: 60000
+      minimum: 1000
+      maximum: 300000
     ChannelPoolSize:
       type: integer
       description: Maximum number of channels in the publisher channel pool
@@ -100,6 +110,8 @@ x-service-configuration:
       description: Default prefetch count for subscriptions
       env: MESSAGING_DEFAULT_PREFETCH_COUNT
       default: 10
+      minimum: 1
+      maximum: 10000
     DefaultAutoAck:
       type: boolean
       description: Default auto-acknowledge setting for subscriptions
@@ -110,6 +122,7 @@ x-service-configuration:
       description: Dead letter exchange name for failed messages
       env: MESSAGING_DEAD_LETTER_EXCHANGE
       default: "bannou-dlx"
+      minLength: 1
     DeadLetterMaxLength:
       type: integer
       description: Maximum messages in dead letter queue before oldest dropped
@@ -125,10 +138,25 @@ x-service-configuration:
       minimum: 3600000
       maximum: 2592000000
     DeadLetterOverflowBehavior:
-      type: string
+      $ref: 'messaging-api.yaml#/components/schemas/DeadLetterOverflowBehavior'
       description: Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
       env: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
       default: "drop-head"
+
+    # Dead Letter Consumer Settings
+    DeadLetterConsumerEnabled:
+      type: boolean
+      description: Enable dead letter consumer background service for logging and monitoring
+      env: MESSAGING_DEAD_LETTER_CONSUMER_ENABLED
+      default: true
+    DeadLetterConsumerStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before dead letter consumer starts subscribing (allows other services to initialize)
+      env: MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS
+      default: 5
+      minimum: 1
+      maximum: 60
+
     RetryMaxAttempts:
       type: integer
       description: Maximum retry attempts before discarding message to dead-letter topic
@@ -176,6 +204,8 @@ x-service-configuration:
       description: Interval between retry attempts for buffered messages
       env: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
       default: 5
+      minimum: 1
+      maximum: 60
     RetryBufferBackpressureThreshold:
       type: number
       description: When buffer reaches this percentage full, start rejecting new publishes (0.0-1.0)
@@ -211,11 +241,24 @@ x-service-configuration:
       description: Maximum retry attempts for HTTP callback delivery (network failures only)
       env: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
       default: 3
+      minimum: 0
+      maximum: 10
     CallbackRetryDelayMs:
       type: integer
       description: Delay between HTTP callback retry attempts in milliseconds
       env: MESSAGING_CALLBACK_RETRY_DELAY_MS
       default: 1000
+      minimum: 100
+      maximum: 30000
+
+    # Shutdown Settings
+    ShutdownTimeoutSeconds:
+      type: integer
+      description: Maximum seconds to wait for graceful subscription cleanup during shutdown. Prevents indefinite blocking when channels hang.
+      env: MESSAGING_SHUTDOWN_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1
+      maximum: 60
 
     # Note: Telemetry (metrics/tracing) is controlled centrally via lib-telemetry configuration.
     # When lib-telemetry is enabled, it automatically instruments messaging operations via ITelemetryProvider.
@@ -227,17 +270,23 @@ x-service-configuration:
       description: Interval in hours between subscription TTL refresh operations
       default: 6
       env: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
+      minimum: 1
+      maximum: 24
     SubscriptionRecoveryStartupDelaySeconds:
       type: integer
       description: Delay in seconds before starting subscription recovery service
       default: 2
       env: MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS
+      minimum: 0
+      maximum: 60
     # RabbitMQ Connection Recovery
     RabbitMQNetworkRecoveryIntervalSeconds:
       type: integer
       description: Interval in seconds between RabbitMQ connection recovery attempts
       default: 10
       env: MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS
+      minimum: 1
+      maximum: 300
 
     # External Subscription Configuration
     ExternalSubscriptionTtlSeconds:
@@ -245,3 +294,5 @@ x-service-configuration:
       description: TTL in seconds for external HTTP callback subscriptions (default 24 hours)
       default: 86400
       env: MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS
+      minimum: 3600
+      maximum: 2592000

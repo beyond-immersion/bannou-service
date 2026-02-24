@@ -89,17 +89,12 @@ components:
             format: uuid
           description: List of session IDs that were invalidated
         reason:
-          $ref: '#/components/schemas/SessionInvalidatedEventReason'
+          $ref: 'auth-api.yaml#/components/schemas/SessionInvalidatedEventReason'
           description: The reason why the session(s) were invalidated
         disconnectClients:
           type: boolean
           default: true
           description: Whether Connect service should disconnect WebSocket clients
-
-    SessionInvalidatedEventReason:
-      type: string
-      enum: [Logout, AccountDeleted, SecurityRevocation, AdminAction, SessionExpired]
-      description: Reason for session invalidation
 
     SessionUpdatedEvent:
       allOf:
@@ -135,13 +130,8 @@ components:
             type: string
           description: Current authorization strings (e.g., ["my-game:authorized"])
         reason:
-          $ref: '#/components/schemas/SessionUpdatedEventReason'
+          $ref: 'auth-api.yaml#/components/schemas/SessionUpdatedEventReason'
           description: The reason why the session was updated
-
-    SessionUpdatedEventReason:
-      type: string
-      enum: [RoleChanged, AuthorizationChanged, SubscriptionChanged]
-      description: Reason for session update
 
     # ==========================================================================
     # Authentication Audit Events
@@ -192,7 +182,7 @@ components:
           type: string
           description: Username that was attempted
         reason:
-          $ref: '#/components/schemas/AuthLoginFailedReason'
+          $ref: 'auth-api.yaml#/components/schemas/AuthLoginFailedReason'
           description: Why the login attempt failed
         accountId:
           type: string
@@ -207,11 +197,6 @@ components:
           type: string
           nullable: true
           description: User agent string from the request
-
-    AuthLoginFailedReason:
-      type: string
-      enum: [InvalidCredentials, AccountDisabled, AccountLocked, AccountNotFound, RateLimited]
-      description: Reason why the login attempt failed
 
     AuthRegistrationSuccessfulEvent:
       allOf:
@@ -361,17 +346,12 @@ components:
           format: uuid
           description: ID of the account whose MFA was disabled
         disabledBy:
-          $ref: '#/components/schemas/MfaDisabledBy'
+          $ref: 'auth-api.yaml#/components/schemas/MfaDisabledBy'
           description: Who triggered the MFA disable
         adminReason:
           type: string
           nullable: true
           description: Administrative reason (only when disabledBy is Admin)
-
-    MfaDisabledBy:
-      type: string
-      enum: [Self, Admin]
-      description: Who triggered the MFA disable action
 
     AuthMfaVerifiedEvent:
       allOf:
@@ -389,7 +369,7 @@ components:
           format: uuid
           description: ID of the account that completed MFA verification
         method:
-          $ref: '#/components/schemas/MfaVerificationMethod'
+          $ref: 'auth-api.yaml#/components/schemas/MfaVerificationMethod'
           description: Method used for MFA verification
         sessionId:
           type: string
@@ -399,11 +379,6 @@ components:
           type: integer
           nullable: true
           description: Recovery codes remaining after use (only when method is RecoveryCode)
-
-    MfaVerificationMethod:
-      type: string
-      enum: [Totp, RecoveryCode]
-      description: Method used for MFA verification
 
     AuthMfaFailedEvent:
       allOf:
@@ -421,13 +396,8 @@ components:
           format: uuid
           description: ID of the account that failed MFA
         method:
-          $ref: '#/components/schemas/MfaVerificationMethod'
+          $ref: 'auth-api.yaml#/components/schemas/MfaVerificationMethod'
           description: Method attempted
         reason:
-          $ref: '#/components/schemas/MfaFailedReason'
+          $ref: 'auth-api.yaml#/components/schemas/MfaFailedReason'
           description: Why MFA verification failed
-
-    MfaFailedReason:
-      type: string
-      enum: [InvalidCode, ExpiredChallenge, NoRecoveryCodesRemaining]
-      description: Reason for MFA verification failure

@@ -157,10 +157,10 @@ Bannou compiles to a single binary that can run all 41 services or a selective s
 
 ```bash
 # Development: All services
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Production: Selective
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 CONNECT_SERVICE_ENABLED=true
@@ -272,7 +272,7 @@ MESH_ENDPOINT_HOST=bannou  # Docker service name
 
 ```bash
 # Master switch
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Individual overrides
 AUTH_SERVICE_ENABLED=true

@@ -24,7 +24,7 @@ public class WebSocketConnectionManagerTests
     public void Constructor_ShouldInitializeWithEmptyConnections()
     {
         // Arrange & Act
-        var manager = new WebSocketConnectionManager();
+        using var manager = new WebSocketConnectionManager();
 
         // Assert
         Assert.Equal(0, manager.ConnectionCount);

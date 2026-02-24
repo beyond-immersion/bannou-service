@@ -87,25 +87,28 @@ public abstract class EmbeddedResourceProvider : ISeededResourceProvider
     protected virtual bool IncludeExtensionInIdentifier => false;
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<string>> ListSeededAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<string>> ListSeededAsync(CancellationToken ct)
     {
         var identifiers = GetCachedIdentifiers();
-        return Task.FromResult<IReadOnlyList<string>>(identifiers);
+        await Task.CompletedTask;
+        return identifiers;
     }
 
     /// <inheritdoc />
-    public Task<SeededResource?> GetSeededAsync(string identifier, CancellationToken ct)
+    public async Task<SeededResource?> GetSeededAsync(string identifier, CancellationToken ct)
     {
         var resourceName = GetResourceNameForIdentifier(identifier);
         if (resourceName == null)
         {
-            return Task.FromResult<SeededResource?>(null);
+            await Task.CompletedTask;
+            return null;
         }
 
         using var stream = ResourceAssembly.GetManifestResourceStream(resourceName);
         if (stream == null)
         {
-            return Task.FromResult<SeededResource?>(null);
+            await Task.CompletedTask;
+            return null;
         }
 
         using var memoryStream = new MemoryStream();
@@ -121,7 +124,8 @@ public abstract class EmbeddedResourceProvider : ISeededResourceProvider
             Content: content,
             Metadata: metadata);
 
-        return Task.FromResult<SeededResource?>(resource);
+        await Task.CompletedTask;
+        return resource;
     }
 
     /// <summary>

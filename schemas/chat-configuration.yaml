@@ -94,6 +94,22 @@ x-service-configuration:
       default: Archive
       description: Default action when governing contract expires naturally
 
+    ContractRoomQueryBatchSize:
+      type: integer
+      env: CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+      description: Page size for paginated contract-room queries during contract lifecycle events
+
+    MaxContractRoomQueryResults:
+      type: integer
+      env: CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS
+      default: 1000
+      minimum: 100
+      maximum: 10000
+      description: Safety cap on total rooms processed per contract lifecycle event, logs warning if reached
+
     MessageHistoryPageSize:
       type: integer
       env: CHAT_MESSAGE_HISTORY_PAGE_SIZE
@@ -117,3 +133,121 @@ x-service-configuration:
       minimum: 5
       maximum: 300
       description: Initial delay before the idle room cleanup worker begins its first cycle
+
+    IdleRoomCleanupLockExpirySeconds:
+      type: integer
+      env: CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS
+      default: 120
+      minimum: 30
+      maximum: 600
+      description: Distributed lock expiry for idle room cleanup batch cycle
+
+    BanExpiryIntervalMinutes:
+      type: integer
+      env: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
+      default: 60
+      minimum: 5
+      maximum: 1440
+      description: How often the background worker checks for expired bans
+
+    BanExpiryStartupDelaySeconds:
+      type: integer
+      env: CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS
+      default: 30
+      minimum: 5
+      maximum: 300
+      description: Initial delay before the ban expiry worker begins its first cycle
+
+    BanExpiryBatchSize:
+      type: integer
+      env: CHAT_BAN_EXPIRY_BATCH_SIZE
+      default: 1000
+      minimum: 10
+      maximum: 10000
+      description: Maximum expired ban records processed per worker cycle
+
+    BanExpiryLockExpirySeconds:
+      type: integer
+      env: CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS
+      default: 120
+      minimum: 30
+      maximum: 600
+      description: Distributed lock expiry for ban expiry batch cycle
+
+    MessageRetentionCleanupIntervalMinutes:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES
+      default: 360
+      minimum: 30
+      maximum: 10080
+      description: How often the background worker checks for expired persistent messages
+
+    MessageRetentionStartupDelaySeconds:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+      description: Initial delay before the message retention cleanup worker begins its first cycle
+
+    MessageRetentionBatchSize:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_BATCH_SIZE
+      default: 500
+      minimum: 10
+      maximum: 5000
+      description: Maximum expired messages to delete per room per cleanup cycle
+
+    MessageRetentionLockExpirySeconds:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS
+      default: 300
+      minimum: 60
+      maximum: 1800
+      description: Distributed lock expiry for message retention cleanup cycle
+
+    MessageRetentionMaxRoomTypeResults:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS
+      default: 1000
+      minimum: 10
+      maximum: 10000
+      description: Maximum room types with retention configuration to process per cleanup cycle
+
+    MessageRetentionMaxRoomsPerType:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE
+      default: 1000
+      minimum: 10
+      maximum: 100000
+      description: Maximum rooms per type to process per retention cleanup cycle
+
+    TypingTimeoutSeconds:
+      type: integer
+      env: CHAT_TYPING_TIMEOUT_SECONDS
+      default: 5
+      minimum: 2
+      maximum: 30
+      description: Seconds of inactivity before typing indicator auto-expires
+
+    TypingWorkerIntervalMilliseconds:
+      type: integer
+      env: CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS
+      default: 1000
+      minimum: 250
+      maximum: 5000
+      description: How often the typing expiry worker checks for stale typing entries
+
+    TypingWorkerBatchSize:
+      type: integer
+      env: CHAT_TYPING_WORKER_BATCH_SIZE
+      default: 100
+      minimum: 10
+      maximum: 1000
+      description: Maximum expired entries processed per worker cycle
+
+    ServerSalt:
+      type: string
+      env: CHAT_SERVER_SALT
+      default: "bannou-dev-chat-salt-change-in-production"
+      description: Server salt for session shortcut GUID generation per IMPLEMENTATION TENETS

@@ -73,7 +73,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         // Verify event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify client broadcast
@@ -572,6 +572,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(2, response.MessageCount);
+        Assert.Empty(response.Failed);
 
         // Two messages saved to persistent store
         MockMessageStore.Verify(
@@ -626,7 +627,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
     }
 
     [Fact]
-    public async Task SendMessageBatch_SkipsInvalidMessages()
+    public async Task SendMessageBatch_WithInvalidMessages_ReportsInFailedList()
     {
         var service = CreateService();
 
@@ -654,7 +655,59 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(1, response.MessageCount); // only the valid one
+        Assert.Equal(1, response.MessageCount);
+        Assert.Single(response.Failed);
+        Assert.Equal(1, response.Failed.First().Index);
+        Assert.NotNull(response.Failed.First().Error);
+    }
+
+    [Fact]
+    public async Task SendMessageBatch_StorageFailure_ReportsInFailedList()
+    {
+        var service = CreateService();
+
+        var room = CreateTestRoom();
+        var roomType = CreateTestRoomType("text", MessageFormat.Text, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var participants = new[] { CreateTestParticipant(sessionId: TestSessionId) };
+        SetupParticipants(TestRoomId, participants);
+
+        // First save succeeds, second save throws
+        var saveCallCount = 0;
+        MockMessageStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ChatMessageModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                saveCallCount++;
+                if (saveCallCount == 2)
+                {
+                    throw new InvalidOperationException("Store unavailable");
+                }
+                return "etag";
+            });
+
+        var request = new SendMessageBatchRequest
+        {
+            RoomId = TestRoomId,
+            Messages = new List<BatchMessageEntry>
+            {
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC1", Content = new SendMessageContent { Text = "First" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC2", Content = new SendMessageContent { Text = "Second" } },
+                new() { SenderType = "npc", SenderId = Guid.NewGuid(), DisplayName = "NPC3", Content = new SendMessageContent { Text = "Third" } },
+            },
+        };
+
+        var (status, response) = await service.SendMessageBatchAsync(request, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.MessageCount);
+        Assert.Single(response.Failed);
+        Assert.Equal(1, response.Failed.First().Index);
+        Assert.Contains("Store unavailable", response.Failed.First().Error);
     }
 
     #endregion
@@ -797,7 +850,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         // Verify event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.message.deleted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-message.deleted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify client broadcast

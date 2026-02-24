@@ -987,15 +987,26 @@ public partial class TopologyNode
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Services enabled on this node.
-    /// <br/>Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-    /// <br/>Example: ["account", "auth", "permission"]
+    /// Service layers to enable on this node. Listed layers are enabled,
+    /// <br/>unlisted layers are disabled. When omitted, layer enablement is
+    /// <br/>inherited from the container's environment.
+    /// <br/>Individual services in the 'services' list override layer settings.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("layers")]
+    // TODO(system.text.json): Add string enum item converter
+    public System.Collections.Generic.ICollection<Layers> Layers { get; set; } = default!;
+
+    /// <summary>
+    /// Individual services to enable on this node.
+    /// <br/>When used with 'layers', these act as overrides for services
+    /// <br/>outside the enabled layers.
+    /// <br/>When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
+    /// <br/>with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
 
     /// <summary>
     /// Number of replicas for this node
@@ -2917,6 +2928,29 @@ public enum DeploymentPresetCategory
 
     [System.Runtime.Serialization.EnumMember(Value = @"custom")]
     Custom = 3,
+
+}
+#pragma warning restore CS1591
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum Layers
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFoundation")]
+    AppFoundation = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFoundation")]
+    GameFoundation = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFeatures")]
+    AppFeatures = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFeatures")]
+    GameFeatures = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Extensions")]
+    Extensions = 4,
 
 }
 #pragma warning restore CS1591

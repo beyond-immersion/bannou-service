@@ -33,11 +33,13 @@ public partial class MessagingController
             "properties": {
                 "topic": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Topic/routing key for the event"
                 },
                 "payload": {
                     "type": "object",
-                    "description": "Event payload (any JSON)"
+                    "additionalProperties": true,
+                    "description": "Arbitrary event payload (any valid JSON object). Wrapped opaquely in GenericMessageEnvelope for RabbitMQ routing. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "options": {
                     "$ref": "#/$defs/PublishOptions",
@@ -54,6 +56,7 @@ public partial class MessagingController
                 "exchange": {
                     "type": "string",
                     "default": "bannou",
+                    "minLength": 1,
                     "description": "Exchange name for routing"
                 },
                 "routingKey": {
@@ -62,12 +65,7 @@ public partial class MessagingController
                     "description": "Routing key for direct/topic exchanges (required for topic exchanges, ignored for fanout)"
                 },
                 "exchangeType": {
-                    "type": "string",
-                    "enum": [
-                        "fanout",
-                        "direct",
-                        "topic"
-                    ],
+                    "$ref": "#/$defs/ExchangeType",
                     "default": "topic",
                     "nullable": true,
                     "description": "Exchange type - determines how messages are routed (topic routes by routing key pattern)"
@@ -103,6 +101,15 @@ public partial class MessagingController
                     "description": "Caller-provided custom headers included with the message. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
+        },
+        "ExchangeType": {
+            "type": "string",
+            "description": "RabbitMQ exchange type determining how messages are routed",
+            "enum": [
+                "fanout",
+                "direct",
+                "topic"
+            ]
         }
     }
 }
@@ -204,11 +211,13 @@ public partial class MessagingController
             "properties": {
                 "topic": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Topic pattern to subscribe to for receiving events"
                 },
                 "callbackUrl": {
                     "type": "string",
                     "format": "uri",
+                    "minLength": 1,
                     "description": "HTTP endpoint to receive events"
                 },
                 "options": {
@@ -241,6 +250,8 @@ public partial class MessagingController
                 "prefetchCount": {
                     "type": "integer",
                     "default": 10,
+                    "minimum": 1,
+                    "maximum": 10000,
                     "description": "Number of messages to prefetch"
                 },
                 "useDeadLetter": {
@@ -442,11 +453,6 @@ public partial class MessagingController
                     "type": "string",
                     "nullable": true,
                     "description": "Filter topics by exchange name prefix"
-                },
-                "includeEmpty": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Include topics with no messages"
                 }
             }
         }
@@ -482,17 +488,12 @@ public partial class MessagingController
             "additionalProperties": false,
             "required": [
                 "name",
-                "messageCount",
                 "consumerCount"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Name of the topic/exchange"
-                },
-                "messageCount": {
-                    "type": "integer",
-                    "description": "Number of messages currently in the topic queue"
                 },
                 "consumerCount": {
                     "type": "integer",

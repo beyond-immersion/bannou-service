@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Quest;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(QuestService))]
-public class QuestServiceConfiguration : IServiceConfiguration
+public class QuestServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum concurrent active quests per character

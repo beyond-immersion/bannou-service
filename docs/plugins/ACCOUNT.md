@@ -15,7 +15,7 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 | Dependency | Usage |
 |------------|-------|
 | lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods. Uses IJsonQueryableStateStore for paginated listing via MySQL JSON queries |
-| lib-state (IDistributedLockProvider) | Distributed locks for email uniqueness during account creation (prevents TOCTOU race conditions) |
+| lib-state (IDistributedLockProvider) | Distributed locks for email uniqueness during account creation and email change (prevents TOCTOU race conditions) |
 | lib-messaging (IMessageBus) | Publishing lifecycle events (created/updated/deleted) and error events |
 | Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via DI-based `IPermissionRegistry` |
 
@@ -84,7 +84,8 @@ This plugin does not consume external events. The events schema explicitly decla
 | `AccountServiceConfiguration` | Typed access to configuration properties above |
 | `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
 | `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
-| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation |
+| `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation and email change |
+| `ITelemetryProvider` | Telemetry span instrumentation for helper methods (auth method fetch, event publishing, provider-filtered listing) |
 | `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via `IPermissionRegistry` on startup |
 
 ## API Endpoints (Implementation Notes)
@@ -105,7 +106,7 @@ The `delete` operation is a soft-delete (sets `DeletedAt` timestamp) but also cl
 
 ### Authentication Methods
 
-Add/remove OAuth provider links. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another active account (stale indexes from soft-deleted accounts are detected and overwritten). Both `AddAuthMethodAsync` and `RemoveAuthMethodAsync` use ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`) on the auth methods list, returning `Conflict` on concurrent modification. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index.
+`auth-methods/list` returns all linked OAuth methods for an account (verifies account exists and is not deleted first). Add/remove OAuth provider links via `auth-methods/add` and `auth-methods/remove`. Adding a method validates: (1) non-empty ExternalId required, (2) provider not already linked on this account (same provider+externalId), (3) provider:externalId not claimed by another active account (stale indexes from soft-deleted accounts are detected and overwritten). Both `AddAuthMethodAsync` and `RemoveAuthMethodAsync` use ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`) on the auth methods list, returning `Conflict` on concurrent modification. Creates both the auth method entry in the `auth-methods-{accountId}` list and a `provider-index-` entry for reverse lookup. Removing a method includes orphan prevention (see Intentional Quirks #7) and cleans up both the auth method list and provider index.
 
 ### Bulk Operations
 
@@ -113,11 +114,12 @@ Add/remove OAuth provider links. Adding a method validates: (1) non-empty Extern
 - `count`: Uses `IJsonQueryableStateStore.JsonCountAsync()` for a pure SQL `SELECT COUNT(*)` with the same filter conditions as `list` (email, displayName, verified), plus a `role` filter that uses `JSON_CONTAINS` on the `$.Roles` array. The `BuildAccountQueryConditions` helper automatically includes the type discriminator and soft-delete exclusion conditions.
 - `roles/bulk-update`: Adds and/or removes roles from up to 100 accounts. Processes sequentially with per-account ETag-based optimistic concurrency. Returns partial success: `succeeded` and `failed` lists with error reasons. Publishes `account.updated` events individually for each changed account. No-op (roles already match) counts as success without publishing an event.
 
-### Profile & Password
+### Profile, Password & MFA
 
-- `profile/update`: User-facing endpoint (not admin-only) for updating display name and metadata.
+- `profile/update`: User-facing endpoint (not admin-only) for updating display name and metadata. Returns early without saving or publishing an event if nothing changed.
 - `password/update`: Stores a pre-hashed password received from the Auth service. Account service never handles raw passwords.
 - `verification/update`: Sets the `IsVerified` flag.
+- `mfa/update`: Updates MFA settings (enabled flag, encrypted TOTP secret, hashed recovery codes). Auth service owns the encryption/hashing; Account stores opaque ciphertext and hashes. Publishes `account.updated` with `changedFields: ["mfaEnabled", "mfaSecret", "mfaRecoveryCodes"]`.
 
 ### Email Change
 
@@ -133,6 +135,7 @@ account-{id} ──────────────────────�
   ├─ DisplayName                                        │ Same store,
   ├─ IsVerified                                         │ different
   ├─ Roles[]                                            │ key prefixes
+  ├─ MfaEnabled, MfaSecret?, MfaRecoveryCodes?           │
   ├─ Metadata{}                                         │
   └─ CreatedAtUnix / UpdatedAtUnix / DeletedAtUnix      │
                                                         │
@@ -157,9 +160,7 @@ On Delete: email-index removed (if exists),             │
 
 - **Account merge**: No mechanism exists to merge two accounts (e.g., when a user registers with email then later tries to register with the same OAuth provider under a different email). The data model supports multiple auth methods per account, but there's no merge workflow.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/137 -->
-- **Audit trail**: Account mutations publish events but don't maintain a per-account change history. An extension could store a changelog for compliance/debugging.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/138 -->
-- ~~**Email change**: There is no endpoint for changing an account's email address.~~: **FIXED** (2026-02-08) - Added `/account/email/update` endpoint with distributed lock, atomic index swap, and IsVerified reset. See Issue #139.
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -174,13 +175,13 @@ On Delete: email-index removed (if exists),             │
 
 3. **Auto-managed anonymous role**: When `AutoManageAnonymousRole` is true (default), both `UpdateAccountAsync` and `BulkUpdateRolesAsync` automatically manage the "anonymous" role: removing roles that would leave zero roles adds "anonymous", and adding a non-anonymous role removes "anonymous" if present. This logic is **not** applied during `CreateAccountAsync` (which defaults to "user"). This ensures accounts always have at least one role for permission resolution.
 
-4. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:302-305). This ensures newly registered accounts have basic authenticated API access.
+4. **Default "user" role on creation**: When an account is created with no roles specified, the "user" role is automatically assigned (AccountService.cs:345). This ensures newly registered accounts have basic authenticated API access.
 
-5. **Password hash exposed in by-email response only**: The `GetAccountByEmailAsync` endpoint includes `PasswordHash` in the response (line 629), while the standard `GetAccountAsync` does not. This is intentional - the Auth service needs the hash for password verification during login, but general account lookups should not expose it.
+5. **Password hash exposed in by-email response only**: The `GetAccountByEmailAsync` endpoint includes `PasswordHash` in the response (AccountService.cs:648), while the standard `GetAccountAsync` does not. This is intentional - the Auth service needs the hash for password verification during login, but general account lookups should not expose it.
 
 6. **Provider index key format**: Provider indices use the format `provider-index-{provider}:{externalId}` where provider is the enum value (e.g., `provider-index-Discord:123456`). The colon separator is intentional to create a pseudo-hierarchical key space.
 
-7. **Auth method removal prevents account orphaning**: The `RemoveAuthMethodAsync` endpoint includes a safety check (AccountService.cs:1118-1129) that rejects removal of the last auth method if the account has no password. This prevents accounts from becoming completely inaccessible. Returns `BadRequest` if removal would leave no authentication mechanism.
+7. **Auth method removal prevents account orphaning**: The `RemoveAuthMethodAsync` endpoint includes a safety check (AccountService.cs:1068-1078) that rejects removal of the last auth method if the account has no password. This prevents accounts from becoming completely inaccessible. Returns `BadRequest` if removal would leave no authentication mechanism.
 
 8. **Provider index ownership validation with stale detection**: When adding an auth method, `AddAuthMethodAsync` checks if another account already owns the provider:externalId combination. If the owning account is soft-deleted (stale index from incomplete cleanup), the orphaned index is overwritten with a log message. Only returns `Conflict` if the owning account is still active.
 
@@ -192,15 +193,4 @@ None identified.
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
 
-### Completed
-
-- **#139 Email Change Endpoint** (2026-02-08): Added `/account/email/update` with distributed lock on new email, atomic index swap, IsVerified reset, and event publication.
-- **#332 Production Hardening** (2026-02-08): Applied all 7 fixes for 100K+ scale:
-  - BUG-1: Added distributed lock (`account-lock` Redis store) for email uniqueness in `CreateAccountAsync`
-  - BUG-2: Added ETag concurrency to `AddAuthMethodAsync` (matching `RemoveAuthMethodAsync`)
-  - BUG-3: Computed `HasNextPage`/`HasPreviousPage` in both list endpoints (made required in schema)
-  - BUG-4: Capped provider-filtered list with `JsonQueryPagedAsync` and `ProviderFilterMaxScanSize` config
-  - INCON-1: Applied `AutoManageAnonymousRole` in `UpdateAccountAsync` (consistent with `BulkUpdateRolesAsync`)
-  - INCON-2: Added stale index detection in `AddAuthMethodAsync` (overwrites orphaned provider indexes from soft-deleted accounts)
-  - HARD-3: Removed dead `IEventConsumer` wiring (closes #136)
-  - Closed #140 (bulk create/delete) as won't-implement
+*No active work items.*

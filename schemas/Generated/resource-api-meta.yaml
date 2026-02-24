@@ -639,15 +639,22 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the resource
         to compress\"\n                },\n                \"deleteSourceData\": {\n                    \"type\": \"boolean\"\
         ,\n                    \"default\": false,\n                    \"description\": \"If true, invoke cleanup callbacks
-        after successful archival\"\n                },\n                \"compressionPolicy\": {\n                    \"\
-        $ref\": \"#/$defs/CompressionPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Override policy (uses default from config if not specified)\"\n                },\n                \"dryRun\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"If true, return what would be compressed without executing\"\n                }\n            }\n        },\n \
-        \       \"CompressionPolicy\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"BEST_EFFORT\"\
-        ,\n                \"ALL_REQUIRED\"\n            ],\n            \"description\": \"Policy for compression callback
-        execution.\\nBEST_EFFORT: Create archive even if some callbacks fail (partial archive)\\nALL_REQUIRED: Abort compression
-        if any callback fails\\n\"\n        }\n    }\n}"
+        after successful archival\"\n                },\n                \"deleteSourceDataPolicy\": {\n                 \
+        \   \"$ref\": \"#/$defs/CleanupPolicy\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Cleanup policy for source data deletion after archival.\\nOnly applies when deleteSourceData is true.\\nIf not
+        specified, uses the configured DefaultCleanupPolicy.\\n\"\n                },\n                \"compressionPolicy\"\
+        : {\n                    \"$ref\": \"#/$defs/CompressionPolicy\",\n                    \"nullable\": true,\n     \
+        \               \"description\": \"Override policy (uses default from config if not specified)\"\n               \
+        \ },\n                \"dryRun\": {\n                    \"type\": \"boolean\",\n                    \"default\":
+        false,\n                    \"description\": \"If true, return what would be compressed without executing\"\n    \
+        \            }\n            }\n        },\n        \"CleanupPolicy\": {\n            \"type\": \"string\",\n     \
+        \       \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\n            ],\n        \
+        \    \"description\": \"Policy for cleanup callback execution.\\nBEST_EFFORT: Proceed with deletion even if some callbacks
+        fail\\nALL_REQUIRED: Abort deletion if any callback fails\\n\"\n        },\n        \"CompressionPolicy\": {\n   \
+        \         \"type\": \"string\",\n            \"enum\": [\n                \"BEST_EFFORT\",\n                \"ALL_REQUIRED\"\
+        \n            ],\n            \"description\": \"Policy for compression callback execution.\\nBEST_EFFORT: Create
+        archive even if some callbacks fail (partial archive)\\nALL_REQUIRED: Abort compression if any callback fails\\n\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExecuteCompressResponse\"\
         ,\n    \"$defs\": {\n        \"ExecuteCompressResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Compression execution result\",\n            \"required\": [\n          \
@@ -1231,8 +1238,10 @@ paths:
         \               \"type\": \"string\",\n                    \"description\": \"Base64-encoded resource content\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Optional key-value metadata\"\n          \
-        \      }\n            }\n        }\n    }\n}"
+        \           \"nullable\": true,\n                    \"description\": \"Client-only key-value metadata provided by
+        the seeded resource provider.\\nUsed for client display hints and debugging context (e.g., source assembly,\\nfile
+        origin). NOT a cross-service data contract per FOUNDATION TENETS \\u2014\\nplugins MUST NOT read metadata keys from
+        other providers by convention.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a seeded resource by type and identifier\",\n    \"description\": \"\
         Retrieves the content and metadata of a seeded resource.\\nReturns found=false if the resource type or identifier
         is not found.\\n\\nContent is returned as base64-encoded bytes with contentType indicating\\nthe MIME type for proper
@@ -1825,6 +1834,13 @@ components:
           type: boolean
           default: false
           description: If true, invoke cleanup callbacks after successful archival
+        deleteSourceDataPolicy:
+          $ref: '#/components/schemas/CleanupPolicy'
+          nullable: true
+          description: |
+            Cleanup policy for source data deletion after archival.
+            Only applies when deleteSourceData is true.
+            If not specified, uses the configured DefaultCleanupPolicy.
         compressionPolicy:
           $ref: '#/components/schemas/CompressionPolicy'
           nullable: true
@@ -2474,4 +2490,8 @@ components:
           additionalProperties:
             type: string
           nullable: true
-          description: Optional key-value metadata
+          description: |
+            Client-only key-value metadata provided by the seeded resource provider.
+            Used for client display hints and debugging context (e.g., source assembly,
+            file origin). NOT a cross-service data contract per FOUNDATION TENETS —
+            plugins MUST NOT read metadata keys from other providers by convention.

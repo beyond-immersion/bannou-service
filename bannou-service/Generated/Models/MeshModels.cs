@@ -49,7 +49,7 @@ public partial class MeshEndpoint
     /// Bannou app-id (e.g., "bannou", "bannou-npc-01")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
@@ -57,7 +57,7 @@ public partial class MeshEndpoint
     /// Hostname or IP address
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("host")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Host { get; set; } = default!;
 
@@ -99,22 +99,22 @@ public partial class MeshEndpoint
     public int CurrentConnections { get; set; } = default!;
 
     /// <summary>
-    /// List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')
+    /// List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
-    /// Last heartbeat timestamp
+    /// Last heartbeat timestamp (null if never seen)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastSeen")]
-    public System.DateTimeOffset LastSeen { get; set; } = default!;
+    public System.DateTimeOffset? LastSeen { get; set; } = default!;
 
     /// <summary>
-    /// When endpoint was first registered
+    /// When endpoint was first registered (null if unknown)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("registeredAt")]
-    public System.DateTimeOffset RegisteredAt { get; set; } = default!;
+    public System.DateTimeOffset? RegisteredAt { get; set; } = default!;
 
     /// <summary>
     /// List of non-critical issues reported via heartbeat (null if none)
@@ -174,6 +174,69 @@ public enum LoadBalancerAlgorithm
 #pragma warning restore CS1591
 
 /// <summary>
+/// Reason why an endpoint was removed from the mesh
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeregistrationReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Graceful")]
+    Graceful = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TtlExpired")]
+    TtlExpired = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HealthCheckFailed")]
+    HealthCheckFailed = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CircuitBreakerTripped")]
+    CircuitBreakerTripped = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Circuit breaker state for mesh endpoints
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CircuitState
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
+    Closed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
+    Open = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
+    HalfOpen = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason why an endpoint was marked as degraded
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DegradedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MissedHeartbeat")]
+    MissedHeartbeat = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HighLoad")]
+    HighLoad = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HighConnectionCount")]
+    HighConnectionCount = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to get endpoints for a service
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -184,7 +247,7 @@ public partial class GetEndpointsRequest
     /// App-id to get endpoints for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
@@ -208,14 +271,6 @@ public partial class GetEndpointsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetEndpointsResponse
 {
-
-    /// <summary>
-    /// The app-id that was queried
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AppId { get; set; } = default!;
 
     /// <summary>
     /// List of endpoints for the requested app-id
@@ -344,7 +399,7 @@ public partial class RegisterEndpointRequest
     /// App-id for this instance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
@@ -352,7 +407,7 @@ public partial class RegisterEndpointRequest
     /// Hostname or IP address to register
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("host")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Host { get; set; } = default!;
 
@@ -415,6 +470,15 @@ public partial class DeregisterEndpointRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid InstanceId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Empty response. HTTP 200 confirms the endpoint was deregistered.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeregisterEndpointResponse
+{
 
 }
 
@@ -494,7 +558,7 @@ public partial class GetRouteRequest
     /// Target app-id to route to
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string AppId { get; set; } = default!;
 
@@ -529,7 +593,7 @@ public partial class GetRouteResponse
     public MeshEndpoint Endpoint { get; set; } = new MeshEndpoint();
 
     /// <summary>
-    /// Alternative endpoints if primary fails
+    /// Alternative endpoints if primary fails (empty array if none)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alternates")]
     public System.Collections.Generic.ICollection<MeshEndpoint> Alternates { get; set; } = default!;
@@ -626,22 +690,16 @@ public partial class MeshHealthResponse
     public bool RedisConnected { get; set; } = default!;
 
     /// <summary>
-    /// Timestamp of the last health status update
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("lastUpdateTime")]
-    public System.DateTimeOffset LastUpdateTime { get; set; } = default!;
-
-    /// <summary>
-    /// Mesh service uptime (e.g., "2d 5h 30m")
+    /// Mesh service uptime (e.g., "2d 5h 30m"). Null if unavailable.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uptime")]
-    public string Uptime { get; set; } = default!;
+    public string? Uptime { get; set; } = default!;
 
     /// <summary>
-    /// Full endpoint list (only if includeEndpoints=true)
+    /// Full endpoint list (null unless includeEndpoints=true)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
-    public System.Collections.Generic.ICollection<MeshEndpoint> Endpoints { get; set; } = default!;
+    public System.Collections.Generic.ICollection<MeshEndpoint>? Endpoints { get; set; } = default!;
 
 }
 

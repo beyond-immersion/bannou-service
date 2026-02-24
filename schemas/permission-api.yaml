@@ -248,13 +248,9 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sessionId
       - permissions
+      - generatedAt
       properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: Session ID that was queried
         permissions:
           type: object
           additionalProperties:
@@ -282,9 +278,11 @@ components:
           description: Session ID to validate access for
         serviceId:
           type: string
+          minLength: 1
           description: Target service ID
         endpoint:
           type: string
+          minLength: 1
           description: Endpoint path being accessed (e.g., "/account/get")
 
     ValidationResponse:
@@ -293,18 +291,14 @@ components:
       additionalProperties: false
       required:
       - allowed
-      - sessionId
       properties:
         allowed:
           type: boolean
           description: Whether access is permitted
-        sessionId:
-          type: string
-          format: uuid
-          description: Session ID that was validated
         reason:
           type: string
-          description: Reason for denial (if applicable)
+          nullable: true
+          description: Reason for denial, null when access is allowed
 
     # Service Management Models
     ServicePermissionMatrix:
@@ -317,6 +311,7 @@ components:
       properties:
         serviceId:
           type: string
+          minLength: 1
           description: Unique service identifier
         serviceName:
           type: string
@@ -329,7 +324,8 @@ components:
           description: Map of State -> Role -> Methods structure
         version:
           type: string
-          description: Service API version for change tracking
+          nullable: true
+          description: Service API version for change tracking (null if not provided)
 
     StatePermissions:
       type: object
@@ -343,29 +339,10 @@ components:
         admin: ["ListGameSessions", "GetGameSession", "CreateGameSession"]
 
     RegistrationResponse:
-      description: Response from registering or updating a service permission matrix
+      description: Empty response. HTTP 200 confirms the registration succeeded.
       type: object
       additionalProperties: false
-      required:
-      - serviceId
-      - affectedSessions
-      properties:
-        serviceId:
-          type: string
-          description: Service ID that was registered
-        message:
-          type: string
-          description: Success or error message
-        registered:
-          type: boolean
-          description: Whether registration was successful
-        affectedSessions:
-          type: integer
-          description: Number of sessions that had permissions recompiled
-        recompiledAt:
-          type: string
-          format: date-time
-          description: Timestamp when permissions were recompiled
+      properties: {}
 
     # Session Management Models
     SessionStateUpdate:
@@ -383,19 +360,16 @@ components:
           description: Session ID to update state for
         serviceId:
           type: string
+          minLength: 1
           description: Service whose state is changing for this session
         newState:
           type: string
+          minLength: 1
           description: New state value (lobby, in_game, etc.)
         previousState:
           type: string
           description: Previous state value (null for initial state)
           nullable: true
-        metadata:
-          type: object
-          additionalProperties: true
-          nullable: true
-          description: Optional context data (null if none)
 
     SessionRoleUpdate:
       description: Request to update a session's role affecting permissions across all services
@@ -411,6 +385,7 @@ components:
           description: Session ID to update role for
         newRole:
           type: string
+          minLength: 1
           description: New role (user, admin, etc.)
         previousRole:
           type: string
@@ -447,16 +422,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sessionId
       - permissionsChanged
       properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: Session ID that was updated
-        message:
-          type: string
-          description: Success or error message
         permissionsChanged:
           type: boolean
           description: Whether compiled permissions actually changed
@@ -466,11 +433,8 @@ components:
             type: array
             items:
               type: string
-          description: Updated ServiceID -> Methods if permissions changed
-        updatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the session was updated
+          nullable: true
+          description: Updated ServiceID -> Methods map, null if permissions did not change
 
     # Session Information Models
     SessionInfoRequest:
@@ -490,17 +454,15 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sessionId
       - role
       - states
       - permissions
+      - version
+      - lastUpdated
       properties:
-        sessionId:
-          type: string
-          format: uuid
-          description: Session ID being queried
         role:
           type: string
+          minLength: 1
           description: Current session role
         states:
           type: object
@@ -514,15 +476,9 @@ components:
             items:
               type: string
           description: Map of ServiceID -> List of available methods
-        compiledPermissions:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              type: string
-          description: Map of ServiceID -> List of available methods
         version:
           type: integer
+          minimum: 0
           description: Permission version number
         lastUpdated:
           type: string
@@ -554,17 +510,22 @@ components:
       additionalProperties: false
       required:
       - serviceId
+      - serviceName
+      - version
       - registeredAt
       - endpointCount
       properties:
         serviceId:
           type: string
+          minLength: 1
           description: Unique service identifier
         serviceName:
           type: string
+          minLength: 1
           description: Human-readable service name
         version:
           type: string
+          minLength: 1
           description: Service API version
         registeredAt:
           type: string
@@ -572,7 +533,26 @@ components:
           description: When the service registered its permissions
         endpointCount:
           type: integer
+          minimum: 0
           description: Number of API endpoints registered by this service
+
+    # Enums shared with permission-events.yaml
+    CapabilityUpdateType:
+      type: string
+      enum:
+      - full
+      - delta
+      description: Type of capability update — full capabilities or delta changes
+
+    CapabilityUpdateReason:
+      type: string
+      enum:
+      - session_created
+      - session_state_changed
+      - role_changed
+      - service_registered
+      - manual_refresh
+      description: Reason for the capability update
 
 # NOTE: Event subscriptions are defined in permission-events.yaml
 # They are processed by generate-event-subscriptions.sh to generate PermissionsEventsController.cs

@@ -78,8 +78,8 @@ public class Controllers : IClassFixture<CollectionFixture>
     [Fact]
     public void Controllers_FindServiceControllers_Enabled()
     {
-        Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), null);
-        Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), null);
+        Environment.SetEnvironmentVariable("CONTROLLERTESTS.ONECONTROLLER_SERVICE_ENABLED", null);
+        Environment.SetEnvironmentVariable("CONTROLLERTESTS.MULTIPLECONTROLLERS_SERVICE_ENABLED", null);
 
         try
         {
@@ -90,8 +90,9 @@ public class Controllers : IClassFixture<CollectionFixture>
             Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
             Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), "true");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), "false");
+            // Disable OneController, leave MultipleControllers enabled
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.ONECONTROLLER_SERVICE_ENABLED", "false");
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.MULTIPLECONTROLLERS_SERVICE_ENABLED", "true");
             serviceControllers = IBannouController.EnabledServiceControllers;
             Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoAttribute));
             Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoService));
@@ -99,8 +100,9 @@ public class Controllers : IClassFixture<CollectionFixture>
             Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerA_MultipleControllers));
             Assert.Contains(serviceControllers, t => t.Item1 == typeof(ControllerB_MultipleControllers));
 
-            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), "false");
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), "true");
+            // Enable OneController, disable MultipleControllers
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.ONECONTROLLER_SERVICE_ENABLED", "true");
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.MULTIPLECONTROLLERS_SERVICE_ENABLED", "false");
             serviceControllers = IBannouController.EnabledServiceControllers;
             Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoAttribute));
             Assert.DoesNotContain(serviceControllers, t => t.Item1 == typeof(Controller_NoService));
@@ -110,8 +112,8 @@ public class Controllers : IClassFixture<CollectionFixture>
         }
         finally
         {
-            Environment.SetEnvironmentVariable("ControllerTests.OneController_Service_Disabled".ToUpper(), null);
-            Environment.SetEnvironmentVariable("ControllerTests.MultipleControllers_Service_Disabled".ToUpper(), null);
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.ONECONTROLLER_SERVICE_ENABLED", null);
+            Environment.SetEnvironmentVariable("CONTROLLERTESTS.MULTIPLECONTROLLERS_SERVICE_ENABLED", null);
         }
     }
 

@@ -10,6 +10,7 @@ using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
+using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -78,6 +79,11 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.subscribe",
+            ActivityKind.Client);
+        activity?.SetTag("messaging.destination", topic);
 
         // Check if already subscribed
         if (_staticSubscriptions.ContainsKey(topic))
@@ -98,7 +104,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             // Declare the exchange (topic for service events - routes by routing key pattern)
             await channel.ExchangeDeclareAsync(
                 exchange: effectiveExchange,
-                type: ExchangeType.Topic,
+                type: RmqExchangeType.Topic,
                 durable: true,
                 autoDelete: false,
                 arguments: null,
@@ -129,7 +135,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume",
                     ActivityKind.Consumer,
@@ -206,6 +212,11 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.subscribe_dynamic",
+            ActivityKind.Client);
+        activity?.SetTag("messaging.destination", topic);
 
         var subscriptionId = Guid.NewGuid();
         var queueName = $"{topic}.dynamic.{subscriptionId:N}";
@@ -214,9 +225,9 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
         {
-            SubscriptionExchangeType.Direct => ExchangeType.Direct,
-            SubscriptionExchangeType.Fanout => ExchangeType.Fanout,
-            _ => ExchangeType.Topic
+            SubscriptionExchangeType.Direct => RmqExchangeType.Direct,
+            SubscriptionExchangeType.Fanout => RmqExchangeType.Fanout,
+            _ => RmqExchangeType.Topic
         };
 
         try
@@ -259,7 +270,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume",
                     ActivityKind.Consumer,
@@ -339,6 +350,11 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.subscribe_dynamic_raw",
+            ActivityKind.Client);
+        activity?.SetTag("messaging.destination", topic);
 
         var subscriptionId = Guid.NewGuid();
         // Use provided queue name for deterministic naming (reconnection support), or generate one
@@ -348,9 +364,9 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         // Map enum to RabbitMQ exchange type
         var rabbitExchangeType = exchangeType switch
         {
-            SubscriptionExchangeType.Direct => ExchangeType.Direct,
-            SubscriptionExchangeType.Fanout => ExchangeType.Fanout,
-            _ => ExchangeType.Topic
+            SubscriptionExchangeType.Direct => RmqExchangeType.Direct,
+            SubscriptionExchangeType.Fanout => RmqExchangeType.Fanout,
+            _ => RmqExchangeType.Topic
         };
 
         // When TTL is specified, create a durable queue that expires after being unused
@@ -412,7 +428,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume.raw",
                     ActivityKind.Consumer,
@@ -487,6 +503,11 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <inheritdoc/>
     public async Task UnsubscribeAsync(string topic)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.unsubscribe",
+            ActivityKind.Client);
+        activity?.SetTag("messaging.destination", topic);
 
         if (_staticSubscriptions.TryRemove(topic, out var subscription))
         {
@@ -514,31 +535,79 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// </summary>
     internal async Task RemoveDynamicSubscriptionAsync(Guid subscriptionId)
     {
-        if (_dynamicSubscriptions.TryRemove(subscriptionId, out var subscription))
-        {
-            try
-            {
-                await subscription.Channel.BasicCancelAsync(subscription.ConsumerTag);
-                await subscription.Channel.CloseAsync();
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.remove_dynamic_subscription",
+            ActivityKind.Client);
 
-                _logger.LogDebug(
-                    "Removed dynamic subscription {SubscriptionId} for topic '{Topic}'",
-                    subscriptionId,
-                    subscription.Topic);
-            }
-            catch (Exception ex)
+        DynamicSubscription? subscription = null;
+        try
+        {
+            if (!_dynamicSubscriptions.TryRemove(subscriptionId, out subscription))
             {
-                _logger.LogError(
-                    ex,
-                    "Failed to remove dynamic subscription {SubscriptionId}",
-                    subscriptionId);
-                throw;
+                return;
+            }
+
+            await subscription.Channel.BasicCancelAsync(subscription.ConsumerTag);
+            await subscription.Channel.CloseAsync();
+
+            _logger.LogDebug(
+                "Removed dynamic subscription {SubscriptionId} for topic '{Topic}'",
+                subscriptionId,
+                subscription.Topic);
+
+            subscription = null; // Cleanup complete - prevents double dispose in finally
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to remove dynamic subscription {SubscriptionId}",
+                subscriptionId);
+            throw;
+        }
+        finally
+        {
+            // Best-effort cleanup if exception occurred before channel was closed
+            if (subscription != null)
+            {
+                try
+                {
+                    await subscription.Channel.CloseAsync();
+                }
+                catch
+                {
+                    // Ignore errors during emergency cleanup
+                }
             }
         }
     }
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()
+    {
+        var timeout = TimeSpan.FromSeconds(_configuration.ShutdownTimeoutSeconds);
+
+        try
+        {
+            await CleanupSubscriptionsAsync().WaitAsync(timeout);
+        }
+        catch (TimeoutException)
+        {
+            _logger.LogWarning(
+                "Subscription cleanup did not complete within {TimeoutSeconds}s, forcing shutdown",
+                _configuration.ShutdownTimeoutSeconds);
+        }
+
+        _staticSubscriptions.Clear();
+        _dynamicSubscriptions.Clear();
+        _logger.LogInformation("RabbitMQMessageSubscriber disposed");
+    }
+
+    /// <summary>
+    /// Cleans up all active subscriptions by cancelling consumers and closing channels.
+    /// </summary>
+    private async Task CleanupSubscriptionsAsync()
     {
         // Clean up all static subscriptions
         foreach (var (topic, subscription) in _staticSubscriptions)
@@ -553,7 +622,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 _logger.LogError(ex, "Error stopping subscription for topic '{Topic}'", topic);
             }
         }
-        _staticSubscriptions.Clear();
 
         // Clean up all dynamic subscriptions
         foreach (var (id, subscription) in _dynamicSubscriptions)
@@ -568,9 +636,6 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 _logger.LogError(ex, "Error stopping dynamic subscription {SubscriptionId}", id);
             }
         }
-        _dynamicSubscriptions.Clear();
-
-        _logger.LogInformation("RabbitMQMessageSubscriber disposed");
     }
 
     private string BuildQueueName(string topic, SubscriptionOptions options)
@@ -593,7 +658,8 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
             ["x-dead-letter-routing-key"] = "dead-letter",
             ["x-max-length"] = _configuration.DeadLetterMaxLength,
             ["x-message-ttl"] = _configuration.DeadLetterTtlMs,
-            ["x-overflow"] = _configuration.DeadLetterOverflowBehavior
+            // External service (RabbitMQ): x-overflow expects kebab-case string from EnumMember attribute
+            ["x-overflow"] = BannouJson.Serialize(_configuration.DeadLetterOverflowBehavior).Trim('"')
         };
     }
 

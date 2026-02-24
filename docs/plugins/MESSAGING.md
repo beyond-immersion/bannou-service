@@ -114,7 +114,7 @@ This plugin does not consume external events (it IS the event infrastructure).
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `EnablePublisherConfirms` | `MESSAGING_ENABLE_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
+| `EnablePublisherConfirms` | `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` | `true` | Enable broker confirmation for at-least-once delivery |
 
 When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker confirmation before returning (RabbitMQ.Client 7.x pattern). The timeout is managed internally by RabbitMQ.Client 7.x and is not configurable.
 
@@ -141,6 +141,8 @@ When `EnablePublisherConfirms` is true, `BasicPublishAsync` waits for broker con
 | `DeadLetterMaxLength` | `MESSAGING_DEAD_LETTER_MAX_LENGTH` | `100000` | Max messages in DLX queue before oldest dropped |
 | `DeadLetterTtlMs` | `MESSAGING_DEAD_LETTER_TTL_MS` | `604800000` | TTL for DLX messages (7 days) |
 | `DeadLetterOverflowBehavior` | `MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR` | `"drop-head"` | Behavior when DLX exceeds max length |
+| `DeadLetterConsumerEnabled` | `MESSAGING_DEAD_LETTER_CONSUMER_ENABLED` | `true` | Enable dead letter consumer background service |
+| `DeadLetterConsumerStartupDelaySeconds` | `MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS` | `5` | Delay before consumer starts subscribing |
 
 ### Poison Message Handling (Retry Buffer)
 
@@ -172,6 +174,12 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | `SubscriptionRecoveryStartupDelaySeconds` | `MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS` | `2` | Delay before recovery on startup |
 | `ExternalSubscriptionTtlSeconds` | `MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS` | `86400` | External subscription persistence TTL (24h) |
 
+### Shutdown Settings
+
+| Property | Env Var | Default | Purpose |
+|----------|---------|---------|---------|
+| `ShutdownTimeoutSeconds` | `MESSAGING_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Max seconds to wait for graceful subscription cleanup during shutdown |
+
 ---
 
 ## DI Services & Helpers
@@ -187,6 +195,8 @@ These settings apply to the **MessageRetryBuffer** (publish failures). After `Re
 | `MessageRetryBuffer` | Singleton | Transient publish failure recovery with crash-fast |
 | `NativeEventConsumerBackend` | HostedService | Bridges IEventConsumer fan-out to RabbitMQ |
 | `MessagingSubscriptionRecoveryService` | HostedService | Recovers external subscriptions on startup, refreshes TTL |
+| `DeadLetterConsumerService` | HostedService | Consumes dead-lettered messages, logs with structured data, publishes error events |
+| `MessagingUnhandledExceptionHandler` | Singleton | Publishes `ServiceErrorEvent` via IMessageBus for unhandled exceptions; AsyncLocal cycle prevention |
 | `MessagingService` | Singleton | HTTP API implementation (also registered as concrete for recovery service) |
 
 Service lifetime is **Singleton** (infrastructure must persist across requests).
@@ -198,7 +208,7 @@ Service lifetime is **Singleton** (infrastructure must persist across requests).
 | `GenericMessageEnvelope` | Wraps arbitrary JSON payloads for MassTransit compatibility; implements `IBannouEvent` |
 | `TappedMessageEnvelope` | Extended envelope with tap routing metadata for multi-stream forwarding |
 | `ExternalSubscriptionData` | Record type for persisting HTTP callback subscriptions |
-| `IProcessTerminator` | Interface for crash-fast behavior; `EnvironmentProcessTerminator` calls `Environment.Exit(1)` |
+| `IProcessTerminator` | Interface for crash-fast behavior; `DefaultProcessTerminator` calls `Environment.FailFast(string)` |
 
 ---
 
@@ -218,7 +228,7 @@ Removes subscription from in-memory tracking and persistent state store. Dispose
 
 ### List Topics (`/messaging/list-topics`)
 
-Returns topics from active subscriptions only. MessageCount always 0 (would require RabbitMQ management API). Only sees topics with active subscriptions on current node. Filters by exchangeFilter prefix. Counts consumers per topic from active subscriptions.
+Returns topics from active HTTP callback subscriptions on the current node. Returns topic name and consumer count per topic. Filters by exchangeFilter prefix.
 
 ---
 
@@ -245,17 +255,17 @@ Messaging Architecture
     │ TryPublishRawAsync()│    │ Dynamic subscriptions   │    │ Crash-fast if      │
     │ TryPublishErrorAsync│    │ Raw subscriptions       │    │ buffer exceeds     │
     └─────────────────────┘    └──────────┬─────────────┘    │ limits             │
-              ▲                           │                   └────────────────────┘
-              │                           ▼
-              │               ┌───────────────────────┐
-              │               │NativeEventConsumerBackend│
-              │               │ (IHostedService)        │
-              │               │                         │
-              │               │ Bridges RabbitMQ to     │
-              │               │ IEventConsumer fan-out  │
-              │               │ (per-plugin handlers)   │
-              │               └─────────────────────────┘
-              │
+              ▲                           │                   └───────┬────────────┘
+              │                           ▼                           │ (on exhaustion)
+              │               ┌───────────────────────┐               ▼
+              │               │NativeEventConsumerBackend│    ┌──────────────────────┐
+              │               │ (IHostedService)        │    │DeadLetterConsumer    │
+              │               │                         │    │Service (IHostedService)│
+              │               │ Bridges RabbitMQ to     │    │                      │
+              │               │ IEventConsumer fan-out  │    │ Reads DLX queue      │
+              │               │ (per-plugin handlers)   │    │ Logs + error events  │
+              │               └─────────────────────────┘    │ Acks after processing│
+              │                                              └──────────────────────┘
     ┌─────────┴─────────┐         ┌──────────────────────┐
     │ RabbitMQConnection │         │  RabbitMQMessageTap   │
     │ Manager            │         │  (IMessageTap)        │
@@ -271,17 +281,16 @@ Messaging Architecture
 
 ## Stubs & Unimplemented Features
 
-1. **Lifecycle events**: MessagePublished, SubscriptionCreated/Removed were planned but never implemented.
-2. **ListTopics MessageCount**: Always returns 0 (would require RabbitMQ Management HTTP API).
-3. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts not yet exposed.
+None. All previously listed stubs have been resolved:
+- **Lifecycle events**: Correctly rejected — messaging IS the event infrastructure; self-referential events would be circular and noisy. Observability is handled by T30 telemetry spans on all async methods.
+- **ListTopics MessageCount**: Removed from schema — "topic message count" is not a coherent RabbitMQ concept (topics are routing keys, not queues). The field always returned 0, which is actively misleading. Queue depth monitoring belongs in RabbitMQ Management API or Prometheus exporters.
 
 ---
 
 ## Potential Extensions
 
-1. **RabbitMQ Management API integration**: Enable accurate message counts and queue depth monitoring.
-2. **Prometheus metrics**: Publish/subscribe rates, buffer depth, retry counts.
-3. **Dead-letter processing consumer**: Background service to process DLX queue and handle poison messages (alerting, logging, reprocessing).
+1. **Observable gauge metrics for buffer depth, retry counts, and channel pool utilization**: Publish/subscribe rate counters and duration histograms are already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram` in `RabbitMQMessageBus` and `RabbitMQMessageSubscriber`. Three application-level gauge metrics remain unimplemented: retry buffer depth (from `IRetryBuffer.BufferCount`), per-attempt retry counts (from `MessageRetryBuffer` retry loop), and channel pool utilization (from `IChannelManager.TotalActiveChannels`/`PooledChannelCount`). These are in-process values that no sidecar exporter can observe — they require `ObservableGauge` support in `ITelemetryProvider`, which currently only exposes `RecordCounter` and `RecordHistogram`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/453 -->
 
 ---
 
@@ -313,17 +322,13 @@ No bugs identified.
 
 8. **DLX queue size limits**: Dead letter queue has configurable max length (default 100k messages) and TTL (default 7 days). When limits are exceeded, oldest messages are dropped (`drop-head` policy).
 
-### Design Considerations (Requires Planning)
+9. **Dead letter consumer uses IChannelManager directly**: `DeadLetterConsumerService` bypasses `IMessageSubscriber` and creates its own consumer channel via `IChannelManager.CreateConsumerChannelAsync()`. This is necessary because `SubscribeDynamicRawAsync` only passes raw bytes to the handler — dead letter processing requires access to `BasicProperties.Headers` for metadata extraction (`x-original-topic`, `x-retry-count`, `x-death`, etc.). Uses a durable shared queue (`bannou-dlx-consumer`) so accumulated dead letters are consumed even after restarts, with RabbitMQ competing consumers for multi-instance safety.
 
-1. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `List<Func<object, ...>>` which is not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
+10. **In-memory mode limitations**: `InMemoryMessageBus` delivers asynchronously via a discarded task (`_ = DeliverToSubscribersAsync(...)`, fire-and-forget). Subscriptions use `ImmutableList<Func<object, ...>>` for lock-free concurrent access but are not fully representative of RabbitMQ semantics (no queue persistence, no dead-letter, no prefetch). `InMemoryMessageTap` works in-process only and simulates exchanges by combining exchange+routing key as destination topic.
 
-2. **No graceful drain on shutdown**: `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process.
+11. **Tap auto-creates destination exchanges**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` (default `true`) that creates the destination exchange if it doesn't exist. This follows the "exchanges as implicit infrastructure" pattern (similar to RabbitMQ's own queue auto-creation) but could mask typos in exchange names — a mistyped exchange will be silently created rather than erroring.
 
-3. **ServiceId from global static**: `RabbitMQMessageBus.TryPublishErrorAsync()` accesses `Program.ServiceGUID` directly (global variable) rather than injecting it via configuration.
-
-4. **Tap creates exchange if not exists**: `RabbitMQMessageTap.CreateTapAsync()` has a `CreateExchangeIfNotExists` flag on `TapDestination` that creates the destination exchange if it doesn't exist. This is powerful but could mask configuration errors where a typo in exchange name silently creates a new exchange instead of failing.
-
-5. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation. This adds ~1-5ms latency per publish. For high-throughput scenarios, consider enabling batching via `EnablePublishBatching`.
+12. **Publisher confirms add latency**: When `EnablePublisherConfirms` is true (default), each `BasicPublishAsync` waits for broker confirmation before returning. This adds ~1-5ms latency per publish but provides at-least-once delivery guarantees. Fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` and mitigated by `MESSAGING_ENABLE_PUBLISH_BATCHING` for high-throughput scenarios.
 
 ---
 
@@ -351,6 +356,40 @@ This section tracks active development work on items from the quirks/bugs lists 
     - Fixed T7 violation: Added error event publishing (`TryPublishErrorAsync`) when poison messages are discarded
     - Fixed T21 violation: Removed dead config `PublisherConfirmTimeoutSeconds` (RabbitMQ.Client 7.x manages timeout internally)
     - Added unit tests for poison message discard scenario
+
+- **L3 Hardening Audit (2026-02-21)**:
+    - Fixed T10 violations: Removed `[Messaging]` bracket-prefix from all log messages across RabbitMQMessageBus, RabbitMQMessageSubscriber, RabbitMQConnectionManager, MessageRetryBuffer, RabbitMQMessageTap, NativeEventConsumerBackend
+    - Fixed T25 violations: Changed `TappedMessageEnvelope.DestinationExchangeType` from `string` to `TapExchangeType` enum; updated all construction sites and tests
+    - Fixed T9 violation: Replaced `List<Func<...>>` + `lock (_subscriptionLock)` in InMemoryMessageBus with lock-free `ImmutableList<Func<...>>` via `ConcurrentDictionary.AddOrUpdate` pattern
+    - Fixed T30 violations: Added telemetry spans to 15+ async methods across RabbitMQMessageBus (TryPublishRawAsync, TryPublishErrorAsync, PublishBatchAsync), RabbitMQMessageSubscriber (SubscribeAsync, SubscribeDynamicAsync, SubscribeDynamicRawAsync, UnsubscribeAsync, RemoveDynamicSubscriptionAsync), NativeEventConsumerBackend (StartAsync), RabbitMQMessageTap (CreateTapAsync, ForwardRawMessageAsync, RemoveTapAsync), RabbitMQConnectionManager (InitializeAsync, GetChannelAsync, CreateConsumerChannelAsync), MessageRetryBuffer (ProcessBufferedMessagesInternalAsync)
+    - Injected `ITelemetryProvider` into RabbitMQMessageTap, RabbitMQConnectionManager, MessageRetryBuffer (previously lacked telemetry)
+    - Fixed CA2000 dispose warnings in RabbitMQMessageTap.RemoveTapAsync and RabbitMQMessageSubscriber.RemoveDynamicSubscriptionAsync with dedicated local variable pattern
+    - Schema fixes: Added NRT compliance (`nullable: true`), validation constraints (`minLength`, `maxLength`, `minimum`, `maximum`, `pattern`), consolidated `ExchangeType` and `OverflowBehavior` enums from configuration to API schema, fixed env var naming (`MESSAGING_RABBITMQ_VHOST` → `MESSAGING_RABBITMQ_VIRTUAL_HOST`), added `description` to all schema properties
+    - Removed `messageCount` field from TopicInfo schema (always returned 0, actively misleading) and `includeEmpty` filter (referenced removed field)
+    - Removed lifecycle events from stubs list (correctly rejected — self-referential events for infrastructure are circular and noisy)
+    - All 177 unit tests passing, 0 warnings, 0 errors
+
+- **Design Consideration Resolution (2026-02-22)**:
+    - Resolved "ServiceId from global static": Replaced `Program.ServiceGUID` with `IMeshInstanceIdentifier` (new interface in bannou-service, registered by lib-mesh). `RabbitMQMessageBus.TryPublishErrorAsync()` now uses injected `_instanceId` instead of static global access. All generated clients and `IServiceNavigator` also expose `InstanceId` for consistent node identification across all services.
+    - Resolved "No graceful drain on shutdown": Added `ShutdownTimeoutSeconds` config (`MESSAGING_SHUTDOWN_TIMEOUT_SECONDS`, default 10s). `RabbitMQMessageSubscriber.DisposeAsync` now wraps subscription cleanup in `WaitAsync(timeout)` to prevent indefinite blocking when channels hang.
+    - All 177 unit tests passing, 0 warnings, 0 errors
+
+- **Dead Letter Consumer (2026-02-22)**:
+    - Implemented `DeadLetterConsumerService` as a BackgroundService that subscribes to the DLX exchange, logs dead letters with structured data, and publishes `service.error` events for downstream monitoring
+    - Added `DeadLetterConsumerEnabled` and `DeadLetterConsumerStartupDelaySeconds` configuration properties
+    - Uses `IChannelManager` directly (not `IMessageSubscriber`) because dead letter processing requires access to `BasicProperties.Headers` for metadata extraction
+    - Durable shared queue `bannou-dlx-consumer` with competing consumers for multi-instance safety
+    - Handles both explicit dead letter paths (from MessageRetryBuffer) and RabbitMQ automatic dead-lettering (nack'd messages)
+    - All 216 unit tests passing, 0 warnings, 0 errors
+
+- **Audit (2026-02-22)**:
+    - Corrected Potential Extensions #1: "Prometheus metrics" description was factually inaccurate — publish/subscribe rate counters and duration histograms already implemented via `ITelemetryProvider.RecordCounter/RecordHistogram`. Updated to accurately describe remaining gap (ObservableGauge metrics for buffer depth, retry counts, channel pool utilization). Created [Issue #453](https://github.com/beyond-immersion/bannou-service/issues/453) for ITelemetryProvider interface design decision.
+    - Reclassified Design Considerations #1 (In-memory mode limitations) to Intentional Quirks #10 after code review of `InMemoryMessageBus.cs` confirmed fire-and-forget is intentional
+
+- **Audit (2026-02-22)**:
+    - Reclassified Design Considerations #1 (Tap creates exchange if not exists) to Intentional Quirks #11 — code review confirmed `CreateExchangeIfNotExists` default `true` is deliberate "exchanges as implicit infrastructure" pattern; typo masking is an acknowledged tradeoff, not a design question
+    - Reclassified Design Considerations #2 (Publisher confirms add latency) to Intentional Quirks #12 — fully configurable via `MESSAGING_ENABLE_PUBLISHER_CONFIRMS` with batching mitigation; this is a documented performance tradeoff, not an open design question
+    - Removed Design Considerations section (all items resolved to Intentional Quirks)
 
 ### Active
 

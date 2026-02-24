@@ -186,6 +186,19 @@ if [ -f "$LIFECYCLE_EVENTS_FILE" ]; then
     # Extract $refs to common-api.yaml types (shared types like EntityType)
     LIFECYCLE_COMMON_REFS=$(extract_common_api_refs "$LIFECYCLE_EVENTS_FILE")
 
+    # Also extract common-api refs from the resolved schema — inlined complex types
+    # may contain transitive $refs to common-api.yaml that aren't in the original
+    if [ -f "$LIFECYCLE_EVENTS_RESOLVED" ]; then
+        LIFECYCLE_RESOLVED_COMMON_REFS=$(extract_common_api_refs "$LIFECYCLE_EVENTS_RESOLVED")
+        if [ -n "$LIFECYCLE_RESOLVED_COMMON_REFS" ]; then
+            if [ -n "$LIFECYCLE_COMMON_REFS" ]; then
+                LIFECYCLE_COMMON_REFS=$(echo "${LIFECYCLE_COMMON_REFS},${LIFECYCLE_RESOLVED_COMMON_REFS}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+            else
+                LIFECYCLE_COMMON_REFS="$LIFECYCLE_RESOLVED_COMMON_REFS"
+            fi
+        fi
+    fi
+
     # Build exclusion list: base exclusions + any API-referenced types + common types
     LIFECYCLE_EXCLUSIONS="ApiException,ApiException\<TResult\>,BaseServiceEvent"
 

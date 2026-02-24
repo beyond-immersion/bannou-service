@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Telemetry Service Events
+  description: |
+    Event models for Telemetry service RabbitMQ pub/sub.
+
+    NOTE: The Telemetry service does not publish or subscribe to any events.
+    It is stateless L0 infrastructure that exports traces and metrics to
+    external collectors (OTLP endpoint, Prometheus). It intentionally avoids
+    lib-messaging to prevent circular instrumentation concerns.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  # No subscriptions - Telemetry service doesn't subscribe to external events
+  x-event-subscriptions: []
+  # No events - Telemetry service doesn't publish events (avoids circular instrumentation)
+  x-event-publications: []
+
+paths: {}  # Events don't have HTTP paths
+
+components:
+  schemas: {}

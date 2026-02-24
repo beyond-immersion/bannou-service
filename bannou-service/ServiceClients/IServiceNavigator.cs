@@ -51,6 +51,18 @@ namespace BeyondImmersion.BannouService.ServiceClients;
 public partial interface IServiceNavigator
 {
     // ═══════════════════════════════════════════════════════════════════════════
+    // Node Identity
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="IMeshInstanceIdentifier"/> via the mesh infrastructure.
+    /// </summary>
+    Guid InstanceId { get; }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // Context Methods
     // ═══════════════════════════════════════════════════════════════════════════
 

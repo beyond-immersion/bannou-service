@@ -1,3 +1,5 @@
+using BeyondImmersion.Bannou.Core;
+
 namespace BeyondImmersion.BannouService.Providers;
 
 /// <summary>
@@ -57,6 +59,21 @@ public interface IEntitySessionRegistry
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Set of live session IDs registered for the entity. Empty set if none.</returns>
     Task<IReadOnlySet<string>> GetSessionsForEntityAsync(string entityType, Guid entityId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Publish a client event to all sessions registered for an entity.
+    /// Resolves entity to session IDs via the forward index, then publishes via
+    /// <c>IClientEventPublisher.PublishToSessionsAsync</c>. Returns the number of
+    /// sessions the event was delivered to (0 if no sessions are registered).
+    /// </summary>
+    /// <typeparam name="TEvent">Type of client event (must inherit from BaseClientEvent).</typeparam>
+    /// <param name="entityType">The entity type (opaque string, e.g., "character", "seed", "inventory").</param>
+    /// <param name="entityId">The entity identifier.</param>
+    /// <param name="eventData">The client event to publish.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Number of sessions the event was published to.</returns>
+    Task<int> PublishToEntitySessionsAsync<TEvent>(string entityType, Guid entityId, TEvent eventData, CancellationToken ct = default)
+        where TEvent : BaseClientEvent;
 
     /// <summary>
     /// Unregister a session from ALL entity bindings (called on disconnect).

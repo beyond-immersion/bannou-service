@@ -312,7 +312,7 @@ public partial class ActorCompletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ActorCompletedEventExitReason ExitReason { get; set; } = default!;
+    public ActorExitReason ExitReason { get; set; } = default!;
 
     /// <summary>
     /// Additional context about the exit
@@ -850,26 +850,6 @@ public partial class CharacterPerceptionEvent : BaseServiceEvent
     public PerceptionData Perception { get; set; } = new PerceptionData();
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ActorCompletedEventExitReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_complete")]
-    Behavior_complete = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"error")]
-    Error = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
-    Timeout = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"external_stop")]
-    External_stop = 3,
-
-}
-#pragma warning restore CS1591
 
 
 

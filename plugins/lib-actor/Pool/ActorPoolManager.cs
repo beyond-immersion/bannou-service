@@ -27,6 +27,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<ActorPoolManager> _logger;
     private readonly ActorServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private static readonly string POOL_NODES_STORE = StateStoreDefinitions.ActorPoolNodes;
     private static readonly string ACTOR_ASSIGNMENTS_STORE = StateStoreDefinitions.ActorAssignments;
@@ -39,11 +40,13 @@ public sealed class ActorPoolManager : IActorPoolManager
     public ActorPoolManager(
         IStateStoreFactory stateStoreFactory,
         ILogger<ActorPoolManager> logger,
-        ActorServiceConfiguration configuration)
+        ActorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     #region Pool Node Management
@@ -51,6 +54,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<bool> RegisterNodeAsync(PoolNodeRegisteredEvent registration, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RegisterNode");
 
         var nodeId = registration.NodeId;
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -89,6 +93,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateNodeHeartbeatAsync(PoolNodeHeartbeatEvent heartbeat, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeHeartbeat");
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
         var state = await store.GetAsync(heartbeat.NodeId, ct);
@@ -135,6 +140,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<int> DrainNodeAsync(string nodeId, int remainingActors, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.DrainNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -161,6 +167,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<int> RemoveNodeAsync(string nodeId, string reason, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RemoveNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -192,6 +199,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolNodeState?> GetNodeAsync(string nodeId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         var store = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
@@ -201,6 +209,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> ListNodesAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListNodes");
         var index = await GetNodeIndexAsync(ct);
         if (index.NodeIds.Count == 0)
         {
@@ -225,6 +234,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> ListNodesByTypeAsync(string poolType, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListNodesByType");
         var allNodes = await ListNodesAsync(ct);
         return allNodes.Where(n => n.PoolType.Equals(poolType, StringComparison.OrdinalIgnoreCase)).ToList();
     }
@@ -236,12 +246,13 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolNodeState?> AcquireNodeForActorAsync(string category, int estimatedLoad = 1, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.AcquireNodeForActor");
         ArgumentException.ThrowIfNullOrWhiteSpace(category);
 
         // Map category to pool type
         // In shared-pool mode, all categories go to "shared" pool
         // In pool-per-type mode, category maps directly to pool type
-        var poolType = _configuration.DeploymentMode == DeploymentMode.SharedPool ? "shared" : category;
+        var poolType = _configuration.DeploymentMode == ActorDeploymentMode.SharedPool ? "shared" : category;
 
         var nodes = await ListNodesByTypeAsync(poolType, ct);
         var healthyNodes = nodes.Where(n => n.HasCapacity).ToList();
@@ -277,6 +288,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task RecordActorAssignmentAsync(ActorAssignment assignment, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RecordActorAssignment");
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
         assignment.AssignedAt = DateTimeOffset.UtcNow;
@@ -286,14 +298,8 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Update actor index
         await UpdateActorIndexAsync(assignment.ActorId, assignment.NodeId, add: true, ct);
 
-        // Increment node load
-        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
-        var node = await nodeStore.GetAsync(assignment.NodeId, ct);
-        if (node != null)
-        {
-            node.CurrentLoad++;
-            await nodeStore.SaveAsync(assignment.NodeId, node, cancellationToken: ct);
-        }
+        // Increment node load with optimistic concurrency per IMPLEMENTATION TENETS
+        await UpdateNodeLoadAsync(assignment.NodeId, increment: 1, ct);
 
         _logger.LogDebug(
             "Recorded actor {ActorId} assignment to node {NodeId}",
@@ -303,6 +309,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<ActorAssignment?> GetActorAssignmentAsync(string actorId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorAssignment");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -312,6 +319,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<bool> RemoveActorAssignmentAsync(string actorId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.RemoveActorAssignment");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -322,14 +330,8 @@ public sealed class ActorPoolManager : IActorPoolManager
             return false;
         }
 
-        // Decrement node load
-        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
-        var node = await nodeStore.GetAsync(assignment.NodeId, ct);
-        if (node != null)
-        {
-            node.CurrentLoad = Math.Max(0, node.CurrentLoad - 1);
-            await nodeStore.SaveAsync(assignment.NodeId, node, cancellationToken: ct);
-        }
+        // Decrement node load with optimistic concurrency per IMPLEMENTATION TENETS
+        await UpdateNodeLoadAsync(assignment.NodeId, increment: -1, ct);
 
         await store.DeleteAsync(actorId, ct);
 
@@ -345,6 +347,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> ListActorsByNodeAsync(string nodeId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.ListActorsByNode");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
 
         // Use index to get actor IDs for this node
@@ -372,6 +375,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorStatus");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
@@ -379,7 +383,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Use optimistic concurrency to prevent lost updates from concurrent assignment
         // modifications (e.g., UpdateActorCharacterAsync racing with a status transition
         // on the same assignment record — the loser would overwrite the winner's field).
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
@@ -423,13 +427,14 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task UpdateActorCharacterAsync(string actorId, Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorCharacter");
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
 
         // Use optimistic concurrency to prevent lost updates from concurrent assignment
         // modifications (e.g., UpdateActorStatusAsync racing with UpdateActorCharacterAsync).
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
@@ -468,6 +473,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetAssignmentsByTemplate");
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);
 
         if (!Guid.TryParse(templateId, out var parsedTemplateId))
@@ -502,6 +508,8 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> GetActorAssignmentsByCharacterAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorAssignmentsByCharacter");
+
         // Get all actor IDs from the index
         var index = await GetActorIndexAsync(ct);
         var allActorIds = index.ActorsByNode.Values.SelectMany(ids => ids).ToList();
@@ -533,6 +541,7 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<PoolCapacitySummary> GetCapacitySummaryAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetCapacitySummary");
         var nodes = await ListNodesAsync(ct);
 
         var summary = new PoolCapacitySummary
@@ -566,12 +575,55 @@ public sealed class ActorPoolManager : IActorPoolManager
     /// <inheritdoc/>
     public async Task<IReadOnlyList<PoolNodeState>> GetUnhealthyNodesAsync(TimeSpan heartbeatTimeout, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetUnhealthyNodes");
         var nodes = await ListNodesAsync(ct);
         var cutoff = DateTimeOffset.UtcNow - heartbeatTimeout;
 
         return nodes
             .Where(n => n.Status != PoolNodeStatus.Unhealthy && n.LastHeartbeat < cutoff)
             .ToList();
+    }
+
+    #endregion
+
+    #region Node Load Management
+
+    /// <summary>
+    /// Atomically updates a node's current load using optimistic concurrency.
+    /// </summary>
+    private async Task UpdateNodeLoadAsync(string nodeId, int increment, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeLoad");
+        var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
+
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            var (node, etag) = await nodeStore.GetWithETagAsync(nodeId, ct);
+            if (node == null)
+            {
+                return; // Node not found
+            }
+
+            node.CurrentLoad = Math.Max(0, node.CurrentLoad + increment);
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await nodeStore.TrySaveAsync(nodeId, node, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Node load conflict for {NodeId}, retrying (attempt {Attempt}/{Max})", nodeId, attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Node load update failed after {MaxRetries} attempts for node {NodeId}", maxRetries, nodeId);
+            }
+        }
     }
 
     #endregion
@@ -590,6 +642,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task<PoolNodeIndex> GetNodeIndexAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetNodeIndex");
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
         var index = await store.GetAsync(NODE_INDEX_KEY, ct);
         return index ?? new PoolNodeIndex();
@@ -597,20 +650,42 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task UpdateNodeIndexAsync(string nodeId, bool add, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeIndex");
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
-        var index = await GetNodeIndexAsync(ct);
 
-        if (add)
+        // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            index.NodeIds.Add(nodeId);
-        }
-        else
-        {
-            index.NodeIds.Remove(nodeId);
-        }
+            var (index, etag) = await store.GetWithETagAsync(NODE_INDEX_KEY, ct);
+            index ??= new PoolNodeIndex();
 
-        index.LastUpdated = DateTimeOffset.UtcNow;
-        await store.SaveAsync(NODE_INDEX_KEY, index, cancellationToken: ct);
+            if (add)
+            {
+                index.NodeIds.Add(nodeId);
+            }
+            else
+            {
+                index.NodeIds.Remove(nodeId);
+            }
+
+            index.LastUpdated = DateTimeOffset.UtcNow;
+
+            var result = await store.TrySaveAsync(NODE_INDEX_KEY, index, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Node index conflict, retrying (attempt {Attempt}/{Max})", attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Node index update failed after {MaxRetries} attempts for node {NodeId}", maxRetries, nodeId);
+            }
+        }
     }
 
     /// <summary>
@@ -625,6 +700,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task<ActorIndex> GetActorIndexAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.GetActorIndex");
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
         var index = await store.GetAsync(ACTOR_INDEX_KEY, ct);
         return index ?? new ActorIndex();
@@ -632,30 +708,52 @@ public sealed class ActorPoolManager : IActorPoolManager
 
     private async Task UpdateActorIndexAsync(string actorId, string nodeId, bool add, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateActorIndex");
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
-        var index = await GetActorIndexAsync(ct);
 
-        if (!index.ActorsByNode.TryGetValue(nodeId, out var actorIds))
+        // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
-            actorIds = new HashSet<string>();
-            index.ActorsByNode[nodeId] = actorIds;
-        }
+            var (index, etag) = await store.GetWithETagAsync(ACTOR_INDEX_KEY, ct);
+            index ??= new ActorIndex();
 
-        if (add)
-        {
-            actorIds.Add(actorId);
-        }
-        else
-        {
-            actorIds.Remove(actorId);
-            if (actorIds.Count == 0)
+            if (!index.ActorsByNode.TryGetValue(nodeId, out var actorIds))
             {
-                index.ActorsByNode.Remove(nodeId);
+                actorIds = new HashSet<string>();
+                index.ActorsByNode[nodeId] = actorIds;
+            }
+
+            if (add)
+            {
+                actorIds.Add(actorId);
+            }
+            else
+            {
+                actorIds.Remove(actorId);
+                if (actorIds.Count == 0)
+                {
+                    index.ActorsByNode.Remove(nodeId);
+                }
+            }
+
+            index.LastUpdated = DateTimeOffset.UtcNow;
+
+            var result = await store.TrySaveAsync(ACTOR_INDEX_KEY, index, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug("Actor index conflict, retrying (attempt {Attempt}/{Max})", attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning("Actor index update failed after {MaxRetries} attempts for actor {ActorId}", maxRetries, actorId);
             }
         }
-
-        index.LastUpdated = DateTimeOffset.UtcNow;
-        await store.SaveAsync(ACTOR_INDEX_KEY, index, cancellationToken: ct);
     }
 
     #endregion

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Chat Service API
   version: 1.0.0
@@ -47,37 +47,41 @@ paths:
         : false,\n            \"description\": \"Request to register a new room type definition\",\n            \"required\"\
         : [\n                \"code\",\n                \"displayName\",\n                \"messageFormat\",\n           \
         \     \"persistenceMode\",\n                \"allowAnonymousSenders\"\n            ],\n            \"properties\"\
-        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Unique room type code (e.g., \\\"text\\\", \\\"guild_board\\\", \\\"trade_posting\\\")\"\n                },\n \
-        \               \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name for the room type\"\n                },\n                \"description\": {\n            \
-        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
-        description of the room type\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Game service scope (null for global types)\"\n                },\n                \"messageFormat\"\
-        : {\n                    \"$ref\": \"#/$defs/MessageFormat\",\n                    \"description\": \"Content format
-        this room type accepts\"\n                },\n                \"validatorConfig\": {\n                    \"allOf\"\
-        : [\n                        {\n                            \"$ref\": \"#/$defs/ValidatorConfig\"\n              \
-        \          }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Validation rules for messages (null uses format defaults)\"\n                },\n                \"persistenceMode\"\
-        : {\n                    \"$ref\": \"#/$defs/PersistenceMode\",\n                    \"description\": \"Message storage
-        mode (ephemeral or persistent)\"\n                },\n                \"defaultMaxParticipants\": {\n            \
-        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Default participant limit (null uses service default)\"\n                },\n                \"retentionDays\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Message retention in days (null uses service default)\"\n                },\n                \"defaultContractTemplateId\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 100,\n                    \"pattern\": \"^[a-z][a-z0-9_]*$\",\n              \
+        \      \"description\": \"Unique room type code (e.g., \\\"text\\\", \\\"guild_board\\\", \\\"trade_posting\\\")\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"minLength\": 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable
+        name for the room type\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"maxLength\": 1000,\n                   \
+        \ \"description\": \"Optional description of the room type\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Default contract template for rooms of this type\"\n   \
-        \             },\n                \"allowAnonymousSenders\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether null senderId is allowed in messages\"\n                },\n          \
-        \      \"rateLimitPerMinute\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Messages per minute per participant (null uses service default)\"\n      \
-        \          },\n                \"metadata\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata for client rendering hints\"\n \
-        \               }\n            }\n        },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n  \
-        \          \"description\": \"Determines what kind of content a room accepts\",\n            \"enum\": [\n       \
-        \         \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n                \"Custom\"\n    \
-        \        ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        nullable\": true,\n                    \"description\": \"Game service scope (null for global types)\"\n         \
+        \       },\n                \"messageFormat\": {\n                    \"$ref\": \"#/$defs/MessageFormat\",\n     \
+        \               \"description\": \"Content format this room type accepts\"\n                },\n                \"\
+        validatorConfig\": {\n                    \"allOf\": [\n                        {\n                            \"\
+        $ref\": \"#/$defs/ValidatorConfig\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Validation rules for messages (null uses format defaults)\"\n    \
+        \            },\n                \"persistenceMode\": {\n                    \"$ref\": \"#/$defs/PersistenceMode\"\
+        ,\n                    \"description\": \"Message storage mode (ephemeral or persistent)\"\n                },\n \
+        \               \"defaultMaxParticipants\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Default participant
+        limit (null uses service default)\"\n                },\n                \"retentionDays\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n        \
+        \            \"description\": \"Message retention in days (null uses service default)\"\n                },\n    \
+        \            \"defaultContractTemplateId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Default contract template
+        for rooms of this type\"\n                },\n                \"allowAnonymousSenders\": {\n                    \"\
+        type\": \"boolean\",\n                    \"description\": \"Whether null senderId is allowed in messages\"\n    \
+        \            },\n                \"rateLimitPerMinute\": {\n                    \"type\": \"integer\",\n         \
+        \           \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Messages
+        per minute per participant (null uses service default)\"\n                },\n                \"metadata\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Determines what kind of content a room accepts\",\n            \"enum\": [\n     \
+        \           \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n                \"Custom\"\n  \
+        \          ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Validation rules applied to messages in rooms of this type\",\n         \
         \   \"properties\": {\n                \"maxMessageLength\": {\n                    \"type\": \"integer\",\n     \
         \               \"nullable\": true,\n                    \"description\": \"Maximum message length in characters for
@@ -125,37 +129,37 @@ paths:
         are allowed\"\n                },\n                \"rateLimitPerMinute\": {\n                    \"type\": \"integer\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Messages per minute limit\"\n \
         \               },\n                \"metadata\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                },\n  \
-        \              \"status\": {\n                    \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\"\
-        : \"Current lifecycle status of the room type\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the room type was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"When the room type was last updated\"\n                }\n            }\n   \
-        \     },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
-        what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
-        ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Validation rules applied to messages in rooms of this type\",\n            \"properties\": {\n               \
-        \ \"maxMessageLength\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Maximum message length in characters for text and custom formats\"\n      \
-        \          },\n                \"allowedPattern\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Regex pattern for content validation\"\n        \
-        \        },\n                \"allowedValues\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whitelist of allowed values (emoji codes, etc.)\",\n   \
-        \                 \"items\": {\n                        \"type\": \"string\",\n                        \"description\"\
-        : \"An allowed value\"\n                    }\n                },\n                \"requiredFields\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Required JSON fields for Custom format messages\",\n                    \"items\": {\n                        \"\
-        type\": \"string\",\n                        \"description\": \"A required field name\"\n                    }\n \
-        \               },\n                \"jsonSchema\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Full JSON Schema string for complex Custom format
-        validation\"\n                }\n            }\n        },\n        \"PersistenceMode\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL) or MySQL (durable)\",\n\
-        \            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n            ]\n        },\n\
-        \        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a room type definition\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"status\": {\n \
+        \                   \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\": \"Current lifecycle
+        status of the room type\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the room type
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the room type was last updated\"\n                }\n            }\n        },\n        \"MessageFormat\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Determines what kind of content a room accepts\"\
+        ,\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n\
+        \                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Validation rules applied to messages
+        in rooms of this type\",\n            \"properties\": {\n                \"maxMessageLength\": {\n               \
+        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum
+        message length in characters for text and custom formats\"\n                },\n                \"allowedPattern\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for content validation\"\n                },\n                \"allowedValues\": {\n           \
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Whitelist
+        of allowed values (emoji codes, etc.)\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"description\": \"An allowed value\"\n                    }\n                },\n    \
+        \            \"requiredFields\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required JSON fields for Custom format messages\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"description\": \"A required field
+        name\"\n                    }\n                },\n                \"jsonSchema\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Full JSON Schema string
+        for complex Custom format validation\"\n                }\n            }\n        },\n        \"PersistenceMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL)
+        or MySQL (durable)\",\n            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n \
+        \           ]\n        },\n        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n        \
+        \        \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a new room type\",\n    \"description\": \"Registers a new room
         type definition. Room types are a dynamic registry of string codes. Built-in types (text, sentiment, emoji) are pre-registered
         on startup. Custom types are added via this endpoint. Returns conflict if code already exists for the given game service
@@ -217,37 +221,37 @@ paths:
         are allowed\"\n                },\n                \"rateLimitPerMinute\": {\n                    \"type\": \"integer\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Messages per minute limit\"\n \
         \               },\n                \"metadata\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                },\n  \
-        \              \"status\": {\n                    \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\"\
-        : \"Current lifecycle status of the room type\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the room type was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"When the room type was last updated\"\n                }\n            }\n   \
-        \     },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
-        what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
-        ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Validation rules applied to messages in rooms of this type\",\n            \"properties\": {\n               \
-        \ \"maxMessageLength\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Maximum message length in characters for text and custom formats\"\n      \
-        \          },\n                \"allowedPattern\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Regex pattern for content validation\"\n        \
-        \        },\n                \"allowedValues\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whitelist of allowed values (emoji codes, etc.)\",\n   \
-        \                 \"items\": {\n                        \"type\": \"string\",\n                        \"description\"\
-        : \"An allowed value\"\n                    }\n                },\n                \"requiredFields\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Required JSON fields for Custom format messages\",\n                    \"items\": {\n                        \"\
-        type\": \"string\",\n                        \"description\": \"A required field name\"\n                    }\n \
-        \               },\n                \"jsonSchema\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Full JSON Schema string for complex Custom format
-        validation\"\n                }\n            }\n        },\n        \"PersistenceMode\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL) or MySQL (durable)\",\n\
-        \            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n            ]\n        },\n\
-        \        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a room type definition\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"status\": {\n \
+        \                   \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\": \"Current lifecycle
+        status of the room type\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the room type
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the room type was last updated\"\n                }\n            }\n        },\n        \"MessageFormat\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Determines what kind of content a room accepts\"\
+        ,\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n\
+        \                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Validation rules applied to messages
+        in rooms of this type\",\n            \"properties\": {\n                \"maxMessageLength\": {\n               \
+        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum
+        message length in characters for text and custom formats\"\n                },\n                \"allowedPattern\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for content validation\"\n                },\n                \"allowedValues\": {\n           \
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Whitelist
+        of allowed values (emoji codes, etc.)\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"description\": \"An allowed value\"\n                    }\n                },\n    \
+        \            \"requiredFields\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required JSON fields for Custom format messages\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"description\": \"A required field
+        name\"\n                    }\n                },\n                \"jsonSchema\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Full JSON Schema string
+        for complex Custom format validation\"\n                }\n            }\n        },\n        \"PersistenceMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL)
+        or MySQL (durable)\",\n            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n \
+        \           ]\n        },\n        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n        \
+        \        \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get room type by code\",\n    \"description\": \"Returns the room type
         definition for the specified code and optional game service scope.\",\n    \"tags\": [],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"GetRoomType\"\n}"
@@ -283,10 +287,11 @@ paths:
         [\n                        {\n                            \"$ref\": \"#/$defs/RoomTypeStatus\"\n                 \
         \       }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
         Filter by status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 0,\n                    \"description\": \"Page number (zero-based)\"\n        \
-        \        },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"default\"\
-        : 20,\n                    \"description\": \"Number of items per page\"\n                }\n            }\n     \
-        \   },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
+        \                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Page number (zero-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 100,\n                    \"description\": \"Number of items per page\"\n                }\n            }\n    \
+        \    },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
         what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
         ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"RoomTypeStatus\":
         {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status of a room type definition\"\
@@ -332,16 +337,17 @@ paths:
         \  \"rateLimitPerMinute\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Messages per minute limit\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                },\n                \"status\": {\n                    \"$ref\": \"\
-        #/$defs/RoomTypeStatus\",\n                    \"description\": \"Current lifecycle status of the room type\"\n  \
-        \              },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When the room type was created\"\n        \
-        \        },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the room type
-        was last updated\"\n                }\n            }\n        },\n        \"MessageFormat\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Determines what kind of content a room accepts\",\n            \"enum\"\
-        : [\n                \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n                \"Custom\"\
-        \n            ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/RoomTypeStatus\",\n \
+        \                   \"description\": \"Current lifecycle status of the room type\"\n                },\n         \
+        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"When the room type was created\"\n                },\n                \"\
+        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"When the room type was last updated\"\n\
+        \                }\n            }\n        },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Determines what kind of content a room accepts\",\n            \"enum\": [\n      \
+        \          \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n                \"Custom\"\n   \
+        \         ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Validation rules applied to messages in rooms of this type\",\n         \
         \   \"properties\": {\n                \"maxMessageLength\": {\n                    \"type\": \"integer\",\n     \
         \               \"nullable\": true,\n                    \"description\": \"Maximum message length in characters for
@@ -456,37 +462,37 @@ paths:
         are allowed\"\n                },\n                \"rateLimitPerMinute\": {\n                    \"type\": \"integer\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Messages per minute limit\"\n \
         \               },\n                \"metadata\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                },\n  \
-        \              \"status\": {\n                    \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\"\
-        : \"Current lifecycle status of the room type\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the room type was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"When the room type was last updated\"\n                }\n            }\n   \
-        \     },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
-        what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
-        ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Validation rules applied to messages in rooms of this type\",\n            \"properties\": {\n               \
-        \ \"maxMessageLength\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Maximum message length in characters for text and custom formats\"\n      \
-        \          },\n                \"allowedPattern\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Regex pattern for content validation\"\n        \
-        \        },\n                \"allowedValues\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whitelist of allowed values (emoji codes, etc.)\",\n   \
-        \                 \"items\": {\n                        \"type\": \"string\",\n                        \"description\"\
-        : \"An allowed value\"\n                    }\n                },\n                \"requiredFields\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Required JSON fields for Custom format messages\",\n                    \"items\": {\n                        \"\
-        type\": \"string\",\n                        \"description\": \"A required field name\"\n                    }\n \
-        \               },\n                \"jsonSchema\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Full JSON Schema string for complex Custom format
-        validation\"\n                }\n            }\n        },\n        \"PersistenceMode\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL) or MySQL (durable)\",\n\
-        \            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n            ]\n        },\n\
-        \        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a room type definition\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"status\": {\n \
+        \                   \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\": \"Current lifecycle
+        status of the room type\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the room type
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the room type was last updated\"\n                }\n            }\n        },\n        \"MessageFormat\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Determines what kind of content a room accepts\"\
+        ,\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n\
+        \                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Validation rules applied to messages
+        in rooms of this type\",\n            \"properties\": {\n                \"maxMessageLength\": {\n               \
+        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum
+        message length in characters for text and custom formats\"\n                },\n                \"allowedPattern\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for content validation\"\n                },\n                \"allowedValues\": {\n           \
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Whitelist
+        of allowed values (emoji codes, etc.)\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"description\": \"An allowed value\"\n                    }\n                },\n    \
+        \            \"requiredFields\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required JSON fields for Custom format messages\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"description\": \"A required field
+        name\"\n                    }\n                },\n                \"jsonSchema\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Full JSON Schema string
+        for complex Custom format validation\"\n                }\n            }\n        },\n        \"PersistenceMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL)
+        or MySQL (durable)\",\n            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n \
+        \           ]\n        },\n        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n        \
+        \        \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a room type definition\",\n    \"description\": \"Updates mutable
         fields of a room type definition. Cannot change code or message format.\",\n    \"tags\": [],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"UpdateRoomType\"\n}"
@@ -548,37 +554,37 @@ paths:
         are allowed\"\n                },\n                \"rateLimitPerMinute\": {\n                    \"type\": \"integer\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Messages per minute limit\"\n \
         \               },\n                \"metadata\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                },\n  \
-        \              \"status\": {\n                    \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\"\
-        : \"Current lifecycle status of the room type\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the room type was created\"\n                },\n                \"updatedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"When the room type was last updated\"\n                }\n            }\n   \
-        \     },\n        \"MessageFormat\": {\n            \"type\": \"string\",\n            \"description\": \"Determines
-        what kind of content a room accepts\",\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\"\
-        ,\n                \"Emoji\",\n                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Validation rules applied to messages in rooms of this type\",\n            \"properties\": {\n               \
-        \ \"maxMessageLength\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Maximum message length in characters for text and custom formats\"\n      \
-        \          },\n                \"allowedPattern\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Regex pattern for content validation\"\n        \
-        \        },\n                \"allowedValues\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Whitelist of allowed values (emoji codes, etc.)\",\n   \
-        \                 \"items\": {\n                        \"type\": \"string\",\n                        \"description\"\
-        : \"An allowed value\"\n                    }\n                },\n                \"requiredFields\": {\n       \
-        \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Required JSON fields for Custom format messages\",\n                    \"items\": {\n                        \"\
-        type\": \"string\",\n                        \"description\": \"A required field name\"\n                    }\n \
-        \               },\n                \"jsonSchema\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Full JSON Schema string for complex Custom format
-        validation\"\n                }\n            }\n        },\n        \"PersistenceMode\": {\n            \"type\":
-        \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL) or MySQL (durable)\",\n\
-        \            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n            ]\n        },\n\
-        \        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Lifecycle status
-        of a room type definition\",\n            \"enum\": [\n                \"Active\",\n                \"Deprecated\"\
-        \n            ]\n        }\n    }\n}"
+        \   \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"status\": {\n \
+        \                   \"$ref\": \"#/$defs/RoomTypeStatus\",\n                    \"description\": \"Current lifecycle
+        status of the room type\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the room type
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the room type was last updated\"\n                }\n            }\n        },\n        \"MessageFormat\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Determines what kind of content a room accepts\"\
+        ,\n            \"enum\": [\n                \"Text\",\n                \"Sentiment\",\n                \"Emoji\",\n\
+        \                \"Custom\"\n            ]\n        },\n        \"ValidatorConfig\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Validation rules applied to messages
+        in rooms of this type\",\n            \"properties\": {\n                \"maxMessageLength\": {\n               \
+        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum
+        message length in characters for text and custom formats\"\n                },\n                \"allowedPattern\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Regex pattern for content validation\"\n                },\n                \"allowedValues\": {\n           \
+        \         \"type\": \"array\",\n                    \"nullable\": true,\n                    \"description\": \"Whitelist
+        of allowed values (emoji codes, etc.)\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"description\": \"An allowed value\"\n                    }\n                },\n    \
+        \            \"requiredFields\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Required JSON fields for Custom format messages\",\n                    \"\
+        items\": {\n                        \"type\": \"string\",\n                        \"description\": \"A required field
+        name\"\n                    }\n                },\n                \"jsonSchema\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Full JSON Schema string
+        for complex Custom format validation\"\n                }\n            }\n        },\n        \"PersistenceMode\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Whether room messages are stored in Redis (TTL)
+        or MySQL (durable)\",\n            \"enum\": [\n                \"Ephemeral\",\n                \"Persistent\"\n \
+        \           ]\n        },\n        \"RoomTypeStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Lifecycle status of a room type definition\",\n            \"enum\": [\n                \"Active\",\n        \
+        \        \"Deprecated\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Soft-deprecate a room type\",\n    \"description\": \"Sets the room type
         status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.\",\n    \"tags\"\
         : [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateRoomType\"\n}"
@@ -609,35 +615,38 @@ paths:
         ,\n    \"$defs\": {\n        \"CreateRoomRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to create a new chat room\",\n            \"required\": [\n     \
         \           \"roomTypeCode\"\n            ],\n            \"properties\": {\n                \"roomTypeCode\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Room type code determining message
-        format and validation\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Connect session ID for companion rooms\"\n                },\n                \"contractId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Governing contract ID for lifecycle management\"\n                },\n   \
-        \             \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Human-readable room name\"\n                },\n                \"maxParticipants\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Participant limit override (null uses type default)\"\n                },\n                \"contractFulfilledAction\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ContractRoomAction\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Action when governing contract is fulfilled (null uses service default)\"\n                },\n\
-        \                \"contractBreachAction\": {\n                    \"allOf\": [\n                        {\n      \
-        \                      \"$ref\": \"#/$defs/ContractRoomAction\"\n                        }\n                    ],\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Action when governing contract is
-        breached (null uses service default)\"\n                },\n                \"contractTerminatedAction\": {\n    \
-        \                \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ContractRoomAction\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Action when governing contract is terminated (null uses service default)\"\n                },\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 100,\n                    \"description\": \"Room type code determining message format and validation\"\n      \
+        \          },\n                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Connect session
+        ID for companion rooms\"\n                },\n                \"contractId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Governing contract ID for lifecycle management\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Human-readable room name\"\n                },\n                \"\
+        maxParticipants\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n      \
+        \              \"minimum\": 1,\n                    \"description\": \"Participant limit override (null uses type
+        default)\"\n                },\n                \"contractFulfilledAction\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"$ref\": \"#/$defs/ContractRoomAction\"\n               \
+        \         }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Action when governing contract is fulfilled (null uses service default)\"\n                },\n              \
+        \  \"contractBreachAction\": {\n                    \"allOf\": [\n                        {\n                    \
+        \        \"$ref\": \"#/$defs/ContractRoomAction\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Action when governing contract is breached (null
+        uses service default)\"\n                },\n                \"contractTerminatedAction\": {\n                   \
+        \ \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ContractRoomAction\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Action when governing contract is terminated (null uses service default)\"\n                },\n\
         \                \"contractExpiredAction\": {\n                    \"allOf\": [\n                        {\n     \
         \                       \"$ref\": \"#/$defs/ContractRoomAction\"\n                        }\n                    ],\n\
         \                    \"nullable\": true,\n                    \"description\": \"Action when governing contract expires
         (null uses service default)\"\n                },\n                \"metadata\": {\n                    \"type\":
-        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata
-        for client rendering hints\"\n                }\n            }\n        },\n        \"ContractRoomAction\": {\n  \
-        \          \"type\": \"string\",\n            \"description\": \"Action to take on a contract-governed room when contract
-        state changes\",\n            \"enum\": [\n                \"Continue\",\n                \"Lock\",\n            \
-        \    \"Archive\",\n                \"Delete\"\n            ]\n        }\n    }\n}"
+        \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata
+        stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        },\n        \"ContractRoomAction\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Action to take on a contract-governed room when contract state changes\",\n            \"enum\": [\n         \
+        \       \"Continue\",\n                \"Lock\",\n                \"Archive\",\n                \"Delete\"\n     \
+        \       ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -662,10 +671,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a chat room\",\n    \"description\": \"Creates a new chat room of
         the specified type. Optionally associates a governing contract that drives room lifecycle (lock, archive, delete)
         on contract state changes.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateRoom\"\
@@ -720,10 +729,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get room by ID\",\n    \"description\": \"Returns the chat room metadata
         for the specified room ID.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetRoom\"\n}"
   /chat/room/list:
@@ -750,19 +759,20 @@ paths:
         ,\n    \"$defs\": {\n        \"ListRoomsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to list rooms with optional filters and pagination\",\n         \
         \   \"properties\": {\n                \"roomTypeCode\": {\n                    \"type\": \"string\",\n          \
-        \          \"nullable\": true,\n                    \"description\": \"Filter by room type code\"\n              \
-        \  },\n                \"sessionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by Connect session
-        ID\"\n                },\n                \"status\": {\n                    \"allOf\": [\n                      \
-        \  {\n                            \"$ref\": \"#/$defs/ChatRoomStatus\"\n                        }\n              \
-        \      ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by room status\"\
-        \n                },\n                \"page\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"default\": 0,\n                    \"description\": \"Page number (zero-based)\"\n                },\n      \
-        \          \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n   \
-        \                 \"description\": \"Number of items per page\"\n                }\n            }\n        },\n  \
-        \      \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current state of a
-        chat room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\",\n                \"\
-        Archived\"\n            ]\n        }\n    }\n}"
+        \          \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Filter
+        by room type code\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by Connect session ID\"\n                },\n                \"status\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"$ref\": \"#/$defs/ChatRoomStatus\"\n               \
+        \         }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Filter by room status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\":
+        \"Page number (zero-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\"\
+        : 100,\n                    \"description\": \"Number of items per page\"\n                }\n            }\n    \
+        \    },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current
+        state of a chat room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\",\n     \
+        \           \"Archived\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRoomsResponse\"\
         ,\n    \"$defs\": {\n        \"ListRoomsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of chat rooms\",\n            \"required\": [\n          \
@@ -797,10 +807,11 @@ paths:
         archived\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"date-time\",\n                    \"description\": \"When the room was created\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                }\n  \
-        \          }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\"\
-        ,\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        \    \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n      \
+        \  \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current state of a chat
+        room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List rooms with filters\",\n    \"description\": \"Returns rooms matching
         the specified filters with pagination.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"\
         ListRooms\"\n}"
@@ -832,12 +843,13 @@ paths:
         \       \"required\": [\n                \"roomId\"\n            ],\n            \"properties\": {\n             \
         \   \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
         \            \"description\": \"Room ID to update\"\n                },\n                \"displayName\": {\n    \
-        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Updated room name\"\n                },\n                \"maxParticipants\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Updated participant
-        limit\"\n                },\n                \"metadata\": {\n                    \"type\": \"string\",\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Updated JSON metadata\"\n               \
-        \ }\n            }\n        }\n    }\n}"
+        \                \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Updated room name\"\n                },\n                \"maxParticipants\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Updated participant limit\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -862,10 +874,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update room settings\",\n    \"description\": \"Updates mutable room settings.
         Caller must be the room owner.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateRoom\"\
         \n}"
@@ -922,10 +934,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a room\",\n    \"description\": \"Deletes a room, removing all participants
         and messages. Caller must be the room owner or the room must be empty.\",\n    \"tags\": [],\n    \"deprecated\":
         false,\n    \"operationId\": \"DeleteRoom\"\n}"
@@ -982,10 +994,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Archive a room to Resource\",\n    \"description\": \"Archives a persistent
         room via lib-resource, preserving message history and metadata. Room is marked as archived after successful archival.\"\
         ,\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"ArchiveRoom\"\n}"
@@ -1023,14 +1035,14 @@ paths:
         \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Sender entity ID (nullable for anonymous)\"\n                },\n\
         \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Human-readable display name\"\n                },\n                \"\
-        role\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ChatParticipantRole\"\
-        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
-        \ \"description\": \"Requested role (defaults to Member if not specified)\"\n                }\n            }\n  \
-        \      },\n        \"ChatParticipantRole\": {\n            \"type\": \"string\",\n            \"description\": \"\
-        Participant role within a chat room determining moderation privileges\",\n            \"enum\": [\n              \
-        \  \"Owner\",\n                \"Moderator\",\n                \"Member\",\n                \"ReadOnly\"\n       \
-        \     ]\n        }\n    }\n}"
+        true,\n                    \"maxLength\": 200,\n                    \"description\": \"Human-readable display name\"\
+        \n                },\n                \"role\": {\n                    \"allOf\": [\n                        {\n \
+        \                           \"$ref\": \"#/$defs/ChatParticipantRole\"\n                        }\n               \
+        \     ],\n                    \"nullable\": true,\n                    \"description\": \"Requested role (defaults
+        to Member if not specified)\"\n                }\n            }\n        },\n        \"ChatParticipantRole\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"Participant role within a chat room determining
+        moderation privileges\",\n            \"enum\": [\n                \"Owner\",\n                \"Moderator\",\n  \
+        \              \"Member\",\n                \"ReadOnly\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -1055,10 +1067,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join a chat room\",\n    \"description\": \"Joins the caller to the specified
         room. For companion rooms in AutoJoinLazy or Manual mode, the room is created on-the-fly if it does not yet exist.
         Returns conflict if the room is full or forbidden if the caller is banned.\\n\",\n    \"tags\": [],\n    \"deprecated\"\
@@ -1115,10 +1127,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Leave a chat room\",\n    \"description\": \"Removes the caller from the
         room. If the owner leaves, promotes the next moderator or oldest member.\",\n    \"tags\": [],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"LeaveRoom\"\n}"
@@ -1237,10 +1249,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove a participant from the room\",\n    \"description\": \"Kicks a participant
         from the room. Caller must be Owner or Moderator with higher role than target.\",\n    \"tags\": [],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"KickParticipant\"\n}"
@@ -1275,10 +1287,11 @@ paths:
         ,\n                    \"description\": \"Room ID\"\n                },\n                \"targetSessionId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Session ID of participant to ban\"\n                },\n                \"reason\": {\n                    \"\
-        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional reason
-        for the ban\"\n                },\n                \"durationMinutes\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Ban duration in minutes (null for
-        permanent)\"\n                }\n            }\n        }\n    }\n}"
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n          \
+        \          \"description\": \"Optional reason for the ban\"\n                },\n                \"durationMinutes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Ban duration in minutes (null for permanent)\"\n                }\n \
+        \           }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -1303,10 +1316,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Ban a participant from the room\",\n    \"description\": \"Bans a participant.
         If currently in the room, they are kicked first. Optionally set a duration; null means permanent.\",\n    \"tags\"\
         : [],\n    \"deprecated\": false,\n    \"operationId\": \"BanParticipant\"\n}"
@@ -1364,10 +1377,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unban a participant\",\n    \"description\": \"Removes a ban record for
         a participant. Caller must be Owner or Moderator.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"UnbanParticipant\"\n}"
@@ -1402,8 +1415,9 @@ paths:
         ,\n                    \"description\": \"Room ID\"\n                },\n                \"targetSessionId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Session ID of participant to mute\"\n                },\n                \"durationMinutes\": {\n            \
-        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Mute duration in minutes (null for permanent)\"\n                }\n            }\n        }\n    }\n}"
+        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n  \
+        \                  \"description\": \"Mute duration in minutes (null for permanent)\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ChatRoomResponse\"\
         ,\n    \"$defs\": {\n        \"ChatRoomResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Chat room details including status and participant count\",\n           \
@@ -1428,10 +1442,10 @@ paths:
         \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"description\": \"When the room was created\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Arbitrary JSON metadata\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\"\
+        ,\n                \"Locked\",\n                \"Archived\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mute a participant\",\n    \"description\": \"Mutes a participant, preventing
         them from sending messages. Optionally set a duration; null means permanent.\",\n    \"tags\": [],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"MuteParticipant\"\n}"
@@ -1597,10 +1611,20 @@ paths:
         rooms)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SendMessageBatchResponse\"\
         ,\n    \"$defs\": {\n        \"SendMessageBatchResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Result of a batch message send operation\",\n            \"required\": [\n\
-        \                \"messageCount\"\n            ],\n            \"properties\": {\n                \"messageCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of messages sent\"\n\
-        \                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Result of a batch message send operation with per-message failure tracking\"\
+        ,\n            \"required\": [\n                \"messageCount\",\n                \"failed\"\n            ],\n  \
+        \          \"properties\": {\n                \"messageCount\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"description\": \"Number of messages successfully sent\"\n                },\n               \
+        \ \"failed\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                    \
+        \    \"$ref\": \"#/$defs/BatchMessageFailure\"\n                    },\n                    \"description\": \"Details
+        of messages that failed to send (empty array when all succeeded)\"\n                }\n            }\n        },\n\
+        \        \"BatchMessageFailure\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Details of a single message that failed in a batch send operation\",\n           \
+        \ \"required\": [\n                \"index\",\n                \"error\"\n            ],\n            \"properties\"\
+        : {\n                \"index\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Zero-based index of the failed message in the request messages array\"\n                },\n                \"\
+        error\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable error
+        reason\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Send multiple messages\",\n    \"description\": \"Sends multiple messages
         to a room atomically. Intended for bulk sentiment pushes from higher-layer services.\",\n    \"tags\": [],\n    \"\
         deprecated\": false,\n    \"operationId\": \"SendMessageBatch\"\n}"
@@ -1635,8 +1659,9 @@ paths:
         \                 \"description\": \"Room ID to get history for\"\n                },\n                \"before\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Cursor for pagination (message ID to fetch before)\"\n                },\n                \"limit\": {\n     \
-        \               \"type\": \"integer\",\n                    \"default\": 50,\n                    \"description\"\
-        : \"Maximum number of messages to return\"\n                }\n            }\n        }\n    }\n}"
+        \               \"type\": \"integer\",\n                    \"default\": 50,\n                    \"minimum\": 1,\n\
+        \                    \"maximum\": 200,\n                    \"description\": \"Maximum number of messages to return\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MessageHistoryResponse\"\
         ,\n    \"$defs\": {\n        \"MessageHistoryResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated message history with cursor for next page\",\n            \"required\"\
@@ -1939,10 +1964,12 @@ paths:
         \  \"required\": [\n                \"roomId\",\n                \"query\"\n            ],\n            \"properties\"\
         : {\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Room ID to search in (must be a persistent room)\"\n             \
-        \   },\n                \"query\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Full-text search query string\"\n                },\n                \"limit\": {\n                    \"type\"\
-        : \"integer\",\n                    \"default\": 20,\n                    \"description\": \"Maximum number of results
-        to return\"\n                }\n            }\n        }\n    }\n}"
+        \   },\n                \"query\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 500,\n                    \"description\": \"Full-text search query string\"\
+        \n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"default\": 20,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n               \
+        \     \"description\": \"Maximum number of results to return\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SearchMessagesResponse\"\
         ,\n    \"$defs\": {\n        \"SearchMessagesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Full-text search results with total match count\",\n            \"required\"\
@@ -2019,17 +2046,18 @@ paths:
         ,\n    \"$defs\": {\n        \"AdminListRoomsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Admin request to list all rooms with filters and pagination\",\n        \
         \    \"properties\": {\n                \"roomTypeCode\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Filter by room type\"\n                },\n\
-        \                \"status\": {\n                    \"allOf\": [\n                        {\n                    \
-        \        \"$ref\": \"#/$defs/ChatRoomStatus\"\n                        }\n                    ],\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Filter by status\"\n                },\n       \
-        \         \"page\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n         \
-        \           \"description\": \"Page number (zero-based)\"\n                },\n                \"pageSize\": {\n \
-        \                   \"type\": \"integer\",\n                    \"default\": 50,\n                    \"description\"\
-        : \"Number of items per page\"\n                }\n            }\n        },\n        \"ChatRoomStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"description\": \"Current state of a chat room\",\n            \"enum\"\
-        : [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\n            ]\n     \
-        \   }\n    }\n}"
+        \           \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"\
+        Filter by room type\"\n                },\n                \"status\": {\n                    \"allOf\": [\n     \
+        \                   {\n                            \"$ref\": \"#/$defs/ChatRoomStatus\"\n                        }\n\
+        \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by
+        status\"\n                },\n                \"page\": {\n                    \"type\": \"integer\",\n          \
+        \          \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"Page number
+        (zero-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"maximum\": 200,\n\
+        \                    \"description\": \"Number of items per page\"\n                }\n            }\n        },\n\
+        \        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current state of
+        a chat room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\",\n              \
+        \  \"Archived\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRoomsResponse\"\
         ,\n    \"$defs\": {\n        \"ListRoomsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of chat rooms\",\n            \"required\": [\n          \
@@ -2064,10 +2092,11 @@ paths:
         archived\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
         \                \"format\": \"date-time\",\n                    \"description\": \"When the room was created\"\n\
         \                },\n                \"metadata\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Arbitrary JSON metadata\"\n                }\n  \
-        \          }\n        },\n        \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current state of a chat room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\"\
-        ,\n                \"Archived\"\n            ]\n        }\n    }\n}"
+        \    \"nullable\": true,\n                    \"description\": \"Client-only metadata stored as JSON string. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n      \
+        \  \"ChatRoomStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current state of a chat
+        room\",\n            \"enum\": [\n                \"Active\",\n                \"Locked\",\n                \"Archived\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all rooms system-wide\",\n    \"description\": \"Returns all rooms
         across the system for administrative purposes. Supports filtering by status and type.\",\n    \"tags\": [],\n    \"\
         deprecated\": false,\n    \"operationId\": \"AdminListRooms\"\n}"
@@ -2150,6 +2179,71 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Force cleanup of idle rooms\",\n    \"description\": \"Triggers an immediate
         idle room cleanup cycle, bypassing the normal interval.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"\
         operationId\": \"AdminForceCleanup\"\n}"
+  /chat/typing:
+    post:
+      operationId: Typing
+      summary: Signal typing activity
+      description: >
+        Records that the caller is actively typing in the specified room.
+        Automatically expires after TypingTimeoutSeconds if not refreshed.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypingRequest'
+      responses:
+        '200':
+          description: Typing state recorded
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TypingRequest\"\
+        ,\n    \"$defs\": {\n        \"TypingRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to signal typing activity in a chat room. Pre-populated via session
+        shortcut BoundPayload.\",\n            \"required\": [\n                \"roomId\",\n                \"sessionId\"\
+        \n            ],\n            \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Room the typing activity applies
+        to\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the typing participant\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Signal typing activity\",\n    \"description\": \"Records that the caller
+        is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed
+        via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.\\n\"\
+        ,\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"Typing\"\n}"
+  /chat/end-typing:
+    post:
+      operationId: EndTyping
+      summary: Signal typing stopped
+      description: >
+        Immediately clears the caller's typing state in the specified room.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndTypingRequest'
+      responses:
+        '200':
+          description: Typing state cleared
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EndTypingRequest\"\
+        ,\n    \"$defs\": {\n        \"EndTypingRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Request to signal typing stopped in a chat room. Pre-populated via session
+        shortcut BoundPayload.\",\n            \"required\": [\n                \"roomId\",\n                \"sessionId\"\
+        \n            ],\n            \"properties\": {\n                \"roomId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Room to clear typing state for\"\
+        \n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID of the participant\"\n \
+        \               }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Signal typing stopped\",\n    \"description\": \"Immediately clears the
+        caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's
+        BoundPayload pre-populates roomId and sessionId.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"EndTyping\"\n}"
 components:
   schemas:
     MessageFormat:
@@ -2248,13 +2342,19 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-z][a-z0-9_]*$'
           description: Unique room type code (e.g., "text", "guild_board", "trade_posting")
         displayName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Human-readable name for the room type
         description:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional description of the room type
         gameServiceId:
           type: string
@@ -2275,10 +2375,12 @@ components:
         defaultMaxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Default participant limit (null uses service default)
         retentionDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Message retention in days (null uses service default)
         defaultContractTemplateId:
           type: string
@@ -2291,11 +2393,13 @@ components:
         rateLimitPerMinute:
           type: integer
           nullable: true
+          minimum: 1
           description: Messages per minute per participant (null uses service default)
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field 
+            by convention.
     GetRoomTypeRequest:
       type: object
       additionalProperties: false
@@ -2334,10 +2438,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     UpdateRoomTypeRequest:
       type: object
@@ -2469,7 +2576,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field 
+            by convention.
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
@@ -2515,6 +2623,8 @@ components:
       properties:
         roomTypeCode:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Room type code determining message format and validation
         sessionId:
           type: string
@@ -2529,10 +2639,12 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Participant limit override (null uses type default)
         contractFulfilledAction:
           allOf:
@@ -2557,7 +2669,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field 
+            by convention.
     GetRoomRequest:
       type: object
       additionalProperties: false
@@ -2577,6 +2690,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type code
         sessionId:
           type: string
@@ -2591,10 +2705,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
     UpdateRoomRequest:
       type: object
@@ -2610,15 +2727,18 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Updated room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Updated participant limit
         metadata:
           type: string
           nullable: true
-          description: Updated JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field 
+            by convention.
     DeleteRoomRequest:
       type: object
       additionalProperties: false
@@ -2694,7 +2814,8 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field 
+            by convention.
     ListRoomsResponse:
       type: object
       additionalProperties: false
@@ -2742,6 +2863,7 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable display name
         role:
           allOf:
@@ -2863,10 +2985,12 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 500
           description: Optional reason for the ban
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Ban duration in minutes (null for permanent)
     UnbanParticipantRequest:
       type: object
@@ -2903,6 +3027,7 @@ components:
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Mute duration in minutes (null for permanent)
     SendMessageContent:
       type: object
@@ -3011,13 +3136,33 @@ components:
     SendMessageBatchResponse:
       type: object
       additionalProperties: false
-      description: Result of a batch message send operation
+      description: Result of a batch message send operation with per-message failure tracking
       required:
       - messageCount
+      - failed
       properties:
         messageCount:
           type: integer
-          description: Number of messages sent
+          description: Number of messages successfully sent
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchMessageFailure'
+          description: Details of messages that failed to send (empty array when all succeeded)
+    BatchMessageFailure:
+      type: object
+      additionalProperties: false
+      description: Details of a single message that failed in a batch send operation
+      required:
+      - index
+      - error
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed message in the request messages array
+        error:
+          type: string
+          description: Human-readable error reason
     ChatMessageResponse:
       type: object
       additionalProperties: false
@@ -3083,6 +3228,8 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Maximum number of messages to return
     MessageHistoryResponse:
       type: object
@@ -3166,10 +3313,14 @@ components:
           description: Room ID to search in (must be a persistent room)
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Full-text search query string
         limit:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Maximum number of results to return
     SearchMessagesResponse:
       type: object
@@ -3195,6 +3346,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type
         status:
           allOf:
@@ -3204,10 +3356,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Number of items per page
     AdminGetStatsRequest:
       type: object
@@ -3267,3 +3422,35 @@ components:
         deletedRooms:
           type: integer
           description: Number of rooms deleted
+    TypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing activity in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+      - roomId
+      - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the typing activity applies to
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the typing participant
+    EndTypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing stopped in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+      - roomId
+      - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room to clear typing state for
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the participant

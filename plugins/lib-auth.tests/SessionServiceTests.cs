@@ -21,7 +21,7 @@ public class SessionServiceTests
     private const string STATE_STORE = "auth-statestore";
 
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
-    private readonly Mock<IStateStore<List<string>>> _mockListStore;
+    private readonly Mock<ICacheableStateStore<string>> _mockCacheableStringStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<SessionDataModel>> _mockSessionStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -36,7 +36,7 @@ public class SessionServiceTests
         TestConfigurationHelper.ConfigureJwt();
 
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
-        _mockListStore = new Mock<IStateStore<List<string>>>();
+        _mockCacheableStringStore = new Mock<ICacheableStateStore<string>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockSessionStore = new Mock<IStateStore<SessionDataModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -52,18 +52,21 @@ public class SessionServiceTests
         _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
 
         // Setup state store factory to return typed stores
-        _mockStateStoreFactory.Setup(f => f.GetStore<List<string>>(STATE_STORE))
-            .Returns(_mockListStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetCacheableStore<string>(STATE_STORE))
+            .Returns(_mockCacheableStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
             .Returns(_mockStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<SessionDataModel>(STATE_STORE))
             .Returns(_mockSessionStore.Object);
+
+        var telemetryProvider = new NullTelemetryProvider();
 
         _service = new SessionService(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
             _mockEdgeRevocationService.Object,
+            telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -195,54 +198,56 @@ public class SessionServiceTests
     #region AddSessionToAccountIndexAsync Tests
 
     [Fact]
-    public async Task AddSessionToAccountIndexAsync_WithNewSession_ShouldAddToIndex()
+    public async Task AddSessionToAccountIndexAsync_WithNewSession_ShouldAddToSet()
     {
         // Arrange
         var accountId = Guid.NewGuid();
         var sessionKey = "new-session-key";
         var indexKey = $"account-sessions:{accountId}";
 
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string>());
-
-        _mockListStore.Setup(s => s.SaveAsync(
+        _mockCacheableStringStore.Setup(s => s.AddToSetAsync(
             indexKey,
-            It.Is<List<string>>(l => l.Contains(sessionKey)),
-            It.IsAny<StateOptions>(),
+            sessionKey,
+            It.IsAny<StateOptions?>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .ReturnsAsync(true);
 
         // Act
         await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
 
-        // Assert
-        _mockListStore.Verify(s => s.SaveAsync(
+        // Assert - Atomic SADD called with correct key, value, and TTL
+        _mockCacheableStringStore.Verify(s => s.AddToSetAsync(
             indexKey,
-            It.Is<List<string>>(l => l.Contains(sessionKey)),
-            It.IsAny<StateOptions>(),
+            sessionKey,
+            It.Is<StateOptions>(o => o != null && o.Ttl > 0),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task AddSessionToAccountIndexAsync_WithExistingSession_ShouldNotDuplicate()
+    public async Task AddSessionToAccountIndexAsync_WithExistingSession_ShouldCallAddToSetIdempotently()
     {
-        // Arrange
+        // Arrange - Redis SADD is idempotent; duplicate adds are handled atomically
         var accountId = Guid.NewGuid();
         var sessionKey = "existing-session-key";
         var indexKey = $"account-sessions:{accountId}";
 
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { sessionKey });
+        // Returns false = item already existed in set
+        _mockCacheableStringStore.Setup(s => s.AddToSetAsync(
+            indexKey,
+            sessionKey,
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
 
         // Act
         await _service.AddSessionToAccountIndexAsync(accountId, sessionKey);
 
-        // Assert - Save should not be called since session already exists
-        _mockListStore.Verify(s => s.SaveAsync(
+        // Assert - AddToSetAsync is still called (set handles deduplication atomically)
+        _mockCacheableStringStore.Verify(s => s.AddToSetAsync(
             indexKey,
-            It.IsAny<List<string>>(),
-            It.IsAny<StateOptions>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            sessionKey,
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -250,54 +255,51 @@ public class SessionServiceTests
     #region RemoveSessionFromAccountIndexAsync Tests
 
     [Fact]
-    public async Task RemoveSessionFromAccountIndexAsync_WithMultipleSessions_ShouldRemoveOne()
+    public async Task RemoveSessionFromAccountIndexAsync_ShouldRemoveFromSet()
     {
         // Arrange
         var accountId = Guid.NewGuid();
         var sessionKeyToRemove = "session-to-remove";
         var indexKey = $"account-sessions:{accountId}";
-        var existingSessions = new List<string> { sessionKeyToRemove, "other-session" };
 
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingSessions);
-
-        _mockListStore.Setup(s => s.SaveAsync(
+        _mockCacheableStringStore.Setup(s => s.RemoveFromSetAsync(
             indexKey,
-            It.Is<List<string>>(l => !l.Contains(sessionKeyToRemove) && l.Contains("other-session")),
-            It.IsAny<StateOptions>(),
+            sessionKeyToRemove,
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
-
-        // Act
-        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove);
-
-        // Assert
-        _mockListStore.Verify(s => s.SaveAsync(
-            indexKey,
-            It.Is<List<string>>(l => !l.Contains(sessionKeyToRemove)),
-            It.IsAny<StateOptions>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task RemoveSessionFromAccountIndexAsync_WithLastSession_ShouldDeleteIndex()
-    {
-        // Arrange
-        var accountId = Guid.NewGuid();
-        var sessionKeyToRemove = "last-session";
-        var indexKey = $"account-sessions:{accountId}";
-
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<string> { sessionKeyToRemove });
-
-        _mockListStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
         await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove);
 
-        // Assert - Should delete the index entirely
-        _mockListStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
+        // Assert - Atomic SREM called with correct key and value
+        _mockCacheableStringStore.Verify(s => s.RemoveFromSetAsync(
+            indexKey,
+            sessionKeyToRemove,
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveSessionFromAccountIndexAsync_WithLastSession_SetDeletedAutomatically()
+    {
+        // Arrange - Redis automatically deletes the key when the set becomes empty
+        var accountId = Guid.NewGuid();
+        var sessionKeyToRemove = "last-session";
+        var indexKey = $"account-sessions:{accountId}";
+
+        _mockCacheableStringStore.Setup(s => s.RemoveFromSetAsync(
+            indexKey,
+            sessionKeyToRemove,
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _service.RemoveSessionFromAccountIndexAsync(accountId, sessionKeyToRemove);
+
+        // Assert - Only RemoveFromSetAsync is called; Redis handles empty set cleanup
+        _mockCacheableStringStore.Verify(s => s.RemoveFromSetAsync(
+            indexKey,
+            sessionKeyToRemove,
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -403,7 +405,7 @@ public class SessionServiceTests
         var indexKey = $"account-sessions:{accountId}";
         var expectedKeys = new List<string> { "session1", "session2" };
 
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(indexKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedKeys);
 
         // Act
@@ -422,8 +424,9 @@ public class SessionServiceTests
         var accountId = Guid.NewGuid();
         var indexKey = $"account-sessions:{accountId}";
 
-        _mockListStore.Setup(s => s.GetAsync(indexKey, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+        // GetSetAsync returns empty list when set doesn't exist
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(indexKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var result = await _service.GetSessionKeysForAccountAsync(accountId);
@@ -443,14 +446,14 @@ public class SessionServiceTests
         var accountId = Guid.NewGuid();
         var indexKey = $"account-sessions:{accountId}";
 
-        _mockListStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Act
         await _service.DeleteAccountSessionsIndexAsync(accountId);
 
         // Assert
-        _mockListStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
+        _mockCacheableStringStore.Verify(s => s.DeleteAsync(indexKey, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -463,8 +466,9 @@ public class SessionServiceTests
         // Arrange
         var accountId = Guid.NewGuid();
 
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act & Assert - Should not throw
         await _service.InvalidateAllSessionsForAccountAsync(accountId);
@@ -481,13 +485,15 @@ public class SessionServiceTests
         var sessionKey2 = Guid.NewGuid().ToString("N");
         var sessionKeys = new List<string> { sessionKey1, sessionKey2 };
 
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionKeys);
 
         _mockSessionStore.Setup(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        _mockListStore.Setup(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.DeleteAsync(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         _mockMessageBus.Setup(m => m.TryPublishAsync(
@@ -506,7 +512,7 @@ public class SessionServiceTests
         _mockSessionStore.Verify(s => s.DeleteAsync($"session:{sessionKey2}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Should delete the index
-        _mockListStore.Verify(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()), Times.Once);
+        _mockCacheableStringStore.Verify(s => s.DeleteAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Should publish event
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -608,8 +614,9 @@ public class SessionServiceTests
         // Arrange
         var accountId = Guid.NewGuid();
 
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync((List<string>?)null);
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
 
         // Act
         var result = await _service.GetAccountSessionsAsync(accountId);
@@ -627,7 +634,8 @@ public class SessionServiceTests
         var sessionData = CreateTestSessionData();
         sessionData.ExpiresAt = DateTimeOffset.UtcNow.AddHours(1); // Active session
 
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionKeys);
 
         _mockSessionStore.Setup(s => s.GetAsync("session:session1", It.IsAny<CancellationToken>()))
@@ -650,15 +658,19 @@ public class SessionServiceTests
         var expiredSession = CreateTestSessionData();
         expiredSession.ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1); // Expired
 
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
+        _mockCacheableStringStore.Setup(s => s.GetSetAsync<string>(
+            $"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(sessionKeys);
 
         _mockSessionStore.Setup(s => s.GetAsync("session:expired-session", It.IsAny<CancellationToken>()))
             .ReturnsAsync(expiredSession);
 
-        // Setup for cleanup operation
-        _mockListStore.Setup(s => s.GetAsync($"account-sessions:{accountId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sessionKeys);
+        // Setup for cleanup via RemoveFromSetAsync (expired sessions are cleaned up)
+        _mockCacheableStringStore.Setup(s => s.RemoveFromSetAsync(
+            $"account-sessions:{accountId}",
+            "expired-session",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _service.GetAccountSessionsAsync(accountId);

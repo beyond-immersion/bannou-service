@@ -391,7 +391,10 @@ Authoring Workflow
 
 ### Bugs
 
-1. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
+1. **T29 violation: `MapObject.data` marked opaque but AffordanceScorer reads 15+ hardcoded keys**: `AffordanceScorer.ScoreAffordance()` and `ExtractFeatures()` read `cover_rating`, `elevation`, `sightlines`, `concealment`, `protection`, `capacity`, `visibility_range`, `view_target`, `approach_direction`, `width`, `defensibility`, `exit_count`, `traversability`, `comfort`, `accessibility` via `TryGetProperty`. Additionally, `CustomAffordance.requires` hardcodes `objectTypes` as a special key with `min` sub-key. Schema claims "No Bannou plugin reads specific keys." Should define typed affordance data schema for the known spatial properties.
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/464 -->
+
+2. **Version counter race condition**: `IncrementVersionAsync` performs a non-atomic read-increment-write on the version counter. Two concurrent publishes could read the same version and both write version+1, producing duplicate version numbers. This is mitigated by the authority model (single writer per channel) but could occur during `accept_and_alert` mode where unauthorized publishes are processed concurrently with authorized ones.
 
 2. ~~**Orphaned spatial/type indexes on channel reset**~~: **FIXED** (2026-01-31) - `ClearChannelDataAsync` now properly cleans up all spatial and type indexes before deleting objects, preventing orphaned index entries.
 

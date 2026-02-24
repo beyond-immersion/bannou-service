@@ -7,8 +7,10 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -31,6 +33,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     private readonly IChannelManager _channelManager;
     private readonly ILogger<RabbitMQMessageTap> _logger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, TapHandleImpl> _activeTaps = new();
 
     // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
@@ -42,14 +45,17 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Messaging service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation.</param>
     public RabbitMQMessageTap(
         IChannelManager channelManager,
         ILogger<RabbitMQMessageTap> logger,
-        MessagingServiceConfiguration configuration)
+        MessagingServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _channelManager = channelManager;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -59,6 +65,12 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         string? sourceExchange = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.tap.create",
+            ActivityKind.Client);
+        activity?.SetTag("messaging.tap.source_topic", sourceTopic);
+        activity?.SetTag("messaging.tap.destination_exchange", destination.Exchange);
 
         var tapId = Guid.NewGuid();
         var effectiveSourceExchange = sourceExchange ?? _configuration.DefaultExchange;
@@ -82,14 +94,14 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             var channel = await _channelManager.CreateConsumerChannelAsync(cancellationToken);
 
             // Ensure source exchange exists (topic for service events - routes by routing key)
-            await EnsureExchangeAsync(channel, effectiveSourceExchange, ExchangeType.Topic, cancellationToken);
+            await EnsureExchangeAsync(channel, effectiveSourceExchange, RmqExchangeType.Topic, cancellationToken);
 
             // Ensure destination exchange exists
             var destExchangeType = destination.ExchangeType switch
             {
-                TapExchangeType.Direct => ExchangeType.Direct,
-                TapExchangeType.Fanout => ExchangeType.Fanout,
-                _ => ExchangeType.Topic
+                TapExchangeType.Direct => RmqExchangeType.Direct,
+                TapExchangeType.Fanout => RmqExchangeType.Fanout,
+                _ => RmqExchangeType.Topic
             };
 
             if (destination.CreateExchangeIfNotExists)
@@ -205,6 +217,13 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         DateTimeOffset tapCreatedAt,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.tap.forward",
+            ActivityKind.Producer);
+        activity?.SetTag("messaging.tap.id", tapId.ToString());
+        activity?.SetTag("messaging.tap.source_topic", sourceTopic);
+
         Guid? eventId = null;
         string? eventName = null;
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
@@ -273,7 +292,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
             SourceExchange = sourceExchange,
             DestinationExchange = destination.Exchange,
             DestinationRoutingKey = destination.RoutingKey,
-            DestinationExchangeType = destination.ExchangeType.ToString().ToLowerInvariant(),
+            DestinationExchangeType = destination.ExchangeType,
             TapCreatedAt = tapCreatedAt,
             ForwardedAt = DateTimeOffset.UtcNow
         };
@@ -348,27 +367,42 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     /// </summary>
     internal async Task RemoveTapAsync(Guid tapId)
     {
-        if (_activeTaps.TryRemove(tapId, out var tap))
-        {
-            try
-            {
-                await tap.Channel.BasicCancelAsync(tap.ConsumerTag);
-                await tap.Channel.CloseAsync();
-                tap.MarkInactive();
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.tap.remove",
+            ActivityKind.Client);
 
-                _logger.LogInformation(
-                    "Removed tap {TapId} from {SourceTopic}",
-                    tapId,
-                    tap.SourceTopic);
-            }
-            catch (Exception ex)
+        TapHandleImpl? tap = null;
+        try
+        {
+            if (!_activeTaps.TryRemove(tapId, out tap))
             {
-                _logger.LogError(
-                    ex,
-                    "Error removing tap {TapId}",
-                    tapId);
-                throw;
+                return;
             }
+
+            await tap.Channel.BasicCancelAsync(tap.ConsumerTag);
+            await tap.Channel.CloseAsync();
+            tap.MarkInactive();
+
+            _logger.LogInformation(
+                "Removed tap {TapId} from {SourceTopic}",
+                tapId,
+                tap.SourceTopic);
+
+            tap = null; // Cleanup complete - prevents double dispose in finally
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Error removing tap {TapId}",
+                tapId);
+            throw;
+        }
+        finally
+        {
+            // Ensure tap is marked inactive even if an exception occurred during cleanup
+            tap?.MarkInactive();
         }
     }
 

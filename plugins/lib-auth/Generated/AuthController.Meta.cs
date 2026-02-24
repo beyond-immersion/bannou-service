@@ -40,6 +40,8 @@ public partial class AuthController
                 "password": {
                     "type": "string",
                     "format": "password",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "User password for authentication"
                 },
                 "rememberMe": {
@@ -60,12 +62,10 @@ public partial class AuthController
             "additionalProperties": false,
             "properties": {
                 "deviceType": {
-                    "type": "string",
-                    "enum": [
-                        "desktop",
-                        "mobile",
-                        "tablet",
-                        "console"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
                     ],
                     "nullable": true,
                     "description": "Category of the device"
@@ -86,6 +86,16 @@ public partial class AuthController
                     "description": "Version of the client application"
                 }
             }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "desktop",
+                "mobile",
+                "tablet",
+                "console"
+            ],
+            "description": "Category of client device used for authentication or session tracking"
         }
     }
 }
@@ -237,6 +247,7 @@ public partial class AuthController
                     "type": "string",
                     "description": "Password for the account (will be hashed)",
                     "minLength": 8,
+                    "maxLength": 128,
                     "format": "password",
                     "example": "SecurePassword123!"
                 },
@@ -449,12 +460,10 @@ public partial class AuthController
             "additionalProperties": false,
             "properties": {
                 "deviceType": {
-                    "type": "string",
-                    "enum": [
-                        "desktop",
-                        "mobile",
-                        "tablet",
-                        "console"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
                     ],
                     "nullable": true,
                     "description": "Category of the device"
@@ -475,6 +484,16 @@ public partial class AuthController
                     "description": "Version of the client application"
                 }
             }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "desktop",
+                "mobile",
+                "tablet",
+                "console"
+            ],
+            "description": "Category of client device used for authentication or session tracking"
         }
     }
 }
@@ -606,7 +625,8 @@ public partial class AuthController
                     "type": "string",
                     "pattern": "^[0-9A-Fa-f]+$",
                     "minLength": 16,
-                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
+                    "maxLength": 2048,
+                    "description": "Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().\ nClient converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace(\"-\", \"\")\n",
                     "example": "140000006A7B3C8E..."
                 },
                 "deviceInfo": {
@@ -622,12 +642,10 @@ public partial class AuthController
             "additionalProperties": false,
             "properties": {
                 "deviceType": {
-                    "type": "string",
-                    "enum": [
-                        "desktop",
-                        "mobile",
-                        "tablet",
-                        "console"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
                     ],
                     "nullable": true,
                     "description": "Category of the device"
@@ -648,6 +666,16 @@ public partial class AuthController
                     "description": "Version of the client application"
                 }
             }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "desktop",
+                "mobile",
+                "tablet",
+                "console"
+            ],
+            "description": "Category of client device used for authentication or session tracking"
         }
     }
 }
@@ -904,19 +932,15 @@ public partial class AuthController
     "$ref": "#/$defs/ValidateTokenResponse",
     "$defs": {
         "ValidateTokenResponse": {
-            "description": "Response from token validation containing validity status and associated account details",
+            "description": "Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "valid",
                 "accountId",
-                "sessionKey"
+                "sessionKey",
+                "remainingTime"
             ],
             "properties": {
-                "valid": {
-                    "type": "boolean",
-                    "description": "Whether the token is valid and not expired"
-                },
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
@@ -1164,12 +1188,10 @@ public partial class AuthController
             "additionalProperties": false,
             "properties": {
                 "deviceType": {
-                    "type": "string",
-                    "enum": [
-                        "desktop",
-                        "mobile",
-                        "tablet",
-                        "console"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/DeviceType"
+                        }
                     ],
                     "nullable": true,
                     "description": "Category of the device"
@@ -1190,6 +1212,16 @@ public partial class AuthController
                     "description": "Version of the client application"
                 }
             }
+        },
+        "DeviceType": {
+            "type": "string",
+            "enum": [
+                "desktop",
+                "mobile",
+                "tablet",
+                "console"
+            ],
+            "description": "Category of client device used for authentication or session tracking"
         }
     }
 }
@@ -1379,8 +1411,7 @@ public partial class AuthController
             "additionalProperties": false,
             "required": [
                 "revokedTokens",
-                "revokedAccounts",
-                "failedPushCount"
+                "revokedAccounts"
             ],
             "properties": {
                 "revokedTokens": {
@@ -1396,15 +1427,6 @@ public partial class AuthController
                         "$ref": "#/$defs/RevokedAccountEntry"
                     },
                     "description": "Account-level revocations (all tokens before timestamp)"
-                },
-                "failedPushCount": {
-                    "type": "integer",
-                    "description": "Number of pending failed pushes awaiting retry"
-                },
-                "totalTokenCount": {
-                    "type": "integer",
-                    "nullable": true,
-                    "description": "Total revoked tokens in store (may be null if count unavailable)"
                 }
             }
         },
@@ -1644,6 +1666,7 @@ public partial class AuthController
                     "type": "string",
                     "format": "password",
                     "minLength": 8,
+                    "maxLength": 128,
                     "description": "New password to set for the account"
                 }
             }
@@ -1759,11 +1782,7 @@ public partial class AuthController
                     "description": "Human-readable name for the provider"
                 },
                 "authType": {
-                    "type": "string",
-                    "enum": [
-                        "oauth",
-                        "ticket"
-                    ],
+                    "$ref": "#/$defs/AuthType",
                     "description": "Authentication mechanism (oauth = browser redirect, ticket = game client token)"
                 },
                 "authUrl": {
@@ -1774,6 +1793,14 @@ public partial class AuthController
                     "description": "URL to initiate OAuth authentication (null for ticket-based auth like Steam)"
                 }
             }
+        },
+        "AuthType": {
+            "type": "string",
+            "enum": [
+                "oauth",
+                "ticket"
+            ],
+            "description": "Authentication mechanism type (oauth = browser redirect, ticket = game client token)"
         }
     }
 }
@@ -2043,6 +2070,7 @@ public partial class AuthController
                 "recoveryCode": {
                     "type": "string",
                     "nullable": true,
+                    "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
                     "description": "Single-use recovery code (format xxxx-xxxx)"
                 }
             }
@@ -2228,6 +2256,7 @@ public partial class AuthController
                 "recoveryCode": {
                     "type": "string",
                     "nullable": true,
+                    "pattern": "^[a-z0-9]{4}-[a-z0-9]{4}$",
                     "description": "Single-use recovery code (format xxxx-xxxx)"
                 }
             }

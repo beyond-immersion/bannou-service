@@ -71,6 +71,8 @@ components:
           description: Host address of the endpoint
         port:
           type: integer
+          minimum: 1
+          maximum: 65535
           description: Port of the endpoint
         services:
           type: array
@@ -100,25 +102,12 @@ components:
           type: string
           description: App-id that was deregistered
         reason:
-          type: string
-          enum:
-            - Graceful
-            - TtlExpired
-            - HealthCheckFailed
-            - CircuitBreakerTripped
+          $ref: 'mesh-api.yaml#/components/schemas/DeregistrationReason'
           description: Why the endpoint was removed
 
     # =========================================================================
     # Circuit Breaker Events
     # =========================================================================
-    CircuitState:
-      type: string
-      enum:
-        - Closed
-        - Open
-        - HalfOpen
-      description: Circuit breaker state for mesh endpoints
-
     MeshCircuitStateChangedEvent:
       allOf:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
@@ -137,10 +126,10 @@ components:
           type: string
           description: The app-id whose circuit state changed
         newState:
-          $ref: '#/components/schemas/CircuitState'
+          $ref: 'mesh-api.yaml#/components/schemas/CircuitState'
           description: The new circuit breaker state
         previousState:
-          $ref: '#/components/schemas/CircuitState'
+          $ref: 'mesh-api.yaml#/components/schemas/CircuitState'
           nullable: true
           description: Previous circuit state (null for first state change)
         consecutiveFailures:
@@ -187,19 +176,12 @@ components:
           description: Current consecutive failure count
         failureThreshold:
           type: integer
+          minimum: 0
           description: Configured threshold for deregistration (0 if disabled)
         lastError:
           type: string
           nullable: true
           description: Error message from the failed health check (if available)
-
-    MeshEndpointDegradedEventReason:
-      type: string
-      enum:
-        - MissedHeartbeat
-        - HighLoad
-        - HighConnectionCount
-      description: Reason why endpoint was marked as degraded
 
     MeshEndpointDegradedEvent:
       allOf:
@@ -222,7 +204,7 @@ components:
           type: string
           description: App-id of the endpoint
         reason:
-          $ref: '#/components/schemas/MeshEndpointDegradedEventReason'
+          $ref: 'mesh-api.yaml#/components/schemas/DegradedReason'
           description: Why the endpoint was marked as degraded
         loadPercent:
           type: number

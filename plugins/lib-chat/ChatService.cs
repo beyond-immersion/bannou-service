@@ -7,6 +7,8 @@ using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Protocol;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
@@ -52,6 +54,9 @@ public partial class ChatService : IChatService
     private readonly IContractClient _contractClient;
     private readonly IResourceClient _resourceClient;
     private readonly IPermissionClient _permissionClient;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly string _serverSalt;
 
     private readonly IJsonQueryableStateStore<ChatRoomTypeModel> _roomTypeStore;
     private readonly IJsonQueryableStateStore<ChatRoomModel> _roomStore;
@@ -74,7 +79,9 @@ public partial class ChatService : IChatService
         IEventConsumer eventConsumer,
         IContractClient contractClient,
         IResourceClient resourceClient,
-        IPermissionClient permissionClient)
+        IPermissionClient permissionClient,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _clientEventPublisher = clientEventPublisher;
@@ -84,6 +91,9 @@ public partial class ChatService : IChatService
         _contractClient = contractClient;
         _resourceClient = resourceClient;
         _permissionClient = permissionClient;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
+        _serverSalt = configuration.ServerSalt;
 
         _roomTypeStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomTypeModel>(StateStoreDefinitions.ChatRoomTypes);
         _roomStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomModel>(StateStoreDefinitions.ChatRooms);
@@ -105,6 +115,16 @@ public partial class ChatService : IChatService
         RegisterRoomTypeRequest body, CancellationToken cancellationToken)
     {
         var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+
+        // Distributed lock prevents TOCTOU race on uniqueness check
+        await using var lockResponse = await _lockProvider.LockAsync(
+            "chat", "register-room-type", typeKey,
+            _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for room type registration: {Code}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
 
         // Check uniqueness
         var existing = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
@@ -656,7 +676,7 @@ public partial class ChatService : IChatService
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+        await _messageBus.TryPublishAsync("chat-room.archived", new ChatRoomArchivedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -755,7 +775,7 @@ public partial class ChatService : IChatService
         await SetParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
 
         // Publish service event
-        await _messageBus.TryPublishAsync("chat.participant.joined", new ChatParticipantJoinedEvent
+        await _messageBus.TryPublishAsync("chat-participant.joined", new ChatParticipantJoinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -781,6 +801,10 @@ public partial class ChatService : IChatService
             Role = role,
             CurrentCount = participants.Count,
         }, cancellationToken);
+
+        // Register session in entity session registry for room event routing
+        await _entitySessionRegistry.RegisterAsync("chat-room", body.RoomId, callerSessionId.Value.ToString(), cancellationToken);
+        await PublishTypingShortcutsAsync(callerSessionId.Value, body.RoomId, cancellationToken);
 
         _logger.LogInformation("Session {SessionId} joined room {RoomId}", callerSessionId, body.RoomId);
         var joinCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
@@ -840,9 +864,14 @@ public partial class ChatService : IChatService
 
         await ClearParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
 
+        // Unregister from entity session registry, revoke typing shortcuts, clear typing state
+        await _entitySessionRegistry.UnregisterAsync("chat-room", body.RoomId, callerSessionId.Value.ToString(), cancellationToken);
+        await RevokeTypingShortcutsAsync(callerSessionId.Value, body.RoomId, cancellationToken);
+        await ClearTypingStateAsync(callerSessionId.Value, body.RoomId, cancellationToken);
+
         var remainingParticipants = await GetParticipantsAsync(body.RoomId, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.left", new ChatParticipantLeftEvent
+        await _messageBus.TryPublishAsync("chat-participant.left", new ChatParticipantLeftEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -949,7 +978,12 @@ public partial class ChatService : IChatService
 
         await ClearParticipantPermissionStateAsync(body.TargetSessionId, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.kicked", new ChatParticipantKickedEvent
+        // Unregister from entity session registry, revoke typing shortcuts, clear typing state
+        await _entitySessionRegistry.UnregisterAsync("chat-room", body.RoomId, body.TargetSessionId.ToString(), cancellationToken);
+        await RevokeTypingShortcutsAsync(body.TargetSessionId, body.RoomId, cancellationToken);
+        await ClearTypingStateAsync(body.TargetSessionId, body.RoomId, cancellationToken);
+
+        await _messageBus.TryPublishAsync("chat-participant.kicked", new ChatParticipantKickedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1027,11 +1061,16 @@ public partial class ChatService : IChatService
             await ClearParticipantPermissionStateAsync(body.TargetSessionId, cancellationToken);
         }
 
+        // Unregister from entity session registry, revoke typing shortcuts, clear typing state
+        await _entitySessionRegistry.UnregisterAsync("chat-room", body.RoomId, body.TargetSessionId.ToString(), cancellationToken);
+        await RevokeTypingShortcutsAsync(body.TargetSessionId, body.RoomId, cancellationToken);
+        await ClearTypingStateAsync(body.TargetSessionId, body.RoomId, cancellationToken);
+
         model.LastActivityAt = now;
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.banned", new ChatParticipantBannedEvent
+        await _messageBus.TryPublishAsync("chat-participant.banned", new ChatParticipantBannedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1121,7 +1160,7 @@ public partial class ChatService : IChatService
         target.MutedUntil = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null;
         await SaveParticipantAsync(body.RoomId, target, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.participant.muted", new ChatParticipantMutedEvent
+        await _messageBus.TryPublishAsync("chat-participant.muted", new ChatParticipantMutedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1264,7 +1303,7 @@ public partial class ChatService : IChatService
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
         // Publish service event (no text/custom content for privacy)
-        await _messageBus.TryPublishAsync("chat.message.sent", new ChatMessageSentEvent
+        await _messageBus.TryPublishAsync("chat-message.sent", new ChatMessageSentEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1278,6 +1317,9 @@ public partial class ChatService : IChatService
             SentimentIntensity = message.SentimentIntensity,
             EmojiCode = message.EmojiCode,
         }, cancellationToken);
+
+        // Clear typing state on message send
+        await ClearTypingStateAsync(callerSessionId.Value, body.RoomId, cancellationToken);
 
         // Broadcast to participants (includes full content for rendering)
         var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
@@ -1326,61 +1368,76 @@ public partial class ChatService : IChatService
         var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
         var now = DateTimeOffset.UtcNow;
         var messageCount = 0;
+        var failed = new List<BatchMessageFailure>();
+        var messages = body.Messages.ToList();
 
-        foreach (var entry in body.Messages)
+        for (var i = 0; i < messages.Count; i++)
         {
+            var entry = messages[i];
+
             var validationError = ValidateMessageContent(entry.Content, roomType);
             if (validationError != null)
             {
+                failed.Add(new BatchMessageFailure { Index = i, Error = validationError });
                 continue;
             }
 
-            var messageId = Guid.NewGuid();
-            var message = new ChatMessageModel
+            try
             {
-                MessageId = messageId,
-                RoomId = body.RoomId,
-                SenderType = entry.SenderType,
-                SenderId = entry.SenderId,
-                DisplayName = entry.DisplayName,
-                Timestamp = now,
-                MessageFormat = roomType.MessageFormat,
-                TextContent = entry.Content.Text,
-                SentimentCategory = entry.Content.SentimentCategory,
-                SentimentIntensity = entry.Content.SentimentIntensity,
-                EmojiCode = entry.Content.EmojiCode,
-                EmojiSetId = entry.Content.EmojiSetId,
-                CustomPayload = entry.Content.CustomPayload,
-            };
+                var messageId = Guid.NewGuid();
+                var message = new ChatMessageModel
+                {
+                    MessageId = messageId,
+                    RoomId = body.RoomId,
+                    SenderType = entry.SenderType,
+                    SenderId = entry.SenderId,
+                    DisplayName = entry.DisplayName,
+                    Timestamp = now,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = entry.Content.Text,
+                    SentimentCategory = entry.Content.SentimentCategory,
+                    SentimentIntensity = entry.Content.SentimentIntensity,
+                    EmojiCode = entry.Content.EmojiCode,
+                    EmojiSetId = entry.Content.EmojiSetId,
+                    CustomPayload = entry.Content.CustomPayload,
+                };
 
-            if (roomType.PersistenceMode == PersistenceMode.Persistent)
-            {
-                await _messageStore.SaveAsync($"{body.RoomId}:{messageId}", message, cancellationToken: cancellationToken);
+                if (roomType.PersistenceMode == PersistenceMode.Persistent)
+                {
+                    await _messageStore.SaveAsync($"{body.RoomId}:{messageId}", message,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
+                    await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
+                        new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+                }
+
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+                {
+                    RoomId = body.RoomId,
+                    MessageId = messageId,
+                    SenderType = message.SenderType,
+                    SenderId = message.SenderId,
+                    DisplayName = message.DisplayName,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = message.TextContent,
+                    SentimentCategory = message.SentimentCategory,
+                    SentimentIntensity = message.SentimentIntensity,
+                    EmojiCode = message.EmojiCode,
+                    EmojiSetId = message.EmojiSetId,
+                    CustomPayload = message.CustomPayload,
+                }, cancellationToken);
+
+                messageCount++;
             }
-            else
+            catch (Exception ex)
             {
-                var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
-                await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
-                    new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+                _logger.LogError(ex, "Failed to send batch message at index {Index} in room {RoomId}",
+                    i, body.RoomId);
+                failed.Add(new BatchMessageFailure { Index = i, Error = ex.Message });
             }
-
-            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
-            {
-                RoomId = body.RoomId,
-                MessageId = messageId,
-                SenderType = message.SenderType,
-                SenderId = message.SenderId,
-                DisplayName = message.DisplayName,
-                MessageFormat = roomType.MessageFormat,
-                TextContent = message.TextContent,
-                SentimentCategory = message.SentimentCategory,
-                SentimentIntensity = message.SentimentIntensity,
-                EmojiCode = message.EmojiCode,
-                EmojiSetId = message.EmojiSetId,
-                CustomPayload = message.CustomPayload,
-            }, cancellationToken);
-
-            messageCount++;
         }
 
         // Update room activity
@@ -1389,7 +1446,11 @@ public partial class ChatService : IChatService
         await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
         await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
 
-        return (StatusCodes.OK, new SendMessageBatchResponse { MessageCount = messageCount });
+        return (StatusCodes.OK, new SendMessageBatchResponse
+        {
+            MessageCount = messageCount,
+            Failed = failed,
+        });
     }
 
     /// <inheritdoc />
@@ -1483,7 +1544,7 @@ public partial class ChatService : IChatService
         var snapshot = MapToMessageResponse(message, model.RoomTypeCode);
         await _messageStore.DeleteAsync(msgKey, cancellationToken);
 
-        await _messageBus.TryPublishAsync("chat.message.deleted", new ChatMessageDeletedEvent
+        await _messageBus.TryPublishAsync("chat-message.deleted", new ChatMessageDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1839,6 +1900,9 @@ public partial class ChatService : IChatService
     internal async Task ExecuteContractRoomActionAsync(
         ChatRoomModel room, ContractRoomAction action, ChatRoomLockReason lockReason, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.ExecuteContractRoomAction");
+
         var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
 
         switch (action)
@@ -1848,7 +1912,7 @@ public partial class ChatService : IChatService
                 await _roomStore.SaveAsync(roomKey, room, cancellationToken: ct);
                 await _roomCache.SaveAsync(roomKey, room, cancellationToken: ct);
 
-                await _messageBus.TryPublishAsync("chat.room.locked", new ChatRoomLockedEvent
+                await _messageBus.TryPublishAsync("chat-room.locked", new ChatRoomLockedEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1879,7 +1943,7 @@ public partial class ChatService : IChatService
                     var contractArchiveId = compressResponse.ArchiveId ?? throw new InvalidOperationException(
                         $"Resource service returned null ArchiveId for room {room.RoomId}");
 
-                    await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+                    await _messageBus.TryPublishAsync("chat-room.archived", new ChatRoomArchivedEvent
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
@@ -1947,6 +2011,9 @@ public partial class ChatService : IChatService
 
     private async Task<ChatRoomTypeModel?> FindRoomTypeByCodeAsync(string code, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.FindRoomTypeByCode");
+
         // Try to find by querying for the code (searches across all scopes)
         var conditions = new List<QueryCondition>
         {
@@ -1958,6 +2025,9 @@ public partial class ChatService : IChatService
 
     private async Task<ChatRoomModel?> GetRoomWithCacheAsync(Guid roomId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.GetRoomWithCache");
+
         var roomKey = $"{RoomKeyPrefix}{roomId}";
 
         // Try cache first
@@ -2025,9 +2095,17 @@ public partial class ChatService : IChatService
                 }
                 if (!string.IsNullOrEmpty(roomType.ValidatorConfig?.AllowedPattern))
                 {
-                    if (!Regex.IsMatch(content.Text, roomType.ValidatorConfig.AllowedPattern))
+                    try
                     {
-                        return "Text does not match allowed pattern";
+                        if (!Regex.IsMatch(content.Text, roomType.ValidatorConfig.AllowedPattern,
+                            RegexOptions.None, TimeSpan.FromSeconds(1)))
+                        {
+                            return "Text does not match allowed pattern";
+                        }
+                    }
+                    catch (RegexMatchTimeoutException)
+                    {
+                        return $"Content validation failed (pattern timeout for room type {roomType.Code})";
                     }
                 }
                 break;
@@ -2098,6 +2176,9 @@ public partial class ChatService : IChatService
 
     private async Task SetParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.SetParticipantPermissionState");
+
         try
         {
             await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
@@ -2119,6 +2200,9 @@ public partial class ChatService : IChatService
 
     private async Task ClearParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.ClearParticipantPermissionState");
+
         try
         {
             await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
@@ -2199,4 +2283,211 @@ public partial class ChatService : IChatService
         },
         IsPinned = model.IsPinned,
     };
+
+    // ============================================================================
+    // TYPING INDICATOR OPERATIONS
+    // ============================================================================
+
+    /// <inheritdoc />
+    public async Task<StatusCodes> TypingAsync(
+        TypingRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.chat", "ChatService.Typing");
+
+        _logger.LogDebug("Typing signal for room {RoomId} from session {SessionId}",
+            body.RoomId, body.SessionId);
+
+        var member = $"{body.RoomId:N}:{body.SessionId:N}";
+        var nowMs = (double)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        // Check if already typing (heartbeat refresh vs new start)
+        var existingScore = await _participantStore.SortedSetScoreAsync(
+            "typing:active", member, cancellationToken);
+
+        // Upsert timestamp
+        await _participantStore.SortedSetAddAsync(
+            "typing:active", member, nowMs, cancellationToken: cancellationToken);
+
+        // Only publish start event on NEW typing (not heartbeat refresh)
+        if (existingScore == null)
+        {
+            _logger.LogDebug("New typing started in room {RoomId} by session {SessionId}",
+                body.RoomId, body.SessionId);
+
+            // Resolve display name from participant data
+            var typingParticipant = await GetParticipantAsync(
+                body.RoomId, body.SessionId, cancellationToken);
+
+            await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "chat-room", body.RoomId,
+                new ChatTypingStartedClientEvent
+                {
+                    RoomId = body.RoomId,
+                    ParticipantSessionId = body.SessionId,
+                    DisplayName = typingParticipant?.DisplayName,
+                }, cancellationToken);
+        }
+
+        return StatusCodes.OK;
+    }
+
+    /// <inheritdoc />
+    public async Task<StatusCodes> EndTypingAsync(
+        EndTypingRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.chat", "ChatService.EndTyping");
+
+        _logger.LogDebug("End typing signal for room {RoomId} from session {SessionId}",
+            body.RoomId, body.SessionId);
+
+        await ClearTypingStateAsync(body.SessionId, body.RoomId, cancellationToken);
+
+        return StatusCodes.OK;
+    }
+
+    // ============================================================================
+    // TYPING INDICATOR HELPERS
+    // ============================================================================
+
+    /// <summary>
+    /// Publish typing and end-typing session shortcuts to a participant.
+    /// </summary>
+    private async Task PublishTypingShortcutsAsync(Guid sessionId, Guid roomId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.PublishTypingShortcuts");
+
+        var sessionIdStr = sessionId.ToString();
+        var roomIdStr = roomId.ToString();
+
+        // --- Typing shortcut ---
+        var typingRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(
+            sessionIdStr, $"chat_typing_{roomIdStr}", "chat", _serverSalt);
+        var typingTargetGuid = GuidGenerator.GenerateServiceGuid(
+            sessionIdStr, "chat/typing", _serverSalt);
+
+        var typingPayload = new TypingRequest { RoomId = roomId, SessionId = sessionId };
+
+        await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SessionId = sessionId,
+            Shortcut = new SessionShortcut
+            {
+                RouteGuid = typingRouteGuid,
+                TargetGuid = typingTargetGuid,
+                BoundPayload = BannouJson.Serialize(typingPayload),
+                Metadata = new SessionShortcutMetadata
+                {
+                    Name = $"chat_typing_{roomIdStr}",
+                    SourceService = "chat",
+                    TargetService = "chat",
+                    TargetMethod = "POST",
+                    TargetEndpoint = "/chat/typing",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                }
+            },
+            ReplaceExisting = false
+        }, ct);
+
+        // --- End-typing shortcut ---
+        var endTypingRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(
+            sessionIdStr, $"chat_end_typing_{roomIdStr}", "chat", _serverSalt);
+        var endTypingTargetGuid = GuidGenerator.GenerateServiceGuid(
+            sessionIdStr, "chat/end-typing", _serverSalt);
+
+        var endTypingPayload = new EndTypingRequest { RoomId = roomId, SessionId = sessionId };
+
+        await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutPublishedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SessionId = sessionId,
+            Shortcut = new SessionShortcut
+            {
+                RouteGuid = endTypingRouteGuid,
+                TargetGuid = endTypingTargetGuid,
+                BoundPayload = BannouJson.Serialize(endTypingPayload),
+                Metadata = new SessionShortcutMetadata
+                {
+                    Name = $"chat_end_typing_{roomIdStr}",
+                    SourceService = "chat",
+                    TargetService = "chat",
+                    TargetMethod = "POST",
+                    TargetEndpoint = "/chat/end-typing",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                }
+            },
+            ReplaceExisting = false
+        }, ct);
+
+        _logger.LogDebug("Published typing shortcuts for session {SessionId} in room {RoomId}",
+            sessionId, roomId);
+    }
+
+    /// <summary>
+    /// Revoke typing and end-typing shortcuts for a departing participant.
+    /// Uses per-GUID revocation (not RevokeByService) because a user can be in multiple rooms.
+    /// </summary>
+    private async Task RevokeTypingShortcutsAsync(Guid sessionId, Guid roomId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.RevokeTypingShortcuts");
+
+        var sessionIdStr = sessionId.ToString();
+        var roomIdStr = roomId.ToString();
+
+        var typingRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(
+            sessionIdStr, $"chat_typing_{roomIdStr}", "chat", _serverSalt);
+        var endTypingRouteGuid = GuidGenerator.GenerateSessionShortcutGuid(
+            sessionIdStr, $"chat_end_typing_{roomIdStr}", "chat", _serverSalt);
+
+        await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutRevokedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SessionId = sessionId,
+            RouteGuid = typingRouteGuid,
+            Reason = $"Left room {roomId}"
+        }, ct);
+
+        await _clientEventPublisher.PublishToSessionAsync(sessionIdStr, new ShortcutRevokedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SessionId = sessionId,
+            RouteGuid = endTypingRouteGuid,
+            Reason = $"Left room {roomId}"
+        }, ct);
+
+        _logger.LogDebug("Revoked typing shortcuts for session {SessionId} in room {RoomId}",
+            sessionId, roomId);
+    }
+
+    /// <summary>
+    /// Remove typing state from sorted set and publish stop event if was active.
+    /// </summary>
+    private async Task ClearTypingStateAsync(Guid sessionId, Guid roomId, CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "ChatService.ClearTypingState");
+
+        var member = $"{roomId:N}:{sessionId:N}";
+        var removed = await _participantStore.SortedSetRemoveAsync("typing:active", member, ct);
+
+        if (removed)
+        {
+            _logger.LogDebug("Cleared typing state for session {SessionId} in room {RoomId}",
+                sessionId, roomId);
+
+            await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "chat-room", roomId,
+                new ChatTypingStoppedClientEvent
+                {
+                    RoomId = roomId,
+                    ParticipantSessionId = sessionId,
+                }, ct);
+        }
+    }
 }

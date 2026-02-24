@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -38,18 +39,22 @@ public sealed class QueryActorStateHandler : IActionHandler
     private const string ACTION_NAME = "query_actor_state";
     private readonly IActorRegistry _actorRegistry;
     private readonly ILogger<QueryActorStateHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new query actor state handler.
     /// </summary>
     /// <param name="actorRegistry">Actor registry for local state access.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public QueryActorStateHandler(
         IActorRegistry actorRegistry,
-        ILogger<QueryActorStateHandler> logger)
+        ILogger<QueryActorStateHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _actorRegistry = actorRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -57,11 +62,12 @@ public sealed class QueryActorStateHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "QueryActorStateHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 
@@ -100,7 +106,8 @@ public sealed class QueryActorStateHandler : IActionHandler
         {
             _logger.LogWarning("Actor {ActorId} not found in local registry", actorId);
             scope.SetValue(resultVariable, null);
-            return ValueTask.FromResult(ActionResult.Continue);
+            await Task.CompletedTask;
+            return ActionResult.Continue;
         }
 
         // Get state snapshot
@@ -134,7 +141,8 @@ public sealed class QueryActorStateHandler : IActionHandler
 
         _logger.LogDebug("Retrieved state for actor {ActorId}", actorId);
 
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>

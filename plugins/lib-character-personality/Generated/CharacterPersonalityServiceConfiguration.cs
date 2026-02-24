@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.CharacterPersonality;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CharacterPersonalityService))]
-public class CharacterPersonalityServiceConfiguration : IServiceConfiguration
+public class CharacterPersonalityServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Base chance for trait shift per evolution event (0.0-1.0)

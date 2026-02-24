@@ -72,6 +72,9 @@ info:
     - topic: contract.expired
       event: ContractExpiredEvent
       description: Published when contract reaches natural expiration
+    - topic: contract.payment.due
+      event: ContractPaymentDueEvent
+      description: Published when a recurring or one-time payment is due on an active contract
 
     # Prebound API execution events (observability)
     - topic: contract.prebound-api.executed
@@ -192,6 +195,7 @@ components:
       - consentingEntityId
       - consentingEntityType
       - role
+      - remainingConsentsNeeded
       properties:
         eventId:
           type: string
@@ -303,6 +307,7 @@ components:
       - contractId
       - milestoneCode
       - milestoneName
+      - preboundApisExecuted
       properties:
         eventId:
           type: string
@@ -326,7 +331,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Evidence of completion
+          description: "Client-only completion evidence. No Bannou plugin reads specific keys from this field by convention."
         preboundApisExecuted:
           type: integer
           description: Number of prebound APIs executed
@@ -342,6 +347,8 @@ components:
       - milestoneCode
       - milestoneName
       - reason
+      - wasRequired
+      - triggeredBreach
       properties:
         eventId:
           type: string
@@ -380,8 +387,6 @@ components:
       - timestamp
       - contractId
       - breachId
-      - breachingEntityId
-      - breachingEntityType
       - breachType
       properties:
         eventId:
@@ -403,10 +408,13 @@ components:
         breachingEntityId:
           type: string
           format: uuid
-          description: Entity that breached
+          nullable: true
+          description: Entity that breached (null for system-initiated breaches such as deadline enforcement)
         breachingEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Entity type
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type (null for system-initiated breaches)
         breachType:
           $ref: 'contract-api.yaml#/components/schemas/BreachType'
           description: Type of breach
@@ -461,6 +469,7 @@ components:
       - contractId
       - templateCode
       - parties
+      - milestonesCompleted
       properties:
         eventId:
           type: string
@@ -494,8 +503,7 @@ components:
       - eventId
       - timestamp
       - contractId
-      - terminatedByEntityId
-      - terminatedByEntityType
+      - wasBreachRelated
       properties:
         eventId:
           type: string
@@ -512,10 +520,13 @@ components:
         terminatedByEntityId:
           type: string
           format: uuid
-          description: Entity that requested termination
+          nullable: true
+          description: Entity that requested termination (null for system-initiated terminations such as breach threshold)
         terminatedByEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Entity type
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type (null for system-initiated terminations)
         reason:
           type: string
           nullable: true
@@ -554,6 +565,50 @@ components:
           format: date-time
           description: When contract was set to expire
 
+    ContractPaymentDueEvent:
+      type: object
+      description: Event published when a contract payment is due based on payment schedule terms
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - paymentSchedule
+      - paymentNumber
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        contractId:
+          type: string
+          format: uuid
+          description: Contract instance ID
+        templateCode:
+          type: string
+          description: Template code
+        paymentSchedule:
+          $ref: 'contract-api.yaml#/components/schemas/PaymentSchedule'
+          description: Payment schedule type (one_time or recurring)
+        paymentFrequency:
+          type: string
+          nullable: true
+          description: Recurring payment frequency (ISO 8601 duration, null for one-time)
+        paymentNumber:
+          type: integer
+          description: Sequential payment number (1-indexed)
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyInfo'
+          nullable: true
+          description: Contract parties
+
     # =========================================================================
     # Prebound API Execution Events
     # =========================================================================
@@ -566,6 +621,7 @@ components:
       - eventId
       - timestamp
       - contractId
+      - trigger
       - serviceName
       - endpoint
       - statusCode
@@ -603,6 +659,7 @@ components:
       - eventId
       - timestamp
       - contractId
+      - trigger
       - serviceName
       - endpoint
       - errorMessage
@@ -644,6 +701,7 @@ components:
       - eventId
       - timestamp
       - contractId
+      - trigger
       - serviceName
       - endpoint
       - validationOutcome
@@ -673,8 +731,8 @@ components:
           type: integer
           description: HTTP status code from the API response
         validationOutcome:
-          type: string
-          description: Validation outcome (PermanentFailure, TransientFailure)
+          $ref: 'contract-api.yaml#/components/schemas/ValidationOutcome'
+          description: Validation outcome
         failureReason:
           type: string
           nullable: true
@@ -689,11 +747,11 @@ components:
       description: Event published when a contract is locked under guardian custody
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - contractId
-        - guardianId
-        - guardianType
+      - eventId
+      - timestamp
+      - contractId
+      - guardianId
+      - guardianType
       properties:
         eventId:
           type: string
@@ -712,17 +770,17 @@ components:
           format: uuid
           description: Guardian entity ID
         guardianType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Guardian entity type
+          type: string
+          description: Guardian entity type identifier (e.g., escrow)
 
     ContractUnlockedEvent:
       type: object
       description: Event published when a contract is released from guardian custody
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - contractId
+      - eventId
+      - timestamp
+      - contractId
       properties:
         eventId:
           type: string
@@ -742,23 +800,23 @@ components:
           nullable: true
           description: Previous guardian entity ID
         previousGuardianType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          type: string
           nullable: true
-          description: Previous guardian entity type
+          description: Previous guardian entity type identifier
 
     ContractPartyTransferredEvent:
       type: object
       description: Event published when a party role is transferred to new entity
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - contractId
-        - role
-        - fromEntityId
-        - fromEntityType
-        - toEntityId
-        - toEntityType
+      - eventId
+      - timestamp
+      - contractId
+      - role
+      - fromEntityId
+      - fromEntityType
+      - toEntityId
+      - toEntityType
       properties:
         eventId:
           type: string
@@ -795,12 +853,12 @@ components:
       description: Event published when a new clause type is registered
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - typeCode
-        - description
-        - category
-        - isBuiltIn
+      - eventId
+      - timestamp
+      - typeCode
+      - description
+      - category
+      - isBuiltIn
       properties:
         eventId:
           type: string
@@ -828,11 +886,11 @@ components:
       description: Event published when template values are set on a contract instance
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - contractId
-        - keys
-        - valueCount
+      - eventId
+      - timestamp
+      - contractId
+      - keys
+      - valueCount
       properties:
         eventId:
           type: string
@@ -857,19 +915,15 @@ components:
 
     ContractExecutedEvent:
       type: object
-      description: |
-        Event published when contract clauses are executed (distributions made).
-        Provides per-clause distribution results for escrow verification, enabling
-        lib-escrow to correlate outcomes with its template value mappings and handle
-        partial failures appropriately.
+      description: Event published when contract clauses are executed (distributions made), providing per-clause distribution results for escrow verification.
       additionalProperties: false
       required:
-        - eventId
-        - timestamp
-        - contractId
-        - templateCode
-        - distributionCount
-        - distributionResults
+      - eventId
+      - timestamp
+      - contractId
+      - templateCode
+      - distributionCount
+      - distributionResults
       properties:
         eventId:
           type: string
@@ -891,11 +945,7 @@ components:
           description: Number of distributions executed
         distributionResults:
           type: array
-          description: |
-            Per-clause distribution outcomes for escrow verification.
-            Escrow correlates these via clauseId to the template values it set,
-            enabling proper handling of partial failures without requiring
-            wallet/container IDs in the event payload.
+          description: Per-clause distribution outcomes for escrow verification (escrow correlates via clauseId to template values it set).
           items:
             $ref: 'contract-api.yaml#/components/schemas/ClauseDistributionResult'
 

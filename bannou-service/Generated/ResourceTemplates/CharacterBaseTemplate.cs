@@ -39,7 +39,7 @@ public sealed class CharacterBaseTemplate : ResourceTemplateBase
         ["resourceType"] = typeof(string),
         ["schemaVersion"] = typeof(int),
         ["speciesId"] = typeof(Guid),
-        ["status"] = typeof(CharacterStatus),
+        ["status"] = typeof(object),
         ["updatedAt"] = typeof(DateTimeOffset?),
     };
 }

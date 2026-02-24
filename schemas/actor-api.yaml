@@ -342,6 +342,10 @@ paths:
       responses:
         '200':
           description: Encounter started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartEncounterResponse'
 
   /actor/encounter/update-phase:
     post:
@@ -426,9 +430,11 @@ components:
       properties:
         category:
           type: string
+          minLength: 1
           description: Category identifier (e.g., "npc-brain", "world-admin", "cron-cleanup")
         behaviorRef:
           type: string
+          minLength: 1
           description: Reference to behavior in lib-assets (e.g., "asset://behaviors/npc-brain-v1")
         configuration:
           type: object
@@ -471,6 +477,7 @@ components:
             Applied as the first layer in the three-layer override composition
             (template, instance, ABML metadata). Structure defined by ICognitionOverride
             interface hierarchy in bannou-service/Behavior/.
+            No Bannou plugin reads specific keys from this field by convention.
 
     AutoSpawnConfig:
       type: object
@@ -565,6 +572,7 @@ components:
           description: >-
             Static template-level cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -668,6 +676,7 @@ components:
           description: >-
             Updated cognition overrides (polymorphic JSON).
             Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
 
     DeleteActorTemplateRequest:
       type: object
@@ -691,12 +700,8 @@ components:
       description: Response confirming template deletion
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - deleted
       - stoppedActorCount
       properties:
-        deleted:
-          type: boolean
-          description: Whether the template was successfully deleted
         stoppedActorCount:
           type: integer
           description: Number of running actors that were stopped
@@ -755,6 +760,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: Actor ID to retrieve
 
     ActorInstanceResponse:
@@ -768,7 +774,6 @@ components:
       - category
       - status
       - startedAt
-      - loopIterations
       properties:
         actorId:
           type: string
@@ -813,7 +818,11 @@ components:
         loopIterations:
           type: integer
           format: int64
-          description: Number of behavior loop iterations executed
+          nullable: true
+          description: >-
+            Number of behavior loop iterations executed. Null when the actor is
+            running on a remote pool node and the iteration count is not locally
+            available.
 
     ActorStatus:
       type: string
@@ -826,6 +835,24 @@ components:
       - stopped
       - error
       description: Current actor lifecycle state
+
+    ActorExitReason:
+      type: string
+      description: Reason an actor exited execution
+      enum:
+      - behavior_complete
+      - error
+      - timeout
+      - external_stop
+
+    ActorDeploymentMode:
+      type: string
+      description: Actor service deployment mode determining how actors are distributed
+      enum:
+      - bannou
+      - pool-per-type
+      - shared-pool
+      - auto-scale
 
     PerceptionSourceType:
       type: string
@@ -850,6 +877,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to stop
         graceful:
           type: boolean
@@ -862,12 +890,8 @@ components:
       description: Response confirming actor stop operation
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - stopped
       - finalStatus
       properties:
-        stopped:
-          type: boolean
-          description: Whether the actor was successfully stopped
         finalStatus:
           description: Final status of the actor after stopping
           $ref: '#/components/schemas/ActorStatus'
@@ -886,6 +910,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to bind
         characterId:
           type: string
@@ -911,7 +936,7 @@ components:
       # NRT: Response properties server always sets (Rule 4)
       required:
       - actorsCleanedUp
-      - success
+      - actorIds
       properties:
         actorsCleanedUp:
           type: integer
@@ -921,9 +946,6 @@ components:
           items:
             type: string
           description: IDs of actors that were cleaned up
-        success:
-          type: boolean
-          description: Whether cleanup completed successfully
 
     ListActorsRequest:
       type: object
@@ -939,8 +961,10 @@ components:
           nullable: true
           description: Filter by pool node
         status:
+          allOf:
+          - $ref: '#/components/schemas/ActorStatus'
+          nullable: true
           description: Filter by actor status
-          $ref: '#/components/schemas/ActorStatus'
         characterId:
           type: string
           format: uuid
@@ -984,6 +1008,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: Target actor to inject perception into
         perception:
           description: Perception data to inject
@@ -1007,11 +1032,13 @@ components:
       properties:
         perceptionType:
           type: string
+          minLength: 1
           description: |
             Perception type. Common values: visual, auditory, tactile, olfactory,
             proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
         sourceId:
           type: string
+          minLength: 1
           description: ID of the entity causing this perception
         sourceType:
           allOf:
@@ -1104,6 +1131,11 @@ components:
         Information about a nearby object perceived by the character.
         Core properties are schema-defined; additionalProperties allows game-specific
         object data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - objectId
+      - objectType
+      - distance
+      - direction
       properties:
         objectId:
           type: string
@@ -1121,7 +1153,7 @@ components:
           description: Relative direction (north, south, east, west, above, below, etc.)
         position:
           allOf:
-          - $ref: '#/components/schemas/Position3D'
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           nullable: true
           description: Optional absolute position
 
@@ -1132,6 +1164,10 @@ components:
         Information about a hazard in range.
         Core properties are schema-defined; additionalProperties allows game-specific
         hazard data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - hazardType
+      - distance
+      - severity
       properties:
         hazardType:
           type: string
@@ -1151,40 +1187,14 @@ components:
           nullable: true
           description: Direction to hazard center
 
-    Position3D:
-      type: object
-      additionalProperties: false
-      description: 3D position in world coordinates
-      required:
-      - x
-      - y
-      - z
-      properties:
-        x:
-          type: number
-          format: float
-          description: X coordinate
-        y:
-          type: number
-          format: float
-          description: Y coordinate (typically vertical)
-        z:
-          type: number
-          format: float
-          description: Z coordinate
-
     InjectPerceptionResponse:
       type: object
       additionalProperties: false
       description: Response confirming perception injection
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - queued
       - queueDepth
       properties:
-        queued:
-          type: boolean
-          description: Whether the perception was successfully queued
         queueDepth:
           type: integer
           description: Current depth of the perception queue
@@ -1202,6 +1212,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the actor to query
         queryType:
           $ref: '#/components/schemas/OptionsQueryType'
@@ -1496,7 +1507,8 @@ components:
             Target actor ID for the action, if applicable.
             Null for untargeted actions like movement or taunts.
         position:
-          $ref: '#/components/schemas/ChoreographyPosition'
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
           nullable: true
           description: Target position for movement or placement actions
         durationMs:
@@ -1577,24 +1589,6 @@ components:
       - after_previous
       - sync_point
 
-    ChoreographyPosition:
-      type: object
-      additionalProperties: false
-      description: 3D position for choreography movement and placement actions
-      properties:
-        x:
-          type: number
-          format: float
-          description: X coordinate
-        y:
-          type: number
-          format: float
-          description: Y coordinate (vertical)
-        z:
-          type: number
-          format: float
-          description: Z coordinate
-
     # === Encounter Management ===
     StartEncounterRequest:
       type: object
@@ -1608,6 +1602,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor that will manage this encounter
         encounterId:
           type: string
@@ -1615,6 +1610,7 @@ components:
           description: Unique identifier for this encounter
         encounterType:
           type: string
+          minLength: 1
           description: Type of encounter (e.g., "combat", "conversation", "choreography")
         participants:
           type: array
@@ -1630,6 +1626,12 @@ components:
             Game-specific encounter initialization data passed to ABML behavior scope.
             No Bannou plugin reads specific keys from this field by convention.
 
+    StartEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the encounter was started.
+      properties: {}
+
     UpdateEncounterPhaseRequest:
       type: object
       additionalProperties: false
@@ -1640,9 +1642,11 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
         phase:
           type: string
+          minLength: 1
           description: New phase name for the encounter
 
     UpdateEncounterPhaseResponse:
@@ -1673,6 +1677,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor managing the encounter
 
     EndEncounterResponse:
@@ -1704,6 +1709,7 @@ components:
       properties:
         actorId:
           type: string
+          minLength: 1
           description: ID of the Event Brain actor to query
 
     GetEncounterResponse:
@@ -1712,14 +1718,10 @@ components:
       description: Response containing the current encounter state
       required:
       - actorId
-      - hasActiveEncounter
       properties:
         actorId:
           type: string
           description: ID of the queried actor
-        hasActiveEncounter:
-          type: boolean
-          description: Whether the actor is currently managing an encounter
         encounter:
           nullable: true
           description: Current encounter state (null if no active encounter)

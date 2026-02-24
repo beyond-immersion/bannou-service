@@ -41,7 +41,7 @@ public partial class CreateActorTemplateRequest
     /// Category identifier (e.g., "npc-brain", "world-admin", "cron-cleanup")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Category { get; set; } = default!;
 
@@ -49,7 +49,7 @@ public partial class CreateActorTemplateRequest
     /// Reference to behavior in lib-assets (e.g., "asset://behaviors/npc-brain-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("behaviorRef")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string BehaviorRef { get; set; } = default!;
 
@@ -93,7 +93,7 @@ public partial class CreateActorTemplateRequest
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/.
+    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -217,7 +217,7 @@ public partial class ActorTemplateResponse
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.
+    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -359,7 +359,7 @@ public partial class UpdateActorTemplateRequest
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.
+    /// Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -395,12 +395,6 @@ public partial class DeleteActorTemplateRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteActorTemplateResponse
 {
-
-    /// <summary>
-    /// Whether the template was successfully deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
-    public bool Deleted { get; set; } = default!;
 
     /// <summary>
     /// Number of running actors that were stopped
@@ -468,7 +462,7 @@ public partial class GetActorRequest
     /// Actor ID to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -553,10 +547,10 @@ public partial class ActorInstanceResponse
     public System.DateTimeOffset? LastHeartbeat { get; set; } = default!;
 
     /// <summary>
-    /// Number of behavior loop iterations executed
+    /// Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("loopIterations")]
-    public long LoopIterations { get; set; } = default!;
+    public long? LoopIterations { get; set; } = default!;
 
 }
 
@@ -588,6 +582,52 @@ public enum ActorStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"error")]
     Error = 6,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason an actor exited execution
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ActorExitReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"behavior_complete")]
+    BehaviorComplete = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"error")]
+    Error = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"timeout")]
+    Timeout = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"external_stop")]
+    ExternalStop = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Actor service deployment mode determining how actors are distributed
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ActorDeploymentMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"bannou")]
+    Bannou = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"pool-per-type")]
+    PoolPerType = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"shared-pool")]
+    SharedPool = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"auto-scale")]
+    AutoScale = 3,
 
 }
 #pragma warning restore CS1591
@@ -641,7 +681,7 @@ public partial class StopActorRequest
     /// ID of the actor to stop
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -659,12 +699,6 @@ public partial class StopActorRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StopActorResponse
 {
-
-    /// <summary>
-    /// Whether the actor was successfully stopped
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("stopped")]
-    public bool Stopped { get; set; } = default!;
 
     /// <summary>
     /// Final status of the actor after stopping
@@ -688,7 +722,7 @@ public partial class BindActorCharacterRequest
     /// ID of the actor to bind
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -736,13 +770,9 @@ public partial class CleanupByCharacterResponse
     /// IDs of actors that were cleaned up
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorIds")]
-    public System.Collections.Generic.ICollection<string> ActorIds { get; set; } = default!;
-
-    /// <summary>
-    /// Whether cleanup completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ActorIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 
@@ -770,7 +800,7 @@ public partial class ListActorsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ActorStatus Status { get; set; } = default!;
+    public ActorStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Filter by associated character
@@ -826,7 +856,7 @@ public partial class InjectPerceptionRequest
     /// Target actor to inject perception into
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -861,7 +891,7 @@ public partial class PerceptionData
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("perceptionType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PerceptionType { get; set; } = default!;
 
@@ -869,7 +899,7 @@ public partial class PerceptionData
     /// ID of the entity causing this perception
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SourceId { get; set; } = default!;
 
@@ -984,12 +1014,16 @@ public partial class NearbyObject
     /// Unique identifier of the object
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("objectId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ObjectId { get; set; } = default!;
 
     /// <summary>
     /// Type of object (boulder_cluster, tree, building, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("objectType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ObjectType { get; set; } = default!;
 
     /// <summary>
@@ -1002,6 +1036,8 @@ public partial class NearbyObject
     /// Relative direction (north, south, east, west, above, below, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("direction")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Direction { get; set; } = default!;
 
     /// <summary>
@@ -1035,6 +1071,8 @@ public partial class HazardInfo
     /// Type of hazard (fire, poison, radiation, deep_water, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("hazardType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string HazardType { get; set; } = default!;
 
     /// <summary>
@@ -1071,44 +1109,11 @@ public partial class HazardInfo
 }
 
 /// <summary>
-/// 3D position in world coordinates
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class Position3D
-{
-
-    /// <summary>
-    /// X coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public float X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate (typically vertical)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public float Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public float Z { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Response confirming perception injection
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InjectPerceptionResponse
 {
-
-    /// <summary>
-    /// Whether the perception was successfully queued
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("queued")]
-    public bool Queued { get; set; } = default!;
 
     /// <summary>
     /// Current depth of the perception queue
@@ -1131,7 +1136,7 @@ public partial class QueryOptionsRequest
     /// ID of the actor to query
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -1560,7 +1565,7 @@ public partial class ChoreographyAction
     /// Target position for movement or placement actions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
-    public ChoreographyPosition? Position { get; set; } = default!;
+    public Position3D? Position { get; set; } = default!;
 
     /// <summary>
     /// Expected duration in milliseconds.
@@ -1699,33 +1704,6 @@ public enum ChoreographyStartCondition
 #pragma warning restore CS1591
 
 /// <summary>
-/// 3D position for choreography movement and placement actions
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChoreographyPosition
-{
-
-    /// <summary>
-    /// X coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("x")]
-    public float X { get; set; } = default!;
-
-    /// <summary>
-    /// Y coordinate (vertical)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("y")]
-    public float Y { get; set; } = default!;
-
-    /// <summary>
-    /// Z coordinate
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("z")]
-    public float Z { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Request to start an encounter managed by an Event Brain actor
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1736,7 +1714,7 @@ public partial class StartEncounterRequest
     /// ID of the Event Brain actor that will manage this encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -1752,7 +1730,7 @@ public partial class StartEncounterRequest
     /// Type of encounter (e.g., "combat", "conversation", "choreography")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("encounterType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string EncounterType { get; set; } = default!;
 
@@ -1773,6 +1751,15 @@ public partial class StartEncounterRequest
 }
 
 /// <summary>
+/// Empty response. HTTP 200 confirms the encounter was started.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StartEncounterResponse
+{
+
+}
+
+/// <summary>
 /// Request to update the phase of an active encounter
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1783,7 +1770,7 @@ public partial class UpdateEncounterPhaseRequest
     /// ID of the Event Brain actor managing the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -1791,7 +1778,7 @@ public partial class UpdateEncounterPhaseRequest
     /// New phase name for the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("phase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Phase { get; set; } = default!;
 
@@ -1839,7 +1826,7 @@ public partial class EndEncounterRequest
     /// ID of the Event Brain actor managing the encounter
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -1887,7 +1874,7 @@ public partial class GetEncounterRequest
     /// ID of the Event Brain actor to query
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
 
@@ -1907,12 +1894,6 @@ public partial class GetEncounterResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string ActorId { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the actor is currently managing an encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("hasActiveEncounter")]
-    public bool HasActiveEncounter { get; set; } = default!;
 
     /// <summary>
     /// Current encounter state (null if no active encounter)

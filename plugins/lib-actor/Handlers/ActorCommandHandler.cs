@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -41,18 +42,22 @@ public sealed class ActorCommandHandler : IActionHandler
 
     private readonly IActorClient _actorClient;
     private readonly ILogger<ActorCommandHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new actor command handler.
     /// </summary>
     /// <param name="actorClient">Actor client for service calls.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ActorCommandHandler(
         IActorClient actorClient,
-        ILogger<ActorCommandHandler> logger)
+        ILogger<ActorCommandHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _actorClient = actorClient;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -65,6 +70,7 @@ public sealed class ActorCommandHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorCommandHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

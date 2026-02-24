@@ -154,7 +154,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Deployment & Lifecycle (4 endpoints)
 
-- **Deploy** (`/orchestrator/deploy`): Resolves orchestrator backend. If request is a "reset to default" (preset=default/bannou/empty, no topology), delegates to `ResetToDefaultTopologyAsync` which tears down tracked containers and resets all mappings to "bannou". Otherwise loads preset YAML via `PresetLoader`, builds per-node environment (SERVICES_ENABLED=false + individual enable flags), filters environment variables via whitelist (`IsAllowedEnvironmentVariable`), deploys containers via `DeployServiceAsync`, sets routing via `ServiceHealthMonitor`, initializes processing pool configurations if preset includes them, saves versioned deployment configuration, invalidates OpenResty cache, and publishes `DeploymentEvent`. Returns `DeployResponse` with success status, deployed services list, warnings, and duration.
+- **Deploy** (`/orchestrator/deploy`): Resolves orchestrator backend. If request is a "reset to default" (preset=default/bannou/empty, no topology), delegates to `ResetToDefaultTopologyAsync` which tears down tracked containers and resets all mappings to "bannou". Otherwise loads preset YAML via `PresetLoader`, builds per-node environment (BANNOU_SERVICES_ENABLED=false + individual enable flags), filters environment variables via whitelist (`IsAllowedEnvironmentVariable`), deploys containers via `DeployServiceAsync`, sets routing via `ServiceHealthMonitor`, initializes processing pool configurations if preset includes them, saves versioned deployment configuration, invalidates OpenResty cache, and publishes `DeploymentEvent`. Returns `DeployResponse` with success status, deployed services list, warnings, and duration.
 
 - **Teardown** (`/orchestrator/teardown`): Supports dry-run mode (returns preview of what would be torn down). Lists containers via orchestrator, identifies services to tear down, optionally includes infrastructure services. Iterates services: tears down container, restores routing to default via `ServiceHealthMonitor`. If `includeInfrastructure=true`, also tears down infrastructure containers (redis, rabbitmq, etc.). Publishes `DeploymentEvent` with completed/failed action. Returns `TeardownResponse` with stopped containers, removed volumes, removed infrastructure.
 
@@ -192,7 +192,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 ### Topology Management (1 endpoint)
 
 - **UpdateTopology** (`/orchestrator/topology`): Accepts list of `TopologyChange` with actions. Iterates changes, applies each:
-  - `AddNode`: Deploys services to new node with `bannou-{service}-{nodeName}` app-id. Sets SERVICES_ENABLED=false plus per-service enable flags. Updates routing.
+  - `AddNode`: Deploys services to new node with `bannou-{service}-{nodeName}` app-id. Sets BANNOU_SERVICES_ENABLED=false plus per-service enable flags. Updates routing.
   - `RemoveNode`: Tears down all services for a node. Restores routing to default.
   - `MoveService`: Updates routing only (no container changes). Points service to new node app-id.
   - `Scale`: Calls `ScaleServiceAsync` on orchestrator backend with target replicas.
@@ -207,7 +207,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **GetPoolStatus** (`/orchestrator/processing-pool/status`): Reads instance list, available list, leases hash, and config for pool type. Computes total/available/busy instance counts. If `includeMetrics=true`, reads metrics data (jobs completed/failed 1h, avg processing time, last scale event). Returns `PoolStatusResponse`.
 
-- **ScalePool** (`/orchestrator/processing-pool/scale`): Loads pool config from Redis. If scaling up: deploys new worker containers via orchestrator backend with pool-specific environment (SERVICES_ENABLED=false, specific plugin enabled, BANNOU_APP_ID, ACTOR_POOL_NODE_ID). If scaling down: prefers removing available instances first; with `force=true` also removes busy instances. Tears down containers, cleans leases. Updates instance/available lists and metrics.
+- **ScalePool** (`/orchestrator/processing-pool/scale`): Loads pool config from Redis. If scaling up: deploys new worker containers via orchestrator backend with pool-specific environment (BANNOU_SERVICES_ENABLED=false, specific plugin enabled, BANNOU_APP_ID, ACTOR_POOL_NODE_ID). If scaling down: prefers removing available instances first; with `force=true` also removes busy instances. Tears down containers, cleans leases. Updates instance/available lists and metrics.
 
 ### Pool Cleanup (1 endpoint)
 

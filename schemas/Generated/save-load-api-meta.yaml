@@ -13,6 +13,7 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
 servers:
 - url: http://localhost:5012
+x-service-layer: GameFeatures
 tags:
 - name: Slots
   description: Save slot management

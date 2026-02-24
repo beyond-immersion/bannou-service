@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Bannou Mesh Service API
   description: |
@@ -132,6 +132,10 @@ paths:
       responses:
         '200':
           description: Endpoint deregistered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeregisterEndpointResponse'
         '404':
           description: Endpoint not found
 
@@ -265,9 +269,11 @@ components:
           description: Unique identifier for this instance
         appId:
           type: string
+          minLength: 1
           description: Bannou app-id (e.g., "bannou", "bannou-npc-01")
         host:
           type: string
+          minLength: 1
           description: Hostname or IP address
         port:
           type: integer
@@ -296,15 +302,18 @@ components:
           type: array
           items:
             type: string
-          description: List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth')
+          nullable: true
+          description: List of service names hosted on this endpoint (without lib- prefix, e.g., 'account', 'auth'). Null if not provided.
         lastSeen:
           type: string
           format: date-time
-          description: Last heartbeat timestamp
+          nullable: true
+          description: Last heartbeat timestamp (null if never seen)
         registeredAt:
           type: string
           format: date-time
-          description: When endpoint was first registered
+          nullable: true
+          description: When endpoint was first registered (null if unknown)
         issues:
           type: array
           items:
@@ -331,6 +340,31 @@ components:
       - WeightedRoundRobin
       - Random
 
+    DeregistrationReason:
+      type: string
+      description: Reason why an endpoint was removed from the mesh
+      enum:
+      - Graceful
+      - TtlExpired
+      - HealthCheckFailed
+      - CircuitBreakerTripped
+
+    CircuitState:
+      type: string
+      description: Circuit breaker state for mesh endpoints
+      enum:
+      - Closed
+      - Open
+      - HalfOpen
+
+    DegradedReason:
+      type: string
+      description: Reason why an endpoint was marked as degraded
+      enum:
+      - MissedHeartbeat
+      - HighLoad
+      - HighConnectionCount
+
     # =========================================================================
     # Service Discovery
     # =========================================================================
@@ -343,6 +377,7 @@ components:
       properties:
         appId:
           type: string
+          minLength: 1
           description: App-id to get endpoints for
         includeUnhealthy:
           type: boolean
@@ -358,12 +393,10 @@ components:
       description: Response containing endpoints for a service
       additionalProperties: false
       required:
-      - appId
       - endpoints
+      - healthyCount
+      - totalCount
       properties:
-        appId:
-          type: string
-          description: The app-id that was queried
         endpoints:
           type: array
           items:
@@ -411,6 +444,12 @@ components:
       type: object
       description: Summary statistics for endpoints
       additionalProperties: false
+      required:
+      - totalEndpoints
+      - healthyCount
+      - degradedCount
+      - unavailableCount
+      - uniqueAppIds
       properties:
         totalEndpoints:
           type: integer
@@ -447,9 +486,11 @@ components:
           description: Unique identifier for this instance
         appId:
           type: string
+          minLength: 1
           description: App-id for this instance
         host:
           type: string
+          minLength: 1
           description: Hostname or IP address to register
         port:
           type: integer
@@ -475,6 +516,7 @@ components:
       additionalProperties: false
       required:
       - endpoint
+      - ttlSeconds
       properties:
         endpoint:
           $ref: '#/components/schemas/MeshEndpoint'
@@ -494,6 +536,12 @@ components:
           type: string
           format: uuid
           description: Instance to deregister
+
+    DeregisterEndpointResponse:
+      type: object
+      description: Empty response. HTTP 200 confirms the endpoint was deregistered.
+      additionalProperties: false
+      properties: {}
 
     HeartbeatRequest:
       type: object
@@ -534,6 +582,9 @@ components:
       type: object
       description: Response after heartbeat processed
       additionalProperties: false
+      required:
+      - nextHeartbeatSeconds
+      - ttlSeconds
       properties:
         nextHeartbeatSeconds:
           type: integer
@@ -554,6 +605,7 @@ components:
       properties:
         appId:
           type: string
+          minLength: 1
           description: Target app-id to route to
         serviceName:
           type: string
@@ -579,7 +631,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeshEndpoint'
-          description: Alternative endpoints if primary fails
+          description: Alternative endpoints if primary fails (empty array if none)
 
     GetMappingsRequest:
       type: object
@@ -633,6 +685,7 @@ components:
       required:
       - status
       - summary
+      - redisConnected
       properties:
         status:
           $ref: '#/components/schemas/EndpointStatus'
@@ -643,15 +696,13 @@ components:
         redisConnected:
           type: boolean
           description: Whether Redis connection is healthy
-        lastUpdateTime:
-          type: string
-          format: date-time
-          description: Timestamp of the last health status update
         uptime:
           type: string
-          description: Mesh service uptime (e.g., "2d 5h 30m")
+          nullable: true
+          description: Mesh service uptime (e.g., "2d 5h 30m"). Null if unavailable.
         endpoints:
           type: array
           items:
             $ref: '#/components/schemas/MeshEndpoint'
-          description: Full endpoint list (only if includeEndpoints=true)
+          nullable: true
+          description: Full endpoint list (null unless includeEndpoints=true)

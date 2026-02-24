@@ -79,10 +79,12 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
-    /// In-game birth date of the character
+    /// In-game birth date of the character (required on creation, always present)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset? BirthDate { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
 
     /// <summary>
     /// In-game death timestamp
@@ -91,11 +93,13 @@ public partial class CharacterCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the character (e.g., active, inactive, deceased)
+    /// Current lifecycle status of the character (alive, dead, dormant)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterStatus? Status { get; set; } = default!;
+    public CharacterStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -161,10 +165,12 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
-    /// In-game birth date of the character
+    /// In-game birth date of the character (required on creation, always present)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset? BirthDate { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
 
     /// <summary>
     /// In-game death timestamp
@@ -173,11 +179,13 @@ public partial class CharacterUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the character (e.g., active, inactive, deceased)
+    /// Current lifecycle status of the character (alive, dead, dormant)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterStatus? Status { get; set; } = default!;
+    public CharacterStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created
@@ -251,10 +259,12 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
-    /// In-game birth date of the character
+    /// In-game birth date of the character (required on creation, always present)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("birthDate")]
-    public System.DateTimeOffset? BirthDate { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset BirthDate { get; set; } = default!;
 
     /// <summary>
     /// In-game death timestamp
@@ -263,11 +273,13 @@ public partial class CharacterDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset? DeathDate { get; set; } = default!;
 
     /// <summary>
-    /// Current status of the character (e.g., active, inactive, deceased)
+    /// Current lifecycle status of the character (alive, dead, dormant)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CharacterStatus? Status { get; set; } = default!;
+    public CharacterStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the character was created

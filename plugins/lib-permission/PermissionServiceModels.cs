@@ -34,20 +34,25 @@ public partial class PermissionService
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class PermissionStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record PermissionCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Internal storage model for service registration information.
+/// Stored per-service in Redis for tracking registration metadata.
+/// </summary>
+internal class ServiceRegistrationInfo
+{
+    /// <summary>
+    /// Unique service identifier.
+    /// </summary>
+    public string ServiceId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Service API version at registration time.
+    /// </summary>
+    public string Version { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Unix timestamp (seconds) of when the service registered its permissions.
+    /// </summary>
+    public long RegisteredAtUnix { get; set; }
+}

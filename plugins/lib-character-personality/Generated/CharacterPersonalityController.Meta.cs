@@ -475,7 +475,7 @@ public partial class CharacterPersonalityController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional context for logging and debugging.\nNot used in evolution calculations.\n"
+                    "description": "Optional context for logging and debugging.\nNot used in evolution calculations.\nNo Bannou plugin reads specific keys from this field by convention.\n"
                 }
             }
         },
@@ -1466,7 +1466,7 @@ public partial class CharacterPersonalityController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional context for logging and debugging (e.g., enemy type,\nally count, location). Not used in evolution calculations.\n"
+                    "description": "Optional context for logging and debugging (e.g., enemy type,\nally count, location). Not used in evolution calculations.\nNo Bannou plugin reads specific keys from this field by convention.\n"
                 }
             }
         },

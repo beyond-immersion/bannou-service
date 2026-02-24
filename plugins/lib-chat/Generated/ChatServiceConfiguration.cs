@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Chat;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ChatService))]
-public class ChatServiceConfiguration : IServiceConfiguration
+public class ChatServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum custom room types per game service
@@ -127,6 +125,20 @@ public class ChatServiceConfiguration : IServiceConfiguration
     public ContractRoomAction DefaultContractExpiredAction { get; set; } = ContractRoomAction.Archive;
 
     /// <summary>
+    /// Page size for paginated contract-room queries during contract lifecycle events
+    /// Environment variable: CHAT_CONTRACT_ROOM_QUERY_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int ContractRoomQueryBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Safety cap on total rooms processed per contract lifecycle event, logs warning if reached
+    /// Environment variable: CHAT_MAX_CONTRACT_ROOM_QUERY_RESULTS
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 10000)]
+    public int MaxContractRoomQueryResults { get; set; } = 1000;
+
+    /// <summary>
     /// Default page size for message history queries
     /// Environment variable: CHAT_MESSAGE_HISTORY_PAGE_SIZE
     /// </summary>
@@ -146,5 +158,109 @@ public class ChatServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 5, Maximum = 300)]
     public int IdleRoomCleanupStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Distributed lock expiry for idle room cleanup batch cycle
+    /// Environment variable: CHAT_IDLE_ROOM_CLEANUP_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 600)]
+    public int IdleRoomCleanupLockExpirySeconds { get; set; } = 120;
+
+    /// <summary>
+    /// How often the background worker checks for expired bans
+    /// Environment variable: CHAT_BAN_EXPIRY_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 1440)]
+    public int BanExpiryIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Initial delay before the ban expiry worker begins its first cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int BanExpiryStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum expired ban records processed per worker cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int BanExpiryBatchSize { get; set; } = 1000;
+
+    /// <summary>
+    /// Distributed lock expiry for ban expiry batch cycle
+    /// Environment variable: CHAT_BAN_EXPIRY_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 600)]
+    public int BanExpiryLockExpirySeconds { get; set; } = 120;
+
+    /// <summary>
+    /// How often the background worker checks for expired persistent messages
+    /// Environment variable: CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 30, Maximum = 10080)]
+    public int MessageRetentionCleanupIntervalMinutes { get; set; } = 360;
+
+    /// <summary>
+    /// Initial delay before the message retention cleanup worker begins its first cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int MessageRetentionStartupDelaySeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Maximum expired messages to delete per room per cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 5000)]
+    public int MessageRetentionBatchSize { get; set; } = 500;
+
+    /// <summary>
+    /// Distributed lock expiry for message retention cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 1800)]
+    public int MessageRetentionLockExpirySeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Maximum room types with retention configuration to process per cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int MessageRetentionMaxRoomTypeResults { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum rooms per type to process per retention cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 100000)]
+    public int MessageRetentionMaxRoomsPerType { get; set; } = 1000;
+
+    /// <summary>
+    /// Seconds of inactivity before typing indicator auto-expires
+    /// Environment variable: CHAT_TYPING_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 30)]
+    public int TypingTimeoutSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// How often the typing expiry worker checks for stale typing entries
+    /// Environment variable: CHAT_TYPING_WORKER_INTERVAL_MILLISECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 250, Maximum = 5000)]
+    public int TypingWorkerIntervalMilliseconds { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum expired entries processed per worker cycle
+    /// Environment variable: CHAT_TYPING_WORKER_BATCH_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int TypingWorkerBatchSize { get; set; } = 100;
+
+    /// <summary>
+    /// Server salt for session shortcut GUID generation per IMPLEMENTATION TENETS
+    /// Environment variable: CHAT_SERVER_SALT
+    /// </summary>
+    public string ServerSalt { get; set; } = "bannou-dev-chat-salt-change-in-production";
 
 }

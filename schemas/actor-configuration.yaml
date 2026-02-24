@@ -20,10 +20,9 @@ x-service-configuration:
   properties:
     # === Deployment Mode ===
     DeploymentMode:
-      type: string
-      enum: [bannou, pool-per-type, shared-pool, auto-scale]
+      $ref: 'actor-api.yaml#/components/schemas/ActorDeploymentMode'
       env: ACTOR_DEPLOYMENT_MODE
-      default: "bannou"
+      default: bannou
       description: "Actor deployment mode: bannou (local dev), pool-per-type, shared-pool, or auto-scale"
 
     # === Pool Node Identity (set when running as pool node) ===
@@ -49,6 +48,7 @@ x-service-configuration:
       type: integer
       env: ACTOR_POOL_NODE_CAPACITY
       default: 100
+      minimum: 1
       description: Maximum actors this pool node can run. Overrides DefaultActorsPerNode when set.
 
     # === Pool Node Management (control plane settings) ===
@@ -62,18 +62,21 @@ x-service-configuration:
       type: integer
       env: ACTOR_MIN_POOL_NODES
       default: 1
+      minimum: 0
       description: Minimum pool nodes to maintain (auto-scale mode)
 
     MaxPoolNodes:
       type: integer
       env: ACTOR_MAX_POOL_NODES
       default: 10
+      minimum: 1
       description: Maximum pool nodes allowed (auto-scale mode)
 
     DefaultActorsPerNode:
       type: integer
       env: ACTOR_DEFAULT_ACTORS_PER_NODE
       default: 100
+      minimum: 1
       description: Default capacity per pool node
 
     # === Heartbeat Configuration ===
@@ -81,12 +84,14 @@ x-service-configuration:
       type: integer
       env: ACTOR_HEARTBEAT_INTERVAL_SECONDS
       default: 10
-      description: Pool node heartbeat frequency
+      minimum: 1
+      description: Pool node heartbeat frequency in seconds
 
     HeartbeatTimeoutSeconds:
       type: integer
       env: ACTOR_HEARTBEAT_TIMEOUT_SECONDS
       default: 30
+      minimum: 1
       description: Mark node unhealthy after this many seconds without heartbeat
 
     # === Actor Default Configuration ===
@@ -94,19 +99,22 @@ x-service-configuration:
       type: integer
       env: ACTOR_DEFAULT_TICK_INTERVAL_MS
       default: 100
+      minimum: 1
       description: Default behavior loop interval in milliseconds
 
     DefaultAutoSaveIntervalSeconds:
       type: integer
       env: ACTOR_DEFAULT_AUTOSAVE_INTERVAL_SECONDS
       default: 60
-      description: Default interval for periodic state saves (0 to disable)
+      minimum: 1
+      description: Default interval in seconds for periodic state saves
 
     # === Queue Configuration ===
     PerceptionQueueSize:
       type: integer
       env: ACTOR_PERCEPTION_QUEUE_SIZE
       default: 100
+      minimum: 1
       description: Max perceptions queued per actor before dropping oldest
 
     # === GOAP Configuration ===
@@ -114,18 +122,22 @@ x-service-configuration:
       type: number
       env: ACTOR_GOAP_REPLAN_THRESHOLD
       default: 0.3
+      minimum: 0
+      maximum: 1
       description: Threshold for triggering GOAP replanning when goal relevance drops below this value
 
     GoapMaxPlanDepth:
       type: integer
       env: ACTOR_GOAP_MAX_PLAN_DEPTH
       default: 10
+      minimum: 1
       description: Maximum depth for GOAP planning search
 
     GoapPlanTimeoutMs:
       type: integer
       env: ACTOR_GOAP_PLAN_TIMEOUT_MS
       default: 50
+      minimum: 1
       description: Maximum time allowed for GOAP planning in milliseconds
 
     # === Local Mode Defaults (Tier 1) ===
@@ -146,24 +158,30 @@ x-service-configuration:
       type: number
       env: ACTOR_PERCEPTION_FILTER_THRESHOLD
       default: 0.1
+      minimum: 0
+      maximum: 1
       description: Minimum urgency for perception to be processed (0.0-1.0)
 
     PerceptionMemoryThreshold:
       type: number
       env: ACTOR_PERCEPTION_MEMORY_THRESHOLD
       default: 0.7
+      minimum: 0
+      maximum: 1
       description: Minimum urgency for perception to become a memory (0.0-1.0)
 
     ShortTermMemoryMinutes:
       type: integer
       env: ACTOR_SHORT_TERM_MEMORY_MINUTES
       default: 5
+      minimum: 1
       description: Expiration time in minutes for short-term memories from high-urgency perceptions
 
     DefaultMemoryExpirationMinutes:
       type: integer
       env: ACTOR_DEFAULT_MEMORY_EXPIRATION_MINUTES
       default: 60
+      minimum: 1
       description: Default expiration time in minutes for actor memories
 
     # === Pool Health Monitoring (Tier 2) ===
@@ -171,11 +189,13 @@ x-service-configuration:
       type: integer
       env: ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS
       default: 5
+      minimum: 0
       description: Delay in seconds before pool health monitor starts checking (allows initial registrations)
     PoolHealthCheckIntervalSeconds:
       type: integer
       env: ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS
       default: 15
+      minimum: 1
       description: Interval in seconds between pool health check operations
 
     # === Scheduled Events (Tier 2) ===
@@ -183,6 +203,7 @@ x-service-configuration:
       type: integer
       env: ACTOR_SCHEDULED_EVENT_CHECK_INTERVAL_MS
       default: 100
+      minimum: 1
       description: Interval in milliseconds for checking scheduled events
 
     # === Actor Operation Timeouts (Tier 2) ===
@@ -190,12 +211,14 @@ x-service-configuration:
       type: integer
       env: ACTOR_OPERATION_TIMEOUT_SECONDS
       default: 5
+      minimum: 1
       description: Timeout in seconds for individual actor operations
 
     ActorStopTimeoutSeconds:
       type: integer
       env: ACTOR_STOP_TIMEOUT_SECONDS
       default: 5
+      minimum: 1
       description: Timeout in seconds for graceful actor stop operations
 
     # === Error Recovery (Tier 2) ===
@@ -203,12 +226,14 @@ x-service-configuration:
       type: integer
       env: ACTOR_ERROR_RETRY_DELAY_MS
       default: 1000
+      minimum: 0
       description: Delay in milliseconds before retrying after behavior loop error
 
     StatePersistenceRetryDelayMs:
       type: integer
       env: ACTOR_STATE_PERSISTENCE_RETRY_DELAY_MS
       default: 50
+      minimum: 0
       description: Base delay in milliseconds between state persistence retry attempts (multiplied by attempt number)
 
     # === Default Urgency Values (Tier 2) ===
@@ -216,18 +241,23 @@ x-service-configuration:
       type: number
       env: ACTOR_SCHEDULED_EVENT_DEFAULT_URGENCY
       default: 0.7
+      minimum: 0
+      maximum: 1
       description: Default urgency value for scheduled event perceptions (0.0-1.0)
 
     EventBrainDefaultUrgency:
       type: number
       env: ACTOR_EVENT_BRAIN_DEFAULT_URGENCY
       default: 0.8
+      minimum: 0
+      maximum: 1
       description: Default urgency for Event Brain instruction perceptions (0.0-1.0)
 
     QueryOptionsDefaultMaxAgeMs:
       type: integer
       env: ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS
       default: 5000
+      minimum: 0
       description: Default max age in milliseconds for cached query options
 
     # === Memory Store Retry Configuration (Tier 3) ===
@@ -235,7 +265,16 @@ x-service-configuration:
       type: integer
       env: ACTOR_MEMORY_STORE_MAX_RETRIES
       default: 3
+      minimum: 0
       description: Maximum retry attempts for memory store operations
+
+    PoolConcurrencyMaxRetries:
+      type: integer
+      env: ACTOR_POOL_CONCURRENCY_MAX_RETRIES
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts for optimistic concurrency operations in pool management
 
 components:
   schemas: {}

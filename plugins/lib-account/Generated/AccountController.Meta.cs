@@ -137,7 +137,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -194,7 +195,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -232,7 +233,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -336,11 +341,13 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "nullable": true,
                     "description": "Email address for the new account. Null for OAuth/Steam accounts without email."
                 },
                 "passwordHash": {
                     "type": "string",
+                    "maxLength": 255,
                     "nullable": true,
                     "description": "Pre-hashed password from Auth service"
                 },
@@ -358,8 +365,10 @@ public partial class AccountController
                 "roles": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 50
                     },
+                    "maxItems": 20,
                     "nullable": true,
                     "description": "List of roles assigned to the account (null defaults to empty)"
                 },
@@ -367,7 +376,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -388,7 +397,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -445,7 +455,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -483,7 +493,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -611,7 +625,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -668,7 +683,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -706,7 +721,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -824,8 +843,10 @@ public partial class AccountController
                 "roles": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "maxLength": 50
                     },
+                    "maxItems": 20,
                     "nullable": true,
                     "description": "Updated list of roles for the account (null to keep unchanged)"
                 },
@@ -833,7 +854,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated custom metadata for the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -854,7 +875,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -911,7 +933,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -949,7 +971,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -1140,6 +1166,7 @@ public partial class AccountController
                 "email": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "Email address to look up"
                 }
             }
@@ -1161,7 +1188,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -1218,7 +1246,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -1256,7 +1284,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -1409,7 +1441,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -1511,7 +1547,8 @@ public partial class AccountController
             "additionalProperties": false,
             "required": [
                 "accountId",
-                "provider"
+                "provider",
+                "externalId"
             ],
             "properties": {
                 "accountId": {
@@ -1520,12 +1557,16 @@ public partial class AccountController
                     "description": "ID of the account to add auth method to"
                 },
                 "provider": {
-                    "$ref": "#/$defs/OAuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/OAuthProvider"
+                        }
+                    ],
                     "description": "OAuth provider type to add"
                 },
                 "externalId": {
                     "type": "string",
-                    "nullable": true,
+                    "maxLength": 255,
                     "description": "External user ID from the OAuth provider"
                 },
                 "displayName": {
@@ -1570,7 +1611,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/OAuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/OAuthProvider"
+                        }
+                    ],
                     "description": "OAuth provider type"
                 },
                 "externalId": {
@@ -1765,11 +1810,16 @@ public partial class AccountController
             ],
             "properties": {
                 "provider": {
-                    "$ref": "#/$defs/OAuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/OAuthProvider"
+                        }
+                    ],
                     "description": "OAuth provider type"
                 },
                 "externalId": {
                     "type": "string",
+                    "maxLength": 255,
                     "description": "External ID from the provider"
                 }
             }
@@ -1801,7 +1851,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -1858,7 +1909,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -1896,7 +1947,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -2015,7 +2070,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated custom metadata for the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2036,7 +2091,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -2093,7 +2149,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -2131,7 +2187,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -2243,6 +2303,7 @@ public partial class AccountController
                 },
                 "passwordHash": {
                     "type": "string",
+                    "maxLength": 255,
                     "description": "New pre-hashed password from Auth service"
                 }
             }
@@ -2489,7 +2550,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -2546,7 +2608,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -2584,7 +2646,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {
@@ -3078,6 +3144,7 @@ public partial class AccountController
                 "newEmail": {
                     "type": "string",
                     "format": "email",
+                    "maxLength": 254,
                     "description": "New email address for the account"
                 }
             }
@@ -3099,7 +3166,8 @@ public partial class AccountController
                 "accountId",
                 "createdAt",
                 "emailVerified",
-                "roles"
+                "roles",
+                "authMethods"
             ],
             "properties": {
                 "accountId": {
@@ -3156,7 +3224,7 @@ public partial class AccountController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata associated with the account"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "mfaEnabled": {
                     "type": "boolean",
@@ -3194,7 +3262,11 @@ public partial class AccountController
                     "description": "Unique identifier for the authentication method"
                 },
                 "provider": {
-                    "$ref": "#/$defs/AuthProvider",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AuthProvider"
+                        }
+                    ],
                     "description": "Authentication provider type"
                 },
                 "externalId": {

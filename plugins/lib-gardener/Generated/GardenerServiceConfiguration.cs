@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(GardenerService))]
-public class GardenerServiceConfiguration : IServiceConfiguration
+public class GardenerServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Milliseconds between garden orchestrator evaluation cycles

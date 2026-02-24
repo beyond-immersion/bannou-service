@@ -784,7 +784,7 @@ public class Program
             // Subscription service
             "/subscription/create"                     // Subscription - admin role
 
-            // NOTE: Voice service disabled in edge tests (VOICE_SERVICE_DISABLED=true)
+            // NOTE: Voice service disabled in edge tests (VOICE_SERVICE_ENABLED=false)
         };
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))

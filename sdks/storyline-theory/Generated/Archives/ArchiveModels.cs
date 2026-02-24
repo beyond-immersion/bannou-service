@@ -264,6 +264,7 @@ public partial class CharacterBaseArchive : ResourceArchiveBase
     /// Real-world creation timestamp
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     public System.DateTimeOffset CreatedAt { get; set; } = default!;
 
     /// <summary>

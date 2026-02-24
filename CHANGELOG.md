@@ -9,6 +9,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.15.0] - 2026-02-23
+
+### Added
+
+#### Infrastructure & Messaging
+
+- **Dead Letter Consumer**: New `IDeadLetterConsumer` service with logging for undeliverable RabbitMQ messages in lib-messaging
+- **MeshInstanceId Pattern**: New `IMeshInstanceIdentifier` interface replacing static property calls for instance identity across all services
+- **Message Tap System**: New infrastructure for message inspection/debugging in lib-messaging
+
+#### Chat Service Buildout (L1)
+
+- **Session Tracking**: Chat sessions now tracked with proper lifecycle management
+- **Client Eventing**: Real-time WebSocket push for chat events (new messages, typing, moderation)
+- **Typing Indicators**: Redis sorted set-based typing status with server-side expiry
+- **Ban Expiry Worker**: Background service for automatic ban expiration
+- **Message Retention Worker**: Background service for configurable message retention cleanup
+- **Idle Room Cleanup**: Distributed lock-protected background cleanup of abandoned rooms
+- **Bulk Message Failures**: Failure details included in bulk message responses
+- **Paginated Contract Room Queries**: New paginated query support for contract-governed rooms
+
+#### Connect Service Overhaul (L1)
+
+- **Inter-Node Broadcast Relay**: WebSocket mesh between Connect instances for multi-node message delivery
+- **Typed Models**: Anonymous types replaced with proper typed models throughout Connect
+- **Entity Session Registry**: `IEntitySessionRegistry` for "find which session owns this entity" lookups
+
+#### Actor Service Leveling (L2)
+
+- **Handler Refactoring**: Separated command, query, perception, encounter, and state update handlers
+- **Pool Health Monitoring**: Improved actor pool health tracking and diagnostics
+- **Fallback Behavior Provider**: Graceful fallback when primary behavior documents unavailable
+- **Behavior Configuration Error Fix**: Race condition fix in behavior document loading
+
+#### Permission Enhancements (L1)
+
+- **Session Heartbeat Listener**: Efficient session activity tracking via heartbeat events instead of polling
+- **Session Activity Listener Pattern**: DI-based listener for session state changes
+
+#### Documentation
+
+- **Extension Plugin Guide**: New `docs/guides/EXTENSION-PLUGINS.md` for third-party plugin development
+- **Deployment FAQ**: New deployment planning documents
+- **Planning Documents**: Predator ecology, sanctuaries, self-hosted deployment planning docs
+- **Updated Plugin Deep Dives**: 17 service deep dives updated to reflect hardening changes
+
+### Changed
+
+#### Service/Plugin Enabling Simplification
+
+- **Removed `_DISABLED` checks**: All services now use `_ENABLED` pattern exclusively (no more `_DISABLED` env vars)
+- **Layer-level configuration**: Added `BANNOU_ENABLE_APP_FOUNDATION`, `BANNOU_ENABLE_GAME_FOUNDATION`, `BANNOU_ENABLE_APP_FEATURES`, `BANNOU_ENABLE_GAME_FEATURES`, `BANNOU_ENABLE_EXTENSIONS` (all default `true`)
+- **Simplified PluginLoader**: Resolution order: required infrastructure → individual override → master kill switch → layer control
+
+#### TENET Compliance Hardening (L0–L2)
+
+- **lib-mesh** (L0): Circuit breaker improvements, health check hardening, invocation client fixes
+- **lib-messaging** (L0): RabbitMQ connection manager hardening, channel pooling improvements, retry buffer enhancements
+- **lib-telemetry** (L0): Provider pattern improvements, span instrumentation consistency
+- **lib-state** (L0): Redis and MySQL store hardening, state metadata improvements
+- **lib-account** (L1): TENET compliance audit fixes, model standardization
+- **lib-auth** (L1): Session registry helper for client event publishing, edge provider improvements
+- **lib-chat** (L1): Full buildout from stub to production-quality implementation
+- **lib-connect** (L1): Major overhaul — anonymous types eliminated, broadcast relay added, session management hardened
+- **lib-permission** (L1): Heartbeat-based session tracking, RBAC improvements
+- **lib-resource** (L1): Reference tracking enhancements
+- **lib-contract** (L1): Paginated queries, room integration improvements
+- **lib-actor** (L2): Handler decomposition, pool monitoring, behavior loading fixes
+- **lib-character** (L2): Test fixes, model standardization
+
+#### Schema & Code Generation
+
+- **Service layer fixes**: Corrected `x-service-layer` declarations across multiple schemas
+- **Metadata bag documentation**: Generated metadata bag contracts into documentation for visibility
+- **Full regeneration**: All 48+ service clients, models, controllers, and meta files regenerated
+
+#### SDKs
+
+- **SDK documentation fixes**: Small corrections across C#, TypeScript, and Unreal SDKs
+
+### Fixed
+
+- **Actor**: Behavior configuration race condition causing intermittent load failures
+- **Connect**: Anonymous type usage throughout the plugin replaced with proper typed models
+- **Connect**: Broadcast relay between nodes now functional for multi-instance deployments
+- **Chat**: Multiple fixes for session tracking and event delivery
+- **Chat**: Bulk message operation now reports per-message failures
+- **Permission**: Efficiency improvement via heartbeat listener (reduced Redis polling)
+- **Contract**: Paginated room queries for large contract-governed room sets
+- **Actor/Character Tests**: Multiple test stabilization fixes
+- **Service Layer Schemas**: Corrected layer declarations that were mismatched
+- **Metadata Bags**: Several `additionalProperties: true` misuses corrected in schemas
+- **Dead Method Removal**: Removed unused method that had unintended side effects
+
+### Removed
+
+- **`_DISABLED` environment variables**: All `{SERVICE}_SERVICE_DISABLED` patterns removed in favor of `{SERVICE}_SERVICE_ENABLED`
+- **Dead method**: Removed unused method with unintended side effects from service code
+
+---
+
 ## [0.14.0] - 2026-02-21
 
 ### Added
@@ -552,7 +653,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.11.0...v0.12.0

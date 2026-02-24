@@ -367,6 +367,30 @@ public interface IChatController : BeyondImmersion.BannouService.Controllers.IBa
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdminCleanupResponse>> AdminForceCleanupAsync(AdminForceCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Signal typing activity
+    /// </summary>
+
+    /// <remarks>
+    /// Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+
+    /// <returns>Typing state recorded</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> TypingAsync(TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Signal typing stopped
+    /// </summary>
+
+    /// <remarks>
+    /// Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+
+    /// <returns>Typing state cleared</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndTypingAsync(EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1755,6 +1779,102 @@ public partial class ChatController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:chat/admin/cleanup",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Signal typing activity
+    /// </summary>
+    /// <remarks>
+    /// Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state recorded</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("chat/typing")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> Typing([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.Typing",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/typing");
+        try
+        {
+
+            var statusCode = await _implementation.TypingAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/typing");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:chat/typing");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "chat",
+                "Typing",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:chat/typing",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Signal typing stopped
+    /// </summary>
+    /// <remarks>
+    /// Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state cleared</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("chat/end-typing")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> EndTyping([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.chat",
+            "ChatController.EndTyping",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "chat/end-typing");
+        try
+        {
+
+            var statusCode = await _implementation.EndTypingAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:chat/end-typing");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ChatController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:chat/end-typing");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "chat",
+                "EndTyping",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:chat/end-typing",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

@@ -405,36 +405,46 @@ public interface IBannouService
 
     /// <summary>
     /// Returns whether the configuration indicates the service should be disabled.
-    /// Uses the two-mode enable/disable system based on SERVICES_ENABLED environment variable.
+    /// Mirrors PluginLoader.IsServiceEnabled resolution order (inverted):
+    /// 1. {SERVICE}_SERVICE_ENABLED env var explicitly set → use that value
+    /// 2. BANNOU_SERVICES_ENABLED=false (master kill switch) → disabled
+    /// 3. Layer enabled (from AppConfiguration) → use layer setting (all default true)
     /// </summary>
     public static bool IsDisabled(string? serviceName)
     {
         if (string.IsNullOrWhiteSpace(serviceName))
             return !Program.Configuration.ServicesEnabled;
 
-        // Use the same two-mode logic as PluginLoader.IsServiceEnabled, but inverted
-        var servicesEnabledEnv = Environment.GetEnvironmentVariable("SERVICES_ENABLED");
-        var globalServicesEnabled = string.IsNullOrWhiteSpace(servicesEnabledEnv) ?
-            Program.Configuration.ServicesEnabled :
-            string.Equals(servicesEnabledEnv, "true", StringComparison.OrdinalIgnoreCase);
+        // 1. Individual override via {SERVICE}_SERVICE_ENABLED
+        var serviceNameUpper = serviceName.ToUpper().Replace("-", "_");
+        var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
+        if (!string.IsNullOrWhiteSpace(enabledEnv))
+            return !string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
 
-        var serviceNameUpper = serviceName.ToUpper();
+        // 2. Master kill switch: BANNOU_SERVICES_ENABLED=false
+        if (!Program.Configuration.ServicesEnabled)
+            return true; // disabled
 
-        if (globalServicesEnabled)
-        {
-            // Mode 1: SERVICES_ENABLED=true → all services enabled by default, use X_SERVICE_DISABLED to disable individual
-            var disabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_DISABLED");
-            var isDisabled = string.Equals(disabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-            return isDisabled;
-        }
-        else
-        {
-            // Mode 2: SERVICES_ENABLED=false → all services disabled by default, use X_SERVICE_ENABLED to enable individual
-            var enabledEnv = Environment.GetEnvironmentVariable($"{serviceNameUpper}_SERVICE_ENABLED");
-            var isEnabled = string.Equals(enabledEnv, "true", StringComparison.OrdinalIgnoreCase);
-            return !isEnabled; // Inverted because this method returns "IsDisabled"
-        }
+        // 3. Layer check — look up layer from registered service info
+        var serviceInfo = GetServiceInfo(serviceName);
+        var layer = serviceInfo?.Item3.Layer ?? ServiceLayer.GameFeatures;
+        return !IsLayerEnabled(layer);
     }
+
+    /// <summary>
+    /// Check if a service hierarchy layer is enabled via AppConfiguration.
+    /// Mirrors PluginLoader.IsLayerEnabled.
+    /// </summary>
+    private static bool IsLayerEnabled(ServiceLayer layer) => layer switch
+    {
+        ServiceLayer.Infrastructure => true,
+        ServiceLayer.AppFoundation => Program.Configuration.EnableAppFoundation,
+        ServiceLayer.GameFoundation => Program.Configuration.EnableGameFoundation,
+        ServiceLayer.AppFeatures => Program.Configuration.EnableAppFeatures,
+        ServiceLayer.GameFeatures => Program.Configuration.EnableGameFeatures,
+        ServiceLayer.Extensions => Program.Configuration.EnableExtensions,
+        _ => true
+    };
 
     /// <summary>
     /// Find the highest priority/derived service type with the given name.

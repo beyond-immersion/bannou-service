@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Account;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(AccountService))]
-public class AccountServiceConfiguration : IServiceConfiguration
+public class AccountServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Comma-separated list of admin email addresses
@@ -69,18 +67,21 @@ public class AccountServiceConfiguration : IServiceConfiguration
     /// Default page size for list operations when not specified
     /// Environment variable: ACCOUNT_DEFAULT_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum allowed page size for list operations
     /// Environment variable: ACCOUNT_MAX_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxPageSize { get; set; } = 100;
 
     /// <summary>
     /// Number of accounts to process per batch in list operations
     /// Environment variable: ACCOUNT_LIST_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int ListBatchSize { get; set; } = 100;
 
     /// <summary>

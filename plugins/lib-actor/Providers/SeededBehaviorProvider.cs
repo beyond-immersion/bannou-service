@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -42,6 +43,7 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     private const string SeededPrefix = "seeded:";
 
     private readonly ILogger<SeededBehaviorProvider> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly DocumentParser _parser = new();
     private readonly ConcurrentDictionary<string, AbmlDocument> _cache = new();
     private readonly Lazy<IReadOnlyList<string>> _availableIdentifiers;
@@ -50,9 +52,13 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     /// Creates a new seeded behavior provider.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
-    public SeededBehaviorProvider(ILogger<SeededBehaviorProvider> logger)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public SeededBehaviorProvider(
+        ILogger<SeededBehaviorProvider> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _availableIdentifiers = new Lazy<IReadOnlyList<string>>(DiscoverEmbeddedBehaviors);
 
         // Log available seeded behaviors on construction (for debugging)
@@ -99,15 +105,16 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
     }
 
     /// <inheritdoc />
-    public Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
+    public async Task<AbmlDocument?> GetDocumentAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "SeededBehaviorProvider.GetDocument");
         var identifier = ExtractIdentifier(behaviorRef);
 
         // Check cache first
         if (_cache.TryGetValue(identifier, out var cached))
         {
             _logger.LogDebug("Seeded behavior cache hit: {Identifier}", identifier);
-            return Task.FromResult<AbmlDocument?>(cached);
+            return cached;
         }
 
         // Load from embedded resource
@@ -118,12 +125,12 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
         if (stream == null)
         {
             _logger.LogDebug("No embedded resource found for seeded behavior {Identifier}", identifier);
-            return Task.FromResult<AbmlDocument?>(null);
+            return null;
         }
 
         // Read and parse YAML
         using var reader = new StreamReader(stream, Encoding.UTF8);
-        var yaml = reader.ReadToEnd();
+        var yaml = await reader.ReadToEndAsync(ct);
 
         var result = _parser.Parse(yaml);
         if (!result.IsSuccess || result.Value == null)
@@ -132,14 +139,14 @@ public sealed class SeededBehaviorProvider : IBehaviorDocumentProvider
                 "Failed to parse seeded behavior {Identifier}: {Errors}",
                 identifier,
                 string.Join(", ", result.Errors.Select(e => e.Message)));
-            return Task.FromResult<AbmlDocument?>(null);
+            return null;
         }
 
         // Cache the parsed document
         _cache.TryAdd(identifier, result.Value);
         _logger.LogDebug("Loaded seeded behavior {Identifier}", identifier);
 
-        return Task.FromResult<AbmlDocument?>(result.Value);
+        return result.Value;
     }
 
     /// <inheritdoc />

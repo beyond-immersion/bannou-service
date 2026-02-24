@@ -62,7 +62,7 @@ public partial interface IMessagingClient
     /// <summary>
     /// Remove a dynamic subscription
     /// </summary>
-    /// <returns>Subscription removed</returns>
+    /// <returns>Subscription removed successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -100,6 +100,14 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
     /// Implements IServiceClient.ServiceName.
     /// </summary>
     public string ServiceName => _serviceName;
+
+    /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MessagingClient"/> class.
@@ -379,7 +387,7 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
     /// <summary>
     /// Remove a dynamic subscription
     /// </summary>
-    /// <returns>Subscription removed</returns>
+    /// <returns>Subscription removed successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     public virtual async System.Threading.Tasks.Task RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -427,6 +435,12 @@ public partial class MessagingClient : IMessagingClient, BeyondImmersion.BannouS
                     if (status_ == 200)
                     {
                         return;
+                    }
+                    else
+                    if (status_ == 404)
+                    {
+                        string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Subscription not found or no longer active", status_, responseText_, headers_, null);
                     }
                     else
                     {

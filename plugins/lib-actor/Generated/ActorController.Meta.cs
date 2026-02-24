@@ -33,10 +33,12 @@ public partial class ActorController
             "properties": {
                 "category": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Category identifier (e.g., \"npc-brain\", \"world-admin\", \"cron-cleanup\")"
                 },
                 "behaviorRef": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Reference to behavior in lib-assets (e.g., \"asset://behaviors/npc-brain-v1\")"
                 },
                 "configuration": {
@@ -68,13 +70,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\ nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -108,7 +110,7 @@ public partial class ActorController
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -181,7 +183,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -225,7 +227,7 @@ public partial class ActorController
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -379,7 +381,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -423,7 +425,7 @@ public partial class ActorController
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -598,7 +600,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -642,7 +644,7 @@ public partial class ActorController
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -757,7 +759,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+                    "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -864,7 +866,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -908,7 +910,7 @@ public partial class ActorController
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\ nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
+                    "description": "Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.\nRequired when characterIdCaptureGroup is not configured and auto-spawn is enabled.\n"
                 }
             }
         }
@@ -1009,14 +1011,9 @@ public partial class ActorController
             "additionalProperties": false,
             "description": "Response confirming template deletion",
             "required": [
-                "deleted",
                 "stoppedActorCount"
             ],
             "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether the template was successfully deleted"
-                },
                 "stoppedActorCount": {
                     "type": "integer",
                     "description": "Number of running actors that were stopped"
@@ -1148,8 +1145,7 @@ public partial class ActorController
                 "templateId",
                 "category",
                 "status",
-                "startedAt",
-                "loopIterations"
+                "startedAt"
             ],
             "properties": {
                 "actorId": {
@@ -1205,7 +1201,8 @@ public partial class ActorController
                 "loopIterations": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "Number of behavior loop iterations executed"
+                    "nullable": true,
+                    "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
                 }
             }
         },
@@ -1295,6 +1292,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Actor ID to retrieve"
                 }
             }
@@ -1317,8 +1315,7 @@ public partial class ActorController
                 "templateId",
                 "category",
                 "status",
-                "startedAt",
-                "loopIterations"
+                "startedAt"
             ],
             "properties": {
                 "actorId": {
@@ -1374,7 +1371,8 @@ public partial class ActorController
                 "loopIterations": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "Number of behavior loop iterations executed"
+                    "nullable": true,
+                    "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
                 }
             }
         },
@@ -1464,6 +1462,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the actor to stop"
                 },
                 "graceful": {
@@ -1487,14 +1486,9 @@ public partial class ActorController
             "additionalProperties": false,
             "description": "Response confirming actor stop operation",
             "required": [
-                "stopped",
                 "finalStatus"
             ],
             "properties": {
-                "stopped": {
-                    "type": "boolean",
-                    "description": "Whether the actor was successfully stopped"
-                },
                 "finalStatus": {
                     "description": "Final status of the actor after stopping",
                     "$ref": "#/$defs/ActorStatus"
@@ -1588,6 +1582,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the actor to bind"
                 },
                 "characterId": {
@@ -1615,8 +1610,7 @@ public partial class ActorController
                 "templateId",
                 "category",
                 "status",
-                "startedAt",
-                "loopIterations"
+                "startedAt"
             ],
             "properties": {
                 "actorId": {
@@ -1672,7 +1666,8 @@ public partial class ActorController
                 "loopIterations": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "Number of behavior loop iterations executed"
+                    "nullable": true,
+                    "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
                 }
             }
         },
@@ -1782,7 +1777,7 @@ public partial class ActorController
             "description": "Response from character cleanup operation",
             "required": [
                 "actorsCleanedUp",
-                "success"
+                "actorIds"
             ],
             "properties": {
                 "actorsCleanedUp": {
@@ -1795,10 +1790,6 @@ public partial class ActorController
                         "type": "string"
                     },
                     "description": "IDs of actors that were cleaned up"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether cleanup completed successfully"
                 }
             }
         }
@@ -1881,8 +1872,13 @@ public partial class ActorController
                     "description": "Filter by pool node"
                 },
                 "status": {
-                    "description": "Filter by actor status",
-                    "$ref": "#/$defs/ActorStatus"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ActorStatus"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Filter by actor status"
                 },
                 "characterId": {
                     "type": "string",
@@ -1955,8 +1951,7 @@ public partial class ActorController
                 "templateId",
                 "category",
                 "status",
-                "startedAt",
-                "loopIterations"
+                "startedAt"
             ],
             "properties": {
                 "actorId": {
@@ -2012,7 +2007,8 @@ public partial class ActorController
                 "loopIterations": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "Number of behavior loop iterations executed"
+                    "nullable": true,
+                    "description": "Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available."
                 }
             }
         },
@@ -2103,6 +2099,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Target actor to inject perception into"
                 },
                 "perception": {
@@ -2114,7 +2111,7 @@ public partial class ActorController
         "PerceptionData": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Data representing a perception event for an actor.\n\nSpatial context can be provided in two ways (hybrid approach):\n1. Typed: Use the optional spatialContext field for structured spatial data\n2. Schema-less: Use perceptionType=\"spatial\" with data containing spatial info\n\nThe typed approach is recommended when game server has structured spatial data.\nThe schema-less approach allows flexibility for game-specific spatial formats.\n",
+            "description": "Data representing a perception event for an actor.\n\nSpatial context can be provided in two ways (hybrid approach):\ n1. Typed: Use the optional spatialContext field for structured spatial data\n2. Schema-less: Use perceptionType=\"spatial\" with data containing spatial info\n\nThe typed approach is recommended when game server has structured spatial data.\nThe schema-less approach allows flexibility for game-specific spatial formats.\n",
             "required": [
                 "perceptionType",
                 "sourceId"
@@ -2122,10 +2119,12 @@ public partial class ActorController
             "properties": {
                 "perceptionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Perception type. Common values: visual, auditory, tactile, olfactory,\nproprioceptive, spatial. Use \"spatial\" for schema-less spatial data in 'data' field.\n"
                 },
                 "sourceId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the entity causing this perception"
                 },
                 "sourceType": {
@@ -2164,7 +2163,7 @@ public partial class ActorController
                         }
                     ],
                     "nullable": true,
-                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\ nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
+                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
                 }
             }
         },
@@ -2240,6 +2239,12 @@ public partial class ActorController
             "type": "object",
             "additionalProperties": true,
             "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
+            "required": [
+                "objectId",
+                "objectType",
+                "distance",
+                "direction"
+            ],
             "properties": {
                 "objectId": {
                     "type": "string",
@@ -2262,7 +2267,7 @@ public partial class ActorController
                 "position": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/Position3D"
+                            "type": "object"
                         }
                     ],
                     "nullable": true,
@@ -2270,37 +2275,15 @@ public partial class ActorController
                 }
             }
         },
-        "Position3D": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "3D position in world coordinates",
-            "required": [
-                "x",
-                "y",
-                "z"
-            ],
-            "properties": {
-                "x": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "X coordinate"
-                },
-                "y": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "Y coordinate (typically vertical)"
-                },
-                "z": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "Z coordinate"
-                }
-            }
-        },
         "HazardInfo": {
             "type": "object",
             "additionalProperties": true,
             "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
+            "required": [
+                "hazardType",
+                "distance",
+                "severity"
+            ],
             "properties": {
                 "hazardType": {
                     "type": "string",
@@ -2339,14 +2322,9 @@ public partial class ActorController
             "additionalProperties": false,
             "description": "Response confirming perception injection",
             "required": [
-                "queued",
                 "queueDepth"
             ],
             "properties": {
-                "queued": {
-                    "type": "boolean",
-                    "description": "Whether the perception was successfully queued"
-                },
                 "queueDepth": {
                     "type": "integer",
                     "description": "Current depth of the perception queue"
@@ -2427,6 +2405,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the actor to query"
                 },
                 "queryType": {
@@ -2453,7 +2432,7 @@ public partial class ActorController
         },
         "OptionsQueryType": {
             "type": "string",
-            "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\ nWell-known types are defined; actors can also expose custom types.\n",
+            "description": "Type of options to query. Actors maintain options in state.memories.{type}_options.\nWell-known types are defined; actors can also expose custom types.\n",
             "enum": [
                 "combat",
                 "dialogue",
@@ -2752,6 +2731,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the Event Brain actor that will manage this encounter"
                 },
                 "encounterId": {
@@ -2761,6 +2741,7 @@ public partial class ActorController
                 },
                 "encounterType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type of encounter (e.g., \"combat\", \"conversation\", \"choreography\")"
                 },
                 "participants": {
@@ -2784,7 +2765,18 @@ public partial class ActorController
 """;
 
     private static readonly string _StartEncounter_ResponseSchema = """
-{}
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/StartEncounterResponse",
+    "$defs": {
+        "StartEncounterResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Empty response. HTTP 200 confirms the encounter was started.",
+            "properties": {}
+        }
+    }
+}
 """;
 
     private static readonly string _StartEncounter_Info = """
@@ -2857,10 +2849,12 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the Event Brain actor managing the encounter"
                 },
                 "phase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "New phase name for the encounter"
                 }
             }
@@ -2971,6 +2965,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the Event Brain actor managing the encounter"
                 }
             }
@@ -3082,6 +3077,7 @@ public partial class ActorController
             "properties": {
                 "actorId": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "ID of the Event Brain actor to query"
                 }
             }
@@ -3100,17 +3096,12 @@ public partial class ActorController
             "additionalProperties": false,
             "description": "Response containing the current encounter state",
             "required": [
-                "actorId",
-                "hasActiveEncounter"
+                "actorId"
             ],
             "properties": {
                 "actorId": {
                     "type": "string",
                     "description": "ID of the queried actor"
-                },
-                "hasActiveEncounter": {
-                    "type": "boolean",
-                    "description": "Whether the actor is currently managing an encounter"
                 },
                 "encounter": {
                     "nullable": true,

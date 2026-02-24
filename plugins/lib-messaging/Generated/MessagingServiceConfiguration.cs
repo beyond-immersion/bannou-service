@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Messaging;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(MessagingService))]
-public class MessagingServiceConfiguration : IServiceConfiguration
+public class MessagingServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Use in-memory messaging instead of RabbitMQ. Messages are NOT persisted. ONLY for testing/minimal infrastructure.
@@ -63,12 +61,14 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// RabbitMQ server hostname
     /// Environment variable: MESSAGING_RABBITMQ_HOST
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string RabbitMQHost { get; set; } = "rabbitmq";
 
     /// <summary>
     /// RabbitMQ server port
     /// Environment variable: MESSAGING_RABBITMQ_PORT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
     public int RabbitMQPort { get; set; } = 5672;
 
     /// <summary>
@@ -93,11 +93,12 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Default exchange name for publishing
     /// Environment variable: MESSAGING_DEFAULT_EXCHANGE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string DefaultExchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
     /// Enable RabbitMQ publisher confirms for reliability. When enabled, BasicPublishAsync waits for broker confirmation (RabbitMQ.Client 7.x pattern).
-    /// Environment variable: MESSAGING_ENABLE_CONFIRMS
+    /// Environment variable: MESSAGING_ENABLE_PUBLISHER_CONFIRMS
     /// </summary>
     public bool EnablePublisherConfirms { get; set; } = true;
 
@@ -105,18 +106,21 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Number of connection retry attempts
     /// Environment variable: MESSAGING_CONNECTION_RETRY_COUNT
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 100)]
     public int ConnectionRetryCount { get; set; } = 5;
 
     /// <summary>
     /// Delay between connection retry attempts in milliseconds
     /// Environment variable: MESSAGING_CONNECTION_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 30000)]
     public int ConnectionRetryDelayMs { get; set; } = 1000;
 
     /// <summary>
     /// Maximum backoff delay for connection retries in milliseconds
     /// Environment variable: MESSAGING_CONNECTION_MAX_BACKOFF_MS
     /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 300000)]
     public int ConnectionMaxBackoffMs { get; set; } = 60000;
 
     /// <summary>
@@ -144,6 +148,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Default prefetch count for subscriptions
     /// Environment variable: MESSAGING_DEFAULT_PREFETCH_COUNT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int DefaultPrefetchCount { get; set; } = 10;
 
     /// <summary>
@@ -156,6 +161,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Dead letter exchange name for failed messages
     /// Environment variable: MESSAGING_DEAD_LETTER_EXCHANGE
     /// </summary>
+    [ConfigStringLength(MinLength = 1)]
     public string DeadLetterExchange { get; set; } = "bannou-dlx";
 
     /// <summary>
@@ -176,7 +182,20 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
     /// Environment variable: MESSAGING_DEAD_LETTER_OVERFLOW_BEHAVIOR
     /// </summary>
-    public string DeadLetterOverflowBehavior { get; set; } = "drop-head";
+    public DeadLetterOverflowBehavior DeadLetterOverflowBehavior { get; set; } = DeadLetterOverflowBehavior.DropHead;
+
+    /// <summary>
+    /// Enable dead letter consumer background service for logging and monitoring
+    /// Environment variable: MESSAGING_DEAD_LETTER_CONSUMER_ENABLED
+    /// </summary>
+    public bool DeadLetterConsumerEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Delay in seconds before dead letter consumer starts subscribing (allows other services to initialize)
+    /// Environment variable: MESSAGING_DEAD_LETTER_CONSUMER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int DeadLetterConsumerStartupDelaySeconds { get; set; } = 5;
 
     /// <summary>
     /// Maximum retry attempts before discarding message to dead-letter topic
@@ -223,6 +242,7 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Interval between retry attempts for buffered messages
     /// Environment variable: MESSAGING_RETRY_BUFFER_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
     public int RetryBufferIntervalSeconds { get; set; } = 5;
 
     /// <summary>
@@ -256,36 +276,49 @@ public class MessagingServiceConfiguration : IServiceConfiguration
     /// Maximum retry attempts for HTTP callback delivery (network failures only)
     /// Environment variable: MESSAGING_CALLBACK_RETRY_MAX_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10)]
     public int CallbackRetryMaxAttempts { get; set; } = 3;
 
     /// <summary>
     /// Delay between HTTP callback retry attempts in milliseconds
     /// Environment variable: MESSAGING_CALLBACK_RETRY_DELAY_MS
     /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 30000)]
     public int CallbackRetryDelayMs { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum seconds to wait for graceful subscription cleanup during shutdown. Prevents indefinite blocking when channels hang.
+    /// Environment variable: MESSAGING_SHUTDOWN_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int ShutdownTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
     /// Interval in hours between subscription TTL refresh operations
     /// Environment variable: MESSAGING_SUBSCRIPTION_TTL_REFRESH_INTERVAL_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 24)]
     public int SubscriptionTtlRefreshIntervalHours { get; set; } = 6;
 
     /// <summary>
     /// Delay in seconds before starting subscription recovery service
     /// Environment variable: MESSAGING_SUBSCRIPTION_RECOVERY_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 60)]
     public int SubscriptionRecoveryStartupDelaySeconds { get; set; } = 2;
 
     /// <summary>
     /// Interval in seconds between RabbitMQ connection recovery attempts
     /// Environment variable: MESSAGING_RABBITMQ_NETWORK_RECOVERY_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int RabbitMQNetworkRecoveryIntervalSeconds { get; set; } = 10;
 
     /// <summary>
     /// TTL in seconds for external HTTP callback subscriptions (default 24 hours)
     /// Environment variable: MESSAGING_EXTERNAL_SUBSCRIPTION_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 3600, Maximum = 2592000)]
     public int ExternalSubscriptionTtlSeconds { get; set; } = 86400;
 
 }

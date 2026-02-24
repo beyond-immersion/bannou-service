@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-02-14
+> **Last Updated**: 2026-02-22
 > **Scope**: All Bannou service plugins
 
 ---
@@ -42,16 +42,16 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 
 | Plugin | Layer | Score | Bugs | Summary |
 |--------|-------|-------|------|---------|
-| [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
-| [Messaging](#messaging-status) | L0 | 82% | 0 | Core pub/sub excellent. Stubs (lifecycle events, metrics) and design debt remain. |
-| [Mesh](#mesh-status) | L0 | 93% | 0 | Feature-complete. Circuit breaker, health checks, load balancing all done. |
-| [Telemetry](#telemetry-status) | L0 | 93% | 0 | Feature-complete observability. OpenTelemetry + Prometheus. Only speculative extensions remain. |
-| [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
-| [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
-| [Chat](#chat-status) | L1 | 90% | 0 | All 28 endpoints complete. Dual storage, rate limiting, moderation. Design considerations remain. |
-| [Connect](#connect-status) | L1 | 92% | 0 | Production-ready gateway. Zero-copy routing, reconnection, shortcuts. Multi-instance broadcast pending. |
-| [Contract](#contract-status) | L1 | 82% | 0 | Full FSM + consent flows. 4 stubs remain (expiration job, payment schedules). L1→L2 violation. |
-| [Permission](#permission-status) | L1 | 93% | 0 | Feature-complete RBAC. Real-time capability push. Only session cache invalidation remains. |
+| [State](#state-status) | L0 | 97% | 0 | L3-hardened. Schema NRT compliance, null-forgiving removal, config cleanup, layer comments fixed. 397 tests, 0 warnings. |
+| [Messaging](#messaging-status) | L0 | 97% | 0 | L3-hardened. Dead letter consumer, IMeshInstanceIdentifier, shutdown timeout. 216 tests, 0 warnings. |
+| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. IMeshInstanceIdentifier canonical identity, dead fields removed, no extensions remaining. |
+| [Telemetry](#telemetry-status) | L0 | 98% | 0 | L3-hardened. Self-instrumentation, schema fixes, null safety, tail-based sampling. 58 tests, 0 warnings. Only speculative extensions remain. |
+| [Account](#account-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, lock safety, null coercion fixes. 111 tests, 0 warnings. |
+| [Auth](#auth-status) | L1 | 95% | 0 | L3-hardened. Schema NRT, telemetry spans, atomic session indexing, email propagation. 168 tests, 0 warnings. |
+| [Chat](#chat-status) | L1 | 97% | 0 | L3-hardened. All 30 endpoints, 4 background workers, dual storage, rate limiting, moderation. 0 bugs, 0 stubs. |
+| [Connect](#connect-status) | L1 | 93% | 1 | L3-hardened gateway. Zero-copy routing, reconnection, multi-node broadcast. 1 orphaned config property. |
+| [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. All 25 endpoints, 0 stubs. Expiration, payment schedules, clause execution all done. Only extensions remain. |
+| [Permission](#permission-status) | L1 | 95% | 0 | L3-hardened RBAC. Heartbeat-driven session TTL, distributed locks, in-memory cache removed. 27 tests. Feature-complete. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
 | [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
 | [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
@@ -125,9 +125,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [STATE.md](plugins/STATE.md)
 
-### Production Readiness: 95%
+### Production Readiness: 97%
 
-The bedrock of the entire platform. Provides unified Redis/MySQL/InMemory state access to all 54 services via `IStateStoreFactory`. Manages ~107 state stores (~70 Redis, ~37 MySQL). Full interface hierarchy: `IStateStore<T>` (core CRUD), `ICacheableStateStore<T>` (sets, sorted sets, counters, hashes), `ISearchableStateStore<T>` (full-text via RedisSearch), `IQueryableStateStore<T>` / `IJsonQueryableStateStore<T>` (MySQL LINQ/JSON path queries), `IRedisOperations` (Lua scripts), `IDistributedLockProvider` (distributed mutex). Optimistic concurrency via ETags on all backends. Error event publishing with deduplication. No stubs, no bugs, no design considerations. 11 well-documented intentional quirks. The only extension is store migration tooling.
+The bedrock of the entire platform. Provides unified Redis/MySQL/InMemory/SQLite state access to all 54 services via `IStateStoreFactory`. Manages ~107 state stores (~70 Redis, ~37 MySQL). Full interface hierarchy: `IStateStore<T>` (core CRUD), `ICacheableStateStore<T>` (sets, sorted sets, counters, hashes), `ISearchableStateStore<T>` (full-text via RedisSearch), `IQueryableStateStore<T>` / `IJsonQueryableStateStore<T>` (MySQL LINQ/JSON path queries), `IRedisOperations` (Lua scripts), `IDistributedLockProvider` (distributed mutex). Optimistic concurrency via ETags on all backends. Error event publishing with deduplication. No stubs, no bugs, no design considerations. 11 well-documented intentional quirks. L3-hardened (2026-02-22): schema NRT compliance (added `required` arrays to 7 response schemas), `additionalProperties` corrected on generic value objects, redundant nullable config removed, layer comments fixed in state-stores.yaml, null-forgiving operators replaced with safe `.ToString()` in Redis stores, LINQ expression tree null coalescing fixed in MySQL/SQLite stores, T0 violation fixed. 397 tests passing, 0 warnings.
 
 ### Bug Count: 0
 
@@ -157,11 +157,9 @@ gh issue list --search "State:" --state open
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [MESSAGING.md](plugins/MESSAGING.md)
 
-### Production Readiness: 82%
+### Production Readiness: 97%
 
-Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing. 30+ configuration properties all wired. No bugs.
-
-However, 3 stubs remain (lifecycle events never implemented, `ListTopics` message count always 0, no Prometheus metrics), and 5 design considerations need attention (in-memory mode limitations, no graceful drain on shutdown, ServiceId from global static, tap exchange auto-creation, publisher confirms latency tradeoff).
+Core pub/sub infrastructure is robust: RabbitMQ channel pooling (100 default, 1000 max), publisher confirms for at-least-once delivery, aggressive retry buffer with crash-fast philosophy (500k message / 10 minute threshold), backpressure at 80% buffer fill, dead-letter exchange with configurable limits, poison message handling with retry counting, HTTP callback subscriptions with recovery, event consumer fan-out bridge (`NativeEventConsumerBackend`), in-memory mode for testing, dead letter consumer with structured logging and error event publishing. 30+ configuration properties all wired. 0 stubs, 0 bugs. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation, dead field removal, T9/T10/T25/T30 code fixes. Design considerations resolved (2026-02-22): `Program.ServiceGUID` replaced with `IMeshInstanceIdentifier` injection, shutdown timeout added (`ShutdownTimeoutSeconds`, default 10s). Dead letter consumer implemented (2026-02-22): `DeadLetterConsumerService` subscribes to DLX exchange, logs dead letters with metadata extraction, publishes `service.error` events, uses durable shared queue with competing consumers for multi-instance safety. 3 informational design notes remain (in-memory mode limitations, tap exchange auto-creation, publisher confirms latency). 1 extension identified (Prometheus metrics). 0 warnings, 216 tests passing.
 
 ### Bug Count: 0
 
@@ -175,9 +173,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Prometheus metrics** | Publish/subscribe rates, retry buffer depth, channel pool utilization, and retry counts are not exposed as metrics. Critical for operating the messaging infrastructure at scale (100k+ NPC agents generating events). Listed as both a stub and an extension. | No issue |
-| 2 | **Dead-letter processing consumer** | No background service to process the DLX queue. Poison messages land in dead-letter and sit there. Need: alerting, logging, optional reprocessing for transient failures that exceeded retry attempts. | No issue |
-| 3 | **No graceful drain on shutdown** | `DisposeAsync` iterates subscriptions without timeout. A hung subscription disposal could hang the entire shutdown process. Needs a timeout-bounded drain with forced cleanup. | No issue |
+| 1 | **Observable gauge metrics** | Retry buffer depth, per-attempt retry counts, and channel pool utilization not exposed as metrics. Requires `ObservableGauge` support in `ITelemetryProvider`. | [#453](https://github.com/beyond-immersion/bannou-service/issues/453) |
+| 2 | *(No further enhancements identified)* | | |
+| 3 | | | |
 
 ### GH Issues
 
@@ -191,9 +189,9 @@ gh issue list --search "Messaging:" --state open
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [MESH.md](plugins/MESH.md)
 
-### Production Readiness: 93%
+### Production Readiness: 97%
 
-Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. Only two speculative extensions remain.
+Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching, canonical `IMeshInstanceIdentifier` for node identity. 27 configuration properties all wired. No stubs, no bugs, no design considerations, no extensions remaining. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. Dead field cleanup (2026-02-22): removed `lastUpdateTime` (always returned current time — useless), fixed `alternates` nullability (code always returns list, schema lied about nullable). `IMeshInstanceIdentifier` (2026-02-22): canonical mesh node identity with priority chain (env > CLI > random), `InstanceId` exposed on all generated clients and `IServiceNavigator`, replaced all `Program.ServiceGUID` usages. Graceful draining deemed unnecessary (Orchestrator's two-level routing handles managed deployments). 0 warnings, 55 tests passing.
 
 ### Bug Count: 0
 
@@ -207,8 +205,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Graceful draining** | Endpoint status `ShuttingDown` could actively drain connections before full deregistration. Currently deregistration is immediate -- in-flight requests to that endpoint may fail. | No issue |
-| 2 | *(No further enhancements identified)* | | |
+| 1 | *(No enhancements identified)* | Graceful draining previously listed here was deemed unnecessary: Orchestrator's two-level routing model handles managed deployments by changing app-id mappings before stopping old nodes. | |
+| 2 | | | |
 | 3 | | | |
 
 ### GH Issues
@@ -223,9 +221,9 @@ gh issue list --search "Mesh:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [ACCOUNT.md](plugins/ACCOUNT.md)
 
-### Production Readiness: 92%
+### Production Readiness: 95%
 
-All CRUD operations complete with optimistic concurrency. OAuth/Steam account support with nullable email. Server-side paginated listing via MySQL JSON queries. Email change with distributed locking. Bulk operations (batch-get, count, bulk role update). Production hardening pass completed (distributed locks, ETag concurrency, stale index detection). No stubs, no bugs, no design considerations remaining. The only open items are post-launch extensions (account merge, audit trail).
+L3-hardened. All CRUD operations complete with optimistic concurrency. OAuth/Steam account support with nullable email. Server-side paginated listing via MySQL JSON queries. Email change with distributed locking. Bulk operations (batch-get, count, bulk role update). Production hardening pass completed: schema NRT compliance (authMethods required, metadata descriptions, validation constraints), telemetry span instrumentation on all async helpers, `await using` lock disposal, null coercion fix in metadata conversion, state store constructor caching, log level audit. 111 unit tests covering all 18 endpoints, 0 warnings. Only post-launch extension remains (account merge).
 
 ### Bug Count: 0
 
@@ -240,8 +238,7 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Account merge workflow** | No mechanism to merge two accounts (e.g., email registration + OAuth under different email). Data model supports multiple auth methods, but no merge orchestration exists. Complex cross-service operation (40+ services reference accounts). Post-launch compliance feature. | [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
-| 2 | **Per-account audit trail** | Account mutations publish events but don't maintain a per-account change history. Deep dive notes zero Account-side code changes needed -- this is purely a consumer-side feature (likely Analytics L4 or dedicated audit service). | #138 (closed) |
-| 3 | *(No further enhancements identified)* | | |
+| 2 | *(No further enhancements identified)* | | |
 
 ### GH Issues
 
@@ -255,9 +252,9 @@ gh issue list --search "Account:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [AUTH.md](plugins/AUTH.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Full authentication suite: email/password, OAuth (Discord/Google/Twitch), Steam tickets, JWT tokens, session management, password reset, login rate limiting, TOTP-based MFA with recovery codes, edge token revocation (CloudFlare/OpenResty). 46 configuration properties covering all auth flows. All session lifecycle events published. No bugs. Remaining work is downstream integration: audit event consumers (Analytics), email change propagation (when Account adds it), and account merge session handling.
+L3-hardened. Full authentication suite: email/password, OAuth (Discord/Google/Twitch), Steam tickets, JWT tokens, session management, password reset, login rate limiting, TOTP-based MFA with recovery codes, edge token revocation (CloudFlare/OpenResty). 46 configuration properties with full NRT compliance, validation bounds, and patterns. Schema inline enums extracted to named types. T30 telemetry spans on all 48 async methods across 7 helper services. T25 Provider enum properly threaded (no `Enum.Parse`). T9 atomic session indexing via Redis Set operations (eliminated read-modify-write races). Email change propagation implemented. 168 tests, 0 warnings. Remaining work is downstream integration: audit event consumers (Analytics L4) and account merge session handling (post-launch).
 
 ### Bug Count: 0
 
@@ -272,8 +269,8 @@ No known bugs.
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Audit event consumers** | Auth publishes 6 audit event types (login success/fail, registration, OAuth, Steam, password reset) but no service subscribes to them. Per-email rate limiting already exists via Redis counters -- the gap is Analytics (L4) consuming events for IP-level cross-account correlation, anomaly detection, and admin alerting. | [#142](https://github.com/beyond-immersion/bannou-service/issues/142) |
-| 2 | **Email change propagation** | When Account adds email change, Auth must propagate new email to active sessions. Handler exists (`HandleAccountUpdatedAsync`) but only watches for `"roles"` changes, not `"email"`. Needs: distributed lock per account, security notification to old email, `session.updated` event. Deep dive marks this as READY. | Auth-side of [#139](https://github.com/beyond-immersion/bannou-service/issues/139) (Account-side closed) |
-| 3 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
+| 2 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
+| 3 | **Device capture for session info** | `DeviceInfo` on session records always returns "Unknown" placeholders. User-Agent parsing or client-provided device metadata needed for meaningful session listing. | [#449](https://github.com/beyond-immersion/bannou-service/issues/449) |
 
 ### GH Issues
 
@@ -287,9 +284,9 @@ gh issue list --search "Auth:" --state open
 
 **Layer**: L0 Infrastructure (Optional) | **Deep Dive**: [TELEMETRY.md](plugins/TELEMETRY.md)
 
-### Production Readiness: 93%
+### Production Readiness: 98%
 
-Feature-complete for its current scope: OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all three infrastructure libs (state, messaging, mesh). No stubs, no bugs, no design considerations. All 8 configuration properties are wired. The only gaps are speculative extensions (Jaeger exporter, custom business operation spans, histogram bucket tuning) that are nice-to-haves rather than production blockers.
+L3-hardened. Feature-complete OpenTelemetry tracing and Prometheus metrics with full instrumentation decorators for all infrastructure libs (state, messaging, mesh, telemetry). Schema issues fixed (events file, NRT annotations, OtlpProtocol enum typed). Null-forgiving operators eliminated. T23/T30 compliant (async pattern, self-instrumentation spans). Tail-based sampling implemented in OTEL Collector (100% error/high-latency retention, 10% probabilistic default). 58 tests, 0 warnings. Only speculative extensions remain (managed exporters, Grafana dashboards).
 
 ### Bug Count: 0
 
@@ -303,9 +300,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Custom business operation instrumentation** | Expose methods for services to create custom spans for business logic tracing beyond infrastructure operations (state/messaging/mesh). Currently only infrastructure-level tracing is supported. | No issue |
-| 2 | **Jaeger exporter option** | Add configuration to export directly to Jaeger format in addition to OTLP, for environments that use Jaeger natively. | No issue |
-| 3 | **Metric aggregation views** | Add custom histogram bucket boundaries optimized for Bannou's typical latency distributions (e.g., state store ops, mesh invocations). | No issue |
+| 1 | **Managed platform exporters** | Datadog, Azure Application Insights, AWS X-Ray, Elastic APM exporters beyond base OTLP. | [#183](https://github.com/beyond-immersion/bannou-service/issues/183) |
+| 2 | **Enhanced Grafana dashboards + SLO alerting** | Per-service dashboards, SLO alerting rules, error monitoring, automated provisioning. | [#185](https://github.com/beyond-immersion/bannou-service/issues/185) |
+| 3 | **Metric aggregation views** | Custom histogram bucket boundaries optimized for Bannou latency distributions. | [#457](https://github.com/beyond-immersion/bannou-service/issues/457) |
 
 ### GH Issues
 
@@ -319,9 +316,9 @@ gh issue list --search "Telemetry:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [CHAT.md](plugins/CHAT.md)
 
-### Production Readiness: 90%
+### Production Readiness: 97%
 
-All 28 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, idle room cleanup background worker, 14 service events, 10 client events, and 14 configuration properties. Four design considerations could impact production use: contract event room query limited to 100, silent batch message validation failures, O(N) participant counting in admin stats, and rate limit counters sharing stores with participant hashes.
+All 30 API endpoints complete with no stubs and no bugs. Covers room type management, room lifecycle with contract governance, participant moderation (join/leave/kick/ban/mute with role hierarchy), message operations (send/batch/history/search/pin/delete) with dual storage (ephemeral Redis TTL and persistent MySQL), rate limiting via atomic Redis counters, typing indicators with sorted-set-backed expiry, 14 service events, 12 client events, 7 state stores (4 MySQL, 3 Redis), and 4 background workers (idle room cleanup, typing expiry, ban expiry, message retention). Hardened with: telemetry spans on all async helpers and event handlers, distributed lock on room type registration and idle room cleanup (T9), Regex timeout protection, schema validation keywords on all request fields, T16-compliant event topic naming, `required` string properties replacing `string.Empty` defaults, error event publication on startup failures, and ServiceHierarchyValidator test coverage. Two design considerations remain: O(N) participant counting in AdminGetStats (#455) and mixed data patterns in the participants Redis store (#456).
 
 ### Bug Count: 0
 
@@ -335,9 +332,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Message edit support** | Add edit endpoint with version history, timestamps, and real-time client events for UI updates. Core chat feature expected by users. | No issue |
-| 2 | **Threaded replies** | Add `replyToMessageId` for conversation threading with threaded history query support. Important for usability in busy rooms. | No issue |
-| 3 | **Room-level message retention worker** | Background service enforcing room type `RetentionDays` by periodically deleting old messages. Currently no mechanism to enforce retention policies. | No issue |
+| 1 | **Message edit support** | Edit messages with version history tracking. | [#450](https://github.com/beyond-immersion/bannou-service/issues/450) |
+| 2 | **Threaded replies** | Reply-to-message support via `replyToMessageId` field. | [#451](https://github.com/beyond-immersion/bannou-service/issues/451) |
+| 3 | **Message reactions** | Emoji reactions per message with aggregated counts. | [#452](https://github.com/beyond-immersion/bannou-service/issues/452) |
 
 ### GH Issues
 
@@ -351,25 +348,29 @@ gh issue list --search "Chat:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [CONNECT.md](plugins/CONNECT.md)
 
-### Production Readiness: 92%
+### Production Readiness: 93%
 
-Production-ready with all core functionality implemented and no stubs remaining. WebSocket connection lifecycle, zero-copy binary routing, reconnection windows, session shortcuts, client-to-client routing, three connection modes, per-session RabbitMQ subscriptions, and all 21 configuration properties are fully wired. All previous stubs (encrypted flag, compressed flag, heartbeat, high-priority flag) have been resolved. Only two design considerations remain around single-instance limitations (broadcast and P2P routing), which are multi-instance deployment optimizations rather than functional gaps.
+L3-hardened. WebSocket connection lifecycle, zero-copy binary routing, reconnection windows, session shortcuts, client-to-client routing, three connection modes, per-session RabbitMQ subscriptions, and multi-node broadcast mesh (`InterNodeBroadcastManager`). Major L3 hardening pass (2026-02-22): fixed T9 thread safety (ConcurrentDictionary/ConcurrentQueue in ConnectionState), T26 Guid.Empty sentinels, T5 anonymous objects, T21 dead config wired (MaxChannelNumber), T7 bare catch blocks, T23 sync-over-async (.Wait()), T24 IDisposable/ClientWebSocket leak, T30 telemetry spans, XML docs. Schema consolidated (connect-shortcuts.yaml merged), enums extracted, format:uuid added, validation constraints added, T29 descriptions fixed. One bug remains: orphaned `CompanionRoomMode` config property (defined in schema but never referenced in code).
 
-### Bug Count: 0
+### Bug Count: 1
 
-No known bugs.
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Orphaned CompanionRoomMode config** | `CompanionRoomMode` is defined in the configuration schema and generated config class but never referenced in service code. T21 violation (dead config). | No issue |
 
 ### Top 3 Bugs
 
-*(None)*
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **Orphaned CompanionRoomMode config** | Defined in schema but never referenced in code. | No issue |
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Multi-instance broadcast** | Current broadcast only reaches clients on the same Connect instance. Extend via RabbitMQ fanout exchange to broadcast across all instances. | [#181](https://github.com/beyond-immersion/bannou-service/issues/181) |
-| 2 | **Single-instance P2P limitation** | Peer-to-peer routing only works when both clients are on the same Connect instance. Requires cross-instance peer registry in Redis. | [#346](https://github.com/beyond-immersion/bannou-service/issues/346) |
-| 3 | **ServiceRequestContext thread-static concern** | Uses thread-static SessionId set/clear pattern that could be incorrect if async continuations run on different threads. Potential correctness issue under load. | No issue |
+| 1 | **Cross-instance P2P routing** | Peer-to-peer routing only works when both clients are on the same Connect instance. Requires cross-instance peer registry in Redis. | [#346](https://github.com/beyond-immersion/bannou-service/issues/346) |
+| 2 | *(No further enhancements identified)* | Multi-instance broadcast was implemented via `InterNodeBroadcastManager`. | |
+| 3 | | | |
 
 ### GH Issues
 
@@ -383,9 +384,9 @@ gh issue list --search "Connect:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [CONTRACT.md](plugins/CONTRACT.md)
 
-### Production Readiness: 82%
+### Production Readiness: 98%
 
-Comprehensive feature set: template CRUD, instance lifecycle with full state machine (Draft through Fulfilled/Terminated/Expired), consent flows, milestone progression with deadline enforcement (hybrid lazy + background), breach handling with cure periods, guardian custody for escrow integration, clause type system with execution pipeline, prebound API batching, and idempotent operations. However, 4 stubs remain (TemplateName always null in summaries, clause handler request/response mappings unused, no active expiration job for effectiveUntil, no payment schedule enforcement), plus a known L1-to-L2 hierarchy violation with lib-location. These stubs and the hierarchy violation prevent a higher score.
+L3-hardened. Comprehensive feature set: template CRUD, instance lifecycle with full state machine (Draft through Fulfilled/Terminated/Expired), consent flows, milestone progression with deadline enforcement (hybrid lazy + background), breach handling with cure periods, guardian custody for escrow integration, clause type system with execution pipeline, prebound API batching, and idempotent operations. L1-to-L2 hierarchy violation (ILocationClient) removed, schema NRT/T25/T26/T29 compliance fixed, telemetry spans added to all async helpers. Contract expiration implemented: `ContractExpirationService` handles both effectiveUntil expiration and milestone deadline enforcement in a single background worker pass with lazy enforcement in `GetContractInstanceStatusAsync`. TemplateName denormalized onto instance model at creation time. Clause handler request/response mappings reclassified as Potential Extension. Payment schedule enforcement added: background worker publishes `ContractPaymentDueEvent` for one-time and recurring schedules with drift prevention. 0 stubs remain.
 
 ### Bug Count: 0
 
@@ -399,9 +400,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Active expiration job** | Background service to scan Active contracts for `effectiveUntil < now` and transition to Expired. Currently expiration only occurs lazily on consent timeout, meaning contracts past their end date remain Active until someone touches them. | No issue |
-| 2 | **L1-to-L2 hierarchy violation remediation** | Contract depends on `ILocationClient` (L2) for territory constraint checking, violating the service hierarchy. Recommended fix: invert so location provides its own validation definition to Contract via DI interface. | No issue |
-| 3 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion would require schema changes. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
+| 1 | **Clause type handler chaining** | Validate before executing -- currently clause execution is fire-and-forget with no pre-validation step. | [#458](https://github.com/beyond-immersion/bannou-service/issues/458) |
+| 2 | **Template inheritance** | Templates extending other templates for shared clause/milestone patterns. | [#459](https://github.com/beyond-immersion/bannou-service/issues/459) |
+| 3 | **Per-milestone onApiFailure flag** | Currently prebound API failures are always non-blocking. Adding per-milestone configuration for whether failure should block milestone completion. | [#246](https://github.com/beyond-immersion/bannou-service/issues/246) |
 
 ### GH Issues
 
@@ -415,9 +416,9 @@ gh issue list --search "Contract:" --state open
 
 **Layer**: L1 AppFoundation | **Deep Dive**: [PERMISSION.md](plugins/PERMISSION.md)
 
-### Production Readiness: 93%
+### Production Readiness: 95%
 
-Feature-complete with no stubs and no active bugs. All 8 endpoints are fully implemented with proper multi-dimensional permission matrix compilation, role hierarchy, session state management, idempotent service registration, and real-time capability push to WebSocket clients via RabbitMQ. Previous bugs (inconsistent default role, static ROLE_ORDER, hardcoded states array) have all been fixed. The only remaining tracked item is a design consideration around in-memory cache not being invalidated on session disconnect.
+L3-hardened and feature-complete. All 8 endpoints are fully implemented with multi-dimensional permission matrix compilation, configurable role hierarchy, session state management, idempotent service registration, and real-time capability push to WebSocket clients via RabbitMQ. Major hardening pass (2026-02-22): fixed 14 schema NRT violations, removed T8 filler properties, moved inline enums to API schema, removed dead metadata field, added validation keywords, added `SessionLockTimeoutSeconds` config. Code fixes: added distributed locks for session state/role updates (T9), completed RoleHierarchy migration from hardcoded ROLE_ORDER (T21), added telemetry spans throughout (T30), removed duplicate try-catch (T7), fixed sentinel values (T26), extracted magic strings to constants (T13). Session cache invalidation implemented (#392): `ISessionActivityListener` DI listener pattern with heartbeat-driven TTL refresh, in-memory cache removed entirely, `SessionDataTtlSeconds` reduced from 86400 to 600. 27 unit tests, all passing. No bugs, no stubs, no extensions remaining.
 
 ### Bug Count: 0
 
@@ -431,8 +432,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Session cache invalidation on disconnect** | In-memory cache entries remain after disconnect until recompilation overwrites them. Planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. | [#392](https://github.com/beyond-immersion/bannou-service/issues/392) |
-| 2 | *(No further enhancements identified)* | | |
+| 1 | *(No enhancements identified)* | Service is feature-complete for its scope. Session cache invalidation (#392) was implemented via `ISessionActivityListener`. | |
+| 2 | | | |
 | 3 | | | |
 
 ### GH Issues
@@ -479,19 +480,22 @@ gh issue list --search "Resource:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [ACTOR.md](plugins/ACTOR.md)
 
-### Production Readiness: 65%
+### Production Readiness: 90%
 
-Core architecture is solid and functional: template CRUD, actor spawn/stop/get lifecycle, behavior loop with perception processing, ABML document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management, pool mode with command topics and health monitoring, Variable Provider Factory pattern (personality/combat/backstory/encounters/quest), behavior document provider chain (Puppetmaster dynamic + seeded + fallback), periodic state persistence, character state update publishing. 30+ configuration properties all wired. No bugs, no implementation gaps.
+L3-hardened. Core architecture is solid and functional: template CRUD, actor spawn/stop/get lifecycle, behavior loop with two-phase tick execution (cognition pipeline + ABML behavior), ABML document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, encounter management, pool mode with command topics and health monitoring, Variable Provider Factory pattern (personality/combat/backstory/encounters/quest), behavior document provider chain (Puppetmaster dynamic + seeded + fallback), dynamic character binding (event brain → character brain without relaunch), periodic state persistence, character state update publishing. 30+ configuration properties all wired with validation keywords. Schema NRT compliance verified. T30 telemetry spans on ~80 async methods across 22 files. All T8 filler booleans removed from responses. Inline enums consolidated to shared types. ETag retry loops on all index operations. All disposal and lifecycle patterns correct. No implementation gaps.
 
-However, significant production features remain unimplemented: auto-scale deployment mode is declared but stubbed, session-bound actors are stubbed, and 5 extensions (memory decay, cross-node encounters, behavior versioning, actor migration, Phase 2 variable providers) are open. The pool node capacity model is self-reported with no external validation.
+Two known bugs (T29 violations: `cognitionOverrides` and `initialState` use `additionalProperties: true` but are deserialized to typed objects — both tracked with open issues). Significant production features remain unimplemented: auto-scale deployment mode is declared but stubbed, session-bound actors are stubbed, and 5 extensions (memory decay, cross-node encounters, behavior versioning, actor migration, Phase 2 variable providers) are open. The pool node capacity model is self-reported with no external validation.
 
-### Bug Count: 0
+### Bug Count: 2
 
-No known bugs.
+Two T29 violations with open design issues.
 
 ### Top 3 Bugs
 
-*(None)*
+| # | Bug | Description | Issue |
+|---|-----|-------------|-------|
+| 1 | **T29: `cognitionOverrides` metadata bag** | Defined as `additionalProperties: true` but deserialized to typed `CognitionOverrides` with 5 discriminated subtypes. Should be a typed schema with `oneOf`/discriminator pattern. | [#462](https://github.com/beyond-immersion/bannou-service/issues/462) |
+| 2 | **T29: `initialState` metadata bag** | Defined as `additionalProperties: true` but cast to `ActorStateSnapshot` with structured fields. Should define typed schema subset. | [#463](https://github.com/beyond-immersion/bannou-service/issues/463) |
 
 ### Top 3 Enhancements
 
@@ -513,9 +517,9 @@ gh issue list --search "Actor:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [CHARACTER.md](plugins/CHARACTER.md)
 
-### Production Readiness: 90%
+### Production Readiness: 97%
 
-All 12 endpoints are fully implemented with no stubs. CRUD operations include smart field tracking, realm-partitioned storage with MySQL JSON queries, enriched retrieval with family tree data (from lib-relationship), and centralized compression via the Resource service. Distributed locking, optimistic concurrency, and lifecycle events are all wired. The only remaining work is two potential extensions (batch compression and automated purge background service), neither of which blocks production use.
+L3-hardened. All 12 endpoints fully implemented with no stubs. Schema NRT compliance verified (3 critical, 7 major fixes applied). Event types properly located in events schema with uuid format and enum reason. Telemetry spans on all 13 async helpers. Configuration validation keywords on all properties. RefCountUpdateMaxRetries extracted from hardcoded constant to config. Post-review: fixed missing fields in CharacterCreatedEvent, corrected null vs empty list in CompressCharacterAsync, fixed referenceTypes description, removed L4-owned snapshot types from L2 schema (T29/T2). CRUD operations include smart field tracking, realm-partitioned storage with MySQL JSON queries, enriched retrieval with family tree data (from lib-relationship), and centralized compression via the Resource service. Distributed locking, optimistic concurrency, and lifecycle events all wired. Remaining: 2 design-phase extensions and 1 design consideration (batch ref unregistration).
 
 ### Bug Count: 0
 
@@ -529,9 +533,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Character purge background service** | Automated purge of characters eligible for cleanup (zero references past grace period). Config removed for T21 compliance; needs redesign when operational need arises. | [#263](https://github.com/beyond-immersion/bannou-service/issues/263) |
-| 2 | **Batch compression** | Compress multiple dead characters in one operation via a batch variant of `/resource/compress/execute`. | [#253](https://github.com/beyond-immersion/bannou-service/issues/253) |
-| 3 | *(No further enhancements identified)* | | |
+| 1 | **Delete flow O(N) reference unregistration** | When a character is deleted, cleanup callbacks fire on 4 L4 services, each publishing individual `resource.reference.unregistered` events. For characters with rich data, this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation. | [#351](https://github.com/beyond-immersion/bannou-service/issues/351) |
+| 2 | **Character purge background service** | Automated purge of characters eligible for cleanup (zero references past grace period). Config removed for T21 compliance; needs redesign when operational need arises. | [#263](https://github.com/beyond-immersion/bannou-service/issues/263) |
+| 3 | **Batch compression** | Compress multiple dead characters in one operation via a batch variant of `/resource/compress/execute`. | [#253](https://github.com/beyond-immersion/bannou-service/issues/253) |
 
 ### GH Issues
 

@@ -579,13 +579,14 @@ paths:
         \   \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\"\
         : \"Compression algorithm to use for the bundle\"\n                },\n                \"metadata\": {\n         \
         \           \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Custom metadata for the bundle (null if none)\"\n                }\n\
-        \            }\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property
-        (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available
-        across all realms.\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n \
-        \           \"description\": \"Compression algorithm for bundles\"\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Custom metadata for the bundle (null if none). No Bannou plugin reads
+        specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"GameRealm\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier)
+        that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the
+        Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n        \"\
+        CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"lz4\",\n     \
+        \           \"lzma\",\n                \"none\"\n            ],\n            \"description\": \"Compression algorithm
+        for bundles\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
         status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
@@ -820,11 +821,11 @@ paths:
         include FROM SOURCE BUNDLES.\\nIf null, all assets from source bundles are included.\\nStandalone assets are always
         included regardless of this filter.\\n\"\n                },\n                \"metadata\": {\n                  \
         \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Custom metadata for the metabundle\"\n                }\n            }\n \
-        \       },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub
-        name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
-        \", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\\
-        n\"\n        }\n    }\n}"
+        \                    \"description\": \"Custom metadata for the metabundle. No Bannou plugin reads specific keys from
+        this field by convention.\"\n                }\n            }\n        },\n        \"GameRealm\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset
+        belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\
+        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response from metabundle creation.\\nFor synchronous creation (small jobs):
@@ -2322,7 +2323,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the bundle (null if none)
+          description: Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this 
+            field by convention.
     CreateBundleResponse:
       description: Response with bundle creation status and estimated size
       type: object
@@ -2562,7 +2564,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata for the metabundle
+          description: Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by 
+            convention.
     CreateMetabundleResponse:
       type: object
       additionalProperties: false

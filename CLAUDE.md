@@ -51,6 +51,38 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ UNEXPECTED CONSEQUENCES = HARD STOP ⛔
+
+**If a change you made produces unexpected errors, unexpected behavior, or unexpected side effects: STOP IMMEDIATELY. Do not attempt to work around it. Do not layer fixes on top of a surprise. Present the unexpected result to the user and ask for directions.**
+
+**The trigger is simple**: You made a change. You expected outcome X. You got outcome Y instead. **STOP.**
+
+**What "stop" means**:
+1. Do NOT attempt to "fix" the unexpected consequence
+2. Do NOT add workarounds, aliases, shims, or compatibility layers
+3. Do NOT continue down the current path hoping the next fix will resolve it
+4. DO explain: what you changed, what you expected, what actually happened, and what the options are
+5. DO wait for explicit direction before proceeding
+
+**Why this rule exists**: An agent moved 6 enum definitions between schema files (a seemingly correct schema-first fix). Code generation produced duplicate types across two namespaces — an unexpected consequence. Instead of stopping, the agent spent multiple build-fix-rebuild cycles layering increasingly complex C# `using` alias workarounds, each failing in a new way (file-level aliases lost to parent namespace resolution, namespace-scoped aliases triggered CS0576 conflicts, namespace alias prefixes required touching 16+ call sites). Every "fix" made the situation worse and harder to revert. **One hard stop at the first unexpected build failure would have saved all of that.**
+
+**The compound damage pattern**:
+- Workaround #1 seems small and reasonable
+- Workaround #1 creates a new problem requiring workaround #2
+- Each layer makes reverting harder and understanding the state more difficult
+- By workaround #3+ you are debugging your workarounds, not the original problem
+- **The first workaround is already one too many without user approval**
+
+**This applies to**:
+- Build failures from schema/generation changes you didn't predict
+- Runtime behavior that differs from what you expected
+- Test failures that don't match your mental model
+- Any situation where reality diverged from your expectation
+
+**Principle**: Surprises mean your mental model is wrong. When your model is wrong, more actions based on that model make things worse, not better. Stop, report, and let the human recalibrate.
+
+---
+
 ## ⛔ CODE GENERATION SCRIPTS ARE FROZEN ⛔
 
 **The `scripts/` directory contains the code generation pipeline. These scripts are NEVER to be modified by an agent without EXPLICIT user instructions to change code generation behavior.**
@@ -72,30 +104,7 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
 
-**Services MUST NEVER store domain-specific data in another service's `metadata`, `additionalProperties`, `customStats`, `data`, `properties`, or any other freeform/untyped JSON field — and then read it back by convention (knowing key names and expected types without schema enforcement).**
-
-**What this means**: If Service A needs data about Service B's entities, Service A stores that data in **its own state stores** with **its own schema-defined models**, accessed through **its own API endpoints**. Service A may query Service B for entity existence or hierarchy (via typed generated clients), but Service A NEVER stuffs its domain data into Service B's untyped JSON bags.
-
-**The anti-patterns (ALL FORBIDDEN)**:
-1. Storing game-specific fields (biomeCode, altitude, speciesCode, isSystemType) in another service's `metadata` object and reading them by convention
-2. Storing structured data (affix slots, behavioral clauses, asset requirements) in another service's `additionalProperties: true` field and parsing by key name
-3. Using `customStats`, `annotations`, or any untyped field as a cross-service communication channel
-4. Documenting "convention" as the interface contract between two services — if it's not in a schema, it doesn't exist
-5. Saying "this is a convention, not a schema change" as justification — **that IS the problem**
-
-**Why this is forbidden**:
-- Zero type safety: no compile-time, generation-time, or validation-time checking
-- Invisible coupling: no schema, import graph, or dependency analysis can detect it
-- Silent failure: misspelled keys, wrong types, or missing data produce wrong behavior with no error
-- Lifecycle orphaning: the storage owner can't validate, migrate, or clean up data it doesn't know about
-- Untestable: neither service's unit tests cover the convention
-- Tenet 1 violation: if it's not in a schema, it's not schema-first
-
-**The correct pattern**: If Environment (L4) needs biome data for Location (L2) entities, Environment maintains its own `LocationClimateBinding` records in its own state stores, managed through its own API. Environment queries Location for hierarchy and existence. Environment owns its own domain data. Always.
-
-**When reviewing deep dives or implementation plans**: If you see a service reading specific named keys from another service's freeform metadata field, **STOP and flag it as a violation**. Do not proceed. Do not rationalize it as "well-documented convention." Present it to the user.
-
-**If you encounter `additionalProperties: true` in a schema**: Treat it with extreme suspicion. Ask: is any other service expected to read specific keys from this field? If yes, those keys must become typed schema properties — either on the owning service (if the data is that service's domain) or on the consuming service (in its own state store, if the data is the consumer's domain).
+**Follow T29 (No Metadata Bag Contracts) in `docs/reference/tenets/FOUNDATION.md` TO THE LETTER.** T29 covers the eight failures of metadata bag contracts, the only two legitimate uses for `additionalProperties: true`, the correct service-owned binding pattern, per-layer scenario guidance, and detection/enforcement rules. It is comprehensive and authoritative.
 
 **Known existing violations** (tracked for remediation, not precedent): GitHub Issue #308 tracks the systemic `additionalProperties: true` problem. Existing violations in affix metadata, contract CustomTerms, and others are tracked for migration to typed schemas. **These are technical debt to fix, not patterns to follow.**
 
@@ -158,6 +167,25 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 - `docs/reference/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy.
 
 These documents provide the high-level architectural north-star context for the entire project. Read them when planning cross-cutting features, evaluating whether work aligns with project goals, designing player-facing features, or needing context on how services serve the bigger picture.
+
+### Sub-Agent Orientation (MANDATORY)
+
+**When launching sub-agents (Task tool), do NOT have them read the entire CLAUDE.md.** Instead, instruct each agent to read only the documents relevant to its mission. This keeps agents focused and avoids context bloat.
+
+**Orientation by mission type:**
+
+| Agent Mission | Must Read Before Starting |
+|---------------|--------------------------|
+| **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md` |
+| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
+| **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
+| **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
+
+**Rules:**
+1. Every sub-agent prompt MUST include an explicit instruction to read the relevant documents listed above BEFORE doing any work
+2. Agents may need multiple orientations (e.g., an agent auditing code for tenet compliance while investigating service dependencies would read both the tenet files AND the service details files)
+3. The agent's prompt should specify which documents to read -- do not rely on the agent discovering them on its own
+4. For investigation agents, also include `docs/reference/SERVICE-HIERARCHY.md` when the task involves dependency analysis or layer validation
 
 **Other Planning References**:
 
@@ -281,39 +309,13 @@ Reference the Makefile in the repository root for all available commands and est
 - **Avoid**: appsettings.json, Config.json, hardcoded configuration
 - **Principle**: Container-first configuration management
 
-### Schema-First Development (MANDATORY)
-**ALL development follows schema-first architecture - never edit generated code manually.**
+### Schema-First Development & Architecture (MANDATORY)
+**Follow these loaded reference documents TO THE LETTER:**
+- **T1 (Schema-First)** in `TENETS.md` — generated file structure, cardinal rules, generation workflow
+- **`SCHEMA-RULES.md`** — enum consolidation, `$ref` resolution, `servers` URL, validation keywords, NRT compliance (read before touching ANY schema)
+- **`BANNOU-DESIGN.md`** — architecture patterns (tuple returns, infrastructure libs, generated clients, controller=wrapper)
 
-**🚨 CRITICAL RULE - SERVICE IMPLEMENTATION ONLY**:
-**NEVER edit ANY file in a service plugin except the service implementation class (e.g., `ConnectService.cs`)**
-- **Generated Files**: NEVER edit any files in `*/Generated/` directories
-- **Controllers**: NEVER create or edit controller files - they are auto-generated wrappers
-- **Interfaces**: NEVER edit generated interfaces - service implementation is the source of truth
-- **Models**: NEVER edit generated models - they come from OpenAPI schemas
-- **Service Implementation Authority**: If there are conflicts between service implementation and generated types, the service implementation is authoritative
-
-**🎯 Schema Design Best Practices**:
-- **Enum Consolidation**: Use shared enum definitions in `components/schemas` section with `$ref` references to avoid duplication (e.g., Provider enum)
-- **$ref Resolution**: Interface generation properly handles `$ref` enum parameters - never fallback to string types
-- **Duplicate Prevention**: Fix schema duplications at source rather than using exclusions in generation scripts
-- **⚠️ CRITICAL - `servers` URL**: ALL schemas MUST use the base endpoint:
-  ```yaml
-  servers:
-    - url: http://localhost:5012
-  ```
-  NSwag generates controller route prefixes from this URL. Using direct paths ensures generated routes match what clients send.
-
-**Required Workflow**:
-1. **Schema First**: Edit OpenAPI YAML in `/schemas/` directory
-2. **Generate**: Run the appropriate generation script (see Essential Commands below)
-3. **Implement**: Write business logic ONLY in service implementation classes (e.g., `SomeService.cs`)
-
-**Architecture Rules**:
-- **Services Return Tuples**: `(StatusCodes, ResponseModel?)` using custom enum
-- **Never Edit Generated Files**: Any files in `*/Generated/` directories are auto-generated
-- **Use Generated Clients**: Service-to-service calls use NSwag-generated clients, not direct interfaces
-- **Infrastructure Libs Pattern**: Use lib-state, lib-messaging, and lib-mesh for all infrastructure (never direct Redis/RabbitMQ/HTTP)
-- **Controller = Service Wrapper**: Generated controllers are just wrappers around service implementations
+These documents are loaded as `@references` above and are authoritative. Do not deviate from them.
 
 ### Shared Class Architecture (MANDATORY)
 **For classes shared across multiple services, follow the established pattern:**
@@ -335,13 +337,6 @@ Reference the Makefile in the repository root for all available commands and est
 4. Never duplicate shared classes across multiple service projects
 
 **Example**: `bannou-service/ApiException.cs` provides `ApiException` and `ApiException<TResult>` for all services
-
-### Safety Protocols
-**Before Any Code Changes**:
-- Will this affect `/Generated/` files? → Fix schema instead
-- Will this modify non-C# files? → Verify file types explicitly  
-- Am I bypassing schema-first workflow? → Use proper generation pipeline
-- **On violations**: STOP and ask for direction
 
 ## Development Workflow
 
@@ -397,9 +392,7 @@ make inspect-list PKG="RabbitMQ.Client"
 - Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 
 ### Code Quality Requirements
-- **XML Documentation**: All public classes/methods must have `<summary>` tags
-- **EditorConfig**: LF line endings enforced across all file types
-- **Generated Code**: Never edit files in `*/Generated/` directories
+**Follow the QUALITY TENETS in `docs/reference/tenets/QUALITY.md` to the letter** — covers XML documentation (T19), warning suppression (T22), naming conventions (T16), logging standards (T10), and test integrity (T12).
 
 ### Testing Strategy
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
@@ -450,24 +443,8 @@ Configuration classes are generated in `Generated/` from schema - never edit man
 ### **MANDATORY**: Complex Service Implementation
 **When implementing complex service patterns or debugging service issues**, you MUST reference the detailed development procedures documentation for complete infrastructure lib patterns, service client examples, event publishing patterns, and architectural implementation details.
 
-### Infrastructure Lib Patterns
-**State Management (lib-state)**:
-```csharp
-// Use StateStoreDefinitions constants (schema-first from schemas/state-stores.yaml)
-_stateStore = stateStoreFactory.GetStore<ServiceModel>(StateStoreDefinitions.ServiceName);
-await _stateStore.SaveAsync(key, data);
-var data = await _stateStore.GetAsync(key);
-```
-
-**Event Publishing (lib-messaging)**:
-```csharp
-await _messageBus.PublishAsync("event.topic", eventModel);
-```
-
-### Assembly Loading & Service Discovery
-- **Default Routing**: All services route to "bannou" (omnipotent default)
-- **Production**: Event-driven service-to-app-id mapping via Redis routing tables
-- **Service Attributes**: `[BannouService]` enables automatic discovery and DI registration
+### Infrastructure Libs & Service Discovery
+**Follow `BANNOU-DESIGN.md` (loaded as `@reference` above) for all infrastructure patterns** — lib-state (StateStoreDefinitions, IStateStoreFactory), lib-messaging (IMessageBus), lib-mesh (generated clients, YARP routing), assembly loading, service discovery, and the omnipotent routing model. Those are the authoritative examples.
 
 ## Arcadia Game Integration
 

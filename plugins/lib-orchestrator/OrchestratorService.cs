@@ -674,12 +674,16 @@ public partial class OrchestratorService : IOrchestratorService
                 }
             }
 
-            // CRITICAL: Disable all services by default, then enable only the specified ones
-            // This MUST override any forwarded SERVICES_ENABLED=true from the orchestrator's environment
-            // Without this, deployed containers would run ALL services (including orchestrator itself!)
-            environment["SERVICES_ENABLED"] = "false";
+            // CRITICAL: Service enablement for deployed containers.
+            // Layer env vars (BANNOU_ENABLE_*) may already be set by PresetLoader when 'layers' is used.
+            // If no layer vars are present, use BANNOU_SERVICES_ENABLED=false + per-service enables.
+            var hasLayerConfig = environment.Keys.Any(k => k.StartsWith("BANNOU_ENABLE_", StringComparison.OrdinalIgnoreCase));
+            if (!hasLayerConfig)
+            {
+                environment["BANNOU_SERVICES_ENABLED"] = "false";
+            }
 
-            // Build service enable flags for this node's specified services only
+            // Build service enable flags for this node's specified services
             foreach (var serviceName in node.Services)
             {
                 var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
@@ -692,8 +696,11 @@ public partial class OrchestratorService : IOrchestratorService
             environment["BANNOU_APP_ID"] = appId;
 
             _logger.LogDebug(
-                "Node {NodeName} service configuration: SERVICES_ENABLED=false, APP_ID={AppId}, enabled services: {Services}",
-                node.Name, appId, string.Join(", ", node.Services));
+                "Node {NodeName} service configuration: {Mode}, APP_ID={AppId}, enabled services: {Services}",
+                node.Name,
+                hasLayerConfig ? "layer-based" : "BANNOU_SERVICES_ENABLED=false",
+                appId,
+                string.Join(", ", node.Services));
 
             // DryRun mode: collect what would be deployed without actually deploying
             if (body.DryRun)
@@ -1495,15 +1502,26 @@ public partial class OrchestratorService : IOrchestratorService
     /// - Core infrastructure: BANNOU_, ACCOUNT_, HEARTBEAT_, SERVICES_, OPENRESTY_, ASPNETCORE_ENVIRONMENT
     /// - Plugin prefixes: AUTH_, CONNECT_, STATE_, MESH_, etc. (derived from discovered plugins)
     ///
-    /// EXCLUDES: *_SERVICE_ENABLED and *_SERVICE_DISABLED flags - these are controlled
-    /// entirely by the deployment logic based on the preset's services list.
+    /// EXCLUDES: *_SERVICE_ENABLED flags and BANNOU_ENABLE_* layer flags.
+    /// These are controlled entirely by the deployment logic based on the preset's layers/services list.
     /// </remarks>
     private static bool IsAllowedEnvironmentVariable(string key)
     {
-        // NEVER forward service enable/disable flags - these are set by deployment logic
-        // based on the preset's services list, not inherited from orchestrator
-        if (key.EndsWith("_SERVICE_ENABLED", StringComparison.OrdinalIgnoreCase) ||
-            key.EndsWith("_SERVICE_DISABLED", StringComparison.OrdinalIgnoreCase))
+        // NEVER forward service enable flags - these are set by deployment logic
+        // based on the preset's layers/services list, not inherited from orchestrator
+        if (key.EndsWith("_SERVICE_ENABLED", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // NEVER forward layer enablement flags - also set by deployment logic
+        if (key.StartsWith("BANNOU_ENABLE_", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // NEVER forward master kill switch - deployment logic sets this explicitly per container
+        if (key.Equals("BANNOU_SERVICES_ENABLED", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -1680,10 +1698,12 @@ public partial class OrchestratorService : IOrchestratorService
                                 ? new Dictionary<string, string>(change.Environment)
                                 : new Dictionary<string, string>();
 
-                            // CRITICAL: Disable all services by default, then enable only the specified ones
-                            if (!nodeEnvironment.ContainsKey("SERVICES_ENABLED"))
+                            // Use layer-based enablement if layer env vars are present, otherwise legacy mode
+                            var addNodeHasLayers = nodeEnvironment.Keys.Any(k =>
+                                k.StartsWith("BANNOU_ENABLE_", StringComparison.OrdinalIgnoreCase));
+                            if (!addNodeHasLayers && !nodeEnvironment.ContainsKey("BANNOU_SERVICES_ENABLED"))
                             {
-                                nodeEnvironment["SERVICES_ENABLED"] = "false";
+                                nodeEnvironment["BANNOU_SERVICES_ENABLED"] = "false";
                             }
 
                             // Enable each service listed in the change
@@ -2896,7 +2916,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Enable only the specified plugin
             if (!string.IsNullOrEmpty(pool.Plugin))
             {
-                poolEnvironment["SERVICES_ENABLED"] = "false";
+                poolEnvironment["BANNOU_SERVICES_ENABLED"] = "false";
                 var envVarName = pool.Plugin.ToUpperInvariant().Replace("-", "_") + "_SERVICE_ENABLED";
                 poolEnvironment[envVarName] = "true";
             }

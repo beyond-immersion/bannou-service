@@ -32,31 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Connect;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
-/// </summary>
-public enum ConnectionMode
-{
-    External,
-    Relayed,
-    Internal,
-}
-#pragma warning restore CS1591
-
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
-/// </summary>
-public enum InternalAuthMode
-{
-    ServiceToken,
-    NetworkTrust,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Connect service.
 /// Properties are automatically bound from environment variables.
@@ -73,27 +48,28 @@ public enum InternalAuthMode
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ConnectService))]
-public class ConnectServiceConfiguration : IServiceConfiguration
+public class ConnectServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent WebSocket connections
     /// Environment variable: CONNECT_MAX_CONCURRENT_CONNECTIONS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000000)]
     public int MaxConcurrentConnections { get; set; } = 10000;
 
     /// <summary>
-    /// Interval between heartbeat messages
+    /// Interval between heartbeat messages in seconds
     /// Environment variable: CONNECT_HEARTBEAT_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Size of message buffers in bytes
     /// Environment variable: CONNECT_BUFFER_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1024, Maximum = 1048576)]
     public int BufferSize { get; set; } = 65536;
 
     /// <summary>
@@ -106,12 +82,14 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Rate limit for messages per minute per client
     /// Environment variable: CONNECT_MAX_MESSAGES_PER_MINUTE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxMessagesPerMinute { get; set; } = 1000;
 
     /// <summary>
     /// Rate limit window in minutes
     /// Environment variable: CONNECT_RATE_LIMIT_WINDOW_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
     public int RateLimitWindowMinutes { get; set; } = 1;
 
     /// <summary>
@@ -121,19 +99,19 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     public string ServerSalt { get; set; } = "bannou-dev-connect-salt-change-in-production";
 
     /// <summary>
-    /// Connection mode: external (default, no broadcast), relayed (broadcast allowed), internal (minimal response, broadcast allowed)
+    /// Connection mode: External (default, no broadcast), Relayed (broadcast allowed), Internal (minimal response, broadcast allowed)
     /// Environment variable: CONNECT_CONNECTION_MODE
     /// </summary>
     public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.External;
 
     /// <summary>
-    /// Auth mode for internal connections: service-token (validate X-Service-Token) or network-trust (no auth)
+    /// Auth mode for internal connections: ServiceToken (validate X-Service-Token) or NetworkTrust (no auth)
     /// Environment variable: CONNECT_INTERNAL_AUTH_MODE
     /// </summary>
     public InternalAuthMode InternalAuthMode { get; set; } = InternalAuthMode.ServiceToken;
 
     /// <summary>
-    /// Secret for X-Service-Token validation when InternalAuthMode is service-token
+    /// Secret for X-Service-Token validation when InternalAuthMode is ServiceToken
     /// Environment variable: CONNECT_INTERNAL_SERVICE_TOKEN
     /// </summary>
     public string? InternalServiceToken { get; set; }
@@ -142,60 +120,77 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// Session time-to-live in seconds (default 24 hours)
     /// Environment variable: CONNECT_SESSION_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 604800)]
     public int SessionTtlSeconds { get; set; } = 86400;
 
     /// <summary>
     /// Heartbeat data TTL in Redis in seconds (default 5 minutes)
     /// Environment variable: CONNECT_HEARTBEAT_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int HeartbeatTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// Window for client reconnection after disconnect in seconds (default 5 minutes)
     /// Environment variable: CONNECT_RECONNECTION_WINDOW_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int ReconnectionWindowSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Maximum allowed channel number in WebSocket binary messages. Messages with channel numbers above this limit are rejected as invalid.
+    /// Environment variable: CONNECT_MAX_CHANNEL_NUMBER
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
+    public int MaxChannelNumber { get; set; } = 1000;
 
     /// <summary>
     /// Interval in seconds between pending RPC cleanup runs
     /// Environment variable: CONNECT_RPC_CLEANUP_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int RpcCleanupIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Default timeout in seconds for RPC calls when not specified
     /// Environment variable: CONNECT_DEFAULT_RPC_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int DefaultRpcTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Interval in seconds between connection cleanup runs
     /// Environment variable: CONNECT_CONNECTION_CLEANUP_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int ConnectionCleanupIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in minutes after which inactive connections are cleaned up
     /// Environment variable: CONNECT_INACTIVE_CONNECTION_TIMEOUT_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int InactiveConnectionTimeoutMinutes { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds for pending messages awaiting acknowledgment
     /// Environment variable: CONNECT_PENDING_MESSAGE_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int PendingMessageTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds when waiting for connection closure during shutdown
     /// Environment variable: CONNECT_CONNECTION_SHUTDOWN_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
     public int ConnectionShutdownTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
     /// Additional minutes added to reconnection window on each extension
     /// Environment variable: CONNECT_RECONNECTION_WINDOW_EXTENSION_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
     public int ReconnectionWindowExtensionMinutes { get; set; } = 1;
 
     /// <summary>
@@ -223,5 +218,31 @@ public class ConnectServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 11)]
     public int CompressionQuality { get; set; } = 1;
+
+    /// <summary>
+    /// Multi-node broadcast directionality (None disables broadcast relay entirely, requires BroadcastInternalUrl to be set)
+    /// Environment variable: CONNECT_MULTINODE_BROADCAST_MODE
+    /// </summary>
+    public BroadcastMode MultiNodeBroadcastMode { get; set; } = BroadcastMode.None;
+
+    /// <summary>
+    /// WebSocket URL where this instance accepts inter-node broadcast connections (null disables broadcast regardless of mode)
+    /// Environment variable: CONNECT_BROADCAST_INTERNAL_URL
+    /// </summary>
+    public string? BroadcastInternalUrl { get; set; }
+
+    /// <summary>
+    /// Interval in seconds between broadcast registry heartbeat refreshes
+    /// Environment variable: CONNECT_BROADCAST_HEARTBEAT_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int BroadcastHeartbeatIntervalSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Threshold in seconds after which a broadcast registry entry is considered stale and removed
+    /// Environment variable: CONNECT_BROADCAST_STALE_THRESHOLD_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 15, Maximum = 600)]
+    public int BroadcastStaleThresholdSeconds { get; set; } = 90;
 
 }

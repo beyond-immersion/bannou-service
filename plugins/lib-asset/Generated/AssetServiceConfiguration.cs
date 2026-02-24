@@ -89,10 +89,8 @@ public enum AudioOutputFormat
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(AssetService))]
-public class AssetServiceConfiguration : IServiceConfiguration
+public class AssetServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Storage backend type

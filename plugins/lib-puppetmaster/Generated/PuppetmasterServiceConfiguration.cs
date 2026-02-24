@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Puppetmaster;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(PuppetmasterService))]
-public class PuppetmasterServiceConfiguration : IServiceConfiguration
+public class PuppetmasterServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of behavior documents to cache in memory

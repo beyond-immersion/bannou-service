@@ -63,7 +63,8 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
                 return null;
             }
 
-            return BannouJson.Deserialize<TValue>(value!);
+            // value.IsNullOrEmpty checked above; ToString() returns non-null string
+            return BannouJson.Deserialize<TValue>(value.ToString());
         }
         catch (RedisConnectionException ex)
         {
@@ -113,7 +114,8 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
             }
 
             var etag = version.HasValue ? version.ToString() : "0";
-            return (BannouJson.Deserialize<TValue>(value!), etag);
+            // value.IsNullOrEmpty checked above; ToString() returns non-null string
+            return (BannouJson.Deserialize<TValue>(value.ToString()), etag);
         }
         catch (RedisConnectionException ex)
         {
@@ -1464,7 +1466,8 @@ public sealed class RedisStateStore<TValue> : ICacheableStateStore<TValue>
                 return default;
             }
 
-            return BannouJson.Deserialize<TField>(value!);
+            // value.IsNullOrEmpty checked above; ToString() returns non-null string
+            return BannouJson.Deserialize<TField>(value.ToString());
         }
         catch (RedisConnectionException ex)
         {

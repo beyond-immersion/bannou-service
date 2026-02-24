@@ -21,17 +21,13 @@ services:
       context: ../
       dockerfile: provisioning/Dockerfile
     environment:
-      # Orchestrator service only
+      # Orchestrator service only - disable all layers, enable just orchestrator
       - BANNOU_APP_ID=orchestrator
+      - BANNOU_ENABLE_APP_FOUNDATION=false
+      - BANNOU_ENABLE_GAME_FOUNDATION=false
+      - BANNOU_ENABLE_APP_FEATURES=false
+      - BANNOU_ENABLE_GAME_FEATURES=false
       - ORCHESTRATOR_SERVICE_ENABLED=true
-      - TESTING_SERVICE_ENABLED=false
-      - ACCOUNT_SERVICE_ENABLED=false
-      - AUTH_SERVICE_ENABLED=false
-      - BEHAVIOR_SERVICE_ENABLED=false
-      - CONNECT_SERVICE_ENABLED=false
-      - GAME_SESSION_SERVICE_ENABLED=false
-      - PERMISSION_SERVICE_ENABLED=false
-      - WEBSITE_SERVICE_ENABLED=false
       # Direct infrastructure connections for orchestrator's own monitoring
       - ORCHESTRATOR_REDIS_CONNECTION_STRING=bannou-redis:6379
       - ORCHESTRATOR_RABBITMQ_CONNECTION_STRING=amqp://guest:guest@rabbitmq:5672

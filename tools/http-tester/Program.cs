@@ -175,6 +175,9 @@ public class Program
             };
             serviceCollection.AddSingleton(messagingConfig);
 
+            // Register mesh instance identifier for node identity
+            serviceCollection.AddSingleton<IMeshInstanceIdentifier>(new DefaultMeshInstanceIdentifier());
+
             // Register shared connection manager as both concrete type and interface
             serviceCollection.AddSingleton<RabbitMQConnectionManager>();
             serviceCollection.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
@@ -188,8 +191,9 @@ public class Program
                 var channelManager = sp.GetRequiredService<IChannelManager>();
                 var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
                 // IMessageBus explicitly null - breaks circular dependency
-                return new MessageRetryBuffer(channelManager, msgConfig, logger);
+                return new MessageRetryBuffer(channelManager, msgConfig, logger, telemetryProvider);
             });
             serviceCollection.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
@@ -202,7 +206,8 @@ public class Program
                 var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
                 var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
-                return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+                var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
+                return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider, instanceIdentifier);
             });
 
             // Register IMessageSubscriber using factory pattern (same as MessagingServicePlugin)
@@ -282,6 +287,9 @@ public class Program
             // Register NullTelemetryProvider (http-tester doesn't need telemetry)
             serviceCollection.AddSingleton<ITelemetryProvider, NullTelemetryProvider>();
 
+            // Register MeshInstanceIdentifier for error event sourcing
+            serviceCollection.AddSingleton<IMeshInstanceIdentifier>(new DefaultMeshInstanceIdentifier());
+
             // Register MeshInvocationClient using factory pattern (same as MeshServicePlugin)
             serviceCollection.AddSingleton<IMeshInvocationClient>(sp =>
             {
@@ -292,7 +300,8 @@ public class Program
                 var config = sp.GetRequiredService<MeshServiceConfiguration>();
                 var logger = sp.GetRequiredService<ILogger<MeshInvocationClient>>();
                 var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
-                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider);
+                var instanceIdentifier = sp.GetRequiredService<IMeshInstanceIdentifier>();
+                return new MeshInvocationClient(stateManager, stateStoreFactory, messageBus, messageSubscriber, config, logger, telemetryProvider, instanceIdentifier);
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)

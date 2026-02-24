@@ -51,6 +51,7 @@ info:
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
+x-service-layer: GameFeatures
 paths:
   /character-encounter/type/create:
     post:

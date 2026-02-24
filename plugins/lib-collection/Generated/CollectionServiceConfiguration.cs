@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Collection;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CollectionService))]
-public class CollectionServiceConfiguration : IServiceConfiguration
+public class CollectionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of collections a single owner entity can have

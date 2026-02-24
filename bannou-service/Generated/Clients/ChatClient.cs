@@ -374,6 +374,30 @@ public partial interface IChatClient
     /// <returns>Cleanup executed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
     System.Threading.Tasks.Task<AdminCleanupResponse> AdminForceCleanupAsync(AdminForceCleanupRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Signal typing activity
+    /// </summary>
+    /// <remarks>
+    /// Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state recorded</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task TypingAsync(TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Signal typing stopped
+    /// </summary>
+    /// <remarks>
+    /// Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state cleared</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    System.Threading.Tasks.Task EndTypingAsync(EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -400,6 +424,14 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
     /// Implements IServiceClient.ServiceName.
     /// </summary>
     public string ServiceName => _serviceName;
+
+    /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ChatClient"/> class.
@@ -2817,6 +2849,160 @@ public partial class ChatClient : IChatClient, BeyondImmersion.BannouService.Ser
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
                         }
                         return objectResponse_.Object;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Signal typing activity
+    /// </summary>
+    /// <remarks>
+    /// Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state recorded</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task TypingAsync(TypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "chat/typing"
+        urlBuilder_.Append("chat/typing");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                    }
+                }
+                finally
+                {
+                    if (disposeResponse_)
+                        response_.Dispose();
+                }
+            }
+            finally
+            {
+                // Clear headers after request (one-time use)
+                ClearHeaders();
+            }
+        }
+    }
+
+    /// <param name="body">The body parameter.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <summary>
+    /// Signal typing stopped
+    /// </summary>
+    /// <remarks>
+    /// Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.
+    /// </remarks>
+    /// <returns>Typing state cleared</returns>
+    /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
+    public virtual async System.Threading.Tasks.Task EndTypingAsync(EndTypingRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+        if (body == null)
+            throw new System.ArgumentNullException("body");
+
+        // Build method path (without base URL - mesh client handles endpoint resolution)
+        var urlBuilder_ = new System.Text.StringBuilder();
+        // Operation Path: "chat/end-typing"
+        urlBuilder_.Append("chat/end-typing");
+
+        var methodPath_ = urlBuilder_.ToString().TrimStart('/');
+        var appId_ = _resolver.GetAppIdForService(ServiceName);
+
+        // Create HTTP request via mesh client
+        using (var request_ = _meshClient.CreateInvokeMethodRequest(
+            new System.Net.Http.HttpMethod("POST"),
+            appId_,
+            methodPath_))
+        {
+            var json_ = BeyondImmersion.Bannou.Core.BannouJson.SerializeToUtf8Bytes(body);
+            var content_ = new System.Net.Http.ByteArrayContent(json_);
+            content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
+            request_.Content = content_;
+
+            // Apply custom headers
+            ApplyHeaders(request_);
+
+            try
+            {
+                var response_ = await _meshClient.InvokeMethodWithResponseAsync(request_, cancellationToken).ConfigureAwait(false);
+                var disposeResponse_ = true;
+                try
+                {
+                    var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                    foreach (var item_ in response_.Headers)
+                        headers_[item_.Key] = item_.Value;
+                    if (response_.Content != null && response_.Content.Headers != null)
+                    {
+                        foreach (var item_ in response_.Content.Headers)
+                            headers_[item_.Key] = item_.Value;
+                    }
+
+                    var status_ = (int)response_.StatusCode;
+                    if (status_ == 200)
+                    {
+                        return;
                     }
                     else
                     {

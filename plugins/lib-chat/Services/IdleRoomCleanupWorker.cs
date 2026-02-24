@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,11 +17,18 @@ namespace BeyondImmersion.BannouService.Chat;
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Background Service Pattern:</b>
 /// Uses IServiceProvider.CreateScope() to access scoped services.
-/// Follows established patterns from SeedDecayWorkerService, ContractMilestoneExpirationService.
+/// Follows established patterns from BanExpiryWorker (distributed lock + batch cleanup).
+/// </para>
+/// <para>
+/// <b>IMPLEMENTATION TENETS - Multi-Instance Safety:</b>
+/// Acquires a distributed lock per cycle to prevent multiple instances from
+/// processing the same idle rooms concurrently.
 /// </para>
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Configuration-First:</b>
-/// Uses IdleRoomCleanupIntervalMinutes and IdleRoomTimeoutMinutes from ChatServiceConfiguration.
+/// Uses IdleRoomCleanupIntervalMinutes, IdleRoomTimeoutMinutes,
+/// IdleRoomCleanupStartupDelaySeconds, and IdleRoomCleanupLockExpirySeconds
+/// from ChatServiceConfiguration.
 /// </para>
 /// </remarks>
 public class IdleRoomCleanupWorker : BackgroundService
@@ -27,6 +36,7 @@ public class IdleRoomCleanupWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<IdleRoomCleanupWorker> _logger;
     private readonly ChatServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between cleanup cycles, from configuration.
@@ -39,14 +49,17 @@ public class IdleRoomCleanupWorker : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with cleanup settings.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public IdleRoomCleanupWorker(
         IServiceProvider serviceProvider,
         ILogger<IdleRoomCleanupWorker> logger,
-        ChatServiceConfiguration configuration)
+        ChatServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -120,9 +133,28 @@ public class IdleRoomCleanupWorker : BackgroundService
     /// </summary>
     private async Task ProcessCleanupCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.chat", "IdleRoomCleanupWorker.ProcessCleanupCycle");
+
         _logger.LogDebug("Starting idle room cleanup cycle");
 
         using var scope = _serviceProvider.CreateScope();
+        var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
+
+        // Distributed lock prevents multiple instances from processing the same cycle concurrently.
+        await using var lockResponse = await lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock,
+            "idle-room-cleanup",
+            Guid.NewGuid().ToString(),
+            _configuration.IdleRoomCleanupLockExpirySeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Could not acquire idle room cleanup lock, another instance is processing this cycle");
+            return;
+        }
+
         var chatService = scope.ServiceProvider.GetRequiredService<IChatService>();
 
         if (chatService is not ChatService service)

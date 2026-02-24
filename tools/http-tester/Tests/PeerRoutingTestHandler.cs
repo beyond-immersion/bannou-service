@@ -163,7 +163,7 @@ public class PeerRoutingTestHandler : BaseHttpTestHandler
                     SessionId = Guid.NewGuid(),
                     TargetService = "testing",
                     TargetEndpoint = "/testing/ping",
-                    Method = InternalProxyRequestMethod.GET
+                    Method = HttpMethodType.GET
                 };
 
                 var response = await connectClient.ProxyInternalRequestAsync(proxyRequest);

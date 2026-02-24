@@ -12199,8 +12199,8 @@ export interface components {
       /** @description List of roles assigned to the account */
       roles: string[];
       /** @description List of authentication methods linked to the account */
-      authMethods?: components['schemas']['AuthMethodInfo'][];
-      /** @description Custom metadata associated with the account */
+      authMethods: components['schemas']['AuthMethodInfo'][];
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -12445,9 +12445,9 @@ export interface components {
       lastHeartbeat?: string | null;
       /**
        * Format: int64
-       * @description Number of behavior loop iterations executed
+       * @description Number of behavior loop iterations executed. Null when the actor is running on a remote pool node and the iteration count is not locally available.
        */
-      loopIterations: number;
+      loopIterations?: number | null;
     };
     /**
      * @description Size classification affecting cover requirements and passage width
@@ -12488,7 +12488,7 @@ export interface components {
        *     pipeline resolution. When null, falls back to ABML metadata, then category default.
        */
       cognitionTemplateId?: string | null;
-      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -12577,7 +12577,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -12808,7 +12808,7 @@ export interface components {
     Analytics: {
       /** @description Google Analytics tracking ID */
       googleAnalyticsId?: string | null;
-      /** @description Configuration for other analytics trackers */
+      /** @description Configuration for other analytics trackers. No Bannou plugin reads specific keys from this field by convention. */
       otherTrackers?: {
         [key: string]: unknown;
       };
@@ -13238,6 +13238,11 @@ export interface components {
       /** @description List of roles assigned to the authenticated user */
       roles?: string[] | null;
     };
+    /**
+     * @description Authentication mechanism type (oauth = browser redirect, ticket = game client token)
+     * @enum {string}
+     */
+    AuthType: 'oauth' | 'ticket';
     /** @description Request to checkout for authoring */
     AuthoringCheckoutRequest: {
       /**
@@ -13387,20 +13392,6 @@ export interface components {
       /** @description Type of the related entity (if any) */
       relatedEntityType?: string | null;
     };
-    /** @description Single backstory element */
-    BackstoryElementSnapshot: {
-      /** @description Type of backstory element (ORIGIN, TRAUMA, GOAL, etc.) */
-      elementType: string;
-      /** @description Machine-readable key (homeland, past_job, etc.) */
-      key: string;
-      /** @description Machine-readable value (northlands, blacksmith, etc.) */
-      value: string;
-      /**
-       * Format: float
-       * @description How strongly this affects behavior (0.0 to 1.0)
-       */
-      strength: number;
-    };
     /**
      * @description Types of backstory elements. Each type represents a different aspect
      *     of the character's background that influences behavior.
@@ -13436,10 +13427,12 @@ export interface components {
        */
       updatedAt?: string | null;
     };
-    /** @description Snapshot of backstory for enriched response */
+    /** @description Snapshot of a backstory element */
     BackstorySnapshot: {
-      /** @description List of backstory elements */
-      elements: components['schemas']['BackstoryElementSnapshot'][];
+      /** @description Backstory element type (e.g., TRAUMA, GOAL) */
+      elementType: string;
+      /** @description Backstory element key */
+      key: string;
     };
     /** @description A single balance query */
     BalanceQuery: {
@@ -13619,6 +13612,13 @@ export interface components {
       senderId?: string | null;
       /** @description Sender display name */
       displayName?: string | null;
+    };
+    /** @description Details of a single message that failed in a batch send operation */
+    BatchMessageFailure: {
+      /** @description Zero-based index of the failed message in the request messages array */
+      index: number;
+      /** @description Human-readable error reason */
+      error: string;
     };
     /** @description Compiled behavior tree data with bytecode or download reference */
     BehaviorTreeData: {
@@ -13846,7 +13846,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -14102,11 +14102,11 @@ export interface components {
       contractId: string;
       /**
        * Format: uuid
-       * @description Entity that breached
+       * @description Entity that breached (null for system-initiated breaches such as deadline enforcement)
        */
-      breachingEntityId: string;
-      /** @description Type of breaching entity */
-      breachingEntityType: components['schemas']['EntityType'];
+      breachingEntityId?: string | null;
+      /** @description Type of breaching entity (null for system-initiated breaches) */
+      breachingEntityType?: components['schemas']['EntityType'] | null;
       /** @description Type of breach */
       breachType: components['schemas']['BreachType'];
       /** @description What was breached */
@@ -14721,15 +14721,15 @@ export interface components {
        */
       personalitySummary?: string | null;
       /**
-       * @description Key backstory elements as text.
+       * @description Key backstory elements as text. Null when compression did not include backstory data.
        *     Example: ["Trained by the Knights Guild", "Born in the Northlands"]
        */
-      keyBackstoryPoints?: string[];
+      keyBackstoryPoints?: string[] | null;
       /**
-       * @description Significant life events as text.
+       * @description Significant life events as text. Null when compression did not include history data.
        *     Example: ["Fought in the Battle of Stormgate (Hero)", "Survived the Great Flood"]
        */
-      majorLifeEvents?: string[];
+      majorLifeEvents?: string[] | null;
       /**
        * @description Text summary of family relationships.
        *     Example: "Father of 3, married to Elena, orphaned at young age"
@@ -14783,7 +14783,7 @@ export interface components {
        * Format: date-time
        * @description Real-world creation timestamp
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * Format: date-time
        * @description Real-world last update timestamp
@@ -14897,9 +14897,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results after this page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results before this page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description A character's membership in a faction with faction details */
     CharacterMembershipEntry: {
@@ -15102,7 +15102,7 @@ export interface components {
        * @description When the room was created
        */
       createdAt: string;
-      /** @description Arbitrary JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /**
@@ -15331,12 +15331,7 @@ export interface components {
      * @enum {string}
      */
     ClauseCategory: 'validation' | 'execution' | 'both';
-    /**
-     * @description Outcome of a single clause distribution during contract execution.
-     *     Used in ContractExecutedEvent to provide per-clause success/failure details.
-     *     Deliberately excludes wallet/container IDs - consumers tracking these should
-     *     correlate via clauseId to their own records.
-     */
+    /** @description Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId */
     ClauseDistributionResult: {
       /**
        * Format: uuid
@@ -15345,10 +15340,7 @@ export interface components {
       clauseId: string;
       /** @description Type of clause (e.g., currency_transfer, item_transfer, fee) */
       clauseType: string;
-      /**
-       * @description Descriptive type of asset involved (e.g., "currency", "item").
-       *     Provides human-readable context for what was transferred.
-       */
+      /** @description Descriptive type of asset involved (e.g. "currency", "item") providing human-readable context */
       assetType: string;
       /** @description Quantity transferred (currency amount, item count, etc.) */
       amount: number;
@@ -15385,9 +15377,7 @@ export interface components {
       /** @description Number of actors that were stopped and cleaned up */
       actorsCleanedUp: number;
       /** @description IDs of actors that were cleaned up */
-      actorIds?: string[];
-      /** @description Whether cleanup completed successfully */
-      success: boolean;
+      actorIds: string[];
     };
     /** @description Request to end all relationships referencing a deleted entity during cascading resource cleanup */
     CleanupByEntityRequest: {
@@ -15564,11 +15554,6 @@ export interface components {
       version: number;
       /**
        * Format: date-time
-       * @description When this capability manifest was generated
-       */
-      generatedAt: string;
-      /**
-       * Format: date-time
        * @description When these capabilities expire and need refresh
        */
       expiresAt?: string | null;
@@ -15584,11 +15569,8 @@ export interface components {
       service: string;
       /** @description API endpoint path (e.g., "/account/create") */
       endpoint: string;
-      /**
-       * @description HTTP method for this endpoint
-       * @enum {string}
-       */
-      method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+      /** @description HTTP method for this endpoint */
+      method: components['schemas']['HttpMethodType'];
       /** @description Human-readable description of this capability */
       description?: string | null;
       /**
@@ -15813,27 +15795,6 @@ export interface components {
        * @description When these preferences were last modified
        */
       updatedAt?: string | null;
-    };
-    /** @description Snapshot of combat preferences for enriched response */
-    CombatPreferencesSnapshot: {
-      /** @description Combat style (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL) */
-      style: string;
-      /** @description Preferred engagement distance (MELEE, CLOSE, MEDIUM, RANGED) */
-      preferredRange: string;
-      /** @description Role in group combat (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO) */
-      groupRole: string;
-      /**
-       * Format: float
-       * @description Willingness to take risky actions (0.0 to 1.0)
-       */
-      riskTolerance: number;
-      /**
-       * Format: float
-       * @description Health percentage at which retreat is considered (0.0 to 1.0)
-       */
-      retreatThreshold: number;
-      /** @description Whether to prioritize ally protection */
-      protectAllies: boolean;
     };
     /**
      * @description Overall approach to combat situations. Affects target selection,
@@ -16632,7 +16593,7 @@ export interface components {
        */
       templateId: string;
       /** @description Source template code */
-      templateCode?: string;
+      templateCode: string;
       /** @description Current contract status */
       status: components['schemas']['ContractStatus'];
       /** @description Contract parties */
@@ -16784,8 +16745,8 @@ export interface components {
       templateName?: string | null;
       /** @description Current status */
       status: components['schemas']['ContractStatus'];
-      /** @description Entity's role in contract */
-      role: string;
+      /** @description Entity's role in contract (null if party record not found due to data inconsistency) */
+      role?: string | null;
       /**
        * Format: date-time
        * @description When contract expires
@@ -16823,7 +16784,7 @@ export interface components {
       /** @description Default enforcement mode */
       defaultEnforcementMode: components['schemas']['EnforcementMode'];
       /** @description Whether contracts can be transferred */
-      transferable?: boolean;
+      transferable: boolean;
       /** @description Client-only game metadata. No Bannou plugin reads specific keys from this field by convention. */
       gameMetadata?: {
         [key: string]: unknown;
@@ -16863,8 +16824,8 @@ export interface components {
       nonCompete?: boolean | null;
       /** @description Whether this contract has a time commitment clause */
       timeCommitment?: boolean | null;
-      /** @description Type of time commitment (exclusive or partial) */
-      timeCommitmentType?: string | null;
+      /** @description Type of time commitment for scheduling constraints */
+      timeCommitmentType?: components['schemas']['TimeCommitmentType'] | null;
       /** @description Clause definitions for contract execution (fees, distributions, asset requirements) */
       clauses?: components['schemas']['ContractClauseDefinition'][] | null;
       /** @description Client-only custom terms. No Bannou plugin reads specific keys from this field by convention. */
@@ -17075,7 +17036,7 @@ export interface components {
        *     Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
        */
       cognitionTemplateId?: string | null;
-      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -17195,7 +17156,7 @@ export interface components {
       assetIds: string[];
       /** @description Compression algorithm to use for the bundle */
       compression?: components['schemas']['CompressionType'];
-      /** @description Custom metadata for the bundle (null if none) */
+      /** @description Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17819,7 +17780,7 @@ export interface components {
        *     Standalone assets are always included regardless of this filter.
        */
       assetFilter?: string[] | null;
-      /** @description Custom metadata for the metabundle */
+      /** @description Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17940,7 +17901,7 @@ export interface components {
       contractTerminatedAction?: components['schemas']['ContractRoomAction'] | null;
       /** @description Action when governing contract expires (null uses service default) */
       contractExpiredAction?: components['schemas']['ContractRoomAction'] | null;
-      /** @description Arbitrary JSON metadata for client rendering hints */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to create a scenario definition */
@@ -18171,7 +18132,7 @@ export interface components {
        * @default false
        */
       bypassEarnCap: boolean;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18450,7 +18411,7 @@ export interface components {
        * @description Amount limited by earn cap
        */
       earnCapAmountLimited?: number | null;
-      /** @description Free-form metadata */
+      /** @description Free-form metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18530,7 +18491,7 @@ export interface components {
       idempotencyKey: string;
       /** @description Override negative balance allowance for this transaction */
       allowNegative?: boolean | null;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -18740,8 +18701,6 @@ export interface components {
     };
     /** @description Response confirming template deletion */
     DeleteActorTemplateResponse: {
-      /** @description Whether the template was successfully deleted */
-      deleted: boolean;
       /** @description Number of running actors that were stopped */
       stoppedActorCount: number;
     };
@@ -19096,11 +19055,8 @@ export interface components {
     };
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
-      /**
-       * @description Category of the device
-       * @enum {string|null}
-       */
-      deviceType?: 'desktop' | 'mobile' | 'tablet' | 'console' | null;
+      /** @description Category of the device */
+      deviceType?: components['schemas']['DeviceType'] | null;
       /** @description Operating system or platform name */
       platform?: string | null;
       /** @description Browser name and version if applicable */
@@ -19108,6 +19064,11 @@ export interface components {
       /** @description Version of the client application */
       appVersion?: string | null;
     };
+    /**
+     * @description Category of client device used for authentication or session tracking
+     * @enum {string}
+     */
+    DeviceType: 'desktop' | 'mobile' | 'tablet' | 'console';
     /** @description Request to discard checkout */
     DiscardRequest: {
       /**
@@ -19358,7 +19319,7 @@ export interface components {
       checksum: string;
       /** @description Release notes or changelog for this version */
       releaseNotes?: string | null;
-      /** @description Minimum system requirements for the client */
+      /** @description Minimum system requirements for the client. No Bannou plugin reads specific keys from this field by convention. */
       minimumRequirements?: {
         [key: string]: unknown;
       };
@@ -19702,14 +19663,8 @@ export interface components {
        * @description Real-world last update timestamp
        */
       updatedAt?: string | null;
-      /** @description Personality traits (included if includePersonality=true) */
-      personality?: components['schemas']['PersonalitySnapshot'];
-      /** @description Backstory elements (included if includeBackstory=true) */
-      backstory?: components['schemas']['BackstorySnapshot'];
       /** @description Family relationships (included if includeFamilyTree=true) */
       familyTree?: components['schemas']['FamilyTreeResponse'];
-      /** @description Combat preferences (included if includeCombatPreferences=true) */
-      combatPreferences?: components['schemas']['CombatPreferencesSnapshot'];
     };
     /** @description Request to enter the garden */
     EnterGardenRequest: {
@@ -19874,7 +19829,7 @@ export interface components {
        * @default 0
        */
       killCount: number;
-      /** @description Arbitrary custom data for game-specific metadata */
+      /** @description Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       customData?: {
         [key: string]: unknown;
       } | null;
@@ -20540,6 +20495,12 @@ export interface components {
        * @default false
        */
       deleteSourceData: boolean;
+      /**
+       * @description Cleanup policy for source data deletion after archival.
+       *     Only applies when deleteSourceData is true.
+       *     If not specified, uses the configured DefaultCleanupPolicy.
+       */
+      deleteSourceDataPolicy?: components['schemas']['CleanupPolicy'];
       /** @description Override policy (uses default from config if not specified) */
       compressionPolicy?: components['schemas']['CompressionPolicy'];
       /**
@@ -20585,24 +20546,17 @@ export interface components {
       /** @description Idempotency key for the execution */
       idempotencyKey?: string | null;
     };
-    /** @description Response from executing a contract */
+    /** @description Response from executing a contract. HTTP 200 confirms execution completed. */
     ExecuteContractResponse: {
-      /** @description Whether execution was successful */
-      executed: boolean;
-      /** @description True if this was a repeat call (idempotency) */
+      /** @description True if this was a repeat call (idempotency). When false, this is a fresh execution. */
       alreadyExecuted: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
        */
-      contractId?: string;
+      contractId: string;
       /** @description Per-clause distribution outcomes with success/failure details */
       distributions?: components['schemas']['ClauseDistributionResult'][] | null;
-      /**
-       * Format: date-time
-       * @description When execution occurred
-       */
-      executedAt?: string | null;
     };
     /** @description Request to execute a currency conversion */
     ExecuteConversionRequest: {
@@ -20940,20 +20894,20 @@ export interface components {
       /** @description Specific relationship type (MOTHER, FATHER, SON, DAUGHTER, etc.) */
       relationshipType: string;
       /** @description Whether the related character is alive */
-      isAlive?: boolean;
+      isAlive: boolean;
     };
     /** @description Family relationships for a character */
     FamilyTreeResponse: {
       /** @description Parent relationships (biological and adoptive) */
-      parents?: components['schemas']['FamilyMember'][];
+      parents: components['schemas']['FamilyMember'][];
       /** @description Child relationships */
-      children?: components['schemas']['FamilyMember'][];
+      children: components['schemas']['FamilyMember'][];
       /** @description Sibling relationships (including half-siblings) */
-      siblings?: components['schemas']['FamilyMember'][];
+      siblings: components['schemas']['FamilyMember'][];
       /** @description Spousal relationships (spouse, husband, wife) */
-      spouses?: components['schemas']['FamilyMember'][];
+      spouses: components['schemas']['FamilyMember'][];
       /** @description Previous incarnations (if reincarnation tracked) */
-      pastLives?: components['schemas']['PastLifeReference'][];
+      pastLives: components['schemas']['PastLifeReference'][];
     };
     /** @description Result from a contract finalizer API call */
     FinalizerResult: {
@@ -22044,25 +21998,10 @@ export interface components {
        */
       characterId: string;
       /**
-       * @description Include personality traits from character-personality service
-       * @default false
-       */
-      includePersonality: boolean;
-      /**
-       * @description Include backstory elements from character-history service
-       * @default false
-       */
-      includeBackstory: boolean;
-      /**
        * @description Include family relationships from relationship service
        * @default false
        */
       includeFamilyTree: boolean;
-      /**
-       * @description Include combat preferences from character-personality service
-       * @default false
-       */
-      includeCombatPreferences: boolean;
     };
     /** @description Request to query an entity's current location */
     GetEntityLocationRequest: {
@@ -23715,17 +23654,17 @@ export interface components {
     /** @description Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention. */
     HazardInfo: {
       /** @description Type of hazard (fire, poison, radiation, deep_water, etc.) */
-      hazardType?: string;
+      hazardType: string;
       /**
        * Format: float
        * @description Distance to hazard edge
        */
-      distance?: number;
+      distance: number;
       /**
        * Format: float
        * @description Hazard severity (0-1)
        */
-      severity?: number;
+      severity: number;
       /** @description Direction to hazard center */
       direction?: string | null;
     } & {
@@ -23903,6 +23842,11 @@ export interface components {
      * @enum {string}
      */
     HoldStatus: 'active' | 'captured' | 'released' | 'expired';
+    /**
+     * @description HTTP method for endpoint invocation
+     * @enum {string}
+     */
+    HttpMethodType: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
     /** @description Request to initialize a clock for a realm */
     InitializeRealmClockRequest: {
       /**
@@ -23978,8 +23922,6 @@ export interface components {
     };
     /** @description Response confirming perception injection */
     InjectPerceptionResponse: {
-      /** @description Whether the perception was successfully queued */
-      queued: boolean;
       /** @description Current depth of the perception queue */
       queueDepth: number;
     };
@@ -24632,7 +24574,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Human-readable description of what this license grants */
       description?: string | null;
-      /** @description Game-specific metadata for this license node */
+      /** @description Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -26614,10 +26556,8 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from locking a contract */
+    /** @description Response from locking a contract. HTTP 200 confirms the lock was acquired. */
     LockContractResponse: {
-      /** @description Whether the contract was locked */
-      locked: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -26627,12 +26567,7 @@ export interface components {
        * Format: uuid
        * @description Guardian entity ID
        */
-      guardianId?: string;
-      /**
-       * Format: date-time
-       * @description When the contract was locked
-       */
-      lockedAt?: string;
+      guardianId: string;
     };
     /** @description Request to authenticate a user with email and password credentials */
     LoginRequest: {
@@ -27423,16 +27358,16 @@ export interface components {
        * Format: uuid
        * @description Unique identifier of the object
        */
-      objectId?: string;
+      objectId: string;
       /** @description Type of object (boulder_cluster, tree, building, etc.) */
-      objectType?: string;
+      objectType: string;
       /**
        * Format: float
        * @description Distance from character in game units
        */
-      distance?: number;
+      distance: number;
       /** @description Relative direction (north, south, east, west, above, below, etc.) */
-      direction?: string;
+      direction: string;
       /** @description Optional absolute position */
       position?: components['schemas']['Position3D'] | null;
     } & {
@@ -27709,7 +27644,7 @@ export interface components {
       lastModified: string;
       /** @description Name or identifier of the page author */
       author?: string | null;
-      /** @description Custom metadata for the page */
+      /** @description Custom metadata for the page. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       };
@@ -28052,15 +27987,6 @@ export interface components {
        */
       updatedAt?: string | null;
     };
-    /** @description Snapshot of personality traits for enriched response */
-    PersonalitySnapshot: {
-      /** @description Trait values keyed by trait name (OPENNESS, AGREEABLENESS, etc.) */
-      traits: {
-        [key: string]: number;
-      };
-      /** @description Personality version number (increments on evolution) */
-      version: number;
-    };
     /** @description Response containing a perspective */
     PerspectiveResponse: {
       /** @description The character's perspective on the encounter */
@@ -28349,12 +28275,16 @@ export interface components {
       /**
        * @description How to execute the API call
        * @default sync
-       * @enum {string}
        */
-      executionMode: 'sync' | 'async' | 'fire_and_forget';
+      executionMode: components['schemas']['PreboundApiExecutionMode'];
       /** @description Optional validation rules for the response */
       responseValidation?: components['schemas']['ResponseValidation'];
     };
+    /**
+     * @description How to execute a prebound API call
+     * @enum {string}
+     */
+    PreboundApiExecutionMode: 'sync' | 'async' | 'fire_and_forget';
     /** @description Mutation that would be applied */
     PredictedMutation: {
       /** @description Type of mutation */
@@ -28454,11 +28384,8 @@ export interface components {
        * @example Discord
        */
       displayName: string;
-      /**
-       * @description Authentication mechanism (oauth = browser redirect, ticket = game client token)
-       * @enum {string}
-       */
-      authType: 'oauth' | 'ticket';
+      /** @description Authentication mechanism (oauth = browser redirect, ticket = game client token) */
+      authType: components['schemas']['AuthType'];
       /**
        * Format: uri
        * @description URL to initiate OAuth authentication (null for ticket-based auth like Steam)
@@ -29912,7 +29839,7 @@ export interface components {
       allowAnonymousSenders: boolean;
       /** @description Messages per minute per participant (null uses service default) */
       rateLimitPerMinute?: number | null;
-      /** @description Arbitrary JSON metadata for client rendering hints */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to register a new save data schema with optional migration rules */
@@ -30738,26 +30665,13 @@ export interface components {
        */
       expiresAt: string;
     };
-    /**
-     * @description Validation rules for API responses with three-outcome model.
-     *     Used by lib-contract to validate clause conditions without
-     *     understanding the specific API semantics.
-     */
+    /** @description Validation rules for API responses with three-outcome model (success, permanent failure, transient failure) */
     ResponseValidation: {
-      /**
-       * @description Conditions that must ALL pass for success.
-       *     If any fail, checks permanent failure conditions.
-       */
+      /** @description Conditions that must ALL pass for success; if any fail, checks permanent failure conditions */
       successConditions?: components['schemas']['ValidationCondition'][];
-      /**
-       * @description Conditions that indicate permanent failure (clause violated).
-       *     Checked when success conditions fail.
-       */
+      /** @description Conditions that indicate permanent failure (clause violated); checked when success conditions fail */
       permanentFailureConditions?: components['schemas']['ValidationCondition'][];
-      /**
-       * @description HTTP status codes that indicate transient failure (retry later).
-       *     Default: [408, 429, 502, 503, 504]
-       */
+      /** @description HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504) */
       transientFailureStatusCodes?: number[];
     };
     /** @description Request to restore a soft-deleted bundle */
@@ -30841,7 +30755,7 @@ export interface components {
       allowAnonymousSenders: boolean;
       /** @description Messages per minute limit */
       rateLimitPerMinute?: number | null;
-      /** @description Arbitrary JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
       /** @description Current lifecycle status of the room type */
       status: components['schemas']['RoomTypeStatus'];
@@ -32028,10 +31942,12 @@ export interface components {
       /** @description Messages to send atomically */
       messages: components['schemas']['BatchMessageEntry'][];
     };
-    /** @description Result of a batch message send operation */
+    /** @description Result of a batch message send operation with per-message failure tracking */
     SendMessageBatchResponse: {
-      /** @description Number of messages sent */
+      /** @description Number of messages successfully sent */
       messageCount: number;
+      /** @description Details of messages that failed to send (empty array when all succeeded) */
+      failed: components['schemas']['BatchMessageFailure'][];
     };
     /** @description Message content discriminated by the room message format. Exactly one content field group must be set, matching the room type format. */
     SendMessageContent: {
@@ -32210,25 +32126,20 @@ export interface components {
        * @description Contract instance ID
        */
       contractInstanceId: string;
-      /**
-       * @description Key-value pairs for template substitution.
-       *     Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
-       */
+      /** @description Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.) */
       templateValues: {
         [key: string]: string;
       };
     };
-    /** @description Response from setting template values */
+    /** @description Response from setting template values. HTTP 200 confirms values were set. */
     SetTemplateValuesResponse: {
-      /** @description Whether values were updated */
-      updated: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
        */
       contractId: string;
       /** @description Number of template values set */
-      valueCount?: number;
+      valueCount: number;
     };
     /** @description Request to change the time ratio for a realm */
     SetTimeRatioRequest: {
@@ -32630,6 +32541,8 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Empty response. HTTP 200 confirms the encounter was started. */
+    StartEncounterResponse: Record<string, never>;
     /** @description Request to start a regional watcher */
     StartWatcherRequest: {
       /**
@@ -32866,8 +32779,6 @@ export interface components {
     };
     /** @description Response confirming actor stop operation */
     StopActorResponse: {
-      /** @description Whether the actor was successfully stopped */
-      stopped: boolean;
       /** @description Final status of the actor after stopping */
       finalStatus: components['schemas']['ActorStatus'];
     };
@@ -33380,6 +33291,11 @@ export interface components {
      */
     TicketStatus: 'searching' | 'match_found' | 'match_accepted' | 'cancelled' | 'expired';
     /**
+     * @description Type of time commitment for scheduling constraints
+     * @enum {string}
+     */
+    TimeCommitmentType: 'exclusive' | 'partial';
+    /**
      * @description Why the time ratio was changed
      * @enum {string}
      */
@@ -33513,27 +33429,25 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from transferring a party role */
+    /** @description Response from transferring a party role. HTTP 200 confirms the transfer succeeded. */
     TransferContractPartyResponse: {
-      /** @description Whether the transfer was successful */
-      transferred: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
        */
       contractId: string;
       /** @description Role that was transferred */
-      role?: string;
+      role: string;
       /**
        * Format: uuid
        * @description Previous party entity ID
        */
-      fromEntityId?: string;
+      fromEntityId: string;
       /**
        * Format: uuid
        * @description New party entity ID
        */
-      toEntityId?: string;
+      toEntityId: string;
     };
     /** @description Request to transfer currency between wallets */
     TransferCurrencyRequest: {
@@ -33568,7 +33482,7 @@ export interface components {
       referenceId?: string | null;
       /** @description Unique key to prevent duplicate processing */
       idempotencyKey: string;
-      /** @description Free-form transaction metadata */
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -33810,10 +33724,8 @@ export interface components {
       /** @description Optional idempotency key for the operation */
       idempotencyKey?: string | null;
     };
-    /** @description Response from unlocking a contract */
+    /** @description Response from unlocking a contract. HTTP 200 confirms the contract was unlocked. */
     UnlockContractResponse: {
-      /** @description Whether the contract was unlocked */
-      unlocked: boolean;
       /**
        * Format: uuid
        * @description Contract instance ID
@@ -34043,7 +33955,7 @@ export interface components {
        *     for actors created from this template.
        */
       cognitionTemplateId?: string | null;
-      /** @description Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
+      /** @description Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. No Bannou plugin reads specific keys from this field by convention. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -34240,7 +34152,7 @@ export interface components {
       favorited?: boolean | null;
       /** @description Updated discovery level */
       discoveryLevel?: number | null;
-      /** @description Updated custom data (merged with existing) */
+      /** @description Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention. */
       customData?: {
         [key: string]: unknown;
       } | null;
@@ -34400,7 +34312,7 @@ export interface components {
       prerequisites?: string[] | null;
       /** @description Updated description */
       description?: string | null;
-      /** @description Updated game-specific metadata */
+      /** @description Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -34500,7 +34412,7 @@ export interface components {
       accountId: string;
       /** @description New display name for the account */
       displayName?: string | null;
-      /** @description Updated custom metadata for the account */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -34574,7 +34486,7 @@ export interface components {
       displayName?: string | null;
       /** @description Updated participant limit */
       maxParticipants?: number | null;
-      /** @description Updated JSON metadata */
+      /** @description Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: string | null;
     };
     /** @description Request to update room type properties (null fields left unchanged) */
@@ -35049,10 +34961,8 @@ export interface components {
        */
       matchedTerritoryId?: string | null;
     };
-    /** @description Response from token validation containing validity status and associated account details */
+    /** @description Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired. */
     ValidateTokenResponse: {
-      /** @description Whether the token is valid and not expired */
-      valid: boolean;
       /**
        * Format: uuid
        * @description Unique identifier for the account associated with the token
@@ -35071,22 +34981,15 @@ export interface components {
        */
       authorizations?: string[] | null;
       /** @description Seconds until expiration */
-      remainingTime?: number;
+      remainingTime: number;
     };
     /** @description A single condition to check against an API response */
     ValidationCondition: {
       /** @description The type of validation condition to check */
       type: components['schemas']['ValidationConditionType'];
-      /**
-       * @description JsonPath expression to extract value from response.
-       *     Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-       *     Example: "$.balance", "$.items[0].status"
-       */
+      /** @description JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance") */
       jsonPath?: string | null;
-      /**
-       * @description Expected value for comparison conditions.
-       *     Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
-       */
+      /** @description Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers) */
       expectedValue?: string | null;
       /** @description Comparison operator for numeric comparisons */
       operator?: components['schemas']['ComparisonOperator'];
@@ -36109,7 +36012,9 @@ export interface operations {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          'application/json': components['schemas']['StartEncounterResponse'];
+        };
       };
     };
   };

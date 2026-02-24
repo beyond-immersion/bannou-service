@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Species;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(SpeciesService))]
-public class SpeciesServiceConfiguration : IServiceConfiguration
+public class SpeciesServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Number of characters to process per page during species merge character migration

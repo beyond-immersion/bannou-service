@@ -451,6 +451,7 @@ public partial class RecordExperienceRequest
     /// <summary>
     /// Optional context for logging and debugging.
     /// <br/>Not used in evolution calculations.
+    /// <br/>No Bannou plugin reads specific keys from this field by convention.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contextData")]
@@ -771,6 +772,7 @@ public partial class EvolveCombatRequest
     /// <summary>
     /// Optional context for logging and debugging (e.g., enemy type,
     /// <br/>ally count, location). Not used in evolution calculations.
+    /// <br/>No Bannou plugin reads specific keys from this field by convention.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contextData")]

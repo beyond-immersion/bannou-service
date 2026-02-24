@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -35,18 +36,22 @@ public sealed class EndEncounterHandler : IActionHandler
     private const string ACTION_NAME = "end_encounter";
     private readonly IActorRegistry _actorRegistry;
     private readonly ILogger<EndEncounterHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new end encounter handler.
     /// </summary>
     /// <param name="actorRegistry">Actor registry for finding the executing actor.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public EndEncounterHandler(
         IActorRegistry actorRegistry,
-        ILogger<EndEncounterHandler> logger)
+        ILogger<EndEncounterHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _actorRegistry = actorRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -54,11 +59,12 @@ public sealed class EndEncounterHandler : IActionHandler
         => action is DomainAction da && da.Name == ACTION_NAME;
 
     /// <inheritdoc/>
-    public ValueTask<ActionResult> ExecuteAsync(
+    public async ValueTask<ActionResult> ExecuteAsync(
         ActionNode action,
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "EndEncounterHandler.Execute");
         var domainAction = (DomainAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 
@@ -74,7 +80,7 @@ public sealed class EndEncounterHandler : IActionHandler
         {
             _logger.LogWarning("Cannot end encounter: actor ID not found in scope");
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // Find actor in local registry
@@ -82,7 +88,7 @@ public sealed class EndEncounterHandler : IActionHandler
         {
             _logger.LogWarning("Cannot end encounter: actor {ActorId} not found in registry", actorId);
             SetResult(scope, resultVariable, false);
-            return ValueTask.FromResult(ActionResult.Continue);
+            return ActionResult.Continue;
         }
 
         // End the encounter
@@ -98,7 +104,8 @@ public sealed class EndEncounterHandler : IActionHandler
         }
 
         SetResult(scope, resultVariable, success);
-        return ValueTask.FromResult(ActionResult.Continue);
+        await Task.CompletedTask;
+        return ActionResult.Continue;
     }
 
     /// <summary>

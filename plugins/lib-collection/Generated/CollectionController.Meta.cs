@@ -2413,7 +2413,7 @@ public partial class CollectionController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary custom data for game-specific metadata"
+                    "description": "Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2843,7 +2843,7 @@ public partial class CollectionController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary custom data for game-specific metadata"
+                    "description": "Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2954,7 +2954,7 @@ public partial class CollectionController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Updated custom data (merged with existing)"
+                    "description": "Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -3066,7 +3066,7 @@ public partial class CollectionController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Arbitrary custom data for game-specific metadata"
+                    "description": "Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

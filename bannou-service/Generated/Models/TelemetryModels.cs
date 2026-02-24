@@ -40,17 +40,11 @@ public partial class TelemetryHealthRequest
 }
 
 /// <summary>
-/// Response containing telemetry exporter health status
+/// Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class TelemetryHealthResponse
 {
-
-    /// <summary>
-    /// Overall health status of telemetry subsystem
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("healthy")]
-    public bool Healthy { get; set; } = default!;
 
     /// <summary>
     /// Whether distributed tracing export is enabled
@@ -107,7 +101,7 @@ public partial class TelemetryStatusResponse
     public double SamplingRatio { get; set; } = default!;
 
     /// <summary>
-    /// Service name used for telemetry identification
+    /// Service name used for telemetry identification (resolved from config or effective app-id)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -131,10 +125,12 @@ public partial class TelemetryStatusResponse
     public string DeploymentEnvironment { get; set; } = default!;
 
     /// <summary>
-    /// Configured OTLP endpoint
+    /// Configured OTLP endpoint (always set, defaults to http://localhost:4317)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("otlpEndpoint")]
-    public string? OtlpEndpoint { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OtlpEndpoint { get; set; } = default!;
 
     /// <summary>
     /// OTLP transport protocol (grpc or http)
@@ -142,9 +138,27 @@ public partial class TelemetryStatusResponse
     [System.Text.Json.Serialization.JsonPropertyName("otlpProtocol")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OtlpProtocol { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public OtlpProtocol OtlpProtocol { get; set; } = default!;
 
 }
+
+/// <summary>
+/// OTLP transport protocol
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum OtlpProtocol
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"grpc")]
+    Grpc = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"http")]
+    Http = 1,
+
+}
+#pragma warning restore CS1591
 
 
 

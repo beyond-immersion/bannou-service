@@ -1011,6 +1011,16 @@ public partial class ExecuteCompressRequest
     public bool DeleteSourceData { get; set; } = false;
 
     /// <summary>
+    /// Cleanup policy for source data deletion after archival.
+    /// <br/>Only applies when deleteSourceData is true.
+    /// <br/>If not specified, uses the configured DefaultCleanupPolicy.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deleteSourceDataPolicy")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CleanupPolicy? DeleteSourceDataPolicy { get; set; } = default!;
+
+    /// <summary>
     /// Override policy (uses default from config if not specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("compressionPolicy")]
@@ -2031,7 +2041,11 @@ public partial class SeededResourceDetail
     public string Content { get; set; } = default!;
 
     /// <summary>
-    /// Optional key-value metadata
+    /// Client-only key-value metadata provided by the seeded resource provider.
+    /// <br/>Used for client display hints and debugging context (e.g., source assembly,
+    /// <br/>file origin). NOT a cross-service data contract per FOUNDATION TENETS —
+    /// <br/>plugins MUST NOT read metadata keys from other providers by convention.
+    /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public System.Collections.Generic.IDictionary<string, string>? Metadata { get; set; } = default!;

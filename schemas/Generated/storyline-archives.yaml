@@ -113,6 +113,7 @@ components:
       - birthDate
       - deathDate
       - status
+      - createdAt
       properties:
         characterId:
           type: string
@@ -138,7 +139,8 @@ components:
           format: date-time
           description: In-game death timestamp (required for compression)
         status:
-          $ref: '#/components/schemas/CharacterStatus'
+          allOf:
+          - $ref: '#/components/schemas/CharacterStatus'
           description: Current lifecycle status (must be dead for compression)
         familySummary:
           type: string

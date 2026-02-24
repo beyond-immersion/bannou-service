@@ -45,7 +45,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Key Pattern | Data Type | TTL | Purpose |
 |-------------|-----------|-----|---------|
 | `session:{sessionKey}` | `SessionDataModel` | JwtExpirationMinutes * 60 | Active session data (accountId, email, roles, authorizations, expiry, jti) |
-| `account-sessions:{accountId}` | `List<string>` | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (lazy-cleaned on read) |
+| `account-sessions:{accountId}` | `Set<string>` (Redis Set) | JwtExpirationMinutes * 60 + 300 | Index of session keys for an account (atomic SADD/SREM via `ICacheableStateStore`, lazy-cleaned on read) |
 | `session-id-index:{sessionId}` | `string` (sessionKey) | JwtExpirationMinutes * 60 | Reverse lookup: human-facing session ID to internal session key |
 | `refresh_token:{token}` | `string` (accountId) | SessionTokenTtlDays in seconds | Maps refresh token to account ID |
 | `oauth-link:{provider}:{providerId}` | `string` (accountId) | **None** | Maps OAuth provider identity to account (cleaned up on account deletion) |
@@ -91,7 +91,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, pushes edge revocations if enabled, and publishes `session.invalidated` |
-| `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session |
+| `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session. If `changedFields` contains "email", propagates new email to all active sessions (no `session.updated` event since email doesn't affect permissions). |
 
 ## Configuration
 
@@ -277,14 +277,11 @@ account.deleted event ──► SessionService.InvalidateAllSessionsForAccountAs
 ### Audit Event Consumers
 <!-- AUDIT:NEEDS_DESIGN:2026-01-30:https://github.com/beyond-immersion/bannou-service/issues/142 -->
 
-Auth publishes 6 audit event types (login successful/failed, registration, OAuth, Steam, password reset) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
+Auth publishes 10 audit event types (login successful/failed, registration, OAuth, Steam, password reset, MFA enabled/disabled/verified/failed) but no service subscribes to them. Note: per-email rate limiting is already implemented directly in Auth via Redis counters (`MaxLoginAttempts`/`LoginLockoutMinutes`), so this is NOT about basic brute force protection (that exists). The remaining gap is Analytics (L4) consuming these events for IP-level cross-account correlation, anomaly detection, and admin alerting.
 
 ## Potential Extensions
 
-- ~~**Multi-factor authentication**~~: **IMPLEMENTED** (2026-02-08) - TOTP-based MFA with 5 new endpoints (setup, enable, disable, admin-disable, verify), AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA event types. See "Multi-Factor Authentication" in API Endpoints above.
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/149 -->
-- **Additional edge revocation providers (when needed)**: Fastly and AWS Lambda@Edge providers were proposed (#160) but closed as premature - no deployment target selected yet. The `IEdgeRevocationProvider` interface is already extensible; adding a provider is a single class implementing `PushTokenRevocationAsync`/`PushAccountRevocationAsync`/`RemoveExpiredEntriesAsync`. Revisit when production CDN/edge infrastructure is chosen.
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/160 -->
+None identified.
 
 ## Known Quirks & Caveats
 
@@ -294,13 +291,14 @@ No bugs identified.
 
 ### Intentional Quirks
 
-1. **Account-sessions index lazy cleanup**: Expired sessions are only removed from the account index when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
+1. **Account-sessions index lazy cleanup**: The account-sessions index uses Redis Sets for atomic add/remove operations (no read-modify-write races), but expired sessions are only removed from the set when someone calls `GetAccountSessionsAsync`. Active accounts accumulate stale entries until explicitly listed.
 
 2. **Password reset always returns 200**: By design for email enumeration prevention. No way for legitimate users to know if the reset email was sent.
 
 3. **RefreshTokenAsync ignores the JWT parameter**: The refresh token alone is the credential for obtaining a new access token. Validating the (possibly expired) JWT would defeat the purpose of the refresh flow.
 
 4. **DeviceInfo always returns "Unknown" placeholders**: `SessionService.GetAccountSessionsAsync` returns hardcoded device information (`Platform: "Unknown"`, `Browser: "Unknown"`, `DeviceType: Desktop`) because device capture is unimplemented. The constants `UNKNOWN_PLATFORM` and `UNKNOWN_BROWSER` are defined at the top of `SessionService.cs`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/449 -->
 
 5. **Edge revocation is best-effort**: When `EdgeRevocationEnabled=true`, token revocations are pushed to configured edge providers (CloudFlare, OpenResty) but failures don't block session invalidation. Failed pushes are stored in a retry set and retried on subsequent revocation operations. If max retries are exceeded, the failure is logged but the session is still invalidated. This design prioritizes session invalidation reliability over edge propagation completeness.
 
@@ -314,25 +312,12 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Logout and TerminateSession do not push edge revocations**~~: **FIXED** (2026-02-08) - Both `LogoutAsync` and `TerminateSessionAsync` now collect JTIs from session data before deletion and push token revocations to edge providers (CloudFlare, OpenResty) when `EdgeRevocationEnabled=true`. Follows the same best-effort pattern as `InvalidateAllSessionsForAccountAsync`: edge revocation failures are logged as warnings but never block session invalidation or event publishing.
-
-2. **Email change propagation** (Auth-side impact of Account #139): When Account adds an email change endpoint, Auth must propagate the new email to active sessions. The existing `HandleAccountUpdatedAsync` handler already watches `changedFields` - it currently only handles `"roles"` but should also handle `"email"` to update `SessionDataModel.Email` across active sessions. Additional Auth-side requirements: distributed lock per account (T9) during propagation, security notification email to the old address via `IEmailService`, and `session.updated` event publishing so Connect/Permission refresh their caches.
-<!-- AUDIT:READY:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/139 -->
-
-3. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
+1. **Account merge session handling** (Auth-side impact of Account #137): Account merge is a complex cross-service operation (40+ services reference accounts). Auth's specific responsibility: handle a new `account.merged` event by invalidating all sessions for the source account (same as `account.deleted` path) and optionally refreshing target account sessions with merged roles/authorizations. The merge itself is an Account-layer orchestration problem; Auth's handler is straightforward. Low priority - post-launch compliance feature.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/137 -->
-
-4. **Per-account audit trail** (Auth-side impact of Account #138): Auth already publishes 6 typed audit events covering all authentication activities. A future audit trail store (likely MySQL-backed, following Currency's `TransactionRecord` pattern) would consume these events. Zero Auth-side code changes needed - the events are well-typed and contain all necessary fields (accountId, IP, provider, timestamp). This is purely a consumer-side feature, likely owned by Analytics (L4) or a dedicated audit service.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/138 -->
 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow.
-
-### Completed
-
-- **Edge revocation on logout/terminate** (2026-02-08): `LogoutAsync` and `TerminateSessionAsync` now push token revocations to edge providers, matching the existing behavior in `InvalidateAllSessionsForAccountAsync`.
-- **Multi-factor authentication** (2026-02-08): Full TOTP-based MFA implementation with 5 endpoints, AES-256-GCM encrypted secrets, BCrypt-hashed recovery codes, Redis-backed challenge tokens, and 4 MFA audit events. Issue #149.
 
 ### Evaluated & Closed
 

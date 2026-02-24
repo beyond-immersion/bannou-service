@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Channels;
+using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -50,6 +51,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     private readonly MessagingServiceConfiguration _messagingConfiguration;
     private readonly ILogger<RabbitMQMessageBus> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly Guid _instanceId;
 
     // Track declared exchanges to avoid redeclaring (ConcurrentDictionary for lock-free access)
     private readonly ConcurrentDictionary<string, byte> _declaredExchanges = new();
@@ -74,13 +76,15 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     /// <param name="messagingConfiguration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="instanceIdentifier">Node identity provider for this mesh instance.</param>
     public RabbitMQMessageBus(
         IChannelManager channelManager,
         IRetryBuffer retryBuffer,
         AppConfiguration appConfiguration,
         MessagingServiceConfiguration messagingConfiguration,
         ILogger<RabbitMQMessageBus> logger,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _channelManager = channelManager;
         _retryBuffer = retryBuffer;
@@ -88,6 +92,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         _messagingConfiguration = messagingConfiguration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
+        _instanceId = instanceIdentifier.InstanceId;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
@@ -127,7 +132,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         var effectiveMessageId = messageId ?? Guid.NewGuid();
 
         // Start telemetry activity for this publish operation
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.publish",
             ActivityKind.Producer);
@@ -138,7 +143,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         try
         {
             var exchange = options?.Exchange ?? _channelManager.DefaultExchange;
-            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
+            var exchangeType = options?.ExchangeType ?? ExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
             // Set activity tags for tracing
@@ -182,7 +187,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
             }
 
             _logger.LogDebug(
-                "DIAG: TryPublishAsync entering GetChannelAsync for {EventType} topic '{Topic}' (exchange: '{Exchange}')",
+                "TryPublishAsync entering GetChannelAsync for {EventType} topic '{Topic}' (exchange: '{Exchange}')",
                 typeof(TEvent).Name, topic, exchange);
 
             var getChannelSw = Stopwatch.StartNew();
@@ -191,13 +196,13 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
             if (getChannelSw.ElapsedMilliseconds > 100)
             {
                 _logger.LogWarning(
-                    "DIAG: GetChannelAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                    "GetChannelAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}'",
                     getChannelSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
             }
             else
             {
                 _logger.LogDebug(
-                    "DIAG: GetChannelAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                    "GetChannelAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
                     getChannelSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
             }
 
@@ -210,7 +215,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 if (ensureExchangeSw.ElapsedMilliseconds > 100)
                 {
                     _logger.LogWarning(
-                        "DIAG: EnsureExchangeAsync took {ElapsedMs}ms for {EventType} on exchange '{Exchange}'",
+                        "EnsureExchangeAsync took {ElapsedMs}ms for {EventType} on exchange '{Exchange}'",
                         ensureExchangeSw.ElapsedMilliseconds, typeof(TEvent).Name, exchange);
                 }
 
@@ -265,10 +270,10 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 }
 
                 // Publish - for fanout, routing key is ignored but we still pass it for logging
-                var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
+                var effectiveRoutingKey = exchangeType == ExchangeType.Fanout ? "" : routingKey;
 
                 _logger.LogDebug(
-                    "DIAG: TryPublishAsync entering BasicPublishAsync for {EventType} topic '{Topic}' exchange '{Exchange}'",
+                    "TryPublishAsync entering BasicPublishAsync for {EventType} topic '{Topic}' exchange '{Exchange}'",
                     typeof(TEvent).Name, topic, exchange);
 
                 var publishSw = Stopwatch.StartNew();
@@ -284,13 +289,13 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 if (publishSw.ElapsedMilliseconds > 100)
                 {
                     _logger.LogWarning(
-                        "DIAG: BasicPublishAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}' exchange '{Exchange}'",
+                        "BasicPublishAsync took {ElapsedMs}ms for {EventType} on topic '{Topic}' exchange '{Exchange}'",
                         publishSw.ElapsedMilliseconds, typeof(TEvent).Name, topic, exchange);
                 }
                 else
                 {
                     _logger.LogDebug(
-                        "DIAG: BasicPublishAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
+                        "BasicPublishAsync completed in {ElapsedMs}ms for {EventType} on topic '{Topic}'",
                         publishSw.ElapsedMilliseconds, typeof(TEvent).Name, topic);
                 }
 
@@ -324,7 +329,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 {
                     // Backpressure active - cannot buffer, message will be lost
                     _logger.LogError(
-                        "BACKPRESSURE: Message dropped for topic '{Topic}' (messageId: {MessageId}). " +
+                        "Message dropped due to backpressure for topic '{Topic}' (messageId: {MessageId}). " +
                         "Buffer at capacity, RabbitMQ connection failure persisting.",
                         topic, effectiveMessageId);
                     activity?.SetStatus(ActivityStatusCode.Error, "Backpressure - message dropped");
@@ -384,11 +389,18 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         // Generate messageId upfront if not provided
         var effectiveMessageId = messageId ?? Guid.NewGuid();
 
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.publish_raw",
+            ActivityKind.Producer);
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.destination", topic);
+
         try
         {
 
             var exchange = options?.Exchange ?? _channelManager.DefaultExchange;
-            var exchangeType = options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
+            var exchangeType = options?.ExchangeType ?? ExchangeType.Topic;
             var routingKey = options?.RoutingKey ?? topic;
 
             var channel = await _channelManager.GetChannelAsync(cancellationToken);
@@ -417,7 +429,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 }
 
                 // Publish
-                var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
+                var effectiveRoutingKey = exchangeType == ExchangeType.Fanout ? "" : routingKey;
 
                 await channel.BasicPublishAsync(
                     exchange: exchange,
@@ -452,7 +464,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 {
                     // Backpressure active - cannot buffer, message will be lost
                     _logger.LogError(
-                        "BACKPRESSURE: Raw message dropped for topic '{Topic}' (messageId: {MessageId}). " +
+                        "Raw message dropped due to backpressure for topic '{Topic}' (messageId: {MessageId}). " +
                         "Buffer at capacity, RabbitMQ connection failure persisting.",
                         topic, effectiveMessageId);
                     return false;
@@ -485,13 +497,20 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         Guid? correlationId = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.publish_error",
+            ActivityKind.Producer);
+        activity?.SetTag("messaging.error.service", serviceName);
+        activity?.SetTag("messaging.error.operation", operation);
+
         try
         {
             var errorEvent = new ServiceErrorEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = Program.ServiceGUID,
+                ServiceId = _instanceId,
                 ServiceName = serviceName,
                 AppId = _appConfiguration.EffectiveAppId,
                 Operation = operation,
@@ -521,7 +540,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     private async Task EnsureExchangeAsync(
         IChannel channel,
         string exchange,
-        PublishOptionsExchangeType exchangeType,
+        ExchangeType exchangeType,
         CancellationToken cancellationToken)
     {
         // Check if already declared (optimization to avoid redeclaring)
@@ -533,9 +552,9 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
 
         var type = exchangeType switch
         {
-            PublishOptionsExchangeType.Direct => ExchangeType.Direct,
-            PublishOptionsExchangeType.Topic => ExchangeType.Topic,
-            _ => ExchangeType.Fanout
+            ExchangeType.Direct => RmqExchangeType.Direct,
+            ExchangeType.Topic => RmqExchangeType.Topic,
+            _ => RmqExchangeType.Fanout
         };
 
         await channel.ExchangeDeclareAsync(
@@ -630,6 +649,12 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     /// </summary>
     private async Task PublishBatchAsync(List<PendingPublish> batch, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.publish_batch",
+            ActivityKind.Producer);
+        activity?.SetTag("messaging.batch.size", batch.Count);
+
         IChannel? channel = null;
         try
         {
@@ -652,7 +677,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                 try
                 {
                     var exchange = pending.Options?.Exchange ?? _channelManager.DefaultExchange;
-                    var exchangeType = pending.Options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
+                    var exchangeType = pending.Options?.ExchangeType ?? ExchangeType.Topic;
                     var routingKey = pending.Options?.RoutingKey ?? pending.Topic;
 
                     // Ensure exchange exists
@@ -682,7 +707,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
                         properties.Priority = (byte)Math.Min(pending.Options.Priority, 9);
                     }
 
-                    var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
+                    var effectiveRoutingKey = exchangeType == ExchangeType.Fanout ? "" : routingKey;
 
                     await channel.BasicPublishAsync(
                         exchange: exchange,

@@ -403,7 +403,8 @@ public static class Program
                 var heartbeatLogger = heartbeatLoggerFactory.CreateLogger<ServiceHeartbeatManager>();
                 var mappingResolver = webApp.Services.GetRequiredService<IServiceAppMappingResolver>();
                 var messageBus = webApp.Services.GetRequiredService<IMessageBus>();
-                HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, Configuration);
+                var instanceIdentifier = webApp.Services.GetRequiredService<IMeshInstanceIdentifier>();
+                HeartbeatManager = new ServiceHeartbeatManager(messageBus, heartbeatLogger, PluginLoader, mappingResolver, instanceIdentifier, Configuration);
 
                 // Initialize mesh invocation client for service-to-service communication
                 MeshInvocationClient = webApp.Services.GetRequiredService<IMeshInvocationClient>();

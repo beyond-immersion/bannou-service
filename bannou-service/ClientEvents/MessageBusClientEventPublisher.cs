@@ -89,7 +89,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
             var options = new PublishOptions
             {
                 Exchange = CLIENT_EVENTS_EXCHANGE,
-                ExchangeType = PublishOptionsExchangeType.Direct,
+                ExchangeType = ExchangeType.Direct,
                 RoutingKey = routingKey
             };
             await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);
@@ -150,7 +150,7 @@ public class MessageBusClientEventPublisher : IClientEventPublisher
                     var options = new PublishOptions
                     {
                         Exchange = CLIENT_EVENTS_EXCHANGE,
-                        ExchangeType = PublishOptionsExchangeType.Direct,
+                        ExchangeType = ExchangeType.Direct,
                         RoutingKey = routingKey
                     };
                     await _messageBus.TryPublishAsync(routingKey, eventData, options, cancellationToken: cancellationToken);

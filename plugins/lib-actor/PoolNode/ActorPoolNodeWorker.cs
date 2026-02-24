@@ -44,6 +44,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     private readonly HeartbeatEmitter _heartbeatEmitter;
     private readonly ActorServiceConfiguration _configuration;
     private readonly ILogger<ActorPoolNodeWorker> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Subscriptions to be disposed on shutdown
     private readonly List<IAsyncDisposable> _subscriptions = new();
@@ -66,7 +67,8 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         IActorRunnerFactory actorRunnerFactory,
         HeartbeatEmitter heartbeatEmitter,
         ActorServiceConfiguration configuration,
-        ILogger<ActorPoolNodeWorker> logger)
+        ILogger<ActorPoolNodeWorker> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
@@ -75,11 +77,13 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         _heartbeatEmitter = heartbeatEmitter;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.Execute");
         var nodeId = _configuration.PoolNodeId;
         var appId = _configuration.PoolNodeAppId;
         var poolType = _configuration.PoolNodeType;
@@ -125,6 +129,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         string poolType,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.RegisterWithControlPlane");
         var registrationEvent = new PoolNodeRegisteredEvent
         {
             EventId = Guid.NewGuid(),
@@ -147,6 +152,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// </summary>
     private async Task SubscribeToCommandsAsync(string appId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.SubscribeToCommands");
         // Subscribe to spawn commands
         var spawnSub = await _messageSubscriber.SubscribeDynamicAsync<SpawnActorCommand>(
             $"actor.node.{appId}.spawn",
@@ -201,6 +207,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// <returns>True if spawn succeeded, false otherwise.</returns>
     public async Task<bool> HandleSpawnCommandAsync(SpawnActorCommand command, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.HandleSpawnCommand");
         _logger.LogInformation(
             "Received spawn command for actor {ActorId} (template: {TemplateId})",
             command.ActorId, command.TemplateId);
@@ -275,6 +282,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// <returns>True if stop succeeded, false otherwise.</returns>
     public async Task<bool> HandleStopCommandAsync(StopActorCommand command, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.HandleStopCommand");
         _logger.LogInformation("Received stop command for actor {ActorId}", command.ActorId);
 
         try
@@ -288,6 +296,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             var previousStatus = runner.Status;
 
             await runner.StopAsync(command.Graceful, ct);
+            await runner.DisposeAsync();
 
             if (!_actorRegistry.TryRemove(command.ActorId, out _))
             {
@@ -304,7 +313,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 Timestamp = DateTimeOffset.UtcNow,
                 ActorId = command.ActorId,
                 NodeId = ValidatedNodeId,
-                ExitReason = ActorCompletedEventExitReason.External_stop,
+                ExitReason = ActorExitReason.ExternalStop,
                 ExitMessage = "Stopped via control plane command",
                 LoopIterations = runner.LoopIterations,
                 CharacterId = runner.CharacterId
@@ -339,8 +348,8 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// <returns>True if message was delivered, false if actor not found.</returns>
     public async Task<bool> HandleMessageCommandAsync(SendMessageCommand command, CancellationToken ct)
     {
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.HandleMessageCommand");
+        await Task.CompletedTask;
         _logger.LogDebug(
             "Received message command for actor {ActorId} (type: {MessageType})",
             command.ActorId, command.MessageType);
@@ -404,6 +413,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
     /// <returns>True if bind succeeded, false otherwise.</returns>
     public async Task<bool> HandleBindCharacterCommandAsync(BindActorCharacterCommand command, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.HandleBindCharacterCommand");
         _logger.LogInformation(
             "Received bind-character command for actor {ActorId} (characterId: {CharacterId})",
             command.ActorId, command.CharacterId);
@@ -445,6 +455,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
 
     private async Task PublishStatusChangedAsync(string actorId, ActorStatus previousStatus, ActorStatus newStatus, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.PublishStatusChanged");
         var statusEvent = new ActorStatusChangedEvent
         {
             EventId = Guid.NewGuid(),
@@ -460,6 +471,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
 
     private async Task ShutdownAsync(string nodeId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolNodeWorker.Shutdown");
         _logger.LogInformation("Shutting down actor pool node worker");
 
         // Dispose command subscriptions
@@ -478,8 +490,8 @@ public sealed class ActorPoolNodeWorker : BackgroundService
         _subscriptions.Clear();
         _logger.LogDebug("Disposed {Count} command subscriptions", subscriptionCount);
 
-        // Stop heartbeat emitter
-        await _heartbeatEmitter.StopAsync();
+        // Stop and dispose heartbeat emitter
+        await _heartbeatEmitter.DisposeAsync();
 
         // Get remaining actors
         var runningActors = _actorRegistry.GetAllRunners().ToList();
@@ -498,7 +510,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 EstimatedDrainTimeSeconds = runningActors.Count * 2 // Rough estimate
             };
 
-            await _messageBus.TryPublishAsync("actor.pool-node.draining", drainingEvent);
+            await _messageBus.TryPublishAsync("actor.pool-node.draining", drainingEvent, cancellationToken: CancellationToken.None);
 
             // Stop all actors gracefully
             foreach (var runner in runningActors)
@@ -506,6 +518,7 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 try
                 {
                     await runner.StopAsync(true);
+                    await runner.DisposeAsync();
                     _actorRegistry.TryRemove(runner.ActorId, out _);
                 }
                 catch (Exception ex)
@@ -517,7 +530,8 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                         ex.GetType().Name,
                         ex.Message,
                         details: new { runner.ActorId, nodeId },
-                        stack: ex.StackTrace);
+                        stack: ex.StackTrace,
+                        cancellationToken: CancellationToken.None);
                 }
             }
         }

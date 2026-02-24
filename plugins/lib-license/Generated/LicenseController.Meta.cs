@@ -1227,7 +1227,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1317,7 +1317,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1497,7 +1497,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1695,7 +1695,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1829,7 +1829,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Updated game-specific metadata"
+                    "description": "Updated game-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1900,7 +1900,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2080,7 +2080,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3217,7 +3217,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3242,7 +3242,7 @@ public partial class LicenseController
         },
         "LicenseStatus": {
             "type": "string",
-            "description": "Unlock status of a license node on a board.\ n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
+            "description": "Unlock status of a license node on a board.\n- locked: Not adjacent to any unlocked node (cannot be unlocked)\n- unlockable: Adjacent to an unlocked node or is a starting node (can be unlocked)\n- unlocked: Already unlocked (item placed at this position)\n",
             "enum": [
                 "locked",
                 "unlockable",
@@ -3390,7 +3390,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3508,7 +3508,7 @@ public partial class LicenseController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game-specific metadata for this license node"
+                    "description": "Game-specific metadata for this license node. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",

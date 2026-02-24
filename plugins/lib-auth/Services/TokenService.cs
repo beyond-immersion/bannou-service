@@ -23,6 +23,7 @@ public class TokenService : ITokenService
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<TokenService> _logger;
 
     /// <summary>
@@ -34,6 +35,7 @@ public class TokenService : ITokenService
         AuthServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         ILogger<TokenService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -41,12 +43,14 @@ public class TokenService : ITokenService
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
     /// <inheritdoc/>
     public async Task<(string accessToken, Guid sessionId)> GenerateAccessTokenAsync(AccountResponse account, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.GenerateAccessToken");
         _logger.LogDebug("Generating access token for account {AccountId}", account.AccountId);
 
         // Generate opaque session key for JWT Redis key security
@@ -132,6 +136,7 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task StoreRefreshTokenAsync(Guid accountId, string refreshToken, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.StoreRefreshToken");
         var redisKey = $"refresh_token:{refreshToken}";
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Auth);
         // Storage boundary: state store requires string value type (Guid is a value type)
@@ -145,6 +150,7 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.ValidateRefreshToken");
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
@@ -176,6 +182,7 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task RemoveRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.RemoveRefreshToken");
         try
         {
             var redisKey = $"refresh_token:{refreshToken}";
@@ -191,6 +198,7 @@ public class TokenService : ITokenService
     /// <inheritdoc/>
     public async Task<(StatusCodes, ValidateTokenResponse?)> ValidateTokenAsync(string jwt, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "TokenService.ValidateToken");
         try
         {
             if (string.IsNullOrWhiteSpace(jwt))
@@ -265,7 +273,6 @@ public class TokenService : ITokenService
                 // key used in account-sessions index and published in SessionInvalidatedEvent
                 return (StatusCodes.OK, new ValidateTokenResponse
                 {
-                    Valid = true,
                     AccountId = sessionData.AccountId,
                     SessionKey = Guid.Parse(sessionKey),
                     Roles = sessionData.Roles,

@@ -48,15 +48,14 @@ namespace BeyondImmersion.BannouService.Auth;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(AuthService))]
-public class AuthServiceConfiguration : IServiceConfiguration
+public class AuthServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// JWT token expiration time in minutes
     /// Environment variable: AUTH_JWT_EXPIRATION_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int JwtExpirationMinutes { get; set; } = 60;
 
     /// <summary>
@@ -238,6 +237,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// Password reset token expiration time in minutes
     /// Environment variable: AUTH_PASSWORD_RESET_TOKEN_TTL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
     public int PasswordResetTokenTtlMinutes { get; set; } = 30;
 
     /// <summary>
@@ -264,12 +264,14 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// BCrypt work factor for password hashing. Higher values are more secure but slower. Existing hashes at lower factors continue to validate.
     /// Environment variable: AUTH_BCRYPT_WORK_FACTOR
     /// </summary>
+    [ConfigRange(Minimum = 4, Maximum = 20)]
     public int BcryptWorkFactor { get; set; } = 12;
 
     /// <summary>
     /// Session token TTL in days for persistent sessions
     /// Environment variable: AUTH_SESSION_TOKEN_TTL_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
     public int SessionTokenTtlDays { get; set; } = 7;
 
     /// <summary>
@@ -326,6 +328,7 @@ public class AuthServiceConfiguration : IServiceConfiguration
     /// AES-256-GCM encryption key for TOTP secrets at rest. Required when MFA is used. Must be at least 32 characters. Throws InvalidOperationException at runtime if null when MFA setup is attempted.
     /// Environment variable: AUTH_MFA_ENCRYPTION_KEY
     /// </summary>
+    [ConfigStringLength(MinLength = 32)]
     public string? MfaEncryptionKey { get; set; }
 
     /// <summary>

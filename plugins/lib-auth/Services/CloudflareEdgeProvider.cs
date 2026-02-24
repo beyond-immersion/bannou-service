@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text;
@@ -27,6 +28,7 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
 {
     private readonly AuthServiceConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<CloudflareEdgeProvider> _logger;
 
     private const string CloudflareApiBaseUrl = "https://api.cloudflare.com/client/v4";
@@ -36,14 +38,17 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
     /// </summary>
     /// <param name="configuration">Auth service configuration.</param>
     /// <param name="httpClientFactory">HTTP client factory for making API requests.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public CloudflareEdgeProvider(
         AuthServiceConfiguration configuration,
         IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider,
         ILogger<CloudflareEdgeProvider> logger)
     {
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -59,6 +64,7 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<bool> PushTokenRevocationAsync(string jti, Guid accountId, TimeSpan ttl, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "CloudflareEdgeProvider.PushTokenRevocation");
         if (!IsEnabled)
         {
             return true;
@@ -86,6 +92,7 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<bool> PushAccountRevocationAsync(Guid accountId, DateTimeOffset issuedBefore, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "CloudflareEdgeProvider.PushAccountRevocation");
         if (!IsEnabled)
         {
             return true;
@@ -114,6 +121,7 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
     /// <inheritdoc/>
     public async Task<int> PushBatchAsync(IReadOnlyList<FailedEdgePushEntry> entries, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "CloudflareEdgeProvider.PushBatch");
         if (!IsEnabled || entries.Count == 0)
         {
             return entries.Count;
@@ -166,6 +174,7 @@ public class CloudflareEdgeProvider : IEdgeRevocationProvider
     /// <returns>True if write succeeded.</returns>
     private async Task<bool> WriteKvAsync(string key, string value, int? expirationTtl, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "CloudflareEdgeProvider.WriteKv");
         var accountId = _configuration.CloudflareAccountId;
         var namespaceId = _configuration.CloudflareKvNamespaceId;
         var apiToken = _configuration.CloudflareApiToken;

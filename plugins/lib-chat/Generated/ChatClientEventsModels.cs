@@ -579,6 +579,83 @@ public partial class ChatRoomDeletedClientEvent : BaseClientEvent
 
 }
 
+/// <summary>
+/// Sent to room participants when someone starts typing.
+/// <br/>Only published on initial typing -- heartbeat refreshes are silent.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatTypingStartedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.typing_started";
+
+    /// <summary>
+    /// Room where typing is occurring
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the typing participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParticipantSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the typing participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Sent to room participants when someone stops typing.
+/// <br/>Fired on explicit end-typing, server-side timeout expiry,
+/// <br/>message send, or room departure.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatTypingStoppedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.typing_stopped";
+
+    /// <summary>
+    /// Room where typing stopped
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the participant who stopped typing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParticipantSessionId { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

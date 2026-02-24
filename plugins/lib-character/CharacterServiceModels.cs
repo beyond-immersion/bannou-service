@@ -64,8 +64,8 @@ internal class CharacterArchiveModel
     public long DeathDateUnix { get; set; }
     public long CompressedAtUnix { get; set; }
     public string? PersonalitySummary { get; set; }
-    public List<string> KeyBackstoryPoints { get; set; } = new();
-    public List<string> MajorLifeEvents { get; set; } = new();
+    public List<string>? KeyBackstoryPoints { get; set; }
+    public List<string>? MajorLifeEvents { get; set; }
     public string? FamilySummary { get; set; }
 }
 

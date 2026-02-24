@@ -1,6 +1,7 @@
 #nullable enable
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
@@ -30,6 +31,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
 {
     private readonly ILogger<RabbitMQConnectionManager> _logger;
     private readonly MessagingServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private IConnection? _connection;
     private readonly ConcurrentBag<IChannel> _channelPool = new();
@@ -42,12 +44,17 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// <summary>
     /// Creates a new RabbitMQConnectionManager.
     /// </summary>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Messaging service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation.</param>
     public RabbitMQConnectionManager(
         ILogger<RabbitMQConnectionManager> logger,
-        MessagingServiceConfiguration configuration)
+        MessagingServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _channelCreationSemaphore = new SemaphoreSlim(
             configuration.MaxConcurrentChannelCreation,
             configuration.MaxConcurrentChannelCreation);
@@ -87,6 +94,11 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </remarks>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.connection.initialize",
+            ActivityKind.Client);
+
         await _connectionLock.WaitAsync(cancellationToken);
         try
         {
@@ -154,9 +166,14 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </summary>
     public async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.channel.get",
+            ActivityKind.Client);
+
         if (_connection == null || !_connection.IsOpen)
         {
-            _logger.LogDebug("DIAG: GetChannelAsync - connection not open, initializing");
+            _logger.LogDebug("GetChannelAsync - connection not open, initializing");
             var initSw = Stopwatch.StartNew();
             if (!await InitializeAsync(cancellationToken))
             {
@@ -166,7 +183,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
             if (initSw.ElapsedMilliseconds > 100)
             {
                 _logger.LogWarning(
-                    "DIAG: InitializeAsync took {ElapsedMs}ms",
+                    "InitializeAsync took {ElapsedMs}ms",
                     initSw.ElapsedMilliseconds);
             }
         }
@@ -184,7 +201,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
             if (channel.IsOpen)
             {
                 _logger.LogDebug(
-                    "DIAG: GetChannelAsync - got channel from pool (remaining pool: {PoolSize}, total active: {TotalActive})",
+                    "GetChannelAsync - got channel from pool (remaining pool: {PoolSize}, total active: {TotalActive})",
                     Volatile.Read(ref _pooledChannelCount),
                     Volatile.Read(ref _totalActiveChannels));
                 return channel; // Ownership transferred to caller
@@ -204,7 +221,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
         // No usable channel in pool - check if we can create more
         var currentTotal = Volatile.Read(ref _totalActiveChannels);
         _logger.LogDebug(
-            "DIAG: GetChannelAsync - pool empty, must create channel (total active: {TotalActive}, max: {MaxTotal})",
+            "GetChannelAsync - pool empty, must create channel (total active: {TotalActive}, max: {MaxTotal})",
             currentTotal, _configuration.MaxTotalChannels);
 
         if (currentTotal >= _configuration.MaxTotalChannels)
@@ -225,7 +242,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
         if (semaphoreSw.ElapsedMilliseconds > 100)
         {
             _logger.LogWarning(
-                "DIAG: Channel creation semaphore wait took {ElapsedMs}ms (total active: {TotalActive})",
+                "Channel creation semaphore wait took {ElapsedMs}ms (total active: {TotalActive})",
                 semaphoreSw.ElapsedMilliseconds, Volatile.Read(ref _totalActiveChannels));
         }
 
@@ -253,7 +270,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
             if (createSw.ElapsedMilliseconds > 100)
             {
                 _logger.LogWarning(
-                    "DIAG: CreateChannelAsync took {ElapsedMs}ms (total active: {TotalActive}, pool size: {PoolSize})",
+                    "CreateChannelAsync took {ElapsedMs}ms (total active: {TotalActive}, pool size: {PoolSize})",
                     createSw.ElapsedMilliseconds,
                     Volatile.Read(ref _totalActiveChannels),
                     Volatile.Read(ref _pooledChannelCount));
@@ -331,6 +348,11 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </remarks>
     public async Task<IChannel> CreateConsumerChannelAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.channel.create_consumer",
+            ActivityKind.Client);
+
         if (_connection == null || !_connection.IsOpen)
         {
             if (!await InitializeAsync(cancellationToken))

@@ -867,7 +867,7 @@ public partial class CreateBundleRequest
     public CompressionType Compression { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata for the bundle (null if none)
+    /// Custom metadata for the bundle (null if none). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1236,7 +1236,7 @@ public partial class CreateMetabundleRequest
     public System.Collections.Generic.ICollection<string>? AssetFilter { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata for the metabundle
+    /// Custom metadata for the metabundle. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

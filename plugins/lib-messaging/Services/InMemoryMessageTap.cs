@@ -129,7 +129,7 @@ public sealed class InMemoryMessageTap : IMessageTap, IAsyncDisposable
                 sourceExchange,
                 destination.Exchange,
                 destination.RoutingKey,
-                destination.ExchangeType.ToString().ToLowerInvariant(),
+                destination.ExchangeType,
                 tapCreatedAt);
 
             // Publish to destination topic

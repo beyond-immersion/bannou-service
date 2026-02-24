@@ -44,7 +44,7 @@ public partial class AuthService
 
     /// <summary>
     /// Handles account.updated events.
-    /// Propagates role changes to active sessions when roles are modified.
+    /// Propagates role and email changes to active sessions when modified.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountUpdatedAsync(AccountUpdatedEvent evt)
@@ -52,20 +52,28 @@ public partial class AuthService
         _logger.LogInformation("Processing account.updated event for AccountId: {AccountId}, ChangedFields: {ChangedFields}",
             evt.AccountId, string.Join(", ", evt.ChangedFields ?? new List<string>()));
 
-        // Only propagate if roles changed
-        if (evt.ChangedFields?.Contains("roles") != true)
+        var changedFields = evt.ChangedFields ?? new List<string>();
+        var rolesChanged = changedFields.Contains("roles");
+        var emailChanged = changedFields.Contains("email");
+
+        if (!rolesChanged && !emailChanged)
         {
-            _logger.LogDebug("Account update did not include role changes, skipping propagation");
+            _logger.LogDebug("Account update did not include role or email changes, skipping session propagation");
             return;
         }
 
-        // In the new event pattern, Roles contains the current state (full model data)
-        var newRoles = evt.Roles?.ToList() ?? new List<string>();
+        if (rolesChanged)
+        {
+            var newRoles = evt.Roles?.ToList() ?? new List<string>();
+            await PropagateRoleChangesAsync(evt.AccountId, newRoles, CancellationToken.None);
+            _logger.LogInformation("Propagated role changes for account: {AccountId}", evt.AccountId);
+        }
 
-        await PropagateRoleChangesAsync(evt.AccountId, newRoles, CancellationToken.None);
-
-        _logger.LogInformation("Successfully propagated role changes for account: {AccountId}",
-            evt.AccountId);
+        if (emailChanged)
+        {
+            await PropagateEmailChangeAsync(evt.AccountId, evt.Email, CancellationToken.None);
+            _logger.LogInformation("Propagated email change for account: {AccountId}", evt.AccountId);
+        }
     }
 
 }

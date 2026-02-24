@@ -12,6 +12,68 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
 
+  x-event-publications:
+    # Actor template lifecycle events (auto-generated from x-lifecycle)
+    - topic: actor-template.created
+      event: ActorTemplateCreatedEvent
+      description: Published when an actor template is created
+    - topic: actor-template.updated
+      event: ActorTemplateUpdatedEvent
+      description: Published when an actor template is updated
+    - topic: actor-template.deleted
+      event: ActorTemplateDeletedEvent
+      description: Published when an actor template is deleted
+    # Actor instance lifecycle events (auto-generated from x-lifecycle)
+    - topic: actor-instance.created
+      event: ActorInstanceCreatedEvent
+      description: Published when an actor instance is created (control plane record)
+    - topic: actor-instance.deleted
+      event: ActorInstanceDeletedEvent
+      description: Published when an actor instance is stopped and removed
+    # Custom actor instance events
+    - topic: actor-instance.started
+      event: ActorInstanceStartedEvent
+      description: Published when an actor begins running its behavior loop
+    - topic: actor-instance.state-persisted
+      event: ActorStatePersistedEvent
+      description: Published on periodic state auto-save to Redis
+    - topic: actor.instance.character-bound
+      event: ActorCharacterBoundEvent
+      description: Published when an actor binds to a character (dynamic or at spawn)
+    - topic: actor.instance.status-changed
+      event: ActorStatusChangedEvent
+      description: Published on actor status transitions (running, paused, error, etc.)
+    - topic: actor.instance.completed
+      event: ActorCompletedEvent
+      description: Published when an actor finishes execution (self-terminate or external stop)
+    # Encounter events (from Event Brain actors)
+    - topic: actor.encounter.started
+      event: ActorEncounterStartedEvent
+      description: Published when an Event Brain actor starts an encounter
+    - topic: actor.encounter.phase-changed
+      event: ActorEncounterPhaseChangedEvent
+      description: Published on encounter phase transitions
+    - topic: actor.encounter.ended
+      event: ActorEncounterEndedEvent
+      description: Published when an encounter finishes
+    # Character state update (behavioral output)
+    - topic: character.state_update
+      event: CharacterStateUpdateEvent
+      description: Published per-tick with actor feelings/goals for character display
+    # Pool node events (from pool nodes to control plane)
+    - topic: actor.pool-node.registered
+      event: PoolNodeRegisteredEvent
+      description: Published when a pool node starts and registers with control plane
+    - topic: actor.pool-node.heartbeat
+      event: PoolNodeHeartbeatEvent
+      description: Periodic heartbeat from pool nodes for health monitoring
+    - topic: actor.pool-node.draining
+      event: PoolNodeDrainingEvent
+      description: Published when a pool node begins graceful shutdown
+    - topic: actor.pool-node.unhealthy
+      event: PoolNodeUnhealthyEvent
+      description: Published by PoolHealthMonitor when a pool node exceeds the heartbeat timeout
+
   x-event-subscriptions:
     - topic: session.disconnected
       event: SessionDisconnectedEvent
@@ -281,6 +343,7 @@ components:
         - actorId
         - nodeId
         - exitReason
+        - loopIterations
       properties:
         eventName:
           type: string
@@ -293,13 +356,8 @@ components:
           type: string
           description: Pool node where the actor was running
         exitReason:
-          type: string
           description: Reason the actor exited
-          enum:
-            - behavior_complete
-            - error
-            - timeout
-            - external_stop
+          $ref: 'actor-api.yaml#/components/schemas/ActorExitReason'
         exitMessage:
           type: string
           nullable: true
@@ -363,6 +421,7 @@ components:
       required:
         - actorId
         - nodeId
+        - loopIterations
       properties:
         eventName:
           type: string
@@ -528,6 +587,8 @@ components:
         - actorId
         - templateId
         - behaviorRef
+        - tickIntervalMs
+        - autoSaveIntervalSeconds
       properties:
         actorId:
           type: string

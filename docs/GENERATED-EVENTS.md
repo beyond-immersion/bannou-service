@@ -100,9 +100,7 @@ This document lists all events defined in Bannou's event schemas.
 | `AuthRegistrationSuccessfulEvent` | Custom | `auth-registration-successful` | Published when a new user successfully registers |
 | `AuthSteamLoginSuccessfulEvent` | Custom | `auth-steam-login-successful` | Published when a user authenticates via Steam |
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
-| `SessionInvalidatedEventReason` | Custom | `session.invalidated-event-reason` | Reason for session invalidation |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
-| `SessionUpdatedEventReason` | Lifecycle (Updated) | `session.updated-event-reason` | Reason for session update |
 
 ### Behavior
 
@@ -117,6 +115,8 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `CharacterCompressedEvent` | Custom | `character-compressed` | Published when a character is compressed to archiv... |
+| `CharacterRealmJoinedEvent` | Custom | `character-realm-joined` | Event published when a character joins a realm (cr... |
+| `CharacterRealmLeftEvent` | Custom | `character-realm-left` | Event published when a character leaves a realm (d... |
 
 ### Character Encounter
 
@@ -182,6 +182,8 @@ This document lists all events defined in Bannou's event schemas.
 | `ChatParticipantUnmutedClientEvent` | Custom | `chat-participant-unmuted-client` | Sent to all room participants when someone is unmu... |
 | `ChatRoomDeletedClientEvent` | Lifecycle (Deleted) | `chat-room.deleted-client` | Sent to room participants when the room is being d... |
 | `ChatRoomLockedClientEvent` | Custom | `chat-room-locked-client` | Sent to room participants when the room is locked. |
+| `ChatTypingStartedClientEvent` | Custom | `chat-typing-started-client` | Sent to room participants when someone starts typi... |
+| `ChatTypingStoppedClientEvent` | Custom | `chat-typing-stopped-client` | Sent to room participants when someone stops typin... |
 
 ### Collection
 
@@ -222,6 +224,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ContractMilestoneCompletedEvent` | Custom | `contract-milestone-completed` | Event published when a milestone is completed |
 | `ContractMilestoneFailedEvent` | Custom | `contract-milestone-failed` | Event published when a milestone fails |
 | `ContractPartyTransferredEvent` | Custom | `contract-party-transferred` | Event published when a party role is transferred t... |
+| `ContractPaymentDueEvent` | Custom | `contract-payment-due` | Event published when a contract payment is due bas... |
 | `ContractPreboundApiExecutedEvent` | Custom | `contract-prebound-api-executed` | Event published when a prebound API is executed |
 | `ContractPreboundApiFailedEvent` | Custom | `contract-prebound-api-failed` | Event published when a prebound API call fails |
 | `ContractPreboundApiValidationFailedEvent` | Custom | `contract-prebound-api-validation-failed` | Event published when a prebound API response fails... |
@@ -442,7 +445,6 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `MeshCircuitStateChangedEvent` | Custom | `mesh-circuit-state-changed` | Published when circuit breaker state changes for a... |
 | `MeshEndpointDegradedEvent` | Custom | `mesh-endpoint-degraded` | Published when an endpoint transitions to Degraded... |
-| `MeshEndpointDegradedEventReason` | Custom | `mesh-endpoint-degraded-event-reason` | Reason why endpoint was marked as degraded |
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointHealthCheckFailedEvent` | Custom | `mesh-endpoint-health-check-failed` | Published when a health check probe fails (before ... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
@@ -508,7 +510,7 @@ This document lists all events defined in Bannou's event schemas.
 | `ResourceCleanupCallbackFailedEvent` | Custom | `resource-cleanup-callback-failed` | Published when a cleanup callback fails during res... |
 | `ResourceCompressCallbackFailedEvent` | Custom | `resource-compress-callback-failed` | Published when a compression callback fails. |
 | `ResourceCompressedEvent` | Custom | `resource-compressed` | Published when compression completes successfully. |
-| `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes successfull... |
+| `ResourceDecompressedEvent` | Custom | `resource-decompressed` | Published when decompression completes with at lea... |
 | `ResourceGracePeriodStartedEvent` | Custom | `resource-grace-period-started` | Published when a resource's reference count reache... |
 | `ResourceSnapshotCreatedEvent` | Lifecycle (Created) | `resource-snapshot.created` | Published when an ephemeral snapshot of a living r... |
 

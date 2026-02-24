@@ -136,7 +136,7 @@ public partial class EntryMetadata
     public int KillCount { get; set; } = 0;
 
     /// <summary>
-    /// Arbitrary custom data for game-specific metadata
+    /// Arbitrary custom data for game-specific metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customData")]
     public object? CustomData { get; set; } = default!;
@@ -1190,7 +1190,7 @@ public partial class UpdateEntryMetadataRequest
     public int? DiscoveryLevel { get; set; } = default!;
 
     /// <summary>
-    /// Updated custom data (merged with existing)
+    /// Updated custom data (merged with existing). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customData")]
     public object? CustomData { get; set; } = default!;

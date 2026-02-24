@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Orchestrator;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(OrchestratorService))]
-public class OrchestratorServiceConfiguration : IServiceConfiguration
+public class OrchestratorServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// When true, publishes blank permission registration making orchestrator inaccessible via WebSocket. Set false for testing.

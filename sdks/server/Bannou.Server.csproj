@@ -95,6 +95,7 @@
     <Compile Include="../client/BannouClient.cs" />
     <Compile Include="../client/BannouConnectionManager.cs" />
     <Compile Include="../client/RemoteAssetCache.cs" />
+    <Compile Include="../client/PayloadDecompressor.cs" />
     <Compile Include="../client/MetaTypes.cs" />
     <Compile Include="../client/ResponseCodes.cs" />
     <Compile Include="../client/IEventSubscription.cs" />

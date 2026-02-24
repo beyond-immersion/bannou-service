@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Leaderboard;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(LeaderboardService))]
-public class LeaderboardServiceConfiguration : IServiceConfiguration
+public class LeaderboardServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum entries returned per rank query

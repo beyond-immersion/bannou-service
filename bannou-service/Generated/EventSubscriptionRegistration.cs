@@ -113,8 +113,6 @@ public static class EventSubscriptionRegistration
 
         // From permission-events.yaml
         EventSubscriptionRegistry.Register<SessionUpdatedEvent>("session.updated");
-        EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
-        EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");
 
         // From puppetmaster-events.yaml
         EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");

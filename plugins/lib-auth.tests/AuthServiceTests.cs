@@ -522,14 +522,14 @@ public class AuthServiceTests
         var discord = response.Providers.FirstOrDefault(p => p.Name == "discord");
         Assert.NotNull(discord);
         Assert.Equal("Discord", discord.DisplayName);
-        Assert.Equal(ProviderInfoAuthType.Oauth, discord.AuthType);
+        Assert.Equal(AuthType.Oauth, discord.AuthType);
         Assert.NotNull(discord.AuthUrl);
 
         // Verify Steam has ticket auth type
         var steam = response.Providers.FirstOrDefault(p => p.Name == "steam");
         Assert.NotNull(steam);
         Assert.Equal("Steam", steam.DisplayName);
-        Assert.Equal(ProviderInfoAuthType.Ticket, steam.AuthType);
+        Assert.Equal(AuthType.Ticket, steam.AuthType);
         Assert.Null(steam.AuthUrl); // Steam uses ticket, no auth URL
     }
 

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Mapping;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(MappingService))]
-public class MappingServiceConfiguration : IServiceConfiguration
+public class MappingServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Time in seconds before authority expires without heartbeat

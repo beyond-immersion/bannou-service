@@ -210,8 +210,8 @@ Tenets are organized into categories based on when they're needed:
 | # | Name | Core Rule |
 |---|------|-----------|
 | **T3** | Event Consumer Fan-Out | Use IEventConsumer for multi-plugin event handling |
-| **T7** | Error Handling | Try-catch with ApiException vs Exception distinction; TryPublishErrorAsync |
-| **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples |
+| **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
+| **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples; null payload for errors; no filler properties in success responses |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
 | **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
@@ -268,9 +268,18 @@ Tenets are organized into categories based on when they're needed:
 | Missing x-permissions on endpoint | T13 | Add to schema (even if empty array) |
 | GPL library in NuGet package | T18 | Use MIT/BSD alternative |
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
-| Generic catch returning 500 | T7 | Catch ApiException specifically |
+| Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
+| Generic catch returning 500 in service method | T7 | Let it propagate to the generated controller; only catch for specific recovery logic or inter-service `ApiException` |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
+| Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
+| Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
+| Using `Guid.NewGuid()` or fixed string for error event `ServiceId` | T7 | `ServiceId` comes from `IMeshInstanceIdentifier` (process-stable) |
 | Using Microsoft.AspNetCore.Http.StatusCodes | T8 | Use BeyondImmersion.BannouService.StatusCodes |
+| Success boolean in response (`locked: true`, `deleted: true`) | T8 | Remove from schema; 200 OK already confirms success |
+| Confirmation message string in response | T8 | Remove from schema; status code communicates result |
+| Action timestamp in response (`executedAt`, `registeredAt`) | T8 | Remove unless it represents stored entity state |
+| Request field echoed back in response | T8 | Remove from schema; caller already knows what they sent |
+| Observability metrics in non-diagnostics response | T8 | Remove or move to dedicated diagnostics endpoint |
 | Plain Dictionary for cache | T9 | Use ConcurrentDictionary |
 | Per-instance salt/key generation | T9 | Use shared/deterministic values |
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
@@ -281,7 +290,9 @@ Tenets are organized into categories based on when they're needed:
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
 | Non-async Task-returning method | T23 | Add `async` keyword and `await Task.CompletedTask` if no other await exists |
+| Non-async ValueTask-returning method | T23 | Add `async` keyword; return value directly instead of `ValueTask.FromResult` |
 | `Task.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
+| `ValueTask.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |

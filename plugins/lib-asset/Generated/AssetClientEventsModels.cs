@@ -499,7 +499,7 @@ public partial class AssetReadyEvent : BaseClientEvent
     public string? ContentType { get; set; } = default!;
 
     /// <summary>
-    /// Asset metadata
+    /// Asset metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

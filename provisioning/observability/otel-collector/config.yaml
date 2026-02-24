@@ -22,6 +22,30 @@ processors:
     limit_mib: 512
     spike_limit_mib: 128
 
+  # Tail-based sampling for traces (GH #186)
+  # Holds complete traces in memory for decision_wait before making sampling decisions.
+  # Requires all spans of a trace to arrive at the same collector instance.
+  # In multi-collector deployments, add a load_balancing exporter upstream.
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    policies:
+      # Always keep traces with errors
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+      # Always keep traces with high latency (>500ms)
+      - name: high-latency
+        type: latency
+        latency:
+          threshold_ms: 500
+      # Probabilistically sample the rest at 10%
+      - name: default
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
   # Resource detection for container metadata
   resourcedetection:
     detectors: [env, docker]
@@ -53,7 +77,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, resourcedetection, batch]
+      processors: [memory_limiter, resourcedetection, tail_sampling, batch]
       exporters: [otlp/tempo]
     metrics:
       receivers: [otlp]

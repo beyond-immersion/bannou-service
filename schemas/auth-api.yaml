@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Bannou Auth Service API
   description: |
@@ -34,7 +34,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -61,7 +60,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -96,7 +94,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -116,7 +113,7 @@ paths:
       responses:
         '302':
           description: Redirect to OAuth provider
-      x-manual-implementation: true  # Returns 302 redirect, not JSON - requires manual controller
+      x-controller-only: true  # Returns 302 redirect, not JSON - requires manual controller
 
   /auth/oauth/{provider}/callback:
     post:
@@ -132,7 +129,6 @@ paths:
       - OAuth
       x-permissions:
       - role: anonymous
-        states: {}
       parameters:
       - name: provider
         in: path
@@ -165,7 +161,6 @@ paths:
       - Steam
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -192,7 +187,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -223,7 +217,6 @@ paths:
       - Tokens
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -252,7 +245,6 @@ paths:
       - Authentication
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -278,7 +270,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -303,7 +294,6 @@ paths:
       - Sessions
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -336,7 +326,6 @@ paths:
       - Token Management
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -361,7 +350,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -380,7 +368,6 @@ paths:
       - Password
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -403,7 +390,6 @@ paths:
       - Authentication
       x-permissions:
       - role: anonymous
-        states: {}
       responses:
         '200':
           description: List of available providers
@@ -424,7 +410,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -455,7 +440,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -490,7 +474,6 @@ paths:
       - MFA
       x-permissions:
       - role: user
-        states: {}
       parameters:
       - name: jwt
         in: header
@@ -524,7 +507,6 @@ paths:
       - MFA
       x-permissions:
       - role: admin
-        states: {}
       requestBody:
         required: true
         content:
@@ -550,7 +532,6 @@ paths:
       - MFA
       x-permissions:
       - role: anonymous
-        states: {}
       requestBody:
         required: true
         content:
@@ -586,6 +567,46 @@ components:
       type: string
       enum: [none, sendgrid, smtp, ses]
       description: Email delivery provider type (none=console logging, sendgrid=SendGrid API, smtp=SMTP via MailKit, ses=AWS SES v2)
+
+    DeviceType:
+      type: string
+      enum: [desktop, mobile, tablet, console]
+      description: Category of client device used for authentication or session tracking
+
+    AuthType:
+      type: string
+      enum: [oauth, ticket]
+      description: Authentication mechanism type (oauth = browser redirect, ticket = game client token)
+
+    SessionInvalidatedEventReason:
+      type: string
+      enum: [Logout, AccountDeleted, SecurityRevocation, AdminAction, SessionExpired]
+      description: Reason for session invalidation
+
+    SessionUpdatedEventReason:
+      type: string
+      enum: [RoleChanged, AuthorizationChanged, SubscriptionChanged]
+      description: Reason for session update
+
+    AuthLoginFailedReason:
+      type: string
+      enum: [InvalidCredentials, AccountDisabled, AccountLocked, AccountNotFound, RateLimited]
+      description: Reason why the login attempt failed
+
+    MfaDisabledBy:
+      type: string
+      enum: [Self, Admin]
+      description: Who triggered the MFA disable action
+
+    MfaVerificationMethod:
+      type: string
+      enum: [Totp, RecoveryCode]
+      description: Method used for MFA verification
+
+    MfaFailedReason:
+      type: string
+      enum: [InvalidCode, ExpiredChallenge, NoRecoveryCodesRemaining]
+      description: Reason for MFA verification failure
 
     InitOAuthResponse:
       type: object
@@ -628,6 +649,8 @@ components:
         password:
           type: string
           format: password
+          minLength: 1
+          maxLength: 128
           description: User password for authentication
         rememberMe:
           type: boolean
@@ -658,6 +681,7 @@ components:
           type: string
           description: Password for the account (will be hashed)
           minLength: 8
+          maxLength: 128
           format: password
           example: "SecurePassword123!"
         email:
@@ -760,6 +784,7 @@ components:
           type: string
           pattern: '^[0-9A-Fa-f]+$'
           minLength: 16
+          maxLength: 2048
           description: |
             Hex-encoded Steam Session Ticket from ISteamUser::GetAuthTicketForWebApi().
             Client converts ticket bytes to hex string: BitConverter.ToString(ticketData).Replace("-", "")
@@ -781,17 +806,14 @@ components:
           description: Refresh token issued during authentication to obtain a new access token
 
     ValidateTokenResponse:
-      description: Response from token validation containing validity status and associated account details
+      description: Response from token validation containing associated account details. HTTP 200 confirms the token is valid; 401 indicates invalid or expired.
       type: object
       additionalProperties: false
       required:
-      - valid
       - accountId
       - sessionKey
+      - remainingTime
       properties:
-        valid:
-          type: boolean
-          description: Whether the token is valid and not expired
         accountId:
           type: string
           format: uuid
@@ -881,8 +903,8 @@ components:
       additionalProperties: false
       properties:
         deviceType:
-          type: string
-          enum: [desktop, mobile, tablet, console]
+          allOf:
+            - $ref: '#/components/schemas/DeviceType'
           nullable: true
           description: Category of the device
         platform:
@@ -926,6 +948,7 @@ components:
           type: string
           format: password
           minLength: 8
+          maxLength: 128
           description: New password to set for the account
 
     LoginResponse:
@@ -1025,6 +1048,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
 
     AdminDisableMfaRequest:
@@ -1063,6 +1087,7 @@ components:
         recoveryCode:
           type: string
           nullable: true
+          pattern: '^[a-z0-9]{4}-[a-z0-9]{4}$'
           description: Single-use recovery code (format xxxx-xxxx)
 
     ProvidersResponse:
@@ -1096,8 +1121,7 @@ components:
           example: "Discord"
           description: Human-readable name for the provider
         authType:
-          type: string
-          enum: [oauth, ticket]
+          $ref: '#/components/schemas/AuthType'
           description: Authentication mechanism (oauth = browser redirect, ticket = game client token)
         authUrl:
           type: string
@@ -1134,7 +1158,6 @@ components:
       required:
       - revokedTokens
       - revokedAccounts
-      - failedPushCount
       properties:
         revokedTokens:
           type: array
@@ -1146,13 +1169,6 @@ components:
           items:
             $ref: '#/components/schemas/RevokedAccountEntry'
           description: Account-level revocations (all tokens before timestamp)
-        failedPushCount:
-          type: integer
-          description: Number of pending failed pushes awaiting retry
-        totalTokenCount:
-          type: integer
-          nullable: true
-          description: Total revoked tokens in store (may be null if count unavailable)
 
     RevokedTokenEntry:
       type: object

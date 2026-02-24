@@ -112,7 +112,7 @@ public class AuthTestHandler : BaseHttpTestHandler
                 var validationResponse = await ((IServiceClient<AuthClient>)authClient)
                     .WithAuthorization("invalid_token")
                     .ValidateTokenAsync();
-                return TestResult.Successful($"Token validation endpoint responded: Valid={validationResponse.Valid}");
+                return TestResult.Successful($"Token validation endpoint responded: AccountId={validationResponse.AccountId}, RemainingTime={validationResponse.RemainingTime}s");
             }
             catch (ApiException ex) when (ex.StatusCode == 401 || ex.StatusCode == 403)
             {
@@ -171,7 +171,7 @@ public class AuthTestHandler : BaseHttpTestHandler
                     return TestResult.Failed($"Provider {provider.Name} has empty display name");
 
                 // OAuth providers should have auth URL, ticket providers should not
-                if (provider.AuthType == ProviderInfoAuthType.Oauth && provider.AuthUrl == null)
+                if (provider.AuthType == AuthType.Oauth && provider.AuthUrl == null)
                     return TestResult.Failed($"OAuth provider {provider.Name} missing auth URL");
             }
 
@@ -203,8 +203,8 @@ public class AuthTestHandler : BaseHttpTestHandler
                     .WithAuthorization(oauthResponse.AccessToken)
                     .ValidateTokenAsync();
 
-                if (!validationResponse.Valid)
-                    return TestResult.Failed("OAuth token validation returned Valid=false - session may not have been created");
+                if (validationResponse.RemainingTime <= 0)
+                    return TestResult.Failed("OAuth token validation returned RemainingTime<=0 - session may not have been created");
 
                 if (validationResponse.SessionKey == Guid.Empty)
                     return TestResult.Failed("OAuth token validation succeeded but no SessionId returned");
@@ -230,7 +230,7 @@ public class AuthTestHandler : BaseHttpTestHandler
                 Ticket = "140000006A7B3C8E0123456789ABCDEF",
                 DeviceInfo = new DeviceInfo
                 {
-                    DeviceType = DeviceInfoDeviceType.Desktop,
+                    DeviceType = DeviceType.Desktop,
                     Platform = "Windows"
                 }
             };
@@ -248,8 +248,8 @@ public class AuthTestHandler : BaseHttpTestHandler
                     .WithAuthorization(steamResponse.AccessToken)
                     .ValidateTokenAsync();
 
-                if (!validationResponse.Valid)
-                    return TestResult.Failed("Steam token validation returned Valid=false - session may not have been created");
+                if (validationResponse.RemainingTime <= 0)
+                    return TestResult.Failed("Steam token validation returned RemainingTime<=0 - session may not have been created");
 
                 if (validationResponse.SessionKey == Guid.Empty)
                     return TestResult.Failed("Steam token validation succeeded but no SessionId returned");
@@ -317,8 +317,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             var validationResponse = await ((IServiceClient<AuthClient>)authClient)
                 .WithAuthorization(accessToken)
                 .ValidateTokenAsync();
-            if (!validationResponse.Valid)
-                return TestResult.Failed("Token validation returned Valid=false for legitimate token");
+            if (validationResponse.RemainingTime <= 0)
+                return TestResult.Failed("Token validation returned RemainingTime<=0 for legitimate token");
 
             // Step 4: Verify session ID was returned
             if (validationResponse.SessionKey == Guid.Empty)
@@ -530,7 +530,7 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             // Step 3: Validate session A works
             var validationA1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenA).ValidateTokenAsync();
-            if (!validationA1.Valid)
+            if (validationA1.RemainingTime <= 0)
                 return TestResult.Failed("Session A validation failed immediately after creation");
 
             var remainingTimeA1 = validationA1.RemainingTime;
@@ -544,12 +544,12 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             // Step 5: Validate session A STILL works after session B was created
             var validationA2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenA).ValidateTokenAsync();
-            if (!validationA2.Valid)
+            if (validationA2.RemainingTime <= 0)
                 return TestResult.Failed($"Session A became invalid after creating session B! RemainingTime before: {remainingTimeA1}");
 
             // Step 6: Validate session B also works
             var validationB = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenB).ValidateTokenAsync();
-            if (!validationB.Valid)
+            if (validationB.RemainingTime <= 0)
                 return TestResult.Failed("Session B validation failed");
 
             // Step 7: Create third session (login C)
@@ -560,9 +560,9 @@ public class AuthTestHandler : BaseHttpTestHandler
             var validationB2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(tokenB).ValidateTokenAsync();
             var validationC = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(loginResponseC.AccessToken).ValidateTokenAsync();
 
-            if (!validationA3.Valid || !validationB2.Valid || !validationC.Valid)
+            if (validationA3.RemainingTime <= 0 || validationB2.RemainingTime <= 0 || validationC.RemainingTime <= 0)
             {
-                return TestResult.Failed($"Session validation failed after 3 logins - A:{validationA3.Valid}, B:{validationB2.Valid}, C:{validationC.Valid}");
+                return TestResult.Failed($"Session validation failed after 3 logins - A:RT={validationA3.RemainingTime}, B:RT={validationB2.RemainingTime}, C:RT={validationC.RemainingTime}");
             }
 
             return TestResult.Successful($"All 3 sessions remain valid after multiple logins. RemainingTime: A={validationA3.RemainingTime}s, B={validationB2.RemainingTime}s, C={validationC.RemainingTime}s");
@@ -594,7 +594,7 @@ public class AuthTestHandler : BaseHttpTestHandler
             // Immediately validate
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
-            if (!validation.Valid)
+            if (validation.RemainingTime <= 0)
                 return TestResult.Failed($"Immediate validation failed! SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}");
 
             if (validation.RemainingTime <= 0)
@@ -628,7 +628,7 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             // Validate immediately
             var validation1 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
-            if (!validation1.Valid)
+            if (validation1.RemainingTime <= 0)
                 return TestResult.Failed("Immediate validation failed");
 
             var remainingTime1 = validation1.RemainingTime;
@@ -638,7 +638,7 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             // Validate again
             var validation2 = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
-            if (!validation2.Valid)
+            if (validation2.RemainingTime <= 0)
                 return TestResult.Failed($"Validation after 2s delay failed! RemainingTime before: {remainingTime1}");
 
             var remainingTime2 = validation2.RemainingTime;
@@ -681,10 +681,10 @@ public class AuthTestHandler : BaseHttpTestHandler
 
             var validations = await Task.WhenAll(validationTasks);
 
-            var invalidCount = validations.Count(v => !v.Valid);
+            var invalidCount = validations.Count(v => v.RemainingTime <= 0);
             if (invalidCount > 0)
             {
-                var details = string.Join(", ", validations.Select((v, i) => $"S{i}:{v.Valid}(RT:{v.RemainingTime})"));
+                var details = string.Join(", ", validations.Select((v, i) => $"S{i}:RT={v.RemainingTime}"));
                 return TestResult.Failed($"{invalidCount}/5 sessions invalid: {details}");
             }
 
@@ -718,8 +718,8 @@ public class AuthTestHandler : BaseHttpTestHandler
             // Validate and check RemainingTime
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
-            if (!validation.Valid)
-                return TestResult.Failed("Token validation returned Valid=false");
+            if (validation.RemainingTime <= 0)
+                return TestResult.Failed("Token validation returned RemainingTime<=0");
 
             // RemainingTime should be positive and reasonable (typically 60 minutes = 3600 seconds)
             if (validation.RemainingTime <= 0)

@@ -962,20 +962,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",
@@ -1290,20 +1303,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",
@@ -1580,20 +1606,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",
@@ -2095,20 +2134,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",
@@ -3062,20 +3114,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",
@@ -3239,20 +3304,33 @@ public partial class OrchestratorController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "name",
-                "services"
+                "name"
             ],
             "properties": {
                 "name": {
                     "type": "string",
                     "description": "Node/container name (e.g., \"bannou-main\", \"bannou-auth\")"
                 },
+                "layers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "AppFoundation",
+                            "GameFoundation",
+                            "AppFeatures",
+                            "GameFeatures",
+                            "Extensions"
+                        ]
+                    },
+                    "description": "Service layers to enable on this node. Listed layers are enabled,\nunlisted layers are disabled. When omitted, layer enablement is\ninherited from the container's environment.\nIndividual services in the 'services' list override layer settings.\n"
+                },
                 "services": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Services enabled on this node.\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\nExample: [\"account\", \"auth\", \"permission\"]\n"
+                    "description": "Individual services to enable on this node.\nWhen used with 'layers', these act as overrides for services\noutside the enabled layers.\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\ nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\n"
                 },
                 "replicas": {
                     "type": "integer",

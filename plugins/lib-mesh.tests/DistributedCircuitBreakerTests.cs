@@ -1,5 +1,6 @@
 #nullable enable
 
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh.Services;
 using BeyondImmersion.BannouService.Messaging;
@@ -52,6 +53,7 @@ public class DistributedCircuitBreakerTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
+            new NullTelemetryProvider(),
             threshold,
             resetTimeout ?? DefaultResetTimeout);
     }

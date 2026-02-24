@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Achievement;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(AchievementService))]
-public class AchievementServiceConfiguration : IServiceConfiguration
+public class AchievementServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Steam Web API key for achievement sync (optional - Steam sync disabled if not set)

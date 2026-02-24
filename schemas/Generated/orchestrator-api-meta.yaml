@@ -471,71 +471,79 @@ paths:
         \       \"description\": \"Infrastructure service configuration\"\n                }\n            }\n        },\n\
         \        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology with its assigned
         services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"name\",\n                \"services\"\n            ],\n           \
-        \ \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n    \
-        \            \"services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
-        \                 \"type\": \"string\"\n                    },\n                    \"description\": \"Services enabled
-        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permission\\\
-        \"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"integer\",\n      \
-        \              \"default\": 1,\n                    \"description\": \"Number of replicas for this node\"\n      \
-        \          },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n     \
-        \               \"description\": \"Resource limits and requests for this node\"\n                },\n            \
-        \    \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"Node-specific
-        environment overrides\"\n                },\n                \"meshEnabled\": {\n                    \"type\": \"\
-        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether mesh routing is
-        enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\",\n         \
-        \           \"description\": \"App-id override for mesh routing (default derives from node name)\"\n             \
-        \   }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container scheduling\"\
-        ,\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n            \
-        \    \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"InfrastructureConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for infrastructure services\",\n            \"properties\": {\n                \"redis\": {\n  \
-        \                  \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"Redis configuration\"\
-        \n                },\n                \"rabbitmq\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        ,\n                    \"description\": \"RabbitMQ configuration\"\n                },\n                \"mysql\"\
-        : {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"MySQL configuration\"\
-        \n                },\n                \"ingress\": {\n                    \"$ref\": \"#/$defs/IngressConfig\",\n \
-        \                   \"description\": \"Ingress/reverse proxy configuration\"\n                }\n            }\n \
-        \       },\n        \"InfraServiceConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Configuration for an infrastructure service\",\n            \"properties\"\
-        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
-        true,\n                    \"description\": \"Whether this infrastructure service is enabled\"\n                },\n\
-        \                \"image\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Docker image override\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests\"\n                },\n                \"environment\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Environment variables
-        for this service\"\n                },\n                \"volumes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Ingress/reverse proxy configuration\",\n            \"properties\": {\n                \"enabled\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether ingress is enabled\"\n                },\n                \"type\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"openresty\",\n                        \"nginx\"\
-        ,\n                        \"traefik\",\n                        \"none\"\n                    ],\n              \
-        \      \"default\": \"openresty\",\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n\
-        \                },\n                \"ports\": {\n                    \"description\": \"Port configuration for HTTP
-        and HTTPS traffic\",\n                    \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
-        for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\"\
-        : \"HTTP port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n           \
-        \     }\n            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n         \
-        \       \"compose\"\n            ],\n            \"description\": \"Container orchestration backend type.\\nPriority
-        order: kubernetes > portainer > swarm > compose\\n\"\n        }\n    }\n}"
+        \           \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n           \
+        \     \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"InfrastructureConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for infrastructure services\",\n            \"properties\"\
+        : {\n                \"redis\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n               \
+        \     \"description\": \"Redis configuration\"\n                },\n                \"rabbitmq\": {\n            \
+        \        \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"RabbitMQ configuration\"\
+        \n                },\n                \"mysql\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n\
+        \                    \"description\": \"MySQL configuration\"\n                },\n                \"ingress\": {\n\
+        \                    \"$ref\": \"#/$defs/IngressConfig\",\n                    \"description\": \"Ingress/reverse
+        proxy configuration\"\n                }\n            }\n        },\n        \"InfraServiceConfig\": {\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for an infrastructure service\",\n            \"properties\": {\n                \"enabled\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this infrastructure service is enabled\"\n                },\n                \"image\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Docker image override\"\n                },\n        \
+        \        \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\"\
+        : \"Resource limits and requests\"\n                },\n                \"environment\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Environment variables for this service\"\n      \
+        \          },\n                \"volumes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ingress/reverse proxy
+        configuration\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether ingress is enabled\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"openresty\",\n                        \"nginx\",\n                      \
+        \  \"traefik\",\n                        \"none\"\n                    ],\n                    \"default\": \"openresty\"\
+        ,\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n                },\n           \
+        \     \"ports\": {\n                    \"description\": \"Port configuration for HTTP and HTTPS traffic\",\n    \
+        \                \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration for ingress
+        specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\": \"HTTP
+        port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n                }\n\
+        \            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n                \"compose\"\
+        \n            ],\n            \"description\": \"Container orchestration backend type.\\nPriority order: kubernetes
+        > portainer > swarm > compose\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available deployment presets\",\n    \"description\": \"Returns all
         available deployment presets from the orchestrator's preset directory.\\nPresets define service combinations and configuration
         for specific use cases.\\n\\nBuilt-in presets:\\n- `local-development`: All services in single container with mesh
@@ -619,74 +627,82 @@ paths:
         ,\n                    \"description\": \"Infrastructure service configuration\"\n                }\n            }\n\
         \        },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology
         with its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"services\"\n            ],\n \
-        \           \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : false,\n            \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"InfrastructureConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for infrastructure services\",\n            \"properties\"\
+        : {\n                \"redis\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n               \
+        \     \"description\": \"Redis configuration\"\n                },\n                \"rabbitmq\": {\n            \
+        \        \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"RabbitMQ configuration\"\
+        \n                },\n                \"mysql\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n\
+        \                    \"description\": \"MySQL configuration\"\n                },\n                \"ingress\": {\n\
+        \                    \"$ref\": \"#/$defs/IngressConfig\",\n                    \"description\": \"Ingress/reverse
+        proxy configuration\"\n                }\n            }\n        },\n        \"InfraServiceConfig\": {\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for an infrastructure service\",\n            \"properties\": {\n                \"enabled\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this infrastructure service is enabled\"\n                },\n                \"image\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Docker image override\"\n                },\n        \
+        \        \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\"\
+        : \"Resource limits and requests\"\n                },\n                \"environment\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Environment variables for this service\"\n      \
+        \          },\n                \"volumes\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
-        node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
-        \           \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Node-specific environment overrides\"\n                },\n                \"meshEnabled\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        mesh routing is enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"App-id override for mesh routing (default derives from node name)\"\n  \
-        \              }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container
-        scheduling\",\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n       \
-        \         \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"InfrastructureConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for infrastructure services\",\n            \"properties\": {\n                \"redis\": {\n  \
-        \                  \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"Redis configuration\"\
-        \n                },\n                \"rabbitmq\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        ,\n                    \"description\": \"RabbitMQ configuration\"\n                },\n                \"mysql\"\
-        : {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"MySQL configuration\"\
-        \n                },\n                \"ingress\": {\n                    \"$ref\": \"#/$defs/IngressConfig\",\n \
-        \                   \"description\": \"Ingress/reverse proxy configuration\"\n                }\n            }\n \
-        \       },\n        \"InfraServiceConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Configuration for an infrastructure service\",\n            \"properties\"\
-        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
-        true,\n                    \"description\": \"Whether this infrastructure service is enabled\"\n                },\n\
-        \                \"image\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Docker image override\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests\"\n                },\n                \"environment\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Environment variables
-        for this service\"\n                },\n                \"volumes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Ingress/reverse proxy configuration\",\n            \"properties\": {\n                \"enabled\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether ingress is enabled\"\n                },\n                \"type\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"openresty\",\n                        \"nginx\"\
-        ,\n                        \"traefik\",\n                        \"none\"\n                    ],\n              \
-        \      \"default\": \"openresty\",\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n\
-        \                },\n                \"ports\": {\n                    \"description\": \"Port configuration for HTTP
-        and HTTPS traffic\",\n                    \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
-        for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\"\
-        : \"HTTP port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n           \
-        \     }\n            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n         \
-        \       \"compose\"\n            ],\n            \"description\": \"Container orchestration backend type.\\nPriority
-        order: kubernetes > portainer > swarm > compose\\n\"\n        },\n        \"DeploymentMode\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"force\",\n              \
-        \  \"clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful: Wait for connections to
-        drain\\n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n}"
+        Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ingress/reverse proxy
+        configuration\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether ingress is enabled\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"openresty\",\n                        \"nginx\",\n                      \
+        \  \"traefik\",\n                        \"none\"\n                    ],\n                    \"default\": \"openresty\"\
+        ,\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n                },\n           \
+        \     \"ports\": {\n                    \"description\": \"Port configuration for HTTP and HTTPS traffic\",\n    \
+        \                \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration for ingress
+        specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\": \"HTTP
+        port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n                }\n\
+        \            }\n        },\n        \"BackendType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"kubernetes\",\n                \"portainer\",\n                \"swarm\",\n                \"compose\"\
+        \n            ],\n            \"description\": \"Container orchestration backend type.\\nPriority order: kubernetes
+        > portainer > swarm > compose\\n\"\n        },\n        \"DeploymentMode\": {\n            \"type\": \"string\",\n\
+        \            \"enum\": [\n                \"graceful\",\n                \"force\",\n                \"clean\"\n \
+        \           ],\n            \"description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\n- force:
+        Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeployResponse\"\
         ,\n    \"$defs\": {\n        \"DeployResponse\": {\n            \"description\": \"Result of a deployment operation
         including status and deployed service information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -721,74 +737,82 @@ paths:
         \       \"description\": \"Infrastructure service configuration\"\n                }\n            }\n        },\n\
         \        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology with its assigned
         services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"required\": [\n                \"name\",\n                \"services\"\n            ],\n           \
-        \ \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n    \
-        \            \"services\": {\n                    \"type\": \"array\",\n                    \"items\": {\n       \
-        \                 \"type\": \"string\"\n                    },\n                    \"description\": \"Services enabled
-        on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\", \\\"permission\\\
-        \"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"integer\",\n      \
-        \              \"default\": 1,\n                    \"description\": \"Number of replicas for this node\"\n      \
-        \          },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n     \
-        \               \"description\": \"Resource limits and requests for this node\"\n                },\n            \
-        \    \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"Node-specific
-        environment overrides\"\n                },\n                \"meshEnabled\": {\n                    \"type\": \"\
-        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether mesh routing is
-        enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\",\n         \
-        \           \"description\": \"App-id override for mesh routing (default derives from node name)\"\n             \
-        \   }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container scheduling\"\
-        ,\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n            \
-        \    \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"InfrastructureConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for infrastructure services\",\n            \"properties\": {\n                \"redis\": {\n  \
-        \                  \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"Redis configuration\"\
-        \n                },\n                \"rabbitmq\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        ,\n                    \"description\": \"RabbitMQ configuration\"\n                },\n                \"mysql\"\
-        : {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"MySQL configuration\"\
-        \n                },\n                \"ingress\": {\n                    \"$ref\": \"#/$defs/IngressConfig\",\n \
-        \                   \"description\": \"Ingress/reverse proxy configuration\"\n                }\n            }\n \
-        \       },\n        \"InfraServiceConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Configuration for an infrastructure service\",\n            \"properties\"\
-        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
-        true,\n                    \"description\": \"Whether this infrastructure service is enabled\"\n                },\n\
-        \                \"image\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Docker image override\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests\"\n                },\n                \"environment\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Environment variables
-        for this service\"\n                },\n                \"volumes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Ingress/reverse proxy configuration\",\n            \"properties\": {\n                \"enabled\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether ingress is enabled\"\n                },\n                \"type\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"openresty\",\n                        \"nginx\"\
-        ,\n                        \"traefik\",\n                        \"none\"\n                    ],\n              \
-        \      \"default\": \"openresty\",\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n\
-        \                },\n                \"ports\": {\n                    \"description\": \"Port configuration for HTTP
-        and HTTPS traffic\",\n                    \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
-        for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\"\
-        : \"HTTP port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n           \
-        \     }\n            }\n        },\n        \"DeployedService\": {\n            \"description\": \"Status information
-        for a single deployed service instance\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"status\",\n                \"\
-        node\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\":
-        \"string\",\n                    \"description\": \"Service name\"\n                },\n                \"status\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"starting\"\
-        ,\n                        \"running\",\n                        \"healthy\",\n                        \"unhealthy\"\
+        \           \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n           \
+        \     \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"InfrastructureConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for infrastructure services\",\n            \"properties\"\
+        : {\n                \"redis\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n               \
+        \     \"description\": \"Redis configuration\"\n                },\n                \"rabbitmq\": {\n            \
+        \        \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"RabbitMQ configuration\"\
+        \n                },\n                \"mysql\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n\
+        \                    \"description\": \"MySQL configuration\"\n                },\n                \"ingress\": {\n\
+        \                    \"$ref\": \"#/$defs/IngressConfig\",\n                    \"description\": \"Ingress/reverse
+        proxy configuration\"\n                }\n            }\n        },\n        \"InfraServiceConfig\": {\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for an infrastructure service\",\n            \"properties\": {\n                \"enabled\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this infrastructure service is enabled\"\n                },\n                \"image\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Docker image override\"\n                },\n        \
+        \        \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\"\
+        : \"Resource limits and requests\"\n                },\n                \"environment\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Environment variables for this service\"\n      \
+        \          },\n                \"volumes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ingress/reverse proxy
+        configuration\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether ingress is enabled\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"openresty\",\n                        \"nginx\",\n                      \
+        \  \"traefik\",\n                        \"none\"\n                    ],\n                    \"default\": \"openresty\"\
+        ,\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n                },\n           \
+        \     \"ports\": {\n                    \"description\": \"Port configuration for HTTP and HTTPS traffic\",\n    \
+        \                \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration for ingress
+        specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\": \"HTTP
+        port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n                }\n\
+        \            }\n        },\n        \"DeployedService\": {\n            \"description\": \"Status information for
+        a single deployed service instance\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"name\",\n                \"status\",\n                \"node\"\n \
+        \           ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Service name\"\n                },\n                \"status\": {\n    \
+        \                \"type\": \"string\",\n                    \"enum\": [\n                        \"starting\",\n \
+        \                       \"running\",\n                        \"healthy\",\n                        \"unhealthy\"\
         ,\n                        \"stopped\"\n                    ],\n                    \"description\": \"Current status
         of the deployed service\"\n                },\n                \"node\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Node/container hosting this service\"\n                },\n            \
@@ -935,74 +959,82 @@ paths:
         ,\n                    \"description\": \"Infrastructure service configuration\"\n                }\n            }\n\
         \        },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology
         with its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"services\"\n            ],\n \
-        \           \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : false,\n            \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"InfrastructureConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for infrastructure services\",\n            \"properties\"\
+        : {\n                \"redis\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n               \
+        \     \"description\": \"Redis configuration\"\n                },\n                \"rabbitmq\": {\n            \
+        \        \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"RabbitMQ configuration\"\
+        \n                },\n                \"mysql\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n\
+        \                    \"description\": \"MySQL configuration\"\n                },\n                \"ingress\": {\n\
+        \                    \"$ref\": \"#/$defs/IngressConfig\",\n                    \"description\": \"Ingress/reverse
+        proxy configuration\"\n                }\n            }\n        },\n        \"InfraServiceConfig\": {\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for an infrastructure service\",\n            \"properties\": {\n                \"enabled\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this infrastructure service is enabled\"\n                },\n                \"image\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Docker image override\"\n                },\n        \
+        \        \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\"\
+        : \"Resource limits and requests\"\n                },\n                \"environment\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Environment variables for this service\"\n      \
+        \          },\n                \"volumes\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
-        node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
-        \           \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Node-specific environment overrides\"\n                },\n                \"meshEnabled\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        mesh routing is enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"App-id override for mesh routing (default derives from node name)\"\n  \
-        \              }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container
-        scheduling\",\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n       \
-        \         \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"InfrastructureConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for infrastructure services\",\n            \"properties\": {\n                \"redis\": {\n  \
-        \                  \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"Redis configuration\"\
-        \n                },\n                \"rabbitmq\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        ,\n                    \"description\": \"RabbitMQ configuration\"\n                },\n                \"mysql\"\
-        : {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"MySQL configuration\"\
-        \n                },\n                \"ingress\": {\n                    \"$ref\": \"#/$defs/IngressConfig\",\n \
-        \                   \"description\": \"Ingress/reverse proxy configuration\"\n                }\n            }\n \
-        \       },\n        \"InfraServiceConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Configuration for an infrastructure service\",\n            \"properties\"\
-        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
-        true,\n                    \"description\": \"Whether this infrastructure service is enabled\"\n                },\n\
-        \                \"image\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Docker image override\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests\"\n                },\n                \"environment\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Environment variables
-        for this service\"\n                },\n                \"volumes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Ingress/reverse proxy configuration\",\n            \"properties\": {\n                \"enabled\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether ingress is enabled\"\n                },\n                \"type\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"openresty\",\n                        \"nginx\"\
-        ,\n                        \"traefik\",\n                        \"none\"\n                    ],\n              \
-        \      \"default\": \"openresty\",\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n\
-        \                },\n                \"ports\": {\n                    \"description\": \"Port configuration for HTTP
-        and HTTPS traffic\",\n                    \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
-        for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\"\
-        : \"HTTP port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n           \
-        \     }\n            }\n        },\n        \"DeployedService\": {\n            \"description\": \"Status information
-        for a single deployed service instance\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"status\",\n                \"\
-        node\"\n            ],\n            \"properties\": {\n                \"name\": {\n                    \"type\":
-        \"string\",\n                    \"description\": \"Service name\"\n                },\n                \"status\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"starting\"\
-        ,\n                        \"running\",\n                        \"healthy\",\n                        \"unhealthy\"\
+        Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ingress/reverse proxy
+        configuration\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether ingress is enabled\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"openresty\",\n                        \"nginx\",\n                      \
+        \  \"traefik\",\n                        \"none\"\n                    ],\n                    \"default\": \"openresty\"\
+        ,\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n                },\n           \
+        \     \"ports\": {\n                    \"description\": \"Port configuration for HTTP and HTTPS traffic\",\n    \
+        \                \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration for ingress
+        specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\": \"HTTP
+        port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n                }\n\
+        \            }\n        },\n        \"DeployedService\": {\n            \"description\": \"Status information for
+        a single deployed service instance\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"name\",\n                \"status\",\n                \"node\"\n \
+        \           ],\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Service name\"\n                },\n                \"status\": {\n    \
+        \                \"type\": \"string\",\n                    \"enum\": [\n                        \"starting\",\n \
+        \                       \"running\",\n                        \"healthy\",\n                        \"unhealthy\"\
         ,\n                        \"stopped\"\n                    ],\n                    \"description\": \"Current status
         of the deployed service\"\n                },\n                \"node\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Node/container hosting this service\"\n                },\n            \
@@ -1341,34 +1373,42 @@ paths:
         ,\n                    \"description\": \"Full node config (for add-node action)\"\n                }\n          \
         \  }\n        },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology
         with its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"services\"\n            ],\n \
-        \           \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
-        node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
-        \           \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Node-specific environment overrides\"\n                },\n                \"meshEnabled\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        mesh routing is enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"App-id override for mesh routing (default derives from node name)\"\n  \
-        \              }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container
-        scheduling\",\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n       \
-        \         \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"DeploymentMode\": {\n \
-        \           \"type\": \"string\",\n            \"enum\": [\n                \"graceful\",\n                \"force\"\
-        ,\n                \"clean\"\n            ],\n            \"description\": \"Deployment mode:\\n- graceful: Wait for
-        connections to drain\\n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"DeploymentMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n   \
+        \             \"graceful\",\n                \"force\",\n                \"clean\"\n            ],\n            \"\
+        description\": \"Deployment mode:\\n- graceful: Wait for connections to drain\\n- force: Apply immediately\\n- clean:
+        Tear down and rebuild\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TopologyUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"TopologyUpdateResponse\": {\n            \"description\": \"Result of a topology update
         including applied changes and the new topology state\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1404,68 +1444,76 @@ paths:
         \                  \"description\": \"Infrastructure service configuration\"\n                }\n            }\n \
         \       },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology
         with its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"name\",\n                \"services\"\n            ],\n \
-        \           \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Node/container name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n           \
-        \     },\n                \"services\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : false,\n            \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"enum\": [\n                            \"AppFoundation\",\n                         \
+        \   \"GameFoundation\",\n                            \"AppFeatures\",\n                            \"GameFeatures\"\
+        ,\n                            \"Extensions\"\n                        ]\n                    },\n               \
+        \     \"description\": \"Service layers to enable on this node. Listed layers are enabled,\\nunlisted layers are disabled.
+        When omitted, layer enablement is\\ninherited from the container's environment.\\nIndividual services in the 'services'
+        list override layer settings.\\n\"\n                },\n                \"services\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        \ },\n                    \"description\": \"Individual services to enable on this node.\\nWhen used with 'layers',
+        these act as overrides for services\\noutside the enabled layers.\\nWhen used without 'layers', uses BANNOU_SERVICES_ENABLED=false\\
+        nwith per-service {SERVICE}_SERVICE_ENABLED=true pattern.\\n\"\n                },\n                \"replicas\":
+        {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\"\
+        : \"Number of replicas for this node\"\n                },\n                \"resources\": {\n                   \
+        \ \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\": \"Resource limits and requests for this
+        node\"\n                },\n                \"environment\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
+        \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
+        \              \"description\": \"Whether mesh routing is enabled\"\n                },\n                \"appId\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"App-id override for mesh routing
+        (default derives from node name)\"\n                }\n            }\n        },\n        \"ResourceLimits\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        Resource limits and requests for container scheduling\",\n            \"properties\": {\n                \"cpuLimit\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\"\
+        , \\\"2\\\")\"\n                },\n                \"memoryLimit\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Memory limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n    \
+        \            \"cpuRequest\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        CPU request (Kubernetes)\"\n                },\n                \"memoryRequest\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Memory request (Kubernetes)\"\n                }\n         \
+        \   }\n        },\n        \"InfrastructureConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for infrastructure services\",\n            \"properties\"\
+        : {\n                \"redis\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n               \
+        \     \"description\": \"Redis configuration\"\n                },\n                \"rabbitmq\": {\n            \
+        \        \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"RabbitMQ configuration\"\
+        \n                },\n                \"mysql\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n\
+        \                    \"description\": \"MySQL configuration\"\n                },\n                \"ingress\": {\n\
+        \                    \"$ref\": \"#/$defs/IngressConfig\",\n                    \"description\": \"Ingress/reverse
+        proxy configuration\"\n                }\n            }\n        },\n        \"InfraServiceConfig\": {\n         \
+        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Configuration
+        for an infrastructure service\",\n            \"properties\": {\n                \"enabled\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
+        this infrastructure service is enabled\"\n                },\n                \"image\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Docker image override\"\n                },\n        \
+        \        \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"description\"\
+        : \"Resource limits and requests\"\n                },\n                \"environment\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Environment variables for this service\"\n      \
+        \          },\n                \"volumes\": {\n                    \"type\": \"array\",\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Services enabled on this node.\\nUses {SERVICE}_SERVICE_ENABLED=true pattern.\\nExample: [\\\"account\\\", \\\"auth\\\
-        \", \\\"permission\\\"]\\n\"\n                },\n                \"replicas\": {\n                    \"type\": \"\
-        integer\",\n                    \"default\": 1,\n                    \"description\": \"Number of replicas for this
-        node\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n     \
-        \           \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Node-specific environment overrides\"\n                },\n                \"meshEnabled\": {\n                  \
-        \  \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether
-        mesh routing is enabled\"\n                },\n                \"appId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"App-id override for mesh routing (default derives from node name)\"\n  \
-        \              }\n            }\n        },\n        \"ResourceLimits\": {\n            \"type\": \"object\",\n  \
-        \          \"additionalProperties\": false,\n            \"description\": \"Resource limits and requests for container
-        scheduling\",\n            \"properties\": {\n                \"cpuLimit\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"CPU limit (e.g., \\\"0.5\\\", \\\"2\\\")\"\n                },\n       \
-        \         \"memoryLimit\": {\n                    \"type\": \"string\",\n                    \"description\": \"Memory
-        limit (e.g., \\\"512m\\\", \\\"2g\\\")\"\n                },\n                \"cpuRequest\": {\n                \
-        \    \"type\": \"string\",\n                    \"description\": \"CPU request (Kubernetes)\"\n                },\n\
-        \                \"memoryRequest\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Memory request (Kubernetes)\"\n                }\n            }\n        },\n        \"InfrastructureConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Configuration for infrastructure services\",\n            \"properties\": {\n                \"redis\": {\n  \
-        \                  \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"Redis configuration\"\
-        \n                },\n                \"rabbitmq\": {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\"\
-        ,\n                    \"description\": \"RabbitMQ configuration\"\n                },\n                \"mysql\"\
-        : {\n                    \"$ref\": \"#/$defs/InfraServiceConfig\",\n                    \"description\": \"MySQL configuration\"\
-        \n                },\n                \"ingress\": {\n                    \"$ref\": \"#/$defs/IngressConfig\",\n \
-        \                   \"description\": \"Ingress/reverse proxy configuration\"\n                }\n            }\n \
-        \       },\n        \"InfraServiceConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Configuration for an infrastructure service\",\n            \"properties\"\
-        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
-        true,\n                    \"description\": \"Whether this infrastructure service is enabled\"\n                },\n\
-        \                \"image\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Docker image override\"\n                },\n                \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\"\
-        ,\n                    \"description\": \"Resource limits and requests\"\n                },\n                \"environment\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                \
-        \        \"type\": \"string\"\n                    },\n                    \"description\": \"Environment variables
-        for this service\"\n                },\n                \"volumes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"description\": \"Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Ingress/reverse proxy configuration\",\n            \"properties\": {\n                \"enabled\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Whether ingress is enabled\"\n                },\n                \"type\": {\n                    \"type\": \"\
-        string\",\n                    \"enum\": [\n                        \"openresty\",\n                        \"nginx\"\
-        ,\n                        \"traefik\",\n                        \"none\"\n                    ],\n              \
-        \      \"default\": \"openresty\",\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n\
-        \                },\n                \"ports\": {\n                    \"description\": \"Port configuration for HTTP
-        and HTTPS traffic\",\n                    \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration
-        for ingress specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n\
-        \                    \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\"\
-        : \"HTTP port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n           \
-        \     }\n            }\n        }\n    }\n}"
+        Volume mounts\"\n                }\n            }\n        },\n        \"IngressConfig\": {\n            \"type\"\
+        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Ingress/reverse proxy
+        configuration\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether ingress is enabled\"\
+        \n                },\n                \"type\": {\n                    \"type\": \"string\",\n                   \
+        \ \"enum\": [\n                        \"openresty\",\n                        \"nginx\",\n                      \
+        \  \"traefik\",\n                        \"none\"\n                    ],\n                    \"default\": \"openresty\"\
+        ,\n                    \"description\": \"Type of ingress/reverse proxy to use\"\n                },\n           \
+        \     \"ports\": {\n                    \"description\": \"Port configuration for HTTP and HTTPS traffic\",\n    \
+        \                \"$ref\": \"#/$defs/Ports\"\n                },\n                \"ssl\": {\n                   \
+        \ \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        SSL/TLS is enabled\"\n                }\n            }\n        },\n        \"Ports\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Port configuration for ingress
+        specifying HTTP and HTTPS port numbers\",\n            \"properties\": {\n                \"http\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 80,\n                    \"description\": \"HTTP
+        port number\"\n                },\n                \"https\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 443,\n                    \"description\": \"HTTPS port number\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update service topology without full redeploy\",\n    \"description\":
         \"Changes which services run on which containers without tearing down\\nthe entire environment. Enables live topology
         changes.\\n\\n**Use Cases**:\\n- Move auth service to dedicated container for scaling\\n- Consolidate services during
@@ -2607,19 +2655,35 @@ components:
       additionalProperties: false
       required:
       - name
-      - services
       properties:
         name:
           type: string
           description: Node/container name (e.g., "bannou-main", "bannou-auth")
+        layers:
+          type: array
+          items:
+            type: string
+            enum:
+            - AppFoundation
+            - GameFoundation
+            - AppFeatures
+            - GameFeatures
+            - Extensions
+          description: |
+            Service layers to enable on this node. Listed layers are enabled,
+            unlisted layers are disabled. When omitted, layer enablement is
+            inherited from the container's environment.
+            Individual services in the 'services' list override layer settings.
         services:
           type: array
           items:
             type: string
           description: |
-            Services enabled on this node.
-            Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            Example: ["account", "auth", "permission"]
+            Individual services to enable on this node.
+            When used with 'layers', these act as overrides for services
+            outside the enabled layers.
+            When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
+            with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
         replicas:
           type: integer
           default: 1

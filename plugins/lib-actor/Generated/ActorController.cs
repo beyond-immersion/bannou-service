@@ -193,7 +193,7 @@ public interface IActorController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <returns>Encounter started successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update the phase of an active encounter
@@ -914,7 +914,7 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Encounter started successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("actor/encounter/start")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<StartEncounterResponse>> StartEncounter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -925,8 +925,8 @@ public partial class ActorController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var statusCode = await _implementation.StartEncounterAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode);
+            var (statusCode, result) = await _implementation.StartEncounterAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {

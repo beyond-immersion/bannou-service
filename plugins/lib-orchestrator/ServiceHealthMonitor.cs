@@ -30,8 +30,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private long _mappingsVersion = 0;
 
     // Instance ID for this orchestrator (for source tracking in events)
-    // Uses the shared Program.ServiceGUID for consistent identification
-    private Guid _instanceId => Program.ServiceGUID;
+    private readonly Guid _instanceId;
 
     // Periodic publication timer
     private Timer? _fullMappingsTimer;
@@ -47,7 +46,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         AppConfiguration appConfiguration,
         IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
-        IControlPlaneServiceProvider controlPlaneProvider)
+        IControlPlaneServiceProvider controlPlaneProvider,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _logger = logger;
         _configuration = configuration;
@@ -55,6 +55,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         _stateManager = stateManager;
         _eventManager = eventManager;
         _controlPlaneProvider = controlPlaneProvider;
+        _instanceId = instanceIdentifier.InstanceId;
 
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;

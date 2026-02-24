@@ -43,11 +43,13 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
 
         // Create a real HeartbeatEmitter (it's a sealed class, not an interface)
         var heartbeatLoggerMock = new Mock<ILogger<HeartbeatEmitter>>();
+        var telemetryProviderMock = new Mock<ITelemetryProvider>();
         _heartbeatEmitter = new HeartbeatEmitter(
             _messageBusMock.Object,
             _actorRegistryMock.Object,
             _configuration,
-            heartbeatLoggerMock.Object);
+            heartbeatLoggerMock.Object,
+            telemetryProviderMock.Object);
     }
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -60,7 +62,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
             worker.Dispose();
         }
         _createdWorkers.Clear();
-        _heartbeatEmitter.Dispose();
+        await _heartbeatEmitter.DisposeAsync();
     }
 
     private ActorPoolNodeWorker CreateWorker()
@@ -72,7 +74,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
             _actorRunnerFactoryMock.Object,
             _heartbeatEmitter,
             _configuration,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            new Mock<ITelemetryProvider>().Object);
         _createdWorkers.Add(worker);
         return worker;
     }

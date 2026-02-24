@@ -456,7 +456,7 @@ public class TappedMessageEnvelopeTests
         Assert.Equal(string.Empty, envelope.SourceExchange);
         Assert.Equal(string.Empty, envelope.DestinationExchange);
         Assert.Equal(string.Empty, envelope.DestinationRoutingKey);
-        Assert.Equal("fanout", envelope.DestinationExchangeType);
+        Assert.Equal(TapExchangeType.Fanout, envelope.DestinationExchangeType);
     }
 
     [Fact]
@@ -475,7 +475,7 @@ public class TappedMessageEnvelopeTests
             "source-exchange",
             "dest-exchange",
             "dest-routing-key",
-            "direct",
+            TapExchangeType.Direct,
             tapCreatedAt);
 
         // Assert
@@ -490,7 +490,7 @@ public class TappedMessageEnvelopeTests
         Assert.Equal("source-exchange", tapped.SourceExchange);
         Assert.Equal("dest-exchange", tapped.DestinationExchange);
         Assert.Equal("dest-routing-key", tapped.DestinationRoutingKey);
-        Assert.Equal("direct", tapped.DestinationExchangeType);
+        Assert.Equal(TapExchangeType.Direct, tapped.DestinationExchangeType);
         Assert.Equal(tapCreatedAt, tapped.TapCreatedAt);
     }
 
@@ -510,7 +510,7 @@ public class TappedMessageEnvelopeTests
             "source-exchange",
             "dest-exchange",
             "dest-key",
-            "fanout",
+            TapExchangeType.Fanout,
             tapCreatedAt);
 
         // Assert
@@ -522,7 +522,7 @@ public class TappedMessageEnvelopeTests
         Assert.Equal("source-exchange", envelope.SourceExchange);
         Assert.Equal("dest-exchange", envelope.DestinationExchange);
         Assert.Equal("dest-key", envelope.DestinationRoutingKey);
-        Assert.Equal("fanout", envelope.DestinationExchangeType);
+        Assert.Equal(TapExchangeType.Fanout, envelope.DestinationExchangeType);
     }
 }
 

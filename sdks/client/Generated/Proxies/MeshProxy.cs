@@ -85,15 +85,17 @@ public sealed class MeshProxy
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task that completes when the event is sent.</returns>
-    public Task DeregisterEndpointEventAsync(
+    /// <returns>ApiResponse containing DeregisterEndpointResponse on success.</returns>
+    public Task<ApiResponse<DeregisterEndpointResponse>> DeregisterEndpointAsync(
         DeregisterEndpointRequest request,
         ushort channel = 0,
+        TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.SendEventAsync<DeregisterEndpointRequest>(
-            "/mesh/deregister", request, channel, cancellationToken);
+        return _client.InvokeAsync<DeregisterEndpointRequest, DeregisterEndpointResponse>(
+            "/mesh/deregister", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

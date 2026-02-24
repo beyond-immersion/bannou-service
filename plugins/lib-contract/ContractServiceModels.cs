@@ -82,7 +82,7 @@ internal class ContractTermsModel
     public bool? Exclusivity { get; set; }
     public bool? NonCompete { get; set; }
     public bool? TimeCommitment { get; set; }
-    public string? TimeCommitmentType { get; set; }
+    public TimeCommitmentType? TimeCommitmentType { get; set; }
     public List<ContractClauseDefinition>? Clauses { get; set; }
     public Dictionary<string, object>? CustomTerms { get; set; }
 }
@@ -124,6 +124,7 @@ internal class ContractInstanceModel
     public Guid ContractId { get; set; }
     public Guid TemplateId { get; set; }
     public string TemplateCode { get; set; } = string.Empty;
+    public string? TemplateName { get; set; }
     public ContractStatus Status { get; set; } = ContractStatus.Draft;
     public List<ContractPartyModel>? Parties { get; set; }
     public ContractTermsModel? Terms { get; set; }
@@ -152,6 +153,11 @@ internal class ContractInstanceModel
     public DateTimeOffset? ExecutedAt { get; set; }
     public string? ExecutionIdempotencyKey { get; set; }
     public List<DistributionRecordModel>? ExecutionDistributions { get; set; }
+
+    // Payment schedule tracking
+    public DateTimeOffset? NextPaymentDue { get; set; }
+    public DateTimeOffset? LastPaymentAt { get; set; }
+    public int PaymentsDuePublished { get; set; }
 }
 
 /// <summary>
@@ -202,8 +208,8 @@ internal class BreachModel
 {
     public Guid BreachId { get; set; }
     public Guid ContractId { get; set; }
-    public Guid BreachingEntityId { get; set; }
-    public EntityType BreachingEntityType { get; set; }
+    public Guid? BreachingEntityId { get; set; }
+    public EntityType? BreachingEntityType { get; set; }
     public BreachType BreachType { get; set; }
     public string? BreachedTermOrMilestone { get; set; }
     public string? Description { get; set; }

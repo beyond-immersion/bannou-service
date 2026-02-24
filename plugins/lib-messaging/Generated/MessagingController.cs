@@ -54,7 +54,7 @@ public interface IMessagingController : BeyondImmersion.BannouService.Controller
     /// </summary>
 
 
-    /// <returns>Subscription removed</returns>
+    /// <returns>Subscription removed successfully</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscriptionAsync(RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
@@ -211,7 +211,7 @@ public partial class MessagingController : Microsoft.AspNetCore.Mvc.ControllerBa
     /// <summary>
     /// Remove a dynamic subscription
     /// </summary>
-    /// <returns>Subscription removed</returns>
+    /// <returns>Subscription removed successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("messaging/unsubscribe")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> RemoveSubscription([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] RemoveSubscriptionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))

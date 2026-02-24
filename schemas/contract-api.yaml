@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Contract Service API
   version: 1.0.0
@@ -1065,6 +1065,28 @@ components:
       - shallow
       - deep
 
+    PreboundApiExecutionMode:
+      type: string
+      description: How to execute a prebound API call
+      enum:
+      - sync
+      - async
+      - fire_and_forget
+
+    ValidationOutcome:
+      type: string
+      description: Outcome of prebound API response validation
+      enum:
+      - permanent_failure
+      - transient_failure
+
+    TimeCommitmentType:
+      type: string
+      description: Type of time commitment for scheduling constraints
+      enum:
+      - exclusive
+      - partial
+
     # =========================================================================
     # Template Models
     # =========================================================================
@@ -1082,11 +1104,13 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           maxLength: 64
           pattern: "^[a-z0-9_]+$"
           description: Unique code for this template (lowercase, underscores)
         name:
           type: string
+          minLength: 1
           maxLength: 200
           description: Human-readable template name
         description:
@@ -1125,8 +1149,10 @@ components:
           nullable: true
           description: Milestone definitions for this contract type
         defaultEnforcementMode:
-          $ref: '#/components/schemas/EnforcementMode'
-          description: Default enforcement mode for instances
+          allOf:
+            - $ref: '#/components/schemas/EnforcementMode'
+          nullable: true
+          description: Default enforcement mode for instances (uses service default if not specified)
         transferable:
           type: boolean
           default: false
@@ -1236,6 +1262,7 @@ components:
       - maxParties
       - partyRoles
       - defaultEnforcementMode
+      - transferable
       - isActive
       - createdAt
       properties:
@@ -1499,6 +1526,7 @@ components:
       required:
       - contractId
       - templateId
+      - templateCode
       - status
       - parties
       - createdAt
@@ -1657,6 +1685,7 @@ components:
       properties:
         role:
           type: string
+          minLength: 1
           maxLength: 64
           description: Role identifier (employer, employee, buyer, seller, etc.)
         minCount:
@@ -1794,9 +1823,10 @@ components:
           nullable: true
           description: Whether this contract has a time commitment clause
         timeCommitmentType:
-          type: string
+          allOf:
+            - $ref: '#/components/schemas/TimeCommitmentType'
           nullable: true
-          description: Type of time commitment (exclusive or partial)
+          description: Type of time commitment for scheduling constraints
         clauses:
           type: array
           nullable: true
@@ -2162,8 +2192,6 @@ components:
       required:
       - breachId
       - contractId
-      - breachingEntityId
-      - breachingEntityType
       - breachType
       - status
       - detectedAt
@@ -2179,10 +2207,13 @@ components:
         breachingEntityId:
           type: string
           format: uuid
-          description: Entity that breached
+          nullable: true
+          description: Entity that breached (null for system-initiated breaches such as deadline enforcement)
         breachingEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
-          description: Type of breaching entity
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Type of breaching entity (null for system-initiated breaches)
         breachType:
           $ref: '#/components/schemas/BreachType'
           description: Type of breach
@@ -2389,7 +2420,6 @@ components:
       - contractId
       - templateCode
       - status
-      - role
       properties:
         contractId:
           type: string
@@ -2407,7 +2437,8 @@ components:
           description: Current status
         role:
           type: string
-          description: Entity's role in contract
+          nullable: true
+          description: Entity's role in contract (null if party record not found due to data inconsistency)
         effectiveUntil:
           type: string
           format: date-time
@@ -2441,8 +2472,8 @@ components:
           nullable: true
           description: Human-readable description
         executionMode:
-          type: string
-          enum: [sync, async, fire_and_forget]
+          allOf:
+            - $ref: '#/components/schemas/PreboundApiExecutionMode'
           default: sync
           description: How to execute the API call
         responseValidation:
@@ -2452,33 +2483,24 @@ components:
 
     ResponseValidation:
       type: object
-      description: |
-        Validation rules for API responses with three-outcome model.
-        Used by lib-contract to validate clause conditions without
-        understanding the specific API semantics.
+      description: Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)
       additionalProperties: false
       properties:
         successConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that must ALL pass for success.
-            If any fail, checks permanent failure conditions.
+          description: Conditions that must ALL pass for success; if any fail, checks permanent failure conditions
         permanentFailureConditions:
           type: array
           items:
             $ref: '#/components/schemas/ValidationCondition'
-          description: |
-            Conditions that indicate permanent failure (clause violated).
-            Checked when success conditions fail.
+          description: Conditions that indicate permanent failure (clause violated); checked when success conditions fail
         transientFailureStatusCodes:
           type: array
           items:
             type: integer
-          description: |
-            HTTP status codes that indicate transient failure (retry later).
-            Default: [408, 429, 502, 503, 504]
+          description: HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)
 
     ValidationCondition:
       type: object
@@ -2494,16 +2516,11 @@ components:
         jsonPath:
           type: string
           nullable: true
-          description: |
-            JsonPath expression to extract value from response.
-            Required for jsonPathEquals, jsonPathExists, jsonPathNotExists.
-            Example: "$.balance", "$.items[0].status"
+          description: JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. "$.balance")
         expectedValue:
           type: string
           nullable: true
-          description: |
-            Expected value for comparison conditions.
-            Type coercion applied: "true"/"false" for booleans, numeric strings for numbers.
+          description: Expected value for comparison conditions with type coercion ("true"/"false" for booleans, numeric strings for numbers)
         operator:
           $ref: '#/components/schemas/ComparisonOperator'
           nullable: true
@@ -2571,15 +2588,12 @@ components:
 
     LockContractResponse:
       type: object
-      description: Response from locking a contract
+      description: Response from locking a contract. HTTP 200 confirms the lock was acquired.
       additionalProperties: false
       required:
-      - locked
       - contractId
+      - guardianId
       properties:
-        locked:
-          type: boolean
-          description: Whether the contract was locked
         contractId:
           type: string
           format: uuid
@@ -2588,10 +2602,6 @@ components:
           type: string
           format: uuid
           description: Guardian entity ID
-        lockedAt:
-          type: string
-          format: date-time
-          description: When the contract was locked
 
     UnlockContractRequest:
       type: object
@@ -2622,15 +2632,11 @@ components:
 
     UnlockContractResponse:
       type: object
-      description: Response from unlocking a contract
+      description: Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.
       additionalProperties: false
       required:
-      - unlocked
       - contractId
       properties:
-        unlocked:
-          type: boolean
-          description: Whether the contract was unlocked
         contractId:
           type: string
           format: uuid
@@ -2683,15 +2689,14 @@ components:
 
     TransferContractPartyResponse:
       type: object
-      description: Response from transferring a party role
+      description: Response from transferring a party role. HTTP 200 confirms the transfer succeeded.
       additionalProperties: false
       required:
-      - transferred
       - contractId
+      - role
+      - fromEntityId
+      - toEntityId
       properties:
-        transferred:
-          type: boolean
-          description: Whether the transfer was successful
         contractId:
           type: string
           format: uuid
@@ -2777,15 +2782,11 @@ components:
 
     RegisterClauseTypeResponse:
       type: object
-      description: Response from registering a clause type
+      description: Response from registering a clause type. HTTP 200 confirms registration succeeded.
       additionalProperties: false
       required:
-      - registered
       - typeCode
       properties:
-        registered:
-          type: boolean
-          description: Whether the type was registered
         typeCode:
           type: string
           description: The registered type code
@@ -2868,21 +2869,16 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: |
-            Key-value pairs for template substitution.
-            Keys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.
+          description: Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)
 
     SetTemplateValuesResponse:
       type: object
-      description: Response from setting template values
+      description: Response from setting template values. HTTP 200 confirms values were set.
       additionalProperties: false
       required:
-      - updated
       - contractId
+      - valueCount
       properties:
-        updated:
-          type: boolean
-          description: Whether values were updated
         contractId:
           type: string
           format: uuid
@@ -3006,11 +3002,7 @@ components:
 
     ClauseDistributionResult:
       type: object
-      description: |
-        Outcome of a single clause distribution during contract execution.
-        Used in ContractExecutedEvent to provide per-clause success/failure details.
-        Deliberately excludes wallet/container IDs - consumers tracking these should
-        correlate via clauseId to their own records.
+      description: Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId
       additionalProperties: false
       required:
       - clauseId
@@ -3028,9 +3020,7 @@ components:
           description: Type of clause (e.g., currency_transfer, item_transfer, fee)
         assetType:
           type: string
-          description: |
-            Descriptive type of asset involved (e.g., "currency", "item").
-            Provides human-readable context for what was transferred.
+          description: Descriptive type of asset involved (e.g. "currency", "item") providing human-readable context
         amount:
           type: number
           description: Quantity transferred (currency amount, item count, etc.)
@@ -3044,18 +3034,15 @@ components:
 
     ExecuteContractResponse:
       type: object
-      description: Response from executing a contract
+      description: Response from executing a contract. HTTP 200 confirms execution completed.
       additionalProperties: false
       required:
-      - executed
       - alreadyExecuted
+      - contractId
       properties:
-        executed:
-          type: boolean
-          description: Whether execution was successful
         alreadyExecuted:
           type: boolean
-          description: True if this was a repeat call (idempotency)
+          description: True if this was a repeat call (idempotency). When false, this is a fresh execution.
         contractId:
           type: string
           format: uuid
@@ -3066,11 +3053,6 @@ components:
             $ref: '#/components/schemas/ClauseDistributionResult'
           nullable: true
           description: Per-clause distribution outcomes with success/failure details
-        executedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When execution occurred
 
 # Service Registration Information
 x-service-registration:

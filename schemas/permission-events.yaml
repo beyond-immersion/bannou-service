@@ -12,18 +12,13 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    # Session updates from Auth service (role/authorization changes)
+    # Session updates from Auth service (role/authorization changes).
+    # This is the only remaining event subscription. Session connected/disconnected
+    # are now handled via ISessionActivityListener DI listener pattern (GH#392)
+    # since Connect and Permission are both L1 AppFoundation (always co-located).
     - topic: session.updated
       event: SessionUpdatedEvent
       handler: HandleSessionUpdated
-    # Session connected - triggers initial capability delivery
-    - topic: session.connected
-      event: SessionConnectedEvent
-      handler: HandleSessionConnected
-    # Session disconnected - removes from activeConnections
-    - topic: session.disconnected
-      event: SessionDisconnectedEvent
-      handler: HandleSessionDisconnected
   x-event-publications:
     # Permission capability updates sent to Connect service
     - topic: permission.capability-update
@@ -38,30 +33,39 @@ components:
     # are defined in their canonical locations and accessed via BeyondImmersion.BannouService.Events namespace
 
     PermissionCapabilityUpdate:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: |
         Event published to specific Connect service instances (CONNECT_{session_id} channel).
         Contains compiled permission capabilities for a session with optional delta updates.
       required:
+        - eventName
+        - eventId
+        - timestamp
         - sessionId
         - version
         - updateType
       properties:
+        eventName:
+          type: string
+          default: "permission.capability-update"
+          description: Fixed event type identifier
         sessionId:
           type: string
           format: uuid
           description: Session ID that had capability changes
         version:
           type: integer
+          minimum: 0
           description: New capability version number (increments on each update)
         updateType:
-          type: string
-          enum: [full, delta]
-          description: Type of update - full capabilities or delta changes
+          $ref: 'permission-api.yaml#/components/schemas/CapabilityUpdateType'
+          description: Type of update — full capabilities or delta changes
         fullCapabilities:
           type: object
-          nullable: true  # NRT: Optional property MUST be nullable
+          nullable: true
           additionalProperties:
             type: array
             items:
@@ -69,10 +73,9 @@ components:
           description: |
             Complete capability map (for full updates or initial connection).
             Key: service_id, Value: array of allowed endpoints.
-            Example: {"account": ["GET:/account", "PUT:/account/{id}"]}
         addedCapabilities:
           type: object
-          nullable: true  # NRT: Optional property MUST be nullable
+          nullable: true
           additionalProperties:
             type: array
             items:
@@ -82,7 +85,7 @@ components:
             Same format as fullCapabilities.
         removedCapabilities:
           type: object
-          nullable: true  # NRT: Optional property MUST be nullable
+          nullable: true
           additionalProperties:
             type: array
             items:
@@ -93,21 +96,15 @@ components:
         generatedAt:
           type: string
           format: date-time
-          nullable: true  # NRT: Optional property MUST be nullable
+          nullable: true
           description: When these capabilities were compiled
         expiresAt:
           type: string
           format: date-time
-          nullable: true  # NRT: Optional property MUST be nullable
+          nullable: true
           description: When these capabilities expire and need refresh
         reason:
-          type: string
-          nullable: true  # NRT: Optional property MUST be nullable
-          enum:
-            - session_created
-            - session_state_changed
-            - role_changed
-            - service_registered
-            - manual_refresh
+          $ref: 'permission-api.yaml#/components/schemas/CapabilityUpdateReason'
+          nullable: true
           description: Reason for the capability update
 

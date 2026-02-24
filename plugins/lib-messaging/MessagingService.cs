@@ -319,7 +319,6 @@ public partial class MessagingService : IMessagingService, IAsyncDisposable
                 .Select(t => new TopicInfo
                 {
                     Name = t,
-                    MessageCount = 0, // Would require RabbitMQ management API to get real counts
                     ConsumerCount = _activeSubscriptions.Values.Count(entry => entry.Topic == t)
                 })
                 .ToList();

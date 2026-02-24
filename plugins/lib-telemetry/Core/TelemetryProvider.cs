@@ -187,13 +187,11 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
 
         return _counters.GetOrAdd(key, _ =>
         {
-            var meter = GetMeter(componentName);
-            if (meter == null)
-            {
-                // This shouldn't happen since we check MetricsEnabled above,
-                // but handle gracefully
-                return null!;
-            }
+            // MetricsEnabled is checked by callers (RecordCounter) before reaching here,
+            // so GetMeter will always return non-null. Throw on invariant violation.
+            var meter = GetMeter(componentName)
+                ?? throw new InvalidOperationException(
+                    $"Meter for {componentName} unavailable despite MetricsEnabled being true");
 
             return meter.CreateCounter<long>(
                 metricName,
@@ -208,11 +206,11 @@ public sealed class TelemetryProvider : ITelemetryProvider, IDisposable
 
         return _histograms.GetOrAdd(key, _ =>
         {
-            var meter = GetMeter(componentName);
-            if (meter == null)
-            {
-                return null!;
-            }
+            // MetricsEnabled is checked by callers (RecordHistogram) before reaching here,
+            // so GetMeter will always return non-null. Throw on invariant violation.
+            var meter = GetMeter(componentName)
+                ?? throw new InvalidOperationException(
+                    $"Meter for {componentName} unavailable despite MetricsEnabled being true");
 
             return meter.CreateHistogram<double>(
                 metricName,

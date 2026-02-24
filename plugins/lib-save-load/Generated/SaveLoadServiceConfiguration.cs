@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(SaveLoadService))]
-public class SaveLoadServiceConfiguration : IServiceConfiguration
+public class SaveLoadServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum size for a single save in bytes (default 100MB)

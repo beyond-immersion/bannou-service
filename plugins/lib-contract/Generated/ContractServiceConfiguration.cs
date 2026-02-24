@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Contract;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(ContractService))]
-public class ContractServiceConfiguration : IServiceConfiguration
+public class ContractServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default enforcement mode for contracts
@@ -63,54 +61,63 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// Default number of days for parties to consent before proposal expires
     /// Environment variable: CONTRACT_DEFAULT_CONSENT_TIMEOUT_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
     public int DefaultConsentTimeoutDays { get; set; } = 7;
 
     /// <summary>
     /// Maximum number of parties allowed in a single contract
     /// Environment variable: CONTRACT_MAX_PARTIES_PER_CONTRACT
     /// </summary>
+    [ConfigRange(Minimum = 2, Maximum = 100)]
     public int MaxPartiesPerContract { get; set; } = 20;
 
     /// <summary>
     /// Maximum number of milestones allowed in a template
     /// Environment variable: CONTRACT_MAX_MILESTONES_PER_TEMPLATE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 500)]
     public int MaxMilestonesPerTemplate { get; set; } = 50;
 
     /// <summary>
     /// Maximum number of prebound APIs per milestone
     /// Environment variable: CONTRACT_MAX_PREBOUND_APIS_PER_MILESTONE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
     public int MaxPreboundApisPerMilestone { get; set; } = 10;
 
     /// <summary>
     /// Maximum active contracts per entity (0 for unlimited)
     /// Environment variable: CONTRACT_MAX_ACTIVE_CONTRACTS_PER_ENTITY
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 10000)]
     public int MaxActiveContractsPerEntity { get; set; } = 100;
 
     /// <summary>
     /// Number of prebound APIs to execute in parallel
     /// Environment variable: CONTRACT_PREBOUND_API_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 50)]
     public int PreboundApiBatchSize { get; set; } = 10;
 
     /// <summary>
     /// Timeout for individual prebound API calls in milliseconds
     /// Environment variable: CONTRACT_PREBOUND_API_TIMEOUT_MS
     /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 300000)]
     public int PreboundApiTimeoutMs { get; set; } = 30000;
 
     /// <summary>
     /// Lock timeout in seconds for contract-level distributed locks
     /// Environment variable: CONTRACT_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 600)]
     public int ContractLockTimeoutSeconds { get; set; } = 60;
 
     /// <summary>
     /// Lock timeout in seconds for index update distributed locks
     /// Environment variable: CONTRACT_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 120)]
     public int IndexLockTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
@@ -129,18 +136,21 @@ public class ContractServiceConfiguration : IServiceConfiguration
     /// TTL in seconds for idempotency key storage (default 24 hours)
     /// Environment variable: CONTRACT_IDEMPOTENCY_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 60, Maximum = 604800)]
     public int IdempotencyTtlSeconds { get; set; } = 86400;
 
     /// <summary>
-    /// Interval between milestone deadline checks in seconds (default 5 minutes)
+    /// Interval between contract expiration checks in seconds, covering both effectiveUntil contract expiration and milestone deadline enforcement (default 5 minutes)
     /// Environment variable: CONTRACT_MILESTONE_DEADLINE_CHECK_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int MilestoneDeadlineCheckIntervalSeconds { get; set; } = 300;
 
     /// <summary>
-    /// Startup delay before first milestone deadline check in seconds
+    /// Startup delay before first contract expiration check in seconds
     /// Environment variable: CONTRACT_MILESTONE_DEADLINE_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
     public int MilestoneDeadlineStartupDelaySeconds { get; set; } = 30;
 
     /// <summary>

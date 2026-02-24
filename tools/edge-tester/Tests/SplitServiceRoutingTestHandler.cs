@@ -443,7 +443,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             if (response.IsSuccessStatusCode)
             {
                 var validateResult = BannouJson.Deserialize<ValidateTokenResponse>(content);
-                var valid = validateResult?.Valid ?? false;
+                var valid = validateResult?.RemainingTime > 0;
 
                 if (valid)
                 {
@@ -451,7 +451,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                     return true;
                 }
 
-                Console.WriteLine("   Auth validation returned valid=false");
+                Console.WriteLine($"   Auth validation returned RemainingTime={validateResult?.RemainingTime}");
             }
 
             return response.IsSuccessStatusCode;

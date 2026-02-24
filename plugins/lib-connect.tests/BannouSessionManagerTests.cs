@@ -17,6 +17,7 @@ public class BannouSessionManagerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<BannouSessionManager>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly BannouSessionManager _sessionManager;
 
@@ -30,6 +31,7 @@ public class BannouSessionManagerTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<BannouSessionManager>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new ConnectServiceConfiguration();
 
         // Set up type-specific stores
@@ -65,16 +67,12 @@ public class BannouSessionManagerTests
             .Setup(f => f.GetStore<string>(It.IsAny<string>()))
             .Returns(_mockStringStore.Object);
 
-        // Default message bus behavior
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         _sessionManager = new BannouSessionManager(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -561,69 +559,6 @@ public class BannouSessionManagerTests
 
     #endregion
 
-    #region PublishSessionEventAsync Tests
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WithValidParameters_ShouldPublishEvent()
-    {
-        // Arrange
-        var eventType = "connected";
-        var sessionId = Guid.NewGuid().ToString();
-        var eventData = new { reason = "new connection" };
-
-        SessionEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .Callback<string, SessionEvent, PublishOptions?, Guid?, CancellationToken>((t, e, o, g, ct) => capturedEvent = e)
-            .ReturnsAsync(true);
-
-        // Act
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId, eventData);
-
-        // Assert
-        Assert.NotNull(capturedEvent);
-        Assert.Equal(eventType, capturedEvent.EventType);
-        Assert.Equal(Guid.Parse(sessionId), capturedEvent.SessionId);
-        Assert.NotNull(capturedEvent.Data);
-    }
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WithNullEventData_ShouldPublishEvent()
-    {
-        // Arrange
-        var eventType = "disconnected";
-        var sessionId = Guid.NewGuid().ToString();
-
-        // Act
-        await _sessionManager.PublishSessionEventAsync(eventType, sessionId);
-
-        // Assert
-        _mockMessageBus.Verify(m => m.TryPublishAsync(
-            It.IsAny<string>(),
-            It.IsAny<SessionEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task PublishSessionEventAsync_WhenMessageBusThrows_ShouldNotPropagateException()
-    {
-        // Arrange
-        var eventType = "error";
-        var sessionId = Guid.NewGuid().ToString();
-
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<SessionEvent>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Publish failed"));
-
-        // Act & Assert - should not throw
-        var exception = await Record.ExceptionAsync(() => _sessionManager.PublishSessionEventAsync(eventType, sessionId));
-        Assert.Null(exception);
-    }
-
-    #endregion
-
     #region Configuration Tests
 
     /// <summary>
@@ -663,7 +598,8 @@ public class BannouSessionManagerTests
             mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             customConfig,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         var sessionId = Guid.NewGuid().ToString();
         var stateData = new ConnectionStateData { SessionId = Guid.Parse(sessionId) };
@@ -713,7 +649,8 @@ public class BannouSessionManagerTests
             mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             customConfig,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         var sessionId = Guid.NewGuid().ToString();
         var instanceId = Guid.NewGuid();

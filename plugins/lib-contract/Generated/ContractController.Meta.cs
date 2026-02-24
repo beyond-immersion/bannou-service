@@ -36,12 +36,14 @@ public partial class ContractController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "pattern": "^[a-z0-9_]+$",
                     "description": "Unique code for this template (lowercase, underscores)"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 200,
                     "description": "Human-readable template name"
                 },
@@ -90,8 +92,13 @@ public partial class ContractController
                     "description": "Milestone definitions for this contract type"
                 },
                 "defaultEnforcementMode": {
-                    "$ref": "#/$defs/EnforcementMode",
-                    "description": "Default enforcement mode for instances"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EnforcementMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Default enforcement mode for instances (uses service default if not specified)"
                 },
                 "transferable": {
                     "type": "boolean",
@@ -118,6 +125,7 @@ public partial class ContractController
             "properties": {
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Role identifier (employer, employee, buyer, seller, etc.)"
                 },
@@ -198,9 +206,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -235,6 +247,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -444,11 +464,10 @@ public partial class ContractController
                     "description": "Human-readable description"
                 },
                 "executionMode": {
-                    "type": "string",
-                    "enum": [
-                        "sync",
-                        "async",
-                        "fire_and_forget"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
@@ -460,9 +479,18 @@ public partial class ContractController
                 }
             }
         },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "sync",
+                "async",
+                "fire_and_forget"
+            ]
+        },
         "ResponseValidation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
             "additionalProperties": false,
             "properties": {
                 "successConditions": {
@@ -470,21 +498,21 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
                 },
                 "permanentFailureConditions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
                 }
             }
         },
@@ -507,12 +535,12 @@ public partial class ContractController
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -585,6 +613,7 @@ public partial class ContractController
                 "maxParties",
                 "partyRoles",
                 "defaultEnforcementMode",
+                "transferable",
                 "isActive",
                 "createdAt"
             ],
@@ -684,6 +713,7 @@ public partial class ContractController
             "properties": {
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Role identifier (employer, employee, buyer, seller, etc.)"
                 },
@@ -764,9 +794,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -801,6 +835,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -1010,11 +1052,10 @@ public partial class ContractController
                     "description": "Human-readable description"
                 },
                 "executionMode": {
-                    "type": "string",
-                    "enum": [
-                        "sync",
-                        "async",
-                        "fire_and_forget"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
@@ -1026,9 +1067,18 @@ public partial class ContractController
                 }
             }
         },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "sync",
+                "async",
+                "fire_and_forget"
+            ]
+        },
         "ResponseValidation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
             "additionalProperties": false,
             "properties": {
                 "successConditions": {
@@ -1036,21 +1086,21 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
                 },
                 "permanentFailureConditions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
                 }
             }
         },
@@ -1073,12 +1123,12 @@ public partial class ContractController
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -1234,6 +1284,7 @@ public partial class ContractController
                 "maxParties",
                 "partyRoles",
                 "defaultEnforcementMode",
+                "transferable",
                 "isActive",
                 "createdAt"
             ],
@@ -1333,6 +1384,7 @@ public partial class ContractController
             "properties": {
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Role identifier (employer, employee, buyer, seller, etc.)"
                 },
@@ -1413,9 +1465,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -1450,6 +1506,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -1659,11 +1723,10 @@ public partial class ContractController
                     "description": "Human-readable description"
                 },
                 "executionMode": {
-                    "type": "string",
-                    "enum": [
-                        "sync",
-                        "async",
-                        "fire_and_forget"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
@@ -1675,9 +1738,18 @@ public partial class ContractController
                 }
             }
         },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "sync",
+                "async",
+                "fire_and_forget"
+            ]
+        },
         "ResponseValidation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
             "additionalProperties": false,
             "properties": {
                 "successConditions": {
@@ -1685,21 +1757,21 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
                 },
                 "permanentFailureConditions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
                 }
             }
         },
@@ -1722,12 +1794,12 @@ public partial class ContractController
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -1927,6 +1999,7 @@ public partial class ContractController
                 "maxParties",
                 "partyRoles",
                 "defaultEnforcementMode",
+                "transferable",
                 "isActive",
                 "createdAt"
             ],
@@ -2026,6 +2099,7 @@ public partial class ContractController
             "properties": {
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Role identifier (employer, employee, buyer, seller, etc.)"
                 },
@@ -2106,9 +2180,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -2143,6 +2221,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -2352,11 +2438,10 @@ public partial class ContractController
                     "description": "Human-readable description"
                 },
                 "executionMode": {
-                    "type": "string",
-                    "enum": [
-                        "sync",
-                        "async",
-                        "fire_and_forget"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
@@ -2368,9 +2453,18 @@ public partial class ContractController
                 }
             }
         },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "sync",
+                "async",
+                "fire_and_forget"
+            ]
+        },
         "ResponseValidation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
             "additionalProperties": false,
             "properties": {
                 "successConditions": {
@@ -2378,21 +2472,21 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
                 },
                 "permanentFailureConditions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
                 }
             }
         },
@@ -2415,12 +2509,12 @@ public partial class ContractController
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -2596,6 +2690,7 @@ public partial class ContractController
                 "maxParties",
                 "partyRoles",
                 "defaultEnforcementMode",
+                "transferable",
                 "isActive",
                 "createdAt"
             ],
@@ -2695,6 +2790,7 @@ public partial class ContractController
             "properties": {
                 "role": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Role identifier (employer, employee, buyer, seller, etc.)"
                 },
@@ -2775,9 +2871,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -2812,6 +2912,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -3021,11 +3129,10 @@ public partial class ContractController
                     "description": "Human-readable description"
                 },
                 "executionMode": {
-                    "type": "string",
-                    "enum": [
-                        "sync",
-                        "async",
-                        "fire_and_forget"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/PreboundApiExecutionMode"
+                        }
                     ],
                     "default": "sync",
                     "description": "How to execute the API call"
@@ -3037,9 +3144,18 @@ public partial class ContractController
                 }
             }
         },
+        "PreboundApiExecutionMode": {
+            "type": "string",
+            "description": "How to execute a prebound API call",
+            "enum": [
+                "sync",
+                "async",
+                "fire_and_forget"
+            ]
+        },
         "ResponseValidation": {
             "type": "object",
-            "description": "Validation rules for API responses with three-outcome model.\nUsed by lib-contract to validate clause conditions without\nunderstanding the specific API semantics.\n",
+            "description": "Validation rules for API responses with three-outcome model (success, permanent failure, transient failure)",
             "additionalProperties": false,
             "properties": {
                 "successConditions": {
@@ -3047,21 +3163,21 @@ public partial class ContractController
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that must ALL pass for success.\nIf any fail, checks permanent failure conditions.\n"
+                    "description": "Conditions that must ALL pass for success; if any fail, checks permanent failure conditions"
                 },
                 "permanentFailureConditions": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/ValidationCondition"
                     },
-                    "description": "Conditions that indicate permanent failure (clause violated).\nChecked when success conditions fail.\n"
+                    "description": "Conditions that indicate permanent failure (clause violated); checked when success conditions fail"
                 },
                 "transientFailureStatusCodes": {
                     "type": "array",
                     "items": {
                         "type": "integer"
                     },
-                    "description": "HTTP status codes that indicate transient failure (retry later).\nDefault: [408, 429, 502, 503, 504]\n"
+                    "description": "HTTP status codes indicating transient failure for retry (default 408, 429, 502, 503, 504)"
                 }
             }
         },
@@ -3084,12 +3200,12 @@ public partial class ContractController
                 "jsonPath": {
                     "type": "string",
                     "nullable": true,
-                    "description": "JsonPath expression to extract value from response.\nRequired for jsonPathEquals, jsonPathExists, jsonPathNotExists.\nExample: \"$.balance\", \"$.items[0].status\"\n"
+                    "description": "JsonPath expression to extract value from response (required for jsonPathEquals/Exists/NotExists, e.g. \"$.balance\")"
                 },
                 "expectedValue": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Expected value for comparison conditions.\nType coercion applied: \"true\"/\"false\" for booleans, numeric strings for numbers.\n"
+                    "description": "Expected value for comparison conditions with type coercion (\"true\"/\"false\" for booleans, numeric strings for numbers)"
                 },
                 "operator": {
                     "$ref": "#/$defs/ComparisonOperator",
@@ -3428,9 +3544,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -3465,6 +3585,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -3589,6 +3717,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -3815,9 +3944,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -3852,6 +3985,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -4139,6 +4280,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -4365,9 +4507,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -4402,6 +4548,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -4700,6 +4854,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -4926,9 +5081,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -4963,6 +5122,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -5250,6 +5417,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -5476,9 +5644,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -5513,6 +5685,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -5873,6 +6053,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -6099,9 +6280,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -6136,6 +6321,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -6440,6 +6633,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateId",
+                "templateCode",
                 "status",
                 "parties",
                 "createdAt"
@@ -6666,9 +6860,13 @@ public partial class ContractController
                     "description": "Whether this contract has a time commitment clause"
                 },
                 "timeCommitmentType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/TimeCommitmentType"
+                        }
+                    ],
                     "nullable": true,
-                    "description": "Type of time commitment (exclusive or partial)"
+                    "description": "Type of time commitment for scheduling constraints"
                 },
                 "clauses": {
                     "type": "array",
@@ -6703,6 +6901,14 @@ public partial class ContractController
                 "unilateral_with_notice",
                 "unilateral_immediate",
                 "non_terminable"
+            ]
+        },
+        "TimeCommitmentType": {
+            "type": "string",
+            "description": "Type of time commitment for scheduling constraints",
+            "enum": [
+                "exclusive",
+                "partial"
             ]
         },
         "ContractClauseDefinition": {
@@ -7889,8 +8095,6 @@ public partial class ContractController
             "required": [
                 "breachId",
                 "contractId",
-                "breachingEntityId",
-                "breachingEntityType",
                 "breachType",
                 "status",
                 "detectedAt"
@@ -7909,11 +8113,17 @@ public partial class ContractController
                 "breachingEntityId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Entity that breached"
+                    "nullable": true,
+                    "description": "Entity that breached (null for system-initiated breaches such as deadline enforcement)"
                 },
                 "breachingEntityType": {
-                    "type": "object",
-                    "description": "Type of breaching entity"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of breaching entity (null for system-initiated breaches)"
                 },
                 "breachType": {
                     "$ref": "#/$defs/BreachType",
@@ -8083,8 +8293,6 @@ public partial class ContractController
             "required": [
                 "breachId",
                 "contractId",
-                "breachingEntityId",
-                "breachingEntityType",
                 "breachType",
                 "status",
                 "detectedAt"
@@ -8103,11 +8311,17 @@ public partial class ContractController
                 "breachingEntityId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Entity that breached"
+                    "nullable": true,
+                    "description": "Entity that breached (null for system-initiated breaches such as deadline enforcement)"
                 },
                 "breachingEntityType": {
-                    "type": "object",
-                    "description": "Type of breaching entity"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of breaching entity (null for system-initiated breaches)"
                 },
                 "breachType": {
                     "$ref": "#/$defs/BreachType",
@@ -8271,8 +8485,6 @@ public partial class ContractController
             "required": [
                 "breachId",
                 "contractId",
-                "breachingEntityId",
-                "breachingEntityType",
                 "breachType",
                 "status",
                 "detectedAt"
@@ -8291,11 +8503,17 @@ public partial class ContractController
                 "breachingEntityId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Entity that breached"
+                    "nullable": true,
+                    "description": "Entity that breached (null for system-initiated breaches such as deadline enforcement)"
                 },
                 "breachingEntityType": {
-                    "type": "object",
-                    "description": "Type of breaching entity"
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type of breaching entity (null for system-initiated breaches)"
                 },
                 "breachType": {
                     "$ref": "#/$defs/BreachType",
@@ -8762,8 +8980,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateCode",
-                "status",
-                "role"
+                "status"
             ],
             "properties": {
                 "contractId": {
@@ -8786,7 +9003,8 @@ public partial class ContractController
                 },
                 "role": {
                     "type": "string",
-                    "description": "Entity's role in contract"
+                    "nullable": true,
+                    "description": "Entity's role in contract (null if party record not found due to data inconsistency)"
                 },
                 "effectiveUntil": {
                     "type": "string",
@@ -8939,8 +9157,7 @@ public partial class ContractController
             "required": [
                 "contractId",
                 "templateCode",
-                "status",
-                "role"
+                "status"
             ],
             "properties": {
                 "contractId": {
@@ -8963,7 +9180,8 @@ public partial class ContractController
                 },
                 "role": {
                     "type": "string",
-                    "description": "Entity's role in contract"
+                    "nullable": true,
+                    "description": "Entity's role in contract (null if party record not found due to data inconsistency)"
                 },
                 "effectiveUntil": {
                     "type": "string",
@@ -9099,17 +9317,13 @@ public partial class ContractController
     "$defs": {
         "LockContractResponse": {
             "type": "object",
-            "description": "Response from locking a contract",
+            "description": "Response from locking a contract. HTTP 200 confirms the lock was acquired.",
             "additionalProperties": false,
             "required": [
-                "locked",
-                "contractId"
+                "contractId",
+                "guardianId"
             ],
             "properties": {
-                "locked": {
-                    "type": "boolean",
-                    "description": "Whether the contract was locked"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9119,11 +9333,6 @@ public partial class ContractController
                     "type": "string",
                     "format": "uuid",
                     "description": "Guardian entity ID"
-                },
-                "lockedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the contract was locked"
                 }
             }
         }
@@ -9236,17 +9445,12 @@ public partial class ContractController
     "$defs": {
         "UnlockContractResponse": {
             "type": "object",
-            "description": "Response from unlocking a contract",
+            "description": "Response from unlocking a contract. HTTP 200 confirms the contract was unlocked.",
             "additionalProperties": false,
             "required": [
-                "unlocked",
                 "contractId"
             ],
             "properties": {
-                "unlocked": {
-                    "type": "boolean",
-                    "description": "Whether the contract was unlocked"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9385,17 +9589,15 @@ public partial class ContractController
     "$defs": {
         "TransferContractPartyResponse": {
             "type": "object",
-            "description": "Response from transferring a party role",
+            "description": "Response from transferring a party role. HTTP 200 confirms the transfer succeeded.",
             "additionalProperties": false,
             "required": [
-                "transferred",
-                "contractId"
+                "contractId",
+                "role",
+                "fromEntityId",
+                "toEntityId"
             ],
             "properties": {
-                "transferred": {
-                    "type": "boolean",
-                    "description": "Whether the transfer was successful"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -9570,17 +9772,12 @@ public partial class ContractController
     "$defs": {
         "RegisterClauseTypeResponse": {
             "type": "object",
-            "description": "Response from registering a clause type",
+            "description": "Response from registering a clause type. HTTP 200 confirms registration succeeded.",
             "additionalProperties": false,
             "required": [
-                "registered",
                 "typeCode"
             ],
             "properties": {
-                "registered": {
-                    "type": "boolean",
-                    "description": "Whether the type was registered"
-                },
                 "typeCode": {
                     "type": "string",
                     "description": "The registered type code"
@@ -9836,7 +10033,7 @@ public partial class ContractController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Key-value pairs for template substitution.\nKeys should follow pattern: EscrowId, PartyA_EscrowWalletId, etc.\n"
+                    "description": "Key-value pairs for template substitution (keys follow pattern EscrowId, PartyA_EscrowWalletId, etc.)"
                 }
             }
         }
@@ -9851,17 +10048,13 @@ public partial class ContractController
     "$defs": {
         "SetTemplateValuesResponse": {
             "type": "object",
-            "description": "Response from setting template values",
+            "description": "Response from setting template values. HTTP 200 confirms values were set.",
             "additionalProperties": false,
             "required": [
-                "updated",
-                "contractId"
+                "contractId",
+                "valueCount"
             ],
             "properties": {
-                "updated": {
-                    "type": "boolean",
-                    "description": "Whether values were updated"
-                },
                 "contractId": {
                     "type": "string",
                     "format": "uuid",
@@ -10166,20 +10359,16 @@ public partial class ContractController
     "$defs": {
         "ExecuteContractResponse": {
             "type": "object",
-            "description": "Response from executing a contract",
+            "description": "Response from executing a contract. HTTP 200 confirms execution completed.",
             "additionalProperties": false,
             "required": [
-                "executed",
-                "alreadyExecuted"
+                "alreadyExecuted",
+                "contractId"
             ],
             "properties": {
-                "executed": {
-                    "type": "boolean",
-                    "description": "Whether execution was successful"
-                },
                 "alreadyExecuted": {
                     "type": "boolean",
-                    "description": "True if this was a repeat call (idempotency)"
+                    "description": "True if this was a repeat call (idempotency). When false, this is a fresh execution."
                 },
                 "contractId": {
                     "type": "string",
@@ -10193,18 +10382,12 @@ public partial class ContractController
                     },
                     "nullable": true,
                     "description": "Per-clause distribution outcomes with success/failure details"
-                },
-                "executedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "nullable": true,
-                    "description": "When execution occurred"
                 }
             }
         },
         "ClauseDistributionResult": {
             "type": "object",
-            "description": "Outcome of a single clause distribution during contract execution.\nUsed in ContractExecutedEvent to provide per-clause success/failure details.\nDeliberately excludes wallet/container IDs - consumers tracking these should\ncorrelate via clauseId to their own records.\n",
+            "description": "Per-clause distribution outcome during contract execution; excludes wallet/container IDs so consumers correlate via clauseId",
             "additionalProperties": false,
             "required": [
                 "clauseId",
@@ -10225,7 +10408,7 @@ public partial class ContractController
                 },
                 "assetType": {
                     "type": "string",
-                    "description": "Descriptive type of asset involved (e.g., \"currency\", \"item\").\nProvides human-readable context for what was transferred.\n"
+                    "description": "Descriptive type of asset involved (e.g. \"currency\", \"item\") providing human-readable context"
                 },
                 "amount": {
                     "type": "number",

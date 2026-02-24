@@ -32,6 +32,103 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
+/// Event published when a character joins a realm (creation or transfer)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterRealmJoinedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm being joined
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Previous realm ID (populated for transfers, null for initial creation)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousRealmId")]
+    public System.Guid? PreviousRealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a character leaves a realm (deletion or transfer)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CharacterRealmLeftEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// ID of the character
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm being left
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason the character left the realm
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CharacterRealmLeftReason Reason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when a character is compressed to archive format
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

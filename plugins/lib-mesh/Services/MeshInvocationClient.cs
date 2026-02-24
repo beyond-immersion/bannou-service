@@ -34,6 +34,9 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     // Round-robin counter for load balancing across multiple endpoints
     private int _roundRobinCounter;
 
+    /// <inheritdoc/>
+    public Guid InstanceId { get; }
+
     /// <summary>
     /// Creates a new MeshInvocationClient.
     /// </summary>
@@ -44,6 +47,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// <param name="configuration">Mesh service configuration.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
+    /// <param name="instanceIdentifier">Node identity provider for this mesh instance.</param>
     public MeshInvocationClient(
         IMeshStateManager stateManager,
         IStateStoreFactory stateStoreFactory,
@@ -51,12 +55,14 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         IMessageSubscriber messageSubscriber,
         MeshServiceConfiguration configuration,
         ILogger<MeshInvocationClient> logger,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IMeshInstanceIdentifier instanceIdentifier)
     {
         _stateManager = stateManager;
         _configuration = configuration;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
+        InstanceId = instanceIdentifier.InstanceId;
 
         if (_telemetryProvider.TracingEnabled || _telemetryProvider.MetricsEnabled)
         {
@@ -95,6 +101,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             stateStoreFactory,
             messageBus,
             logger,
+            telemetryProvider,
             configuration.CircuitBreakerThreshold,
             TimeSpan.FromSeconds(configuration.CircuitBreakerResetSeconds));
 
@@ -208,7 +215,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         }
 
         // Start telemetry activity for this mesh invocation
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Mesh,
             "mesh.invoke",
             ActivityKind.Client);
@@ -403,11 +410,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),
@@ -424,11 +426,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordRetryMetric(string appId, string method, string reason)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),
@@ -444,11 +441,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordCircuitBreakerStateChange(string appId, string state)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("app_id", appId),
@@ -459,16 +451,19 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     }
 
     /// <summary>
-    /// Determines if an HTTP status code represents a transient error eligible for retry.
-    /// Only server errors and specific timeout/throttle codes are retried.
+    /// Determines if an HTTP status code represents a transient infrastructure error eligible for retry.
+    /// Only gateway/proxy errors are retried (502, 503, 504) — these indicate the request likely
+    /// never reached the target service or the service was temporarily unavailable.
+    /// 500 (Internal Server Error) is NOT retried because the service received and processed the
+    /// request — retrying a deterministic bug wastes time and risks duplicate side effects.
+    /// 408/429 are NOT retried because they are application-level responses, not infrastructure failures.
+    /// Connection failures and timeouts are handled separately via HttpRequestException and
+    /// OperationCanceledException catch blocks.
     /// </summary>
     private static bool IsTransientError(HttpStatusCode statusCode)
     {
         return statusCode switch
         {
-            HttpStatusCode.RequestTimeout => true,          // 408
-            HttpStatusCode.TooManyRequests => true,         // 429
-            HttpStatusCode.InternalServerError => true,     // 500
             HttpStatusCode.BadGateway => true,              // 502
             HttpStatusCode.ServiceUnavailable => true,      // 503
             HttpStatusCode.GatewayTimeout => true,          // 504
@@ -539,7 +534,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         }
 
         // Start telemetry activity for this raw mesh invocation (distinct from normal invoke)
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Mesh,
             "mesh.invoke.raw",
             ActivityKind.Client);
@@ -698,11 +693,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordRawInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),

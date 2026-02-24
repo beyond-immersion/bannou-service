@@ -409,6 +409,14 @@ public partial class DocumentationClient : IDocumentationClient, BeyondImmersion
     public string ServiceName => _serviceName;
 
     /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="DocumentationClient"/> class.
     /// </summary>
     /// <param name="meshClient">The mesh invocation client for service-to-service communication.</param>

@@ -60,10 +60,8 @@ public enum MemoryDecayMode
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CharacterEncounterService))]
-public class CharacterEncounterServiceConfiguration : IServiceConfiguration
+public class CharacterEncounterServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Enable time-based memory decay for encounter perspectives

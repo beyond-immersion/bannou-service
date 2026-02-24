@@ -8,7 +8,7 @@ info:
     publish or subscribe to events through standard channels.
 
     Debug/monitoring events (MessagePublished, SubscriptionCreated/Removed) were
-    planned but never implemented. See docs/CLEANED_EVENTS.md for documentation
+    planned but never implemented. See docs/plugins/MESSAGING.md for documentation
     of these planned events.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:

@@ -56,8 +56,8 @@ public partial class ActorService
     /// <param name="evt">The event data.</param>
     public async Task HandleSessionDisconnectedAsync(SessionDisconnectedEvent evt)
     {
-        // Yield to honor async contract per IMPLEMENTATION TENETS
-        await Task.Yield();
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandleSessionDisconnected");
+        await Task.CompletedTask;
         _logger.LogInformation(
             "Received session.disconnected event for session {SessionId}",
             evt.SessionId);
@@ -79,7 +79,8 @@ public partial class ActorService
     /// <param name="evt">The registration event.</param>
     public async Task HandlePoolNodeRegisteredAsync(PoolNodeRegisteredEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandlePoolNodeRegistered");
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.registered event (not in control plane mode)");
             return;
@@ -117,7 +118,8 @@ public partial class ActorService
     /// <param name="evt">The heartbeat event.</param>
     public async Task HandlePoolNodeHeartbeatAsync(PoolNodeHeartbeatEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandlePoolNodeHeartbeat");
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.heartbeat event (not in control plane mode)");
             return;
@@ -151,7 +153,8 @@ public partial class ActorService
     /// <param name="evt">The draining event.</param>
     public async Task HandlePoolNodeDrainingAsync(PoolNodeDrainingEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandlePoolNodeDraining");
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring pool-node.draining event (not in control plane mode)");
             return;
@@ -185,7 +188,8 @@ public partial class ActorService
     /// <param name="evt">The status changed event.</param>
     public async Task HandleActorStatusChangedAsync(ActorStatusChangedEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandleActorStatusChanged");
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.status-changed event (not in control plane mode)");
             return;
@@ -219,7 +223,8 @@ public partial class ActorService
     /// <param name="evt">The completed event.</param>
     public async Task HandleActorCompletedAsync(ActorCompletedEvent evt)
     {
-        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandleActorCompleted");
+        if (_configuration.DeploymentMode == ActorDeploymentMode.Bannou)
         {
             _logger.LogDebug("Ignoring actor.instance.completed event (not in control plane mode)");
             return;
@@ -262,6 +267,7 @@ public partial class ActorService
     /// <param name="evt">The template updated event.</param>
     public async Task HandleActorTemplateUpdatedAsync(ActorTemplateUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorServiceEvents.HandleActorTemplateUpdated");
         // Only act on BehaviorRef changes — other field updates don't affect cached behaviors
         if (!evt.ChangedFields.Contains("behaviorRef"))
         {

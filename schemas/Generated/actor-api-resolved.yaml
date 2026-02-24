@@ -1,0 +1,1791 @@
+openapi: 3.0.3
+info:
+  title: Actor Service API
+  version: 1.0.0
+  description: |
+    Distributed actor management and execution for NPC brains, event coordinators,
+    and other long-running behavior loops. Actors output behavioral state (feelings,
+    goals, memories) to characters - NOT physics data.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  x-references:
+  - target: character
+    sourceType: actor
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /actor/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+servers:
+- url: http://localhost:5012
+
+# Service hierarchy layer - Actor is L2 (Game Foundation) because it's a core
+# runtime for behavior execution. It uses IVariableProviderFactory pattern to
+# receive data from L4 services without depending on them directly.
+x-service-layer: GameFoundation
+
+paths:
+  # === Actor Templates ===
+  /actor/template/create:
+    post:
+      operationId: CreateActorTemplate
+      summary: Create an actor template (category definition)
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateActorTemplateRequest'
+      responses:
+        '200':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorTemplateResponse'
+
+  /actor/template/get:
+    post:
+      operationId: GetActorTemplate
+      summary: Get an actor template by ID or category
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetActorTemplateRequest'
+      responses:
+        '200':
+          description: Template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorTemplateResponse'
+
+  /actor/template/list:
+    post:
+      operationId: ListActorTemplates
+      summary: List all actor templates
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListActorTemplatesRequest'
+      responses:
+        '200':
+          description: Templates listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListActorTemplatesResponse'
+
+  /actor/template/update:
+    post:
+      operationId: UpdateActorTemplate
+      summary: Update an actor template
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateActorTemplateRequest'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorTemplateResponse'
+
+  /actor/template/delete:
+    post:
+      operationId: DeleteActorTemplate
+      summary: Delete an actor template
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteActorTemplateRequest'
+      responses:
+        '200':
+          description: Template deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteActorTemplateResponse'
+
+  # === Actor Instances ===
+  /actor/spawn:
+    post:
+      operationId: SpawnActor
+      summary: Spawn a new actor from a template
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpawnActorRequest'
+      responses:
+        '200':
+          description: Actor spawned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorInstanceResponse'
+
+  /actor/get:
+    post:
+      operationId: GetActor
+      summary: Get actor instance (instantiate-on-access if template allows)
+      description: |
+        If the actor exists, returns its current state.
+        If the actor doesn't exist but a matching template has auto-spawn enabled,
+        instantiates the actor and returns it.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetActorRequest'
+      responses:
+        '200':
+          description: Actor retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorInstanceResponse'
+
+  /actor/stop:
+    post:
+      operationId: StopActor
+      summary: Stop a running actor
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopActorRequest'
+      responses:
+        '200':
+          description: Actor stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StopActorResponse'
+
+  /actor/bind-character:
+    post:
+      operationId: BindActorCharacter
+      summary: Bind an unbound actor to a character
+      description: |
+        Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
+        After binding, the actor receives character perception events and variable
+        providers begin loading character-specific data on subsequent ticks.
+        Fails if the actor is already bound to a character.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindActorCharacterRequest'
+      responses:
+        '200':
+          description: Actor bound to character successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActorInstanceResponse'
+
+  /actor/cleanup-by-character:
+    post:
+      operationId: CleanupByCharacter
+      summary: Cleanup actors referencing a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Stops and removes all actors that reference the specified characterId.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
+  /actor/list:
+    post:
+      operationId: ListActors
+      summary: List actors with optional filters
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListActorsRequest'
+      responses:
+        '200':
+          description: Actors listed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListActorsResponse'
+
+  /actor/inject-perception:
+    post:
+      operationId: InjectPerception
+      summary: Inject a perception event into an actor's queue (testing)
+      description: |
+        Injects a perception event directly into the actor's perception queue
+        for testing purposes. Useful for testing actor behavior without a
+        full game server setup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InjectPerceptionRequest'
+      responses:
+        '200':
+          description: Perception injected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InjectPerceptionResponse'
+
+  /actor/query-options:
+    post:
+      operationId: QueryOptions
+      summary: Query an actor for its available options
+      description: |
+        Query an actor for its available options (combat, dialogue, exploration, etc.).
+        Options are maintained by the actor in its state and returned based on requested
+        freshness level. This enables Event Brain actors to ask participants "what can
+        you do?" for choreography and coordination.
+
+        Freshness levels:
+        - fresh: Inject context and wait for actor to recompute options
+        - cached: Return cached options if within maxAgeMs, else recompute
+        - stale_ok: Return cached options regardless of age
+      x-permissions: []  # Internal only - used by other actor instances
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryOptionsRequest'
+      responses:
+        '200':
+          description: Options retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryOptionsResponse'
+
+  /actor/encounter/start:
+    post:
+      operationId: StartEncounter
+      summary: Start an encounter managed by an Event Brain actor
+      description: |
+        Initializes an encounter with the specified participants. The Event Brain actor
+        will coordinate the encounter, sending instructions to participant NPC Brain actors
+        via their character perception channels.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartEncounterRequest'
+      responses:
+        '200':
+          description: Encounter started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartEncounterResponse'
+
+  /actor/encounter/update-phase:
+    post:
+      operationId: UpdateEncounterPhase
+      summary: Update the phase of an active encounter
+      description: |
+        Updates the phase of an encounter being managed by an Event Brain actor.
+        Phase changes are logged and can trigger behavior changes in participant actors.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEncounterPhaseRequest'
+      responses:
+        '200':
+          description: Encounter phase updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateEncounterPhaseResponse'
+
+  /actor/encounter/end:
+    post:
+      operationId: EndEncounter
+      summary: End an active encounter
+      description: |
+        Ends an encounter being managed by an Event Brain actor. This clears the
+        encounter state and allows the actor to manage a new encounter.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndEncounterRequest'
+      responses:
+        '200':
+          description: Encounter ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndEncounterResponse'
+
+  /actor/encounter/get:
+    post:
+      operationId: GetEncounter
+      summary: Get the current encounter state for an actor
+      description: |
+        Retrieves the current encounter state for an Event Brain actor. Returns
+        null encounter data if the actor is not managing an encounter.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEncounterRequest'
+      responses:
+        '200':
+          description: Encounter state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEncounterResponse'
+
+components:
+  schemas:
+    # === Actor Templates ===
+    CreateActorTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new actor template definition
+      required:
+      - category
+      - behaviorRef
+      properties:
+        category:
+          type: string
+          minLength: 1
+          description: Category identifier (e.g., "npc-brain", "world-admin", "cron-cleanup")
+        behaviorRef:
+          type: string
+          minLength: 1
+          description: Reference to behavior in lib-assets (e.g., "asset://behaviors/npc-brain-v1")
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different ABML behaviors define their own expected configuration structure.
+        autoSpawn:
+          description: Auto-spawn configuration for instantiate-on-access
+          nullable: true
+          $ref: '#/components/schemas/AutoSpawnConfig'
+        tickIntervalMs:
+          type: integer
+          default: 1000
+          description: Milliseconds between behavior loop iterations
+        autoSaveIntervalSeconds:
+          type: integer
+          default: 60
+          description: Seconds between automatic state saves (0 to disable)
+        maxInstancesPerNode:
+          type: integer
+          default: 100
+          description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+            Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            Applied as the first layer in the three-layer override composition
+            (template, instance, ABML metadata). Structure defined by ICognitionOverride
+            interface hierarchy in bannou-service/Behavior/.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    AutoSpawnConfig:
+      type: object
+      additionalProperties: false
+      description: Configuration for instantiate-on-access behavior
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: If true, accessing a non-existent actor creates it
+        idPattern:
+          type: string
+          nullable: true
+          description: |
+            Regex pattern for actor IDs that trigger auto-spawn.
+            Examples: "npc-.*" matches "npc-grok", "npc-merchant-123"
+        maxInstances:
+          type: integer
+          nullable: true
+          description: Maximum auto-spawned instances (0 = unlimited)
+        characterIdCaptureGroup:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: |
+            1-based regex capture group index for extracting CharacterId from actor ID.
+            Example: With idPattern "npc-brain-([a-f0-9-]+)" and characterIdCaptureGroup: 1,
+            actor ID "npc-brain-abc-123-def" extracts "abc-123-def" as CharacterId (parsed as GUID).
+        defaultRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            Default realm ID for auto-spawned actors when no CharacterId is available to resolve a realm.
+            Required when characterIdCaptureGroup is not configured and auto-spawn is enabled.
+
+    ActorTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing actor template details
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - templateId
+      - category
+      - behaviorRef
+      - tickIntervalMs
+      - autoSaveIntervalSeconds
+      - maxInstancesPerNode
+      - createdAt
+      - updatedAt
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Unique template identifier
+        category:
+          type: string
+          description: Category identifier
+        behaviorRef:
+          type: string
+          description: Reference to behavior in lib-assets
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+        autoSpawn:
+          description: Auto-spawn configuration for instantiate-on-access
+          nullable: true
+          $ref: '#/components/schemas/AutoSpawnConfig'
+        tickIntervalMs:
+          type: integer
+          description: Milliseconds between behavior loop iterations
+        autoSaveIntervalSeconds:
+          type: integer
+          description: Seconds between automatic state saves
+        maxInstancesPerNode:
+          type: integer
+          description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
+        createdAt:
+          type: string
+          format: date-time
+          description: When the template was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the template was last updated
+
+    GetActorTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get an actor template by ID or category
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Template ID to retrieve
+        category:
+          type: string
+          nullable: true
+          description: Or retrieve by category name
+
+    ListActorTemplatesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list actor templates with pagination
+      properties:
+        limit:
+          type: integer
+          default: 100
+          description: Maximum number of templates to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of templates to skip
+
+    ListActorTemplatesResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing a list of actor templates
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - templates
+      - total
+      properties:
+        templates:
+          type: array
+          description: List of actor templates
+          items:
+            $ref: '#/components/schemas/ActorTemplateResponse'
+        total:
+          type: integer
+          description: Total number of templates available
+
+    UpdateActorTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update an existing actor template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: ID of the template to update
+        behaviorRef:
+          type: string
+          nullable: true
+          description: New behavior reference (triggers behavior.updated subscription)
+        configuration:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Updated game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+        autoSpawn:
+          description: Updated auto-spawn configuration
+          nullable: true
+          $ref: '#/components/schemas/AutoSpawnConfig'
+        tickIntervalMs:
+          type: integer
+          nullable: true
+          description: Updated tick interval in milliseconds
+        autoSaveIntervalSeconds:
+          type: integer
+          nullable: true
+          description: Updated auto-save interval in seconds
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Updated cognition template ID. Set to override the cognition pipeline
+            for actors created from this template.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Updated cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    DeleteActorTemplateRequest:
+      type: object
+      additionalProperties: false
+      description: Request to delete an actor template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: ID of the template to delete
+        forceStopActors:
+          type: boolean
+          default: false
+          description: If true, stops all running actors using this template
+
+    DeleteActorTemplateResponse:
+      type: object
+      additionalProperties: false
+      description: Response confirming template deletion
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - stoppedActorCount
+      properties:
+        stoppedActorCount:
+          type: integer
+          description: Number of running actors that were stopped
+
+    # === Actor Instances ===
+    SpawnActorRequest:
+      type: object
+      additionalProperties: false
+      description: Request to spawn a new actor from a template
+      required:
+      - templateId
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          description: Template to instantiate from
+        actorId:
+          type: string
+          nullable: true
+          description: Optional custom actor ID (auto-generated if not provided)
+        configurationOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific configuration overrides merged with template defaults.
+            No Bannou plugin reads specific keys from this field by convention.
+        initialState:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Initial actor state snapshot. Deserialized internally to ActorStateSnapshot.
+            No Bannou plugin reads specific keys from this field by convention.
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm the actor operates in. Optional on request -- when not provided
+            and characterId is set, the service looks up the character's realm
+            automatically. Required for non-character actors that operate in a
+            specific realm.
+
+    GetActorRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get an actor instance by ID
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: Actor ID to retrieve
+
+    ActorInstanceResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing actor instance details
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorId
+      - templateId
+      - category
+      - status
+      - startedAt
+      properties:
+        actorId:
+          type: string
+          description: Unique actor identifier
+        templateId:
+          type: string
+          format: uuid
+          description: Template this actor was instantiated from
+        category:
+          type: string
+          description: Actor category from template
+        nodeId:
+          type: string
+          nullable: true
+          description: Pool node running this actor (null in bannou mode)
+        nodeAppId:
+          type: string
+          nullable: true
+          description: Pool node's app-id for direct messaging
+        status:
+          description: Current actor lifecycle state
+          $ref: '#/components/schemas/ActorStatus'
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated character ID (for NPC brains)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved at spawn time)
+        startedAt:
+          type: string
+          format: date-time
+          description: When the actor started running
+        lastHeartbeat:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last heartbeat timestamp from the actor
+        loopIterations:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            Number of behavior loop iterations executed. Null when the actor is
+            running on a remote pool node and the iteration count is not locally
+            available.
+
+    ActorStatus:
+      type: string
+      enum:
+      - pending
+      - starting
+      - running
+      - paused
+      - stopping
+      - stopped
+      - error
+      description: Current actor lifecycle state
+
+    ActorExitReason:
+      type: string
+      description: Reason an actor exited execution
+      enum:
+      - behavior_complete
+      - error
+      - timeout
+      - external_stop
+
+    ActorDeploymentMode:
+      type: string
+      description: Actor service deployment mode determining how actors are distributed
+      enum:
+      - bannou
+      - pool-per-type
+      - shared-pool
+      - auto-scale
+
+    PerceptionSourceType:
+      type: string
+      description: Type of source generating a perception event
+      enum:
+      - character
+      - npc
+      - object
+      - environment
+      - coordinator
+      - scheduled
+      - message
+      - service
+      - system
+
+    StopActorRequest:
+      type: object
+      additionalProperties: false
+      description: Request to stop a running actor
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the actor to stop
+        graceful:
+          type: boolean
+          default: true
+          description: If true, allows behavior to complete current iteration
+
+    StopActorResponse:
+      type: object
+      additionalProperties: false
+      description: Response confirming actor stop operation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - finalStatus
+      properties:
+        finalStatus:
+          description: Final status of the actor after stopping
+          $ref: '#/components/schemas/ActorStatus'
+
+    BindActorCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Request to bind an unbound actor to a character. After binding, the actor
+        subscribes to the character's perception stream and variable providers begin
+        loading character-specific data. The actor's behavior document continues
+        executing — it should already handle both unbound and bound modes gracefully.
+      required:
+      - actorId
+      - characterId
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to bind to
+
+    CleanupByCharacterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup actors referencing a deleted character
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      additionalProperties: false
+      description: Response from character cleanup operation
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorsCleanedUp
+      - actorIds
+      properties:
+        actorsCleanedUp:
+          type: integer
+          description: Number of actors that were stopped and cleaned up
+        actorIds:
+          type: array
+          items:
+            type: string
+          description: IDs of actors that were cleaned up
+
+    ListActorsRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list actor instances with optional filters
+      properties:
+        category:
+          type: string
+          nullable: true
+          description: Filter by category
+        nodeId:
+          type: string
+          nullable: true
+          description: Filter by pool node
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ActorStatus'
+          nullable: true
+          description: Filter by actor status
+        characterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by associated character
+        limit:
+          type: integer
+          default: 100
+          description: Maximum number of actors to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of actors to skip
+
+    ListActorsResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing a list of actor instances
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actors
+      - total
+      properties:
+        actors:
+          type: array
+          description: List of actor instances
+          items:
+            $ref: '#/components/schemas/ActorInstanceResponse'
+        total:
+          type: integer
+          description: Total number of actors matching the filter
+
+    # === Perception Injection (Testing) ===
+    InjectPerceptionRequest:
+      type: object
+      additionalProperties: false
+      description: Request to inject a perception event into an actor's queue
+      required:
+      - actorId
+      - perception
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: Target actor to inject perception into
+        perception:
+          description: Perception data to inject
+          $ref: '#/components/schemas/PerceptionData'
+
+    PerceptionData:
+      type: object
+      additionalProperties: false
+      description: |
+        Data representing a perception event for an actor.
+
+        Spatial context can be provided in two ways (hybrid approach):
+        1. Typed: Use the optional spatialContext field for structured spatial data
+        2. Schema-less: Use perceptionType="spatial" with data containing spatial info
+
+        The typed approach is recommended when game server has structured spatial data.
+        The schema-less approach allows flexibility for game-specific spatial formats.
+      required:
+      - perceptionType
+      - sourceId
+      properties:
+        perceptionType:
+          type: string
+          minLength: 1
+          description: |
+            Perception type. Common values: visual, auditory, tactile, olfactory,
+            proprioceptive, spatial. Use "spatial" for schema-less spatial data in 'data' field.
+        sourceId:
+          type: string
+          minLength: 1
+          description: ID of the entity causing this perception
+        sourceType:
+          allOf:
+          - $ref: '#/components/schemas/PerceptionSourceType'
+          nullable: true
+          description: Type of source (character, npc, object, environment, coordinator, scheduled, message)
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          description: How urgent this perception is (0-1)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Current location ID of the entity sending this perception.
+            Used by ActorRunner to track the actor's current location for
+            location-aware variable providers. Updated on each perception
+            event that carries this field.
+        spatialContext:
+          allOf:
+          - $ref: '#/components/schemas/SpatialContext'
+          nullable: true
+          description: |
+            Optional typed spatial context from game server's local spatial state.
+            Provides structured information about terrain, nearby objects, hazards, etc.
+            Alternative to using perceptionType="spatial" with schema-less data.
+
+    SpatialContext:
+      type: object
+      additionalProperties: true
+      description: >-
+        Spatial context derived from game server's authoritative spatial state.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
+      properties:
+        terrainType:
+          type: string
+          nullable: true
+          description: Terrain type at character position (grass, stone, water, etc.)
+        elevation:
+          type: number
+          format: float
+          nullable: true
+          description: Elevation at character position
+        nearbyObjects:
+          type: array
+          nullable: true
+          description: Objects within perception radius
+          items:
+            $ref: '#/components/schemas/NearbyObject'
+        hazardsInRange:
+          type: array
+          nullable: true
+          description: Active hazards within detection range
+          items:
+            $ref: '#/components/schemas/HazardInfo'
+        pathableDirections:
+          type: array
+          nullable: true
+          description: Directions the character can move (for navigation awareness)
+          items:
+            type: string
+            description: Cardinal or relative direction (north, south, east, west, forward, etc.)
+        coverNearby:
+          type: boolean
+          nullable: true
+          description: Whether cover is available within close range
+        indoors:
+          type: boolean
+          nullable: true
+          description: Whether character is currently indoors/under roof
+
+    NearbyObject:
+      type: object
+      additionalProperties: true
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - objectId
+      - objectType
+      - distance
+      - direction
+      properties:
+        objectId:
+          type: string
+          format: uuid
+          description: Unique identifier of the object
+        objectType:
+          type: string
+          description: Type of object (boulder_cluster, tree, building, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance from character in game units
+        direction:
+          type: string
+          description: Relative direction (north, south, east, west, above, below, etc.)
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Optional absolute position
+
+    HazardInfo:
+      type: object
+      additionalProperties: true
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
+      required:
+      - hazardType
+      - distance
+      - severity
+      properties:
+        hazardType:
+          type: string
+          description: Type of hazard (fire, poison, radiation, deep_water, etc.)
+        distance:
+          type: number
+          format: float
+          description: Distance to hazard edge
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Hazard severity (0-1)
+        direction:
+          type: string
+          nullable: true
+          description: Direction to hazard center
+
+    InjectPerceptionResponse:
+      type: object
+      additionalProperties: false
+      description: Response confirming perception injection
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - queueDepth
+      properties:
+        queueDepth:
+          type: integer
+          description: Current depth of the perception queue
+
+    # === Query Options ===
+    QueryOptionsRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Query an actor for its available options. Options are maintained by the actor
+        in its state.memories.{queryType}_options and returned based on requested freshness.
+      required:
+      - actorId
+      - queryType
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the actor to query
+        queryType:
+          $ref: '#/components/schemas/OptionsQueryType'
+          description: Type of options to query
+        freshness:
+          $ref: '#/components/schemas/OptionsFreshness'
+          description: |
+            Requested freshness level. Defaults to 'cached'.
+            - fresh: Inject context and wait for actor to recompute
+            - cached: Return cached options if within maxAgeMs
+            - stale_ok: Return whatever is cached, even if expired
+        maxAgeMs:
+          type: integer
+          minimum: 0
+          maximum: 60000
+          nullable: true
+          description: |
+            Maximum age of cached options in milliseconds (for 'cached' freshness).
+            Defaults to 5000ms. If cached options are older, behavior depends on
+            freshness level.
+        context:
+          $ref: '#/components/schemas/OptionsQueryContext'
+          nullable: true
+          description: |
+            Optional context for the query. When provided with freshness='fresh',
+            this context is injected as a perception to the actor, triggering
+            context-sensitive option recomputation.
+
+    QueryOptionsResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing the actor's available options
+      # NRT: Response properties server always sets (Rule 4)
+      required:
+      - actorId
+      - queryType
+      - options
+      - computedAt
+      - ageMs
+      properties:
+        actorId:
+          type: string
+          description: ID of the queried actor
+        queryType:
+          $ref: '#/components/schemas/OptionsQueryType'
+          description: Type of options returned
+        options:
+          type: array
+          description: Available options for the queried type
+          items:
+            $ref: '#/components/schemas/ActorOption'
+        computedAt:
+          type: string
+          format: date-time
+          description: When these options were last computed by the actor
+        ageMs:
+          type: integer
+          description: Age of options in milliseconds (now - computedAt)
+        characterContext:
+          $ref: '#/components/schemas/CharacterOptionContext'
+          nullable: true
+          description: |
+            Character-specific context that influenced these options.
+            Only present for character-based actors.
+
+    OptionsQueryType:
+      type: string
+      description: |
+        Type of options to query. Actors maintain options in state.memories.{type}_options.
+        Well-known types are defined; actors can also expose custom types.
+      enum:
+      - combat
+      - dialogue
+      - exploration
+      - social
+      - custom
+
+    OptionsFreshness:
+      type: string
+      description: Controls caching behavior for options queries
+      enum:
+      - fresh
+      - cached
+      - stale_ok
+      default: cached
+
+    ActorOption:
+      type: object
+      additionalProperties: true
+      description: >-
+        A single option available to the actor. Core properties (actionId, preference,
+        risk, available, etc.) are schema-defined and used by Actor internally.
+        additionalProperties allows game-specific option extensions.
+        No Bannou plugin reads specific extension keys by convention.
+      required:
+      - actionId
+      - preference
+      - available
+      properties:
+        actionId:
+          type: string
+          description: |
+            Unique identifier for this action within the option type.
+            Examples: "sword_slash", "greet_friendly", "climb_wall"
+        preference:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: |
+            How much the actor prefers this option (0-1), based on personality,
+            combat preferences, current state, etc. Higher = more preferred.
+        risk:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Estimated risk of this action (0=safe, 1=very risky)
+        available:
+          type: boolean
+          description: Whether this option is currently available (requirements met)
+        requirements:
+          type: array
+          nullable: true
+          description: Requirements that must be met for this option
+          items:
+            type: string
+        cooldownMs:
+          type: integer
+          nullable: true
+          description: Milliseconds until this option becomes available again (if on cooldown)
+        tags:
+          type: array
+          nullable: true
+          description: Tags for categorization (e.g., ["melee", "aggressive", "loud"])
+          items:
+            type: string
+
+    OptionsQueryContext:
+      type: object
+      additionalProperties: true
+      description: >-
+        Context provided with a fresh query. Injected as a perception to the actor
+        to trigger context-sensitive option recomputation. Core properties are schema-defined;
+        use customContext for game-specific extensions.
+        No Bannou plugin reads specific extension keys by convention.
+      properties:
+        combatState:
+          type: string
+          nullable: true
+          description: Current combat state (approaching, engaged, retreating, etc.)
+        opponentIds:
+          type: array
+          nullable: true
+          description: IDs of opponents in the current encounter
+          items:
+            type: string
+        allyIds:
+          type: array
+          nullable: true
+          description: IDs of allies in the current encounter
+          items:
+            type: string
+        environmentTags:
+          type: array
+          nullable: true
+          description: Environment tags (indoor, elevated, destructibles, narrow, etc.)
+          items:
+            type: string
+        urgency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: How urgent is this query (affects option prioritization)
+        customContext:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific context data passed through to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    CharacterOptionContext:
+      type: object
+      additionalProperties: false
+      description: Character-specific context that influenced option computation
+      properties:
+        combatStyle:
+          type: string
+          nullable: true
+          description: Character's combat style (aggressive, defensive, balanced, etc.)
+        riskTolerance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Character's risk tolerance (0=cautious, 1=reckless)
+        protectAllies:
+          type: boolean
+          nullable: true
+          description: Whether character prioritizes ally protection
+        currentGoal:
+          type: string
+          nullable: true
+          description: Character's current primary goal
+        emotionalState:
+          type: string
+          nullable: true
+          description: Character's current dominant emotion
+
+    # === Choreography (Event Brain coordination) ===
+    ChoreographyInstruction:
+      type: object
+      additionalProperties: false
+      description: |
+        Instruction sent to a participant actor by Event Brain to execute a choreographed sequence.
+        Delivered via emit_perception with perception_type "choreography_instruction".
+      required:
+      - encounterId
+      - sequenceId
+      - actions
+      - timing
+      - priority
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the coordinated encounter this instruction belongs to
+        sequenceId:
+          type: string
+          description: |
+            Unique ID for this sequence within the choreography.
+            Used for acknowledgment and sync point coordination.
+        actions:
+          type: array
+          description: |
+            Ordered list of actions for the participant to execute.
+            Multiple actions allow for combos or reaction sequences.
+          items:
+            $ref: '#/components/schemas/ChoreographyAction'
+        timing:
+          $ref: '#/components/schemas/ChoreographyTiming'
+          description: When and how to start executing this sequence
+        priority:
+          $ref: '#/components/schemas/ChoreographyPriority'
+          description: |
+            How strongly to prefer this choreography over actor's own choices.
+            Higher priority may interrupt current actions.
+        canInterrupt:
+          type: boolean
+          nullable: true
+          description: |
+            Whether participant can interrupt the sequence if a better opportunity arises.
+            If false, participant should complete the sequence unless impossible.
+        expectedOutcome:
+          type: string
+          nullable: true
+          description: |
+            Expected outcome of this sequence (e.g., "hit", "miss", "block").
+            Used for coordinating reactions with other participants.
+        onComplete:
+          type: string
+          nullable: true
+          description: |
+            Event to emit when sequence completes (e.g., "sync_point.attack_landed").
+            Other participants may be waiting on this.
+
+    ChoreographyAction:
+      type: object
+      additionalProperties: true
+      description: >-
+        A single action within a choreographed sequence. Core properties (actionId,
+        targetId, position, durationMs, style, delayMs) are schema-defined.
+        additionalProperties allows game-specific action extensions.
+        No Bannou plugin reads specific extension keys by convention.
+      required:
+      - actionId
+      properties:
+        actionId:
+          type: string
+          description: |
+            Action identifier matching one from the actor's options.
+            Examples: "sword_slash", "dodge_roll", "taunt"
+        targetId:
+          type: string
+          nullable: true
+          description: |
+            Target actor ID for the action, if applicable.
+            Null for untargeted actions like movement or taunts.
+        position:
+          allOf:
+          - $ref: '#/components/schemas/Position3D'
+          nullable: true
+          description: Target position for movement or placement actions
+        durationMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Expected duration in milliseconds.
+            Used for timing subsequent actions and sync points.
+        style:
+          type: string
+          nullable: true
+          description: |
+            Stylistic modifier for the action (e.g., "dramatic", "desperate", "confident").
+            Actors may adjust animation/presentation based on style.
+        delayMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Delay before starting this action (relative to previous action completion).
+            Allows precise timing within sequences.
+
+    ChoreographyTiming:
+      type: object
+      additionalProperties: false
+      description: Controls when a choreographed sequence should begin execution
+      required:
+      - startAt
+      properties:
+        startAt:
+          $ref: '#/components/schemas/ChoreographyStartCondition'
+          description: |
+            When to start executing the sequence.
+            - immediate: Start as soon as instruction received
+            - after_previous: Start after current action completes
+            - sync_point: Wait for specified sync point event
+        syncPointId:
+          type: string
+          nullable: true
+          description: |
+            Sync point to wait for (required when startAt=sync_point).
+            Examples: "attack_landed", "guard_raised", "combo_ready"
+        maxWaitMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Maximum time to wait for sync point in milliseconds.
+            If exceeded, sequence may start anyway or be cancelled.
+        windowMs:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: |
+            Time window during which the action can start.
+            Allows for natural timing variation.
+
+    ChoreographyPriority:
+      type: string
+      description: |
+        How strongly the actor should prefer the choreographed action over their own choices.
+        - low: Suggestion; actor may ignore if they prefer something else
+        - normal: Standard choreography; follow unless clearly suboptimal
+        - high: Important sequence; should follow even if not preferred
+        - override: Critical moment; must follow unless physically impossible
+      enum:
+      - low
+      - normal
+      - high
+      - override
+
+    ChoreographyStartCondition:
+      type: string
+      description: When to begin executing a choreographed sequence
+      enum:
+      - immediate
+      - after_previous
+      - sync_point
+
+    # === Encounter Management ===
+    StartEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to start an encounter managed by an Event Brain actor
+      required:
+      - actorId
+      - encounterId
+      - encounterType
+      - participants
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the Event Brain actor that will manage this encounter
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          minLength: 1
+          description: Type of encounter (e.g., "combat", "conversation", "choreography")
+        participants:
+          type: array
+          description: Character IDs of participants in the encounter
+          items:
+            type: string
+            format: uuid
+        initialData:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific encounter initialization data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
+
+    StartEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Empty response. HTTP 200 confirms the encounter was started.
+      properties: {}
+
+    UpdateEncounterPhaseRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update the phase of an active encounter
+      required:
+      - actorId
+      - phase
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the Event Brain actor managing the encounter
+        phase:
+          type: string
+          minLength: 1
+          description: New phase name for the encounter
+
+    UpdateEncounterPhaseResponse:
+      type: object
+      additionalProperties: false
+      description: Response after updating encounter phase
+      required:
+      - actorId
+      - currentPhase
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor managing the encounter
+        previousPhase:
+          type: string
+          nullable: true
+          description: Previous phase name
+        currentPhase:
+          type: string
+          description: Current phase name after update
+
+    EndEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to end an active encounter
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the Event Brain actor managing the encounter
+
+    EndEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response after ending an encounter
+      required:
+      - actorId
+      - encounterId
+      properties:
+        actorId:
+          type: string
+          description: ID of the actor
+        encounterId:
+          type: string
+          format: uuid
+          description: ID of the ended encounter
+        durationMs:
+          type: integer
+          nullable: true
+          description: Duration of the encounter in milliseconds
+
+    GetEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get the current encounter state for an actor
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          minLength: 1
+          description: ID of the Event Brain actor to query
+
+    GetEncounterResponse:
+      type: object
+      additionalProperties: false
+      description: Response containing the current encounter state
+      required:
+      - actorId
+      properties:
+        actorId:
+          type: string
+          description: ID of the queried actor
+        encounter:
+          nullable: true
+          description: Current encounter state (null if no active encounter)
+          $ref: '#/components/schemas/EncounterState'
+
+    EncounterState:
+      type: object
+      additionalProperties: false
+      description: State of an active encounter being managed by an Event Brain actor
+      required:
+      - encounterId
+      - encounterType
+      - participants
+      - phase
+      - startedAt
+      properties:
+        encounterId:
+          type: string
+          format: uuid
+          description: Unique identifier for this encounter
+        encounterType:
+          type: string
+          description: Type of encounter
+        participants:
+          type: array
+          description: Character IDs participating in the encounter
+          items:
+            type: string
+            format: uuid
+        phase:
+          type: string
+          description: Current phase of the encounter
+        startedAt:
+          type: string
+          format: date-time
+          description: When the encounter started
+        data:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: >-
+            Game-specific encounter state data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+x-inlined-types:
+- Position3D

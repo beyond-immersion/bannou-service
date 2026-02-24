@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(GameSessionService))]
-public class GameSessionServiceConfiguration : IServiceConfiguration
+public class GameSessionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Server salt for GUID generation. Must be shared across all instances for session GUIDs to work correctly. Change in production.

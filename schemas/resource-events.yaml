@@ -214,14 +214,18 @@ components:
       type: object
       additionalProperties: false
       description: |
-        Published when decompression completes successfully.
-        Services can subscribe to perform post-decompression actions.
+        Published when decompression completes with at least one successful callback.
+        Includes per-source-type success/failure arrays so consumers can assess partial
+        restoration state without querying the full API response.
       required:
       - eventId
       - timestamp
       - resourceType
       - resourceId
       - archiveId
+      - entriesCount
+      - succeededSourceTypes
+      - failedSourceTypes
       properties:
         eventId:
           type: string
@@ -242,6 +246,19 @@ components:
           type: string
           format: uuid
           description: ID of the archive that was restored
+        entriesCount:
+          type: integer
+          description: Total number of decompression callbacks attempted
+        succeededSourceTypes:
+          type: array
+          items:
+            type: string
+          description: Source types whose decompression callbacks succeeded
+        failedSourceTypes:
+          type: array
+          items:
+            type: string
+          description: Source types whose decompression callbacks failed (empty on full success)
 
     # =========================================================================
     # Snapshot Events (Living Entity Snapshots)

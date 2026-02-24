@@ -155,10 +155,10 @@ Every service is an independent assembly that can be enabled or disabled via env
 
 ```bash
 # Development: everything runs in one process
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Production: distribute by function
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 AUTH_SERVICE_ENABLED=true
 ACCOUNT_SERVICE_ENABLED=true
 ```

@@ -76,14 +76,6 @@ public partial class CapabilityResponse
 {
 
     /// <summary>
-    /// Session ID that was queried
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
     /// Map of ServiceID -&gt; List of available methods
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissions")]
@@ -95,6 +87,8 @@ public partial class CapabilityResponse
     /// When these permissions were compiled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("generatedAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset GeneratedAt { get; set; } = default!;
 
 }
@@ -118,7 +112,7 @@ public partial class ValidationRequest
     /// Target service ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
@@ -126,7 +120,7 @@ public partial class ValidationRequest
     /// Endpoint path being accessed (e.g., "/account/get")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Endpoint { get; set; } = default!;
 
@@ -146,18 +140,10 @@ public partial class ValidationResponse
     public bool Allowed { get; set; } = default!;
 
     /// <summary>
-    /// Session ID that was validated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for denial (if applicable)
+    /// Reason for denial, null when access is allowed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
 }
 
@@ -172,7 +158,7 @@ public partial class ServicePermissionMatrix
     /// Unique service identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
@@ -191,10 +177,10 @@ public partial class ServicePermissionMatrix
     public System.Collections.Generic.IDictionary<string, StatePermissions> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, StatePermissions>();
 
     /// <summary>
-    /// Service API version for change tracking
+    /// Service API version for change tracking (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public string Version { get; set; } = default!;
+    public string? Version { get; set; } = default!;
 
 }
 
@@ -208,43 +194,11 @@ public partial class StatePermissions : System.Collections.Generic.Dictionary<st
 }
 
 /// <summary>
-/// Response from registering or updating a service permission matrix
+/// Empty response. HTTP 200 confirms the registration succeeded.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RegistrationResponse
 {
-
-    /// <summary>
-    /// Service ID that was registered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Success or error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
-    /// Whether registration was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("registered")]
-    public bool Registered { get; set; } = default!;
-
-    /// <summary>
-    /// Number of sessions that had permissions recompiled
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedSessions")]
-    public int AffectedSessions { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when permissions were recompiled
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("recompiledAt")]
-    public System.DateTimeOffset RecompiledAt { get; set; } = default!;
 
 }
 
@@ -267,7 +221,7 @@ public partial class SessionStateUpdate
     /// Service whose state is changing for this session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
@@ -275,7 +229,7 @@ public partial class SessionStateUpdate
     /// New state value (lobby, in_game, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newState")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewState { get; set; } = default!;
 
@@ -284,12 +238,6 @@ public partial class SessionStateUpdate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousState")]
     public string? PreviousState { get; set; } = default!;
-
-    /// <summary>
-    /// Optional context data (null if none)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
 
 }
 
@@ -312,7 +260,7 @@ public partial class SessionRoleUpdate
     /// New role (user, admin, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newRole")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewRole { get; set; } = default!;
 
@@ -364,36 +312,16 @@ public partial class SessionUpdateResponse
 {
 
     /// <summary>
-    /// Session ID that was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Success or error message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
-
-    /// <summary>
     /// Whether compiled permissions actually changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("permissionsChanged")]
     public bool PermissionsChanged { get; set; } = default!;
 
     /// <summary>
-    /// Updated ServiceID -&gt; Methods if permissions changed
+    /// Updated ServiceID -&gt; Methods map, null if permissions did not change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> NewPermissions { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the session was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset UpdatedAt { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>>? NewPermissions { get; set; } = default!;
 
 }
 
@@ -422,18 +350,10 @@ public partial class SessionInfo
 {
 
     /// <summary>
-    /// Session ID being queried
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
     /// Current session role
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("role")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Role { get; set; } = default!;
 
@@ -454,21 +374,18 @@ public partial class SessionInfo
     public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Permissions { get; set; } = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.ICollection<string>>();
 
     /// <summary>
-    /// Map of ServiceID -&gt; List of available methods
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("compiledPermissions")]
-    public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> CompiledPermissions { get; set; } = default!;
-
-    /// <summary>
     /// Permission version number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
     /// <summary>
     /// When permissions were last recompiled
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastUpdated")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset LastUpdated { get; set; } = default!;
 
 }
@@ -509,7 +426,7 @@ public partial class RegisteredServiceInfo
     /// Unique service identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ServiceId { get; set; } = default!;
 
@@ -517,12 +434,16 @@ public partial class RegisteredServiceInfo
     /// Human-readable service name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ServiceName { get; set; } = default!;
 
     /// <summary>
     /// Service API version
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     public string Version { get; set; } = default!;
 
     /// <summary>
@@ -537,9 +458,53 @@ public partial class RegisteredServiceInfo
     /// Number of API endpoints registered by this service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpointCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int EndpointCount { get; set; } = default!;
 
 }
+
+/// <summary>
+/// Type of capability update — full capabilities or delta changes
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CapabilityUpdateType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"full")]
+    Full = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"delta")]
+    Delta = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for the capability update
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CapabilityUpdateReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session_created")]
+    SessionCreated = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session_state_changed")]
+    SessionStateChanged = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"role_changed")]
+    RoleChanged = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
+    ServiceRegistered = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"manual_refresh")]
+    ManualRefresh = 4,
+
+}
+#pragma warning restore CS1591
 
 
 

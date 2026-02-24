@@ -20,7 +20,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
-| [Chat Service API](#chat) | `client.Chat` | 28 | Typed message channel service (L1 AppFoundation) providing u... |
+| [Chat Service API](#chat) | `client.Chat` | 30 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
@@ -192,7 +192,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `ListActorsAsync` | `ListActorsRequest` | `ListActorsResponse` | List actors with optional filters |
 | `InjectperceptionAsync` | `InjectPerceptionRequest` | `InjectPerceptionResponse` | Inject a perception event into an actor's queue (testing) |
 | `QueryoptionsAsync` | `QueryOptionsRequest` | `QueryOptionsResponse` | Query an actor for its available options |
-| `StartencounterEventAsync` | `StartEncounterRequest` | *(fire-and-forget)* | Start an encounter managed by an Event Brain actor |
+| `StartencounterAsync` | `StartEncounterRequest` | `StartEncounterResponse` | Start an encounter managed by an Event Brain actor |
 | `UpdateEncounterphaseAsync` | `UpdateEncounterPhaseRequest` | `UpdateEncounterPhaseResponse` | Update the phase of an active encounter |
 | `EndencounterAsync` | `EndEncounterRequest` | `EndEncounterResponse` | End an active encounter |
 | `GetEncounterAsync` | `GetEncounterRequest` | `GetEncounterResponse` | Get the current encounter state for an actor |
@@ -591,6 +591,8 @@ Typed message channel service (L1 AppFoundation) providing universal communicati
 | `AdminlistroomsAsync` | `AdminListRoomsRequest` | `ListRoomsResponse` | List all rooms system-wide |
 | `AdmingetstatsAsync` | `AdminGetStatsRequest` | `AdminStatsResponse` | Room and message statistics |
 | `AdminforcecleanupAsync` | `AdminForceCleanupRequest` | `AdminCleanupResponse` | Force cleanup of idle rooms |
+| `TypingEventAsync` | `TypingRequest` | *(fire-and-forget)* | Signal typing activity |
+| `EndtypingEventAsync` | `EndTypingRequest` | *(fire-and-forget)* | Signal typing stopped |
 
 ---
 
@@ -1544,7 +1546,7 @@ Native service mesh plugin providing direct service-to-service invocation native
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `RegisterEndpointAsync` | `RegisterEndpointRequest` | `RegisterEndpointResponse` | Register a service endpoint |
-| `DeregisterendpointEventAsync` | `DeregisterEndpointRequest` | *(fire-and-forget)* | Deregister a service endpoint |
+| `DeregisterendpointAsync` | `DeregisterEndpointRequest` | `DeregisterEndpointResponse` | Deregister a service endpoint |
 | `HeartbeatAsync` | `HeartbeatRequest` | `HeartbeatResponse` | Update endpoint health and load |
 
 ### Routing
@@ -2445,7 +2447,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 54
-- **Total methods**: 846
+- **Total methods**: 848
 
 ---
 

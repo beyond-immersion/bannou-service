@@ -55,9 +55,9 @@ paths:
         ,\n    \"$defs\": {\n        \"GetStateResponse\": {\n            \"description\": \"Response containing a retrieved
         state value with its ETag for optimistic concurrency\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"properties\": {\n                \"value\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": false,\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"The stored value (null if not found)\"\n                },\n                \"etag\": {\n \
-        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"The stored value (null if not found)\"\n                },\n                \"etag\": {\n  \
+        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"ETag for optimistic concurrency\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get state value by key\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getState\"\n}"
@@ -90,11 +90,11 @@ paths:
         : 100,\n                    \"description\": \"Name of the state store\"\n                },\n                \"key\"\
         : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
         : 255,\n                    \"description\": \"Key to save\"\n                },\n                \"value\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": false,\n                \
-        \    \"description\": \"Value to store\"\n                },\n                \"options\": {\n                   \
-        \ \"nullable\": true,\n                    \"$ref\": \"#/$defs/StateOptions\",\n                    \"description\"\
-        : \"Optional settings for the save operation including TTL and consistency\"\n                }\n            }\n \
-        \       },\n        \"StateOptions\": {\n            \"description\": \"Configuration options for state save operations
+        \                   \"type\": \"object\",\n                    \"additionalProperties\": true,\n                 \
+        \   \"description\": \"Value to store\"\n                },\n                \"options\": {\n                    \"\
+        nullable\": true,\n                    \"$ref\": \"#/$defs/StateOptions\",\n                    \"description\": \"\
+        Optional settings for the save operation including TTL and consistency\"\n                }\n            }\n     \
+        \   },\n        \"StateOptions\": {\n            \"description\": \"Configuration options for state save operations
         including TTL, consistency level, and optimistic concurrency\",\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"properties\": {\n                \"ttl\": {\n                    \"\
         type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 31536000,\n          \
@@ -106,9 +106,10 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveStateResponse\"\
         ,\n    \"$defs\": {\n        \"SaveStateResponse\": {\n            \"description\": \"Response from a save operation
         containing the new ETag\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"properties\": {\n                \"etag\": {\n                    \"type\": \"string\",\n             \
-        \       \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\": \"New ETag
-        after save\"\n                }\n            }\n        }\n    }\n}"
+        \        \"required\": [\n                \"etag\"\n            ],\n            \"properties\": {\n              \
+        \  \"etag\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n               \
+        \     \"maxLength\": 100,\n                    \"description\": \"New ETag after save\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save state value\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"saveState\"\n}"
   /state/delete:
@@ -214,24 +215,27 @@ paths:
         ,\n                \"notExists\",\n                \"fullText\"\n            ],\n            \"default\": \"equals\"\
         \n        },\n        \"SortField\": {\n            \"description\": \"Specifies a field and direction for sorting
         query results\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
-        properties\": {\n                \"field\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
-        : 1,\n                    \"maxLength\": 200,\n                    \"description\": \"Field name to sort by (JSON
-        path for MySQL, field name for Redis)\"\n                },\n                \"order\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"asc\",\n                        \"\
-        desc\"\n                    ],\n                    \"default\": \"asc\",\n                    \"description\": \"\
-        Sort direction\"\n                }\n            }\n        }\n    }\n}"
+        required\": [\n                \"field\"\n            ],\n            \"properties\": {\n                \"field\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 200,\n                    \"description\": \"Field name to sort by (JSON path for MySQL, field name for Redis)\"\
+        \n                },\n                \"order\": {\n                    \"type\": \"string\",\n                  \
+        \  \"enum\": [\n                        \"asc\",\n                        \"desc\"\n                    ],\n     \
+        \               \"default\": \"asc\",\n                    \"description\": \"Sort direction\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryStateResponse\"\
         ,\n    \"$defs\": {\n        \"QueryStateResponse\": {\n            \"description\": \"Response containing paginated
         query results with total count information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"results\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"object\",\n                        \"additionalProperties\"\
-        : false\n                    },\n                    \"description\": \"Query results\"\n                },\n    \
-        \            \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
-        \                    \"description\": \"Total matching items (for pagination)\"\n                },\n            \
-        \    \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n              \
-        \      \"description\": \"Current page number\"\n                },\n                \"pageSize\": {\n           \
-        \         \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n  \
-        \                  \"description\": \"Items per page\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"results\",\n                \"totalCount\",\n           \
+        \     \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"results\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"object\",\n                        \"additionalProperties\": true\n                    },\n                  \
+        \  \"description\": \"Query results\"\n                },\n                \"totalCount\": {\n                   \
+        \ \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Total matching
+        items (for pagination)\"\n                },\n                \"page\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Current page number\"\n           \
+        \     },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 1,\n                    \"maximum\": 1000,\n                    \"description\": \"Items per page\"\n          \
+        \      }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query state (MySQL JSON queries or Redis with search enabled)\",\n    \"\
         description\": \"\",\n    \"tags\": [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"queryState\"\n}"
@@ -269,20 +273,22 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkGetStateResponse\"\
         ,\n    \"$defs\": {\n        \"BulkGetStateResponse\": {\n            \"description\": \"Response containing the results
         of a bulk get operation for multiple keys\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"items\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"$ref\": \"#/$defs/BulkStateItem\"\n                 \
-        \   },\n                    \"description\": \"Results for each key\"\n                }\n            }\n        },\n\
-        \        \"BulkStateItem\": {\n            \"description\": \"A single item result from a bulk get operation including
-        the key, value, ETag, and found status\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n \
-        \                   \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\"\
-        : \"The key\"\n                },\n                \"value\": {\n                    \"type\": \"object\",\n     \
-        \               \"additionalProperties\": false,\n                    \"nullable\": true,\n                    \"\
-        description\": \"The value (null if not found)\"\n                },\n                \"etag\": {\n              \
-        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"ETag for this item\"\n             \
-        \   },\n                \"found\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the key was found\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"items\"\n            ],\n            \"properties\": {\n\
+        \                \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/BulkStateItem\"\n                    },\n                    \"description\"\
+        : \"Results for each key\"\n                }\n            }\n        },\n        \"BulkStateItem\": {\n         \
+        \   \"description\": \"A single item result from a bulk get operation including the key, value, ETag, and found status\"\
+        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
+        \                \"key\",\n                \"found\"\n            ],\n            \"properties\": {\n            \
+        \    \"key\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n              \
+        \      \"maxLength\": 255,\n                    \"description\": \"The key\"\n                },\n               \
+        \ \"value\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n \
+        \                   \"nullable\": true,\n                    \"description\": \"The value (null if not found)\"\n\
+        \                },\n                \"etag\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 100,\n                    \"nullable\": true,\n              \
+        \      \"description\": \"ETag for this item\"\n                },\n                \"found\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"Whether the key was found\"\n               \
+        \ }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Bulk get multiple keys\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetState\"\n}"
   /state/bulk-save:
@@ -461,19 +467,20 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListStoresResponse\"\
         ,\n    \"$defs\": {\n        \"ListStoresResponse\": {\n            \"description\": \"Response containing the list
         of configured state stores\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"properties\": {\n                \"stores\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"$ref\": \"#/$defs/StoreInfo\"\n                    },\n      \
-        \              \"description\": \"List of configured stores\"\n                }\n            }\n        },\n    \
-        \    \"StoreInfo\": {\n            \"description\": \"Information about a configured state store including its name,
-        backend type, and optional key count\",\n            \"type\": \"object\",\n            \"additionalProperties\":
-        false,\n            \"properties\": {\n                \"name\": {\n                    \"type\": \"string\",\n  \
-        \                  \"minLength\": 1,\n                    \"maxLength\": 100,\n                    \"description\"\
-        : \"Store name\"\n                },\n                \"backend\": {\n                    \"type\": \"string\",\n\
-        \                    \"enum\": [\n                        \"redis\",\n                        \"mysql\"\n        \
-        \            ],\n                    \"description\": \"Backend type\"\n                },\n                \"keyCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Number of keys (only if includeStats=true)\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \           \"required\": [\n                \"stores\"\n            ],\n            \"properties\": {\n         \
+        \       \"stores\": {\n                    \"type\": \"array\",\n                    \"items\": {\n              \
+        \          \"$ref\": \"#/$defs/StoreInfo\"\n                    },\n                    \"description\": \"List of
+        configured stores\"\n                }\n            }\n        },\n        \"StoreInfo\": {\n            \"description\"\
+        : \"Information about a configured state store including its name, backend type, and optional key count\",\n     \
+        \       \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
+        \         \"name\",\n                \"backend\"\n            ],\n            \"properties\": {\n                \"\
+        name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
+        maxLength\": 100,\n                    \"description\": \"Store name\"\n                },\n                \"backend\"\
+        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"redis\"\
+        ,\n                        \"mysql\"\n                    ],\n                    \"description\": \"Backend type\"\
+        \n                },\n                \"keyCount\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\": \"Number of
+        keys (only if includeStats=true)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List configured state stores\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"State\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listStores\"\n}"
 components:
@@ -503,7 +510,7 @@ components:
       properties:
         value:
           type: object
-          additionalProperties: false
+          additionalProperties: true
           nullable: true
           description: The stored value (null if not found)
         etag:
@@ -531,7 +538,7 @@ components:
           description: Key to save
         value:
           type: object
-          additionalProperties: false
+          additionalProperties: true
           description: Value to store
         options:
           nullable: true
@@ -541,6 +548,8 @@ components:
       description: Response from a save operation containing the new ETag
       type: object
       additionalProperties: false
+      required:
+      - etag
       properties:
         etag:
           type: string
@@ -651,6 +660,8 @@ components:
       description: Specifies a field and direction for sorting query results
       type: object
       additionalProperties: false
+      required:
+      - field
       properties:
         field:
           type: string
@@ -703,12 +714,17 @@ components:
       description: Response containing paginated query results with total count information
       type: object
       additionalProperties: false
+      required:
+      - results
+      - totalCount
+      - page
+      - pageSize
       properties:
         results:
           type: array
           items:
             type: object
-            additionalProperties: false
+            additionalProperties: true
           description: Query results
         totalCount:
           type: integer
@@ -749,6 +765,8 @@ components:
       description: Response containing the results of a bulk get operation for multiple keys
       type: object
       additionalProperties: false
+      required:
+      - items
       properties:
         items:
           type: array
@@ -759,6 +777,9 @@ components:
       description: A single item result from a bulk get operation including the key, value, ETag, and found status
       type: object
       additionalProperties: false
+      required:
+      - key
+      - found
       properties:
         key:
           type: string
@@ -767,7 +788,7 @@ components:
           description: The key
         value:
           type: object
-          additionalProperties: false
+          additionalProperties: true
           nullable: true
           description: The value (null if not found)
         etag:
@@ -938,6 +959,8 @@ components:
       description: Response containing the list of configured state stores
       type: object
       additionalProperties: false
+      required:
+      - stores
       properties:
         stores:
           type: array
@@ -948,6 +971,9 @@ components:
       description: Information about a configured state store including its name, backend type, and optional key count
       type: object
       additionalProperties: false
+      required:
+      - name
+      - backend
       properties:
         name:
           type: string

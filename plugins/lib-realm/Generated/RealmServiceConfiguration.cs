@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Realm;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(RealmService))]
-public class RealmServiceConfiguration : IServiceConfiguration
+public class RealmServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Page size for paginated entity migration during realm merge operations

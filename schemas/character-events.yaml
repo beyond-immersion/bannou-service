@@ -26,7 +26,7 @@ info:
     - topic: character.compressed
       event: CharacterCompressedEvent
       description: Published when a character is compressed to archive format
-    # Custom realm transition events (defined in character-api.yaml)
+    # Custom realm transition events
     - topic: character.realm.joined
       event: CharacterRealmJoinedEvent
       description: Published when a character joins a realm (creation or transfer)
@@ -62,8 +62,8 @@ x-lifecycle:
       birthDate:
         type: string
         format: date-time
-        nullable: true  # NRT: Optional property MUST be nullable
-        description: In-game birth date of the character
+        required: true
+        description: In-game birth date of the character (required on creation, always present)
       deathDate:
         type: string
         format: date-time
@@ -72,8 +72,8 @@ x-lifecycle:
       status:
         allOf:
           - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'
-        nullable: true  # NRT: Optional property MUST be nullable
-        description: Current status of the character (e.g., active, inactive, deceased)
+        required: true
+        description: Current lifecycle status of the character (alive, dead, dormant)
       createdAt:
         type: string
         format: date-time
@@ -94,6 +94,70 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
+    CharacterRealmJoinedEvent:
+      type: object
+      description: Event published when a character joins a realm (creation or transfer)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being joined
+        previousRealmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Previous realm ID (populated for transfers, null for initial creation)
+
+    CharacterRealmLeftEvent:
+      type: object
+      description: Event published when a character leaves a realm (deletion or transfer)
+      additionalProperties: false
+      required:
+      - eventId
+      - timestamp
+      - characterId
+      - realmId
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event instance
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character
+        realmId:
+          type: string
+          format: uuid
+          description: Realm being left
+        reason:
+          allOf:
+          - $ref: 'character-api.yaml#/components/schemas/CharacterRealmLeftReason'
+          description: Reason the character left the realm
+
     CharacterCompressedEvent:
       type: object
       additionalProperties: false

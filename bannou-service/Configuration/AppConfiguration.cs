@@ -55,9 +55,45 @@ public class AppConfiguration : BaseServiceConfiguration
     public string? SecretStore { get; set; }
 
     /// <summary>
-    /// Whether services are enabled by default.
+    /// Master kill switch for all services. When false, all services are disabled unless
+    /// individually overridden with {SERVICE}_SERVICE_ENABLED=true.
+    /// Environment variable: BANNOU_SERVICES_ENABLED
     /// </summary>
     public bool ServicesEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Whether App Foundation (L1) services are enabled.
+    /// Controls: account, auth, chat, connect, contract, permission, resource.
+    /// Environment variable: BANNOU_ENABLE_APP_FOUNDATION
+    /// </summary>
+    public bool EnableAppFoundation { get; set; } = true;
+
+    /// <summary>
+    /// Whether Game Foundation (L2) services are enabled.
+    /// Controls: character, realm, species, location, currency, item, inventory, etc.
+    /// Environment variable: BANNOU_ENABLE_GAME_FOUNDATION
+    /// </summary>
+    public bool EnableGameFoundation { get; set; } = true;
+
+    /// <summary>
+    /// Whether App Features (L3) services are enabled.
+    /// Controls: asset, orchestrator, documentation, website, voice, broadcast.
+    /// Environment variable: BANNOU_ENABLE_APP_FEATURES
+    /// </summary>
+    public bool EnableAppFeatures { get; set; } = true;
+
+    /// <summary>
+    /// Whether Game Features (L4) services are enabled.
+    /// Controls: behavior, matchmaking, achievement, analytics, escrow, etc.
+    /// Environment variable: BANNOU_ENABLE_GAME_FEATURES
+    /// </summary>
+    public bool EnableGameFeatures { get; set; } = true;
+
+    /// <summary>
+    /// Whether Extensions (L5) third-party plugins are enabled.
+    /// Environment variable: BANNOU_ENABLE_EXTENSIONS
+    /// </summary>
+    public bool EnableExtensions { get; set; } = true;
 
     /// <summary>
     /// Time in milliseconds for any given service startup to

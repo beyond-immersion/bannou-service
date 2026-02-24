@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
@@ -61,6 +62,11 @@ public sealed class NativeEventConsumerBackend : IHostedService
     /// <inheritdoc/>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.event_consumer_backend.start",
+            ActivityKind.Client);
+
         var registeredTopics = _eventConsumer.GetRegisteredTopics().ToList();
 
         _logger.LogInformation(

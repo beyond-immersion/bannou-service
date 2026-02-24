@@ -668,7 +668,7 @@ x-state-stores:
     purpose: Custom asset type handler registrations
 
   # ============================================================================
-  # Quest Stores (L4 GameFeatures Service)
+  # Quest Stores (L2 GameFoundation Service)
   # ============================================================================
 
   quest-definition-statestore:
@@ -906,7 +906,7 @@ x-state-stores:
     purpose: Distributed locks for board mutations and unlock operations
 
   # ============================================================================
-  # Collection Stores (L4 GameFeatures Service)
+  # Collection Stores (L2 GameFoundation Service)
   # ============================================================================
 
   collection-entry-templates:

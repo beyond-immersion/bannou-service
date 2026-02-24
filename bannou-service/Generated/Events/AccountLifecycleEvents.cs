@@ -99,7 +99,13 @@ public partial class AccountCreatedEvent : BaseServiceEvent
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata associated with the account
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -174,7 +180,13 @@ public partial class AccountUpdatedEvent : BaseServiceEvent
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata associated with the account
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -257,7 +269,13 @@ public partial class AccountDeletedEvent : BaseServiceEvent
     public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Additional metadata associated with the account
+    /// Whether multi-factor authentication is enabled for the account
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.RealmHistory;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(RealmHistoryService))]
-public class RealmHistoryServiceConfiguration : IServiceConfiguration
+public class RealmHistoryServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of lore elements allowed per realm. Prevents unbounded growth from repeated AddLoreElement or SetLore calls. Returns BadRequest when limit would be exceeded.

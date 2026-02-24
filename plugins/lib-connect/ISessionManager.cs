@@ -84,16 +84,6 @@ public interface ISessionManager
 
     #endregion
 
-    #region Session Events
-
-    /// <summary>
-    /// Publishes a session event for cross-instance communication.
-    /// Used for disconnect notifications and other session lifecycle events.
-    /// </summary>
-    Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null);
-
-    #endregion
-
     #region Account Session Index
 
     /// <summary>

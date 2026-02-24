@@ -188,7 +188,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional error details (service-specific)
+          description: Additional error details (service-specific). No Bannou plugin reads specific keys from this field by convention.
         recoverable:
           type: boolean
           default: true

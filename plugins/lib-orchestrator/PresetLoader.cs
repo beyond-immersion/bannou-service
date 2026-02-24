@@ -162,23 +162,48 @@ public class PresetLoader
                     }
                 }
 
-                // CRITICAL: Translate services list to proper service enable/disable environment variables
-                // Without this, deployed containers have all services enabled by default (including
-                // services like Asset that require infrastructure like MinIO that won't be available).
-                // Set SERVICES_ENABLED=false so only explicitly listed services are enabled.
+                // Translate layer and service lists to environment variables.
+                // Two modes:
+                // 1. layers: [AppFoundation, GameFoundation] → BANNOU_ENABLE_* env vars per layer
+                // 2. services: [auth, account] (without layers) → BANNOU_SERVICES_ENABLED=false + per-service enables
+                // Both can be combined: layers set the base, services add individual overrides.
+                if (node.Layers != null && node.Layers.Count > 0)
+                {
+                    // Layer-based enablement: enable listed layers, disable unlisted
+                    var allLayers = new[] { "APP_FOUNDATION", "GAME_FOUNDATION", "APP_FEATURES", "GAME_FEATURES", "EXTENSIONS" };
+                    foreach (var layerEnvSuffix in allLayers)
+                    {
+                        var envKey = $"BANNOU_ENABLE_{layerEnvSuffix}";
+                        if (!mergedEnv.ContainsKey(envKey))
+                        {
+                            // Match: "AppFoundation" → "APP_FOUNDATION", "app_foundation" → "APP_FOUNDATION", etc.
+                            var isEnabled = node.Layers.Any(l =>
+                                string.Equals(
+                                    l.Replace(" ", "_").ToUpperInvariant(),
+                                    layerEnvSuffix,
+                                    StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(
+                                    string.Concat(l.Select((c, i) => i > 0 && char.IsUpper(c) ? $"_{c}" : $"{c}")).ToUpperInvariant(),
+                                    layerEnvSuffix,
+                                    StringComparison.OrdinalIgnoreCase));
+
+                            mergedEnv[envKey] = isEnabled ? "true" : "false";
+                        }
+                    }
+                }
+
+                // Individual service overrides (works with or without layers)
                 if (node.Services != null && node.Services.Count > 0)
                 {
-                    // Only set if not already explicitly configured
-                    if (!mergedEnv.ContainsKey("SERVICES_ENABLED"))
+                    // When NO layers specified, use BANNOU_SERVICES_ENABLED=false + per-service enables
+                    if ((node.Layers == null || node.Layers.Count == 0) && !mergedEnv.ContainsKey("BANNOU_SERVICES_ENABLED"))
                     {
-                        mergedEnv["SERVICES_ENABLED"] = "false";
+                        mergedEnv["BANNOU_SERVICES_ENABLED"] = "false";
                     }
 
-                    // Enable each service listed in the preset
+                    // Enable each individually listed service
                     foreach (var serviceName in node.Services)
                     {
-                        // Convert service name to environment variable format
-                        // e.g., "auth" -> "AUTH_SERVICE_ENABLED", "game-session" -> "GAME_SESSION_SERVICE_ENABLED"
                         var envVarName = serviceName.ToUpperInvariant().Replace("-", "_") + "_SERVICE_ENABLED";
                         if (!mergedEnv.ContainsKey(envVarName))
                         {

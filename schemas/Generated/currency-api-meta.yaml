@@ -1398,14 +1398,15 @@ paths:
         boolean\",\n                    \"default\": false,\n                    \"description\": \"Skip earn cap enforcement
         (admin use)\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
         \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
-        description\": \"Free-form transaction metadata\"\n                }\n            }\n        },\n        \"TransactionType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
-        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
-        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
-        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
-        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
-        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        description\": \"Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreditCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"CreditCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of credit operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
@@ -1465,14 +1466,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit currency to a wallet (faucet operation)\",\n    \"description\"\
         : \"Credits currency to a wallet. This is a faucet operation (currency enters the system).\\nEnforces earn caps, wallet
         caps, and global supply caps. Requires idempotency key.\\n\",\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"\
@@ -1530,14 +1532,15 @@ paths:
         \           \"nullable\": true,\n                    \"description\": \"Override negative balance allowance for this
         transaction\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n  \
         \                  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"\
-        description\": \"Free-form transaction metadata\"\n                }\n            }\n        },\n        \"TransactionType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
-        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
-        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
-        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
-        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
-        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        description\": \"Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DebitCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"DebitCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of debit operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n    \
@@ -1588,15 +1591,15 @@ paths:
         \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Amount limited by earn cap\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata\"\n                }\n   \
-        \         }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
-        \n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
+        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit currency from a wallet (sink operation)\",\n    \"description\":
         \"Debits currency from a wallet. This is a sink operation (currency exits the system).\\nChecks for sufficient funds
         unless negative balance is allowed.\\n\",\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"deprecated\": false,\n\
@@ -1654,15 +1657,15 @@ paths:
         \           \"type\": \"string\",\n                    \"maxLength\": 128,\n                    \"description\": \"\
         Unique key to prevent duplicate processing\"\n                },\n                \"metadata\": {\n              \
         \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Free-form transaction metadata\"\n                }\n            }\n\
-        \        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification
-        of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\"\
-        ,\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n             \
-        \   \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\"\
-        ,\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"\
-        conversion_debit\",\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n      \
-        \          \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\n         \
-        \   ]\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Free-form transaction metadata. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\",\n\
+        \            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferCurrencyResponse\"\
         ,\n    \"$defs\": {\n        \"TransferCurrencyResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of transfer operation\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
@@ -1720,14 +1723,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer currency between wallets\",\n    \"description\": \"Transfers
         currency from one wallet to another. Validates transferability,\\nrealm compatibility, and sufficient funds.\\n\"\
         ,\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"transferCurrency\"\
@@ -1847,14 +1851,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit multiple wallets in one call\",\n    \"description\": \"Credits
         currency to multiple wallets in one call. Each operation is independent;\\nfailures do not rollback others. For atomic
         multi-wallet operations, use lib-escrow.\\n\",\n    \"tags\": [\n        \"Balance\"\n    ],\n    \"deprecated\":
@@ -2025,14 +2030,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Execute currency conversion in a wallet\",\n    \"description\": \"Executes
         a currency conversion within a single wallet. Debits the source\\ncurrency and credits the target currency at the
         computed exchange rate.\\n\",\n    \"tags\": [\n        \"Conversion\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -2315,14 +2321,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a transaction by ID\",\n    \"description\": \"Retrieves a single transaction
         record by its unique ID.\",\n    \"tags\": [\n        \"Transaction History\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"getTransaction\"\n}"
@@ -2431,14 +2438,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get paginated transaction history for a wallet\",\n    \"description\"\
         : \"Retrieves transaction history for a wallet with optional filters\\nby currency, transaction type, and date range.\\\
         n\",\n    \"tags\": [\n        \"Transaction History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -2525,15 +2533,15 @@ paths:
         \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Amount limited by earn cap\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata\"\n                }\n   \
-        \         }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
-        \n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
+        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get transactions by reference type and ID\",\n    \"description\": \"Retrieves
         all transactions linked to a specific reference (quest, auction,\\nescrow, etc.).\\n\",\n    \"tags\": [\n       \
         \ \"Transaction History\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getTransactionsByReference\"\
@@ -2758,15 +2766,15 @@ paths:
         \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Amount limited by earn cap\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata\"\n                }\n   \
-        \         }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
-        \n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
+        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Debit wallet for escrow deposit\",\n    \"description\": \"Called by lib-escrow
         when a party deposits currency into an escrow agreement.\\nImmediately debits the wallet (no lock tracking needed
         - escrow owns the funds).\\n\",\n    \"tags\": [\n        \"Escrow Integration\"\n    ],\n    \"deprecated\": false,\n\
@@ -2863,15 +2871,15 @@ paths:
         \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Amount limited by earn cap\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata\"\n                }\n   \
-        \         }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
-        \n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
+        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit recipient on escrow completion\",\n    \"description\": \"Called
         by lib-escrow when an escrow agreement completes successfully.\\nCredits the recipient wallet with the released funds.\\\
         n\",\n    \"tags\": [\n        \"Escrow Integration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -2968,15 +2976,15 @@ paths:
         \       \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Amount limited by earn cap\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata\"\n                }\n   \
-        \         }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Classification of the currency transaction\",\n            \"enum\": [\n                \"mint\",\n          \
-        \      \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\"\
-        ,\n                \"refund\",\n                \"conversion_credit\",\n                \"burn\",\n              \
-        \  \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n                \"cap_overflow\"\
-        ,\n                \"conversion_debit\",\n                \"transfer\",\n                \"trade\",\n            \
-        \    \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\",\n                \"escrow_refund\"\
-        \n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Free-form metadata. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"TransactionType\":
+        {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency transaction\"\
+        ,\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n                \"loot_drop\"\
+        ,\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\",\n                \"\
+        conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n\
+        \                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\",\n     \
+        \           \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
+        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Credit depositor on escrow refund\",\n    \"description\": \"Called by
         lib-escrow when an escrow agreement is cancelled or refunded.\\nCredits the original depositor wallet with the refunded
         funds.\\n\",\n    \"tags\": [\n        \"Escrow Integration\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -3190,14 +3198,15 @@ paths:
         \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Amount limited by earn cap\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Free-form metadata\"\n                }\n            }\n        },\n        \"\
-        TransactionType\": {\n            \"type\": \"string\",\n            \"description\": \"Classification of the currency
-        transaction\",\n            \"enum\": [\n                \"mint\",\n                \"quest_reward\",\n          \
-        \      \"loot_drop\",\n                \"vendor_sale\",\n                \"autogain\",\n                \"refund\"\
-        ,\n                \"conversion_credit\",\n                \"burn\",\n                \"vendor_purchase\",\n     \
-        \           \"fee\",\n                \"expiration\",\n                \"cap_overflow\",\n                \"conversion_debit\"\
-        ,\n                \"transfer\",\n                \"trade\",\n                \"gift\",\n                \"escrow_deposit\"\
-        ,\n                \"escrow_release\",\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Free-form metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        },\n        \"TransactionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Classification of the currency transaction\",\n            \"enum\": [\n         \
+        \       \"mint\",\n                \"quest_reward\",\n                \"loot_drop\",\n                \"vendor_sale\"\
+        ,\n                \"autogain\",\n                \"refund\",\n                \"conversion_credit\",\n          \
+        \      \"burn\",\n                \"vendor_purchase\",\n                \"fee\",\n                \"expiration\",\n\
+        \                \"cap_overflow\",\n                \"conversion_debit\",\n                \"transfer\",\n       \
+        \         \"trade\",\n                \"gift\",\n                \"escrow_deposit\",\n                \"escrow_release\"\
+        ,\n                \"escrow_refund\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Capture held funds (debit final amount)\",\n    \"description\": \"Captures
         an active hold by debiting the final amount (which may be less than\\nor equal to the held amount). Any difference
         is released back to available balance.\\n\",\n    \"tags\": [\n        \"Authorization Hold\"\n    ],\n    \"deprecated\"\
@@ -4404,7 +4413,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads specific keys from this field by 
+            convention.
     CreditCurrencyResponse:
       type: object
       description: Result of credit operation
@@ -4485,7 +4495,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads specific keys from this field by 
+            convention.
     DebitCurrencyResponse:
       type: object
       description: Result of debit operation
@@ -4549,7 +4560,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form transaction metadata
+          description: Free-form transaction metadata. No Bannou plugin reads specific keys from this field by 
+            convention.
     TransferCurrencyResponse:
       type: object
       description: Result of transfer operation
@@ -4762,7 +4774,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Free-form metadata
+          description: Free-form metadata. No Bannou plugin reads specific keys from this field by convention.
     CalculateConversionRequest:
       type: object
       description: Request to preview a currency conversion

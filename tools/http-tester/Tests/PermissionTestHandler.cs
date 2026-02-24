@@ -1,6 +1,4 @@
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Permission;
-using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 using System.Collections.ObjectModel;
@@ -57,11 +55,12 @@ public class PermissionTestHandler : BaseHttpTestHandler
         new ServiceTest(TestStateBasedPermissionEscalation, "StateBasedEscalation", "Permission", "Test setting game-session:in_game state grants additional permissions"),
         new ServiceTest(TestDefaultVsInGameState, "DefaultVsInGame", "Permission", "Test difference between default and game-session:in_game state permissions"),
 
-        // Phase 6: Session Connection Event Tests (activeConnections tracking)
-        new ServiceTest(TestSessionConnectedEvent, "SessionConnectedEvent", "Permission", "Test session.connected event adds session to activeConnections"),
-        new ServiceTest(TestSessionConnectedEventWithRoles, "SessionConnectedWithRoles", "Permission", "Test session.connected event stores roles for capability compilation"),
-        new ServiceTest(TestSessionDisconnectedEvent, "SessionDisconnectedEvent", "Permission", "Test session.disconnected event removes session from activeConnections"),
-        new ServiceTest(TestSessionDisconnectedReconnectable, "SessionDisconnectedReconn", "Permission", "Test session.disconnected with reconnectable flag preserves activeSessions"),
+        // Phase 6: Session Lifecycle Tests — REMOVED from http-tester
+        // Permission now receives session lifecycle notifications via ISessionActivityListener
+        // (DI listener pattern), not via IMessageBus events. These are in-process calls from
+        // Connect to Permission, which cannot be triggered from the http-tester's separate
+        // DI container. Equivalent coverage lives in edge-tester (CapabilityFlowTestHandler)
+        // where real WebSocket connections trigger the full Connect → DI listener → Permission flow.
     ];
 
     /// <summary>
@@ -87,16 +86,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
+            await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Registered)
-            {
-                return TestResult.Successful($"Service permissions registered: {testServiceId}, affected {response.AffectedSessions} sessions");
-            }
-            else
-            {
-                return TestResult.Failed($"Service permission registration returned success=false");
-            }
+            return TestResult.Successful($"Service permissions registered: {testServiceId}");
         }, "Register service permissions");
 
     /// <summary>
@@ -123,9 +115,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var response1 = await permissionsClient.RegisterServicePermissionsAsync(matrix1);
-            if (!response1.Registered)
-                return TestResult.Failed("Failed to register first service");
+            await permissionsClient.RegisterServicePermissionsAsync(matrix1);
 
             // Register second service
             var service2Id = $"{testPrefix}-service2";
@@ -142,9 +132,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var response2 = await permissionsClient.RegisterServicePermissionsAsync(matrix2);
-            if (!response2.Registered)
-                return TestResult.Failed("Failed to register second service");
+            await permissionsClient.RegisterServicePermissionsAsync(matrix2);
 
             return TestResult.Successful($"Successfully registered multiple services: {service1Id}, {service2Id}");
         }, "Register multiple services");
@@ -179,13 +167,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
+            await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Registered)
-            {
-                return TestResult.Successful($"Service with multiple states registered: {testServiceId}, 3 states defined");
-            }
-            return TestResult.Failed("Registration returned success=false");
+            return TestResult.Successful($"Service with multiple states registered: {testServiceId}, 3 states defined");
         }, "Register multiple states");
 
     /// <summary>
@@ -212,13 +196,9 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 }
             };
 
-            var response = await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
+            await permissionsClient.RegisterServicePermissionsAsync(permissionMatrix);
 
-            if (response.Registered)
-            {
-                return TestResult.Successful($"Service with multiple roles registered: {testServiceId}, 3 roles defined");
-            }
-            return TestResult.Failed("Registration returned success=false");
+            return TestResult.Successful($"Service with multiple roles registered: {testServiceId}, 3 roles defined");
         }, "Register multiple roles");
 
     /// <summary>
@@ -545,10 +525,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
 
             var response = await permissionsClient.UpdateSessionStateAsync(stateUpdate);
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (response.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
-
             return TestResult.Successful($"Session state updated to 'in_lobby' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session state");
 
@@ -655,10 +631,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
             };
 
             var response = await permissionsClient.UpdateSessionRoleAsync(roleUpdate);
-
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (response.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {response.SessionId}");
 
             return TestResult.Successful($"Session role updated to 'admin' for session {testSessionId}, permissionsChanged={response.PermissionsChanged}");
         }, "Update session role");
@@ -829,10 +801,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // States is null/empty - clears unconditionally
             });
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (clearResponse.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
-
             // Verify state was cleared
             var updatedInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
             {
@@ -844,7 +812,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("State was not cleared");
             }
 
-            return TestResult.Successful($"State cleared unconditionally: {clearResponse.Message}");
+            return TestResult.Successful("State cleared unconditionally");
         }, "Clear state unconditional");
 
     /// <summary>
@@ -879,10 +847,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "in_lobby" matches
             });
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (clearResponse.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
-
             if (!clearResponse.PermissionsChanged)
             {
                 return TestResult.Failed("Permissions should have changed when state was cleared");
@@ -899,7 +863,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("State was not cleared despite matching filter");
             }
 
-            return TestResult.Successful($"State cleared with matching filter: {clearResponse.Message}");
+            return TestResult.Successful("State cleared with matching filter");
         }, "Clear state matching filter");
 
     /// <summary>
@@ -934,10 +898,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 States = new List<string> { "in_lobby", "in_game" } // "active" doesn't match
             });
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (clearResponse.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
-
             if (clearResponse.PermissionsChanged)
             {
                 return TestResult.Failed("Permissions should NOT have changed when filter didn't match");
@@ -959,7 +919,7 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"State changed unexpectedly to: {updatedInfo.States[testServiceId]}");
             }
 
-            return TestResult.Successful($"State preserved when filter didn't match: {clearResponse.Message}");
+            return TestResult.Successful("State preserved when filter didn't match");
         }, "Clear state non-matching filter");
 
     /// <summary>
@@ -987,16 +947,12 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 ServiceId = testServiceId
             });
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (clearResponse.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
-
             if (clearResponse.PermissionsChanged)
             {
                 return TestResult.Failed("Permissions should NOT have changed when no state existed");
             }
 
-            return TestResult.Successful($"Clearing non-existent state handled gracefully: {clearResponse.Message}");
+            return TestResult.Successful("Clearing non-existent state handled gracefully");
         }, "Clear non-existent state");
 
     /// <summary>
@@ -1079,10 +1035,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
                 // ServiceId is null - should clear all states
             });
 
-            // Validate response structure (SessionUpdateResponse has sessionId and permissionsChanged required)
-            if (clearResponse.SessionId != testSessionId)
-                return TestResult.Failed($"Session ID mismatch: expected {testSessionId}, got {clearResponse.SessionId}");
-
             if (!clearResponse.PermissionsChanged)
             {
                 return TestResult.Failed("Permissions should have changed when clearing states");
@@ -1104,12 +1056,12 @@ public class PermissionTestHandler : BaseHttpTestHandler
                     return TestResult.Failed($"Expected 0 states after clear all, got {updatedInfo.States.Count}");
                 }
 
-                return TestResult.Successful($"All states cleared successfully: {clearResponse.Message}");
+                return TestResult.Successful("All states cleared successfully");
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 // 404 is expected - session has no state info after clearing all states
-                return TestResult.Successful($"All states cleared successfully (session info now returns 404): {clearResponse.Message}");
+                return TestResult.Successful("All states cleared successfully (session info now returns 404)");
             }
         }, "Clear all session states");
 
@@ -1156,11 +1108,6 @@ public class PermissionTestHandler : BaseHttpTestHandler
             {
                 SessionId = testSessionId
             });
-
-            if (sessionInfo.SessionId != testSessionId)
-            {
-                return TestResult.Failed("Session info returned wrong session ID");
-            }
 
             if (sessionInfo.Role != "user")
             {
@@ -1573,362 +1520,4 @@ public class PermissionTestHandler : BaseHttpTestHandler
             return TestResult.Failed($"State difference test failed: before={beforeMethodCount}, after={afterMethodCount} (expected 0 → 2)");
         }, "Default vs in_game state");
 
-    /// <summary>
-    /// Test that session.connected event adds session to activeConnections.
-    /// </summary>
-    private static async Task<TestResult> TestSessionConnectedEvent(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
-            if (messageBus == null)
-            {
-                return TestResult.Failed("IMessageBus not available from service provider");
-            }
-
-            var permissionsClient = GetServiceClient<IPermissionClient>();
-            var testPrefix = $"session-connected-{Guid.NewGuid():N}";
-            var testSessionId = Guid.NewGuid();
-            var testAccountId = Guid.NewGuid();
-            var testServiceId = Guid.NewGuid().ToString();
-
-            // Step 1: Register a service with permissions so there are capabilities to compile
-            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
-            {
-                ServiceId = testServiceId,
-                Version = "1.0.0",
-                Permissions = new Dictionary<string, StatePermissions>
-                {
-                    ["default"] = new StatePermissions
-                    {
-                        ["user"] = new Collection<string> { "/connected/test" }
-                    }
-                }
-            });
-
-            // Step 2: Publish session.connected event via IMessageBus using strongly-typed model
-            var sessionConnectedEvent = new SessionConnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Roles = new List<string> { "user" },
-                Authorizations = null,
-                ConnectInstanceId = Guid.NewGuid()
-            };
-
-            Console.WriteLine($"  Publishing session.connected event for {testSessionId}...");
-            await messageBus.TryPublishAsync("session.connected", sessionConnectedEvent);
-
-            // Wait for event to be processed
-            await Task.Delay(500);
-
-            // Step 3: Verify the session has capabilities (proving it was added to activeConnections)
-            var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
-            {
-                SessionId = testSessionId
-            });
-
-            if (capabilities.Permissions != null && capabilities.Permissions.Count > 0)
-            {
-                return TestResult.Successful(
-                    $"session.connected event processed: session {testSessionId} now has capabilities " +
-                    $"({capabilities.Permissions.Count} services)");
-            }
-
-            // If capabilities are empty, check session info to see if session exists
-            try
-            {
-                var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
-                {
-                    SessionId = testSessionId
-                });
-
-                if (sessionInfo.Role == "user")
-                {
-                    return TestResult.Successful(
-                        $"session.connected event processed: session {testSessionId} has role '{sessionInfo.Role}'");
-                }
-            }
-            catch (ApiException)
-            {
-                // Session info not found - event may not have been processed
-            }
-
-            return TestResult.Failed(
-                $"session.connected event may not have been processed - session has no capabilities or role");
-        }, "Session connected event");
-
-    /// <summary>
-    /// Test that session.connected event properly stores roles from JWT for capability compilation.
-    /// </summary>
-    private static async Task<TestResult> TestSessionConnectedEventWithRoles(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
-            if (messageBus == null)
-            {
-                return TestResult.Failed("IMessageBus not available from service provider");
-            }
-
-            var permissionsClient = GetServiceClient<IPermissionClient>();
-            var testPrefix = $"session-roles-{Guid.NewGuid():N}";
-            var testSessionId = Guid.NewGuid();
-            var testAccountId = Guid.NewGuid();
-            var testServiceId = Guid.NewGuid().ToString();
-
-            // Step 1: Register service with admin-only permissions
-            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
-            {
-                ServiceId = testServiceId,
-                Version = "1.0.0",
-                Permissions = new Dictionary<string, StatePermissions>
-                {
-                    ["default"] = new StatePermissions
-                    {
-                        ["user"] = new Collection<string> { "/user/endpoint" },
-                        ["admin"] = new Collection<string> { "/admin/dangerous" }
-                    }
-                }
-            });
-
-            // Step 2: Publish session.connected with admin role using strongly-typed model
-            var sessionConnectedEvent = new SessionConnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Roles = new List<string> { "user", "admin" },  // Admin role should be selected (highest priority)
-                Authorizations = null
-            };
-
-            Console.WriteLine($"  Publishing session.connected with roles [user, admin]...");
-            await messageBus.TryPublishAsync("session.connected", sessionConnectedEvent);
-
-            await Task.Delay(500);
-
-            // Step 3: Verify session has admin capabilities
-            var capabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
-            {
-                SessionId = testSessionId
-            });
-
-            if (capabilities.Permissions?.ContainsKey(testServiceId) == true)
-            {
-                var methods = capabilities.Permissions[testServiceId];
-                if (methods.Contains("/admin/dangerous"))
-                {
-                    return TestResult.Successful(
-                        $"session.connected with roles processed: admin role correctly applied, " +
-                        $"session has admin-only endpoint access ({methods.Count} methods)");
-                }
-
-                if (methods.Contains("/user/endpoint"))
-                {
-                    return TestResult.Failed(
-                        $"Roles stored but admin inheritance not working. Got user methods but not admin. " +
-                        $"Methods: [{string.Join(", ", methods)}]");
-                }
-            }
-
-            // Check session info for role
-            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
-            {
-                SessionId = testSessionId
-            });
-
-            if (sessionInfo.Role == "admin")
-            {
-                return TestResult.Successful(
-                    $"session.connected with roles processed: role stored as '{sessionInfo.Role}'");
-            }
-
-            return TestResult.Failed(
-                $"session.connected with roles may not have processed correctly. Role: {sessionInfo.Role}");
-        }, "Session connected with roles");
-
-    /// <summary>
-    /// Test that session.disconnected event removes session from activeConnections.
-    /// </summary>
-    private static async Task<TestResult> TestSessionDisconnectedEvent(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
-            if (messageBus == null)
-            {
-                return TestResult.Failed("IMessageBus not available from service provider");
-            }
-
-            var permissionsClient = GetServiceClient<IPermissionClient>();
-            var testPrefix = $"session-disconnect-{Guid.NewGuid():N}";
-            var testSessionId = Guid.NewGuid();
-            var testAccountId = Guid.NewGuid();
-
-            // Step 1: First connect the session using strongly-typed model
-            var connectEvent = new SessionConnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Roles = new List<string> { "user" },
-                Authorizations = null
-            };
-
-            Console.WriteLine($"  Publishing session.connected for {testSessionId}...");
-            await messageBus.TryPublishAsync("session.connected", connectEvent);
-            await Task.Delay(500);
-
-            // Verify session is connected (has capabilities)
-            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
-            {
-                SessionId = testSessionId
-            });
-
-            if (beforeCapabilities.Permissions == null)
-            {
-                Console.WriteLine("  Warning: Session may not have capabilities before disconnect test");
-            }
-
-            // Step 2: Disconnect the session using strongly-typed model
-            var disconnectEvent = new SessionDisconnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Reason = "test_disconnect",
-                Reconnectable = false,
-                DurationSeconds = 60
-            };
-
-            Console.WriteLine($"  Publishing session.disconnected for {testSessionId}...");
-            await messageBus.TryPublishAsync("session.disconnected", disconnectEvent);
-            await Task.Delay(500);
-
-            // Step 3: Verify the event handler completed successfully
-            try
-            {
-                var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
-                {
-                    SessionId = testSessionId
-                });
-
-                // Session info should still exist (session data preserved)
-                return TestResult.Successful(
-                    $"session.disconnected event processed: session {testSessionId} data preserved " +
-                    $"(role: {sessionInfo.Role}), removed from activeConnections");
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                // Session completely cleaned up - also acceptable behavior
-                return TestResult.Successful(
-                    $"session.disconnected event processed: session {testSessionId} fully cleaned up");
-            }
-        }, "Session disconnected event");
-
-    /// <summary>
-    /// Test that session.disconnected with reconnectable=true preserves session in activeSessions.
-    /// </summary>
-    private static async Task<TestResult> TestSessionDisconnectedReconnectable(ITestClient client, string[] args) =>
-        await ExecuteTestAsync(async () =>
-        {
-            var messageBus = Program.ServiceProvider?.GetService(typeof(IMessageBus)) as IMessageBus;
-            if (messageBus == null)
-            {
-                return TestResult.Failed("IMessageBus not available from service provider");
-            }
-
-            var permissionsClient = GetServiceClient<IPermissionClient>();
-            var testPrefix = $"session-reconn-{Guid.NewGuid():N}";
-            var testSessionId = Guid.NewGuid();
-            var testAccountId = Guid.NewGuid();
-            var testServiceId = Guid.NewGuid().ToString();
-
-            // Step 1: Register service with permissions
-            await permissionsClient.RegisterServicePermissionsAsync(new ServicePermissionMatrix
-            {
-                ServiceId = testServiceId,
-                Version = "1.0.0",
-                Permissions = new Dictionary<string, StatePermissions>
-                {
-                    ["default"] = new StatePermissions
-                    {
-                        ["user"] = new Collection<string> { "/reconn/test" }
-                    }
-                }
-            });
-
-            // Step 2: Connect the session using strongly-typed model
-            var connectEvent = new SessionConnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Roles = new List<string> { "user" },
-                Authorizations = null
-            };
-
-            Console.WriteLine($"  Publishing session.connected...");
-            await messageBus.TryPublishAsync("session.connected", connectEvent);
-            await Task.Delay(500);
-
-            // Capture capabilities before disconnect
-            var beforeCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
-            {
-                SessionId = testSessionId
-            });
-
-            var beforeCount = beforeCapabilities.Permissions?.Values
-                .SelectMany(methods => methods).Count() ?? 0;
-
-            // Step 3: Disconnect with reconnectable=true using strongly-typed model
-            var disconnectEvent = new SessionDisconnectedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SessionId = testSessionId,
-                AccountId = testAccountId,
-                Reason = "temporary_disconnect",
-                Reconnectable = true,  // Key difference: session can reconnect
-                DurationSeconds = 30
-            };
-
-            Console.WriteLine($"  Publishing session.disconnected with reconnectable=true...");
-            await messageBus.TryPublishAsync("session.disconnected", disconnectEvent);
-            await Task.Delay(500);
-
-            // Step 4: Verify session data is preserved (can still get capabilities)
-            var afterCapabilities = await permissionsClient.GetCapabilitiesAsync(new CapabilityRequest
-            {
-                SessionId = testSessionId
-            });
-
-            var afterCount = afterCapabilities.Permissions?.Values
-                .SelectMany(methods => methods).Count() ?? 0;
-
-            // Session info should also be preserved
-            var sessionInfo = await permissionsClient.GetSessionInfoAsync(new SessionInfoRequest
-            {
-                SessionId = testSessionId
-            });
-
-            if (sessionInfo.Role == "user" && afterCount >= beforeCount)
-            {
-                return TestResult.Successful(
-                    $"Reconnectable session preserved: role='{sessionInfo.Role}', " +
-                    $"capabilities before={beforeCount}, after={afterCount}");
-            }
-
-            if (sessionInfo.Role != null)
-            {
-                return TestResult.Successful(
-                    $"Reconnectable session data preserved: role='{sessionInfo.Role}'");
-            }
-
-            return TestResult.Failed(
-                $"Reconnectable session may not have preserved data properly. Role: {sessionInfo.Role}");
-        }, "Session disconnected reconnectable");
 }

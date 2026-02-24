@@ -77,15 +77,11 @@ components:
     TelemetryHealthResponse:
       type: object
       additionalProperties: false
-      description: Response containing telemetry exporter health status
+      description: Response containing telemetry exporter health status. HTTP 200 confirms the subsystem is healthy.
       required:
-        - healthy
         - tracingEnabled
         - metricsEnabled
       properties:
-        healthy:
-          type: boolean
-          description: Overall health status of telemetry subsystem
         tracingEnabled:
           type: boolean
           description: Whether distributed tracing export is enabled
@@ -114,6 +110,7 @@ components:
         - serviceName
         - serviceNamespace
         - deploymentEnvironment
+        - otlpEndpoint
         - otlpProtocol
       properties:
         tracingEnabled:
@@ -128,7 +125,7 @@ components:
           description: Current trace sampling ratio (0.0-1.0)
         serviceName:
           type: string
-          description: Service name used for telemetry identification
+          description: Service name used for telemetry identification (resolved from config or effective app-id)
         serviceNamespace:
           type: string
           description: Service namespace for telemetry grouping
@@ -137,8 +134,14 @@ components:
           description: Current deployment environment
         otlpEndpoint:
           type: string
-          nullable: true
-          description: Configured OTLP endpoint
+          description: Configured OTLP endpoint (always set, defaults to http://localhost:4317)
         otlpProtocol:
-          type: string
+          $ref: '#/components/schemas/OtlpProtocol'
           description: OTLP transport protocol (grpc or http)
+
+    OtlpProtocol:
+      type: string
+      enum:
+        - grpc
+        - http
+      description: OTLP transport protocol

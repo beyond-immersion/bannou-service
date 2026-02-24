@@ -174,6 +174,7 @@ public partial class GetAccountByEmailRequest
     [System.Text.Json.Serialization.JsonPropertyName("email")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(254)]
     public string Email { get; set; } = default!;
 
 }
@@ -242,6 +243,7 @@ public partial class GetAccountByProviderRequest
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255)]
     public string ExternalId { get; set; } = default!;
 
 }
@@ -257,12 +259,14 @@ public partial class CreateAccountRequest
     /// Email address for the new account. Null for OAuth/Steam accounts without email.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("email")]
+    [System.ComponentModel.DataAnnotations.StringLength(254)]
     public string? Email { get; set; } = default!;
 
     /// <summary>
     /// Pre-hashed password from Auth service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
+    [System.ComponentModel.DataAnnotations.StringLength(255)]
     public string? PasswordHash { get; set; } = default!;
 
     /// <summary>
@@ -282,10 +286,11 @@ public partial class CreateAccountRequest
     /// List of roles assigned to the account (null defaults to empty)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    [System.ComponentModel.DataAnnotations.MaxLength(20)]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
-    /// Custom metadata associated with the account
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -318,10 +323,11 @@ public partial class UpdateAccountRequest
     /// Updated list of roles for the account (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roles")]
+    [System.ComponentModel.DataAnnotations.MaxLength(20)]
     public System.Collections.Generic.ICollection<string>? Roles { get; set; } = default!;
 
     /// <summary>
-    /// Updated custom metadata for the account
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -351,7 +357,7 @@ public partial class UpdateProfileRequest
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// Updated custom metadata for the account
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -379,6 +385,7 @@ public partial class UpdatePasswordRequest
     [System.Text.Json.Serialization.JsonPropertyName("passwordHash")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255)]
     public string PasswordHash { get; set; } = default!;
 
 }
@@ -462,6 +469,7 @@ public partial class UpdateEmailRequest
     [System.Text.Json.Serialization.JsonPropertyName("newEmail")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(254)]
     public string NewEmail { get; set; } = default!;
 
 }
@@ -494,7 +502,10 @@ public partial class AddAuthMethodRequest
     /// External user ID from the OAuth provider
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("externalId")]
-    public string? ExternalId { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255)]
+    public string ExternalId { get; set; } = default!;
 
     /// <summary>
     /// Display name from the OAuth provider
@@ -569,10 +580,12 @@ public partial class AccountResponse
     /// List of authentication methods linked to the account
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("authMethods")]
-    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<AuthMethodInfo> AuthMethods { get; set; } = new System.Collections.ObjectModel.Collection<AuthMethodInfo>();
 
     /// <summary>
-    /// Custom metadata associated with the account
+    /// Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

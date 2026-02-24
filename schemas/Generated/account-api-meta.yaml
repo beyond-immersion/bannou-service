@@ -80,44 +80,46 @@ paths:
         one\"\n                }\n            }\n        },\n        \"AccountResponse\": {\n            \"type\": \"object\"\
         ,\n            \"description\": \"Account information response\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"accountId\",\n                \"createdAt\",\n                \"emailVerified\"\
-        ,\n                \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Unique identifier for the account\"\n                },\n                \"email\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\": true,\n       \
-        \             \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts without
-        email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n    \
-        \            },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n   \
-        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n \
-        \               },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
-        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
-        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
-        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
-        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
-        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Custom metadata associated with the account\"\n                },\n                \"mfaEnabled\": {\n       \
-        \             \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether multi-factor authentication is enabled for this account\"\n                },\n                \"mfaSecret\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\
-        \n                },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n        \
-        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
-        \    \"nullable\": true,\n                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service
-        generates and verifies. Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"\
-        AuthMethodInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked
-        authentication method\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
-        \    \"provider\",\n                \"linkedAt\"\n            ],\n            \"properties\": {\n                \"\
-        methodId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Unique identifier for the authentication method\"\
-        \n                },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n \
-        \                   \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
+        ,\n                \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n  \
+        \              \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Unique identifier for the account\"\n                },\n              \
+        \  \"email\": {\n                    \"type\": \"string\",\n                    \"format\": \"email\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Email address associated with the account.
+        Null for OAuth/Steam accounts without email.\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Display name for the account\"\n                },\n                \"passwordHash\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"BCrypt hashed password
+        for authentication\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n    \
+        \                \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been
+        verified\"\n                },\n                \"roles\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"type\": \"string\"\n                    },\n                 \
+        \   \"description\": \"List of roles assigned to the account\"\n                },\n                \"authMethods\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/AuthMethodInfo\"\n                    },\n                    \"description\": \"List of authentication
+        methods linked to the account\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by
+        convention.\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
+        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
+        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
+        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
+        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
+        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
+        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
+        \  },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n         \
+        \           \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -159,71 +161,75 @@ paths:
         ,\n    \"$defs\": {\n        \"CreateAccountRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a new account\",\n            \"additionalProperties\": false,\n            \"properties\":
         {\n                \"email\": {\n                    \"type\": \"string\",\n                    \"format\": \"email\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Email address for the new account.
-        Null for OAuth/Steam accounts without email.\"\n                },\n                \"passwordHash\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Pre-hashed password from Auth service\"\n                },\n                \"displayName\": {\n              \
-        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n \
-        \                   \"description\": \"Display name for the account\"\n                },\n                \"emailVerified\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Whether the email address has been verified\"\n                },\n                \"roles\": {\n            \
-        \        \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n  \
-        \                  },\n                    \"nullable\": true,\n                    \"description\": \"List of roles
-        assigned to the account (null defaults to empty)\"\n                },\n                \"metadata\": {\n        \
-        \            \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Custom metadata associated with the account\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        ,\n                    \"maxLength\": 254,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Email address for the new account. Null for OAuth/Steam accounts without email.\"\n                },\n      \
+        \          \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Pre-hashed password from Auth service\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 100,\n                    \"description\": \"Display
+        name for the account\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether the email address
+        has been verified\"\n                },\n                \"roles\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\",\n                        \"maxLength\"\
+        : 50\n                    },\n                    \"maxItems\": 20,\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"List of roles assigned to the account (null defaults to empty)\"\n          \
+        \      },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new account\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createAccount\"\n}"
   /account/get:
@@ -260,53 +266,55 @@ paths:
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by ID\",\n    \"description\": \"\",\n    \"tags\": [\n   \
         \     \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccount\"\n}"
   /account/update:
@@ -344,62 +352,65 @@ paths:
         type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
         \          \"description\": \"New display name for the account\"\n                },\n                \"roles\": {\n\
         \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
-        Updated list of roles for the account (null to keep unchanged)\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Updated custom metadata for the account\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        string\",\n                        \"maxLength\": 50\n                    },\n                    \"maxItems\": 20,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Updated list of roles for the account
+        (null to keep unchanged)\"\n                },\n                \"metadata\": {\n                    \"type\": \"\
+        object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account\",\n    \"description\": \"\",\n    \"tags\": [\n      \
         \  \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateAccount\"\n}"
   /account/delete:
@@ -461,59 +472,62 @@ paths:
         ,\n    \"$defs\": {\n        \"GetAccountByEmailRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to get account by email address\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"email\"\n            ],\n            \"properties\": {\n                \"email\": {\n    \
-        \                \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"description\"\
-        : \"Email address to look up\"\n                }\n            }\n        }\n    }\n}"
+        \                \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"maxLength\"\
+        : 254,\n                    \"description\": \"Email address to look up\"\n                }\n            }\n    \
+        \    }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by email\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByEmail\"\n}"
   /account/auth-methods/list:
@@ -558,9 +572,10 @@ paths:
         \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        \  },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n         \
+        \           \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
@@ -601,35 +616,37 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddAuthMethodRequest\"\
         ,\n    \"$defs\": {\n        \"AddAuthMethodRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to add an authentication method to an account\",\n            \"additionalProperties\": false,\n     \
-        \       \"required\": [\n                \"accountId\",\n                \"provider\"\n            ],\n          \
-        \  \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"ID of the account to add auth method to\"\n \
-        \               },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\",\n  \
-        \                  \"description\": \"OAuth provider type to add\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the OAuth provider\"\n                },\n                \"displayName\": {\n         \
-        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Display name from the OAuth provider\"\n                }\n            }\n        },\n        \"OAuthProvider\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes email)\",\n    \
-        \        \"enum\": [\n                \"google\",\n                \"discord\",\n                \"twitch\",\n   \
-        \             \"steam\"\n            ]\n        }\n    }\n}"
+        \       \"required\": [\n                \"accountId\",\n                \"provider\",\n                \"externalId\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account to
+        add auth method to\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n    \
+        \                    {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n\
+        \                    ],\n                    \"description\": \"OAuth provider type to add\"\n                },\n\
+        \                \"externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\":
+        255,\n                    \"description\": \"External user ID from the OAuth provider\"\n                },\n    \
+        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name from the OAuth provider\"\n                }\n            }\n\
+        \        },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
+        provider types (excludes email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\"\
+        ,\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthMethodResponse\"\
         ,\n    \"$defs\": {\n        \"AuthMethodResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response after adding an authentication method\",\n            \"additionalProperties\": false,\n            \"\
         required\": [\n                \"methodId\",\n                \"provider\",\n                \"linkedAt\"\n      \
         \      ],\n            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the authentication
-        method\"\n                },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\"\
-        ,\n                    \"description\": \"OAuth provider type\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the OAuth provider\"\n                },\n                \"displayName\": {\n         \
-        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Display name from the OAuth provider\"\n                },\n                \"linkedAt\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp
-        when the authentication method was linked\"\n                }\n            }\n        },\n        \"OAuthProvider\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes email)\",\n\
-        \            \"enum\": [\n                \"google\",\n                \"discord\",\n                \"twitch\",\n\
-        \                \"steam\"\n            ]\n        }\n    }\n}"
+        method\"\n                },\n                \"provider\": {\n                    \"allOf\": [\n                \
+        \        {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n         \
+        \           ],\n                    \"description\": \"OAuth provider type\"\n                },\n               \
+        \ \"externalId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"External user ID from the OAuth provider\"\n                },\n                \"\
+        displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Display name from the OAuth provider\"\n                },\n                \"linkedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the authentication method was linked\"\n                }\n            }\n \
+        \       },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth
+        provider types (excludes email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\"\
+        ,\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add authentication method to account\",\n    \"description\": \"\",\n \
         \   \"tags\": [\n        \"Authentication Methods\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"addAuthMethod\"\
         \n}"
@@ -696,64 +713,67 @@ paths:
         ,\n    \"$defs\": {\n        \"GetAccountByProviderRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to get account by external provider ID\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"provider\",\n                \"externalId\"\n            ],\n    \
-        \        \"properties\": {\n                \"provider\": {\n                    \"$ref\": \"#/$defs/OAuthProvider\"\
-        ,\n                    \"description\": \"OAuth provider type\"\n                },\n                \"externalId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"External ID from the provider\"\
-        \n                }\n            }\n        },\n        \"OAuthProvider\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"OAuth provider types (excludes email)\",\n            \"enum\": [\n              \
-        \  \"google\",\n                \"discord\",\n                \"twitch\",\n                \"steam\"\n           \
-        \ ]\n        }\n    }\n}"
+        \        \"properties\": {\n                \"provider\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/OAuthProvider\"\n                        }\n           \
+        \         ],\n                    \"description\": \"OAuth provider type\"\n                },\n                \"\
+        externalId\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n            \
+        \        \"description\": \"External ID from the provider\"\n                }\n            }\n        },\n      \
+        \  \"OAuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"OAuth provider types (excludes
+        email)\",\n            \"enum\": [\n                \"google\",\n                \"discord\",\n                \"\
+        twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get account by external provider ID\",\n    \"description\": \"\",\n  \
         \  \"tags\": [\n        \"Account Lookup\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountByProvider\"\
         \n}"
@@ -790,59 +810,61 @@ paths:
         type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 100,\n          \
         \          \"description\": \"New display name for the account\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Updated custom metadata for the account\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads
+        specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account profile\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Profile Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateProfile\"\n}"
   /account/password/update:
@@ -871,8 +893,9 @@ paths:
         : [\n                \"accountId\",\n                \"passwordHash\"\n            ],\n            \"properties\"\
         : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"description\": \"ID of the account to update\"\n                },\n            \
-        \    \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"description\": \"New pre-hashed
-        password from Auth service\"\n                }\n            }\n        }\n    }\n}"
+        \    \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 255,\n   \
+        \                 \"description\": \"New pre-hashed password from Auth service\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Update account password hash\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updatePasswordHash\"\
@@ -966,46 +989,47 @@ paths:
         : \"Account IDs that failed to fetch with error reasons\"\n                }\n            }\n        },\n        \"\
         AccountResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Account information response\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n   \
-        \             \"createdAt\",\n                \"emailVerified\",\n                \"roles\"\n            ],\n    \
-        \        \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the account\"\n \
-        \               },\n                \"email\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"email\",\n                    \"nullable\": true,\n                    \"description\": \"Email address
-        associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n                \"\
-        displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Display name for the account\"\n                },\n                \"passwordHash\"\
+        \             \"createdAt\",\n                \"emailVerified\",\n                \"roles\",\n                \"authMethods\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
+        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
+        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
+        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
+        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
+        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
+        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
+        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
+        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
+        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"mfaEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether multi-factor authentication is enabled for this account\"\n                },\n                \"mfaSecret\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"BCrypt hashed password for authentication\"\n                },\n                \"createdAt\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the account was created\"\n                },\n                \"updatedAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when the account was last updated\"\n                },\n      \
-        \          \"emailVerified\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether the email address has been verified\"\n                },\n                \"roles\": {\n              \
-        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
-        \                },\n                    \"description\": \"List of roles assigned to the account\"\n            \
-        \    },\n                \"authMethods\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n                    },\n                    \"\
-        description\": \"List of authentication methods linked to the account\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Custom metadata associated with the account\"\
-        \n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n            \
-        \        \"default\": false,\n                    \"description\": \"Whether multi-factor authentication is enabled
-        for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM
-        ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n       \
-        \         \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n   \
-        \                 \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\
+        \n                },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\"\n                    },\n                \
+        \    \"nullable\": true,\n                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service
+        generates and verifies. Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"\
+        AuthMethodInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Information about a linked
+        authentication method\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"provider\",\n                \"linkedAt\"\n            ],\n            \"properties\": {\n                \"\
+        methodId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Unique identifier for the authentication method\"\
+        \n                },\n                \"provider\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/AuthProvider\"\n                        }\n                    ],\n\
+        \                    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
@@ -1188,59 +1212,61 @@ paths:
         : {\n                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"description\": \"ID of the account to update\"\n                },\n            \
         \    \"newEmail\": {\n                    \"type\": \"string\",\n                    \"format\": \"email\",\n    \
-        \                \"description\": \"New email address for the account\"\n                }\n            }\n      \
-        \  }\n    }\n}"
+        \                \"maxLength\": 254,\n                    \"description\": \"New email address for the account\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AccountResponse\"\
         ,\n    \"$defs\": {\n        \"AccountResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Account information response\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
         \               \"accountId\",\n                \"createdAt\",\n                \"emailVerified\",\n             \
-        \   \"roles\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        identifier for the account\"\n                },\n                \"email\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"email\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Email address associated with the account. Null for OAuth/Steam accounts without email.\"\n                },\n\
-        \                \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Display name for the account\"\n                },\n               \
-        \ \"passwordHash\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
-        \              \"description\": \"BCrypt hashed password for authentication\"\n                },\n              \
-        \  \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n \
-        \                   \"description\": \"Timestamp when the account was created\"\n                },\n            \
-        \    \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Timestamp when the account was last
-        updated\"\n                },\n                \"emailVerified\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether the email address has been verified\"\n                },\n      \
-        \          \"roles\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"List of roles assigned
-        to the account\"\n                },\n                \"authMethods\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\n              \
-        \      },\n                    \"description\": \"List of authentication methods linked to the account\"\n       \
-        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Custom metadata associated
-        with the account\"\n                },\n                \"mfaEnabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether multi-factor authentication
-        is enabled for this account\"\n                },\n                \"mfaSecret\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Encrypted TOTP secret
-        (AES-256-GCM ciphertext). Auth service encrypts and decrypts. Account stores opaque ciphertext.\"\n              \
-        \  },\n                \"mfaRecoveryCodes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies.
-        Account stores opaque hashes.\"\n                }\n            }\n        },\n        \"AuthMethodInfo\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"Information about a linked authentication method\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"provider\",\n    \
-        \            \"linkedAt\"\n            ],\n            \"properties\": {\n                \"methodId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Unique identifier for the authentication method\"\n              \
-        \  },\n                \"provider\": {\n                    \"$ref\": \"#/$defs/AuthProvider\",\n                \
-        \    \"description\": \"Authentication provider type\"\n                },\n                \"externalId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"External user ID from the authentication provider\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name from the authentication provider\"\n                },\n                \"linkedAt\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the authentication method was linked\"\n                }\n            }\n        },\n        \"\
-        AuthProvider\": {\n            \"type\": \"string\",\n            \"description\": \"All authentication provider types
-        including email\",\n            \"enum\": [\n                \"email\",\n                \"google\",\n           \
-        \     \"discord\",\n                \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
+        \   \"roles\",\n                \"authMethods\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the account\"\n                },\n                \"email\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"email\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Email address associated with the account. Null for OAuth/Steam accounts
+        without email.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name for the account\"\n\
+        \                },\n                \"passwordHash\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"BCrypt hashed password for authentication\"\n\
+        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the account was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Timestamp when the account was last updated\"\n                },\n                \"emailVerified\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"description\": \"Whether the email address has been verified\"\
+        \n                },\n                \"roles\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of roles assigned to the account\"\n                },\n                \"authMethods\": {\n            \
+        \        \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AuthMethodInfo\"\
+        \n                    },\n                    \"description\": \"List of authentication methods linked to the account\"\
+        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
+        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n\
+        \                \"mfaEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Whether multi-factor authentication is enabled for this account\"\n      \
+        \          },\n                \"mfaSecret\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Encrypted TOTP secret (AES-256-GCM ciphertext). Auth service
+        encrypts and decrypts. Account stores opaque ciphertext.\"\n                },\n                \"mfaRecoveryCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"BCrypt-hashed single-use recovery codes. Auth service generates and verifies. Account stores opaque hashes.\"\n\
+        \                }\n            }\n        },\n        \"AuthMethodInfo\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Information about a linked authentication method\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"provider\",\n                \"linkedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"methodId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Unique identifier for the authentication method\"\n                },\n                \"provider\": {\n     \
+        \               \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AuthProvider\"\
+        \n                        }\n                    ],\n                    \"description\": \"Authentication provider
+        type\"\n                },\n                \"externalId\": {\n                    \"type\": \"string\",\n       \
+        \             \"nullable\": true,\n                    \"description\": \"External user ID from the authentication
+        provider\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Display name from the authentication
+        provider\"\n                },\n                \"linkedAt\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the authentication
+        method was linked\"\n                }\n            }\n        },\n        \"AuthProvider\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"All authentication provider types including email\",\n            \"\
+        enum\": [\n                \"email\",\n                \"google\",\n                \"discord\",\n               \
+        \ \"twitch\",\n                \"steam\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update account email address\",\n    \"description\": \"\",\n    \"tags\"\
         : [\n        \"Account Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateEmail\"\n}"
 components:
@@ -1328,6 +1354,7 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           description: Email address to look up
     GetAuthMethodsRequest:
       type: object
@@ -1365,10 +1392,12 @@ components:
       - externalId
       properties:
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string
+          maxLength: 255
           description: External ID from the provider
     CreateAccountRequest:
       type: object
@@ -1378,10 +1407,12 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
           nullable: true
           description: Email address for the new account. Null for OAuth/Steam accounts without email.
         passwordHash:
           type: string
+          maxLength: 255
           nullable: true
           description: Pre-hashed password from Auth service
         displayName:
@@ -1397,13 +1428,15 @@ components:
           type: array
           items:
             type: string
+            maxLength: 50
+          maxItems: 20
           nullable: true
           description: List of roles assigned to the account (null defaults to empty)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdateAccountRequest:
       type: object
       description: Request to update an existing account
@@ -1424,13 +1457,15 @@ components:
           type: array
           items:
             type: string
+            maxLength: 50
+          maxItems: 20
           nullable: true
           description: Updated list of roles for the account (null to keep unchanged)
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdateProfileRequest:
       type: object
       description: Request to update an account profile
@@ -1451,7 +1486,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated custom metadata for the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdatePasswordRequest:
       type: object
       description: Request to update an account password
@@ -1466,6 +1501,7 @@ components:
           description: ID of the account to update
         passwordHash:
           type: string
+          maxLength: 255
           description: New pre-hashed password from Auth service
     UpdateMfaRequest:
       type: object
@@ -1522,6 +1558,7 @@ components:
         newEmail:
           type: string
           format: email
+          maxLength: 254
           description: New email address for the account
     AddAuthMethodRequest:
       type: object
@@ -1530,17 +1567,19 @@ components:
       required:
       - accountId
       - provider
+      - externalId
       properties:
         accountId:
           type: string
           format: uuid
           description: ID of the account to add auth method to
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type to add
         externalId:
           type: string
-          nullable: true
+          maxLength: 255
           description: External user ID from the OAuth provider
         displayName:
           type: string
@@ -1555,6 +1594,7 @@ components:
       - createdAt
       - emailVerified
       - roles
+      - authMethods
       properties:
         accountId:
           type: string
@@ -1599,7 +1639,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata associated with the account
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
         mfaEnabled:
           type: boolean
           default: false
@@ -1630,7 +1670,8 @@ components:
           nullable: true
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/AuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/AuthProvider'
           description: Authentication provider type
         externalId:
           type: string
@@ -1658,7 +1699,8 @@ components:
           format: uuid
           description: Unique identifier for the authentication method
         provider:
-          $ref: '#/components/schemas/OAuthProvider'
+          allOf:
+          - $ref: '#/components/schemas/OAuthProvider'
           description: OAuth provider type
         externalId:
           type: string

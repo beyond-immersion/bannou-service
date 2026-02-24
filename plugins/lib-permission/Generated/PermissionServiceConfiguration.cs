@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Permission;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(PermissionService))]
-public class PermissionServiceConfiguration : IServiceConfiguration
+public class PermissionServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum number of concurrent session recompilations during service registration (bounds parallel Redis operations)
@@ -61,18 +59,18 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     public int MaxConcurrentRecompilations { get; set; } = 50;
 
     /// <summary>
-    /// In-memory permission cache TTL in seconds. Cached capabilities older than this are refreshed from Redis on next access. 0 disables TTL (cache never expires). Recommended non-zero value is 300 (5 minutes). Acts as a safety net against lost event-driven recompilation triggers.
-    /// Environment variable: PERMISSION_CACHE_TTL_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 0, Maximum = 86400)]
-    public int PermissionCacheTtlSeconds { get; set; } = 0;
-
-    /// <summary>
-    /// Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    /// Redis TTL in seconds for session permission data keys (states and compiled permissions). With heartbeat-driven TTL refresh (every 30s via ISessionActivityListener), active sessions continuously extend their TTL. Dead sessions expire naturally when heartbeats stop. Default 600 (10 minutes, ~20 heartbeat intervals of headroom). 0 disables Redis TTL. Maximum 604800 (7 days).
     /// Environment variable: PERMISSION_SESSION_DATA_TTL_SECONDS
     /// </summary>
     [ConfigRange(Minimum = 0, Maximum = 604800)]
-    public int SessionDataTtlSeconds { get; set; } = 86400;
+    public int SessionDataTtlSeconds { get; set; } = 600;
+
+    /// <summary>
+    /// Timeout in seconds for distributed locks during session state and role update operations. Prevents lost updates when concurrent requests modify the same session.
+    /// Environment variable: PERMISSION_SESSION_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int SessionLockTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
     /// Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).

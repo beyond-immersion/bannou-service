@@ -291,13 +291,13 @@ paths:
         = higher probability of trait evolution.\\nTypical values: 0.3 (minor), 0.5 (moderate), 0.8 (major), 1.0 (life-changing)\\\
         n\"\n                },\n                \"contextData\": {\n                    \"type\": \"object\",\n         \
         \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional context for logging and debugging.\\nNot used in evolution calculations.\\n\"\n                }\n  \
-        \          }\n        },\n        \"ExperienceType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Categories of significant experiences that may cause personality evolution.\\nEach type has predefined trait impact
-        tendencies.\\n\",\n            \"enum\": [\n                \"TRAUMA\",\n                \"BETRAYAL\",\n         \
-        \       \"LOSS\",\n                \"VICTORY\",\n                \"FRIENDSHIP\",\n                \"REDEMPTION\",\n\
-        \                \"CORRUPTION\",\n                \"ENLIGHTENMENT\",\n                \"SACRIFICE\"\n            ]\n\
-        \        }\n    }\n}"
+        : \"Optional context for logging and debugging.\\nNot used in evolution calculations.\\nNo Bannou plugin reads specific
+        keys from this field by convention.\\n\"\n                }\n            }\n        },\n        \"ExperienceType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of significant experiences that
+        may cause personality evolution.\\nEach type has predefined trait impact tendencies.\\n\",\n            \"enum\":
+        [\n                \"TRAUMA\",\n                \"BETRAYAL\",\n                \"LOSS\",\n                \"VICTORY\"\
+        ,\n                \"FRIENDSHIP\",\n                \"REDEMPTION\",\n                \"CORRUPTION\",\n           \
+        \     \"ENLIGHTENMENT\",\n                \"SACRIFICE\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExperienceResult\"\
         ,\n    \"$defs\": {\n        \"ExperienceResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording an experience, including any personality evolution\",\n            \"additionalProperties\"\
@@ -698,13 +698,14 @@ paths:
         = higher probability of preference evolution.\\n\"\n                },\n                \"contextData\": {\n     \
         \               \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
         nullable\": true,\n                    \"description\": \"Optional context for logging and debugging (e.g., enemy
-        type,\\nally count, location). Not used in evolution calculations.\\n\"\n                }\n            }\n      \
-        \  },\n        \"CombatExperienceType\": {\n            \"type\": \"string\",\n            \"description\": \"Categories
-        of combat experiences that may cause preference evolution.\\nEach type affects different aspects of combat behavior.\\\
-        n\",\n            \"enum\": [\n                \"DECISIVE_VICTORY\",\n                \"NARROW_VICTORY\",\n      \
-        \          \"DEFEAT\",\n                \"NEAR_DEATH\",\n                \"ALLY_SAVED\",\n                \"ALLY_LOST\"\
-        ,\n                \"SUCCESSFUL_RETREAT\",\n                \"FAILED_RETREAT\",\n                \"AMBUSH_SUCCESS\"\
-        ,\n                \"AMBUSH_SURVIVED\"\n            ]\n        }\n    }\n}"
+        type,\\nally count, location). Not used in evolution calculations.\\nNo Bannou plugin reads specific keys from this
+        field by convention.\\n\"\n                }\n            }\n        },\n        \"CombatExperienceType\": {\n   \
+        \         \"type\": \"string\",\n            \"description\": \"Categories of combat experiences that may cause preference
+        evolution.\\nEach type affects different aspects of combat behavior.\\n\",\n            \"enum\": [\n            \
+        \    \"DECISIVE_VICTORY\",\n                \"NARROW_VICTORY\",\n                \"DEFEAT\",\n                \"NEAR_DEATH\"\
+        ,\n                \"ALLY_SAVED\",\n                \"ALLY_LOST\",\n                \"SUCCESSFUL_RETREAT\",\n    \
+        \            \"FAILED_RETREAT\",\n                \"AMBUSH_SUCCESS\",\n                \"AMBUSH_SURVIVED\"\n     \
+        \       ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CombatEvolutionResult\"\
         ,\n    \"$defs\": {\n        \"CombatEvolutionResult\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of recording a combat experience\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1265,6 +1266,7 @@ components:
           description: |
             Optional context for logging and debugging.
             Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
     BatchGetPersonalitiesRequest:
       type: object
       description: Request payload for bulk loading personalities
@@ -1483,6 +1485,7 @@ components:
           description: |
             Optional context for logging and debugging (e.g., enemy type,
             ally count, location). Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
     CleanupByCharacterRequest:
       type: object
       description: Request to cleanup all personality data for a deleted character

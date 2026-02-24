@@ -50,7 +50,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify service event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.participant.joined", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-participant.joined", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -218,7 +218,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify service event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.participant.left", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-participant.left", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -360,7 +360,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify ban event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.participant.banned", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-participant.banned", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();
@@ -460,7 +460,7 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
 
         // Verify mute event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.participant.muted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-participant.muted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         ClearCallerSession();

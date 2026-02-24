@@ -90,6 +90,8 @@ public class OAuthProviderServiceTests : IDisposable
         _httpClient = new HttpClient();
         _mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(_httpClient);
 
+        var telemetryProvider = new NullTelemetryProvider();
+
         _service = new OAuthProviderService(
             _mockStateStoreFactory.Object,
             _mockAccountClient.Object,
@@ -97,6 +99,7 @@ public class OAuthProviderServiceTests : IDisposable
             _configuration,
             _appConfiguration,
             _mockMessageBus.Object,
+            telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -171,6 +174,7 @@ public class OAuthProviderServiceTests : IDisposable
     {
         var mockFactory = new Mock<IHttpClientFactory>();
         mockFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(httpClient);
+        var telemetryProvider = new NullTelemetryProvider();
 
         return new OAuthProviderService(
             _mockStateStoreFactory.Object,
@@ -179,6 +183,7 @@ public class OAuthProviderServiceTests : IDisposable
             configOverride ?? _configuration,
             _appConfiguration,
             _mockMessageBus.Object,
+            telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -297,6 +302,7 @@ public class OAuthProviderServiceTests : IDisposable
     {
         // Arrange
         var configWithMock = new AuthServiceConfiguration { MockProviders = true };
+        var telemetryProvider = new NullTelemetryProvider();
         var service = new OAuthProviderService(
             _mockStateStoreFactory.Object,
             _mockAccountClient.Object,
@@ -304,6 +310,7 @@ public class OAuthProviderServiceTests : IDisposable
             configWithMock,
             _appConfiguration,
             _mockMessageBus.Object,
+            telemetryProvider,
             _mockLogger.Object);
 
         // Act & Assert

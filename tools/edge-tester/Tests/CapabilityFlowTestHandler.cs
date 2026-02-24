@@ -641,7 +641,7 @@ public class CapabilityFlowTestHandler : IServiceTestHandler
                     return false;
                 }
 
-                Console.WriteLine($"✅ State update succeeded: sessionId={response.Result.SessionId}, permissionsChanged={response.Result.PermissionsChanged}");
+                Console.WriteLine($"✅ State update succeeded: permissionsChanged={response.Result.PermissionsChanged}");
             }
             catch (Exception ex)
             {

@@ -45,7 +45,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Default action is Archive: verify archive event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -72,7 +72,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
 
         // Default action is Lock: verify lock event
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.locked", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.locked", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify room saved with Locked status
@@ -143,7 +143,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
         await service.HandleContractExpiredAsync(evt);
 
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat.room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat-room.archived", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -203,6 +203,63 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
     }
 
     [Fact]
+    public async Task HandleContractFulfilled_MultiplePages_ProcessesAllRooms()
+    {
+        var service = CreateService();
+
+        var room1 = CreateTestRoom(roomId: Guid.NewGuid(), contractId: TestContractId);
+        var room2 = CreateTestRoom(roomId: Guid.NewGuid(), contractId: TestContractId);
+        room1.ContractFulfilledAction = ContractRoomAction.Lock;
+        room2.ContractFulfilledAction = ContractRoomAction.Lock;
+
+        // Page 1: returns room1, HasMore = true (TotalCount=2, Offset=0, Items=1)
+        var page1Results = new List<JsonQueryResult<ChatRoomModel>>
+        {
+            new($"room:{room1.RoomId}", room1),
+        };
+        // Page 2: returns room2, HasMore = false (TotalCount=2, Offset=1, Items=1)
+        var page2Results = new List<JsonQueryResult<ChatRoomModel>>
+        {
+            new($"room:{room2.RoomId}", room2),
+        };
+
+        MockRoomStore
+            .SetupSequence(s => s.JsonQueryPagedAsync(
+                It.Is<IReadOnlyList<QueryCondition>>(c =>
+                    c.Any(q => q.Path == "$.ContractId" && (string)q.Value == TestContractId.ToString())),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(page1Results, 2, 0, 100))
+            .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(page2Results, 2, 1, 100));
+
+        SetupRoomCache(room1);
+        SetupRoomCache(room2);
+        SetupParticipants(room1.RoomId, CreateTestParticipant(sessionId: TestSessionId));
+        SetupParticipants(room2.RoomId, CreateTestParticipant(sessionId: Guid.NewGuid()));
+
+        var evt = new ContractFulfilledEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ContractId = TestContractId,
+        };
+
+        await service.HandleContractFulfilledAsync(evt);
+
+        // Verify the store was queried twice (two pages)
+        MockRoomStore.Verify(
+            s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // Both rooms should be locked (action applied to both pages)
+        MockRoomStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.Is<ChatRoomModel>(r => r.Status == ChatRoomStatus.Locked),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
     public async Task HandleContractEvent_NoRoomsFound_CompletesWithoutError()
     {
         var service = CreateService();
@@ -213,7 +270,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .Setup(s => s.JsonQueryPagedAsync(
                 It.Is<IReadOnlyList<QueryCondition>>(c =>
                     c.Any(q => q.Path == "$.ContractId" && (string)q.Value == contractId.ToString())),
-                0, 100, It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(
                 new List<JsonQueryResult<ChatRoomModel>>(), 0, 0, 100));
 
@@ -498,7 +555,7 @@ public class ChatServiceEventsAndAdminTests : ChatServiceTestBase
             .Setup(s => s.JsonQueryPagedAsync(
                 It.Is<IReadOnlyList<QueryCondition>>(c =>
                     c.Any(q => q.Path == "$.ContractId" && (string)q.Value == contractId.ToString())),
-                0, 100, It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new JsonPagedResult<ChatRoomModel>(queryResults, rooms.Length, 0, 100));
     }
 

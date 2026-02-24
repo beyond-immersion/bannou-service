@@ -201,7 +201,7 @@ public partial interface IActorClient
     /// </remarks>
     /// <returns>Encounter started successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<StartEncounterResponse> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -267,6 +267,14 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// Implements IServiceClient.ServiceName.
     /// </summary>
     public string ServiceName => _serviceName;
+
+    /// <summary>
+    /// The unique identity of this node in the mesh network.
+    /// Stable for the lifetime of the process. Used for mesh registration,
+    /// heartbeat identification, and error event sourcing.
+    /// Sourced from <see cref="BeyondImmersion.BannouService.Services.IMeshInvocationClient"/> via the mesh infrastructure.
+    /// </summary>
+    public System.Guid InstanceId => _meshClient.InstanceId;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ActorClient"/> class.
@@ -1466,7 +1474,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
     /// </remarks>
     /// <returns>Encounter started successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<StartEncounterResponse> StartEncounterAsync(StartEncounterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
@@ -1489,6 +1497,7 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
             var content_ = new System.Net.Http.ByteArrayContent(json_);
             content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json");
             request_.Content = content_;
+            request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
 
             // Apply custom headers
             ApplyHeaders(request_);
@@ -1511,7 +1520,12 @@ public partial class ActorClient : IActorClient, BeyondImmersion.BannouService.S
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        return;
+                        var objectResponse_ = await ReadObjectResponseAsync<StartEncounterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        if (objectResponse_.Object == null)
+                        {
+                            throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                        }
+                        return objectResponse_.Object;
                     }
                     else
                     {

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
@@ -25,6 +26,7 @@ public class MeshHealthCheckService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MeshHealthCheckService> _logger;
     private readonly MeshServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly HttpMessageInvoker _httpClient;
 
     /// <summary>
@@ -43,14 +45,20 @@ public class MeshHealthCheckService : BackgroundService
     /// <summary>
     /// Creates a new MeshHealthCheckService.
     /// </summary>
+    /// <param name="serviceProvider">Service provider for resolving scoped dependencies.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Mesh service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshHealthCheckService(
         IServiceProvider serviceProvider,
         ILogger<MeshHealthCheckService> logger,
-        MeshServiceConfiguration configuration)
+        MeshServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
 
         SocketsHttpHandler? handler = null;
         try
@@ -134,6 +142,8 @@ public class MeshHealthCheckService : BackgroundService
     /// </summary>
     private async Task ProbeAllEndpointsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.probe_all", ActivityKind.Internal);
+
         var stateManager = _serviceProvider.GetRequiredService<IMeshStateManager>();
         var endpoints = await stateManager.GetAllEndpointsAsync();
 
@@ -158,6 +168,8 @@ public class MeshHealthCheckService : BackgroundService
         IMeshStateManager stateManager,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.probe_endpoint", ActivityKind.Internal);
+
         // Skip endpoints that are shutting down (intentional, not a health issue)
         if (endpoint.Status == EndpointStatus.ShuttingDown)
         {
@@ -233,6 +245,8 @@ public class MeshHealthCheckService : BackgroundService
         string? lastError,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.handle_failure", ActivityKind.Internal);
+
         // Increment failure counter
         var failureCount = _failureCounters.AddOrUpdate(
             endpoint.InstanceId,
@@ -295,6 +309,8 @@ public class MeshHealthCheckService : BackgroundService
         string appId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.publish_deregistration", ActivityKind.Internal);
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -307,7 +323,7 @@ public class MeshHealthCheckService : BackgroundService
                 Timestamp = DateTimeOffset.UtcNow,
                 InstanceId = instanceId,
                 AppId = appId,
-                Reason = MeshEndpointDeregisteredEventReason.HealthCheckFailed
+                Reason = DeregistrationReason.HealthCheckFailed
             };
 
             await messageBus.TryPublishAsync(
@@ -335,6 +351,8 @@ public class MeshHealthCheckService : BackgroundService
         string? lastError,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.publish_failed", ActivityKind.Internal);
+
         var dedupKey = endpoint.InstanceId.ToString();
         var windowSeconds = _configuration.HealthCheckEventDeduplicationWindowSeconds;
         var now = DateTimeOffset.UtcNow;
@@ -391,6 +409,8 @@ public class MeshHealthCheckService : BackgroundService
     /// </summary>
     private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.health.publish_error", ActivityKind.Internal);
+
         try
         {
             using var scope = _serviceProvider.CreateScope();

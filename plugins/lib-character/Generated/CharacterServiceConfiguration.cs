@@ -48,39 +48,49 @@ namespace BeyondImmersion.BannouService.Character;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CharacterService))]
-public class CharacterServiceConfiguration : IServiceConfiguration
+public class CharacterServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum page size for list queries
     /// Environment variable: CHARACTER_MAX_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int MaxPageSize { get; set; } = 100;
 
     /// <summary>
     /// Default page size when not specified
     /// Environment variable: CHARACTER_DEFAULT_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum retry attempts when updating realm character index (optimistic concurrency)
     /// Environment variable: CHARACTER_REALM_INDEX_UPDATE_MAX_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
     public int RealmIndexUpdateMaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Maximum retry attempts when updating reference count data (optimistic concurrency)
+    /// Environment variable: CHARACTER_REF_COUNT_UPDATE_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int RefCountUpdateMaxRetries { get; set; } = 3;
 
     /// <summary>
     /// Timeout in seconds for acquiring distributed locks during character updates and compression
     /// Environment variable: CHARACTER_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Grace period in days before cleanup of dead character references (default 30 days)
     /// Environment variable: CHARACTER_CLEANUP_GRACE_PERIOD_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
     public int CleanupGracePeriodDays { get; set; } = 30;
 
 }

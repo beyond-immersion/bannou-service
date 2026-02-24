@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.Auth.Services;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -17,6 +18,7 @@ public class CloudflareEdgeProviderTests
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
     private readonly Mock<ILogger<CloudflareEdgeProvider>> _mockLogger;
+    private readonly NullTelemetryProvider _telemetryProvider;
     private readonly AuthServiceConfiguration _configuration;
     private readonly CloudflareEdgeProvider _provider;
 
@@ -25,6 +27,7 @@ public class CloudflareEdgeProviderTests
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         _mockLogger = new Mock<ILogger<CloudflareEdgeProvider>>();
+        _telemetryProvider = new NullTelemetryProvider();
 
         _configuration = new AuthServiceConfiguration
         {
@@ -41,6 +44,7 @@ public class CloudflareEdgeProviderTests
         _provider = new CloudflareEdgeProvider(
             _configuration,
             _mockHttpClientFactory.Object,
+            _telemetryProvider,
             _mockLogger.Object);
     }
 
@@ -81,7 +85,7 @@ public class CloudflareEdgeProviderTests
             CloudflareKvNamespaceId = "test",
             CloudflareApiToken = "test"
         };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = provider.IsEnabled;
@@ -101,7 +105,7 @@ public class CloudflareEdgeProviderTests
             CloudflareKvNamespaceId = "test",
             CloudflareApiToken = "test"
         };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = provider.IsEnabled;
@@ -121,7 +125,7 @@ public class CloudflareEdgeProviderTests
             CloudflareKvNamespaceId = null,
             CloudflareApiToken = "test"
         };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = provider.IsEnabled;
@@ -141,7 +145,7 @@ public class CloudflareEdgeProviderTests
             CloudflareKvNamespaceId = "test",
             CloudflareApiToken = null
         };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = provider.IsEnabled;
@@ -159,7 +163,7 @@ public class CloudflareEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { CloudflareEdgeEnabled = false };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = await provider.PushTokenRevocationAsync("test-jti", Guid.NewGuid(), TimeSpan.FromMinutes(60));
@@ -238,7 +242,7 @@ public class CloudflareEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { CloudflareEdgeEnabled = false };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
 
         // Act
         var result = await provider.PushAccountRevocationAsync(Guid.NewGuid(), DateTimeOffset.UtcNow);
@@ -275,7 +279,7 @@ public class CloudflareEdgeProviderTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { CloudflareEdgeEnabled = false };
-        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _mockLogger.Object);
+        var provider = new CloudflareEdgeProvider(config, _mockHttpClientFactory.Object, _telemetryProvider, _mockLogger.Object);
         var entries = new List<FailedEdgePushEntry>
         {
             new FailedEdgePushEntry { Type = "token", Jti = "jti-1", TtlSeconds = 3600 },

@@ -130,6 +130,8 @@ public partial class SaveStateResponse
     /// New ETag after save
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("etag")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Etag { get; set; } = default!;
 
@@ -277,6 +279,8 @@ public partial class SortField
     /// Field name to sort by (JSON path for MySQL, field name for Redis)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("field")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Field { get; set; } = default!;
 
@@ -381,7 +385,9 @@ public partial class QueryStateResponse
     /// Query results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("results")]
-    public System.Collections.Generic.ICollection<object> Results { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<object> Results { get; set; } = new System.Collections.ObjectModel.Collection<object>();
 
     /// <summary>
     /// Total matching items (for pagination)
@@ -445,7 +451,9 @@ public partial class BulkGetStateResponse
     /// Results for each key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("items")]
-    public System.Collections.Generic.ICollection<BulkStateItem> Items { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BulkStateItem> Items { get; set; } = new System.Collections.ObjectModel.Collection<BulkStateItem>();
 
 }
 
@@ -460,6 +468,8 @@ public partial class BulkStateItem
     /// The key
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Key { get; set; } = default!;
 
@@ -710,7 +720,9 @@ public partial class ListStoresResponse
     /// List of configured stores
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stores")]
-    public System.Collections.Generic.ICollection<StoreInfo> Stores { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<StoreInfo> Stores { get; set; } = new System.Collections.ObjectModel.Collection<StoreInfo>();
 
 }
 
@@ -725,6 +737,8 @@ public partial class StoreInfo
     /// Store name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
@@ -732,6 +746,8 @@ public partial class StoreInfo
     /// Backend type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public StoreInfoBackend Backend { get; set; } = default!;
 

@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Relationship;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(RelationshipService))]
-public class RelationshipServiceConfiguration : IServiceConfiguration
+public class RelationshipServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Maximum depth for hierarchy traversal to prevent infinite loops on corrupted data

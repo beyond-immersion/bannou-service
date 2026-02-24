@@ -41,12 +41,12 @@ public partial class PublishEventRequest
     /// Topic/routing key for the event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
     /// <summary>
-    /// Event payload (any JSON)
+    /// Arbitrary event payload (any valid JSON object). Wrapped opaquely in GenericMessageEnvelope for RabbitMQ routing. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -72,6 +72,7 @@ public partial class PublishOptions
     /// Exchange name for routing
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchange")]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string Exchange { get; set; } = AppConstants.DEFAULT_APP_NAME;
 
     /// <summary>
@@ -85,7 +86,7 @@ public partial class PublishOptions
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("exchangeType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PublishOptionsExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.PublishOptionsExchangeType.Topic;
+    public ExchangeType? ExchangeType { get; set; } = BeyondImmersion.BannouService.Messaging.ExchangeType.Topic;
 
     /// <summary>
     /// Whether the message should be persisted to disk
@@ -148,7 +149,7 @@ public partial class CreateSubscriptionRequest
     /// Topic pattern to subscribe to for receiving events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topic")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Topic { get; set; } = default!;
 
@@ -156,7 +157,7 @@ public partial class CreateSubscriptionRequest
     /// HTTP endpoint to receive events
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("callbackUrl")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Uri CallbackUrl { get; set; } = default!;
 
@@ -197,6 +198,7 @@ public partial class SubscriptionOptions
     /// Number of messages to prefetch
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("prefetchCount")]
+    [System.ComponentModel.DataAnnotations.Range(1, 10000)]
     public int PrefetchCount { get; set; } = 10;
 
     /// <summary>
@@ -268,12 +270,6 @@ public partial class ListTopicsRequest
     [System.Text.Json.Serialization.JsonPropertyName("exchangeFilter")]
     public string? ExchangeFilter { get; set; } = default!;
 
-    /// <summary>
-    /// Include topics with no messages
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("includeEmpty")]
-    public bool IncludeEmpty { get; set; } = true;
-
 }
 
 /// <summary>
@@ -309,12 +305,6 @@ public partial class TopicInfo
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Number of messages currently in the topic queue
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("messageCount")]
-    public int MessageCount { get; set; } = default!;
-
-    /// <summary>
     /// Number of active consumers subscribed to this topic
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consumerCount")]
@@ -322,9 +312,12 @@ public partial class TopicInfo
 
 }
 
+/// <summary>
+/// RabbitMQ exchange type determining how messages are routed
+/// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PublishOptionsExchangeType
+public enum ExchangeType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"fanout")]
@@ -335,6 +328,23 @@ public enum PublishOptionsExchangeType
 
     [System.Runtime.Serialization.EnumMember(Value = @"topic")]
     Topic = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Behavior when DLX queue exceeds max length (drop-head drops oldest, reject-publish blocks new messages)
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeadLetterOverflowBehavior
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"drop-head")]
+    DropHead = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"reject-publish")]
+    RejectPublish = 1,
 
 }
 #pragma warning restore CS1591

@@ -38,6 +38,44 @@ public partial class ConnectController : ConnectControllerBase
     }
 
     /// <summary>
+    /// Handles inter-node broadcast WebSocket connections from peer Connect instances.
+    /// </summary>
+    public override async Task<IActionResult> BroadcastWebSocket(
+        [Microsoft.AspNetCore.Mvc.FromQuery][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] string instanceId,
+        [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Connection3 connection,
+        [Microsoft.AspNetCore.Mvc.FromHeader][Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] Upgrade3 upgrade,
+        [Microsoft.AspNetCore.Mvc.FromHeader(Name = "X-Service-Token")] string? x_Service_Token,
+        CancellationToken cancellationToken = default)
+    {
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            return BadRequest("WebSocket upgrade required");
+        }
+
+        if (!System.Guid.TryParse(instanceId, out var parsedInstanceId))
+        {
+            return BadRequest("Invalid instanceId: must be a valid UUID");
+        }
+
+        var connectService = _connectService as ConnectService;
+        if (connectService == null)
+        {
+            return StatusCode(500, "Service implementation not available");
+        }
+
+        // Validate service token for internal auth
+        if (!connectService.ValidateBroadcastServiceToken(x_Service_Token))
+        {
+            _logger.LogWarning("Broadcast connection rejected: invalid or missing service token");
+            return Unauthorized("Invalid service token");
+        }
+
+        var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        await connectService.HandleBroadcastConnectionAsync(ws, parsedInstanceId, cancellationToken);
+        return new EmptyResult();
+    }
+
+    /// <summary>
     /// Common WebSocket connection handling logic.
     /// Validates JWT, accepts WebSocket upgrade, and initiates binary protocol communication.
     /// </summary>

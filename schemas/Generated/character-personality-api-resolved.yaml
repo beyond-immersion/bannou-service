@@ -669,6 +669,7 @@ components:
           description: |
             Optional context for logging and debugging.
             Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
 
     BatchGetPersonalitiesRequest:
       type: object
@@ -900,6 +901,7 @@ components:
           description: |
             Optional context for logging and debugging (e.g., enemy type,
             ally count, location). Not used in evolution calculations.
+            No Bannou plugin reads specific keys from this field by convention.
 
     # Resource Cleanup Models
     CleanupByCharacterRequest:

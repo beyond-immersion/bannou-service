@@ -32,10 +32,10 @@ Bannou's monoservice pattern provides both benefits:
 
 ```bash
 # Development: Everything runs locally
-SERVICES_ENABLED=true
+BANNOU_SERVICES_ENABLED=true
 
 # Production: Only specific services on this node
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 ACCOUNT_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```
@@ -258,47 +258,52 @@ This manifest updates in real-time as:
 
 ## Deployment Flexibility
 
-The same binary supports multiple deployment patterns:
+The same binary supports multiple deployment patterns via **layer-level enablement controls**. Five layer flags (`BANNOU_ENABLE_APP_FOUNDATION`, `BANNOU_ENABLE_GAME_FOUNDATION`, `BANNOU_ENABLE_APP_FEATURES`, `BANNOU_ENABLE_GAME_FEATURES`, `BANNOU_ENABLE_EXTENSIONS`) all default to `true`. Individual services can be overridden with `{SERVICE}_SERVICE_ENABLED=true/false`.
+
+Resolution order: infrastructure always on → individual override → master kill switch (`BANNOU_SERVICES_ENABLED=false`) → layer control.
 
 ### Local Development
-All services, single process:
+All services, single process (defaults — no env vars needed):
 ```bash
-SERVICES_ENABLED=true
+# All layers default to true, all services enabled
 docker-compose up
 ```
 
 ### Testing Configurations
 Minimal services for specific test scenarios:
 ```bash
-SERVICES_ENABLED=false
+BANNOU_SERVICES_ENABLED=false
 TESTING_SERVICE_ENABLED=true
 AUTH_SERVICE_ENABLED=true
 ```
 
 ### Production Distribution
-Services distributed by function:
+Services distributed by layer and function:
 ```bash
-# Auth nodes
-AUTH_SERVICE_ENABLED=true
-ACCOUNT_SERVICE_ENABLED=true
+# Auth node (all L1 services)
+BANNOU_ENABLE_GAME_FOUNDATION=false
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
 
-# NPC processing nodes
+# Full game deployment minus voice
+VOICE_SERVICE_ENABLED=false
+
+# NPC processing node (L1 + L2 foundations only)
+BANNOU_ENABLE_APP_FEATURES=false
+BANNOU_ENABLE_GAME_FEATURES=false
 BEHAVIOR_SERVICE_ENABLED=true
 CHARACTER_SERVICE_ENABLED=true
-
-# Game state nodes
-GAME_SESSION_SERVICE_ENABLED=true
-WORLD_SERVICE_ENABLED=true
 ```
 
 ### Orchestrator-Managed
-The Orchestrator service can dynamically manage deployments using presets:
+The Orchestrator service can dynamically manage deployments using presets with layer-based topology:
 ```yaml
-# provisioning/orchestrator/presets/http-tests.yaml
-services:
-  - auth
-  - account
-  - testing
+# provisioning/orchestrator/presets/relayed-connect.yaml
+topology:
+  nodes:
+    - name: bannou-relayed
+      layers:
+        - AppFoundation
 ```
 
 ## Service Communication Patterns

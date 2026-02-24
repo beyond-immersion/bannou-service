@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Mesh;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -67,6 +68,7 @@ public partial class MeshEndpointRegisteredEvent : BaseServiceEvent
     /// Port of the endpoint
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("port")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Port { get; set; } = default!;
 
     /// <summary>
@@ -109,29 +111,9 @@ public partial class MeshEndpointDeregisteredEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MeshEndpointDeregisteredEventReason Reason { get; set; } = default!;
+    public DeregistrationReason Reason { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Circuit breaker state for mesh endpoints
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CircuitState
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Closed")]
-    Closed = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Open")]
-    Open = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HalfOpen")]
-    HalfOpen = 2,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Published when circuit breaker state changes for an app-id.
@@ -225,6 +207,7 @@ public partial class MeshEndpointHealthCheckFailedEvent : BaseServiceEvent
     /// Configured threshold for deregistration (0 if disabled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("failureThreshold")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int FailureThreshold { get; set; } = default!;
 
     /// <summary>
@@ -234,26 +217,6 @@ public partial class MeshEndpointHealthCheckFailedEvent : BaseServiceEvent
     public string? LastError { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Reason why endpoint was marked as degraded
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MeshEndpointDegradedEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"MissedHeartbeat")]
-    MissedHeartbeat = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HighLoad")]
-    HighLoad = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HighConnectionCount")]
-    HighConnectionCount = 2,
-
-}
-#pragma warning restore CS1591
 
 /// <summary>
 /// Published when an endpoint transitions to Degraded status.
@@ -287,7 +250,7 @@ public partial class MeshEndpointDegradedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MeshEndpointDegradedEventReason Reason { get; set; } = default!;
+    public DegradedReason Reason { get; set; } = default!;
 
     /// <summary>
     /// Current load percentage (for HighLoad reason)
@@ -302,26 +265,6 @@ public partial class MeshEndpointDegradedEvent : BaseServiceEvent
     public System.DateTimeOffset? LastHeartbeatAt { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MeshEndpointDeregisteredEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Graceful")]
-    Graceful = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"TtlExpired")]
-    TtlExpired = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HealthCheckFailed")]
-    HealthCheckFailed = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CircuitBreakerTripped")]
-    CircuitBreakerTripped = 3,
-
-}
-#pragma warning restore CS1591
 
 
 

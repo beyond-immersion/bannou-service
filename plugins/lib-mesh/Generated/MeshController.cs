@@ -82,7 +82,7 @@ public interface IMeshController : BeyondImmersion.BannouService.Controllers.IBa
 
     /// <returns>Endpoint deregistered successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeregisterEndpointAsync(DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterEndpointResponse>> DeregisterEndpointAsync(DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// Update endpoint health and load
@@ -347,7 +347,7 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// <returns>Endpoint deregistered successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("mesh/deregister")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> DeregisterEndpoint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<DeregisterEndpointResponse>> DeregisterEndpoint([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] DeregisterEndpointRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         using var activity_ = _telemetryProvider.StartActivity(
@@ -358,8 +358,8 @@ public partial class MeshController : Microsoft.AspNetCore.Mvc.ControllerBase
         try
         {
 
-            var statusCode = await _implementation.DeregisterEndpointAsync(body, cancellationToken);
-            return ConvertToActionResult(statusCode);
+            var (statusCode, result) = await _implementation.DeregisterEndpointAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {

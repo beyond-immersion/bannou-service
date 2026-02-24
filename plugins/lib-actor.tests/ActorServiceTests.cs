@@ -33,6 +33,7 @@ public class ActorServiceTests
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public ActorServiceTests()
     {
@@ -44,7 +45,7 @@ public class ActorServiceTests
             DefaultTickIntervalMs = 100,
             DefaultAutoSaveIntervalSeconds = 60,
             DefaultActorsPerNode = 100,
-            DeploymentMode = DeploymentMode.Bannou
+            DeploymentMode = ActorDeploymentMode.Bannou
         };
         _mockActorRegistry = new Mock<IActorRegistry>();
         _mockActorRunnerFactory = new Mock<IActorRunnerFactory>();
@@ -56,6 +57,7 @@ public class ActorServiceTests
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup default store factory returns
         _mockStateStoreFactory
@@ -80,7 +82,8 @@ public class ActorServiceTests
             _mockPoolManager.Object,
             _mockMeshClient.Object,
             _mockResourceClient.Object,
-            _mockCharacterClient.Object);
+            _mockCharacterClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -513,7 +516,7 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Stopped);
+        Assert.Equal(ActorStatus.Stopped, response.FinalStatus);
     }
 
     [Fact]
@@ -907,7 +910,7 @@ public class ActorServiceTests
     public async Task ListActorsAsync_PoolModeWithNodeId_QueriesPoolAssignments()
     {
         // Arrange
-        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        _configuration.DeploymentMode = ActorDeploymentMode.PoolPerType;
         var service = CreateService();
         var request = new ListActorsRequest { NodeId = "pool-node-1", Limit = 10, Offset = 0 };
 
@@ -958,7 +961,7 @@ public class ActorServiceTests
     public async Task ListActorsAsync_PoolModeWithNodeIdAndCategoryFilter_ReturnsFilteredAssignments()
     {
         // Arrange
-        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        _configuration.DeploymentMode = ActorDeploymentMode.PoolPerType;
         var service = CreateService();
         var request = new ListActorsRequest { NodeId = "pool-node-1", Category = "npc", Limit = 10, Offset = 0 };
 
@@ -1037,7 +1040,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Queued);
         Assert.Equal(1, response.QueueDepth);
     }
 
@@ -1094,10 +1096,11 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var status = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -1120,10 +1123,11 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var status = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
     }
 
     [Fact]
@@ -1151,10 +1155,11 @@ public class ActorServiceTests
         _mockActorRegistry.Setup(r => r.TryGet("event-brain-1", out runner)).Returns(true);
 
         // Act
-        var status = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
     }
 
     #endregion
@@ -1344,7 +1349,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.HasActiveEncounter);
         Assert.NotNull(response.Encounter);
         Assert.Equal(encounterId, response.Encounter.EncounterId);
         Assert.Equal("combat", response.Encounter.EncounterType);
@@ -1353,7 +1357,7 @@ public class ActorServiceTests
     }
 
     [Fact]
-    public async Task GetEncounterAsync_NoActiveEncounter_ReturnsHasActiveEncounterFalse()
+    public async Task GetEncounterAsync_NoActiveEncounter_ReturnsNullEncounter()
     {
         // Arrange
         var service = CreateService();
@@ -1382,7 +1386,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.False(response.HasActiveEncounter);
         Assert.Null(response.Encounter);
     }
 
@@ -1452,15 +1455,23 @@ public class ActorServiceTests
             It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        // Mock the remote invocation response
+        _mockMeshClient.Setup(m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
+            remoteNodeId,
+            "actor/encounter/start",
+            It.IsAny<StartEncounterRequest>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new StartEncounterResponse());
+
         // Act
-        var status = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
 
         // Verify mesh client was called
         _mockMeshClient.Verify(
-            m => m.InvokeMethodAsync(
+            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
                 remoteNodeId,
                 "actor/encounter/start",
                 It.Is<StartEncounterRequest>(r => r.ActorId == "remote-actor-1"),
@@ -1624,7 +1635,6 @@ public class ActorServiceTests
         var expectedResponse = new GetEncounterResponse
         {
             ActorId = "remote-actor-4",
-            HasActiveEncounter = true,
             Encounter = new EncounterState
             {
                 EncounterId = encounterId,
@@ -1648,7 +1658,6 @@ public class ActorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.HasActiveEncounter);
         Assert.NotNull(response.Encounter);
         Assert.Equal(encounterId, response.Encounter.EncounterId);
         Assert.Equal("dialogue", response.Encounter.EncounterType);
@@ -1686,14 +1695,15 @@ public class ActorServiceTests
             .ReturnsAsync((ActorAssignment?)null);
 
         // Act
-        var status = await service.StartEncounterAsync(request, CancellationToken.None);
+        var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
 
         // Verify mesh client was NOT called (no remote node to forward to)
         _mockMeshClient.Verify(
-            m => m.InvokeMethodAsync(
+            m => m.InvokeMethodAsync<StartEncounterRequest, StartEncounterResponse>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<StartEncounterRequest>(),
@@ -1729,7 +1739,7 @@ public class ActorConfigurationTests
             DefaultAutoSaveIntervalSeconds = 60,
             DefaultActorsPerNode = 100,
             PerceptionQueueSize = 100,
-            DeploymentMode = DeploymentMode.Bannou
+            DeploymentMode = ActorDeploymentMode.Bannou
         };
 
         // Assert
@@ -1737,6 +1747,6 @@ public class ActorConfigurationTests
         Assert.Equal(60, config.DefaultAutoSaveIntervalSeconds);
         Assert.Equal(100, config.DefaultActorsPerNode);
         Assert.Equal(100, config.PerceptionQueueSize);
-        Assert.Equal(DeploymentMode.Bannou, config.DeploymentMode);
+        Assert.Equal(ActorDeploymentMode.Bannou, config.DeploymentMode);
     }
 }

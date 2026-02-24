@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
@@ -44,7 +45,8 @@ public class MeshServiceTests
             _configuration,
             _mockStateManager.Object,
             _mockMappingResolver.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            new NullTelemetryProvider());
     }
 
     #region Constructor Tests
@@ -89,7 +91,6 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal("bannou", response.AppId);
         Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.HealthyCount);
     }
@@ -118,7 +119,8 @@ public class MeshServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Single(response.Endpoints);
-        Assert.Contains("auth", response.Endpoints.First().Services);
+        var firstEndpointServices = response.Endpoints.First().Services ?? throw new InvalidOperationException("Services should not be null");
+        Assert.Contains("auth", firstEndpointServices);
     }
 
     [Fact]
@@ -328,10 +330,12 @@ public class MeshServiceTests
         };
 
         // Act
-        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
+        Assert.NotNull(response);
+        // HTTP 200 confirms deregistration; response is an empty object
     }
 
     [Fact]
@@ -351,10 +355,11 @@ public class MeshServiceTests
         };
 
         // Act
-        var statusCode = await service.DeregisterEndpointAsync(request, CancellationToken.None);
+        var (statusCode, response) = await service.DeregisterEndpointAsync(request, CancellationToken.None);
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, statusCode);
+        Assert.Null(response);
     }
 
     #endregion
@@ -585,7 +590,8 @@ public class MeshServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(response.Endpoint);
-        Assert.Single(response.Alternates); // One alternate since we have 2 endpoints
+        var alternates = response.Alternates ?? throw new InvalidOperationException("Alternates should not be null");
+        Assert.Single(alternates); // One alternate since we have 2 endpoints
     }
 
     [Fact]
@@ -630,7 +636,8 @@ public class MeshServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Contains("auth", response.Endpoint.Services);
+        var endpointServices = response.Endpoint.Services ?? throw new InvalidOperationException("Endpoint Services should not be null");
+        Assert.Contains("auth", endpointServices);
     }
 
     [Fact]
@@ -983,7 +990,7 @@ public class MeshStateManagerTests
     public async Task Constructor_ShouldNotThrow_WithValidDependencies()
     {
         // Act & Assert - verify it can be constructed with valid dependencies
-        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
         Assert.NotNull(manager);
     }
 
@@ -995,7 +1002,7 @@ public class MeshStateManagerTests
             .Setup(x => x.GetStoreAsync<MeshEndpoint>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("State store not available"));
 
-        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object);
+        await using var manager = new MeshStateManager(_mockStateStoreFactory.Object, _mockLogger.Object, new NullTelemetryProvider());
 
         // Act
         var result = await manager.InitializeAsync();
@@ -1053,7 +1060,8 @@ public class MeshInvocationClientTests : IDisposable
             _mockMessageSubscriber.Object,
             new MeshServiceConfiguration(),
             _mockLogger.Object,
-            _telemetryProvider);
+            _telemetryProvider,
+            new DefaultMeshInstanceIdentifier());
         return _client;
     }
 

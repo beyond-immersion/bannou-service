@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Mesh.Services;
@@ -43,6 +44,7 @@ public sealed class DistributedCircuitBreaker
     private readonly IRedisOperations? _redis;
     private readonly IMessageBus _messageBus;
     private readonly ILogger _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly int _threshold;
     private readonly TimeSpan _resetTimeout;
     private readonly string _keyPrefix;
@@ -59,18 +61,21 @@ public sealed class DistributedCircuitBreaker
     /// <param name="stateStoreFactory">Factory for obtaining Redis operations.</param>
     /// <param name="messageBus">Message bus for publishing state change events.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     /// <param name="threshold">Number of consecutive failures before opening circuit.</param>
     /// <param name="resetTimeout">Time to wait before allowing a probe request (HalfOpen transition).</param>
     public DistributedCircuitBreaker(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         ILogger logger,
+        ITelemetryProvider telemetryProvider,
         int threshold,
         TimeSpan resetTimeout)
     {
         _redis = stateStoreFactory.GetRedisOperations();
         _messageBus = messageBus;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _threshold = threshold;
         _resetTimeout = resetTimeout;
 
@@ -99,6 +104,8 @@ public sealed class DistributedCircuitBreaker
     /// <returns>The current circuit state.</returns>
     public async Task<CircuitState> GetStateAsync(string appId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.circuit.get_state", ActivityKind.Internal);
+
         // Check local cache first
         if (_localCache.TryGetValue(appId, out var cached))
         {
@@ -170,6 +177,8 @@ public sealed class DistributedCircuitBreaker
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task RecordSuccessAsync(string appId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.circuit.record_success", ActivityKind.Internal);
+
         // Update local cache immediately
         var previousEntry = _localCache.TryGetValue(appId, out var cached) ? cached : null;
         var previousState = previousEntry?.State;
@@ -218,6 +227,8 @@ public sealed class DistributedCircuitBreaker
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task RecordFailureAsync(string appId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.circuit.record_failure", ActivityKind.Internal);
+
         var now = DateTimeOffset.UtcNow;
         var previousEntry = _localCache.TryGetValue(appId, out var cached) ? cached : null;
         var previousState = previousEntry?.State ?? CircuitState.Closed;
@@ -321,6 +332,8 @@ public sealed class DistributedCircuitBreaker
         DateTimeOffset? openedAt,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.circuit.publish_change", ActivityKind.Internal);
+
         var evt = new MeshCircuitStateChangedEvent
         {
             EventId = Guid.NewGuid(),

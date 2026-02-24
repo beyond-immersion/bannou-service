@@ -68,10 +68,13 @@ public class EdgeRevocationServiceTests
         _mockIndexStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => new List<string>());
 
+        var telemetryProvider = new NullTelemetryProvider();
+
         _service = new EdgeRevocationService(
             _mockStateStoreFactory.Object,
             new[] { _mockProvider.Object },
             _mockMessageBus.Object,
+            telemetryProvider,
             _configuration,
             _mockLogger.Object);
     }
@@ -95,10 +98,12 @@ public class EdgeRevocationServiceTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { EdgeRevocationEnabled = false };
+        var telemetryProvider = new NullTelemetryProvider();
         var service = new EdgeRevocationService(
             _mockStateStoreFactory.Object,
             new[] { _mockProvider.Object },
             _mockMessageBus.Object,
+            telemetryProvider,
             config,
             _mockLogger.Object);
 
@@ -148,10 +153,12 @@ public class EdgeRevocationServiceTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { EdgeRevocationEnabled = false };
+        var telemetryProvider = new NullTelemetryProvider();
         var service = new EdgeRevocationService(
             _mockStateStoreFactory.Object,
             new[] { _mockProvider.Object },
             _mockMessageBus.Object,
+            telemetryProvider,
             config,
             _mockLogger.Object);
 
@@ -225,10 +232,12 @@ public class EdgeRevocationServiceTests
     {
         // Arrange
         var config = new AuthServiceConfiguration { EdgeRevocationEnabled = false };
+        var telemetryProvider = new NullTelemetryProvider();
         var service = new EdgeRevocationService(
             _mockStateStoreFactory.Object,
             new[] { _mockProvider.Object },
             _mockMessageBus.Object,
+            telemetryProvider,
             config,
             _mockLogger.Object);
 

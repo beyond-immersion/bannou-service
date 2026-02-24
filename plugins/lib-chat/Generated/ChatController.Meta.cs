@@ -36,15 +36,21 @@ public partial class ChatController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[a-z][a-z0-9_]*$",
                     "description": "Unique room type code (e.g., \"text\", \"guild_board\", \"trade_posting\")"
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Human-readable name for the room type"
                 },
                 "description": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 1000,
                     "description": "Optional description of the room type"
                 },
                 "gameServiceId": {
@@ -73,11 +79,13 @@ public partial class ChatController
                 "defaultMaxParticipants": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Default participant limit (null uses service default)"
                 },
                 "retentionDays": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Message retention in days (null uses service default)"
                 },
                 "defaultContractTemplateId": {
@@ -93,12 +101,13 @@ public partial class ChatController
                 "rateLimitPerMinute": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Messages per minute per participant (null uses service default)"
                 },
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata for client rendering hints"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -247,7 +256,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "status": {
                     "$ref": "#/$defs/RoomTypeStatus",
@@ -502,7 +511,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "status": {
                     "$ref": "#/$defs/RoomTypeStatus",
@@ -682,11 +691,14 @@ public partial class ChatController
                 "page": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Page number (zero-based)"
                 },
                 "pageSize": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Number of items per page"
                 }
             }
@@ -828,7 +840,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "status": {
                     "$ref": "#/$defs/RoomTypeStatus",
@@ -1173,7 +1185,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "status": {
                     "$ref": "#/$defs/RoomTypeStatus",
@@ -1428,7 +1440,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "status": {
                     "$ref": "#/$defs/RoomTypeStatus",
@@ -1586,6 +1598,8 @@ public partial class ChatController
             "properties": {
                 "roomTypeCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Room type code determining message format and validation"
                 },
                 "sessionId": {
@@ -1603,11 +1617,13 @@ public partial class ChatController
                 "displayName": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Human-readable room name"
                 },
                 "maxParticipants": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Participant limit override (null uses type default)"
                 },
                 "contractFulfilledAction": {
@@ -1649,7 +1665,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata for client rendering hints"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1736,7 +1752,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1900,7 +1916,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1984,6 +2000,7 @@ public partial class ChatController
                 "roomTypeCode": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 100,
                     "description": "Filter by room type code"
                 },
                 "sessionId": {
@@ -2004,11 +2021,14 @@ public partial class ChatController
                 "page": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Page number (zero-based)"
                 },
                 "pageSize": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Number of items per page"
                 }
             }
@@ -2127,7 +2147,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2219,17 +2239,19 @@ public partial class ChatController
                 "displayName": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Updated room name"
                 },
                 "maxParticipants": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Updated participant limit"
                 },
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Updated JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2306,7 +2328,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2470,7 +2492,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2634,7 +2656,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2737,6 +2759,7 @@ public partial class ChatController
                 "displayName": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 200,
                     "description": "Human-readable display name"
                 },
                 "role": {
@@ -2833,7 +2856,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2997,7 +3020,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3339,7 +3362,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3437,11 +3460,13 @@ public partial class ChatController
                 "reason": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 500,
                     "description": "Optional reason for the ban"
                 },
                 "durationMinutes": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Ban duration in minutes (null for permanent)"
                 }
             }
@@ -3519,7 +3544,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3689,7 +3714,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3787,6 +3812,7 @@ public partial class ChatController
                 "durationMinutes": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Mute duration in minutes (null for permanent)"
                 }
             }
@@ -3864,7 +3890,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4310,14 +4336,41 @@ public partial class ChatController
         "SendMessageBatchResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Result of a batch message send operation",
+            "description": "Result of a batch message send operation with per-message failure tracking",
             "required": [
-                "messageCount"
+                "messageCount",
+                "failed"
             ],
             "properties": {
                 "messageCount": {
                     "type": "integer",
-                    "description": "Number of messages sent"
+                    "description": "Number of messages successfully sent"
+                },
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BatchMessageFailure"
+                    },
+                    "description": "Details of messages that failed to send (empty array when all succeeded)"
+                }
+            }
+        },
+        "BatchMessageFailure": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Details of a single message that failed in a batch send operation",
+            "required": [
+                "index",
+                "error"
+            ],
+            "properties": {
+                "index": {
+                    "type": "integer",
+                    "description": "Zero-based index of the failed message in the request messages array"
+                },
+                "error": {
+                    "type": "string",
+                    "description": "Human-readable error reason"
                 }
             }
         }
@@ -4405,6 +4458,8 @@ public partial class ChatController
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
+                    "maximum": 200,
                     "description": "Maximum number of messages to return"
                 }
             }
@@ -5231,11 +5286,15 @@ public partial class ChatController
                 },
                 "query": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
                     "description": "Full-text search query string"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Maximum number of results to return"
                 }
             }
@@ -5449,6 +5508,7 @@ public partial class ChatController
                 "roomTypeCode": {
                     "type": "string",
                     "nullable": true,
+                    "maxLength": 100,
                     "description": "Filter by room type"
                 },
                 "status": {
@@ -5463,11 +5523,14 @@ public partial class ChatController
                 "page": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Page number (zero-based)"
                 },
                 "pageSize": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
+                    "maximum": 200,
                     "description": "Number of items per page"
                 }
             }
@@ -5586,7 +5649,7 @@ public partial class ChatController
                 "metadata": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Arbitrary JSON metadata"
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -5871,6 +5934,182 @@ public partial class ChatController
             _AdminForceCleanup_Info,
             _AdminForceCleanup_RequestSchema,
             _AdminForceCleanup_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for Typing
+
+    private static readonly string _Typing_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/TypingRequest",
+    "$defs": {
+        "TypingRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to signal typing activity in a chat room. Pre-populated via session shortcut BoundPayload.",
+            "required": [
+                "roomId",
+                "sessionId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Room the typing activity applies to"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "WebSocket session ID of the typing participant"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _Typing_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _Typing_Info = """
+{
+    "summary": "Signal typing activity",
+    "description": "Records that the caller is actively typing in the specified room. Automatically expires after TypingTimeoutSeconds if not refreshed. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "Typing"
+}
+""";
+
+    /// <summary>Returns endpoint information for Typing</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/typing/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Typing_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Chat",
+            "POST",
+            "/chat/typing",
+            _Typing_Info));
+
+    /// <summary>Returns request schema for Typing</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/typing/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Typing_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/typing",
+            "request-schema",
+            _Typing_RequestSchema));
+
+    /// <summary>Returns response schema for Typing</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/typing/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Typing_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/typing",
+            "response-schema",
+            _Typing_ResponseSchema));
+
+    /// <summary>Returns full schema for Typing</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/typing/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> Typing_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/typing",
+            _Typing_Info,
+            _Typing_RequestSchema,
+            _Typing_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for EndTyping
+
+    private static readonly string _EndTyping_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/EndTypingRequest",
+    "$defs": {
+        "EndTypingRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to signal typing stopped in a chat room. Pre-populated via session shortcut BoundPayload.",
+            "required": [
+                "roomId",
+                "sessionId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Room to clear typing state for"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "WebSocket session ID of the participant"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _EndTyping_ResponseSchema = """
+{}
+""";
+
+    private static readonly string _EndTyping_Info = """
+{
+    "summary": "Signal typing stopped",
+    "description": "Immediately clears the caller's typing state in the specified room. Accessed via session shortcut published on room join. The shortcut's BoundPayload pre-populates roomId and sessionId.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "EndTyping"
+}
+""";
+
+    /// <summary>Returns endpoint information for EndTyping</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/end-typing/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndTyping_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Chat",
+            "POST",
+            "/chat/end-typing",
+            _EndTyping_Info));
+
+    /// <summary>Returns request schema for EndTyping</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/end-typing/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndTyping_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/end-typing",
+            "request-schema",
+            _EndTyping_RequestSchema));
+
+    /// <summary>Returns response schema for EndTyping</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/end-typing/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndTyping_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/end-typing",
+            "response-schema",
+            _EndTyping_ResponseSchema));
+
+    /// <summary>Returns full schema for EndTyping</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/end-typing/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EndTyping_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/end-typing",
+            _EndTyping_Info,
+            _EndTyping_RequestSchema,
+            _EndTyping_ResponseSchema));
 
     #endregion
 }

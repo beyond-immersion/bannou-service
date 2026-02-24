@@ -46,6 +46,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "character-statestore";
     private const string CHARACTER_KEY_PREFIX = "character:";
@@ -70,6 +71,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockContractClient = new Mock<IContractClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -134,7 +136,8 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             _mockRelationshipClient.Object,
             _mockContractClient.Object,
             _mockEventConsumer.Object,
-            resourceClient ?? _mockResourceClient.Object);
+            resourceClient ?? _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>

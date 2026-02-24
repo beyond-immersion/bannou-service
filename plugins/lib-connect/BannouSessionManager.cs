@@ -15,8 +15,7 @@ public class BannouSessionManager : ISessionManager
     private readonly IMessageBus _messageBus;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ILogger<BannouSessionManager> _logger;
-
-    private const string SESSION_EVENTS_TOPIC = "connect.session-events";
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Key prefixes - MUST be unique across all services to avoid key collisions
     // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
@@ -34,12 +33,14 @@ public class BannouSessionManager : ISessionManager
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         ConnectServiceConfiguration configuration,
-        ILogger<BannouSessionManager> logger)
+        ILogger<BannouSessionManager> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     #region Connection State
@@ -50,6 +51,7 @@ public class BannouSessionManager : ISessionManager
         ConnectionStateData stateData,
         TimeSpan? ttl = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.SetConnectionStateAsync");
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
@@ -77,6 +79,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task<ConnectionStateData?> GetConnectionStateAsync(string sessionId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.GetConnectionStateAsync");
         try
         {
             var key = SESSION_KEY_PREFIX + sessionId;
@@ -112,6 +115,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task UpdateSessionHeartbeatAsync(string sessionId, Guid instanceId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.UpdateSessionHeartbeatAsync");
         try
         {
             var key = SESSION_HEARTBEAT_KEY_PREFIX + sessionId;
@@ -155,6 +159,7 @@ public class BannouSessionManager : ISessionManager
         string sessionId,
         TimeSpan reconnectionWindow)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.SetReconnectionTokenAsync");
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
@@ -182,6 +187,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task<string?> ValidateReconnectionTokenAsync(string reconnectionToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.ValidateReconnectionTokenAsync");
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
@@ -213,6 +219,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task RemoveReconnectionTokenAsync(string reconnectionToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RemoveReconnectionTokenAsync");
         try
         {
             var key = RECONNECTION_TOKEN_KEY_PREFIX + reconnectionToken;
@@ -244,6 +251,7 @@ public class BannouSessionManager : ISessionManager
         TimeSpan reconnectionWindow,
         ICollection<string>? userRoles)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.InitiateReconnectionWindowAsync");
         try
         {
             // Get existing connection state
@@ -289,6 +297,7 @@ public class BannouSessionManager : ISessionManager
         string sessionId,
         string reconnectionToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RestoreSessionFromReconnectionAsync");
         try
         {
             var state = await GetConnectionStateAsync(sessionId);
@@ -347,6 +356,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task RemoveSessionAsync(string sessionId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RemoveSessionAsync");
         try
         {
             // Remove all session-related keys in parallel
@@ -385,50 +395,12 @@ public class BannouSessionManager : ISessionManager
 
     #endregion
 
-    #region Session Events
-
-    /// <inheritdoc />
-    public async Task PublishSessionEventAsync(string eventType, string sessionId, object? eventData = null)
-    {
-        try
-        {
-            var sessionEvent = new SessionEvent
-            {
-                EventType = eventType,
-                SessionId = Guid.Parse(sessionId),
-                Timestamp = DateTimeOffset.UtcNow,
-                Data = eventData
-            };
-
-            await _messageBus.TryPublishAsync(SESSION_EVENTS_TOPIC, sessionEvent);
-
-            _logger.LogDebug("Published session event {EventType} for session {SessionId}",
-                eventType, sessionId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish session event {EventType} for {SessionId}",
-                eventType, sessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "connect",
-                "PublishSessionEvent",
-                "event_publishing_failed",
-                ex.Message,
-                dependency: "messaging",
-                endpoint: null,
-                details: $"eventType={eventType},sessionId={sessionId}",
-                stack: ex.StackTrace);
-            // Don't throw - event publishing failures shouldn't break main functionality
-        }
-    }
-
-    #endregion
-
     #region Account Session Index
 
     /// <inheritdoc />
     public async Task AddSessionToAccountAsync(Guid accountId, string sessionId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.AddSessionToAccountAsync");
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
@@ -461,6 +433,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task RemoveSessionFromAccountAsync(Guid accountId, string sessionId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.RemoveSessionFromAccountAsync");
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");
@@ -502,6 +475,7 @@ public class BannouSessionManager : ISessionManager
     /// <inheritdoc />
     public async Task<HashSet<string>> GetSessionsForAccountAsync(Guid accountId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.connect", "BannouSessionManager.GetSessionsForAccountAsync");
         try
         {
             var key = ACCOUNT_SESSIONS_KEY_PREFIX + accountId.ToString("N");

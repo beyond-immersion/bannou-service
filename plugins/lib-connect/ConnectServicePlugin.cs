@@ -33,6 +33,11 @@ public class ConnectServicePlugin : StandardServicePlugin<IConnectService>
         services.AddSingleton<ICapabilityManifestBuilder, CapabilityManifestBuilder>();
         Logger?.LogDebug("Registered CapabilityManifestBuilder");
 
+        // Register inter-node broadcast manager for multi-instance broadcast relay
+        // Must be Singleton because it maintains WebSocket connections to peer Connect instances
+        services.AddSingleton<InterNodeBroadcastManager>();
+        Logger?.LogDebug("Registered InterNodeBroadcastManager");
+
         Logger?.LogDebug("Service dependencies configured");
     }
 }

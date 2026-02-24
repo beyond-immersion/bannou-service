@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Chat Service API
   version: 1.0.0
@@ -672,6 +672,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminCleanupResponse'
 
+  # ==========================================================================
+  # Typing Indicators
+  # ==========================================================================
+
+  /chat/typing:
+    post:
+      operationId: Typing
+      summary: Signal typing activity
+      description: >
+        Records that the caller is actively typing in the specified room.
+        Automatically expires after TypingTimeoutSeconds if not refreshed.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypingRequest'
+      responses:
+        '200':
+          description: Typing state recorded
+
+  /chat/end-typing:
+    post:
+      operationId: EndTyping
+      summary: Signal typing stopped
+      description: >
+        Immediately clears the caller's typing state in the specified room.
+        Accessed via session shortcut published on room join.
+        The shortcut's BoundPayload pre-populates roomId and sessionId.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndTypingRequest'
+      responses:
+        '200':
+          description: Typing state cleared
+
 components:
   schemas:
     # ==========================================================================
@@ -790,13 +833,19 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-z][a-z0-9_]*$'
           description: Unique room type code (e.g., "text", "guild_board", "trade_posting")
         displayName:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Human-readable name for the room type
         description:
           type: string
           nullable: true
+          maxLength: 1000
           description: Optional description of the room type
         gameServiceId:
           type: string
@@ -817,10 +866,12 @@ components:
         defaultMaxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Default participant limit (null uses service default)
         retentionDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Message retention in days (null uses service default)
         defaultContractTemplateId:
           type: string
@@ -833,11 +884,12 @@ components:
         rateLimitPerMinute:
           type: integer
           nullable: true
+          minimum: 1
           description: Messages per minute per participant (null uses service default)
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
 
     GetRoomTypeRequest:
       type: object
@@ -878,10 +930,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
 
     UpdateRoomTypeRequest:
@@ -1016,7 +1071,7 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
         status:
           $ref: '#/components/schemas/RoomTypeStatus'
           description: Current lifecycle status of the room type
@@ -1068,6 +1123,8 @@ components:
       properties:
         roomTypeCode:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Room type code determining message format and validation
         sessionId:
           type: string
@@ -1082,10 +1139,12 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Participant limit override (null uses type default)
         contractFulfilledAction:
           allOf:
@@ -1110,7 +1169,7 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata for client rendering hints
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
 
     GetRoomRequest:
       type: object
@@ -1132,6 +1191,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type code
         sessionId:
           type: string
@@ -1146,10 +1206,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Number of items per page
 
     UpdateRoomRequest:
@@ -1166,15 +1229,17 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Updated room name
         maxParticipants:
           type: integer
           nullable: true
+          minimum: 1
           description: Updated participant limit
         metadata:
           type: string
           nullable: true
-          description: Updated JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
 
     DeleteRoomRequest:
       type: object
@@ -1253,7 +1318,7 @@ components:
         metadata:
           type: string
           nullable: true
-          description: Arbitrary JSON metadata
+          description: Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention.
 
     ListRoomsResponse:
       type: object
@@ -1307,6 +1372,7 @@ components:
         displayName:
           type: string
           nullable: true
+          maxLength: 200
           description: Human-readable display name
         role:
           allOf:
@@ -1434,10 +1500,12 @@ components:
         reason:
           type: string
           nullable: true
+          maxLength: 500
           description: Optional reason for the ban
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Ban duration in minutes (null for permanent)
 
     UnbanParticipantRequest:
@@ -1476,6 +1544,7 @@ components:
         durationMinutes:
           type: integer
           nullable: true
+          minimum: 1
           description: Mute duration in minutes (null for permanent)
 
     # ==========================================================================
@@ -1593,13 +1662,34 @@ components:
     SendMessageBatchResponse:
       type: object
       additionalProperties: false
-      description: Result of a batch message send operation
+      description: Result of a batch message send operation with per-message failure tracking
       required:
         - messageCount
+        - failed
       properties:
         messageCount:
           type: integer
-          description: Number of messages sent
+          description: Number of messages successfully sent
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchMessageFailure'
+          description: Details of messages that failed to send (empty array when all succeeded)
+
+    BatchMessageFailure:
+      type: object
+      additionalProperties: false
+      description: Details of a single message that failed in a batch send operation
+      required:
+        - index
+        - error
+      properties:
+        index:
+          type: integer
+          description: Zero-based index of the failed message in the request messages array
+        error:
+          type: string
+          description: Human-readable error reason
 
     ChatMessageResponse:
       type: object
@@ -1667,6 +1757,8 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Maximum number of messages to return
 
     MessageHistoryResponse:
@@ -1755,10 +1847,14 @@ components:
           description: Room ID to search in (must be a persistent room)
         query:
           type: string
+          minLength: 1
+          maxLength: 500
           description: Full-text search query string
         limit:
           type: integer
           default: 20
+          minimum: 1
+          maximum: 100
           description: Maximum number of results to return
 
     SearchMessagesResponse:
@@ -1790,6 +1886,7 @@ components:
         roomTypeCode:
           type: string
           nullable: true
+          maxLength: 100
           description: Filter by room type
         status:
           allOf:
@@ -1799,10 +1896,13 @@ components:
         page:
           type: integer
           default: 0
+          minimum: 0
           description: Page number (zero-based)
         pageSize:
           type: integer
           default: 50
+          minimum: 1
+          maximum: 200
           description: Number of items per page
 
     AdminGetStatsRequest:
@@ -1866,3 +1966,41 @@ components:
         deletedRooms:
           type: integer
           description: Number of rooms deleted
+
+    # ==========================================================================
+    # Typing Indicator Requests
+    # ==========================================================================
+
+    TypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing activity in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+        - roomId
+        - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room the typing activity applies to
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the typing participant
+
+    EndTypingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to signal typing stopped in a chat room. Pre-populated via session shortcut BoundPayload.
+      required:
+        - roomId
+        - sessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room to clear typing state for
+        sessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID of the participant

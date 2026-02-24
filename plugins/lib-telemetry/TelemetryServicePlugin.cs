@@ -127,6 +127,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     .AddSource(TelemetryComponents.State)
                     .AddSource(TelemetryComponents.Messaging)
                     .AddSource(TelemetryComponents.Mesh)
+                    .AddSource(TelemetryComponents.Telemetry)
                     // Configure OTLP exporter for trace export
                     .AddOtlpExporter(options =>
                     {
@@ -160,6 +161,7 @@ public class TelemetryServicePlugin : BaseBannouPlugin
                     .AddMeter(TelemetryComponents.State)
                     .AddMeter(TelemetryComponents.Messaging)
                     .AddMeter(TelemetryComponents.Mesh)
+                    .AddMeter(TelemetryComponents.Telemetry)
                     // Add Prometheus exporter for /metrics endpoint scraping
                     .AddPrometheusExporter();
 

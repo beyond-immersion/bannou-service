@@ -28,6 +28,8 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `ChatParticipantUnmutedClientEvent` | `chat.participant_unmuted` | Sent to all room participants when someone is unmuted. |
 | `ChatRoomDeletedClientEvent` | `chat.room_deleted` | Sent to room participants when the room is being deleted. |
 | `ChatRoomLockedClientEvent` | `chat.room_locked` | Sent to room participants when the room is locked. |
+| `ChatTypingStartedClientEvent` | `chat.typing_started` | Sent to room participants when someone starts typing. |
+| `ChatTypingStoppedClientEvent` | `chat.typing_stopped` | Sent to room participants when someone stops typing. |
 | `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
 | `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
 | `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
@@ -205,7 +207,7 @@ Final notification that an asset is ready for use.
 | `assetId` | ID of the asset that is now ready |
 | `contentHash` | SHA256 hash of the asset |
 | `contentType` | MIME content type |
-| `metadata` | Asset metadata |
+| `metadata` | Asset metadata. No Bannou plugin reads specific ke |
 | `size` | File size in bytes |
 | `versionId` | Version ID of this asset |
 
@@ -402,6 +404,33 @@ Sent to room participants when the room is locked.
 | `reason` | Reason the room was locked |
 | `roomId` | Room that was locked |
 
+### `ChatTypingStartedClientEvent`
+
+**Event Name**: `chat.typing_started`
+
+Sent to room participants when someone starts typing.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `displayName` | Display name of the typing participant |
+| `participantSessionId` | Connect session ID of the typing participant |
+| `roomId` | Room where typing is occurring |
+
+### `ChatTypingStoppedClientEvent`
+
+**Event Name**: `chat.typing_stopped`
+
+Sent to room participants when someone stops typing.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `participantSessionId` | Connect session ID of the participant who stopped  |
+| `roomId` | Room where typing stopped |
+
 ---
 
 ## Common Client Events API
@@ -449,7 +478,7 @@ Generic error notification sent to client.
 
 | Property | Description |
 |----------|-------------|
-| `details` | Additional error details (service-specific) |
+| `details` | Additional error details (service-specific). No Ba |
 | `errorCode` | Machine-readable error code (e.g., "SERVICE_UNAVAI |
 | `message` | Human-readable error message |
 | `recoverable` | Whether the client can retry the operation |
@@ -489,7 +518,7 @@ Sent to relevant players when a game action produces results.
 | `actionId` | ID of the action that produced this result |
 | `actionType` | Type of action performed |
 | `actorId` | Account ID of player who performed the action |
-| `resultData` | Action-specific result data |
+| `resultData` | Action-specific result data. No Bannou plugin read |
 | `sessionId` | ID of the game session |
 | `success` | Whether the action succeeded |
 | `visibleEffects` | Visual/audio effects other players should see |
@@ -587,7 +616,7 @@ Sent when game state changes that all players should see.
 |----------|-------------|
 | `sequenceNumber` | Monotonically increasing sequence for ordering sta |
 | `sessionId` | ID of the game session |
-| `stateDelta` | Partial game state changes |
+| `stateDelta` | Partial game state changes. No Bannou plugin reads |
 | `triggeredBy` | Account ID that triggered the state change |
 | `updateType` | Type of update (game-specific, e.g., "turn_changed |
 
@@ -878,7 +907,7 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 46
+- **Total event types**: 48
 - **Services with events**: 7
 
 ---

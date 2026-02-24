@@ -68,4 +68,8 @@ python3 "$SCRIPT_DIR/generate-client-api-docs.py"
 echo "  → Generating client events reference..."
 python3 "$SCRIPT_DIR/generate-client-events-docs.py"
 
+# Generate metadata properties documentation (T29 compliance tracking)
+echo "  → Generating metadata properties reference..."
+python3 "$SCRIPT_DIR/generate-metadata-docs.py"
+
 echo "✅ Documentation generation complete"

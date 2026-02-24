@@ -48,10 +48,8 @@ namespace BeyondImmersion.BannouService.Currency;
 /// </para>
 /// </remarks>
 [ServiceConfiguration(typeof(CurrencyService))]
-public class CurrencyServiceConfiguration : IServiceConfiguration
+public class CurrencyServiceConfiguration : BaseServiceConfiguration
 {
-    /// <inheritdoc />
-    public Guid? ForceServiceId { get; set; }
 
     /// <summary>
     /// Default for currencies that do not specify allowNegative

@@ -3609,7 +3609,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form transaction metadata"
+                    "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3804,7 +3804,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3954,7 +3954,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form transaction metadata"
+                    "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4127,7 +4127,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4278,7 +4278,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form transaction metadata"
+                    "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4468,7 +4468,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4825,7 +4825,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -5278,7 +5278,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6042,7 +6042,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6361,7 +6361,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6616,7 +6616,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7215,7 +7215,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7492,7 +7492,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7769,7 +7769,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -8349,7 +8349,7 @@ public partial class CurrencyController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Free-form metadata"
+                    "description": "Free-form metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

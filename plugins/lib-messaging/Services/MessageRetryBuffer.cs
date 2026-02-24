@@ -6,7 +6,9 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
+using RmqExchangeType = RabbitMQ.Client.ExchangeType;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -34,6 +36,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     private readonly IChannelManager _channelManager;
     private readonly MessagingServiceConfiguration _configuration;
     private readonly ILogger<MessageRetryBuffer> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly IProcessTerminator _processTerminator;
     private readonly IMessageBus? _messageBus;
 
@@ -52,18 +55,21 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     /// <param name="channelManager">Channel manager for RabbitMQ operations.</param>
     /// <param name="configuration">Messaging service configuration.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation.</param>
     /// <param name="processTerminator">Process terminator for crash-fast behavior (optional, defaults to Environment.FailFast).</param>
     /// <param name="messageBus">Message bus for publishing error events (optional to avoid circular dependency).</param>
     public MessageRetryBuffer(
         IChannelManager channelManager,
         MessagingServiceConfiguration configuration,
         ILogger<MessageRetryBuffer> logger,
+        ITelemetryProvider telemetryProvider,
         IProcessTerminator? processTerminator = null,
         IMessageBus? messageBus = null)
     {
         _channelManager = channelManager;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _processTerminator = processTerminator ?? new DefaultProcessTerminator();
         _messageBus = messageBus;
 
@@ -303,6 +309,12 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
             return;
         }
 
+        using var activity = _telemetryProvider.StartActivity(
+            TelemetryComponents.Messaging,
+            "messaging.retry_buffer.process",
+            ActivityKind.Internal);
+        activity?.SetTag("messaging.retry_buffer.count", _bufferCount);
+
         _logger.LogDebug("Processing retry buffer ({Count} messages)", _bufferCount);
 
         IChannel? channel = null;
@@ -387,7 +399,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
                 try
                 {
                     var exchange = message.Options?.Exchange ?? _channelManager.DefaultExchange;
-                    var exchangeType = message.Options?.ExchangeType ?? PublishOptionsExchangeType.Topic;
+                    var exchangeType = message.Options?.ExchangeType ?? ExchangeType.Topic;
                     var routingKey = message.Options?.RoutingKey ?? message.Topic;
 
                     // Ensure exchange exists (cached in connection manager)
@@ -402,7 +414,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
                         Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                     };
 
-                    var effectiveRoutingKey = exchangeType == PublishOptionsExchangeType.Fanout ? "" : routingKey;
+                    var effectiveRoutingKey = exchangeType == ExchangeType.Fanout ? "" : routingKey;
 
                     await channel.BasicPublishAsync(
                         exchange: exchange,
@@ -479,7 +491,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
             var dlxExchange = _configuration.DeadLetterExchange;
 
             // Ensure DLX exists
-            await EnsureExchangeAsync(channel, dlxExchange, PublishOptionsExchangeType.Topic);
+            await EnsureExchangeAsync(channel, dlxExchange, ExchangeType.Topic);
 
             // Build properties with additional context headers
             var properties = new BasicProperties
@@ -530,7 +542,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
     private async Task EnsureExchangeAsync(
         IChannel channel,
         string exchange,
-        PublishOptionsExchangeType exchangeType)
+        ExchangeType exchangeType)
     {
         var key = $"{exchange}:{exchangeType}";
         if (_declaredExchanges.ContainsKey(key))
@@ -540,9 +552,9 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
 
         var type = exchangeType switch
         {
-            PublishOptionsExchangeType.Direct => ExchangeType.Direct,
-            PublishOptionsExchangeType.Topic => ExchangeType.Topic,
-            _ => ExchangeType.Fanout
+            ExchangeType.Direct => RmqExchangeType.Direct,
+            ExchangeType.Topic => RmqExchangeType.Topic,
+            _ => RmqExchangeType.Fanout
         };
 
         await channel.ExchangeDeclareAsync(

@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 
 namespace BeyondImmersion.BannouService.Messaging.Services;
 
@@ -19,8 +20,8 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     private readonly ILogger<InMemoryMessageBus> _logger;
 
     // Local subscriptions for in-process delivery
-    private readonly ConcurrentDictionary<string, List<Func<object, CancellationToken, Task>>> _subscriptions = new();
-    private readonly object _subscriptionLock = new();
+    // IMPLEMENTATION TENETS: ImmutableList for lock-free concurrent read/write via AddOrUpdate
+    private readonly ConcurrentDictionary<string, ImmutableList<Func<object, CancellationToken, Task>>> _subscriptions = new();
 
     public InMemoryMessageBus(ILogger<InMemoryMessageBus> logger)
     {
@@ -116,18 +117,18 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-
-        lock (_subscriptionLock)
+        Func<object, CancellationToken, Task> wrappedHandler = async (obj, ct) =>
         {
-            var handlers = _subscriptions.GetOrAdd(topic, _ => new List<Func<object, CancellationToken, Task>>());
-            handlers.Add(async (obj, ct) =>
+            if (obj is TEvent typedEvent)
             {
-                if (obj is TEvent typedEvent)
-                {
-                    await handler(typedEvent, ct);
-                }
-            });
-        }
+                await handler(typedEvent, ct);
+            }
+        };
+
+        _subscriptions.AddOrUpdate(
+            topic,
+            _ => ImmutableList.Create(wrappedHandler),
+            (_, existing) => existing.Add(wrappedHandler));
 
         _logger.LogDebug("Subscribed to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange})",
             topic, typeof(TEvent).Name, exchange ?? "default");
@@ -152,11 +153,10 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             }
         };
 
-        lock (_subscriptionLock)
-        {
-            var handlers = _subscriptions.GetOrAdd(topic, _ => new List<Func<object, CancellationToken, Task>>());
-            handlers.Add(wrappedHandler);
-        }
+        _subscriptions.AddOrUpdate(
+            topic,
+            _ => ImmutableList.Create(wrappedHandler),
+            (_, existing) => existing.Add(wrappedHandler));
 
         _logger.LogDebug("Dynamic subscription to topic '{Topic}' for {EventType} (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
             topic, typeof(TEvent).Name, exchange ?? "default", exchangeType);
@@ -186,11 +186,10 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
             await handler(bytes, ct);
         };
 
-        lock (_subscriptionLock)
-        {
-            var handlers = _subscriptions.GetOrAdd(topic, _ => new List<Func<object, CancellationToken, Task>>());
-            handlers.Add(wrappedHandler);
-        }
+        _subscriptions.AddOrUpdate(
+            topic,
+            _ => ImmutableList.Create(wrappedHandler),
+            (_, existing) => existing.Add(wrappedHandler));
 
         _logger.LogDebug("Raw dynamic subscription to topic '{Topic}' (in-memory mode, exchange: {Exchange}, type: {ExchangeType})",
             topic, exchange ?? "default", exchangeType);
@@ -202,11 +201,7 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     /// <inheritdoc/>
     public async Task UnsubscribeAsync(string topic)
     {
-
-        lock (_subscriptionLock)
-        {
-            _subscriptions.TryRemove(topic, out _);
-        }
+        _subscriptions.TryRemove(topic, out _);
 
         _logger.LogDebug("Unsubscribed from topic '{Topic}' (in-memory mode)", topic);
         await Task.CompletedTask;
@@ -215,15 +210,10 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
     private async Task DeliverToSubscribersAsync<TEvent>(string topic, TEvent eventData, CancellationToken cancellationToken)
         where TEvent : class
     {
-        List<Func<object, CancellationToken, Task>>? handlers;
-        lock (_subscriptionLock)
+        // ImmutableList snapshot is inherently thread-safe — no lock needed
+        if (!_subscriptions.TryGetValue(topic, out var handlers) || handlers.IsEmpty)
         {
-            if (!_subscriptions.TryGetValue(topic, out handlers) || handlers.Count == 0)
-            {
-                return;
-            }
-            // Copy to avoid holding lock during async delivery
-            handlers = handlers.ToList();
+            return;
         }
 
         foreach (var handler in handlers)
@@ -241,13 +231,10 @@ public sealed class InMemoryMessageBus : IMessageBus, IMessageSubscriber
 
     private void RemoveHandler(string topic, Func<object, CancellationToken, Task> handler)
     {
-        lock (_subscriptionLock)
-        {
-            if (_subscriptions.TryGetValue(topic, out var handlers))
-            {
-                handlers.Remove(handler);
-            }
-        }
+        _subscriptions.AddOrUpdate(
+            topic,
+            _ => ImmutableList<Func<object, CancellationToken, Task>>.Empty,
+            (_, existing) => existing.Remove(handler));
     }
 
     private sealed class DynamicSubscription : IAsyncDisposable

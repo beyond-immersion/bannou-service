@@ -517,7 +517,7 @@ public partial class ReleaseAllocationWithConfirmation
     public string? ReleaseToken { get; set; } = default!;
 
     /// <summary>
-    /// Prebound API shortcut for client confirmation (pushed via WebSocket)
+    /// Prebound API shortcut for client confirmation (pushed via WebSocket). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("confirmationShortcut")]
     public object? ConfirmationShortcut { get; set; } = default!;
@@ -1216,7 +1216,7 @@ public partial class ValidationFailureInfo
     public System.Guid AffectedPartyId { get; set; } = default!;
 
     /// <summary>
-    /// Additional failure details
+    /// Additional failure details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("details")]
     public object? Details { get; set; } = default!;

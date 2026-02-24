@@ -1333,19 +1333,35 @@ components:
       additionalProperties: false
       required:
       - name
-      - services
       properties:
         name:
           type: string
           description: Node/container name (e.g., "bannou-main", "bannou-auth")
+        layers:
+          type: array
+          items:
+            type: string
+            enum:
+            - AppFoundation
+            - GameFoundation
+            - AppFeatures
+            - GameFeatures
+            - Extensions
+          description: |
+            Service layers to enable on this node. Listed layers are enabled,
+            unlisted layers are disabled. When omitted, layer enablement is
+            inherited from the container's environment.
+            Individual services in the 'services' list override layer settings.
         services:
           type: array
           items:
             type: string
           description: |
-            Services enabled on this node.
-            Uses {SERVICE}_SERVICE_ENABLED=true pattern.
-            Example: ["account", "auth", "permission"]
+            Individual services to enable on this node.
+            When used with 'layers', these act as overrides for services
+            outside the enabled layers.
+            When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
+            with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
         replicas:
           type: integer
           default: 1

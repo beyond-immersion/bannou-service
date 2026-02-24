@@ -24,6 +24,7 @@ public class OAuthProviderService : IOAuthProviderService
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<OAuthProviderService> _logger;
 
     private const string DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
@@ -44,6 +45,7 @@ public class OAuthProviderService : IOAuthProviderService
         AuthServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         ILogger<OAuthProviderService> logger)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -52,6 +54,7 @@ public class OAuthProviderService : IOAuthProviderService
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -61,6 +64,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeDiscordCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.ExchangeDiscordCode");
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var discordClientId = _configuration.DiscordClientId;
         var discordClientSecret = _configuration.DiscordClientSecret;
@@ -147,6 +151,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeGoogleCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.ExchangeGoogleCode");
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var googleClientId = _configuration.GoogleClientId;
         var googleClientSecret = _configuration.GoogleClientSecret;
@@ -233,6 +238,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo?> ExchangeTwitchCodeAsync(string code, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.ExchangeTwitchCode");
         // IMPLEMENTATION TENETS: Validate OAuth provider is configured before use
         var twitchClientId = _configuration.TwitchClientId;
         var twitchClientSecret = _configuration.TwitchClientSecret;
@@ -321,6 +327,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<string?> ValidateSteamTicketAsync(string ticket, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.ValidateSteamTicket");
         try
         {
             if (string.IsNullOrWhiteSpace(_configuration.SteamApiKey) ||
@@ -386,6 +393,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<(AccountResponse? Account, bool IsNewAccount)> FindOrCreateOAuthAccountAsync(Provider provider, OAuthUserInfo userInfo, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.FindOrCreateOAuthAccount");
         // Handle null userInfo gracefully - return null if no user info provided
         if (userInfo == null)
         {
@@ -586,6 +594,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo> GetMockUserInfoAsync(Provider provider, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.GetMockUserInfo");
         var mockProviderId = provider switch
         {
             Provider.Discord => _configuration.MockDiscordId,
@@ -607,6 +616,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task<OAuthUserInfo> GetMockSteamUserInfoAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.GetMockSteamUserInfo");
         await Task.CompletedTask;
         // MockSteamId has a default value in schema - no fallback needed
         var mockId = _configuration.MockSteamId;
@@ -648,6 +658,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// <inheritdoc/>
     public async Task CleanupOAuthLinksForAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.CleanupOAuthLinksForAccount");
         try
         {
             var indexKey = $"account-oauth-links:{accountId}";
@@ -692,6 +703,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// </summary>
     private async Task AddToAccountOAuthLinksIndexAsync(Guid accountId, string oauthLinkKey, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.AddToAccountOAuthLinksIndex");
         try
         {
             var indexKey = $"account-oauth-links:{accountId}";
@@ -720,6 +732,7 @@ public class OAuthProviderService : IOAuthProviderService
     /// </summary>
     private async Task EnsureAuthMethodSyncedAsync(Guid accountId, Provider provider, string externalId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "OAuthProviderService.EnsureAuthMethodSynced");
         try
         {
             await _accountClient.AddAuthMethodAsync(new AddAuthMethodRequest
