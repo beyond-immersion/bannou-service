@@ -46,20 +46,10 @@ internal class GameSessionModel
     public int MaxPlayers { get; set; }
     public int CurrentPlayers { get; set; }
     public bool IsPrivate { get; set; }
-    public Guid Owner { get; set; }
+    public Guid? Owner { get; set; }
     public List<GamePlayer> Players { get; set; } = new();
     public DateTimeOffset CreatedAt { get; set; }
     public object? GameSettings { get; set; }
-
-    /// <summary>
-    /// Whether voice communication is enabled for this session.
-    /// </summary>
-    public bool VoiceEnabled { get; set; }
-
-    /// <summary>
-    /// The voice room ID if voice is enabled.
-    /// </summary>
-    public Guid? VoiceRoomId { get; set; }
 
     /// <summary>
     /// Type of session - lobby (persistent) or matchmade (time-limited with reservations).
@@ -158,26 +148,5 @@ internal class CleanupReservationModel
 internal class CleanupPlayerModel
 {
     public Guid AccountId { get; set; }
-    public string WebSocketSessionId { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Client event for session cancellation.
-/// </summary>
-internal class SessionCancelledClientEvent : BaseClientEvent
-{
-    public override string EventName => "game-session.session_cancelled";
-    public string SessionId { get; set; } = string.Empty;
-    public string Reason { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Server-side event for session cancellation.
-/// </summary>
-internal class SessionCancelledServerEvent
-{
-    public Guid EventId { get; set; }
-    public DateTimeOffset Timestamp { get; set; }
-    public string SessionId { get; set; } = string.Empty;
-    public string Reason { get; set; } = string.Empty;
+    public Guid? WebSocketSessionId { get; set; }
 }

@@ -39,7 +39,9 @@ The Game Service is a minimal registry (L2 GameFoundation) that maintains a cata
 
 **Version**: 2.0.0 | **Schema**: `schemas/game-session-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscription-driven shortcut publishing and voice integration. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking, Voice for room lifecycle, and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
+Multiplayer session container primitive (L2 GameFoundation) with subscription-driven shortcut publishing for basic game access. Manages two session types: **lobby** sessions (persistent, per-game-service entry points auto-created for subscribed accounts) and **matchmade** sessions (pre-created by matchmaking with reservation tokens and TTL-based expiry). Integrates with Permission for `in_game` state tracking and Subscription for account eligibility. Publishes WebSocket shortcuts to connected clients for one-click game join, lifecycle events for session state changes, and supports per-game horizontal scaling via `SupportedGameServices` partitioning.
+
+GameSession is to players what Inventory is to items: a **container primitive**. It owns who is in what multiplayer context, with distributed locking, reservation tokens, and permission state management. Higher-layer services (Gardener, Matchmaking) create and manage these containers for their own purposes.
 
 ## Inventory {#inventory}
 

@@ -325,6 +325,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `GameSessionActionPerformedEvent` | Custom | `game-session-action-performed` | Published when a game action is performed in a ses... |
+| `GameSessionCancelledEvent` | Custom | `game-session-cancelled` | Published when a matchmade session is cancelled du... |
 | `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
 | `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
 
@@ -337,6 +338,7 @@ This document lists all events defined in Bannou's event schemas.
 | `PlayerJoinedEvent` | Custom | `player-joined` | Sent to all session participants when a new player... |
 | `PlayerKickedEvent` | Custom | `player-kicked` | Sent to all session participants when a player is ... |
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
+| `SessionCancelledEvent` | Custom | `session-cancelled` | Sent to players who claimed their reservation when... |
 | `SessionChatReceivedEvent` | Custom | `session-chat-received` | Sent to recipients when a chat message is posted i... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
 

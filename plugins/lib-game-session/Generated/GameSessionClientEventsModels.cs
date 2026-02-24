@@ -242,6 +242,41 @@ public partial class PlayerKickedEvent : BaseClientEvent
 }
 
 /// <summary>
+/// Sent to players who claimed their reservation when a matchmade session
+/// <br/>is cancelled due to not enough players joining before reservation expiry.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionCancelledEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "game_session.session_cancelled";
+
+    /// <summary>
+    /// ID of the cancelled game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for cancellation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Sent to recipients when a chat message is posted in the session.
 /// <br/>Public messages go to all participants, whispers only to the target.
 /// <br/>

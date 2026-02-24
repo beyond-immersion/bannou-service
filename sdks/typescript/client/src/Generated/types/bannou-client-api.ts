@@ -15113,7 +15113,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
       /** @description Content of the chat message */
       message: string;
       /**
@@ -21129,7 +21129,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type for the action. Determines which lobby to apply the action. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
       /** @description Type of game action to perform */
       actionType: components['schemas']['GameActionType'];
       /** @description Game-specific action data. No Bannou plugin reads specific keys from this field by convention. */
@@ -21188,11 +21188,6 @@ export interface components {
       characterData?: {
         [key: string]: unknown;
       } | null;
-      /**
-       * Format: uuid
-       * @description Voice participant session ID (if player has joined voice)
-       */
-      voiceSessionId?: string | null;
     };
     /**
      * @description Realm stub name (lowercase string identifier) that this asset belongs to.
@@ -21223,9 +21218,9 @@ export interface components {
       isPrivate?: boolean;
       /**
        * Format: uuid
-       * @description Account ID of the session owner
+       * @description Account ID of the session owner (null for system-owned lobby sessions)
        */
-      owner?: string;
+      owner?: string | null;
       /** @description List of players currently in the session */
       players?: components['schemas']['GamePlayer'][];
       /**
@@ -24600,7 +24595,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type being left. Determines which lobby to leave. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
     };
     /** @description Request to leave the garden */
     LeaveGardenRequest: {
@@ -32141,6 +32136,8 @@ export interface components {
       description?: string | null;
       /** @description Whether the service is currently active */
       isActive: boolean;
+      /** @description Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect */
+      autoLobbyEnabled: boolean;
       /**
        * Format: date-time
        * @description When the service was created

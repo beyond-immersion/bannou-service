@@ -36,6 +36,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IConnectClient> _mockConnectClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -61,6 +62,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockConnectClient = new Mock<IConnectClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -100,7 +102,8 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
-            _mockConnectClient.Object);
+            _mockConnectClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>
@@ -837,6 +840,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
     private readonly Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient> _mockSubscriptionClient;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IConnectClient> _mockConnectClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -861,6 +865,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         _mockSubscriptionClient = new Mock<BeyondImmersion.BannouService.Subscription.ISubscriptionClient>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockConnectClient = new Mock<IConnectClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -900,7 +905,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
-            _mockConnectClient.Object);
+            _mockConnectClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region HandleSessionConnectedInternal Tests
@@ -945,7 +951,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(true);
 
         // Act
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - shortcut was published to the session
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -979,7 +985,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             });
 
         // Act
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - no shortcut published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1000,7 +1006,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         GameSessionService.AddAccountSubscription(accountId, "other-game");
 
         // Act
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - no shortcut published because "other-game" is not in SupportedGameServices
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1010,22 +1016,6 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Cleanup
         GameSessionService.RemoveAccountSubscription(accountId, "other-game");
-    }
-
-    [Fact]
-    public async Task HandleSessionConnectedInternal_WithInvalidSessionId_ShouldReturnEarly()
-    {
-        // Arrange
-        var service = CreateService();
-
-        // Act - pass empty session ID
-        await service.HandleSessionConnectedInternalAsync("", Guid.NewGuid().ToString());
-
-        // Assert - nothing should happen
-        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
-            It.IsAny<string>(),
-            It.IsAny<ShortcutPublishedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -1290,7 +1280,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
-            _mockConnectClient.Object);
+            _mockConnectClient.Object,
+            _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
@@ -1323,7 +1314,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(true);
 
         // Act - NO subscription exists for this account, but GenericLobbiesEnabled is true
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - shortcut was published even without subscription
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1356,7 +1347,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
-            _mockConnectClient.Object);
+            _mockConnectClient.Object,
+            _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
@@ -1373,7 +1365,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             });
 
         // Act - No subscription, GenericLobbiesEnabled = false
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - NO shortcut published because no subscription and GenericLobbiesEnabled is false
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1404,7 +1396,8 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockPermissionClient.Object,
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
-            _mockConnectClient.Object);
+            _mockConnectClient.Object,
+            _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
@@ -1440,7 +1433,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(true);
 
         // Act
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - shortcut published exactly ONCE (not twice - once from GenericLobbiesEnabled, once from subscription)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1516,7 +1509,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(true);
 
         // Act
-        await service.HandleSessionConnectedInternalAsync(sessionId.ToString(), accountId.ToString());
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
 
         // Assert - subscription client was called to fetch subscriptions
         _mockSubscriptionClient.Verify(c => c.QueryCurrentSubscriptionsAsync(

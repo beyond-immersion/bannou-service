@@ -66,22 +66,15 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.Conflict, null);
         }
 
-        // Check base currency uniqueness if marking as base
+        // Check base currency uniqueness if marking as base (O(1) via dedicated index)
         if (body.IsBaseCurrency)
         {
-            var allDefsJson = await stringStore.GetAsync(ALL_DEFS_KEY, cancellationToken);
-            if (!string.IsNullOrEmpty(allDefsJson))
+            var baseCurrencyIndexKey = $"{BASE_CURRENCY_INDEX}{body.Scope}";
+            var existingBaseId = await stringStore.GetAsync(baseCurrencyIndexKey, cancellationToken);
+            if (!string.IsNullOrEmpty(existingBaseId))
             {
-                var allIds = BannouJson.Deserialize<List<string>>(allDefsJson) ?? new List<string>();
-                foreach (var id in allIds)
-                {
-                    var existing = await store.GetAsync($"{DEF_PREFIX}{id}", cancellationToken);
-                    if (existing is not null && existing.IsBaseCurrency && existing.Scope == body.Scope)
-                    {
-                        _logger.LogWarning("Base currency already exists for scope: {Scope}", body.Scope);
-                        return (StatusCodes.Conflict, null);
-                    }
-                }
+                _logger.LogWarning("Base currency already exists for scope: {Scope}", body.Scope);
+                return (StatusCodes.Conflict, null);
             }
         }
 
@@ -131,6 +124,11 @@ public partial class CurrencyService : ICurrencyService
         await store.SaveAsync($"{DEF_PREFIX}{definitionId}", model, cancellationToken: cancellationToken);
         await stringStore.SaveAsync($"{DEF_CODE_INDEX}{body.Code}", definitionId.ToString(), cancellationToken: cancellationToken);
         await AddToListAsync(StateStoreDefinitions.CurrencyDefinitions, ALL_DEFS_KEY, definitionId.ToString(), cancellationToken);
+
+        if (body.IsBaseCurrency)
+        {
+            await stringStore.SaveAsync($"{BASE_CURRENCY_INDEX}{body.Scope}", $"{definitionId}:{body.Code}", cancellationToken: cancellationToken);
+        }
 
         await _messageBus.TryPublishAsync("currency-definition.created", new CurrencyDefinitionCreatedEvent
         {
@@ -220,6 +218,7 @@ public partial class CurrencyService : ICurrencyService
         if (body.CapOverflowBehavior is not null) model.CapOverflowBehavior = body.CapOverflowBehavior;
         if (body.DailyEarnCap is not null) model.DailyEarnCap = body.DailyEarnCap;
         if (body.WeeklyEarnCap is not null) model.WeeklyEarnCap = body.WeeklyEarnCap;
+        if (body.EarnCapResetTime is not null) model.EarnCapResetTime = body.EarnCapResetTime;
         if (body.AutogainEnabled is not null) model.AutogainEnabled = body.AutogainEnabled.Value;
         if (body.AutogainMode is not null) model.AutogainMode = body.AutogainMode;
         if (body.AutogainAmount is not null) model.AutogainAmount = body.AutogainAmount;
@@ -979,11 +978,41 @@ public partial class CurrencyService : ICurrencyService
         if (isDuplicate) return (StatusCodes.Conflict, null);
 
         var results = new List<BatchCreditResult>();
+        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
         var operations = body.Operations.ToList();
         for (var i = 0; i < operations.Count; i++)
         {
             var op = operations[i];
             var opKey = $"{body.IdempotencyKey}:{i}";
+
+            // Check if sub-operation completed in a prior partial batch attempt
+            var (isAlreadyComplete, existingTxId) = await CheckIdempotencyAsync(opKey, cancellationToken);
+            if (isAlreadyComplete)
+            {
+                _logger.LogDebug("Batch credit sub-operation {Index} already completed (key: {OpKey}, tx: {TxId}), reporting existing result",
+                    i, opKey, existingTxId);
+
+                TransactionModel? existingTx = null;
+                if (existingTxId.HasValue)
+                {
+                    existingTx = await txStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
+                    if (existingTx is null)
+                    {
+                        _logger.LogWarning("Batch credit sub-operation {Index} idempotency hit but transaction {TxId} not found in store",
+                            i, existingTxId);
+                    }
+                }
+
+                results.Add(new BatchCreditResult
+                {
+                    Index = i,
+                    Success = true,
+                    Transaction = existingTx is not null ? MapTransactionToRecord(existingTx) : null,
+                    Error = null
+                });
+                continue;
+            }
+
             var (status, response) = await CreditCurrencyAsync(new CreditCurrencyRequest
             {
                 WalletId = op.WalletId,
@@ -1018,11 +1047,40 @@ public partial class CurrencyService : ICurrencyService
         if (isDuplicate) return (StatusCodes.Conflict, null);
 
         var results = new List<BatchDebitResult>();
+        var txStore = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
         var operations = body.Operations.ToList();
         for (var i = 0; i < operations.Count; i++)
         {
             var op = operations[i];
             var opKey = $"{body.IdempotencyKey}:{i}";
+
+            // Check if sub-operation completed in a prior partial batch attempt
+            var (isAlreadyComplete, existingTxId) = await CheckIdempotencyAsync(opKey, cancellationToken);
+            if (isAlreadyComplete)
+            {
+                _logger.LogDebug("Batch debit sub-operation {Index} already completed (key: {OpKey}, tx: {TxId}), reporting existing result",
+                    i, opKey, existingTxId);
+
+                TransactionModel? existingTx = null;
+                if (existingTxId.HasValue)
+                {
+                    existingTx = await txStore.GetAsync($"{TX_PREFIX}{existingTxId}", cancellationToken);
+                    if (existingTx is null)
+                    {
+                        _logger.LogWarning("Batch debit sub-operation {Index} idempotency hit but transaction {TxId} not found in store",
+                            i, existingTxId);
+                    }
+                }
+
+                results.Add(new BatchDebitResult
+                {
+                    Index = i,
+                    Success = true,
+                    Transaction = existingTx is not null ? MapTransactionToRecord(existingTx) : null,
+                    Error = null
+                });
+                continue;
+            }
 
             var (status, response) = await DebitCurrencyAsync(new DebitCurrencyRequest
             {
@@ -2189,17 +2247,19 @@ public partial class CurrencyService : ICurrencyService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.FindBaseCurrencyCodeAsync");
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyDefinitions);
-        var defStore = _stateStoreFactory.GetStore<CurrencyDefinitionModel>(StateStoreDefinitions.CurrencyDefinitions);
 
-        var allDefsJson = await stringStore.GetAsync(ALL_DEFS_KEY, ct);
-        if (string.IsNullOrEmpty(allDefsJson)) return null;
-
-        var allIds = BannouJson.Deserialize<List<string>>(allDefsJson) ?? new List<string>();
-        foreach (var id in allIds)
+        // O(1) lookup via dedicated base-currency index instead of iterating all definitions.
+        // Check each scope (Global most likely for exchange rate pivot purposes).
+        CurrencyScope[] scopes = [CurrencyScope.Global, CurrencyScope.RealmSpecific, CurrencyScope.MultiRealm];
+        foreach (var scope in scopes)
         {
-            var def = await defStore.GetAsync($"{DEF_PREFIX}{id}", ct);
-            if (def is not null && def.IsBaseCurrency)
-                return def.Code;
+            var indexValue = await stringStore.GetAsync($"{BASE_CURRENCY_INDEX}{scope}", ct);
+            if (!string.IsNullOrEmpty(indexValue))
+            {
+                // Index value format: "{definitionId}:{code}"
+                var colonIndex = indexValue.IndexOf(':');
+                return colonIndex >= 0 ? indexValue[(colonIndex + 1)..] : indexValue;
+            }
         }
 
         return null;

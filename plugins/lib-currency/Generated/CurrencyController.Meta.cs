@@ -1435,6 +1435,12 @@ public partial class CurrencyController
                     "nullable": true,
                     "description": "New weekly earn cap"
                 },
+                "earnCapResetTime": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "nullable": true,
+                    "description": "New earn cap reset time (e.g. \"14:00:00\" for 2pm UTC)"
+                },
                 "autogainEnabled": {
                     "type": "boolean",
                     "nullable": true,

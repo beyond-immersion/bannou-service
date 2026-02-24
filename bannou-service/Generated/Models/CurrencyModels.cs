@@ -685,6 +685,13 @@ public partial class UpdateCurrencyDefinitionRequest
     public double? WeeklyEarnCap { get; set; } = default!;
 
     /// <summary>
+    /// New earn cap reset time (e.g. "14:00:00" for 2pm UTC)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("earnCapResetTime")]
+    [System.ComponentModel.DataAnnotations.StringLength(20)]
+    public string? EarnCapResetTime { get; set; } = default!;
+
+    /// <summary>
     /// Enable/disable autogain
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("autogainEnabled")]

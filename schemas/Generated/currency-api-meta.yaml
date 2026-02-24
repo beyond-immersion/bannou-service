@@ -588,28 +588,31 @@ paths:
         ,\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"New daily earn cap\"\n                },\n                \"weeklyEarnCap\": {\n                    \"type\":
         \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"New weekly earn cap\"\n                },\n                \"autogainEnabled\": {\n    \
-        \                \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Enable/disable autogain\"\n                },\n                \"autogainMode\": {\n                    \"$ref\"\
-        : \"#/$defs/AutogainMode\",\n                    \"nullable\": true,\n                    \"description\": \"New autogain
-        mode\"\n                },\n                \"autogainAmount\": {\n                    \"type\": \"number\",\n   \
-        \                 \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New autogain amount\"\n                },\n                \"autogainInterval\": {\n                    \"type\"\
-        : \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n                 \
-        \   \"description\": \"New autogain interval\"\n                },\n                \"autogainCap\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\":
-        true,\n                    \"description\": \"New autogain cap\"\n                },\n                \"exchangeRateToBase\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"New exchange rate to base\"\n                },\n      \
-        \          \"iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New icon asset ID\"\n         \
-        \       },\n                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"\
-        maxLength\": 200,\n                    \"nullable\": true,\n                    \"description\": \"New display format\"\
-        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Active status\"\n                }\n          \
-        \  }\n        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\"\
-        ,\n                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
+        \      \"description\": \"New weekly earn cap\"\n                },\n                \"earnCapResetTime\": {\n   \
+        \                 \"type\": \"string\",\n                    \"maxLength\": 20,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New earn cap reset time (e.g. \\\"14:00:00\\\" for 2pm UTC)\"\n  \
+        \              },\n                \"autogainEnabled\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Enable/disable autogain\"\n               \
+        \ },\n                \"autogainMode\": {\n                    \"$ref\": \"#/$defs/AutogainMode\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"New autogain mode\"\n                },\n    \
+        \            \"autogainAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"nullable\": true,\n                    \"description\": \"New autogain amount\"\n\
+        \                },\n                \"autogainInterval\": {\n                    \"type\": \"string\",\n        \
+        \            \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"description\": \"\
+        New autogain interval\"\n                },\n                \"autogainCap\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n                \
+        \    \"description\": \"New autogain cap\"\n                },\n                \"exchangeRateToBase\": {\n      \
+        \              \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"New exchange rate to base\"\n                },\n                \"\
+        iconAssetId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"New icon asset ID\"\n                },\n\
+        \                \"displayFormat\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 200,\n                    \"nullable\": true,\n                    \"description\": \"New display format\"\n   \
+        \             },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Active status\"\n                }\n            }\n\
+        \        },\n        \"CapOverflowBehavior\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        What happens when a credit would exceed the wallet cap\",\n            \"enum\": [\n                \"reject\",\n\
+        \                \"cap_and_lose\",\n                \"cap_and_return\"\n            ]\n        },\n        \"AutogainMode\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"How autogain (energy/interest) is calculated\"\
         ,\n            \"enum\": [\n                \"simple\",\n                \"compound\"\n            ]\n        }\n\
         \    }\n}"
@@ -3883,6 +3886,11 @@ components:
           format: double
           nullable: true
           description: New weekly earn cap
+        earnCapResetTime:
+          type: string
+          maxLength: 20
+          nullable: true
+          description: New earn cap reset time (e.g. "14:00:00" for 2pm UTC)
         autogainEnabled:
           type: boolean
           nullable: true

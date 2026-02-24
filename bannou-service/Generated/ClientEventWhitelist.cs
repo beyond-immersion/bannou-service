@@ -55,6 +55,7 @@ public static class ClientEventWhitelist
         "game_session.player_joined",
         "game_session.player_kicked",
         "game_session.player_left",
+        "game_session.session_cancelled",
         "game_session.state_changed",
         "game_session.state_updated",
         "matchmaking.cancelled",

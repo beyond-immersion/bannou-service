@@ -194,6 +194,8 @@ public static class StateStoreDefinitions
     public const string FactionTerritory = "faction-territory-statestore";
 
     // GameService Service
+    /// <summary>Distributed locks for stub name uniqueness</summary>
+    public const string GameServiceLock = "game-service-lock";
     /// <summary>Game service registry</summary>
     public const string GameService = "game-service-statestore";
 
@@ -532,6 +534,7 @@ public static class StateStoreDefinitions
             [FactionNorm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_norm_statestore" },
             [Faction] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_statestore" },
             [FactionTerritory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_territory_statestore" },
+            [GameServiceLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "game-service:lock" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
             [GardenerGardenInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:garden" },
@@ -710,6 +713,7 @@ public static class StateStoreDefinitions
             [FactionNorm] = new StoreMetadata("Faction", "Behavioral norm definitions per faction (durable, queryable by violation type)", "mysql"),
             [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by realm/game service/status)", "mysql"),
             [FactionTerritory] = new StoreMetadata("Faction", "Territory claim records linking factions to controlled locations", "mysql"),
+            [GameServiceLock] = new StoreMetadata("GameService", "Distributed locks for stub name uniqueness", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
             [GardenerGardenInstances] = new StoreMetadata("Gardener", "Active garden instance state per player (ephemeral, TTL-based)", "redis"),

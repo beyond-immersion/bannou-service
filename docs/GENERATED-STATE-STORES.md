@@ -75,6 +75,7 @@ This document lists all state store components used in Bannou.
 | `faction-norm-statestore` | MySQL | Faction | Behavioral norm definitions per faction (durable, queryable by violation type) |
 | `faction-statestore` | MySQL | Faction | Faction entity records (durable, queryable by realm/game service/status) |
 | `faction-territory-statestore` | MySQL | Faction | Territory claim records linking factions to controlled locations |
+| `game-service-lock` | Redis | GameService | Distributed locks for stub name uniqueness |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
 | `gardener-garden-instances` | Redis | Gardener | Active garden instance state per player (ephemeral, TTL-based) |
@@ -176,7 +177,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 166 stores (99 Redis, 67 MySQL)
+**Total**: 167 stores (100 Redis, 67 MySQL)
 
 ## Naming Conventions
 

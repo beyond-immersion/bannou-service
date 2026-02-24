@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Bannou Game Session Service API
   description: |
@@ -89,59 +89,57 @@ paths:
         : \"Current number of players in the session\"\n                },\n                \"isPrivate\": {\n           \
         \         \"type\": \"boolean\",\n                    \"description\": \"Whether the session requires a password to
         join\"\n                },\n                \"owner\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"description\": \"Account ID of the session owner\"\n       \
-        \         },\n                \"players\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n                    },\n                    \"description\"\
-        : \"List of players currently in the session\"\n                },\n                \"createdAt\": {\n           \
-        \         \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the session was created\"\n                },\n                \"gameSettings\": {\n          \
-        \          \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Game-specific configuration settings. No Bannou plugin reads specific
-        keys from this field by convention.\"\n                },\n                \"reservations\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ReservationInfo\"\
-        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"For matchmade
-        sessions - reservation tokens for expected players\"\n                },\n                \"reservationExpiresAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"For matchmade sessions - when reservations expire\"\
-        \n                }\n            }\n        },\n        \"GameType\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"Game service stub name for this session. Use the game service's stubName property (e.g.,
-        \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"Type of game session - determines join behavior\"\
-        ,\n            \"enum\": [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        },\n\
-        \        \"SessionStatus\": {\n            \"type\": \"string\",\n            \"description\": \"Current status of
-        the game session\",\n            \"enum\": [\n                \"waiting\",\n                \"active\",\n        \
-        \        \"full\",\n                \"finished\"\n            ]\n        },\n        \"GamePlayer\": {\n         \
-        \   \"description\": \"Information about a player currently participating in a game session\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\"\
-        ,\n                \"sessionId\",\n                \"joinedAt\",\n                \"role\"\n            ],\n     \
-        \       \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for the player's account\"\
-        \n                },\n                \"sessionId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"WebSocket session ID that joined the game. Chat
-        and events are delivered to this specific session only.\"\n                },\n                \"displayName\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name shown to other players\"\n                },\n                \"role\": {\n                    \"\
-        $ref\": \"#/$defs/PlayerRole\",\n                    \"description\": \"Role of the player in the game session\"\n\
-        \                },\n                \"joinedAt\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the player joined the session\"\
-        \n                },\n                \"characterData\": {\n                    \"type\": \"object\",\n          \
-        \          \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                },\n                \"voiceSessionId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Voice participant session ID (if player has joined voice)\"\n                }\n            }\n        },\n      \
-        \  \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role of the player in the
-        game session\",\n            \"enum\": [\n                \"player\",\n                \"spectator\",\n          \
-        \      \"moderator\"\n            ]\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Reservation token returned when creating a matchmade session\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n                \"token\"\
-        ,\n                \"expiresAt\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Account ID this reservation is for\"\n                },\n                \"token\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Token to claim this reservation\"\n                },\n\
-        \                \"expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this reservation expires\"\n                }\n            }\n    \
-        \    }\n    }\n}"
+        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Account
+        ID of the session owner (null for system-owned lobby sessions)\"\n                },\n                \"players\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/GamePlayer\"\n                    },\n                    \"description\": \"List of players currently
+        in the session\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session
+        was created\"\n                },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n\
+        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Game-specific configuration settings. No Bannou plugin reads specific keys from this field by
+        convention.\"\n                },\n                \"reservations\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/ReservationInfo\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"For matchmade sessions -
+        reservation tokens for expected players\"\n                },\n                \"reservationExpiresAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"For matchmade sessions - when reservations expire\"\n            \
+        \    }\n            }\n        },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Game service stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use
+        \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Type of game session - determines join behavior\",\n            \"enum\"\
+        : [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        },\n        \"SessionStatus\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the game session\",\n   \
+        \         \"enum\": [\n                \"waiting\",\n                \"active\",\n                \"full\",\n    \
+        \            \"finished\"\n            ]\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
+        about a player currently participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n          \
+        \      \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"\
+        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"Unique identifier for the player's account\"\n                },\n                \"\
+        sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
+        \         \"description\": \"WebSocket session ID that joined the game. Chat and events are delivered to this specific
+        session only.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name shown to other players\"\
+        \n                },\n                \"role\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n       \
+        \             \"description\": \"Role of the player in the game session\"\n                },\n                \"\
+        joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
+        \             \"description\": \"Timestamp when the player joined the session\"\n                },\n            \
+        \    \"characterData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific character data
+        for this player. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n      \
+        \      }\n        },\n        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Role of the player in the game session\",\n            \"enum\": [\n                \"player\",\n                \"\
+        spectator\",\n                \"moderator\"\n            ]\n        },\n        \"ReservationInfo\": {\n         \
+        \   \"type\": \"object\",\n            \"description\": \"Reservation token returned when creating a matchmade session\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"accountId\",\n   \
+        \             \"token\",\n                \"expiresAt\"\n            ],\n            \"properties\": {\n         \
+        \       \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Account ID this reservation is for\"\n                },\n                \"\
+        token\": {\n                    \"type\": \"string\",\n                    \"description\": \"Token to claim this
+        reservation\"\n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this reservation expires\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List available game sessions\",\n    \"description\": \"List available
         game sessions. This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts
         or internal service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n\
@@ -185,25 +183,27 @@ paths:
         : \"Optional display name for the session\"\n                },\n                \"isPrivate\": {\n              \
         \      \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         the session requires a password to join\"\n                },\n                \"ownerId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        ID of the session owner. If not provided, defaults to caller's account.\"\n                },\n                \"\
-        gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Game-specific configuration settings.
-        No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"sessionType\"\
-        : {\n                    \"$ref\": \"#/$defs/SessionType\",\n                    \"description\": \"Type of session
-        - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby.\"\n                },\n   \
-        \             \"expectedPlayers\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"For matchmade sessions - list
-        of account IDs expected to join. Reservations created for each.\"\n                },\n                \"reservationTtlSeconds\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 10,\n                    \"maximum\"\
-        : 300,\n                    \"default\": 60,\n                    \"description\": \"For matchmade sessions - how
-        long reservations last before expiring (seconds)\"\n                }\n            }\n        },\n        \"GameType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session. Use
-        the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
-        \n        },\n        \"SessionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
-        game session - determines join behavior\",\n            \"enum\": [\n                \"lobby\",\n                \"\
-        matchmade\"\n            ]\n        }\n    }\n}"
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Account ID of the session owner. If not provided, defaults to caller's account.\"\
+        \n                },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n           \
+        \         \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.\"\n\
+        \                },\n                \"sessionType\": {\n                    \"allOf\": [\n                      \
+        \  {\n                            \"$ref\": \"#/$defs/SessionType\"\n                        }\n                 \
+        \   ],\n                    \"nullable\": true,\n                    \"description\": \"Type of session - lobby (persistent)
+        or matchmade (time-limited with reservations). Defaults to lobby.\"\n                },\n                \"expectedPlayers\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"nullable\"\
+        : true,\n                    \"description\": \"For matchmade sessions - list of account IDs expected to join. Reservations
+        created for each.\"\n                },\n                \"reservationTtlSeconds\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 10,\n                    \"maximum\": 300,\n                    \"\
+        default\": 60,\n                    \"description\": \"For matchmade sessions - how long reservations last before
+        expiring (seconds)\"\n                }\n            }\n        },\n        \"GameType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Game service stub name for this session. Use the game service's stubName
+        property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of game session - determines join behavior\"\
+        ,\n            \"enum\": [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"GameSessionResponse\": {\n            \"description\": \"Complete details of a game
         session including players and settings\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -224,58 +224,56 @@ paths:
         \              },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n                \
         \    \"description\": \"Whether the session requires a password to join\"\n                },\n                \"\
         owner\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n               \
-        \     \"description\": \"Account ID of the session owner\"\n                },\n                \"players\": {\n \
-        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\
-        \n                    },\n                    \"description\": \"List of players currently in the session\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session was created\"\n  \
-        \              },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n              \
-        \      \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.\"\n\
-        \                },\n                \"reservations\": {\n                    \"type\": \"array\",\n             \
-        \       \"items\": {\n                        \"$ref\": \"#/$defs/ReservationInfo\"\n                    },\n    \
-        \                \"nullable\": true,\n                    \"description\": \"For matchmade sessions - reservation
-        tokens for expected players\"\n                },\n                \"reservationExpiresAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"For matchmade sessions - when reservations expire\"\n                }\n \
-        \           }\n        },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Game service stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use
-        \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Type of game session - determines join behavior\",\n            \"enum\"\
-        : [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        },\n        \"SessionStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the game session\",\n   \
-        \         \"enum\": [\n                \"waiting\",\n                \"active\",\n                \"full\",\n    \
-        \            \"finished\"\n            ]\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
-        about a player currently participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n          \
-        \      \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"\
-        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"Unique identifier for the player's account\"\n                },\n                \"\
-        sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"WebSocket session ID that joined the game. Chat and events are delivered to this specific
-        session only.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name shown to other players\"\
-        \n                },\n                \"role\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n       \
-        \             \"description\": \"Role of the player in the game session\"\n                },\n                \"\
-        joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
-        \             \"description\": \"Timestamp when the player joined the session\"\n                },\n            \
-        \    \"characterData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific character data
-        for this player. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n     \
-        \           \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session ID (if
-        player has joined voice)\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n            \"enum\"\
-        : [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n            ]\n \
-        \       },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Reservation
-        token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\n       \
-        \     ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID this reservation is
-        for\"\n                },\n                \"token\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Token to claim this reservation\"\n                },\n                \"expiresAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When this reservation expires\"\n                }\n            }\n        }\n    }\n}"
+        \     \"nullable\": true,\n                    \"description\": \"Account ID of the session owner (null for system-owned
+        lobby sessions)\"\n                },\n                \"players\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n                    },\n\
+        \                    \"description\": \"List of players currently in the session\"\n                },\n         \
+        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the session was created\"\n                },\n         \
+        \       \"gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific configuration
+        settings. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"reservations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/ReservationInfo\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"For matchmade sessions - reservation tokens for expected players\"\n     \
+        \           },\n                \"reservationExpiresAt\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For matchmade sessions - when reservations expire\"\n                }\n            }\n        },\n        \"\
+        GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session.
+        Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
+        \n        },\n        \"SessionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        game session - determines join behavior\",\n            \"enum\": [\n                \"lobby\",\n                \"\
+        matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"waiting\"\
+        ,\n                \"active\",\n                \"full\",\n                \"finished\"\n            ]\n        },\n\
+        \        \"GamePlayer\": {\n            \"description\": \"Information about a player currently participating in a
+        game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\",\n             \
+        \   \"role\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the player's account\"\n                },\n                \"sessionId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
+        ID that joined the game. Chat and events are delivered to this specific session only.\"\n                },\n    \
+        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name shown to other players\"\n                },\n              \
+        \  \"role\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n                    \"description\": \"Role
+        of the player in the game session\"\n                },\n                \"joinedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the player joined the session\"\n                },\n                \"characterData\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Game-specific character data for this player. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n    \
+        \        \"enum\": [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n\
+        \            ]\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID this reservation
+        is for\"\n                },\n                \"token\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Token to claim this reservation\"\n                },\n                \"expiresAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this reservation expires\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new game session\",\n    \"description\": \"Create a new game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts or internal
         service calls.\\n\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -332,58 +330,56 @@ paths:
         \              },\n                \"isPrivate\": {\n                    \"type\": \"boolean\",\n                \
         \    \"description\": \"Whether the session requires a password to join\"\n                },\n                \"\
         owner\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n               \
-        \     \"description\": \"Account ID of the session owner\"\n                },\n                \"players\": {\n \
-        \                   \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\
-        \n                    },\n                    \"description\": \"List of players currently in the session\"\n    \
-        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
-        \ \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the session was created\"\n  \
-        \              },\n                \"gameSettings\": {\n                    \"type\": \"object\",\n              \
-        \      \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.\"\n\
-        \                },\n                \"reservations\": {\n                    \"type\": \"array\",\n             \
-        \       \"items\": {\n                        \"$ref\": \"#/$defs/ReservationInfo\"\n                    },\n    \
-        \                \"nullable\": true,\n                    \"description\": \"For matchmade sessions - reservation
-        tokens for expected players\"\n                },\n                \"reservationExpiresAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"For matchmade sessions - when reservations expire\"\n                }\n \
-        \           }\n        },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Game service stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use
-        \\\"generic\\\" for non-game-specific sessions.\"\n        },\n        \"SessionType\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Type of game session - determines join behavior\",\n            \"enum\"\
-        : [\n                \"lobby\",\n                \"matchmade\"\n            ]\n        },\n        \"SessionStatus\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Current status of the game session\",\n   \
-        \         \"enum\": [\n                \"waiting\",\n                \"active\",\n                \"full\",\n    \
-        \            \"finished\"\n            ]\n        },\n        \"GamePlayer\": {\n            \"description\": \"Information
-        about a player currently participating in a game session\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"accountId\",\n                \"sessionId\",\n          \
-        \      \"joinedAt\",\n                \"role\"\n            ],\n            \"properties\": {\n                \"\
-        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"Unique identifier for the player's account\"\n                },\n                \"\
-        sessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"WebSocket session ID that joined the game. Chat and events are delivered to this specific
-        session only.\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name shown to other players\"\
-        \n                },\n                \"role\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n       \
-        \             \"description\": \"Role of the player in the game session\"\n                },\n                \"\
-        joinedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n       \
-        \             \"description\": \"Timestamp when the player joined the session\"\n                },\n            \
-        \    \"characterData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific character data
-        for this player. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n     \
-        \           \"voiceSessionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Voice participant session ID (if
-        player has joined voice)\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n            \"enum\"\
-        : [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n            ]\n \
-        \       },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\": \"Reservation
-        token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\n       \
-        \     ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID this reservation is
-        for\"\n                },\n                \"token\": {\n                    \"type\": \"string\",\n             \
-        \       \"description\": \"Token to claim this reservation\"\n                },\n                \"expiresAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When this reservation expires\"\n                }\n            }\n        }\n    }\n}"
+        \     \"nullable\": true,\n                    \"description\": \"Account ID of the session owner (null for system-owned
+        lobby sessions)\"\n                },\n                \"players\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/GamePlayer\"\n                    },\n\
+        \                    \"description\": \"List of players currently in the session\"\n                },\n         \
+        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the session was created\"\n                },\n         \
+        \       \"gameSettings\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific configuration
+        settings. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"reservations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
+        \             \"$ref\": \"#/$defs/ReservationInfo\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"For matchmade sessions - reservation tokens for expected players\"\n     \
+        \           },\n                \"reservationExpiresAt\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For matchmade sessions - when reservations expire\"\n                }\n            }\n        },\n        \"\
+        GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session.
+        Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
+        \n        },\n        \"SessionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of
+        game session - determines join behavior\",\n            \"enum\": [\n                \"lobby\",\n                \"\
+        matchmade\"\n            ]\n        },\n        \"SessionStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"Current status of the game session\",\n            \"enum\": [\n                \"waiting\"\
+        ,\n                \"active\",\n                \"full\",\n                \"finished\"\n            ]\n        },\n\
+        \        \"GamePlayer\": {\n            \"description\": \"Information about a player currently participating in a
+        game session\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"accountId\",\n                \"sessionId\",\n                \"joinedAt\",\n             \
+        \   \"role\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
+        identifier for the player's account\"\n                },\n                \"sessionId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"WebSocket session
+        ID that joined the game. Chat and events are delivered to this specific session only.\"\n                },\n    \
+        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Display name shown to other players\"\n                },\n              \
+        \  \"role\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n                    \"description\": \"Role
+        of the player in the game session\"\n                },\n                \"joinedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
+        the player joined the session\"\n                },\n                \"characterData\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Game-specific character data for this player. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                }\n            }\n        },\n        \"PlayerRole\": {\n \
+        \           \"type\": \"string\",\n            \"description\": \"Role of the player in the game session\",\n    \
+        \        \"enum\": [\n                \"player\",\n                \"spectator\",\n                \"moderator\"\n\
+        \            ]\n        },\n        \"ReservationInfo\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Reservation token returned when creating a matchmade session\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"accountId\",\n                \"token\",\n                \"expiresAt\"\
+        \n            ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID this reservation
+        is for\"\n                },\n                \"token\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Token to claim this reservation\"\n                },\n                \"expiresAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this reservation expires\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get game session details\",\n    \"description\": \"Get details of the
         current game session the user has joined.\",\n    \"tags\": [\n        \"Game Sessions\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getGameSession\"\n}"
@@ -428,24 +424,16 @@ paths:
         of the client joining. Provided by shortcut system. Used for event delivery.\"\n                },\n             \
         \   \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n     \
         \               \"description\": \"Account ID of the player joining. Provided by shortcut system.\"\n            \
-        \    },\n                \"gameType\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Game service stub name to join. Determines which lobby to join. Provided by shortcut system.\"\n             \
-        \   },\n                \"password\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Password for private sessions (null for public sessions)\"\n     \
-        \           },\n                \"characterData\": {\n                    \"type\": \"object\",\n                \
-        \    \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        \    },\n                \"gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n                  \
+        \  \"description\": \"Game service stub name to join. Determines which lobby to join. Provided by shortcut system.\"\
+        \n                },\n                \"password\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Password for private sessions (null for public sessions)\"\
+        \n                },\n                \"characterData\": {\n                    \"type\": \"object\",\n          \
+        \          \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
         : \"Game-specific character data. No Bannou plugin reads specific keys from this field by convention.\"\n        \
-        \        },\n                \"voiceEndpoint\": {\n                    \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Client's SIP endpoint for voice communication
-        (null if not using voice)\"\n                }\n            }\n        },\n        \"VoiceSipEndpoint\": {\n     \
-        \       \"type\": \"object\",\n            \"description\": \"Client's SIP/WebRTC endpoint for voice communication\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"sdpOffer\"\n     \
-        \       ],\n            \"properties\": {\n                \"sdpOffer\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"SDP offer for WebRTC negotiation\"\n                },\n               \
-        \ \"iceCandidates\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
-        \           \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n              \
-        \      \"description\": \"ICE candidates for NAT traversal\"\n                }\n            }\n        }\n    }\n\
-        }"
+        \        }\n            }\n        },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"Game service stub name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\
+        \"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"JoinGameSessionResponse\": {\n            \"description\": \"Response after successfully
         joining a game session with role and permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -455,33 +443,14 @@ paths:
         \n                },\n                \"playerRole\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n \
         \                   \"description\": \"Role assigned to the player in this session\"\n                },\n       \
         \         \"gameData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Game-specific initial state data. No Bannou plugin reads specific
-        keys from this field by convention.\"\n                },\n                \"newPermissions\": {\n               \
-        \     \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n     \
-        \               },\n                    \"description\": \"Additional permissions granted by joining\"\n         \
-        \       },\n                \"voice\": {\n                    \"$ref\": \"#/$defs/VoiceConnectionInfo\",\n       \
-        \             \"description\": \"Voice connection info (if voice is enabled for this session)\"\n                }\n\
-        \            }\n        },\n        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Role of the player in the game session\",\n            \"enum\": [\n                \"player\",\n            \
-        \    \"spectator\",\n                \"moderator\"\n            ]\n        },\n        \"VoiceConnectionInfo\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Minimal voice metadata returned when joining a
-        session.\\n\\n**Event-Only Pattern**: Peer connection details are NOT included here.\\nClients receive VoicePeerJoinedEvent
-        when other peers join (with their SDP offers).\\nThis avoids race conditions between response processing and event
-        handling.\\n\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"voiceEnabled\"\
-        \n            ],\n            \"properties\": {\n                \"voiceEnabled\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether voice is enabled for this game session\"\n        \
-        \        },\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Voice room ID (null until
-        room is created when 2+ participants join with voice)\"\n                },\n                \"tier\": {\n       \
-        \             \"allOf\": [\n                        {\n                            \"type\": \"object\"\n        \
-        \                }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expected voice tier (may change based on participant count)\"\n                },\n                \"codec\":
-        {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n\
-        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
-        description\": \"Audio codec to use\"\n                },\n                \"stunServers\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            },\n                    \"nullable\": true,\n                    \"description\": \"STUN server URIs
-        for NAT traversal (clients should configure these early)\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific initial state
+        data. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"\
+        newPermissions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Additional permissions granted by joining\"\n                }\n            }\n        },\n\
+        \        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role of the player in
+        the game session\",\n            \"enum\": [\n                \"player\",\n                \"spectator\",\n      \
+        \          \"moderator\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join a game session\",\n    \"description\": \"Join an existing game session.
         This endpoint is not directly accessible via WebSocket API.\\nAccess is granted through session shortcuts published
         by the game-session service when\\na subscribed user connects. The shortcut contains a pre-bound JoinGameSessionRequest\\
@@ -517,8 +486,11 @@ paths:
         Provided by shortcut system.\"\n                },\n                \"accountId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account ID of the
         player leaving. Provided by shortcut system.\"\n                },\n                \"gameType\": {\n            \
-        \        \"type\": \"string\",\n                    \"description\": \"Game type being left. Determines which lobby
-        to leave. Provided by shortcut system.\"\n                }\n            }\n        }\n    }\n}"
+        \        \"$ref\": \"#/$defs/GameType\",\n                    \"description\": \"Game type being left. Determines
+        which lobby to leave. Provided by shortcut system.\"\n                }\n            }\n        },\n        \"GameType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Game service stub name for this session. Use
+        the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\
+        \n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Leave a game session\",\n    \"description\": \"\",\n    \"tags\": [\n\
         \        \"Game Sessions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"leaveGameSession\"\n}"
@@ -592,18 +564,21 @@ paths:
         : \"WebSocket session ID of the sender. Provided by shortcut system.\"\n                },\n                \"accountId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Account ID of the sender. Provided by shortcut system.\"\n                },\n                \"\
-        gameType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game type for the
-        chat. Determines which lobby's players receive the message. Provided by shortcut system.\"\n                },\n \
-        \               \"message\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n\
-        \                    \"description\": \"Content of the chat message\"\n                },\n                \"messageType\"\
-        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ChatMessageType\"\
-        \n                        }\n                    ],\n                    \"default\": \"public\",\n              \
-        \      \"description\": \"Type of message (public to all, whisper to one player, or system announcement)\"\n     \
-        \           },\n                \"targetPlayerId\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"For whisper
-        messages\"\n                }\n            }\n        },\n        \"ChatMessageType\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Type of chat message\",\n            \"enum\": [\n                \"public\"\
-        ,\n                \"whisper\",\n                \"system\"\n            ]\n        }\n    }\n}"
+        gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n                    \"description\": \"Game type
+        for the chat. Determines which lobby's players receive the message. Provided by shortcut system.\"\n             \
+        \   },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 500,\n                    \"description\": \"Content of the chat message\"\n                },\n               \
+        \ \"messageType\": {\n                    \"allOf\": [\n                        {\n                            \"\
+        $ref\": \"#/$defs/ChatMessageType\"\n                        }\n                    ],\n                    \"default\"\
+        : \"public\",\n                    \"description\": \"Type of message (public to all, whisper to one player, or system
+        announcement)\"\n                },\n                \"targetPlayerId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"For whisper messages\"\n                }\n            }\n        },\n        \"GameType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Game service stub name for this session. Use the game service's
+        stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific sessions.\"\n        },\n   \
+        \     \"ChatMessageType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of chat message\"\
+        ,\n            \"enum\": [\n                \"public\",\n                \"whisper\",\n                \"system\"\n\
+        \            ]\n        }\n    }\n}"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"Send chat message to game session\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Game Chat\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"sendChatMessage\"\n}"
@@ -646,18 +621,21 @@ paths:
         : \"WebSocket session ID of the client. Provided by shortcut system.\"\n                },\n                \"accountId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Account ID of the player. Provided by shortcut system.\"\n                },\n                \"\
-        gameType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game type for the
-        action. Determines which lobby to apply the action. Provided by shortcut system.\"\n                },\n         \
-        \       \"actionType\": {\n                    \"$ref\": \"#/$defs/GameActionType\",\n                    \"description\"\
-        : \"Type of game action to perform\"\n                },\n                \"actionData\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Game-specific action data. No Bannou plugin reads specific keys from this
-        field by convention.\"\n                },\n                \"targetId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Target of the action (if applicable)\"\n                }\n            }\n        },\n        \"GameActionType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of game action\",\n            \"enum\"\
-        : [\n                \"move\",\n                \"interact\",\n                \"attack\",\n                \"cast_spell\"\
-        ,\n                \"use_item\"\n            ]\n        }\n    }\n}"
+        gameType\": {\n                    \"$ref\": \"#/$defs/GameType\",\n                    \"description\": \"Game type
+        for the action. Determines which lobby to apply the action. Provided by shortcut system.\"\n                },\n \
+        \               \"actionType\": {\n                    \"$ref\": \"#/$defs/GameActionType\",\n                   \
+        \ \"description\": \"Type of game action to perform\"\n                },\n                \"actionData\": {\n   \
+        \                 \"type\": \"object\",\n                    \"additionalProperties\": true,\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Game-specific action data. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"targetId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Target of the action (if applicable)\"\n                }\n            }\n       \
+        \ },\n        \"GameType\": {\n            \"type\": \"string\",\n            \"description\": \"Game service stub
+        name for this session. Use the game service's stubName property (e.g., \\\"my-game\\\"). Use \\\"generic\\\" for non-game-specific
+        sessions.\"\n        },\n        \"GameActionType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type of game action\",\n            \"enum\": [\n                \"move\",\n                \"interact\",\n  \
+        \              \"attack\",\n                \"cast_spell\",\n                \"use_item\"\n            ]\n       \
+        \ }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GameActionResponse\"\
         ,\n    \"$defs\": {\n        \"GameActionResponse\": {\n            \"description\": \"Response indicating the result
         of a game action with any state changes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -723,17 +701,7 @@ paths:
         : \"Token proving reservation (required for matchmade sessions)\"\n                },\n                \"characterData\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
         \        \"nullable\": true,\n                    \"description\": \"Game-specific character data. No Bannou plugin
-        reads specific keys from this field by convention.\"\n                },\n                \"voiceEndpoint\": {\n \
-        \                   \"$ref\": \"#/$defs/VoiceSipEndpoint\",\n                    \"nullable\": true,\n           \
-        \         \"description\": \"Client's SIP endpoint for voice communication (null if not using voice)\"\n         \
-        \       }\n            }\n        },\n        \"VoiceSipEndpoint\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"Client's SIP/WebRTC endpoint for voice communication\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"sdpOffer\"\n            ],\n            \"properties\": {\n\
-        \                \"sdpOffer\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"SDP offer for WebRTC negotiation\"\n                },\n                \"iceCandidates\": {\n                 \
-        \   \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n       \
-        \             },\n                    \"nullable\": true,\n                    \"description\": \"ICE candidates for
-        NAT traversal\"\n                }\n            }\n        }\n    }\n}"
+        reads specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/JoinGameSessionResponse\"\
         ,\n    \"$defs\": {\n        \"JoinGameSessionResponse\": {\n            \"description\": \"Response after successfully
         joining a game session with role and permissions\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -743,33 +711,14 @@ paths:
         \n                },\n                \"playerRole\": {\n                    \"$ref\": \"#/$defs/PlayerRole\",\n \
         \                   \"description\": \"Role assigned to the player in this session\"\n                },\n       \
         \         \"gameData\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Game-specific initial state data. No Bannou plugin reads specific
-        keys from this field by convention.\"\n                },\n                \"newPermissions\": {\n               \
-        \     \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n     \
-        \               },\n                    \"description\": \"Additional permissions granted by joining\"\n         \
-        \       },\n                \"voice\": {\n                    \"$ref\": \"#/$defs/VoiceConnectionInfo\",\n       \
-        \             \"description\": \"Voice connection info (if voice is enabled for this session)\"\n                }\n\
-        \            }\n        },\n        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Role of the player in the game session\",\n            \"enum\": [\n                \"player\",\n            \
-        \    \"spectator\",\n                \"moderator\"\n            ]\n        },\n        \"VoiceConnectionInfo\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Minimal voice metadata returned when joining a
-        session.\\n\\n**Event-Only Pattern**: Peer connection details are NOT included here.\\nClients receive VoicePeerJoinedEvent
-        when other peers join (with their SDP offers).\\nThis avoids race conditions between response processing and event
-        handling.\\n\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"voiceEnabled\"\
-        \n            ],\n            \"properties\": {\n                \"voiceEnabled\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether voice is enabled for this game session\"\n        \
-        \        },\n                \"roomId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Voice room ID (null until
-        room is created when 2+ participants join with voice)\"\n                },\n                \"tier\": {\n       \
-        \             \"allOf\": [\n                        {\n                            \"type\": \"object\"\n        \
-        \                }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Expected voice tier (may change based on participant count)\"\n                },\n                \"codec\":
-        {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n\
-        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
-        description\": \"Audio codec to use\"\n                },\n                \"stunServers\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            },\n                    \"nullable\": true,\n                    \"description\": \"STUN server URIs
-        for NAT traversal (clients should configure these early)\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Game-specific initial state
+        data. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"\
+        newPermissions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Additional permissions granted by joining\"\n                }\n            }\n        },\n\
+        \        \"PlayerRole\": {\n            \"type\": \"string\",\n            \"description\": \"Role of the player in
+        the game session\",\n            \"enum\": [\n                \"player\",\n                \"spectator\",\n      \
+        \          \"moderator\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Join a specific game session by ID\",\n    \"description\": \"Join a game
         session by its session ID. Used for matchmade games where the session\\nis pre-created by the matchmaking service
         and the player has a reservation.\\nFor matchmade sessions, a valid reservation token is required.\\nFor lobby sessions,
@@ -855,17 +804,16 @@ paths:
         \     \"format\": \"uuid\",\n                    \"description\": \"Account ID of the player\"\n                },\n\
         \                \"gameSessionId\": {\n                    \"type\": \"string\",\n                    \"format\":
         \"uuid\",\n                    \"description\": \"ID of the game session to join\"\n                },\n         \
-        \       \"reservationToken\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Token for this player's reservation\"\n                }\n            }\n        }\n    }\n}"
+        \       \"reservationToken\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"description\": \"Token for this player's reservation\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishJoinShortcutResponse\"\
         ,\n    \"$defs\": {\n        \"PublishJoinShortcutResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response after publishing a join shortcut\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"success\"\n            ],\n            \"properties\": {\n           \
-        \     \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
-        shortcut was published successfully\"\n                },\n                \"shortcutRouteGuid\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"The route GUID for the published shortcut (null if failed)\"\n           \
-        \     }\n            }\n        }\n    }\n}"
+        \        \"required\": [\n                \"shortcutRouteGuid\"\n            ],\n            \"properties\": {\n \
+        \               \"shortcutRouteGuid\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"The route GUID for the published shortcut\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Publish join shortcut for matchmade session\",\n    \"description\": \"\
         Internal endpoint for the matchmaking service to trigger shortcut publishing\\nto a specific player for a matchmade
         session. The shortcut allows the player\\nto join the session with their reservation token pre-bound.\\n\",\n    \"\
@@ -917,7 +865,7 @@ components:
           format: uuid
           description: Account ID of the player leaving. Provided by shortcut system.
         gameType:
-          type: string
+          $ref: '#/components/schemas/GameType'
           description: Game type being left. Determines which lobby to leave. Provided by shortcut system.
     CreateGameSessionRequest:
       description: Request to create a new game session with specified settings
@@ -947,6 +895,7 @@ components:
         ownerId:
           type: string
           format: uuid
+          nullable: true
           description: Account ID of the session owner. If not provided, defaults to caller's account.
         gameSettings:
           type: object
@@ -956,7 +905,9 @@ components:
             Game-specific configuration settings.
             No Bannou plugin reads specific keys from this field by convention.
         sessionType:
-          $ref: '#/components/schemas/SessionType'
+          allOf:
+          - $ref: '#/components/schemas/SessionType'
+          nullable: true
           description: Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to 
             lobby.
         expectedPlayers:
@@ -1012,7 +963,8 @@ components:
         owner:
           type: string
           format: uuid
-          description: Account ID of the session owner
+          nullable: true
+          description: Account ID of the session owner (null for system-owned lobby sessions)
         players:
           type: array
           items:
@@ -1073,7 +1025,7 @@ components:
           format: uuid
           description: Account ID of the player joining. Provided by shortcut system.
         gameType:
-          type: string
+          $ref: '#/components/schemas/GameType'
           description: Game service stub name to join. Determines which lobby to join. Provided by shortcut system.
         password:
           type: string
@@ -1086,10 +1038,6 @@ components:
           description: >-
             Game-specific character data.
             No Bannou plugin reads specific keys from this field by convention.
-        voiceEndpoint:
-          $ref: '#/components/schemas/VoiceSipEndpoint'
-          nullable: true
-          description: Client's SIP endpoint for voice communication (null if not using voice)
     JoinGameSessionResponse:
       description: Response after successfully joining a game session with role and permissions
       type: object
@@ -1108,6 +1056,7 @@ components:
         gameData:
           type: object
           additionalProperties: true
+          nullable: true
           description: >-
             Game-specific initial state data.
             No Bannou plugin reads specific keys from this field by convention.
@@ -1115,10 +1064,8 @@ components:
           type: array
           items:
             type: string
+          nullable: true
           description: Additional permissions granted by joining
-        voice:
-          $ref: '#/components/schemas/VoiceConnectionInfo'
-          description: Voice connection info (if voice is enabled for this session)
     GamePlayer:
       description: Information about a player currently participating in a game session
       type: object
@@ -1156,11 +1103,6 @@ components:
           description: >-
             Game-specific character data for this player.
             No Bannou plugin reads specific keys from this field by convention.
-        voiceSessionId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Voice participant session ID (if player has joined voice)
     KickPlayerRequest:
       description: Request to remove a player from a game session (admin only)
       type: object
@@ -1201,7 +1143,7 @@ components:
           format: uuid
           description: Account ID of the sender. Provided by shortcut system.
         gameType:
-          type: string
+          $ref: '#/components/schemas/GameType'
           description: Game type for the chat. Determines which lobby's players receive the message. Provided by 
             shortcut system.
         message:
@@ -1237,7 +1179,7 @@ components:
           format: uuid
           description: Account ID of the player. Provided by shortcut system.
         gameType:
-          type: string
+          $ref: '#/components/schemas/GameType'
           description: Game type for the action. Determines which lobby to apply the action. Provided by shortcut 
             system.
         actionType:
@@ -1280,58 +1222,6 @@ components:
           description: >-
             Updated game state (if applicable).
             No Bannou plugin reads specific keys from this field by convention.
-    VoiceSipEndpoint:
-      type: object
-      description: Client's SIP/WebRTC endpoint for voice communication
-      additionalProperties: false
-      required:
-      - sdpOffer
-      properties:
-        sdpOffer:
-          type: string
-          description: SDP offer for WebRTC negotiation
-        iceCandidates:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: ICE candidates for NAT traversal
-    VoiceConnectionInfo:
-      type: object
-      description: |
-        Minimal voice metadata returned when joining a session.
-
-        **Event-Only Pattern**: Peer connection details are NOT included here.
-        Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
-        This avoids race conditions between response processing and event handling.
-      additionalProperties: false
-      required:
-      - voiceEnabled
-      properties:
-        voiceEnabled:
-          type: boolean
-          description: Whether voice is enabled for this game session
-        roomId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Voice room ID (null until room is created when 2+ participants join with voice)
-        tier:
-          allOf:
-          - $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
-          nullable: true
-          description: Expected voice tier (may change based on participant count)
-        codec:
-          allOf:
-          - $ref: 'voice-api.yaml#/components/schemas/VoiceCodec'
-          nullable: true
-          description: Audio codec to use
-        stunServers:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: STUN server URIs for NAT traversal (clients should configure these early)
     SessionType:
       type: string
       description: Type of game session - determines join behavior
@@ -1425,10 +1315,6 @@ components:
           description: >-
             Game-specific character data.
             No Bannou plugin reads specific keys from this field by convention.
-        voiceEndpoint:
-          $ref: '#/components/schemas/VoiceSipEndpoint'
-          nullable: true
-          description: Client's SIP endpoint for voice communication (null if not using voice)
     PublishJoinShortcutRequest:
       type: object
       description: Request to publish a join shortcut for a matchmade session to a player
@@ -1453,22 +1339,19 @@ components:
           description: ID of the game session to join
         reservationToken:
           type: string
+          minLength: 1
           description: Token for this player's reservation
     PublishJoinShortcutResponse:
       type: object
       description: Response after publishing a join shortcut
       additionalProperties: false
       required:
-      - success
+      - shortcutRouteGuid
       properties:
-        success:
-          type: boolean
-          description: Whether the shortcut was published successfully
         shortcutRouteGuid:
           type: string
           format: uuid
-          nullable: true
-          description: The route GUID for the published shortcut (null if failed)
+          description: The route GUID for the published shortcut
     LeaveGameSessionByIdRequest:
       type: object
       description: Request to leave a specific game session by ID

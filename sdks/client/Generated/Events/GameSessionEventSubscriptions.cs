@@ -79,6 +79,17 @@ public sealed class GameSessionEventSubscriptions
     }
 
     /// <summary>
+    /// Subscribe to <see cref="SessionCancelledEvent"/> events.
+    /// Sent to players who claimed their reservation when a matchmade session
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnSessionCancelled(Action<SessionCancelledEvent> handler)
+    {
+        return _client.OnEvent<SessionCancelledEvent>(handler);
+    }
+
+    /// <summary>
     /// Subscribe to <see cref="SessionChatReceivedEvent"/> events.
     /// Sent to recipients when a chat message is posted in the session.
     /// </summary>

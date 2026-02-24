@@ -38,6 +38,7 @@ internal static class CurrencyKeys
 {
     internal const string DEF_PREFIX = "def:";
     internal const string DEF_CODE_INDEX = "def-code:";
+    internal const string BASE_CURRENCY_INDEX = "base-currency:";
     internal const string ALL_DEFS_KEY = "all-defs";
     internal const string WALLET_PREFIX = "wallet:";
     internal const string WALLET_OWNER_INDEX = "wallet-owner:";

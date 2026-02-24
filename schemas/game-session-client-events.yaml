@@ -191,6 +191,34 @@ components:
           nullable: true
           description: Reason provided for the kick
 
+    SessionCancelledEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to players who claimed their reservation when a matchmade session
+        is cancelled due to not enough players joining before reservation expiry.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - sessionId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "game_session.session_cancelled"
+          description: Fixed event type identifier
+        sessionId:
+          type: string
+          format: uuid
+          description: ID of the cancelled game session
+        reason:
+          type: string
+          description: Reason for cancellation
+
     # ============================================
     # Chat Events
     # ============================================

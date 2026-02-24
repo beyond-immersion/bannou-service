@@ -57,8 +57,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
 | [Collection](#collection-status) | L2 | 78% | 4 | All 20 endpoints done. 4 bugs: grant bypasses limits, cleanup missing events, update ignores fields. |
 | [Currency](#currency-status) | L2 | 85% | 0 | Production-hardened (7 bugs fixed, T25/T30 compliant). 8 stubs remain: hold expiration, currency expiration, analytics, pruning. |
-| [Game Service](#game-service-status) | L2 | 93% | 0 | Minimal, feature-complete registry. All 5 endpoints done. Only metadata validation remains. |
-| [Game Session](#game-session-status) | L2 | 72% | 0 | Core lobby/matchmade flows work. L2→L3 Voice violation, 3 stubs, 7 design considerations. |
+| [Game Service](#game-service-status) | L2 | 100% | 0 | Production-hardened registry. All 5 endpoints done. T9/T21/T26/T28/T30 compliant. Resource cleanup on delete. |
+| [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
 | [Inventory](#inventory-status) | L2 | 80% | 0 | Core container ops work. Grid collision, weight propagation, RemoveItem cleanup stubbed. |
 | [Item](#item-status) | L2 | 88% | 0 | Dual-model system complete. "Itemize Anything" pattern works. Deprecation cascade pending. |
 | [Location](#location-status) | L2 | 92% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking. No gaps. |
@@ -615,9 +615,9 @@ gh issue list --search "Currency:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [GAME-SERVICE.md](plugins/GAME-SERVICE.md)
 
-### Production Readiness: 93%
+### Production Readiness: 100%
 
-Minimal, feature-complete registry with all 5 CRUD endpoints fully implemented. No stubs, no bugs. Pagination was added (2026-01-31). The only remaining items are speculative extensions (metadata schema validation, service versioning) and minor design considerations (single-key list pattern, no concurrency control on updates, misleading event handler comment). All acceptable given the service's low write frequency and small data volume.
+Production-hardened registry with all 5 CRUD endpoints fully implemented and all tenet violations resolved. L3 hardening pass (2026-02-24) addressed: T26 (Guid.Empty sentinels removed), T30 (telemetry spans on all async helpers), T9 (distributed lock on stub name uniqueness), T21 (retry count moved to config, dead code removed), T28 (lib-resource cleanup on delete with 409 Conflict). x-resource-lifecycle declared in schema. Deep dive updated with 5 previously missing dependents. Only speculative extensions remain (metadata validation, service versioning).
 
 ### Bug Count: 0
 
@@ -647,9 +647,9 @@ gh issue list --search "Game Service:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [GAME-SESSION.md](plugins/GAME-SESSION.md)
 
-### Production Readiness: 72%
+### Production Readiness: 92%
 
-Core lobby and matchmade session flows work end-to-end with subscription-driven shortcut publishing, reservation cleanup, voice integration, and horizontal scaling by game. However, the plugin has a critical L2-to-L3 hierarchy violation (depends on Voice), 3 stubs (actions endpoint echo-only, missing lifecycle events, no player-in-session validation for actions), 7 design considerations including inline event models not in schema and a single-key session list that won't scale, and several chat quirks (messages from non-members, silent whisper failures).
+Production-hardened. Core lobby and matchmade session flows work end-to-end with subscription-driven shortcut publishing, reservation cleanup, and horizontal scaling by game. Voice hierarchy violation (L2→L3) fully removed — voice fields stripped from schema, models, and service code. Lifecycle events (`game-session.updated`, `game-session.deleted`) now published at all mutation points. All event models defined in schema (SessionCancelled client/server events). T25 type safety (enums, Guids throughout), T26 no sentinel values (nullable Guid returns), T30 telemetry spans on all async methods, T7 error handling (re-throw after rollback, TryPublishErrorAsync), T9 distributed locks on session-list and lobby creation races. Remaining gaps: actions endpoint is echo-only (no real processing), chat allows messages from non-members, single-key session list won't scale past ~1000 sessions.
 
 ### Bug Count: 0
 
@@ -663,9 +663,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Fix Voice hierarchy violation** | GameSession (L2) depends directly on Voice (L3). Voice should subscribe to game-session events and create rooms reactively, inverting the dependency to the correct direction. | No issue |
-| 2 | **Publish lifecycle events** | `game-session.updated` and `game-session.deleted` event topics are defined with constants but never published anywhere, leaving downstream consumers with no update/delete signals. | [#224](https://github.com/beyond-immersion/bannou-service/issues/224) |
-| 3 | **Inline event models not in schema** | `SessionCancelledClientEvent` and `SessionCancelledServerEvent` are defined as internal classes in source code rather than in schema files, violating schema-first tenets. | No issue |
+| 1 | **Actions endpoint processing** | `PerformGameSessionAction` echoes back the action type without any real processing logic. Needs game-specific action handlers or delegation to a configurable action pipeline. | No issue |
+| 2 | **Session list scalability** | All session IDs stored in a single Redis key (`game-session:sessions`). Read-modify-write under lock works for small counts but won't scale past ~1000 sessions. Needs Redis set or per-game partitioning. | No issue |
+| 3 | **Chat non-member validation** | `SendChatMessage` does not validate that the sender is actually a member of the session before publishing the message. | No issue |
 
 ### GH Issues
 

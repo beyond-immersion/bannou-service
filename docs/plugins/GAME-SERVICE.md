@@ -4,7 +4,7 @@
 > **Schema**: schemas/game-service-api.yaml
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **State Store**: game-service-statestore (MySQL)
+> **State Store**: game-service-statestore (MySQL), game-service-lock (Redis)
 
 ---
 
@@ -19,17 +19,25 @@ The Game Service is a minimal registry (L2 GameFoundation) that maintains a cata
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Persistence for service registry entries and indexes |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
+| lib-state (`IDistributedLockProvider`) | Distributed lock on stub name uniqueness during create |
+| lib-messaging (`IMessageBus`) | Publishing lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (currently no handlers) |
+| lib-resource (`IResourceClient`) | Reference checking and cleanup coordination on delete |
+| lib-telemetry (`ITelemetryProvider`) | Span instrumentation for async helper methods |
 
 ---
 
 ## Dependents (What Relies On This Plugin)
 
-| Dependent | Relationship |
-|-----------|-------------|
-| lib-subscription | Calls `GetServiceAsync` via `IGameServiceClient` to resolve stub names → service IDs for subscription creation |
-| lib-analytics | Uses `IGameServiceClient` for service validation |
+| Dependent | Layer | Relationship |
+|-----------|-------|-------------|
+| lib-subscription | L2 | Calls `GetServiceAsync` via `IGameServiceClient` to resolve stub names → service IDs for subscription creation |
+| lib-collection | L2 | Uses `IGameServiceClient` for game service scoping of collection types |
+| lib-seed | L2 | Uses `IGameServiceClient` for game service scoping of seed types |
+| lib-analytics | L4 | Uses `IGameServiceClient` for service validation |
+| lib-status | L4 | Uses `IGameServiceClient` for game service scoping of status templates |
+| lib-license | L4 | Uses `IGameServiceClient` for game service scoping of license boards |
+| lib-faction | L4 | Uses `IGameServiceClient` for game service scoping of faction entities |
 
 No services subscribe to game-service events.
 
@@ -45,19 +53,25 @@ No services subscribe to game-service events.
 | `game-service-stub:{stubName}` | `string` | Stub name → service ID lookup index |
 | `game-service-list` | `List<Guid>` | Master list of all service IDs |
 
+**Store**: `game-service-lock` (Backend: Redis)
+
+| Key Pattern | Purpose |
+|-------------|---------|
+| `game-service-stub:{stubName}` | Distributed lock for stub name uniqueness during create |
+
 ---
 
 ## Events
 
 ### Published Events
 
-| Topic | Trigger |
-|-------|---------|
-| `game-service.created` | New service entry created |
-| `game-service.updated` | Service metadata modified (includes `changedFields` list) |
-| `game-service.deleted` | Service permanently removed (includes optional `deletedReason`) |
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `game-service.created` | `GameServiceCreatedEvent` | New service entry created |
+| `game-service.updated` | `GameServiceUpdatedEvent` | Service metadata modified (includes `changedFields` list) |
+| `game-service.deleted` | `GameServiceDeletedEvent` | Service permanently removed (includes optional `deletedReason`) |
 
-All event publishing is wrapped in try-catch and uses `TryPublishAsync` (non-fatal on failure).
+All event publishing uses `TryPublishAsync` (non-fatal on failure — the method internally handles exceptions).
 
 ### Consumed Events
 
@@ -67,11 +81,9 @@ This plugin does not consume external events.
 
 ## Configuration
 
-| Property | Env Var | Default | Purpose |
-|----------|---------|---------|---------|
-| — | — | — | No service-specific configuration properties |
-
-The generated `GameServiceServiceConfiguration` contains only the framework-level `ForceServiceId` property.
+| Property | Env Var | Default | Range | Purpose |
+|----------|---------|---------|-------|---------|
+| `ServiceListRetryAttempts` | `GAME_SERVICE_SERVICE_LIST_RETRY_ATTEMPTS` | 3 | 1–10 | Maximum optimistic concurrency retry attempts for service list mutations |
 
 ---
 
@@ -80,10 +92,13 @@ The generated `GameServiceServiceConfiguration` contains only the framework-leve
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<GameServiceService>` | Singleton | Structured logging |
-| `GameServiceServiceConfiguration` | Singleton | Framework config (empty) |
+| `GameServiceServiceConfiguration` | Singleton | Service configuration (retry attempts) |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IMessageBus` | Singleton | Event publishing |
 | `IEventConsumer` | Singleton | Event registration (no handlers) |
+| `IDistributedLockProvider` | Singleton | Distributed locks for stub name uniqueness |
+| `IResourceClient` | Scoped | Reference checking and cleanup on delete |
+| `ITelemetryProvider` | Singleton | Telemetry span creation |
 
 Service lifetime is **Singleton** (registry is read-mostly, safe to share).
 
@@ -94,10 +109,10 @@ Service lifetime is **Singleton** (registry is read-mostly, safe to share).
 **All 5 endpoints are straightforward CRUD.** Key implementation details:
 
 - **GetService**: Dual-lookup strategy — tries GUID first, falls back to stub name index. Stub names normalized to lowercase.
-- **CreateService**: Validates stub name uniqueness via composite key `game-service-stub:{name}`. Generates UUID, stores three keys (data + stub index + list). Publishes `game-service.created`.
+- **CreateService**: Acquires distributed lock on normalized stub name, then validates uniqueness via composite key `game-service-stub:{name}`. Generates UUID, stores three keys (data + stub index + list). Publishes `game-service.created`.
 - **UpdateService**: Only updates fields that are non-null AND different from current values. Tracks changed field names for event payload. Does not publish if nothing changed.
-- **DeleteService**: Removes all three keys (data, stub index, list entry). Publishes with optional deletion reason.
-- **ListServices**: Loads all service IDs from master list, bulk-fetches models, optionally filters by `activeOnly`.
+- **DeleteService**: Checks external references via `IResourceClient.CheckReferencesAsync`. If references exist, executes cleanup callbacks with `ALL_REQUIRED` policy — returns 409 Conflict if cleanup fails or is refused. On success, removes all three keys (data, stub index, list entry). Publishes with optional deletion reason.
+- **ListServices**: Loads all service IDs from master list, bulk-fetches models, optionally filters by `activeOnly`. Supports pagination via `skip`/`take` parameters (default 0/50, max take 200). Returns `totalCount` reflecting total matching items before pagination.
 
 ---
 
@@ -135,10 +150,9 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. ~~**Pagination for ListServices**~~: **FIXED** (2026-01-31) - Added `skip` (default 0) and `take` (default 50, max 200) parameters to `ListServicesRequest`. Response `totalCount` reflects total matching items (not page count). Filtering by `activeOnly` is applied before pagination.
-2. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
+1. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/228 -->
-3. **Service versioning**: Track deployment versions to inform clients of compatibility.
+2. **Service versioning**: Track deployment versions to inform clients of compatibility.
 
 ---
 
@@ -154,15 +168,13 @@ No bugs identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **T19 (param/returns XML docs)**: ~~Public methods have `<summary>` tags but are missing `<param>` and `<returns>` documentation.~~ <!-- AUDIT:FIXED 2026-01-31 - Added full XML documentation to all public and private methods -->
+1. **Service list as single key**: `game-service-list` stores all service IDs as a single `List<Guid>`. Every create/delete reads the full list, modifies it, and writes it back with ETag-based optimistic concurrency (configurable retry via `ServiceListRetryAttempts`). Not a problem with dozens of services, but would become a bottleneck with thousands.
 
-2. **Service list as single key**: `game-service-list` stores all service IDs as a single `List<Guid>`. Every create/delete reads the full list, modifies it, and writes it back. Not a problem with dozens of services, but would become a bottleneck with thousands and concurrent modifications.
+2. **No event consumers**: Three lifecycle events are published but no service currently subscribes to them. They exist for future integration (e.g., analytics tracking).
 
-3. **No event consumers**: Three lifecycle events are published but no service currently subscribes to them. They exist for future integration (e.g., analytics tracking, subscription cleanup on delete).
+3. **No concurrency control on updates**: Two simultaneous updates to the same service will both succeed — last writer wins. Acceptable given admin-only access and low write frequency.
 
-4. **No concurrency control on updates**: Two simultaneous updates to the same service will both succeed — last writer wins. Acceptable given admin-only access and low write frequency.
-
-5. **Event handler comment references non-existent file**: Line 39 references `GameServiceServiceEvents.cs` for event handler registration, but this file doesn't exist because the service has no event subscriptions (`x-event-subscriptions: []` in schema). The call to `RegisterEventConsumers` is harmless (default implementation is a no-op) but the comment is misleading. Either remove the comment or add the file with an empty handler registration to be explicit.
+4. **`autoLobbyEnabled` property for game entry mode**: GameSession (L2) currently publishes naive lobby shortcuts for all subscribed games on `session.connected`. Games with rich entry orchestration (e.g., Arcadia via Gardener L4) don't want this — their entry flow is managed by higher-layer services. A boolean `autoLobbyEnabled` property (default `true`) on the `GameServiceRegistryModel` would let games declare their entry mode. GameSession checks this before publishing shortcuts, skipping games where `autoLobbyEnabled: false`. This allows naive-lobby games and orchestrated-entry games to coexist in the same deployment. The property belongs here (on the game definition) because it describes how a game wants players to enter — a property of the game, not of GameSession's deployment topology.
 
 ---
 
@@ -170,7 +182,7 @@ No bugs identified.
 
 ### Completed
 
-- **2026-01-31**: Added pagination support to `ListServicesAsync` with `skip`/`take` parameters (schema + implementation)
+- **2026-02-24**: L3 hardening pass — T26 (removed Guid.Empty sentinels), T30 (telemetry spans), T9 (distributed lock on stub name create), T21 (config for retry attempts, removed dead code), T28 (lib-resource cleanup on delete), x-resource-lifecycle schema, updated dependents list (5 missing), misleading event handler comment fixed
 
 ### Pending
 

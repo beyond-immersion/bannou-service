@@ -1,5 +1,7 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Hosting;
@@ -20,11 +22,14 @@ public class ReservationCleanupService : BackgroundService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly ILogger<ReservationCleanupService> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
-    private const string SESSION_KEY_PREFIX = "session:";
-    private const string SESSION_LIST_KEY = "session-list";
+    // Use shared constants from GameSessionService to avoid duplication
+    private const string SESSION_KEY_PREFIX = GameSessionService.SESSION_KEY_PREFIX;
+    private const string SESSION_LIST_KEY = GameSessionService.SESSION_LIST_KEY;
 
     /// <summary>
     /// Creates a new ReservationCleanupService instance.
@@ -32,20 +37,26 @@ public class ReservationCleanupService : BackgroundService
     /// <param name="stateStoreFactory">State store factory for session data access.</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket notifications.</param>
+    /// <param name="lockProvider">Distributed lock provider for multi-instance coordination.</param>
     /// <param name="configuration">Game session service configuration.</param>
     /// <param name="logger">Logger for this service.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     public ReservationCleanupService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         IClientEventPublisher clientEventPublisher,
+        IDistributedLockProvider lockProvider,
         GameSessionServiceConfiguration configuration,
-        ILogger<ReservationCleanupService> logger)
+        ILogger<ReservationCleanupService> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _clientEventPublisher = clientEventPublisher;
+        _lockProvider = lockProvider;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -53,6 +64,9 @@ public class ReservationCleanupService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "ReservationCleanupService.ExecuteAsync");
+
         // Wait for other services to initialize
         await Task.Delay(TimeSpan.FromSeconds(_configuration.CleanupServiceStartupDelaySeconds), stoppingToken);
 
@@ -98,6 +112,9 @@ public class ReservationCleanupService : BackgroundService
     /// </summary>
     private async Task CleanupExpiredReservationsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "ReservationCleanupService.CleanupExpiredReservations");
+
         // Get all session IDs
         var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
         var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
@@ -137,6 +154,24 @@ public class ReservationCleanupService : BackgroundService
             // Session should be cancelled if not enough players joined
             if (claimedCount < totalReservations)
             {
+                // Acquire per-session lock to prevent duplicate cancellation across instances
+                await using var sessionLock = await _lockProvider.LockAsync(
+                    "game-session", SESSION_KEY_PREFIX + sessionId, Guid.NewGuid().ToString(),
+                    _configuration.LockTimeoutSeconds, cancellationToken);
+                if (!sessionLock.Success)
+                {
+                    _logger.LogDebug("Could not acquire lock for expired session {SessionId}, another instance is handling it", sessionId);
+                    continue;
+                }
+
+                // Re-check session state under lock — another instance may have already cancelled it
+                var sessionUnderLock = await store.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+                if (sessionUnderLock == null)
+                {
+                    _logger.LogDebug("Session {SessionId} already deleted by another instance", sessionId);
+                    continue;
+                }
+
                 _logger.LogInformation(
                     "Cancelling matchmade session {SessionId}: only {Claimed}/{Total} reservations claimed before expiry",
                     sessionId, claimedCount, totalReservations);
@@ -157,6 +192,9 @@ public class ReservationCleanupService : BackgroundService
     /// </summary>
     private async Task CancelExpiredSessionAsync(CleanupSessionModel session, string sessionId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "ReservationCleanupService.CancelExpiredSession");
+
         try
         {
             // Notify players who claimed their reservations
@@ -166,13 +204,13 @@ public class ReservationCleanupService : BackgroundService
                 {
                     // Find the player in the session
                     var player = session.Players.FirstOrDefault(p => p.AccountId == reservation.AccountId);
-                    if (player != null && !string.IsNullOrEmpty(player.WebSocketSessionId))
+                    if (player != null && player.WebSocketSessionId.HasValue)
                     {
                         await _clientEventPublisher.PublishToSessionAsync(
-                            player.WebSocketSessionId,
-                            new SessionCancelledClientEvent
+                            player.WebSocketSessionId.Value.ToString(),
+                            new SessionCancelledEvent
                             {
-                                SessionId = sessionId,
+                                SessionId = session.SessionId,
                                 Reason = "Not enough players joined before reservation expiry"
                             },
                             cancellationToken);
@@ -186,17 +224,29 @@ public class ReservationCleanupService : BackgroundService
                 }
             }
 
-            // Publish server-side event
+            // Publish server-side domain event
             await _messageBus.TryPublishAsync(
-                "game-session.session-cancelled",
-                new SessionCancelledServerEvent
+                "game-session.cancelled",
+                new GameSessionCancelledEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    SessionId = sessionId,
+                    SessionId = session.SessionId,
                     Reason = "Reservation timeout - not enough players"
                 },
                 cancellationToken);
+
+            // Read full model for lifecycle event before deletion
+            var fullStore = _stateStoreFactory.GetStore<GameSessionModel>(StateStoreDefinitions.GameSession);
+            var fullModel = await fullStore.GetAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
+            if (fullModel != null)
+            {
+                // Publish lifecycle deleted event using shared helper
+                await _messageBus.TryPublishAsync(
+                    "game-session.deleted",
+                    GameSessionService.BuildDeletedEvent(fullModel, "Reservation timeout - not enough players"),
+                    cancellationToken);
+            }
 
             // Delete the session
             var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);

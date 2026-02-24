@@ -52,6 +52,10 @@ x-lifecycle:
         type: boolean
         required: true
         description: Whether the game service is currently active
+      autoLobbyEnabled:
+        type: boolean
+        required: true
+        description: Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service
       createdAt:
         type: string
         format: date-time

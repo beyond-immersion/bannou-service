@@ -28974,7 +28974,7 @@
             "description": "Account ID of the sender. Provided by shortcut system."
           },
           "gameType": {
-            "type": "string",
+            "$ref": "#/components/schemas/GameType",
             "description": "Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system."
           },
           "message": {
@@ -40457,7 +40457,7 @@
             "description": "Account ID of the player. Provided by shortcut system."
           },
           "gameType": {
-            "type": "string",
+            "$ref": "#/components/schemas/GameType",
             "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
           },
           "actionType": {
@@ -40556,12 +40556,6 @@
             "additionalProperties": true,
             "nullable": true,
             "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
-          },
-          "voiceSessionId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true,
-            "description": "Voice participant session ID (if player has joined voice)"
           }
         }
       },
@@ -40618,7 +40612,8 @@
           "owner": {
             "type": "string",
             "format": "uuid",
-            "description": "Account ID of the session owner"
+            "nullable": true,
+            "description": "Account ID of the session owner (null for system-owned lobby sessions)"
           },
           "players": {
             "type": "array",
@@ -46911,7 +46906,7 @@
             "description": "Account ID of the player leaving. Provided by shortcut system."
           },
           "gameType": {
-            "type": "string",
+            "$ref": "#/components/schemas/GameType",
             "description": "Game type being left. Determines which lobby to leave. Provided by shortcut system."
           }
         }
@@ -61712,6 +61707,7 @@
           "stubName",
           "displayName",
           "isActive",
+          "autoLobbyEnabled",
           "createdAt"
         ],
         "properties": {
@@ -61736,6 +61732,10 @@
           "isActive": {
             "type": "boolean",
             "description": "Whether the service is currently active"
+          },
+          "autoLobbyEnabled": {
+            "type": "boolean",
+            "description": "Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect"
           },
           "createdAt": {
             "type": "string",

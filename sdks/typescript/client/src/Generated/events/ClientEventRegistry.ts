@@ -236,6 +236,14 @@ export const eventRegistry = new Map<string, EventMetadata>([
     { eventName: 'game_session.player_left', typeName: 'PlayerLeftEvent', service: 'game-session' },
   ],
   [
+    'game_session.session_cancelled',
+    {
+      eventName: 'game_session.session_cancelled',
+      typeName: 'SessionCancelledEvent',
+      service: 'game-session',
+    },
+  ],
+  [
     'game_session.state_changed',
     {
       eventName: 'game_session.state_changed',

@@ -141,7 +141,7 @@ public partial class CreateGameSessionRequest
     /// Account ID of the session owner. If not provided, defaults to caller's account.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerId")]
-    public System.Guid OwnerId { get; set; } = default!;
+    public System.Guid? OwnerId { get; set; } = default!;
 
     /// <summary>
     /// Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention.
@@ -154,7 +154,7 @@ public partial class CreateGameSessionRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SessionType SessionType { get; set; } = default!;
+    public SessionType? SessionType { get; set; } = default!;
 
     /// <summary>
     /// For matchmade sessions - list of account IDs expected to join. Reservations created for each.
@@ -237,10 +237,10 @@ public partial class GameSessionResponse
     public bool IsPrivate { get; set; } = default!;
 
     /// <summary>
-    /// Account ID of the session owner
+    /// Account ID of the session owner (null for system-owned lobby sessions)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    public System.Guid Owner { get; set; } = default!;
+    public System.Guid? Owner { get; set; } = default!;
 
     /// <summary>
     /// List of players currently in the session
@@ -342,12 +342,6 @@ public partial class JoinGameSessionRequest
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
 
-    /// <summary>
-    /// Client's SIP endpoint for voice communication (null if not using voice)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voiceEndpoint")]
-    public VoiceSipEndpoint? VoiceEndpoint { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -378,19 +372,13 @@ public partial class JoinGameSessionResponse
     /// Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameData")]
-    public object GameData { get; set; } = default!;
+    public object? GameData { get; set; } = default!;
 
     /// <summary>
     /// Additional permissions granted by joining
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPermissions")]
-    public System.Collections.Generic.ICollection<string> NewPermissions { get; set; } = default!;
-
-    /// <summary>
-    /// Voice connection info (if voice is enabled for this session)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voice")]
-    public VoiceConnectionInfo Voice { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? NewPermissions { get; set; } = default!;
 
 }
 
@@ -445,12 +433,6 @@ public partial class GamePlayer
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
-
-    /// <summary>
-    /// Voice participant session ID (if player has joined voice)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voiceSessionId")]
-    public System.Guid? VoiceSessionId { get; set; } = default!;
 
 }
 
@@ -621,75 +603,6 @@ public partial class GameActionResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newGameState")]
     public object? NewGameState { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Client's SIP/WebRTC endpoint for voice communication
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceSipEndpoint
-{
-
-    /// <summary>
-    /// SDP offer for WebRTC negotiation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SdpOffer { get; set; } = default!;
-
-    /// <summary>
-    /// ICE candidates for NAT traversal
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Minimal voice metadata returned when joining a session.
-/// <br/>
-/// <br/>**Event-Only Pattern**: Peer connection details are NOT included here.
-/// <br/>Clients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).
-/// <br/>This avoids race conditions between response processing and event handling.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceConnectionInfo
-{
-
-    /// <summary>
-    /// Whether voice is enabled for this game session
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voiceEnabled")]
-    public bool VoiceEnabled { get; set; } = default!;
-
-    /// <summary>
-    /// Voice room ID (null until room is created when 2+ participants join with voice)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
-    public System.Guid? RoomId { get; set; } = default!;
-
-    /// <summary>
-    /// Expected voice tier (may change based on participant count)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("tier")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceTier? Tier { get; set; } = default!;
-
-    /// <summary>
-    /// Audio codec to use
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("codec")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceCodec? Codec { get; set; } = default!;
-
-    /// <summary>
-    /// STUN server URIs for NAT traversal (clients should configure these early)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
-    public System.Collections.Generic.ICollection<string>? StunServers { get; set; } = default!;
 
 }
 
@@ -875,12 +788,6 @@ public partial class JoinGameSessionByIdRequest
     [System.Text.Json.Serialization.JsonPropertyName("characterData")]
     public object? CharacterData { get; set; } = default!;
 
-    /// <summary>
-    /// Client's SIP endpoint for voice communication (null if not using voice)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voiceEndpoint")]
-    public VoiceSipEndpoint? VoiceEndpoint { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -918,7 +825,7 @@ public partial class PublishJoinShortcutRequest
     /// Token for this player's reservation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reservationToken")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ReservationToken { get; set; } = default!;
 
@@ -932,16 +839,12 @@ public partial class PublishJoinShortcutResponse
 {
 
     /// <summary>
-    /// Whether the shortcut was published successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// The route GUID for the published shortcut (null if failed)
+    /// The route GUID for the published shortcut
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("shortcutRouteGuid")]
-    public System.Guid? ShortcutRouteGuid { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ShortcutRouteGuid { get; set; } = default!;
 
 }
 
@@ -975,46 +878,6 @@ public partial class LeaveGameSessionByIdRequest
     public System.Guid GameSessionId { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Audio codec for voice communication
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceCodec
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
-    Opus = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g711")]
-    G711 = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"g722")]
-    G722 = 2,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Voice communication tier:
-/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
-/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum VoiceTier
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
-    Scaled = 1,
-
-}
-#pragma warning restore CS1591
 
 
 

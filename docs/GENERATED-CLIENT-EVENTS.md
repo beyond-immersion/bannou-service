@@ -40,6 +40,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `PlayerJoinedEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
 | `PlayerKickedEvent` | `game_session.player_kicked` | Sent to all session participants when a player is kicked. |
 | `PlayerLeftEvent` | `game_session.player_left` | Sent to all session participants when a player leaves volunt... |
+| `SessionCancelledEvent` | `game_session.session_cancelled` | Sent to players who claimed their reservation when a matchma... |
 | `SessionStateChangedEvent` | `game_session.state_changed` | Sent to all session participants when the session state chan... |
 | `GameStateUpdatedEvent` | `game_session.state_updated` | Sent when game state changes that all players should see. |
 | `MatchmakingCancelledEvent` | `matchmaking.cancelled` | Sent when matchmaking is cancelled for any reason. |
@@ -644,6 +645,19 @@ Sent to all session participants when a player leaves voluntarily.
 | `playerId` | Account ID of player who left |
 | `sessionId` | ID of the game session |
 
+### `SessionCancelledEvent`
+
+**Event Name**: `game_session.session_cancelled`
+
+Sent to players who claimed their reservation when a matchmade session
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `reason` | Reason for cancellation |
+| `sessionId` | ID of the cancelled game session |
+
 ### `SessionStateChangedEvent`
 
 **Event Name**: `game_session.state_changed`
@@ -963,7 +977,7 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 51
+- **Total event types**: 52
 - **Services with events**: 8
 
 ---

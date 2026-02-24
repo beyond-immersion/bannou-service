@@ -429,6 +429,12 @@ x-state-stores:
     service: Relationship
     purpose: Distributed locks for composite uniqueness and index modifications
 
+  game-service-lock:
+    backend: redis
+    prefix: "game-service:lock"
+    service: GameService
+    purpose: Distributed locks for stub name uniqueness
+
   game-service-statestore:
     backend: mysql
     service: GameService

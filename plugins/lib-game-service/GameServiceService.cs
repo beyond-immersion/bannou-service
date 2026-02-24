@@ -1,6 +1,8 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -16,8 +18,11 @@ public partial class GameServiceService : IGameServiceService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<GameServiceService> _logger;
     private readonly GameServiceServiceConfiguration _configuration;
+    private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Key patterns for state store
     private const string SERVICE_KEY_PREFIX = "game-service:";
@@ -27,16 +32,22 @@ public partial class GameServiceService : IGameServiceService
     public GameServiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
+        IDistributedLockProvider lockProvider,
         ILogger<GameServiceService> logger,
         GameServiceServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _resourceClient = resourceClient;
+        _telemetryProvider = telemetryProvider;
 
-        // Register event handlers via partial class (GameServiceServiceEvents.cs)
+        // No event subscriptions (x-event-subscriptions: [])
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
@@ -114,7 +125,7 @@ public partial class GameServiceService : IGameServiceService
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
 
         // Try by service ID first
-        if (body.ServiceId.HasValue && body.ServiceId.Value != Guid.Empty)
+        if (body.ServiceId.HasValue)
         {
             serviceModel = await modelStore.GetAsync($"{SERVICE_KEY_PREFIX}{body.ServiceId.Value}", cancellationToken);
         }
@@ -154,24 +165,27 @@ public partial class GameServiceService : IGameServiceService
         _logger.LogDebug("Creating service (stubName={StubName}, displayName={DisplayName})",
             body.StubName, body.DisplayName);
 
-        // Validate required fields
-        if (string.IsNullOrWhiteSpace(body.StubName))
-        {
-            _logger.LogDebug("Stub name is required");
-            return (StatusCodes.BadRequest, null);
-        }
-
-        if (string.IsNullOrWhiteSpace(body.DisplayName))
-        {
-            _logger.LogDebug("Display name is required");
-            return (StatusCodes.BadRequest, null);
-        }
-
         var normalizedStubName = body.StubName.ToLowerInvariant();
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
         var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
-        // Check if stub name already exists
+        // Distributed lock on stub name to prevent concurrent creates with same name
+        // per IMPLEMENTATION TENETS (Multi-Instance Safety)
+        var lockOwner = $"create-game-service-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GameServiceLock,
+            $"game-service-stub:{normalizedStubName}",
+            lockOwner,
+            30,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Could not acquire lock for stub name {StubName}", normalizedStubName);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check if stub name already exists (under lock)
         var existingServiceId = await stringStore.GetAsync($"{SERVICE_STUB_INDEX_PREFIX}{normalizedStubName}", cancellationToken);
 
         if (!string.IsNullOrEmpty(existingServiceId))
@@ -191,6 +205,7 @@ public partial class GameServiceService : IGameServiceService
             DisplayName = body.DisplayName,
             Description = body.Description,
             IsActive = body.IsActive,
+            AutoLobbyEnabled = body.AutoLobbyEnabled,
             CreatedAtUnix = now.ToUnixTimeSeconds(),
             UpdatedAtUnix = null
         };
@@ -219,18 +234,12 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="body">Request containing service ID and optional fields to update (display name, description, active status).</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>
-    /// OK with updated service info (even if no changes made), BadRequest if service ID missing,
+    /// OK with updated service info (even if no changes made),
     /// NotFound if service doesn't exist, or InternalServerError if state store fails.
     /// </returns>
     public async Task<(StatusCodes, ServiceInfo?)> UpdateServiceAsync(UpdateServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Updating service {ServiceId}", body.ServiceId);
-
-        if (body.ServiceId == Guid.Empty)
-        {
-            _logger.LogDebug("Service ID is required");
-            return (StatusCodes.BadRequest, null);
-        }
 
         var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
 
@@ -265,6 +274,12 @@ public partial class GameServiceService : IGameServiceService
             changedFields.Add("isActive");
         }
 
+        if (body.AutoLobbyEnabled.HasValue && body.AutoLobbyEnabled.Value != serviceModel.AutoLobbyEnabled)
+        {
+            serviceModel.AutoLobbyEnabled = body.AutoLobbyEnabled.Value;
+            changedFields.Add("autoLobbyEnabled");
+        }
+
         // Only save if something actually changed
         if (changedFields.Count == 0)
         {
@@ -287,22 +302,18 @@ public partial class GameServiceService : IGameServiceService
 
     /// <summary>
     /// Delete a game service entry.
+    /// Checks for external references via lib-resource and returns 409 if references exist.
     /// </summary>
     /// <param name="body">Request containing service ID and optional deletion reason.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>
-    /// OK if deleted successfully, BadRequest if service ID missing,
-    /// NotFound if service doesn't exist, or InternalServerError if state store fails.
+    /// OK if deleted successfully,
+    /// NotFound if service doesn't exist, Conflict if references exist,
+    /// or InternalServerError if state store fails.
     /// </returns>
     public async Task<StatusCodes> DeleteServiceAsync(DeleteServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Deleting service {ServiceId}", body.ServiceId);
-
-        if (body.ServiceId == Guid.Empty)
-        {
-            _logger.LogDebug("Service ID is required");
-            return StatusCodes.BadRequest;
-        }
 
         var modelStore = _stateStoreFactory.GetStore<GameServiceRegistryModel>(StateStoreName);
         var stringStore = _stateStoreFactory.GetStore<string>(StateStoreName);
@@ -314,6 +325,47 @@ public partial class GameServiceService : IGameServiceService
         {
             _logger.LogDebug("Service {ServiceId} not found", body.ServiceId);
             return StatusCodes.NotFound;
+        }
+
+        // Check for external references and execute cleanup callbacks (per x-resource-lifecycle contract)
+        try
+        {
+            var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                new CheckReferencesRequest
+                {
+                    ResourceType = "game-service",
+                    ResourceId = body.ServiceId
+                }, cancellationToken);
+
+            if (resourceCheck != null && resourceCheck.RefCount > 0)
+            {
+                var sourceTypes = string.Join(", ",
+                    resourceCheck.Sources?.Select(s => s.SourceType) ?? Enumerable.Empty<string>());
+                _logger.LogDebug(
+                    "Game service {ServiceId} has {RefCount} external references from: {SourceTypes}, executing cleanup",
+                    body.ServiceId, resourceCheck.RefCount, sourceTypes);
+
+                var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                    new ExecuteCleanupRequest
+                    {
+                        ResourceType = "game-service",
+                        ResourceId = body.ServiceId,
+                        CleanupPolicy = CleanupPolicy.ALL_REQUIRED
+                    }, cancellationToken);
+
+                if (cleanupResult == null || !cleanupResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Cleanup failed for game service {ServiceId}: {Reason}",
+                        body.ServiceId, cleanupResult?.AbortReason ?? "no response");
+                    return StatusCodes.Conflict;
+                }
+            }
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Resource service call failed during game service {ServiceId} deletion", body.ServiceId);
+            return StatusCodes.Conflict;
         }
 
         // Delete service data
@@ -346,9 +398,12 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     private async Task AddToServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-service", "GameServiceService.AddToServiceList");
+
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ServiceListRetryAttempts; attempt++)
         {
             var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
             serviceIds ??= new List<Guid>();
@@ -359,6 +414,9 @@ public partial class GameServiceService : IGameServiceService
             }
 
             serviceIds.Add(serviceId);
+
+            // etag is null when the list key doesn't exist yet; empty string signals
+            // "new entry" to TrySaveAsync (will never conflict on new entries)
             var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
@@ -368,7 +426,8 @@ public partial class GameServiceService : IGameServiceService
             _logger.LogDebug("Concurrent modification on service list, retrying add (attempt {Attempt})", attempt + 1);
         }
 
-        _logger.LogWarning("Failed to add service {ServiceId} to list after 3 attempts", serviceId);
+        _logger.LogWarning("Failed to add service {ServiceId} to list after {MaxAttempts} attempts",
+            serviceId, _configuration.ServiceListRetryAttempts);
     }
 
     /// <summary>
@@ -379,9 +438,12 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     private async Task RemoveFromServiceListAsync(Guid serviceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-service", "GameServiceService.RemoveFromServiceList");
+
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreName);
 
-        for (var attempt = 0; attempt < 3; attempt++)
+        for (var attempt = 0; attempt < _configuration.ServiceListRetryAttempts; attempt++)
         {
             var (serviceIds, etag) = await listStore.GetWithETagAsync(SERVICE_LIST_KEY, cancellationToken);
             if (serviceIds == null || !serviceIds.Remove(serviceId))
@@ -389,6 +451,8 @@ public partial class GameServiceService : IGameServiceService
                 return; // Not in list or already removed
             }
 
+            // etag is null when the list key doesn't exist yet; empty string signals
+            // "new entry" to TrySaveAsync (will never conflict on new entries)
             var result = await listStore.TrySaveAsync(SERVICE_LIST_KEY, serviceIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
@@ -398,7 +462,8 @@ public partial class GameServiceService : IGameServiceService
             _logger.LogDebug("Concurrent modification on service list, retrying remove (attempt {Attempt})", attempt + 1);
         }
 
-        _logger.LogWarning("Failed to remove service {ServiceId} from list after 3 attempts", serviceId);
+        _logger.LogWarning("Failed to remove service {ServiceId} from list after {MaxAttempts} attempts",
+            serviceId, _configuration.ServiceListRetryAttempts);
     }
 
     /// <summary>
@@ -415,44 +480,12 @@ public partial class GameServiceService : IGameServiceService
             DisplayName = model.DisplayName,
             Description = model.Description,
             IsActive = model.IsActive,
+            AutoLobbyEnabled = model.AutoLobbyEnabled,
             CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
             UpdatedAt = model.UpdatedAtUnix.HasValue
                 ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
                 : null
         };
-    }
-
-    #endregion
-
-    #region Service Registration
-
-    #endregion
-
-    #region Error Event Publishing
-
-    /// <summary>
-    /// Publishes an error event for unexpected/internal failures.
-    /// Does NOT publish for validation errors or expected failure cases.
-    /// </summary>
-    /// <param name="operation">The operation that failed (e.g., "CreateService").</param>
-    /// <param name="errorType">The type of error (e.g., exception type name).</param>
-    /// <param name="message">The error message.</param>
-    /// <param name="dependency">Optional dependency that caused the failure (e.g., "state").</param>
-    /// <param name="details">Optional additional details about the error.</param>
-    private async Task PublishErrorEventAsync(
-        string operation,
-        string errorType,
-        string message,
-        string? dependency = null,
-        object? details = null)
-    {
-        await _messageBus.TryPublishErrorAsync(
-            serviceName: "game-service",
-            operation: operation,
-            errorType: errorType,
-            message: message,
-            dependency: dependency,
-            details: details);
     }
 
     #endregion
@@ -465,28 +498,25 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="model">The created service model to include in the event.</param>
     private async Task PublishServiceCreatedEventAsync(GameServiceRegistryModel model)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-service", "GameServiceService.PublishServiceCreatedEvent");
+
+        var eventModel = new GameServiceCreatedEvent
         {
-            var eventModel = new GameServiceCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = model.ServiceId,
-                StubName = model.StubName,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                IsActive = model.IsActive,
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-                UpdatedAt = model.UpdatedAtUnix.HasValue
-                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                    : null
-            };
-            await _messageBus.TryPublishAsync("game-service.created", eventModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish GameServiceCreatedEvent for {ServiceId}", model.ServiceId);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            GameServiceId = model.ServiceId,
+            StubName = model.StubName,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            IsActive = model.IsActive,
+            AutoLobbyEnabled = model.AutoLobbyEnabled,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+            UpdatedAt = model.UpdatedAtUnix.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                : null
+        };
+        await _messageBus.TryPublishAsync("game-service.created", eventModel);
     }
 
     /// <summary>
@@ -496,29 +526,26 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="changedFields">List of field names that were modified.</param>
     private async Task PublishServiceUpdatedEventAsync(GameServiceRegistryModel model, List<string> changedFields)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-service", "GameServiceService.PublishServiceUpdatedEvent");
+
+        var eventModel = new GameServiceUpdatedEvent
         {
-            var eventModel = new GameServiceUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = model.ServiceId,
-                StubName = model.StubName,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                IsActive = model.IsActive,
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-                UpdatedAt = model.UpdatedAtUnix.HasValue
-                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                    : null,
-                ChangedFields = changedFields
-            };
-            await _messageBus.TryPublishAsync("game-service.updated", eventModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish GameServiceUpdatedEvent for {ServiceId}", model.ServiceId);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            GameServiceId = model.ServiceId,
+            StubName = model.StubName,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            IsActive = model.IsActive,
+            AutoLobbyEnabled = model.AutoLobbyEnabled,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+            UpdatedAt = model.UpdatedAtUnix.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                : null,
+            ChangedFields = changedFields
+        };
+        await _messageBus.TryPublishAsync("game-service.updated", eventModel);
     }
 
     /// <summary>
@@ -528,29 +555,26 @@ public partial class GameServiceService : IGameServiceService
     /// <param name="reason">Optional reason for deletion provided by the caller.</param>
     private async Task PublishServiceDeletedEventAsync(GameServiceRegistryModel model, string? reason)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-service", "GameServiceService.PublishServiceDeletedEvent");
+
+        var eventModel = new GameServiceDeletedEvent
         {
-            var eventModel = new GameServiceDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                GameServiceId = model.ServiceId,
-                StubName = model.StubName,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                IsActive = model.IsActive,
-                CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
-                UpdatedAt = model.UpdatedAtUnix.HasValue
-                    ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
-                    : null,
-                DeletedReason = reason
-            };
-            await _messageBus.TryPublishAsync("game-service.deleted", eventModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish GameServiceDeletedEvent for {ServiceId}", model.ServiceId);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            GameServiceId = model.ServiceId,
+            StubName = model.StubName,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            IsActive = model.IsActive,
+            AutoLobbyEnabled = model.AutoLobbyEnabled,
+            CreatedAt = DateTimeOffset.FromUnixTimeSeconds(model.CreatedAtUnix),
+            UpdatedAt = model.UpdatedAtUnix.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(model.UpdatedAtUnix.Value)
+                : null,
+            DeletedReason = reason
+        };
+        await _messageBus.TryPublishAsync("game-service.deleted", eventModel);
     }
 
     #endregion

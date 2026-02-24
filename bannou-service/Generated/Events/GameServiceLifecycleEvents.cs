@@ -82,6 +82,12 @@ public partial class GameServiceCreatedEvent : BaseServiceEvent
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
+    /// Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool AutoLobbyEnabled { get; set; } = default!;
+
+    /// <summary>
     /// When the service was created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
@@ -147,6 +153,12 @@ public partial class GameServiceUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
     /// When the service was created
@@ -222,6 +234,12 @@ public partial class GameServiceDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isActive")]
     public bool IsActive { get; set; } = default!;
+
+    /// <summary>
+    /// Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoLobbyEnabled")]
+    public bool AutoLobbyEnabled { get; set; } = default!;
 
     /// <summary>
     /// When the service was created

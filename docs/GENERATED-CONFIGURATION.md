@@ -556,6 +556,12 @@ This document lists all configuration options defined in Bannou's configuration 
 | `FACTION_SEED_BULK_PAGE_SIZE` | int | `100` | Page size for bulk seed operations during faction seeding |
 | `FACTION_SEED_TYPE_CODE` | string | `faction` | Which seed type code this service manages for faction growth |
 
+### Game Service
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GAME_SERVICE_SERVICE_LIST_RETRY_ATTEMPTS` | int | `3` | Maximum number of optimistic concurrency retry attempts for ... |
+
 ### Game Session
 
 | Environment Variable | Type | Default | Description |
@@ -564,7 +570,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS` | int | `10` | Delay before cleanup service starts (allows other services t... |
 | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | int | `100` | Default maximum players for game lobbies |
 | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | int | `60` | Default TTL for player reservations when not specified in re... |
-| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | `0` | Default session timeout in seconds (0 = no timeout) |
+| `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | int | **REQUIRED** | Default session timeout in seconds. Null means sessions have... |
 | `GAME_SESSION_GENERIC_LOBBIES_ENABLED` | bool | `false` | When true AND "generic" is in SupportedGameServices, auto-pu... |
 | `GAME_SESSION_LOCK_TIMEOUT_SECONDS` | int | `60` | Timeout in seconds for distributed session locks |
 | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | int | `16` | Maximum players allowed per session |
@@ -1204,8 +1210,8 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 917
-- **Required (no default)**: 54
+- **Total properties**: 918
+- **Required (no default)**: 55
 - **Optional (has default)**: 863
 
 ## Environment Variable Naming Convention
