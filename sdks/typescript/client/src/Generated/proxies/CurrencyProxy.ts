@@ -229,6 +229,26 @@ export class CurrencyProxy {
   }
 
   /**
+   * Debit multiple wallets in one call
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async batchDebitCurrencyAsync(
+    request: Schemas['BatchDebitRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['BatchDebitResponse']>> {
+    return this.client.invokeAsync<Schemas['BatchDebitRequest'], Schemas['BatchDebitResponse']>(
+      '/currency/batch-debit',
+      request,
+      channel,
+      timeout
+    );
+  }
+
+  /**
    * Calculate conversion without executing
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

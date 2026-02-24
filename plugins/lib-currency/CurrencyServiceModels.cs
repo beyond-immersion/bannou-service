@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace BeyondImmersion.BannouService.Currency;
 
 /// <summary>
@@ -154,7 +152,7 @@ internal class TransactionModel
     public double? SourceBalanceAfter { get; set; }
     public double? TargetBalanceBefore { get; set; }
     public double? TargetBalanceAfter { get; set; }
-    public JsonElement? Metadata { get; set; }
+    public object? Metadata { get; set; }
 }
 
 /// <summary>

@@ -141,13 +141,6 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public int WalletLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Timeout in seconds for autogain distributed locks
-    /// Environment variable: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 300)]
-    public int AutogainLockTimeoutSeconds { get; set; } = 10;
-
-    /// <summary>
     /// Timeout in seconds for index update distributed locks
     /// Environment variable: CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>

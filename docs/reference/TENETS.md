@@ -304,6 +304,9 @@ Tenets are organized into categories based on when they're needed:
 | Claiming "JSON requires strings" | T25 | FALSE - BannouJson handles serialization |
 | String in request/response/event model | T25 | Schema should define enum type |
 | String in configuration class | T25 | Config schema should define enum type |
+| Type-narrowing `object?` on `additionalProperties: true` field | T25, T29 | Keep `object?`; client metadata is opaque pass-through; do not inspect |
+| `JsonElement?` for client metadata field | T25, T29 | Use `object?`; type-narrowing implies inspection which violates T29 |
+| Pattern-matching or casting client metadata (`is JsonElement`) | T25, T29 | Store and return unchanged; service must not inspect structure |
 | Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
 | Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
 | Using empty string for "absent" | T26 | Make field `string?` nullable |

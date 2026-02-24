@@ -478,6 +478,7 @@ None currently.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-03:https://github.com/beyond-immersion/bannou-service/issues/278 -->
 
 5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/474 -->
 
 6. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity makes an individual `UnregisterReferenceAsync` API call. A batch unregister endpoint would reduce O(N) API calls to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->

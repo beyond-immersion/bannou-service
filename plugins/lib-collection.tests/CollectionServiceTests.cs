@@ -7,8 +7,10 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -31,11 +33,19 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     private readonly Mock<IQueryableStateStore<CollectionInstanceModel>> _mockCollectionStore;
     private readonly Mock<IQueryableStateStore<AreaContentConfigModel>> _mockAreaContentStore;
     private readonly Mock<IStateStore<CollectionCacheModel>> _mockCollectionCache;
+    private readonly Mock<ICacheableStateStore<CollectionCacheModel>> _mockCacheableCollectionCache;
 
     // Client mocks
     private readonly Mock<IInventoryClient> _mockInventoryClient;
     private readonly Mock<IItemClient> _mockItemClient;
     private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
+
+    // Telemetry mock
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+
+    // Entity session registry mock
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     // Lock response mock
     private readonly Mock<ILockResponse> _mockLockResponse;
@@ -63,11 +73,19 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockCollectionStore = new Mock<IQueryableStateStore<CollectionInstanceModel>>();
         _mockAreaContentStore = new Mock<IQueryableStateStore<AreaContentConfigModel>>();
         _mockCollectionCache = new Mock<IStateStore<CollectionCacheModel>>();
+        _mockCacheableCollectionCache = new Mock<ICacheableStateStore<CollectionCacheModel>>();
 
         // Initialize client mocks
         _mockInventoryClient = new Mock<IInventoryClient>();
         _mockItemClient = new Mock<IItemClient>();
         _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
+
+        // Initialize telemetry mock
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+
+        // Initialize entity session registry mock
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Wire up state store factory
         _mockStateStoreFactory
@@ -82,6 +100,9 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
             .Returns(_mockCollectionCache.Object);
+        _mockStateStoreFactory
+            .Setup(f => f.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache))
+            .Returns(_mockCacheableCollectionCache.Object);
 
         // Default save behavior
         _mockTemplateStore
@@ -151,6 +172,9 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         _mockItemClient.Object,
         _mockGameServiceClient.Object,
         _mockLockProvider.Object,
+        _mockResourceClient.Object,
+        _mockTelemetryProvider.Object,
+        _mockEntitySessionRegistry.Object,
         Enumerable.Empty<ICollectionUnlockListener>());
 
     private static EntryTemplateModel CreateTestTemplate(
@@ -2019,7 +2043,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     #region Event Handler Tests
 
     [Fact]
-    public async Task HandleCharacterDeleted_CleansUpCharacterOwnedCollections()
+    public async Task CleanupByCharacter_CleansUpCharacterOwnedCollections()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -2038,7 +2062,13 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+        var (status, response) = await service.CleanupByCharacterAsync(
+            new CleanupByCharacterRequest { CharacterId = characterId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
 
         // Assert - both containers deleted
         _mockInventoryClient.Verify(
@@ -2090,7 +2120,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
     }
 
     [Fact]
-    public async Task HandleCharacterDeleted_NoCollections_LogsAndReturns()
+    public async Task CleanupByCharacter_NoCollections_ReturnsZeroDeleted()
     {
         // Arrange - no collections for this character
         var characterId = Guid.NewGuid();
@@ -2101,7 +2131,14 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         var service = CreateService();
 
         // Act
-        await service.HandleCharacterDeletedAsync(new CharacterDeletedEvent { CharacterId = characterId });
+        var (status, response) = await service.CleanupByCharacterAsync(
+            new CleanupByCharacterRequest { CharacterId = characterId },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.DeletedCount);
 
         // Assert - no delete operations performed
         _mockInventoryClient.Verify(
@@ -2445,13 +2482,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
 
         // Assert - verify the underlying Register<TEvent> interface method is called
         // (RegisterHandler is an extension method that delegates to Register)
-        _mockEventConsumer.Verify(
-            ec => ec.Register<CharacterDeletedEvent>(
-                "character.deleted",
-                It.IsAny<string>(),
-                It.IsAny<Func<IServiceProvider, CharacterDeletedEvent, Task>>()),
-            Times.Once);
-
+        // Note: Character cleanup uses lib-resource (x-references), not event subscription, per FOUNDATION TENETS
         _mockEventConsumer.Verify(
             ec => ec.Register<AccountDeletedEvent>(
                 "account.deleted",

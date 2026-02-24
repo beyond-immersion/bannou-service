@@ -36,6 +36,7 @@ public partial class CollectionController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique code within this collection type and game service"
                 },
@@ -50,6 +51,8 @@ public partial class CollectionController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable display name for this entry"
                 },
                 "category": {
@@ -1481,6 +1484,7 @@ public partial class CollectionController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Unique code within this collection type and game service"
                 },
@@ -1495,6 +1499,8 @@ public partial class CollectionController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
                     "description": "Human-readable display name for this entry"
                 },
                 "category": {
@@ -1706,6 +1712,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator (e.g., account, character)"
                 },
                 "collectionType": {
@@ -1759,6 +1767,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -1788,7 +1798,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -1906,6 +1916,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -1935,7 +1947,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2018,6 +2030,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -2081,6 +2095,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -2228,6 +2244,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -2257,7 +2275,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2343,6 +2361,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -2352,6 +2372,8 @@ public partial class CollectionController
                 },
                 "entryCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Entry template code to grant"
                 },
                 "collectionType": {
@@ -2359,8 +2381,13 @@ public partial class CollectionController
                     "description": "Type of collection to grant into"
                 },
                 "metadata": {
-                    "$ref": "#/$defs/EntryMetadata",
-                    "description": "Optional initial metadata for the unlocked entry"
+                    "nullable": true,
+                    "description": "Optional initial metadata for the unlocked entry",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EntryMetadata"
+                        }
+                    ]
                 }
             }
         },
@@ -2553,6 +2580,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -2562,6 +2591,8 @@ public partial class CollectionController
                 },
                 "entryCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Entry template code to check"
                 },
                 "collectionType": {
@@ -2572,7 +2603,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2793,8 +2824,13 @@ public partial class CollectionController
                     "description": "When this entry was unlocked"
                 },
                 "metadata": {
-                    "$ref": "#/$defs/EntryMetadata",
-                    "description": "Entry instance metadata"
+                    "nullable": true,
+                    "description": "Entry instance metadata (null if no metadata was provided at grant time)",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EntryMetadata"
+                        }
+                    ]
                 }
             }
         },
@@ -2928,6 +2964,8 @@ public partial class CollectionController
                 },
                 "entryCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Entry code to update metadata for"
                 },
                 "playCount": {
@@ -3016,8 +3054,13 @@ public partial class CollectionController
                     "description": "When this entry was unlocked"
                 },
                 "metadata": {
-                    "$ref": "#/$defs/EntryMetadata",
-                    "description": "Entry instance metadata"
+                    "nullable": true,
+                    "description": "Entry instance metadata (null if no metadata was provided at grant time)",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/EntryMetadata"
+                        }
+                    ]
                 }
             }
         },
@@ -3153,6 +3196,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -3168,7 +3213,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -3330,6 +3375,8 @@ public partial class CollectionController
                 },
                 "ownerType": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -3343,13 +3390,15 @@ public partial class CollectionController
                 },
                 "areaCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Area code to select content for"
                 }
             }
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -3489,6 +3538,8 @@ public partial class CollectionController
             "properties": {
                 "areaCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Area code to configure (unique per game service and collection type)"
                 },
                 "gameServiceId": {
@@ -3510,6 +3561,8 @@ public partial class CollectionController
                 },
                 "defaultEntryCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Default entry code to use when no matches are found"
                 }
             }
@@ -3664,6 +3717,8 @@ public partial class CollectionController
             "properties": {
                 "areaCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Area code to look up"
                 },
                 "gameServiceId": {
@@ -4006,6 +4061,8 @@ public partial class CollectionController
                 },
                 "entryCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Entry code to advance discovery for"
                 }
             }
@@ -4101,6 +4158,110 @@ public partial class CollectionController
             _AdvanceDiscovery_Info,
             _AdvanceDiscovery_RequestSchema,
             _AdvanceDiscovery_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for CleanupByCharacter
+
+    private static readonly string _CleanupByCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterRequest",
+    "$defs": {
+        "CleanupByCharacterRequest": {
+            "type": "object",
+            "description": "Request to clean up all collections owned by a deleted character",
+            "additionalProperties": false,
+            "required": [
+                "characterId"
+            ],
+            "properties": {
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The character ID whose collections should be cleaned up"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/CleanupByCharacterResponse",
+    "$defs": {
+        "CleanupByCharacterResponse": {
+            "type": "object",
+            "description": "Result of character collection cleanup",
+            "additionalProperties": false,
+            "required": [
+                "deletedCount"
+            ],
+            "properties": {
+                "deletedCount": {
+                    "type": "integer",
+                    "description": "Number of collections deleted",
+                    "minimum": 0
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _CleanupByCharacter_Info = """
+{
+    "summary": "Cleanup all collections for a deleted character",
+    "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves all collections owned by the specified characterId, including\ntheir inventory containers, cache entries, and publishes collection.deleted\nlifecycle events.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+    "tags": [
+        "Resource Cleanup"
+    ],
+    "deprecated": false,
+    "operationId": "cleanupByCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/cleanup-by-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Collection",
+            "POST",
+            "/collection/cleanup-by-character",
+            _CleanupByCharacter_Info));
+
+    /// <summary>Returns request schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/cleanup-by-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/cleanup-by-character",
+            "request-schema",
+            _CleanupByCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/cleanup-by-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/cleanup-by-character",
+            "response-schema",
+            _CleanupByCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for CleanupByCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/cleanup-by-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> CleanupByCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Collection",
+            "POST",
+            "/collection/cleanup-by-character",
+            _CleanupByCharacter_Info,
+            _CleanupByCharacter_RequestSchema,
+            _CleanupByCharacter_ResponseSchema));
 
     #endregion
 }

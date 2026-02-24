@@ -31,6 +31,8 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 |-----------|-------------|
 | lib-escrow | References currency as an AssetType; stores CurrencyDefinitionId, CurrencyCode, CurrencyAmount on escrow asset models for currency custody |
 | lib-contract | Registers `currency_transfer` and `fee` clause types that route to `/currency/transfer` and `/currency/balance/get` endpoints via mesh invocation |
+| lib-quest | Hard dependency via `ICurrencyClient` for built-in `currency` prerequisite checking |
+| lib-license | Hard dependency via `ICurrencyClient` for cost verification on license board operations |
 
 ---
 
@@ -103,7 +105,6 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `DefaultAllowNegative` | `CURRENCY_DEFAULT_ALLOW_NEGATIVE` | `false` | Default for currencies that do not specify allowNegative |
-| `DefaultPrecision` | `CURRENCY_DEFAULT_PRECISION` | `Decimal2` | Default precision for currencies without explicit precision (enum: Integer, Decimal2, Decimal4, Decimal8, DecimalFull, BigInteger) |
 | `AutogainProcessingMode` | `CURRENCY_AUTOGAIN_PROCESSING_MODE` | `Lazy` | How autogain is calculated (enum: Lazy = on-demand at query, Task = background worker) |
 | `AutogainTaskStartupDelaySeconds` | `CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS` | `15` | Delay before first autogain background cycle |
 | `AutogainTaskIntervalMs` | `CURRENCY_AUTOGAIN_TASK_INTERVAL_MS` | `60000` | Background task processing interval (1 minute) |
@@ -116,8 +117,8 @@ This plugin does not consume external events.
 | `BalanceLockTimeoutSeconds` | `CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for balance-level distributed locks |
 | `HoldLockTimeoutSeconds` | `CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for hold-level distributed locks |
 | `WalletLockTimeoutSeconds` | `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | `30` | Timeout for wallet-level distributed locks |
-| `AutogainLockTimeoutSeconds` | `CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS` | `10` | Timeout for autogain distributed locks |
 | `IndexLockTimeoutSeconds` | `CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for index update distributed locks |
+| `IndexLockMaxRetries` | `CURRENCY_INDEX_LOCK_MAX_RETRIES` | `3` | Max retry attempts for acquiring index locks before logging error |
 | `ExchangeRateUpdateMaxRetries` | `CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES` | `3` | Max retry attempts for exchange rate update with optimistic concurrency |
 | `ConversionRoundingPrecision` | `CURRENCY_CONVERSION_ROUNDING_PRECISION` | `8` | Number of decimal places for currency conversion rounding |
 
@@ -128,9 +129,10 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<CurrencyService>` | Scoped | Structured logging |
-| `CurrencyServiceConfiguration` | Singleton | All 18 config properties |
+| `CurrencyServiceConfiguration` | Singleton | All 17 config properties (see Configuration section) |
 | `IStateStoreFactory` | Singleton | Access to all 8 state stores |
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
+| `ITelemetryProvider` | Singleton | Telemetry span instrumentation for all async helper methods |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 
@@ -156,7 +158,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 - **UnfreezeWallet** (`/currency/wallet/unfreeze`): Uses ETag-based optimistic concurrency. Requires current status is Frozen (returns BadRequest otherwise). Clears frozen fields, sets status to Active. Publishes `currency.wallet.unfrozen`.
 - **CloseWallet** (`/currency/wallet/close`): Requires a `transferRemainingTo` destination wallet. Loads all balances for closing wallet. Credits each positive balance to destination wallet via `InternalCreditAsync` (bypasses earn caps). Sets wallet status to Closed. Publishes `currency.wallet.closed`. Returns transferred balance details.
 
-### Balance Operations (6 endpoints)
+### Balance Operations (7 endpoints)
 
 - **GetBalance** (`/currency/balance/get`): Validates wallet and definition exist. Gets or creates balance record. Applies lazy autogain if currency is autogain-enabled (acquires `currency-autogain` lock on `{walletId}:{currencyDefId}`, skips if lock unavailable). Resets daily/weekly earn caps if periods elapsed. Calculates locked amount from active holds. Returns amount, lockedAmount, effectiveAmount, earnCapInfo, and autogainInfo.
 - **BatchGetBalances** (`/currency/balance/batch-get`): Iterates query list. For each, gets balance, applies lazy autogain, calculates locked amounts. Returns list of balance results. No locking between items - individual consistency per balance.
@@ -164,6 +166,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 - **DebitCurrency** (`/currency/debit`): Validates amount > 0. Checks idempotency. Validates wallet not frozen. Acquires distributed lock. Checks sufficient funds (negative allowed if definition or transaction-level override permits). Debits balance. Records transaction. Publishes `currency.debited`. Returns 422 for insufficient funds.
 - **TransferCurrency** (`/currency/transfer`): Validates both wallets exist and are not frozen. Validates currency is transferable. Acquires two distributed locks in deterministic order (string comparison of lock keys) to prevent deadlock. Checks source has sufficient funds. Applies wallet cap on target (reject or cap_and_lose). Updates both balances. Records single transaction with both source/target balance snapshots. Publishes `currency.transferred`.
 - **BatchCreditCurrency** (`/currency/batch-credit`): Checks batch-level idempotency. Iterates operations sequentially, delegating each to CreditCurrencyAsync with sub-key `{batchKey}:{index}`. Collects per-operation success/failure results. Records batch-level idempotency key. Returns partial success results.
+- **BatchDebitCurrency** (`/currency/batch-debit`): Checks batch-level idempotency. Iterates operations sequentially, delegating each to DebitCurrencyAsync with sub-key `{batchKey}:{index}`. Each operation supports `allowNegative` override and metadata. Collects per-operation success/failure results. Records batch-level idempotency key. Returns partial success results. Symmetric to BatchCredit.
 
 ### Conversion Operations (4 endpoints)
 
@@ -405,13 +408,16 @@ Escrow Integration Flow
 1. **Global supply analytics**: `GetGlobalSupply` returns all zeros. Comment indicates production would use pre-computed aggregates from balance data. No aggregation logic exists.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Wallet distribution analytics**: `GetWalletDistribution` returns all zeros for wallet count, averages, percentiles, and Gini coefficient. No statistical computation is implemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/470 -->
 3. **Currency expiration**: The `CurrencyExpiredEvent` is defined in the events schema and the definition model has `Expires`, `ExpirationPolicy`, `ExpirationDate`, `ExpirationDuration`, and `SeasonId` fields, but no background task or lazy check implements expiration logic.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 4. **Hold expiration**: The `CurrencyHoldExpiredEvent` is defined in the events schema but no mechanism (background task or lazy check) auto-releases expired holds. Expired holds remain Active and continue to reduce effective balance.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 5. **Global supply cap enforcement**: `GlobalSupplyCap` is stored on currency definitions but never checked during credit operations. There is no aggregate tracking of total minted supply.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
 6. **Item linkage**: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored on definitions but no logic enforces item-currency linkage (e.g., requiring item ownership for currency access).
-7. **EarnCapResetTime**: The field is stored on definitions but not used in earn cap reset logic. Resets always happen at midnight UTC (daily) and Monday UTC (weekly), ignoring any custom reset time.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
+7. ~~**EarnCapResetTime**~~: **FIXED** (2026-02-24) - `ResetEarnCapsIfNeeded` and `GetOrCreateBalanceAsync` now accept `earnCapResetTime` and use `ParseResetTime`/`GetNextDailyReset`/`GetNextWeeklyReset` helpers to honor the configured reset time. Falls back to midnight UTC when not set.
 8. **Transaction retention cleanup**: `TransactionRetentionDays` config exists but old transactions are only filtered at query time, never actually deleted. Transactions accumulate indefinitely.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 
@@ -420,15 +426,23 @@ Escrow Integration Flow
 ## Potential Extensions
 
 1. **Aggregate tracking for analytics**: Maintain running totals (minted, burned, in-circulation) via transaction events. Use pre-computed Redis counters updated on each credit/debit for O(1) supply queries.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/211 -->
 2. **Hold expiration background task**: Similar to CurrencyAutogainTaskService, periodically scan active holds and auto-release those past ExpiresAt, publishing `currency.hold.expired`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 3. **Currency expiration background task**: Scan balances for currencies with expiration policies. Apply expiration logic (zero-out, reduce, or convert) based on ExpirationPolicy.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 4. **Global supply cap enforcement**: Track total supply per currency in a Redis counter. Check cap during credit operations. Reject or truncate credits that would exceed global cap.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/471 -->
 5. **Item-linked currencies**: Enforce that item must exist in player inventory for linked currency operations. Query lib-item during credit/debit to validate linkage.
-6. **Configurable earn cap reset times**: Use EarnCapResetTime field from definition to calculate reset points instead of hardcoded midnight/Monday.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/473 -->
+6. ~~**Configurable earn cap reset times**~~: **FIXED** (2026-02-24) - Implemented in Stub #7 fix. `ResetEarnCapsIfNeeded` and `GetOrCreateBalanceAsync` now honor the per-definition `EarnCapResetTime` field.
 7. **Transaction pruning background task**: Delete transactions older than TransactionRetentionDays to prevent unbounded state growth. Currently retention is only enforced at query time (filtered out of results).
-8. **Batch debit operations**: Symmetric to BatchCredit but for debits (e.g., batch shop purchases).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
+8. ~~**Batch debit operations**~~: **FIXED** (2026-02-24) - Added `/currency/batch-debit` endpoint with `BatchDebitRequest/Operation/Response/Result` schema models mirroring the existing batch credit pattern. Implementation delegates each operation to `DebitCurrencyAsync` with sub-key idempotency.
 9. **Universal value anchoring**: Add `UniversalValue` field to currency definitions representing intrinsic worth (relative to a 1.0 baseline). Exchange rates can then be computed dynamically from universal values plus location-scoped modifiers (tariff, war, festival, shortage) rather than requiring manual `ExchangeRateToBase` updates. Universal values shift in response to game events (gold discoveries lower gold's value, wartime increases weapon-currency values). See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#8-exchange-rate-extensions).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
 10. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
 
 ---
 
@@ -436,13 +450,7 @@ Escrow Integration Flow
 
 ### Bugs
 
-1. ~~**Transaction metadata silently dropped**: `RecordTransactionAsync` accepted metadata parameter but never stored it in `TransactionModel` or mapped it to response~~: **FIXED** (2026-02-24) - Added `Metadata` field to `TransactionModel`, assigned in `RecordTransactionAsync`, mapped in `MapTransactionToRecord`.
-2. ~~**Lazy autogain race condition**: `ApplyAutogainIfNeededAsync` used `"currency-autogain"` lock while credit/debit used `"currency-balance"` lock, allowing concurrent balance modifications to overwrite each other~~: **FIXED** (2026-02-24) - Unified on `"currency-balance"` lock with read-after-lock pattern.
-3. ~~**Guid.Empty sentinel in autogain events**: `CurrencyAutogainTaskService` used `Guid.Empty` and `WalletOwnerType.Account` as fallbacks when wallet lookup failed~~: **FIXED** (2026-02-24) - Added null check; logs error and skips event if wallet missing.
-4. ~~**Hardcoded "base" in exchange rate events**: `UpdateExchangeRateAsync` hardcoded `BaseCurrencyCode = "base"` instead of looking up the actual base currency~~: **FIXED** (2026-02-24) - Added `FindBaseCurrencyCodeAsync` to scan definitions.
-5. ~~**Silent index lock failures**: `AddToListAsync` and `RemoveFromListAsync` silently returned on lock failure, causing permanent index inconsistency~~: **FIXED** (2026-02-24) - Added retry loop (3 attempts) with Error-level logging on final failure.
-6. ~~**CaptureHold TOCTOU**: Hold read before lock acquisition allowed concurrent captures to race~~: **FIXED** (2026-02-24) - Moved lock acquisition before hold read.
-7. ~~**GetOrCreateWallet race condition**: Two concurrent calls could both fail to find existing wallet, then one succeeds and the other returns Conflict instead of the existing wallet~~: **FIXED** (2026-02-24) - On Conflict from CreateWallet, re-reads existing wallet and returns it.
+*(None known)*
 
 ### Intentional Quirks
 
@@ -454,7 +462,7 @@ Escrow Integration Flow
 
 ### Design Considerations
 
-1. **N+1 transaction history loading**: `GetTransactionHistory` loads all transaction IDs from the wallet index, then loads each transaction individually. For wallets with thousands of transactions, this generates many state store calls. Pre-filtering before loading individual records would reduce load.
+1. ~~**N+1 transaction history loading**~~: **FIXED** (2026-02-24) - `GetTransactionHistoryAsync` and `GetTransactionsByReferenceAsync` now use `GetBulkAsync` to load all transactions in a single state store call instead of sequential individual `GetAsync` calls. Filters are still applied in-memory after the bulk fetch. For MySQL backend, this collapses N individual SELECT queries into a single `SELECT WHERE Key IN (...)` query.
 
 2. **All-defs iteration for base currency check**: `CreateCurrencyDefinition` with `isBaseCurrency=true` loads all definitions to check uniqueness. This is O(n) in the number of currency definitions. A dedicated base-currency index would be O(1).
 
@@ -467,10 +475,12 @@ Escrow Integration Flow
 6. **Double-spending window on conversion**: The debit and credit legs of a conversion are separate operations. Between the debit and credit, the wallet temporarily has less currency. A concurrent balance check during this window would see the reduced balance. The credit follows immediately so the window is small. If the credit fails, a compensating credit reverses the debit.
 
 7. **Transaction retention only enforced at query time**: Transactions beyond `TransactionRetentionDays` are filtered out of history queries but remain in the MySQL store indefinitely. No background cleanup task exists to actually delete old transactions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/222 -->
 
 8. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
 
 9. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/433 -->
 
 ---
 
@@ -478,11 +488,19 @@ Escrow Integration Flow
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### Completed
-
-- **2026-02-24**: Production hardening audit - Fixed 7 bugs (metadata drop, autogain race condition, Guid.Empty sentinel, hardcoded "base" code, silent index failures, CaptureHold TOCTOU, GetOrCreateWallet race). Schema NRT compliance + validation keywords. T25 type safety refactor (eliminated all Guid.Parse/ToString in helpers). T30 telemetry spans on all 25 async methods. Removed dead config (DefaultPrecision), dead code (InvalidateHoldCacheAsync), consolidated duplicate constants into shared CurrencyKeys class. Removed duplicate InternalsVisibleTo attributes.
-
 ### Pending Design
 
 - **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
 - [#433](https://github.com/beyond-immersion/bannou-service/issues/433) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)
+- [#470](https://github.com/beyond-immersion/bannou-service/issues/470) - Wallet distribution analytics stub returns all zeros. Needs aggregation strategy decision (shared with #211)
+- [#471](https://github.com/beyond-immersion/bannou-service/issues/471) - Global supply cap enforcement needs aggregation strategy (shared with #211). `GlobalSupplyCap` stored but never checked during credits.
+- [#473](https://github.com/beyond-immersion/bannou-service/issues/473) - Item linkage enforcement: `LinkedToItem`, `LinkedItemTemplateId`, and `LinkageMode` fields are stored but have zero runtime enforcement. Needs design decisions on what each linkage mode means and which operations to gate.
+- [#478](https://github.com/beyond-immersion/bannou-service/issues/478) - Universal value anchoring for dynamic exchange rates. Needs design on coexistence vs replacement of `ExchangeRateToBase`, modifier ownership (L2 vs L4), value change triggers, and relationship to location-scoped exchange rates.
+
+### Completed
+
+- **2026-02-24**: EarnCapResetTime - `ResetEarnCapsIfNeeded` and `GetOrCreateBalanceAsync` now honor the configured reset time instead of hardcoding midnight UTC.
+- **2026-02-24**: N+1 transaction history loading - `GetTransactionHistoryAsync` and `GetTransactionsByReferenceAsync` now use `GetBulkAsync` instead of sequential individual `GetAsync` calls, collapsing N+1 state store calls into 2 (index load + bulk fetch).
+- **2026-02-24**: Audit doc cleanup - Marked 7 Potential Extension items and 2 Design Consideration items with AUDIT markers linking to their existing tracking issues (#211, #222, #433, #471, #473). Marked Potential Extension #6 (configurable earn cap reset times) as FIXED since it was implemented in the Stub #7 fix.
+- **2026-02-24**: Batch debit operations - Added `/currency/batch-debit` endpoint with `BatchDebitRequest/Operation/Response/Result` schema models and implementation mirroring the existing batch credit pattern.
+- **2026-02-24**: Location-scoped exchange rates (Potential Extension #10) - Linked to existing issue #478 (universal value anchoring) which explicitly includes location-scoped rates in its design scope (question #5). No separate issue needed.

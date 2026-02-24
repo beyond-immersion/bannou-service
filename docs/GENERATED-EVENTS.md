@@ -194,6 +194,14 @@ This document lists all events defined in Bannou's event schemas.
 | `CollectionEntryUnlockedEvent` | Custom | `collection-entry-unlocked` | Published when an entry is successfully unlocked i... |
 | `CollectionMilestoneReachedEvent` | Custom | `collection-milestone-reached` | Published when a completion milestone is reached (... |
 
+### Collection (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CollectionDiscoveryAdvancedClientEvent` | Custom | `collection-discovery-advanced-client` | Sent to the collection owner when progressive disc... |
+| `CollectionEntryUnlockedClientEvent` | Custom | `collection-entry-unlocked-client` | Sent to the collection owner when an entry is unlo... |
+| `CollectionMilestoneReachedClientEvent` | Custom | `collection-milestone-reached-client` | Sent to the collection owner when a completion mil... |
+
 ### Common (client)
 
 | Event | Type | Likely Topic | Description |

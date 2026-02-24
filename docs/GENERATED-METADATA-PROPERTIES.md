@@ -29,8 +29,8 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 165 |
-| Compliant (has marker) | 144 |
+| Total metadata bag properties | 166 |
+| Compliant (has marker) | 145 |
 | Non-compliant (missing marker) | 21 |
 | Compliance rate | 87% |
 
@@ -125,6 +125,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
+| `BatchDebitOperation` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |
 | `CreditCurrencyRequest` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |
 | `CurrencyTransactionRecord` | `metadata` | `currency-api.yaml` | Y | Free-form metadata. No Bannou plugin reads specific keys from this field by c... |
 | `DebitCurrencyRequest` | `metadata` | `currency-api.yaml` | Y | Free-form transaction metadata. No Bannou plugin reads specific keys from thi... |

@@ -7,7 +7,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using System.Xml;
 using static BeyondImmersion.BannouService.Currency.CurrencyKeys;
 
@@ -566,7 +565,7 @@ public partial class CurrencyService : ICurrencyService
         var definition = await GetDefinitionByIdAsync(body.CurrencyDefinitionId, cancellationToken);
         if (definition is null) return (StatusCodes.NotFound, null);
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
+        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
 
         // Apply lazy autogain if enabled
         if (definition.AutogainEnabled)
@@ -575,7 +574,7 @@ public partial class CurrencyService : ICurrencyService
         }
 
         // Reset earn caps if needed
-        ResetEarnCapsIfNeeded(balance);
+        ResetEarnCapsIfNeeded(balance, definition.EarnCapResetTime);
 
         var lockedAmount = await GetTotalHeldAmountAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
 
@@ -655,8 +654,8 @@ public partial class CurrencyService : ICurrencyService
             return (StatusCodes.Conflict, null);
         }
 
-        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken);
-        ResetEarnCapsIfNeeded(balance);
+        var balance = await GetOrCreateBalanceAsync(body.WalletId, body.CurrencyDefinitionId, cancellationToken, earnCapResetTime: definition.EarnCapResetTime);
+        ResetEarnCapsIfNeeded(balance, definition.EarnCapResetTime);
 
         var creditAmount = body.Amount;
         var earnCapApplied = false;
@@ -1010,6 +1009,48 @@ public partial class CurrencyService : ICurrencyService
         return (StatusCodes.OK, new BatchCreditResponse { Results = results });
     }
 
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, BatchDebitResponse?)> BatchDebitCurrencyAsync(
+        BatchDebitRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        var (isDuplicate, _) = await CheckIdempotencyAsync(body.IdempotencyKey, cancellationToken);
+        if (isDuplicate) return (StatusCodes.Conflict, null);
+
+        var results = new List<BatchDebitResult>();
+        var operations = body.Operations.ToList();
+        for (var i = 0; i < operations.Count; i++)
+        {
+            var op = operations[i];
+            var opKey = $"{body.IdempotencyKey}:{i}";
+
+            var (status, response) = await DebitCurrencyAsync(new DebitCurrencyRequest
+            {
+                WalletId = op.WalletId,
+                CurrencyDefinitionId = op.CurrencyDefinitionId,
+                Amount = op.Amount,
+                TransactionType = op.TransactionType,
+                ReferenceType = op.ReferenceType,
+                ReferenceId = op.ReferenceId,
+                AllowNegative = op.AllowNegative,
+                Metadata = op.Metadata,
+                IdempotencyKey = opKey
+            }, cancellationToken);
+
+            results.Add(new BatchDebitResult
+            {
+                Index = i,
+                Success = status == StatusCodes.OK,
+                Transaction = response?.Transaction,
+                Error = status != StatusCodes.OK ? status.ToString() : null
+            });
+        }
+
+        await RecordIdempotencyAsync(body.IdempotencyKey, Guid.NewGuid().ToString(), cancellationToken);
+
+        return (StatusCodes.OK, new BatchDebitResponse { Results = results });
+    }
+
     #endregion
 
     #region Conversion Operations
@@ -1254,11 +1295,16 @@ public partial class CurrencyService : ICurrencyService
             ? body.FromDate
             : retentionFloor;
 
+        // Bulk-load all transactions in a single state store call to avoid N+1
+        var txKeys = txIds.Select(id => $"{TX_PREFIX}{id}").ToList();
+        var txMap = txKeys.Count > 0
+            ? await txStore.GetBulkAsync(txKeys, cancellationToken)
+            : new Dictionary<string, TransactionModel>();
+
         var transactions = new List<CurrencyTransactionRecord>();
         foreach (var txId in txIds.AsEnumerable().Reverse())
         {
-            var tx = await txStore.GetAsync($"{TX_PREFIX}{txId}", cancellationToken);
-            if (tx is null) continue;
+            if (!txMap.TryGetValue($"{TX_PREFIX}{txId}", out var tx)) continue;
 
             // Apply filters
             if (body.CurrencyDefinitionId is not null && tx.CurrencyDefinitionId != body.CurrencyDefinitionId.Value) continue;
@@ -1294,11 +1340,16 @@ public partial class CurrencyService : ICurrencyService
         var indexJson = await stringStore.GetAsync(refKey, cancellationToken);
         var txIds = string.IsNullOrEmpty(indexJson) ? new List<string>() : BannouJson.Deserialize<List<string>>(indexJson) ?? new List<string>();
 
+        // Bulk-load all transactions in a single state store call to avoid N+1
+        var txKeys = txIds.Select(id => $"{TX_PREFIX}{id}").ToList();
+        var txMap = txKeys.Count > 0
+            ? await txStore.GetBulkAsync(txKeys, cancellationToken)
+            : new Dictionary<string, TransactionModel>();
+
         var transactions = new List<CurrencyTransactionRecord>();
         foreach (var txId in txIds)
         {
-            var tx = await txStore.GetAsync($"{TX_PREFIX}{txId}", cancellationToken);
-            if (tx is not null)
+            if (txMap.TryGetValue($"{TX_PREFIX}{txId}", out var tx))
             {
                 transactions.Add(MapTransactionToRecord(tx));
             }
@@ -1804,7 +1855,7 @@ public partial class CurrencyService : ICurrencyService
         return null;
     }
 
-    private async Task<BalanceModel> GetOrCreateBalanceAsync(Guid walletId, Guid currencyDefId, CancellationToken ct)
+    private async Task<BalanceModel> GetOrCreateBalanceAsync(Guid walletId, Guid currencyDefId, CancellationToken ct, string? earnCapResetTime = null)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.GetOrCreateBalanceAsync");
         var key = $"{BALANCE_PREFIX}{walletId}:{currencyDefId}";
@@ -1826,6 +1877,7 @@ public partial class CurrencyService : ICurrencyService
         }
 
         // Create new balance (don't cache until saved)
+        var resetTime = ParseResetTime(earnCapResetTime);
         return new BalanceModel
         {
             WalletId = walletId,
@@ -1833,8 +1885,8 @@ public partial class CurrencyService : ICurrencyService
             Amount = 0,
             DailyEarned = 0,
             WeeklyEarned = 0,
-            DailyResetAt = DateTimeOffset.UtcNow.Date.AddDays(1),
-            WeeklyResetAt = GetNextWeeklyReset(),
+            DailyResetAt = GetNextDailyReset(resetTime),
+            WeeklyResetAt = GetNextWeeklyReset(resetTime),
             CreatedAt = DateTimeOffset.UtcNow,
             LastModifiedAt = DateTimeOffset.UtcNow
         };
@@ -2044,7 +2096,7 @@ public partial class CurrencyService : ICurrencyService
             SourceBalanceAfter = sourceBalAfter,
             TargetBalanceBefore = targetBalBefore,
             TargetBalanceAfter = targetBalAfter,
-            Metadata = metadata is JsonElement je ? je : null
+            Metadata = metadata
         };
 
         var store = _stateStoreFactory.GetStore<TransactionModel>(StateStoreDefinitions.CurrencyTransactions);
@@ -2168,19 +2220,47 @@ public partial class CurrencyService : ICurrencyService
         return (effectiveRate, baseCurrencyCode, null);
     }
 
-    private static void ResetEarnCapsIfNeeded(BalanceModel balance)
+    private static void ResetEarnCapsIfNeeded(BalanceModel balance, string? earnCapResetTime = null)
     {
         var now = DateTimeOffset.UtcNow;
+        var resetTime = ParseResetTime(earnCapResetTime);
         if (balance.DailyResetAt <= now)
         {
             balance.DailyEarned = 0;
-            balance.DailyResetAt = now.Date.AddDays(1);
+            balance.DailyResetAt = GetNextDailyReset(resetTime);
         }
         if (balance.WeeklyResetAt <= now)
         {
             balance.WeeklyEarned = 0;
-            balance.WeeklyResetAt = GetNextWeeklyReset();
+            balance.WeeklyResetAt = GetNextWeeklyReset(resetTime);
         }
+    }
+
+    /// <summary>
+    /// Parses the EarnCapResetTime string (e.g. "14:00:00") to a TimeSpan.
+    /// Returns TimeSpan.Zero (midnight UTC) if null, empty, or invalid.
+    /// </summary>
+    private static TimeSpan ParseResetTime(string? earnCapResetTime)
+    {
+        if (string.IsNullOrEmpty(earnCapResetTime))
+            return TimeSpan.Zero;
+
+        if (TimeSpan.TryParse(earnCapResetTime, out var ts)
+            && ts >= TimeSpan.Zero && ts < TimeSpan.FromDays(1))
+            return ts;
+
+        return TimeSpan.Zero;
+    }
+
+    /// <summary>
+    /// Gets the next daily reset point at the specified UTC time-of-day.
+    /// If today's reset time is still in the future, returns today; otherwise tomorrow.
+    /// </summary>
+    private static DateTimeOffset GetNextDailyReset(TimeSpan resetTime)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var todayReset = new DateTimeOffset(now.UtcDateTime.Date.Add(resetTime), TimeSpan.Zero);
+        return todayReset > now ? todayReset : todayReset.AddDays(1);
     }
 
     private static double ApplyEarnCap(double amount, BalanceModel balance, CurrencyDefinitionModel definition)
@@ -2266,12 +2346,18 @@ public partial class CurrencyService : ICurrencyService
         return realmId.HasValue ? $"{ownerId}:{ownerType}:{realmId.Value}" : $"{ownerId}:{ownerType}";
     }
 
-    private static DateTimeOffset GetNextWeeklyReset()
+    private static DateTimeOffset GetNextWeeklyReset(TimeSpan resetTime = default)
     {
         var now = DateTimeOffset.UtcNow;
         var daysUntilMonday = ((int)DayOfWeek.Monday - (int)now.DayOfWeek + 7) % 7;
-        if (daysUntilMonday == 0) daysUntilMonday = 7;
-        return now.Date.AddDays(daysUntilMonday);
+        if (daysUntilMonday == 0)
+        {
+            var todayReset = new DateTimeOffset(now.UtcDateTime.Date.Add(resetTime), TimeSpan.Zero);
+            if (todayReset > now)
+                return todayReset;
+            daysUntilMonday = 7;
+        }
+        return new DateTimeOffset(now.UtcDateTime.Date.AddDays(daysUntilMonday).Add(resetTime), TimeSpan.Zero);
     }
 
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)

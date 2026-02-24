@@ -60,7 +60,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractExpiredEvent>("contract.expired");
 
         // From collection-events.yaml
-        EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
 
         // From connect-events.yaml

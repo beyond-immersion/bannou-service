@@ -2765,6 +2765,31 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/collection/cleanup-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup all collections for a deleted character
+     * @description Called by lib-resource cleanup coordination when a character is deleted.
+     *     Removes all collections owned by the specified characterId, including
+     *     their inventory containers, cache entries, and publishes collection.deleted
+     *     lifecycle events.
+     *     This endpoint is designed for internal service-to-service calls during
+     *     cascading resource cleanup.
+     */
+    post: operations['cleanupByCharacter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/client-capabilities': {
     parameters: {
       query?: never;
@@ -3577,6 +3602,27 @@ export interface paths {
      *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
      */
     post: operations['batchCreditCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/batch-debit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Debit multiple wallets in one call
+     * @description Debits currency from multiple wallets in one call. Each operation is independent;
+     *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+     */
+    post: operations['batchDebitCurrency'];
     delete?: never;
     options?: never;
     head?: never;
@@ -13531,7 +13577,7 @@ export interface components {
       currencyDefinitionId: string;
       /**
        * Format: double
-       * @description Amount to credit
+       * @description Amount to credit (must be positive)
        */
       amount: number;
       /** @description Faucet transaction type */
@@ -13558,6 +13604,62 @@ export interface components {
     };
     /** @description Result of a single credit in a batch */
     BatchCreditResult: {
+      /** @description Index in the operations array */
+      index: number;
+      /** @description Whether the operation succeeded */
+      success: boolean;
+      /** @description Transaction record if successful */
+      transaction?: components['schemas']['CurrencyTransactionRecord'];
+      /** @description Error code if failed */
+      error?: string | null;
+    };
+    /** @description A single debit operation in a batch */
+    BatchDebitOperation: {
+      /**
+       * Format: uuid
+       * @description Source wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to debit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to debit (must be positive)
+       */
+      amount: number;
+      /** @description Sink transaction type (burn, vendor_purchase, fee, etc.) */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transaction */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Override negative balance allowance for this transaction */
+      allowNegative?: boolean | null;
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request to debit multiple wallets */
+    BatchDebitRequest: {
+      /** @description Debit operations to execute */
+      operations: components['schemas']['BatchDebitOperation'][];
+      /** @description Unique key covering the entire batch */
+      idempotencyKey: string;
+    };
+    /** @description Results of batch debit operations */
+    BatchDebitResponse: {
+      /** @description Results for each operation */
+      results: components['schemas']['BatchDebitResult'][];
+    };
+    /** @description Result of a single debit in a batch */
+    BatchDebitResult: {
       /** @description Index in the operations array */
       index: number;
       /** @description Whether the operation succeeded */
@@ -14454,7 +14556,7 @@ export interface components {
       toCurrencyId: string;
       /**
        * Format: double
-       * @description Amount to convert
+       * @description Amount to convert (must be positive)
        */
       fromAmount: number;
     };
@@ -14471,7 +14573,7 @@ export interface components {
        */
       effectiveRate: number;
       /** @description Steps in the conversion */
-      conversionPath?: components['schemas']['ConversionStep'][];
+      conversionPath: components['schemas']['ConversionStep'][];
       /** @description Base currency used for conversion */
       baseCurrency: string;
     };
@@ -20577,7 +20679,7 @@ export interface components {
       toCurrencyId: string;
       /**
        * Format: double
-       * @description Amount to convert
+       * @description Amount to convert (must be positive)
        */
       fromAmount: number;
       /** @description Unique key for idempotency */
@@ -21492,7 +21594,7 @@ export interface components {
        */
       currencyDefinitionId: string;
       /** @description Currency code */
-      currencyCode?: string;
+      currencyCode: string;
       /**
        * Format: double
        * @description Total balance
@@ -23334,7 +23436,7 @@ export interface components {
       /** @description Type of collection to grant into */
       collectionType: components['schemas']['CollectionType'];
       /** @description Optional initial metadata for the unlocked entry */
-      metadata?: components['schemas']['EntryMetadata'];
+      metadata?: components['schemas']['EntryMetadata'] | null;
     };
     /** @description Result of a grant operation */
     GrantEntryResponse: {
@@ -33807,8 +33909,8 @@ export interface components {
        * @description When this entry was unlocked
        */
       unlockedAt: string;
-      /** @description Entry instance metadata */
-      metadata?: components['schemas']['EntryMetadata'];
+      /** @description Entry instance metadata (null if no metadata was provided at grant time) */
+      metadata?: components['schemas']['EntryMetadata'] | null;
     };
     /** @description Request to unpin a message in a room */
     UnpinMessageRequest: {
@@ -39431,6 +39533,30 @@ export interface operations {
       };
     };
   };
+  cleanupByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByCharacterResponse'];
+        };
+      };
+    };
+  };
   getClientCapabilities: {
     parameters: {
       query?: never;
@@ -40731,6 +40857,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['BatchCreditResponse'];
+        };
+      };
+    };
+  };
+  batchDebitCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchDebitRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch debit processed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchDebitResponse'];
         };
       };
     };

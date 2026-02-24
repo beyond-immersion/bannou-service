@@ -656,6 +656,7 @@ Actor State Model
 6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
 7. **Worldstate variable provider**: `world` provider namespace is defined in `variable-providers.yaml` but lib-worldstate does not yet implement `IVariableProviderFactory` to provide `${world.*}` expressions (game time, calendar, season data).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/477 -->
 
 ---
 

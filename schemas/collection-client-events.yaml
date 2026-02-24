@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Collection Client Events API
+  description: |
+    Server-to-client push events for the Collection service.
+    These events notify clients of collection entry unlocks, milestone completions,
+    and discovery advancements delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "collection.{event_type}" naming convention.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Entry Unlocked Client Event
+    # ============================================
+
+    CollectionEntryUnlockedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the collection owner when an entry is unlocked in their collection.
+        Includes entry details and first-global status for UI celebration effects.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - collectionId
+        - entryCode
+        - collectionType
+      properties:
+        eventName:
+          type: string
+          default: "collection.entry_unlocked"
+          description: Fixed event type identifier
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection where the entry was unlocked
+        entryCode:
+          type: string
+          description: Code of the unlocked entry template
+        displayName:
+          type: string
+          nullable: true
+          description: Human-readable display name of the entry
+        category:
+          type: string
+          nullable: true
+          description: Category of the unlocked entry
+        collectionType:
+          type: string
+          description: Type of collection (e.g., "voice_gallery", "bestiary")
+        isFirstGlobal:
+          type: boolean
+          default: false
+          description: Whether this is the first time any player has unlocked this entry
+
+    # ============================================
+    # Milestone Reached Client Event
+    # ============================================
+
+    CollectionMilestoneReachedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the collection owner when a completion milestone is crossed.
+        Milestones trigger at 25%, 50%, 75%, and 100% completion.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - collectionId
+        - collectionType
+        - milestone
+        - completionPercentage
+      properties:
+        eventName:
+          type: string
+          default: "collection.milestone_reached"
+          description: Fixed event type identifier
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection that reached the milestone
+        collectionType:
+          type: string
+          description: Type of collection
+        milestone:
+          type: string
+          description: Milestone label (e.g., "25%", "50%", "75%", "100%")
+        completionPercentage:
+          type: number
+          format: double
+          description: Precise completion percentage at time of milestone
+
+    # ============================================
+    # Discovery Advanced Client Event
+    # ============================================
+
+    CollectionDiscoveryAdvancedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the collection owner when progressive discovery advances for an entry.
+        Includes the new discovery level and which information keys were revealed.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - collectionId
+        - entryCode
+        - newDiscoveryLevel
+      properties:
+        eventName:
+          type: string
+          default: "collection.discovery_advanced"
+          description: Fixed event type identifier
+        collectionId:
+          type: string
+          format: uuid
+          description: Collection containing the entry
+        entryCode:
+          type: string
+          description: Code of the entry whose discovery advanced
+        newDiscoveryLevel:
+          type: integer
+          description: New discovery level after advancement
+        revealedKeys:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Information keys revealed at the new discovery level

@@ -8,6 +8,7 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Chat.ClientEvents;
+using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
@@ -45,6 +46,9 @@ public static class ClientEventRegistry
         { typeof(ChatRoomLockedClientEvent), "chat.room_locked" },
         { typeof(ChatTypingStartedClientEvent), "chat.typing_started" },
         { typeof(ChatTypingStoppedClientEvent), "chat.typing_stopped" },
+        { typeof(CollectionDiscoveryAdvancedClientEvent), "collection.discovery_advanced" },
+        { typeof(CollectionEntryUnlockedClientEvent), "collection.entry_unlocked" },
+        { typeof(CollectionMilestoneReachedClientEvent), "collection.milestone_reached" },
         { typeof(DisconnectNotificationEvent), "connect.disconnect_notification" },
         { typeof(GameActionResultEvent), "game_session.action_result" },
         { typeof(GameStateUpdatedEvent), "game_session.state_updated" },
@@ -97,6 +101,9 @@ public static class ClientEventRegistry
         { "chat.room_locked", typeof(ChatRoomLockedClientEvent) },
         { "chat.typing_started", typeof(ChatTypingStartedClientEvent) },
         { "chat.typing_stopped", typeof(ChatTypingStoppedClientEvent) },
+        { "collection.discovery_advanced", typeof(CollectionDiscoveryAdvancedClientEvent) },
+        { "collection.entry_unlocked", typeof(CollectionEntryUnlockedClientEvent) },
+        { "collection.milestone_reached", typeof(CollectionMilestoneReachedClientEvent) },
         { "connect.capability_manifest", typeof(CapabilityManifestEvent) },
         { "connect.disconnect_notification", typeof(DisconnectNotificationEvent) },
         { "game_session.action_result", typeof(GameActionResultEvent) },

@@ -110,6 +110,11 @@ public partial interface ICurrencyService : IBannouService
         Task<(StatusCodes, BatchCreditResponse?)> BatchCreditCurrencyAsync(BatchCreditRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// BatchDebitCurrency operation
+        /// </summary>
+        Task<(StatusCodes, BatchDebitResponse?)> BatchDebitCurrencyAsync(BatchDebitRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// CalculateConversion operation
         /// </summary>
         Task<(StatusCodes, CalculateConversionResponse?)> CalculateConversionAsync(CalculateConversionRequest body, CancellationToken cancellationToken = default(CancellationToken));

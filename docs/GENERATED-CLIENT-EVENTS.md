@@ -30,6 +30,9 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `ChatRoomLockedClientEvent` | `chat.room_locked` | Sent to room participants when the room is locked. |
 | `ChatTypingStartedClientEvent` | `chat.typing_started` | Sent to room participants when someone starts typing. |
 | `ChatTypingStoppedClientEvent` | `chat.typing_stopped` | Sent to room participants when someone stops typing. |
+| `CollectionDiscoveryAdvancedClientEvent` | `collection.discovery_advanced` | Sent to the collection owner when progressive discovery adva... |
+| `CollectionEntryUnlockedClientEvent` | `collection.entry_unlocked` | Sent to the collection owner when an entry is unlocked in th... |
+| `CollectionMilestoneReachedClientEvent` | `collection.milestone_reached` | Sent to the collection owner when a completion milestone is ... |
 | `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
 | `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
 | `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
@@ -430,6 +433,59 @@ Sent to room participants when someone stops typing.
 |----------|-------------|
 | `participantSessionId` | Connect session ID of the participant who stopped  |
 | `roomId` | Room where typing stopped |
+
+---
+
+## Collection Client Events API
+
+Server-to-client push events for the Collection service. These events notify clients of collection entry unlocks, milestone completions, and discovery advancements delivered via WebSocket.
+
+### `CollectionDiscoveryAdvancedClientEvent`
+
+**Event Name**: `collection.discovery_advanced`
+
+Sent to the collection owner when progressive discovery advances for an entry.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `collectionId` | Collection containing the entry |
+| `entryCode` | Code of the entry whose discovery advanced |
+| `newDiscoveryLevel` | New discovery level after advancement |
+| `revealedKeys` | Information keys revealed at the new discovery lev |
+
+### `CollectionEntryUnlockedClientEvent`
+
+**Event Name**: `collection.entry_unlocked`
+
+Sent to the collection owner when an entry is unlocked in their collection.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `category` | Category of the unlocked entry |
+| `collectionId` | Collection where the entry was unlocked |
+| `collectionType` | Type of collection (e.g., "voice_gallery", "bestia |
+| `displayName` | Human-readable display name of the entry |
+| `entryCode` | Code of the unlocked entry template |
+| `isFirstGlobal` | Whether this is the first time any player has unlo |
+
+### `CollectionMilestoneReachedClientEvent`
+
+**Event Name**: `collection.milestone_reached`
+
+Sent to the collection owner when a completion milestone is crossed.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `collectionId` | Collection that reached the milestone |
+| `collectionType` | Type of collection |
+| `completionPercentage` | Precise completion percentage at time of milestone |
+| `milestone` | Milestone label (e.g., "25%", "50%", "75%", "100%" |
 
 ---
 
@@ -907,8 +963,8 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 48
-- **Services with events**: 7
+- **Total event types**: 51
+- **Services with events**: 8
 
 ---
 

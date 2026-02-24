@@ -3551,6 +3551,34 @@ paths:
           description: Collection or entry not found, or entry not unlocked
         '409':
           description: Already at max discovery level
+  /collection/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      summary: Cleanup all collections for a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes all collections owned by the specified characterId, including
+        their inventory containers, cache entries, and publishes collection.deleted
+        lifecycle events.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
   /client-capabilities:
     post:
       summary: Get client capability manifest (GUID → API mappings)
@@ -4627,6 +4655,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BatchCreditResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+  /currency/batch-debit:
+    post:
+      operationId: batchDebitCurrency
+      tags:
+      - Balance
+      summary: Debit multiple wallets in one call
+      description: |
+        Debits currency from multiple wallets in one call. Each operation is independent;
+        failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDebitRequest'
+      responses:
+        '200':
+          description: Batch debit processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDebitResponse'
       x-permissions:
       - role: developer
         states: {}
@@ -16335,6 +16388,8 @@ components:
           description: Collection containing the entry
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry code to advance discovery for
     AdvanceDiscoveryResponse:
       type: object
@@ -17583,12 +17638,15 @@ components:
         amount:
           type: number
           format: double
-          description: Amount to credit
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to credit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Faucet transaction type
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type
         referenceId:
@@ -17613,6 +17671,7 @@ components:
           description: Credit operations to execute
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key covering the entire batch
     BatchCreditResponse:
@@ -17630,6 +17689,107 @@ components:
     BatchCreditResult:
       type: object
       description: Result of a single credit in a batch
+      additionalProperties: false
+      required:
+      - index
+      - success
+      properties:
+        index:
+          type: integer
+          description: Index in the operations array
+        success:
+          type: boolean
+          description: Whether the operation succeeded
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          nullable: true
+          description: Transaction record if successful
+        error:
+          type: string
+          nullable: true
+          description: Error code if failed
+    BatchDebitOperation:
+      type: object
+      description: A single debit operation in a batch
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        amount:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to debit (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Sink transaction type (burn, vendor_purchase, fee, etc.)
+        referenceType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: What triggered this transaction
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Override negative balance allowance for this transaction
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata. No Bannou plugin reads 
+            specific keys from this field by convention.
+    BatchDebitRequest:
+      type: object
+      description: Request to debit multiple wallets
+      additionalProperties: false
+      required:
+      - operations
+      - idempotencyKey
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitOperation'
+          minItems: 1
+          maxItems: 100
+          description: Debit operations to execute
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique key covering the entire batch
+    BatchDebitResponse:
+      type: object
+      description: Results of batch debit operations
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitResult'
+          description: Results for each operation
+    BatchDebitResult:
+      type: object
+      description: Result of a single debit in a batch
       additionalProperties: false
       required:
       - index
@@ -18987,7 +19147,9 @@ components:
         fromAmount:
           type: number
           format: double
-          description: Amount to convert
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to convert (must be positive)
     CalculateConversionResponse:
       type: object
       description: Conversion preview result
@@ -18996,6 +19158,7 @@ components:
       - toAmount
       - effectiveRate
       - baseCurrency
+      - conversionPath
       properties:
         toAmount:
           type: number
@@ -19273,9 +19436,12 @@ components:
         captureAmount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Final amount to debit (may be less than hold amount)
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
     CaptureHoldResponse:
@@ -20963,6 +21129,8 @@ components:
           description: Entity that owns this collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -23297,6 +23465,8 @@ components:
           description: Entity that owns this collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator (e.g., account, character)
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -23566,6 +23736,7 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique code within this collection type and game service
         collectionType:
@@ -23577,6 +23748,8 @@ components:
           description: Game service this entry template is scoped to
         displayName:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable display name for this entry
         category:
           type: string
@@ -23843,6 +24016,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to reserve
         expiresAt:
           type: string
@@ -23850,6 +24025,7 @@ components:
           description: When the hold auto-releases
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type (e.g. dining, hotel, gas)
         referenceId:
@@ -23859,6 +24035,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
     CreateItemInstanceRequest:
@@ -24836,6 +25013,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to credit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
@@ -24843,6 +25022,7 @@ components:
             etc.)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction (quest, admin, etc.)
         referenceId:
@@ -24852,6 +25032,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         bypassEarnCap:
@@ -25175,6 +25356,7 @@ components:
           description: Transaction classification
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction
         referenceId:
@@ -25189,6 +25371,8 @@ components:
           description: Associated escrow ID
         idempotencyKey:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Idempotency key
         timestamp:
           type: string
@@ -25342,12 +25526,15 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to debit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Must be a sink type (burn, vendor_purchase, fee, etc.)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction
         referenceId:
@@ -25357,6 +25544,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         allowNegative:
@@ -27954,6 +28142,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to debit for escrow
         escrowId:
           type: string
@@ -27961,6 +28151,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
     EscrowDepositResponse:
@@ -28088,6 +28279,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to refund
         escrowId:
           type: string
@@ -28095,6 +28288,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
     EscrowRefundResponse:
@@ -28134,6 +28328,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to credit
         escrowId:
           type: string
@@ -28141,6 +28337,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
     EscrowReleaseResponse:
@@ -28463,9 +28660,12 @@ components:
         fromAmount:
           type: number
           format: double
-          description: Amount to convert
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to convert (must be positive)
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key for idempotency
     ExecuteConversionResponse:
@@ -29793,6 +29993,8 @@ components:
       properties:
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to look up
         gameServiceId:
           type: string
@@ -29862,6 +30064,7 @@ components:
       required:
       - walletId
       - currencyDefinitionId
+      - currencyCode
       - amount
       - lockedAmount
       - effectiveAmount
@@ -30152,6 +30355,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -30293,6 +30498,7 @@ components:
           description: Definition ID (provide this or code)
         code:
           type: string
+          maxLength: 32
           nullable: true
           description: Currency code (provide this or definitionId)
     GetDefinitionRequest:
@@ -32271,6 +32477,8 @@ components:
       properties:
         referenceType:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Reference type
         referenceId:
           type: string
@@ -32525,6 +32733,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -32532,13 +32742,17 @@ components:
           description: Game service scope
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry template code to grant
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to grant into
         metadata:
-          $ref: '#/components/schemas/EntryMetadata'
+          nullable: true
           description: Optional initial metadata for the unlocked entry
+          allOf:
+          - $ref: '#/components/schemas/EntryMetadata'
     GrantEntryResponse:
       type: object
       description: Result of a grant operation
@@ -32848,6 +33062,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -32855,6 +33071,8 @@ components:
           description: Game service scope
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry template code to check
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -33226,6 +33444,7 @@ components:
           description: When hold auto-releases
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type
         referenceId:
@@ -34868,6 +35087,8 @@ components:
           description: Entity to list collections for
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -45837,6 +46058,8 @@ components:
           description: Entity whose collection to search
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -45847,6 +46070,8 @@ components:
           description: Type of collection to select content from
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to select content for
     SendMessageBatchRequest:
       type: object
@@ -46139,6 +46364,8 @@ components:
       properties:
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to configure (unique per game service and 
             collection type)
         gameServiceId:
@@ -46157,6 +46384,8 @@ components:
             entry themes)
         defaultEntryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Default entry code to use when no matches are found
     SetTemplateValuesRequest:
       type: object
@@ -48248,12 +48477,15 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to transfer (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Must be a transfer type (transfer, trade, gift)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transfer
         referenceId:
@@ -48263,6 +48495,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         metadata:
@@ -48746,8 +48979,11 @@ components:
           format: date-time
           description: When this entry was unlocked
         metadata:
-          $ref: '#/components/schemas/EntryMetadata'
-          description: Entry instance metadata
+          nullable: true
+          description: Entry instance metadata (null if no metadata was provided
+            at grant time)
+          allOf:
+          - $ref: '#/components/schemas/EntryMetadata'
     UnpinMessageRequest:
       type: object
       additionalProperties: false
@@ -49336,6 +49572,8 @@ components:
           description: Collection containing the entry
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry code to update metadata for
         playCount:
           type: integer

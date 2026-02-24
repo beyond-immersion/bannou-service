@@ -1287,6 +1287,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.ValidateRealmAsync");
         try
         {
             var response = await _realmClient.RealmExistsAsync(
@@ -1311,6 +1312,7 @@ public partial class CharacterService : ICharacterService
     /// </summary>
     private async Task<(bool exists, bool isInRealm)> ValidateSpeciesAsync(Guid speciesId, Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character", "CharacterService.ValidateSpeciesAsync");
         try
         {
             var speciesResponse = await _speciesClient.GetSpeciesAsync(

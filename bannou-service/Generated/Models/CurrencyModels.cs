@@ -25,21 +25,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 
-#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
-#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
-#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
-#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
-#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
-#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
-#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
-#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
-#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
-#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
-#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
-#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
-#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
-#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
-#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Currency;
 
@@ -2141,6 +2126,150 @@ public partial class BatchCreditResponse
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BatchCreditResult
+{
+
+    /// <summary>
+    /// Index in the operations array
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the operation succeeded
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("success")]
+    public bool Success { get; set; } = default!;
+
+    /// <summary>
+    /// Transaction record if successful
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transaction")]
+    public CurrencyTransactionRecord? Transaction { get; set; } = default!;
+
+    /// <summary>
+    /// Error code if failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    public string? Error { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to debit multiple wallets
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitRequest
+{
+
+    /// <summary>
+    /// Debit operations to execute
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("operations")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
+    public System.Collections.Generic.ICollection<BatchDebitOperation> Operations { get; set; } = new System.Collections.ObjectModel.Collection<BatchDebitOperation>();
+
+    /// <summary>
+    /// Unique key covering the entire batch
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("idempotencyKey")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string IdempotencyKey { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A single debit operation in a batch
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitOperation
+{
+
+    /// <summary>
+    /// Source wallet ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("walletId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid WalletId { get; set; } = default!;
+
+    /// <summary>
+    /// Currency to debit
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currencyDefinitionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CurrencyDefinitionId { get; set; } = default!;
+
+    /// <summary>
+    /// Amount to debit (must be positive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    [System.ComponentModel.DataAnnotations.Range(0D, double.MaxValue)]
+    public double Amount { get; set; } = default!;
+
+    /// <summary>
+    /// Sink transaction type (burn, vendor_purchase, fee, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("transactionType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public TransactionType TransactionType { get; set; } = default!;
+
+    /// <summary>
+    /// What triggered this transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceType")]
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? ReferenceType { get; set; } = default!;
+
+    /// <summary>
+    /// Reference entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("referenceId")]
+    public System.Guid? ReferenceId { get; set; } = default!;
+
+    /// <summary>
+    /// Override negative balance allowance for this transaction
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowNegative")]
+    public bool? AllowNegative { get; set; } = default!;
+
+    /// <summary>
+    /// Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Results of batch debit operations
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitResponse
+{
+
+    /// <summary>
+    /// Results for each operation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("results")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<BatchDebitResult> Results { get; set; } = new System.Collections.ObjectModel.Collection<BatchDebitResult>();
+
+}
+
+/// <summary>
+/// Result of a single debit in a batch
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BatchDebitResult
 {
 
     /// <summary>

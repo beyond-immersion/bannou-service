@@ -588,6 +588,25 @@ public class RegisterReferenceRequest
 
 See also: [SCHEMA-RULES.md "When NOT to Create Enums"](../SCHEMA-RULES.md#when-not-to-create-enums-service-hierarchy-consideration)
 
+4. **Client-Opaque Metadata (T29 Exemption)**: Schema fields with `additionalProperties: true` that represent client-only metadata bags (per T29) are correctly generated as `object?` by NSwag. This is the **right type** — do NOT narrow it to `JsonElement?`, `Dictionary<string, object>?`, or any other type.
+
+```csharp
+// CORRECT: Client metadata is opaque pass-through — object? is the right type
+public object? Metadata { get; set; }  // additionalProperties: true in schema
+
+// FORBIDDEN: Type-narrowing client metadata violates T29
+public JsonElement? Metadata { get; set; }         // Implies inspection
+public Dictionary<string, object>? Metadata { get; set; }  // Implies structure
+
+// FORBIDDEN: Inspecting, converting, or pattern-matching client metadata
+Metadata = metadata is JsonElement je ? je : null;  // Service must not inspect
+var dict = BannouJson.Deserialize<Dictionary<string, object>>(metadata);  // No
+```
+
+**Why this matters**: T29 says `additionalProperties: true` is NEVER a data contract between services. Client metadata is stored and returned unchanged — the service MUST NOT inspect, type-narrow, pattern-match, or make any assumption about its structure. Applying T25 type-narrowing to these fields actively violates T29 by implying the service understands the data's shape.
+
+**When to apply**: Field is `additionalProperties: true` in schema + described as client/caller metadata + no Bannou plugin reads specific keys from it by convention.
+
 Tests follow the same rules. `DeploymentMode = "bannou"` in a test is wrong - use `DeploymentMode.Bannou`.
 
 ---

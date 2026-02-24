@@ -5363,6 +5363,43 @@
         }
       }
     },
+    "/collection/cleanup-by-character": {
+      "post": {
+        "operationId": "cleanupByCharacter",
+        "tags": [
+          "Resource Cleanup"
+        ],
+        "summary": "Cleanup all collections for a deleted character",
+        "description": "Called by lib-resource cleanup coordination when a character is deleted.\nRemoves all collections owned by the specified characterId, including\ntheir inventory containers, cache entries, and publishes collection.deleted\nlifecycle events.\nThis endpoint is designed for internal service-to-service calls during\ncascading resource cleanup.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupByCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cleanup completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupByCharacterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/client-capabilities": {
       "post": {
         "summary": "Get client capability manifest (GUID \u2192 API mappings)",
@@ -6962,6 +6999,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BatchCreditResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ]
+      }
+    },
+    "/currency/batch-debit": {
+      "post": {
+        "operationId": "batchDebitCurrency",
+        "tags": [
+          "Balance"
+        ],
+        "summary": "Debit multiple wallets in one call",
+        "description": "Debits currency from multiple wallets in one call. Each operation is independent;\nfailures do not rollback others. For atomic multi-wallet operations, use lib-escrow.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchDebitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch debit processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchDebitResponse"
                 }
               }
             }
@@ -24447,6 +24522,8 @@
           },
           "entryCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Entry code to advance discovery for"
           }
         }
@@ -25980,7 +26057,9 @@
           "amount": {
             "type": "number",
             "format": "double",
-            "description": "Amount to credit"
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Amount to credit (must be positive)"
           },
           "transactionType": {
             "$ref": "#/components/schemas/TransactionType",
@@ -25988,6 +26067,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "Reference type"
           },
@@ -26019,6 +26099,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique key covering the entire batch"
           }
@@ -26044,6 +26125,135 @@
       "BatchCreditResult": {
         "type": "object",
         "description": "Result of a single credit in a batch",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "success"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Index in the operations array"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation succeeded"
+          },
+          "transaction": {
+            "$ref": "#/components/schemas/CurrencyTransactionRecord",
+            "nullable": true,
+            "description": "Transaction record if successful"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error code if failed"
+          }
+        }
+      },
+      "BatchDebitOperation": {
+        "type": "object",
+        "description": "A single debit operation in a batch",
+        "additionalProperties": false,
+        "required": [
+          "walletId",
+          "currencyDefinitionId",
+          "amount",
+          "transactionType"
+        ],
+        "properties": {
+          "walletId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source wallet ID"
+          },
+          "currencyDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Currency to debit"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Amount to debit (must be positive)"
+          },
+          "transactionType": {
+            "$ref": "#/components/schemas/TransactionType",
+            "description": "Sink transaction type (burn, vendor_purchase, fee, etc.)"
+          },
+          "referenceType": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "description": "What triggered this transaction"
+          },
+          "referenceId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Reference entity ID"
+          },
+          "allowNegative": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Override negative balance allowance for this transaction"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention."
+          }
+        }
+      },
+      "BatchDebitRequest": {
+        "type": "object",
+        "description": "Request to debit multiple wallets",
+        "additionalProperties": false,
+        "required": [
+          "operations",
+          "idempotencyKey"
+        ],
+        "properties": {
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchDebitOperation"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Debit operations to execute"
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Unique key covering the entire batch"
+          }
+        }
+      },
+      "BatchDebitResponse": {
+        "type": "object",
+        "description": "Results of batch debit operations",
+        "additionalProperties": false,
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchDebitResult"
+            },
+            "description": "Results for each operation"
+          }
+        }
+      },
+      "BatchDebitResult": {
+        "type": "object",
+        "description": "Result of a single debit in a batch",
         "additionalProperties": false,
         "required": [
           "index",
@@ -27741,7 +27951,9 @@
           "fromAmount": {
             "type": "number",
             "format": "double",
-            "description": "Amount to convert"
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Amount to convert (must be positive)"
           }
         }
       },
@@ -27752,7 +27964,8 @@
         "required": [
           "toAmount",
           "effectiveRate",
-          "baseCurrency"
+          "baseCurrency",
+          "conversionPath"
         ],
         "properties": {
           "toAmount": {
@@ -28100,10 +28313,13 @@
           "captureAmount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Final amount to debit (may be less than hold amount)"
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Idempotency key"
           }
@@ -30193,6 +30409,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "collectionType": {
@@ -33031,6 +33249,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator (e.g., account, character)"
           },
           "collectionType": {
@@ -33366,6 +33586,7 @@
         "properties": {
           "code": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique code within this collection type and game service"
           },
@@ -33380,6 +33601,8 @@
           },
           "displayName": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
             "description": "Human-readable display name for this entry"
           },
           "category": {
@@ -33711,6 +33934,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to reserve"
           },
           "expiresAt": {
@@ -33720,6 +33945,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "Reference type (e.g. dining, hotel, gas)"
           },
@@ -33731,6 +33957,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Idempotency key"
           }
@@ -34877,6 +35104,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to credit (must be positive)"
           },
           "transactionType": {
@@ -34885,6 +35114,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "What triggered this transaction (quest, admin, etc.)"
           },
@@ -34896,6 +35126,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique key to prevent duplicate processing"
           },
@@ -35294,6 +35525,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "What triggered this transaction"
           },
@@ -35311,6 +35543,8 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Idempotency key"
           },
           "timestamp": {
@@ -35491,6 +35725,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to debit (must be positive)"
           },
           "transactionType": {
@@ -35499,6 +35735,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "What triggered this transaction"
           },
@@ -35510,6 +35747,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique key to prevent duplicate processing"
           },
@@ -38779,6 +39017,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to debit for escrow"
           },
           "escrowId": {
@@ -38788,6 +39028,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Idempotency key"
           }
@@ -38939,6 +39180,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to refund"
           },
           "escrowId": {
@@ -38948,6 +39191,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Idempotency key"
           }
@@ -38998,6 +39242,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to credit"
           },
           "escrowId": {
@@ -39007,6 +39253,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Idempotency key"
           }
@@ -39355,10 +39602,13 @@
           "fromAmount": {
             "type": "number",
             "format": "double",
-            "description": "Amount to convert"
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "description": "Amount to convert (must be positive)"
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique key for idempotency"
           }
@@ -41002,6 +41252,8 @@
         "properties": {
           "areaCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Area code to look up"
           },
           "gameServiceId": {
@@ -41093,6 +41345,7 @@
         "required": [
           "walletId",
           "currencyDefinitionId",
+          "currencyCode",
           "amount",
           "lockedAmount",
           "effectiveAmount"
@@ -41475,6 +41728,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -41664,6 +41919,7 @@
           },
           "code": {
             "type": "string",
+            "maxLength": 32,
             "nullable": true,
             "description": "Currency code (provide this or definitionId)"
           }
@@ -44200,6 +44456,8 @@
         "properties": {
           "referenceType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
             "description": "Reference type"
           },
           "referenceId": {
@@ -44522,6 +44780,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -44531,6 +44791,8 @@
           },
           "entryCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Entry template code to grant"
           },
           "collectionType": {
@@ -44538,8 +44800,13 @@
             "description": "Type of collection to grant into"
           },
           "metadata": {
-            "$ref": "#/components/schemas/EntryMetadata",
-            "description": "Optional initial metadata for the unlocked entry"
+            "nullable": true,
+            "description": "Optional initial metadata for the unlocked entry",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntryMetadata"
+              }
+            ]
           }
         }
       },
@@ -44911,6 +45178,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -44920,6 +45189,8 @@
           },
           "entryCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Entry template code to check"
           },
           "collectionType": {
@@ -45389,6 +45660,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "Reference type"
           },
@@ -47449,6 +47721,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -61229,6 +61503,8 @@
           },
           "ownerType": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -61242,6 +61518,8 @@
           },
           "areaCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Area code to select content for"
           }
         }
@@ -61602,6 +61880,8 @@
         "properties": {
           "areaCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Area code to configure (unique per game service and collection type)"
           },
           "gameServiceId": {
@@ -61623,6 +61903,8 @@
           },
           "defaultEntryCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Default entry code to use when no matches are found"
           }
         }
@@ -64199,6 +64481,8 @@
           "amount": {
             "type": "number",
             "format": "double",
+            "minimum": 0,
+            "exclusiveMinimum": true,
             "description": "Amount to transfer (must be positive)"
           },
           "transactionType": {
@@ -64207,6 +64491,7 @@
           },
           "referenceType": {
             "type": "string",
+            "maxLength": 100,
             "nullable": true,
             "description": "What triggered this transfer"
           },
@@ -64218,6 +64503,7 @@
           },
           "idempotencyKey": {
             "type": "string",
+            "minLength": 1,
             "maxLength": 128,
             "description": "Unique key to prevent duplicate processing"
           },
@@ -64821,8 +65107,13 @@
             "description": "When this entry was unlocked"
           },
           "metadata": {
-            "$ref": "#/components/schemas/EntryMetadata",
-            "description": "Entry instance metadata"
+            "nullable": true,
+            "description": "Entry instance metadata (null if no metadata was provided at grant time)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntryMetadata"
+              }
+            ]
           }
         }
       },
@@ -65558,6 +65849,8 @@
           },
           "entryCode": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
             "description": "Entry code to update metadata for"
           },
           "playCount": {

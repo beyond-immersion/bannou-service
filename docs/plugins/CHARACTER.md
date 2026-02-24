@@ -39,7 +39,7 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
 | lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
 
-> **Refactoring Consideration**: This plugin injects 9 service clients individually in the service constructor (10 including `IEventConsumer`). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin has 12 constructor parameters (5 service clients: IRealmClient, ISpeciesClient, IRelationshipClient, IContractClient, IResourceClient; plus 7 infrastructure: IStateStoreFactory, IDistributedLockProvider, IMessageBus, IEventConsumer, ILogger, configuration, ITelemetryProvider). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -271,7 +271,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**MapToArchiveModel loses null semantics for L4 fields**~~: **FIXED** (2026-02-23) - Made `CharacterArchiveModel.KeyBackstoryPoints` and `MajorLifeEvents` nullable (`List<string>?`) and removed `?? new()` coalescing in `MapToArchiveModel`. Null now round-trips correctly through storage, preserving the null vs empty list semantic distinction (null = "compression did not include this data", empty = "included but no entries").
+None currently tracked.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -286,7 +286,7 @@ None currently tracked.
 ### Design Considerations (Requires Planning)
 
 1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
-<!-- AUDIT:TRACKED:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 
 ---
@@ -302,8 +302,7 @@ No active work items.
 ### Historical
 
 See git history for full changelog. Key milestones:
-- **2026-02-23**: Fixed MapToArchiveModel null semantics bug — `KeyBackstoryPoints` and `MajorLifeEvents` now preserve null through storage round-trip
-- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on all 13 async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
+- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
 - **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
 - **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
 - **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`

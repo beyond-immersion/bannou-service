@@ -315,6 +315,24 @@ public sealed class CurrencyProxy
     }
 
     /// <summary>
+    /// Debit multiple wallets in one call
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing BatchDebitResponse on success.</returns>
+    public Task<ApiResponse<BatchDebitResponse>> BatchDebitCurrencyAsync(
+        BatchDebitRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<BatchDebitRequest, BatchDebitResponse>(
+            "/currency/batch-debit", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Calculate conversion without executing
     /// </summary>
     /// <param name="request">The request payload.</param>

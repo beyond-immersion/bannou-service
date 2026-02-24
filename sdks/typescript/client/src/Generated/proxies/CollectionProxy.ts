@@ -391,4 +391,22 @@ export class CollectionProxy {
       Schemas['AdvanceDiscoveryResponse']
     >('/collection/discovery/advance', request, channel, timeout);
   }
+
+  /**
+   * Cleanup all collections for a deleted character
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async cleanupByCharacterAsync(
+    request: Schemas['CleanupByCharacterRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['CleanupByCharacterRequest'],
+      Schemas['CleanupByCharacterResponse']
+    >('/collection/cleanup-by-character', request, channel, timeout);
+  }
 }

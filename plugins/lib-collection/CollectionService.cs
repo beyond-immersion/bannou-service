@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -45,8 +46,9 @@ public static class CollectionTopics
 /// <para>
 /// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
-///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0), IEntitySessionRegistry (L1)</item>
 ///   <item>DI listeners (ICollectionUnlockListener): Seed (L2) receives in-process unlock notifications for growth pipeline</item>
+///   <item>Client events: Pushes unlock/milestone/discovery events to owner WebSocket sessions via IEntitySessionRegistry</item>
 ///   <item>No owner-specific client dependencies: owner validation is caller-responsibility</item>
 /// </list>
 /// </para>
@@ -76,6 +78,7 @@ public partial class CollectionService : ICollectionService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IReadOnlyList<ICollectionUnlockListener> _unlockListeners;
 
     #region State Store Accessors
@@ -96,6 +99,10 @@ public partial class CollectionService : ICollectionService
     private IStateStore<CollectionCacheModel> CollectionCache =>
         _collectionCache ??= _stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
 
+    private ICacheableStateStore<CollectionCacheModel>? _cacheableCollectionCache;
+    private ICacheableStateStore<CollectionCacheModel> CacheableCollectionCache =>
+        _cacheableCollectionCache ??= _stateStoreFactory.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
+
     #endregion
 
     #region Key Building
@@ -110,6 +117,8 @@ public partial class CollectionService : ICollectionService
     private static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
         $"acc:{gameServiceId}:{collectionType}:{areaCode}";
     private static string BuildCacheKey(Guid collectionId) => $"cache:{collectionId}";
+    private static string BuildGlobalUnlocksSetKey(Guid gameServiceId, string collectionType) =>
+        $"global-unlocks:{gameServiceId}:{collectionType}";
 
     #endregion
 
@@ -207,6 +216,7 @@ public partial class CollectionService : ICollectionService
         IDistributedLockProvider lockProvider,
         IResourceClient resourceClient,
         ITelemetryProvider telemetryProvider,
+        IEntitySessionRegistry entitySessionRegistry,
         IEnumerable<ICollectionUnlockListener> unlockListeners)
     {
         _messageBus = messageBus;
@@ -219,6 +229,7 @@ public partial class CollectionService : ICollectionService
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
         _telemetryProvider = telemetryProvider;
+        _entitySessionRegistry = entitySessionRegistry;
         _unlockListeners = unlockListeners.ToList();
 
         RegisterEventConsumers(eventConsumer);
@@ -552,6 +563,20 @@ public partial class CollectionService : ICollectionService
                         CompletionPercentage = percentage
                     },
                     cancellationToken: cancellationToken);
+
+                // Push milestone client event to collection owner's WebSocket sessions
+                await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                    collection.OwnerType, collection.OwnerId,
+                    new CollectionMilestoneReachedClientEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CollectionId = collection.CollectionId,
+                        CollectionType = collection.CollectionType,
+                        Milestone = $"{(int)milestone}%",
+                        CompletionPercentage = percentage
+                    },
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "Collection {CollectionId} reached {Milestone} milestone ({Percentage:F1}%)",
@@ -1484,6 +1509,12 @@ public partial class CollectionService : ICollectionService
             }
         }
 
+        // Track global first-unlock via atomic Redis SADD (returns true if newly added)
+        var isFirstGlobal = await CacheableCollectionCache.AddToSetAsync(
+            BuildGlobalUnlocksSetKey(collection.GameServiceId, collection.CollectionType),
+            template.Code,
+            cancellationToken: cancellationToken);
+
         // Publish entry-unlocked event (for external/distributed consumers)
         await _messageBus.TryPublishAsync(
             CollectionTopics.EntryUnlocked,
@@ -1500,9 +1531,25 @@ public partial class CollectionService : ICollectionService
                 DisplayName = template.DisplayName,
                 Category = template.Category,
                 Tags = template.Tags,
-                IsFirstGlobal = false // Would require global tracking to determine
+                IsFirstGlobal = isFirstGlobal
             },
             cancellationToken: cancellationToken);
+
+        // Push client event to collection owner's WebSocket sessions
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            collection.OwnerType, collection.OwnerId,
+            new CollectionEntryUnlockedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CollectionId = collection.CollectionId,
+                EntryCode = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                CollectionType = collection.CollectionType,
+                IsFirstGlobal = isFirstGlobal
+            },
+            cancellationToken);
 
         // Dispatch to in-process unlock listeners (e.g., Seed growth pipeline)
         await DispatchUnlockListenersAsync(collection, template, newEntry, cancellationToken);
@@ -2228,6 +2275,20 @@ public partial class CollectionService : ICollectionService
                 Reveals = nextLevelDef.Reveals.ToList()
             },
             cancellationToken: cancellationToken);
+
+        // Push discovery client event to collection owner's WebSocket sessions
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            collection.OwnerType, collection.OwnerId,
+            new CollectionDiscoveryAdvancedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CollectionId = collection.CollectionId,
+                EntryCode = body.EntryCode,
+                NewDiscoveryLevel = nextLevel,
+                RevealedKeys = nextLevelDef.Reveals.ToList()
+            },
+            cancellationToken);
 
         _logger.LogInformation(
             "Advanced discovery for entry {EntryCode} in collection {CollectionId} to level {NewLevel}",

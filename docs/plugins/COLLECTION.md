@@ -14,19 +14,23 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for entry templates (MySQL), collection instances (MySQL), area content configs (MySQL), collection cache (Redis), distributed locks (Redis) |
+| lib-state (`IStateStoreFactory`) | Persistence for entry templates (MySQL), collection instances (MySQL), area content configs (MySQL), collection cache (Redis), global unlock tracking via Redis sets (Redis), distributed locks (Redis) |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events, entry-unlocked, grant-failed, milestone-reached, discovery-advanced events; error event publishing in cleanup |
 | lib-inventory (`IInventoryClient`) | Creating unlimited containers for collections, deleting containers on collection deletion, reading container contents for cache rebuilds (L2 hard dependency) |
 | lib-item (`IItemClient`) | Creating item instances when entries are granted, validating item template existence for entry templates (L2 hard dependency) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence during template/collection/area-config creation (L2 hard dependency) |
+| lib-resource (`IResourceClient`) | Registering/unregistering character references for cascading cleanup, registering cleanup callbacks on startup (L1 hard dependency) |
 | `IDistributedLockProvider` | Distributed locks for template updates/deletes, collection deletes, grant operations, metadata updates, discovery advancement (L0 hard dependency) |
-| `IEventConsumer` | Registering handlers for `character.deleted` and `account.deleted` cleanup events |
+| `ITelemetryProvider` | Distributed tracing spans for async operations (L0 hard dependency) |
+| `IEntitySessionRegistry` | Publishing client events to collection owner WebSocket sessions for real-time unlock/milestone/discovery notifications (L1 hard dependency) |
+| `IEventConsumer` | Registering handler for `account.deleted` cleanup event (character cleanup uses lib-resource x-references, not event subscription) |
 
 ## Dependents (What Relies On This Plugin)
 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-seed (`SeedCollectionUnlockListener`) | Implements `ICollectionUnlockListener` to drive seed growth from collection entry unlocks via tag-prefix matching against seed type `collectionGrowthMappings` |
+| lib-faction (`FactionCollectionUnlockListener`) | Implements `ICollectionUnlockListener` to react to collection entry unlocks for faction-related growth |
 
 ## State Storage
 
@@ -75,8 +79,10 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 | `collection-entry-template.created` | `CollectionEntryTemplateCreatedEvent` | Entry template created (single or via seed) |
 | `collection-entry-template.updated` | `CollectionEntryTemplateUpdatedEvent` | Entry template fields updated |
 | `collection-entry-template.deleted` | `CollectionEntryTemplateDeletedEvent` | Entry template deleted |
+| `collection-area-content-config.created` | `CollectionAreaContentConfigCreatedEvent` | Area content config created via SetAreaContentConfigAsync |
+| `collection-area-content-config.updated` | `CollectionAreaContentConfigUpdatedEvent` | Area content config updated via SetAreaContentConfigAsync (with `changedFields` list) |
 | `collection.created` | `CollectionCreatedEvent` | Collection instance created (explicit or auto-create during grant) |
-| `collection.deleted` | `CollectionDeletedEvent` | Collection instance explicitly deleted via DeleteCollectionAsync |
+| `collection.deleted` | `CollectionDeletedEvent` | Collection instance deleted (explicit via DeleteCollectionAsync or cascading via owner cleanup) |
 | `collection.entry-unlocked` | `CollectionEntryUnlockedEvent` | Entry successfully granted/unlocked in a collection |
 | `collection.entry-grant-failed` | `CollectionEntryGrantFailedEvent` | Grant attempt failed (entry not found, max reached, item creation failed) |
 | `collection.milestone-reached` | `CollectionMilestoneReachedEvent` | Completion milestone crossed (25%, 50%, 75%, 100%) |
@@ -86,14 +92,25 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `character.deleted` | `HandleCharacterDeletedAsync` | Deletes all character-owned collections, their containers, and cache entries |
 | `account.deleted` | `HandleAccountDeletedAsync` | Deletes all account-owned collections, their containers, and cache entries |
+
+### Published Client Events
+
+| Event Name | Event Type | Trigger |
+|------------|-----------|---------|
+| `collection.entry_unlocked` | `CollectionEntryUnlockedClientEvent` | Entry granted/unlocked; pushed to owner's WebSocket sessions with entry details and first-global status |
+| `collection.milestone_reached` | `CollectionMilestoneReachedClientEvent` | Completion milestone crossed (25%, 50%, 75%, 100%); pushed to owner's WebSocket sessions |
+| `collection.discovery_advanced` | `CollectionDiscoveryAdvancedClientEvent` | Discovery level advanced; pushed to owner's WebSocket sessions with revealed keys |
+
+Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsAsync` using the collection's `ownerType`/`ownerId` for entity-session resolution. If zero sessions are registered for the owner, zero events are delivered (graceful degradation). Schema: `schemas/collection-client-events.yaml`.
+
+**Note**: Character cleanup is NOT handled via event subscription. Character-owned collection cleanup uses lib-resource (x-references) with a registered cleanup callback (`CleanupByCharacterAsync`) per FOUNDATION TENETS.
 
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `MaxCollectionsPerOwner` | `COLLECTION_MAX_COLLECTIONS_PER_OWNER` | 20 | Max collections per owner entity (checked in CreateCollectionAsync) |
+| `MaxCollectionsPerOwner` | `COLLECTION_MAX_COLLECTIONS_PER_OWNER` | 20 | Max collections per owner entity (checked in CreateCollectionAsync and GrantEntryAsync auto-create) |
 | `MaxEntriesPerCollection` | `COLLECTION_MAX_ENTRIES_PER_COLLECTION` | 500 | Max unlocked entries per collection (checked in GrantEntryAsync) |
 | `LockTimeoutSeconds` | `COLLECTION_LOCK_TIMEOUT_SECONDS` | 30 | TTL for distributed locks on mutation operations |
 | `CollectionCacheTtlSeconds` | `COLLECTION_CACHE_TTL_SECONDS` | 300 | Redis TTL for collection state cache (5 minutes) |
@@ -112,10 +129,13 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 | `IInventoryClient` | Inventory container operations (L2) |
 | `IItemClient` | Item template validation and instance creation (L2) |
 | `IGameServiceClient` | Game service existence validation (L2) |
+| `IResourceClient` | Resource reference tracking for character-owned collections (L1) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
-| `IEnumerable<ICollectionUnlockListener>` | DI-discovered listeners notified on entry unlock (e.g., SeedCollectionUnlockListener) |
+| `ITelemetryProvider` | Distributed tracing span creation (L0) |
+| `IEntitySessionRegistry` | Publishing client events to owner WebSocket sessions (L1) |
+| `IEnumerable<ICollectionUnlockListener>` | DI-discovered listeners notified on entry unlock (e.g., SeedCollectionUnlockListener, FactionCollectionUnlockListener) |
 
-No helper services or background workers. All logic in `CollectionService.cs`, with events in `CollectionServiceEvents.cs` and models in `CollectionServiceModels.cs`.
+No helper services or background workers. All logic in `CollectionService.cs`, with events in `CollectionServiceEvents.cs` and models in `CollectionServiceModels.cs`. Plugin startup registration in `CollectionServicePlugin.cs` registers resource cleanup callbacks with lib-resource.
 
 ## API Endpoints (Implementation Notes)
 
@@ -131,10 +151,10 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 
 ### Collection Instance Management (4 endpoints)
 
-- **Create**: Validates owner type mapping to `ContainerOwnerType`, game service existence, uniqueness (one per type per game per owner), and max collections limit. Creates an unlimited inventory container via lib-inventory.
+- **Create**: Validates owner type mapping to `ContainerOwnerType`, game service existence, uniqueness (one per type per game per owner), and max collections limit. Creates an unlimited inventory container via lib-inventory. Registers character references with lib-resource for character-owned collections.
 - **Get**: Returns collection with entry count from cache (rebuilds cache on miss).
 - **List**: Lists all collections for an owner with optional game service filter. Uses cache for entry counts when available (0 on cache miss).
-- **Delete**: Acquires lock, deletes inventory container (tolerates 404), deletes cache and both store keys.
+- **Delete**: Acquires lock, deletes inventory container (tolerates 404), deletes cache and both store keys. Unregisters character references with lib-resource for character-owned collections.
 
 ### Entry Operations (5 endpoints)
 
@@ -153,6 +173,10 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 ### Discovery (1 endpoint)
 
 - **AdvanceDiscovery**: Increments discovery level for a bestiary-style entry. Validates level exists in template definition. Publishes event with revealed information keys.
+
+### Resource Cleanup (1 endpoint)
+
+- **CleanupByCharacter**: Called by lib-resource during cascading character deletion. Delegates to `CleanupCollectionsForOwnerAsync` to delete all character-owned collections, their containers, cache entries, and publishes `collection.deleted` events for each.
 
 ## Visual Aid
 
@@ -200,26 +224,22 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 
 ## Stubs & Unimplemented Features
 
-1. **`isFirstGlobal` always false**: `CollectionEntryUnlockedEvent.IsFirstGlobal` is hardcoded to `false` with comment "Would require global tracking to determine". No global first-unlock tracking exists.
+1. ~~**`isFirstGlobal` always false**~~: **FIXED** (2026-02-24) - Added global first-unlock tracking via Redis set (SADD) on the `collection-cache` store. `CacheableCollectionCache.AddToSetAsync` atomically adds entry codes to a per-game-service per-collection-type set and returns whether the code was newly added (true = first global unlock). Multi-instance safe via Redis atomicity. Global unlock sets persist indefinitely (no TTL).
 
 ## Potential Extensions
 
-1. **Global first-unlock tracking**: Implement tracking to set `isFirstGlobal` correctly on unlock events. Would require a global set of unlocked entry codes per game service.
-2. **Client events for real-time unlock notifications**: Define `collection-client-events.yaml` to push unlock/milestone events to connected WebSocket clients via `IClientEventPublisher`.
+1. ~~**Global first-unlock tracking**~~: **FIXED** (2026-02-24) - Implemented via Redis set operations in the `collection-cache` store. See Stubs section for details.
+2. ~~**Client events for real-time unlock notifications**~~: **FIXED** (2026-02-24) - Added `schemas/collection-client-events.yaml` with three client events (`collection.entry_unlocked`, `collection.milestone_reached`, `collection.discovery_advanced`). CollectionService now pushes real-time notifications to collection owner WebSocket sessions via `IEntitySessionRegistry` after each corresponding service event publish.
 3. **Expiring/seasonal collections**: Support time-limited collection types that expire or rotate on a schedule.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/475 -->
 4. **Collection sharing/trading**: Allow owners to share or trade unlocked entries between collections.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/476 -->
 
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
 
-1. **UpdateEntryTemplateAsync ignores `hideWhenLocked` and `discoveryLevels` fields**: The schema defines both `hideWhenLocked` (nullable boolean) and `discoveryLevels` (nullable array) on `UpdateEntryTemplateRequest`, but the service code only handles displayName, category, tags, assetId, thumbnailAssetId, unlockHint, themes, duration, loopPoint, and composer. These two fields cannot be updated after creation.
-
-2. **ListEntryTemplatesAsync ignores request `pageSize`**: Uses `_configuration.DefaultPageSize` unconditionally, ignoring `body.PageSize` from the request. `QueryEntriesAsync` correctly uses `body.PageSize ?? _configuration.DefaultPageSize`. The same pattern should be applied to `ListEntryTemplatesAsync`.
-
-3. **GrantEntryAsync auto-create bypasses `MaxCollectionsPerOwner` limit**: When auto-creating a collection during `GrantEntryAsync`, `CreateCollectionInternalAsync` is called directly without the max-collections-per-owner check that `CreateCollectionAsync` performs. This allows unlimited collections to be created via the grant path.
-
-4. **Cleanup event handlers don't publish `collection.deleted` events**: `CleanupCollectionsForOwnerAsync` (triggered by `character.deleted` / `account.deleted`) deletes collections but never publishes `collection.deleted` events. Only `DeleteCollectionAsync` publishes these events. Any downstream consumers of `collection.deleted` would miss cascading deletions.
+*No known bugs.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -239,12 +259,19 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 
 8. **Milestone events use string labels**: `CollectionMilestoneReachedEvent.Milestone` is a string like `"25%"` rather than a numeric value. The `CompletionPercentage` field carries the precise numeric value.
 
+9. **No owner entity existence validation**: Collection follows the Seed pattern where owner validation is caller-responsibility. The service validates that `ownerType` maps to a known `ContainerOwnerType` and that the game service exists, but does not verify the owner entity (character, account, location, guild) actually exists. This is intentional: Collection is L2 and owner types span L1 (account), L2 (character, location), and L4 (guild via Faction). Injecting clients for all owner types would create hierarchy issues and break the polymorphic ownership model. Callers must ensure valid owners before creating collections.
+
+10. **No event-driven entry template cache invalidation**: When an entry template is updated or deleted, existing collection caches that reference it are not invalidated. Stale template data may be served until the cache TTL expires or the cache is rebuilt. Cache TTL (default 300s) bounds the staleness window.
+
 ### Design Considerations (Requires Planning)
 
-1. **No owner validation**: Collection follows the Seed pattern where owner validation is caller-responsibility. The service accepts any `ownerId`/`ownerType` that passes the `MapToContainerOwnerType` check, without verifying that the entity actually exists. Callers must ensure valid owners.
-
-2. **No event-driven entry template cache invalidation**: When an entry template is updated or deleted, existing collection caches that reference it are not invalidated. Stale template data may be served until the cache TTL expires or the cache is rebuilt.
+*No open design considerations.*
 
 ## Work Tracking
 
-*No active work items.*
+### Completed
+
+- **`isFirstGlobal` global unlock tracking** (2026-02-24): Added atomic Redis set tracking for first-global unlock determination. `CollectionEntryUnlockedEvent.IsFirstGlobal` now correctly reflects whether this is the first time any owner has unlocked the entry within the game service + collection type scope.
+- **Client events for real-time unlock notifications** (2026-02-24): Added `schemas/collection-client-events.yaml` defining three client event types. CollectionService now publishes `CollectionEntryUnlockedClientEvent`, `CollectionMilestoneReachedClientEvent`, and `CollectionDiscoveryAdvancedClientEvent` to owner WebSocket sessions via `IEntitySessionRegistry` after each corresponding service event. Added `IEntitySessionRegistry` as L1 hard dependency.
+- **"No owner validation" moved to Intentional Quirks** (2026-02-24): Audit confirmed this follows the established Seed pattern — polymorphic ownership by design, not a missing feature. Moved from Design Considerations to Intentional Quirks #9 with expanded rationale (hierarchy constraints, extensibility).
+- **"No entry template cache invalidation" moved to Intentional Quirks** (2026-02-24): Audit confirmed this is bounded by cache TTL (default 300s) — not a design gap requiring planning. Moved from Design Considerations to Intentional Quirks #10.

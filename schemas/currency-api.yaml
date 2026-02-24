@@ -508,6 +508,32 @@ paths:
       - role: developer
         states: {}
 
+  /currency/batch-debit:
+    post:
+      operationId: batchDebitCurrency
+      tags:
+      - Balance
+      summary: Debit multiple wallets in one call
+      description: |
+        Debits currency from multiple wallets in one call. Each operation is independent;
+        failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDebitRequest'
+      responses:
+        '200':
+          description: Batch debit processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDebitResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
   # ===========================================================================
   # Conversion (4 endpoints)
   # ===========================================================================
@@ -2388,6 +2414,110 @@ components:
     BatchCreditResult:
       type: object
       description: Result of a single credit in a batch
+      additionalProperties: false
+      required:
+      - index
+      - success
+      properties:
+        index:
+          type: integer
+          description: Index in the operations array
+        success:
+          type: boolean
+          description: Whether the operation succeeded
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          nullable: true
+          description: Transaction record if successful
+        error:
+          type: string
+          nullable: true
+          description: Error code if failed
+
+    BatchDebitRequest:
+      type: object
+      description: Request to debit multiple wallets
+      additionalProperties: false
+      required:
+      - operations
+      - idempotencyKey
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitOperation'
+          minItems: 1
+          maxItems: 100
+          description: Debit operations to execute
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique key covering the entire batch
+
+    BatchDebitOperation:
+      type: object
+      description: A single debit operation in a batch
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        amount:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to debit (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Sink transaction type (burn, vendor_purchase, fee, etc.)
+        referenceType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: What triggered this transaction
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Override negative balance allowance for this transaction
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    BatchDebitResponse:
+      type: object
+      description: Results of batch debit operations
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitResult'
+          description: Results for each operation
+
+    BatchDebitResult:
+      type: object
+      description: Result of a single debit in a batch
       additionalProperties: false
       required:
       - index

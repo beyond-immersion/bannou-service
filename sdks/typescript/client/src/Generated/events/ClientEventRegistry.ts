@@ -160,6 +160,30 @@ export const eventRegistry = new Map<string, EventMetadata>([
     { eventName: 'chat.typing_stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' },
   ],
   [
+    'collection.discovery_advanced',
+    {
+      eventName: 'collection.discovery_advanced',
+      typeName: 'CollectionDiscoveryAdvancedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
+    'collection.entry_unlocked',
+    {
+      eventName: 'collection.entry_unlocked',
+      typeName: 'CollectionEntryUnlockedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
+    'collection.milestone_reached',
+    {
+      eventName: 'collection.milestone_reached',
+      typeName: 'CollectionMilestoneReachedClientEvent',
+      service: 'collection',
+    },
+  ],
+  [
     'connect.capability_manifest',
     {
       eventName: 'connect.capability_manifest',

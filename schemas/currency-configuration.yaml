@@ -105,13 +105,6 @@ x-service-configuration:
       env: CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for wallet-level distributed locks
-    autogainLockTimeoutSeconds:
-      type: integer
-      minimum: 1
-      maximum: 300
-      env: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
-      default: 10
-      description: Timeout in seconds for autogain distributed locks
     indexLockTimeoutSeconds:
       type: integer
       minimum: 1

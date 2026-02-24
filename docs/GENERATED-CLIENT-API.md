@@ -21,10 +21,10 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Chat Service API](#chat) | `client.Chat` | 30 | Typed message channel service (L1 AppFoundation) providing u... |
-| [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
+| [Collection Service API](#collection) | `client.Collection` | 21 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
-| [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
+| [Currency Service API](#currency) | `client.Currency` | 33 | Multi-currency management service for game economies. |
 | [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
@@ -647,6 +647,12 @@ Universal content unlock and archive system for collectible content.
 | `DeleteEntrytemplateAsync` | `DeleteEntryTemplateRequest` | `EntryTemplateResponse` | Delete an entry template |
 | `SeedentrytemplatesAsync` | `SeedEntryTemplatesRequest` | `SeedEntryTemplatesResponse` | Bulk seed entry templates |
 
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all collections for a deleted character |
+
 ---
 
 ## Bannou Connect API {#connect}
@@ -802,6 +808,7 @@ Multi-currency management service for game economies.
 | `DebitcurrencyAsync` | `DebitCurrencyRequest` | `DebitCurrencyResponse` | Debit currency from a wallet (sink operation) |
 | `TransfercurrencyAsync` | `TransferCurrencyRequest` | `TransferCurrencyResponse` | Transfer currency between wallets |
 | `BatchcreditcurrencyAsync` | `BatchCreditRequest` | `BatchCreditResponse` | Credit multiple wallets in one call |
+| `BatchdebitcurrencyAsync` | `BatchDebitRequest` | `BatchDebitResponse` | Debit multiple wallets in one call |
 
 ### Conversion
 
@@ -2447,7 +2454,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 54
-- **Total methods**: 848
+- **Total methods**: 850
 
 ---
 
