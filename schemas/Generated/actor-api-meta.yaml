@@ -1139,19 +1139,8 @@ paths:
         \          }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/StartEncounterResponse\"\
         ,\n    \"$defs\": {\n        \"StartEncounterResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Response after starting an encounter\",\n            \"required\": [\n  \
-        \              \"actorId\",\n                \"encounterId\",\n                \"encounterType\",\n              \
-        \  \"participantCount\",\n                \"startedAt\"\n            ],\n            \"properties\": {\n         \
-        \       \"actorId\": {\n                    \"type\": \"string\",\n                    \"description\": \"ID of the
-        Event Brain actor managing the encounter\"\n                },\n                \"encounterId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Unique identifier for the started encounter\"\n                },\n                \"encounterType\": {\n        \
-        \            \"type\": \"string\",\n                    \"description\": \"Type of encounter that was started\"\n\
-        \                },\n                \"participantCount\": {\n                    \"type\": \"integer\",\n       \
-        \             \"description\": \"Number of participants in the encounter\"\n                },\n                \"\
-        startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"Timestamp when the encounter was started\"\n                }\n            }\n \
-        \       }\n    }\n}"
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the encounter was started.\",\n       \
+        \     \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Start an encounter managed by an Event Brain actor\",\n    \"description\"\
         : \"Initializes an encounter with the specified participants. The Event Brain actor\\nwill coordinate the encounter,
         sending instructions to participant NPC Brain actors\\nvia their character perception channels.\\n\",\n    \"tags\"\
@@ -2455,31 +2444,8 @@ components:
     StartEncounterResponse:
       type: object
       additionalProperties: false
-      description: Response after starting an encounter
-      required:
-      - actorId
-      - encounterId
-      - encounterType
-      - participantCount
-      - startedAt
-      properties:
-        actorId:
-          type: string
-          description: ID of the Event Brain actor managing the encounter
-        encounterId:
-          type: string
-          format: uuid
-          description: Unique identifier for the started encounter
-        encounterType:
-          type: string
-          description: Type of encounter that was started
-        participantCount:
-          type: integer
-          description: Number of participants in the encounter
-        startedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the encounter was started
+      description: Empty response. HTTP 200 confirms the encounter was started.
+      properties: {}
     UpdateEncounterPhaseRequest:
       type: object
       additionalProperties: false

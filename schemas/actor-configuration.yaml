@@ -268,5 +268,13 @@ x-service-configuration:
       minimum: 0
       description: Maximum retry attempts for memory store operations
 
+    PoolConcurrencyMaxRetries:
+      type: integer
+      env: ACTOR_POOL_CONCURRENCY_MAX_RETRIES
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Maximum retry attempts for optimistic concurrency operations in pool management
+
 components:
   schemas: {}

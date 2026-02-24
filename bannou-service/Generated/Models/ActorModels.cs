@@ -1751,49 +1751,11 @@ public partial class StartEncounterRequest
 }
 
 /// <summary>
-/// Response after starting an encounter
+/// Empty response. HTTP 200 confirms the encounter was started.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StartEncounterResponse
 {
-
-    /// <summary>
-    /// ID of the Event Brain actor managing the encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ActorId { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for the started encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("encounterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EncounterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of encounter that was started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("encounterType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EncounterType { get; set; } = default!;
-
-    /// <summary>
-    /// Number of participants in the encounter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("participantCount")]
-    public int ParticipantCount { get; set; } = default!;
-
-    /// <summary>
-    /// Timestamp when the encounter was started
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("startedAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset StartedAt { get; set; } = default!;
 
 }
 

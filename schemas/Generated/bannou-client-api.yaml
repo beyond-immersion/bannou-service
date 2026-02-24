@@ -46818,31 +46818,8 @@ components:
     StartEncounterResponse:
       type: object
       additionalProperties: false
-      description: Response after starting an encounter
-      required:
-      - actorId
-      - encounterId
-      - encounterType
-      - participantCount
-      - startedAt
-      properties:
-        actorId:
-          type: string
-          description: ID of the Event Brain actor managing the encounter
-        encounterId:
-          type: string
-          format: uuid
-          description: Unique identifier for the started encounter
-        encounterType:
-          type: string
-          description: Type of encounter that was started
-        participantCount:
-          type: integer
-          description: Number of participants in the encounter
-        startedAt:
-          type: string
-          format: date-time
-          description: Timestamp when the encounter was started
+      description: Empty response. HTTP 200 confirms the encounter was started.
+      properties: {}
     StartWatcherRequest:
       type: object
       additionalProperties: false

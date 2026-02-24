@@ -1461,14 +1461,7 @@ public class ActorServiceTests
             "actor/encounter/start",
             It.IsAny<StartEncounterRequest>(),
             It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new StartEncounterResponse
-            {
-                ActorId = "remote-actor-1",
-                EncounterId = request.EncounterId,
-                EncounterType = "combat",
-                ParticipantCount = 1,
-                StartedAt = DateTimeOffset.UtcNow
-            });
+            .ReturnsAsync(new StartEncounterResponse());
 
         // Act
         var (status, response) = await service.StartEncounterAsync(request, CancellationToken.None);

@@ -94,7 +94,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </remarks>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.connection.initialize",
             ActivityKind.Client);
@@ -166,7 +166,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </summary>
     public async Task<IChannel> GetChannelAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.channel.get",
             ActivityKind.Client);
@@ -348,7 +348,7 @@ public sealed class RabbitMQConnectionManager : IChannelManager
     /// </remarks>
     public async Task<IChannel> CreateConsumerChannelAsync(CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.channel.create_consumer",
             ActivityKind.Client);

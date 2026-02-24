@@ -68,6 +68,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ACTOR_PERCEPTION_FILTER_THRESHOLD` | double | `0.1` | Minimum urgency for perception to be processed (0.0-1.0) |
 | `ACTOR_PERCEPTION_MEMORY_THRESHOLD` | double | `0.7` | Minimum urgency for perception to become a memory (0.0-1.0) |
 | `ACTOR_PERCEPTION_QUEUE_SIZE` | int | `100` | Max perceptions queued per actor before dropping oldest |
+| `ACTOR_POOL_CONCURRENCY_MAX_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency operations... |
 | `ACTOR_POOL_HEALTH_CHECK_INTERVAL_SECONDS` | int | `15` | Interval in seconds between pool health check operations |
 | `ACTOR_POOL_HEALTH_MONITOR_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before pool health monitor starts checking ... |
 | `ACTOR_POOL_NODE_APP_ID` | string | **REQUIRED** | Mesh app-id for routing commands to this pool node. Required... |
@@ -370,6 +371,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CHAT_MESSAGE_RETENTION_BATCH_SIZE` | int | `500` | Maximum expired messages to delete per room per cleanup cycl... |
 | `CHAT_MESSAGE_RETENTION_CLEANUP_INTERVAL_MINUTES` | int | `360` | How often the background worker checks for expired persisten... |
 | `CHAT_MESSAGE_RETENTION_LOCK_EXPIRY_SECONDS` | int | `300` | Distributed lock expiry for message retention cleanup cycle |
+| `CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE` | int | `1000` | Maximum rooms per type to process per retention cleanup cycl... |
+| `CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS` | int | `1000` | Maximum room types with retention configuration to process p... |
 | `CHAT_MESSAGE_RETENTION_STARTUP_DELAY_SECONDS` | int | `60` | Initial delay before the message retention cleanup worker be... |
 | `CHAT_SERVER_SALT` | string | `bannou-dev-chat-salt-change-in-production` | Server salt for session shortcut GUID generation per IMPLEME... |
 | `CHAT_TYPING_TIMEOUT_SECONDS` | int | `5` | Seconds of inactivity before typing indicator auto-expires |
@@ -1202,9 +1205,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 915
+- **Total properties**: 918
 - **Required (no default)**: 54
-- **Optional (has default)**: 861
+- **Optional (has default)**: 864
 
 ## Environment Variable Naming Convention
 

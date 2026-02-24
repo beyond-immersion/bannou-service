@@ -223,6 +223,20 @@ public class ChatServiceConfiguration : BaseServiceConfiguration
     public int MessageRetentionLockExpirySeconds { get; set; } = 300;
 
     /// <summary>
+    /// Maximum room types with retention configuration to process per cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 10000)]
+    public int MessageRetentionMaxRoomTypeResults { get; set; } = 1000;
+
+    /// <summary>
+    /// Maximum rooms per type to process per retention cleanup cycle
+    /// Environment variable: CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 100000)]
+    public int MessageRetentionMaxRoomsPerType { get; set; } = 1000;
+
+    /// <summary>
     /// Seconds of inactivity before typing indicator auto-expires
     /// Environment variable: CHAT_TYPING_TIMEOUT_SECONDS
     /// </summary>

@@ -309,7 +309,7 @@ public sealed class MessageRetryBuffer : IRetryBuffer, IAsyncDisposable
             return;
         }
 
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.retry_buffer.process",
             ActivityKind.Internal);

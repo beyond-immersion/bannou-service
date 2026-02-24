@@ -65,7 +65,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         string? sourceExchange = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.tap.create",
             ActivityKind.Client);
@@ -217,7 +217,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
         DateTimeOffset tapCreatedAt,
         CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.tap.forward",
             ActivityKind.Producer);
@@ -367,7 +367,7 @@ public sealed class RabbitMQMessageTap : IMessageTap, IAsyncDisposable
     /// </summary>
     internal async Task RemoveTapAsync(Guid tapId)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.tap.remove",
             ActivityKind.Client);

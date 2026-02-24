@@ -132,7 +132,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         var effectiveMessageId = messageId ?? Guid.NewGuid();
 
         // Start telemetry activity for this publish operation
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.publish",
             ActivityKind.Producer);
@@ -389,7 +389,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         // Generate messageId upfront if not provided
         var effectiveMessageId = messageId ?? Guid.NewGuid();
 
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.publish_raw",
             ActivityKind.Producer);
@@ -497,7 +497,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
         Guid? correlationId = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.publish_error",
             ActivityKind.Producer);
@@ -649,7 +649,7 @@ public sealed class RabbitMQMessageBus : IMessageBus, IAsyncDisposable
     /// </summary>
     private async Task PublishBatchAsync(List<PendingPublish> batch, CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.publish_batch",
             ActivityKind.Producer);

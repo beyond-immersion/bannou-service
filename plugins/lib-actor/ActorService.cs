@@ -1610,16 +1610,7 @@ public partial class ActorService : IActorService
         _logger.LogInformation("Started encounter {EncounterId} on actor {ActorId} with {Count} participants",
             body.EncounterId, body.ActorId, body.Participants.Count);
 
-        var response = new StartEncounterResponse
-        {
-            ActorId = body.ActorId,
-            EncounterId = body.EncounterId,
-            EncounterType = body.EncounterType,
-            ParticipantCount = body.Participants.Count,
-            StartedAt = DateTimeOffset.UtcNow
-        };
-
-        return (StatusCodes.OK, response);
+        return (StatusCodes.OK, new StartEncounterResponse());
     }
 
     /// <summary>

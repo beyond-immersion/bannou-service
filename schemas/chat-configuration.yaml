@@ -206,6 +206,22 @@ x-service-configuration:
       maximum: 1800
       description: Distributed lock expiry for message retention cleanup cycle
 
+    MessageRetentionMaxRoomTypeResults:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_MAX_ROOM_TYPE_RESULTS
+      default: 1000
+      minimum: 10
+      maximum: 10000
+      description: Maximum room types with retention configuration to process per cleanup cycle
+
+    MessageRetentionMaxRoomsPerType:
+      type: integer
+      env: CHAT_MESSAGE_RETENTION_MAX_ROOMS_PER_TYPE
+      default: 1000
+      minimum: 10
+      maximum: 100000
+      description: Maximum rooms per type to process per retention cleanup cycle
+
     TypingTimeoutSeconds:
       type: integer
       env: CHAT_TYPING_TIMEOUT_SECONDS

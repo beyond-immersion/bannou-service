@@ -282,4 +282,11 @@ public class ActorServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 0)]
     public int MemoryStoreMaxRetries { get; set; } = 3;
 
+    /// <summary>
+    /// Maximum retry attempts for optimistic concurrency operations in pool management
+    /// Environment variable: ACTOR_POOL_CONCURRENCY_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int PoolConcurrencyMaxRetries { get; set; } = 3;
+
 }

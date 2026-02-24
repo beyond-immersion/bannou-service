@@ -205,7 +205,7 @@ public class MessageRetentionWorker : BackgroundService
             new() { Path = "$.Status", Operator = QueryOperator.Equals, Value = RoomTypeStatus.Active },
         };
 
-        var result = await roomTypeStore.JsonQueryPagedAsync(conditions, 0, 1000, cancellationToken: cancellationToken);
+        var result = await roomTypeStore.JsonQueryPagedAsync(conditions, 0, _configuration.MessageRetentionMaxRoomTypeResults, cancellationToken: cancellationToken);
         return result.Items.Select(r => r.Value).ToList();
     }
 
@@ -229,7 +229,7 @@ public class MessageRetentionWorker : BackgroundService
             new() { Path = "$.RoomTypeCode", Operator = QueryOperator.Equals, Value = roomType.Code },
         };
 
-        var rooms = await roomStore.JsonQueryPagedAsync(roomConditions, 0, 1000, cancellationToken: cancellationToken);
+        var rooms = await roomStore.JsonQueryPagedAsync(roomConditions, 0, _configuration.MessageRetentionMaxRoomsPerType, cancellationToken: cancellationToken);
         var totalDeleted = 0;
 
         foreach (var roomItem in rooms.Items)

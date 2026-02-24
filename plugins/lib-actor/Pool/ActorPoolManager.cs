@@ -383,7 +383,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         // Use optimistic concurrency to prevent lost updates from concurrent assignment
         // modifications (e.g., UpdateActorCharacterAsync racing with a status transition
         // on the same assignment record — the loser would overwrite the winner's field).
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
@@ -434,7 +434,7 @@ public sealed class ActorPoolManager : IActorPoolManager
 
         // Use optimistic concurrency to prevent lost updates from concurrent assignment
         // modifications (e.g., UpdateActorStatusAsync racing with UpdateActorCharacterAsync).
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
@@ -596,7 +596,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         using var activity = _telemetryProvider.StartActivity("bannou.actor", "ActorPoolManager.UpdateNodeLoad");
         var nodeStore = _stateStoreFactory.GetStore<PoolNodeState>(POOL_NODES_STORE);
 
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (node, etag) = await nodeStore.GetWithETagAsync(nodeId, ct);
@@ -654,7 +654,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         var store = _stateStoreFactory.GetStore<PoolNodeIndex>(POOL_NODES_STORE);
 
         // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (index, etag) = await store.GetWithETagAsync(NODE_INDEX_KEY, ct);
@@ -712,7 +712,7 @@ public sealed class ActorPoolManager : IActorPoolManager
         var store = _stateStoreFactory.GetStore<ActorIndex>(ACTOR_ASSIGNMENTS_STORE);
 
         // Optimistic concurrency: retry on conflict per IMPLEMENTATION TENETS
-        const int maxRetries = 3;
+        var maxRetries = _configuration.PoolConcurrencyMaxRetries;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
             var (index, etag) = await store.GetWithETagAsync(ACTOR_INDEX_KEY, ct);

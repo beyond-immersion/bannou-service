@@ -32541,25 +32541,8 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
-    /** @description Response after starting an encounter */
-    StartEncounterResponse: {
-      /** @description ID of the Event Brain actor managing the encounter */
-      actorId: string;
-      /**
-       * Format: uuid
-       * @description Unique identifier for the started encounter
-       */
-      encounterId: string;
-      /** @description Type of encounter that was started */
-      encounterType: string;
-      /** @description Number of participants in the encounter */
-      participantCount: number;
-      /**
-       * Format: date-time
-       * @description Timestamp when the encounter was started
-       */
-      startedAt: string;
-    };
+    /** @description Empty response. HTTP 200 confirms the encounter was started. */
+    StartEncounterResponse: Record<string, never>;
     /** @description Request to start a regional watcher */
     StartWatcherRequest: {
       /**

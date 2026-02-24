@@ -79,7 +79,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.subscribe",
             ActivityKind.Client);
@@ -135,7 +135,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume",
                     ActivityKind.Consumer,
@@ -212,7 +212,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         CancellationToken cancellationToken = default)
         where TEvent : class
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.subscribe_dynamic",
             ActivityKind.Client);
@@ -270,7 +270,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume",
                     ActivityKind.Consumer,
@@ -350,7 +350,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
         TimeSpan? queueTtl = null,
         CancellationToken cancellationToken = default)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.subscribe_dynamic_raw",
             ActivityKind.Client);
@@ -428,7 +428,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
                 var parentContext = ExtractTraceContext(ea.BasicProperties.Headers);
 
                 // Start telemetry activity for this consume operation
-                using var activity = _telemetryProvider?.StartActivity(
+                using var activity = _telemetryProvider.StartActivity(
                     TelemetryComponents.Messaging,
                     "messaging.consume.raw",
                     ActivityKind.Consumer,
@@ -503,7 +503,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// <inheritdoc/>
     public async Task UnsubscribeAsync(string topic)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.unsubscribe",
             ActivityKind.Client);
@@ -535,7 +535,7 @@ public sealed class RabbitMQMessageSubscriber : IMessageSubscriber, IAsyncDispos
     /// </summary>
     internal async Task RemoveDynamicSubscriptionAsync(Guid subscriptionId)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.remove_dynamic_subscription",
             ActivityKind.Client);

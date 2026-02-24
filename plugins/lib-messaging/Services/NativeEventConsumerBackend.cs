@@ -62,7 +62,7 @@ public sealed class NativeEventConsumerBackend : IHostedService
     /// <inheritdoc/>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Messaging,
             "messaging.event_consumer_backend.start",
             ActivityKind.Client);
