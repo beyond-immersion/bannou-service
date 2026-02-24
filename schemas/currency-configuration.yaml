@@ -19,11 +19,6 @@ x-service-configuration:
       env: CURRENCY_DEFAULT_ALLOW_NEGATIVE
       default: false
       description: Default for currencies that do not specify allowNegative
-    defaultPrecision:
-      $ref: 'currency-api.yaml#/components/schemas/CurrencyPrecision'
-      env: CURRENCY_DEFAULT_PRECISION
-      default: decimal_2
-      description: Default precision for currencies that do not specify
     autogainProcessingMode:
       $ref: 'currency-api.yaml#/components/schemas/AutogainProcessingMode'
       env: CURRENCY_AUTOGAIN_PROCESSING_MODE
@@ -31,31 +26,43 @@ x-service-configuration:
       description: How autogain is calculated (lazy = on-demand at query time, task = background processing)
     autogainTaskStartupDelaySeconds:
       type: integer
+      minimum: 0
+      maximum: 300
       env: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
       default: 15
       description: Delay in seconds before first autogain task cycle (allows services to start)
     autogainTaskIntervalMs:
       type: integer
+      minimum: 1000
+      maximum: 3600000
       env: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
       default: 60000
       description: For task mode - how often to process autogain in milliseconds
     autogainBatchSize:
       type: integer
+      minimum: 1
+      maximum: 100000
       env: CURRENCY_AUTOGAIN_BATCH_SIZE
       default: 1000
       description: For task mode - batch size per processing cycle
     transactionRetentionDays:
       type: integer
+      minimum: 1
+      maximum: 3650
       env: CURRENCY_TRANSACTION_RETENTION_DAYS
       default: 365
       description: How many days to retain detailed transaction history
     idempotencyTtlSeconds:
       type: integer
+      minimum: 1
+      maximum: 86400
       env: CURRENCY_IDEMPOTENCY_TTL_SECONDS
       default: 3600
       description: How long to cache idempotency keys in seconds
     holdMaxDurationDays:
       type: integer
+      minimum: 1
+      maximum: 365
       env: CURRENCY_HOLD_MAX_DURATION_DAYS
       default: 7
       description: Maximum duration for authorization holds in days
@@ -63,11 +70,15 @@ x-service-configuration:
     # Cache TTL Configuration
     balanceCacheTtlSeconds:
       type: integer
+      minimum: 1
+      maximum: 3600
       env: CURRENCY_BALANCE_CACHE_TTL_SECONDS
       default: 60
       description: TTL in seconds for balance cache entries
     holdCacheTtlSeconds:
       type: integer
+      minimum: 1
+      maximum: 3600
       env: CURRENCY_HOLD_CACHE_TTL_SECONDS
       default: 120
       description: TTL in seconds for hold cache entries
@@ -75,38 +86,59 @@ x-service-configuration:
     # Lock Timeout Configuration
     balanceLockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       env: CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for balance-level distributed locks
     holdLockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       env: CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for hold-level distributed locks
     walletLockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       env: CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for wallet-level distributed locks
     autogainLockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       env: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
       default: 10
       description: Timeout in seconds for autogain distributed locks
     indexLockTimeoutSeconds:
       type: integer
+      minimum: 1
+      maximum: 300
       env: CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS
       default: 15
       description: Timeout in seconds for index update distributed locks
 
     # Operation Configuration
+    indexLockMaxRetries:
+      type: integer
+      minimum: 1
+      maximum: 10
+      env: CURRENCY_INDEX_LOCK_MAX_RETRIES
+      default: 3
+      description: Maximum retry attempts for acquiring index update locks before logging an error
     exchangeRateUpdateMaxRetries:
       type: integer
+      minimum: 1
+      maximum: 10
       env: CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES
       default: 3
       description: Maximum retry attempts for exchange rate update with optimistic concurrency
     conversionRoundingPrecision:
       type: integer
+      minimum: 0
+      maximum: 28
       env: CURRENCY_CONVERSION_ROUNDING_PRECISION
       default: 8
       description: Number of decimal places for currency conversion rounding

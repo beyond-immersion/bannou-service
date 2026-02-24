@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Xml;
+using static BeyondImmersion.BannouService.Currency.CurrencyKeys;
 
 namespace BeyondImmersion.BannouService.Currency.Services;
 
@@ -22,13 +23,7 @@ public class CurrencyAutogainTaskService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<CurrencyAutogainTaskService> _logger;
     private readonly CurrencyServiceConfiguration _configuration;
-
-    // Key prefixes matching CurrencyService constants
-    private const string DEF_PREFIX = "def:";
-    private const string ALL_DEFS_KEY = "all-defs";
-    private const string BALANCE_PREFIX = "bal:";
-    private const string BALANCE_CURRENCY_INDEX = "bal-currency:";
-    private const string WALLET_PREFIX = "wallet:";
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new CurrencyAutogainTaskService.
@@ -36,11 +31,13 @@ public class CurrencyAutogainTaskService : BackgroundService
     public CurrencyAutogainTaskService(
         IServiceProvider serviceProvider,
         ILogger<CurrencyAutogainTaskService> logger,
-        CurrencyServiceConfiguration configuration)
+        CurrencyServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -102,6 +99,7 @@ public class CurrencyAutogainTaskService : BackgroundService
     /// </summary>
     private async Task ProcessAutogainCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessAutogainCycleAsync");
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
@@ -155,6 +153,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         IDistributedLockProvider lockProvider,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessAutogainForCurrencyAsync");
         var balanceStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.CurrencyBalances);
         var balanceStore = stateStoreFactory.GetStore<BalanceModel>(StateStoreDefinitions.CurrencyBalances);
         var walletStore = stateStoreFactory.GetStore<WalletModel>(StateStoreDefinitions.CurrencyWallets);
@@ -199,14 +198,16 @@ public class CurrencyAutogainTaskService : BackgroundService
         IDistributedLockProvider lockProvider,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.ProcessSingleBalanceAutogainAsync");
         try
         {
             var balanceKey = $"{BALANCE_PREFIX}{walletId}:{definition.DefinitionId}";
 
-            // Acquire lock to prevent concurrent modification with lazy autogain path
+            // Acquire the balance lock (same lock used by credit/debit/transfer) to prevent
+            // race conditions where autogain save overwrites concurrent balance modifications
             await using var lockResponse = await lockProvider.LockAsync(
-                "currency-autogain", $"{walletId}:{definition.DefinitionId}",
-                Guid.NewGuid().ToString(), _configuration.AutogainLockTimeoutSeconds, cancellationToken);
+                "currency-balance", $"{walletId}:{definition.DefinitionId}",
+                Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
 
             if (!lockResponse.Success)
                 return false; // Skip this balance, will be processed next cycle
@@ -229,7 +230,12 @@ public class CurrencyAutogainTaskService : BackgroundService
 
             TimeSpan interval;
             try { interval = XmlConvert.ToTimeSpan(definition.AutogainInterval); }
-            catch { return false; }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Invalid autogain interval '{Interval}' for currency {CurrencyId}",
+                    definition.AutogainInterval, definition.DefinitionId);
+                return false;
+            }
 
             if (interval.TotalSeconds <= 0) return false;
 
@@ -273,14 +279,20 @@ public class CurrencyAutogainTaskService : BackgroundService
 
             // Get wallet for owner info in event
             var wallet = await walletStore.GetAsync($"{WALLET_PREFIX}{walletId}", cancellationToken);
+            if (wallet is null)
+            {
+                _logger.LogError("Wallet {WalletId} not found during autogain processing for currency {CurrencyId}",
+                    walletId, definition.DefinitionId);
+                return true; // Balance was saved successfully, just can't publish event
+            }
 
             await messageBus.TryPublishAsync("currency.autogain.calculated", new CurrencyAutogainCalculatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 WalletId = balance.WalletId,
-                OwnerId = wallet?.OwnerId ?? Guid.Empty,
-                OwnerType = wallet?.OwnerType ?? WalletOwnerType.Account,
+                OwnerId = wallet.OwnerId,
+                OwnerType = wallet.OwnerType,
                 CurrencyDefinitionId = balance.CurrencyDefinitionId,
                 CurrencyCode = definition.Code,
                 PreviousBalance = previousBalance,
@@ -297,7 +309,7 @@ public class CurrencyAutogainTaskService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error processing autogain for wallet {WalletId}, currency {CurrencyId}",
+            _logger.LogError(ex, "Error processing autogain for wallet {WalletId}, currency {CurrencyId}",
                 walletId, definition.DefinitionId);
             return false;
         }
@@ -308,6 +320,7 @@ public class CurrencyAutogainTaskService : BackgroundService
     /// </summary>
     private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyAutogainTaskService.TryPublishErrorAsync");
         try
         {
             using var scope = _serviceProvider.CreateScope();

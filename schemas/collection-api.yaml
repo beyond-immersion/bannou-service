@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: Collection Service API
   version: 1.0.0
@@ -33,6 +33,17 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
+  # Resource reference tracking (see SCHEMA-RULES.md "x-references")
+  # Collections can be owned by characters. When a character is deleted,
+  # lib-resource coordinates cleanup of character-owned collections.
+  x-references:
+    - target: character
+      sourceType: collection
+      field: ownerId
+      onDelete: cascade
+      cleanup:
+        endpoint: /collection/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
 x-service-layer: GameFoundation
 
 servers:
@@ -598,6 +609,39 @@ paths:
         '409':
           description: Already at max discovery level
 
+  # ===========================================================================
+  # Resource Cleanup (lib-resource callbacks)
+  # ===========================================================================
+
+  /collection/cleanup-by-character:
+    post:
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      summary: Cleanup all collections for a deleted character
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes all collections owned by the specified characterId, including
+        their inventory containers, cache entries, and publishes collection.deleted
+        lifecycle events.
+        This endpoint is designed for internal service-to-service calls during
+        cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
 components:
   schemas:
     # ==========================================================================
@@ -708,6 +752,7 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique code within this collection type and game service
         collectionType:
@@ -719,6 +764,8 @@ components:
           description: Game service this entry template is scoped to
         displayName:
           type: string
+          minLength: 1
+          maxLength: 256
           description: Human-readable display name for this entry
         category:
           type: string
@@ -1058,6 +1105,8 @@ components:
           description: Entity that owns this collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator (e.g., account, character)
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -1093,6 +1142,8 @@ components:
           description: Entity to list collections for
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1136,6 +1187,8 @@ components:
           description: Entity that owns this collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -1190,6 +1243,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1197,13 +1252,17 @@ components:
           description: Game service scope
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry template code to grant
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to grant into
         metadata:
-          $ref: '#/components/schemas/EntryMetadata'
+          nullable: true
           description: Optional initial metadata for the unlocked entry
+          allOf:
+          - $ref: '#/components/schemas/EntryMetadata'
 
     GrantEntryResponse:
       type: object
@@ -1257,6 +1316,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1264,6 +1325,8 @@ components:
           description: Game service scope
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry template code to check
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -1378,8 +1441,10 @@ components:
           format: date-time
           description: When this entry was unlocked
         metadata:
-          $ref: '#/components/schemas/EntryMetadata'
-          description: Entry instance metadata
+          nullable: true
+          description: Entry instance metadata (null if no metadata was provided at grant time)
+          allOf:
+          - $ref: '#/components/schemas/EntryMetadata'
 
     UpdateEntryMetadataRequest:
       type: object
@@ -1395,6 +1460,8 @@ components:
           description: Collection containing the entry
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry code to update metadata for
         playCount:
           type: integer
@@ -1434,6 +1501,8 @@ components:
           description: Entity that owns the collection
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1514,6 +1583,8 @@ components:
           description: Entity whose collection to search
         ownerType:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1524,6 +1595,8 @@ components:
           description: Type of collection to select content from
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to select content for
 
     ContentSelectionResponse:
@@ -1578,6 +1651,8 @@ components:
       properties:
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to configure (unique per game service and collection type)
         gameServiceId:
           type: string
@@ -1594,6 +1669,8 @@ components:
           description: Theme tags for this area (matched against collection entry themes)
         defaultEntryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Default entry code to use when no matches are found
 
     GetAreaContentConfigRequest:
@@ -1607,6 +1684,8 @@ components:
       properties:
         areaCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Area code to look up
         gameServiceId:
           type: string
@@ -1708,6 +1787,8 @@ components:
           description: Collection containing the entry
         entryCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Entry code to advance discovery for
 
     AdvanceDiscoveryResponse:
@@ -1730,3 +1811,31 @@ components:
           items:
             type: string
           description: Information keys revealed at the new level
+
+    # ==========================================================================
+    # Resource Cleanup Models
+    # ==========================================================================
+
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to clean up all collections owned by a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: The character ID whose collections should be cleaned up
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Result of character collection cleanup
+      additionalProperties: false
+      required:
+      - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          description: Number of collections deleted
+          minimum: 0

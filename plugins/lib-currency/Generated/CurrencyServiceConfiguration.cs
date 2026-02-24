@@ -58,12 +58,6 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     public bool DefaultAllowNegative { get; set; } = false;
 
     /// <summary>
-    /// Default precision for currencies that do not specify
-    /// Environment variable: CURRENCY_DEFAULT_PRECISION
-    /// </summary>
-    public CurrencyPrecision DefaultPrecision { get; set; } = CurrencyPrecision.Decimal2;
-
-    /// <summary>
     /// How autogain is calculated (lazy = on-demand at query time, task = background processing)
     /// Environment variable: CURRENCY_AUTOGAIN_PROCESSING_MODE
     /// </summary>
@@ -73,90 +67,112 @@ public class CurrencyServiceConfiguration : BaseServiceConfiguration
     /// Delay in seconds before first autogain task cycle (allows services to start)
     /// Environment variable: CURRENCY_AUTOGAIN_TASK_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
     public int AutogainTaskStartupDelaySeconds { get; set; } = 15;
 
     /// <summary>
     /// For task mode - how often to process autogain in milliseconds
     /// Environment variable: CURRENCY_AUTOGAIN_TASK_INTERVAL_MS
     /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 3600000)]
     public int AutogainTaskIntervalMs { get; set; } = 60000;
 
     /// <summary>
     /// For task mode - batch size per processing cycle
     /// Environment variable: CURRENCY_AUTOGAIN_BATCH_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int AutogainBatchSize { get; set; } = 1000;
 
     /// <summary>
     /// How many days to retain detailed transaction history
     /// Environment variable: CURRENCY_TRANSACTION_RETENTION_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3650)]
     public int TransactionRetentionDays { get; set; } = 365;
 
     /// <summary>
     /// How long to cache idempotency keys in seconds
     /// Environment variable: CURRENCY_IDEMPOTENCY_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 86400)]
     public int IdempotencyTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// Maximum duration for authorization holds in days
     /// Environment variable: CURRENCY_HOLD_MAX_DURATION_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 365)]
     public int HoldMaxDurationDays { get; set; } = 7;
 
     /// <summary>
     /// TTL in seconds for balance cache entries
     /// Environment variable: CURRENCY_BALANCE_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
     public int BalanceCacheTtlSeconds { get; set; } = 60;
 
     /// <summary>
     /// TTL in seconds for hold cache entries
     /// Environment variable: CURRENCY_HOLD_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 3600)]
     public int HoldCacheTtlSeconds { get; set; } = 120;
 
     /// <summary>
     /// Timeout in seconds for balance-level distributed locks
     /// Environment variable: CURRENCY_BALANCE_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int BalanceLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds for hold-level distributed locks
     /// Environment variable: CURRENCY_HOLD_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int HoldLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds for wallet-level distributed locks
     /// Environment variable: CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int WalletLockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout in seconds for autogain distributed locks
     /// Environment variable: CURRENCY_AUTOGAIN_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int AutogainLockTimeoutSeconds { get; set; } = 10;
 
     /// <summary>
     /// Timeout in seconds for index update distributed locks
     /// Environment variable: CURRENCY_INDEX_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int IndexLockTimeoutSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum retry attempts for acquiring index update locks before logging an error
+    /// Environment variable: CURRENCY_INDEX_LOCK_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int IndexLockMaxRetries { get; set; } = 3;
 
     /// <summary>
     /// Maximum retry attempts for exchange rate update with optimistic concurrency
     /// Environment variable: CURRENCY_EXCHANGE_RATE_UPDATE_MAX_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
     public int ExchangeRateUpdateMaxRetries { get; set; } = 3;
 
     /// <summary>
     /// Number of decimal places for currency conversion rounding
     /// Environment variable: CURRENCY_CONVERSION_ROUNDING_PRECISION
     /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 28)]
     public int ConversionRoundingPrecision { get; set; } = 8;
 
 }

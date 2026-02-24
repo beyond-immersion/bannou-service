@@ -56,7 +56,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
 | [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
 | [Collection](#collection-status) | L2 | 78% | 4 | All 20 endpoints done. 4 bugs: grant bypasses limits, cleanup missing events, update ignores fields. |
-| [Currency](#currency-status) | L2 | 78% | 0 | Core economy solid. 8 stubs: hold expiration, currency expiration, analytics, pruning. |
+| [Currency](#currency-status) | L2 | 85% | 0 | Production-hardened (7 bugs fixed, T25/T30 compliant). 8 stubs remain: hold expiration, currency expiration, analytics, pruning. |
 | [Game Service](#game-service-status) | L2 | 93% | 0 | Minimal, feature-complete registry. All 5 endpoints done. Only metadata validation remains. |
 | [Game Session](#game-session-status) | L2 | 72% | 0 | Core lobby/matchmade flows work. L2→L3 Voice violation, 3 stubs, 7 design considerations. |
 | [Inventory](#inventory-status) | L2 | 80% | 0 | Core container ops work. Grid collision, weight propagation, RemoveItem cleanup stubbed. |
@@ -583,17 +583,17 @@ gh issue list --search "Collection:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [CURRENCY.md](plugins/CURRENCY.md)
 
-### Production Readiness: 78%
+### Production Readiness: 85%
 
-Core currency operations are comprehensive and production-hardened: definitions, wallets, balance operations (credit/debit/transfer with idempotency and distributed locks), authorization holds (reserve/capture/release), exchange rate conversions with compensating transactions, and escrow integration endpoints all work. The autogain background worker is functional. However, 8 stubs represent significant gaps: both analytics endpoints return all zeros, currency expiration and hold expiration have no enforcement mechanism, global supply cap is not checked, item linkage is not enforced, EarnCapResetTime is ignored, and transaction retention cleanup only filters at query time (never deletes).
+Core currency operations are comprehensive and production-hardened after a thorough audit (2026-02-24): 7 bugs fixed (autogain race condition, metadata drop, sentinel values, TOCTOU, index failures), full T25 type safety (no Guid.Parse/ToString in helpers), T30 telemetry on all 25 async methods, schema NRT + validation compliance, dead code/config removed. Definitions, wallets, balance operations (credit/debit/transfer with idempotency and distributed locks), authorization holds (reserve/capture/release), exchange rate conversions, and escrow integration endpoints all work. The 8 remaining stubs are the gap to 100%: analytics endpoints return zeros, currency/hold expiration have no enforcement, global supply cap unchecked, item linkage unenforced, EarnCapResetTime ignored, transaction retention never deletes.
 
 ### Bug Count: 0
 
-No known bugs.
+7 bugs found and fixed during 2026-02-24 audit. No known remaining bugs.
 
 ### Top 3 Bugs
 
-*(None)*
+*(None -- 7 fixed on 2026-02-24)*
 
 ### Top 3 Enhancements
 

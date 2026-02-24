@@ -4,17 +4,19 @@ info:
   description: |
     Event subscription and publication declarations for Collection service.
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
-    for both CollectionEntryTemplate and Collection entities.
+    for CollectionEntryTemplate, CollectionAreaContentConfig, and Collection entities.
     Custom events cover entry unlock outcomes, milestones, and discovery advancement.
 
     **Event Categories**:
     - Entry template lifecycle: created, updated, deleted (auto-generated)
+    - Area content config lifecycle: created, updated, deleted (auto-generated)
     - Collection instance lifecycle: created, deleted (auto-generated; updated omitted — collections are immutable after creation)
     - Entry events: unlocked, grant-failed, milestone-reached, discovery-advanced
 
     **Consumed Events**:
-    - character.deleted: Cleanup character-owned collections
-    - account.deleted: Cleanup account-owned collections
+    - account.deleted: Cleanup account-owned collections (Account exempt from lib-resource per FOUNDATION TENETS)
+    Note: Character cleanup uses lib-resource (x-references in collection-api.yaml),
+    not event subscription, per FOUNDATION TENETS.
 
     **Topic Naming**: Uses dot-separated format (collection.entry-unlocked).
 
@@ -25,9 +27,6 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    - topic: character.deleted
-      event: CharacterDeletedEvent
-      handler: HandleCharacterDeleted
     - topic: account.deleted
       event: AccountDeletedEvent
       handler: HandleAccountDeleted
@@ -50,6 +49,17 @@ info:
     - topic: collection.deleted
       event: CollectionDeletedEvent
       description: Published when a collection instance is deleted
+
+    # Area content config lifecycle events (auto-generated from x-lifecycle)
+    - topic: collection-area-content-config.created
+      event: CollectionAreaContentConfigCreatedEvent
+      description: Published when an area content config is created
+    - topic: collection-area-content-config.updated
+      event: CollectionAreaContentConfigUpdatedEvent
+      description: Published when an area content config is updated
+    - topic: collection-area-content-config.deleted
+      event: CollectionAreaContentConfigDeletedEvent
+      description: Published when an area content config is deleted
 
     # Custom events
     - topic: collection.entry-unlocked
@@ -80,6 +90,17 @@ x-lifecycle:
       itemTemplateId: { type: string, format: uuid, required: true, description: "Item template used when granting this entry" }
       createdAt: { type: string, format: date-time, required: true, description: "When this entry template was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "When this entry template was last updated" }
+    sensitive: []
+
+  CollectionAreaContentConfig:
+    model:
+      areaConfigId: { type: string, format: uuid, primary: true, required: true, description: "Unique area content config identifier" }
+      areaCode: { type: string, required: true, description: "Area code this config applies to" }
+      collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection this config applies to" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this config is scoped to" }
+      defaultEntryCode: { type: string, required: true, description: "Default entry code when no matches found" }
+      createdAt: { type: string, format: date-time, required: true, description: "When this config was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "When this config was last updated" }
     sensitive: []
 
   Collection:
@@ -119,7 +140,7 @@ components:
       - collectionType
       - entryCode
       - displayName
-      - category
+      - isFirstGlobal
       properties:
         eventId:
           type: string

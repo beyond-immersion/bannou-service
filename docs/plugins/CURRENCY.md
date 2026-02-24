@@ -436,7 +436,13 @@ Escrow Integration Flow
 
 ### Bugs
 
-No bugs identified. All enum types are stored as proper enums in models; string conversions occur only for composite state store key construction (which is acceptable per IMPLEMENTATION TENETS).
+1. ~~**Transaction metadata silently dropped**: `RecordTransactionAsync` accepted metadata parameter but never stored it in `TransactionModel` or mapped it to response~~: **FIXED** (2026-02-24) - Added `Metadata` field to `TransactionModel`, assigned in `RecordTransactionAsync`, mapped in `MapTransactionToRecord`.
+2. ~~**Lazy autogain race condition**: `ApplyAutogainIfNeededAsync` used `"currency-autogain"` lock while credit/debit used `"currency-balance"` lock, allowing concurrent balance modifications to overwrite each other~~: **FIXED** (2026-02-24) - Unified on `"currency-balance"` lock with read-after-lock pattern.
+3. ~~**Guid.Empty sentinel in autogain events**: `CurrencyAutogainTaskService` used `Guid.Empty` and `WalletOwnerType.Account` as fallbacks when wallet lookup failed~~: **FIXED** (2026-02-24) - Added null check; logs error and skips event if wallet missing.
+4. ~~**Hardcoded "base" in exchange rate events**: `UpdateExchangeRateAsync` hardcoded `BaseCurrencyCode = "base"` instead of looking up the actual base currency~~: **FIXED** (2026-02-24) - Added `FindBaseCurrencyCodeAsync` to scan definitions.
+5. ~~**Silent index lock failures**: `AddToListAsync` and `RemoveFromListAsync` silently returned on lock failure, causing permanent index inconsistency~~: **FIXED** (2026-02-24) - Added retry loop (3 attempts) with Error-level logging on final failure.
+6. ~~**CaptureHold TOCTOU**: Hold read before lock acquisition allowed concurrent captures to race~~: **FIXED** (2026-02-24) - Moved lock acquisition before hold read.
+7. ~~**GetOrCreateWallet race condition**: Two concurrent calls could both fail to find existing wallet, then one succeeds and the other returns Conflict instead of the existing wallet~~: **FIXED** (2026-02-24) - On Conflict from CreateWallet, re-reads existing wallet and returns it.
 
 ### Intentional Quirks
 
@@ -471,6 +477,10 @@ No bugs identified. All enum types are stored as proper enums in models; string 
 ## Work Tracking
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
+
+### Completed
+
+- **2026-02-24**: Production hardening audit - Fixed 7 bugs (metadata drop, autogain race condition, Guid.Empty sentinel, hardcoded "base" code, silent index failures, CaptureHold TOCTOU, GetOrCreateWallet race). Schema NRT compliance + validation keywords. T25 type safety refactor (eliminated all Guid.Parse/ToString in helpers). T30 telemetry spans on all 25 async methods. Removed dead config (DefaultPrecision), dead code (InvalidateHoldCacheAsync), consolidated duplicate constants into shared CurrencyKeys class. Removed duplicate InternalsVisibleTo attributes.
 
 ### Pending Design
 

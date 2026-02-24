@@ -143,6 +143,119 @@ components:
           type: string
           nullable: true
           description: Optional reason for deletion (e.g., "Merged into {targetId}")
+    CollectionAreaContentConfigCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-area-content-config.created when a collectionareacontentconfig is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - areaConfigId
+      - areaCode
+      - collectionType
+      - gameServiceId
+      - defaultEntryCode
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection-area-content-config.created
+          description: 'Event type identifier: collection-area-content-config.created'
+        areaConfigId: &id011
+          type: string
+          format: uuid
+          description: "Unique area content config identifier"
+        areaCode: &id012
+          type: string
+          description: "Area code this config applies to"
+        collectionType: &id013
+          $ref: ../collection-api.yaml#/components/schemas/CollectionType
+          description: "Type of collection this config applies to"
+        gameServiceId: &id014
+          type: string
+          format: uuid
+          description: "Game service this config is scoped to"
+        defaultEntryCode: &id015
+          type: string
+          description: "Default entry code when no matches found"
+        createdAt: &id016
+          type: string
+          format: date-time
+          description: "When this config was created"
+        updatedAt: &id017
+          type: string
+          format: date-time
+          nullable: true
+          description: "When this config was last updated"
+    CollectionAreaContentConfigUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-area-content-config.updated when a collectionareacontentconfig is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - areaConfigId
+      - areaCode
+      - collectionType
+      - gameServiceId
+      - defaultEntryCode
+      - createdAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: collection-area-content-config.updated
+          description: 'Event type identifier: collection-area-content-config.updated'
+        areaConfigId: *id011
+        areaCode: *id012
+        collectionType: *id013
+        gameServiceId: *id014
+        defaultEntryCode: *id015
+        createdAt: *id016
+        updatedAt: *id017
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    CollectionAreaContentConfigDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to collection-area-content-config.deleted when a collectionareacontentconfig is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - areaConfigId
+      - areaCode
+      - collectionType
+      - gameServiceId
+      - defaultEntryCode
+      - createdAt
+      properties:
+        eventName:
+          type: string
+          default: collection-area-content-config.deleted
+          description: 'Event type identifier: collection-area-content-config.deleted'
+        areaConfigId: *id011
+        areaCode: *id012
+        collectionType: *id013
+        gameServiceId: *id014
+        defaultEntryCode: *id015
+        createdAt: *id016
+        updatedAt: *id017
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")
     CollectionCreatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -165,29 +278,29 @@ components:
           type: string
           default: collection.created
           description: 'Event type identifier: collection.created'
-        collectionId: &id011
+        collectionId: &id018
           type: string
           format: uuid
           description: "Unique collection instance identifier"
-        ownerId: &id012
+        ownerId: &id019
           type: string
           format: uuid
           description: "Entity that owns this collection"
-        ownerType: &id013
+        ownerType: &id020
           type: string
           description: "Entity type discriminator"
-        collectionType: &id014
+        collectionType: &id021
           $ref: ../collection-api.yaml#/components/schemas/CollectionType
           description: "Type of collection"
-        gameServiceId: &id015
+        gameServiceId: &id022
           type: string
           format: uuid
           description: "Game service this collection is scoped to"
-        containerId: &id016
+        containerId: &id023
           type: string
           format: uuid
           description: "Inventory container holding unlocked entry items"
-        createdAt: &id017
+        createdAt: &id024
           type: string
           format: date-time
           description: "When this collection was created"
@@ -214,13 +327,13 @@ components:
           type: string
           default: collection.updated
           description: 'Event type identifier: collection.updated'
-        collectionId: *id011
-        ownerId: *id012
-        ownerType: *id013
-        collectionType: *id014
-        gameServiceId: *id015
-        containerId: *id016
-        createdAt: *id017
+        collectionId: *id018
+        ownerId: *id019
+        ownerType: *id020
+        collectionType: *id021
+        gameServiceId: *id022
+        containerId: *id023
+        createdAt: *id024
         changedFields:
           type: array
           items:
@@ -248,13 +361,13 @@ components:
           type: string
           default: collection.deleted
           description: 'Event type identifier: collection.deleted'
-        collectionId: *id011
-        ownerId: *id012
-        ownerType: *id013
-        collectionType: *id014
-        gameServiceId: *id015
-        containerId: *id016
-        createdAt: *id017
+        collectionId: *id018
+        ownerId: *id019
+        ownerType: *id020
+        collectionType: *id021
+        gameServiceId: *id022
+        containerId: *id023
+        createdAt: *id024
         deletedReason:
           type: string
           nullable: true

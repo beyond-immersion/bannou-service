@@ -303,6 +303,7 @@ public class CurrencyConversionConcurrencyTests
     private readonly Mock<ILogger<CurrencyService>> _mockLogger;
     private readonly CurrencyServiceConfiguration _configuration;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // Typed stores
     private readonly Mock<IStateStore<WalletModel>> _mockWalletStore;
@@ -331,6 +332,7 @@ public class CurrencyConversionConcurrencyTests
         _mockLogger = new Mock<ILogger<CurrencyService>>();
         _configuration = new CurrencyServiceConfiguration();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Initialize stores
         _mockWalletStore = new Mock<IStateStore<WalletModel>>();
@@ -408,7 +410,8 @@ public class CurrencyConversionConcurrencyTests
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object);
     }
 
     private WalletModel CreateTestWallet()
@@ -534,7 +537,7 @@ public class CurrencyConversionConcurrencyTests
         var (status, response) = await service.ExecuteConversionAsync(request);
 
         // Assert - should be rejected before any debit occurs
-        Assert.Equal((StatusCodes)422, status);
+        Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
 
         // Verify no balance lock was acquired (debit never started)

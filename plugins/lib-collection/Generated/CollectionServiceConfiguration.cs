@@ -55,36 +55,42 @@ public class CollectionServiceConfiguration : BaseServiceConfiguration
     /// Maximum number of collections a single owner entity can have
     /// Environment variable: COLLECTION_MAX_COLLECTIONS_PER_OWNER
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxCollectionsPerOwner { get; set; } = 20;
 
     /// <summary>
     /// Maximum number of unlocked entries per collection instance
     /// Environment variable: COLLECTION_MAX_ENTRIES_PER_COLLECTION
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxEntriesPerCollection { get; set; } = 500;
 
     /// <summary>
     /// Distributed lock TTL for collection mutations in seconds
     /// Environment variable: COLLECTION_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Redis TTL for collection state cache in seconds
     /// Environment variable: COLLECTION_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int CollectionCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// Default page size for paginated queries
     /// Environment variable: COLLECTION_DEFAULT_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int DefaultPageSize { get; set; } = 20;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency conflicts
     /// Environment variable: COLLECTION_MAX_CONCURRENCY_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int MaxConcurrencyRetries { get; set; } = 3;
 
 }

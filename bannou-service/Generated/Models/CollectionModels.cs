@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Collection;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Collection;
 
@@ -154,9 +169,9 @@ public partial class CreateEntryTemplateRequest
     /// Unique code within this collection type and game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -179,8 +194,9 @@ public partial class CreateEntryTemplateRequest
     /// Human-readable display name for this entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -649,8 +665,9 @@ public partial class CreateCollectionRequest
     /// Entity type discriminator (e.g., account, character)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -707,8 +724,9 @@ public partial class ListCollectionsRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -763,8 +781,9 @@ public partial class CollectionResponse
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -843,8 +862,9 @@ public partial class GrantEntryRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -859,8 +879,9 @@ public partial class GrantEntryRequest
     /// Entry template code to grant
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -875,7 +896,7 @@ public partial class GrantEntryRequest
     /// Optional initial metadata for the unlocked entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public EntryMetadata Metadata { get; set; } = default!;
+    public EntryMetadata? Metadata { get; set; } = default!;
 
 }
 
@@ -953,8 +974,9 @@ public partial class HasEntryRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -969,8 +991,9 @@ public partial class HasEntryRequest
     /// Entry template code to check
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -1135,10 +1158,10 @@ public partial class UnlockedEntryResponse
     public System.DateTimeOffset UnlockedAt { get; set; } = default!;
 
     /// <summary>
-    /// Entry instance metadata
+    /// Entry instance metadata (null if no metadata was provided at grant time)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public EntryMetadata Metadata { get; set; } = default!;
+    public EntryMetadata? Metadata { get; set; } = default!;
 
 }
 
@@ -1161,8 +1184,9 @@ public partial class UpdateEntryMetadataRequest
     /// Entry code to update metadata for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -1216,8 +1240,9 @@ public partial class GetCompletionStatsRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -1325,8 +1350,9 @@ public partial class SelectContentForAreaRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string OwnerType { get; set; } = default!;
 
     /// <summary>
@@ -1349,8 +1375,9 @@ public partial class SelectContentForAreaRequest
     /// Area code to select content for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
 }
@@ -1423,8 +1450,9 @@ public partial class SetAreaContentConfigRequest
     /// Area code to configure (unique per game service and collection type)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
     /// <summary>
@@ -1456,8 +1484,9 @@ public partial class SetAreaContentConfigRequest
     /// Default entry code to use when no matches are found
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string DefaultEntryCode { get; set; } = default!;
 
 }
@@ -1473,8 +1502,9 @@ public partial class GetAreaContentConfigRequest
     /// Area code to look up
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
     /// <summary>
@@ -1627,8 +1657,9 @@ public partial class AdvanceDiscoveryRequest
     /// Entry code to advance discovery for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
 }
@@ -1661,6 +1692,39 @@ public partial class AdvanceDiscoveryResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Reveals { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to clean up all collections owned by a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// The character ID whose collections should be cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of character collection cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Number of collections deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int DeletedCount { get; set; } = default!;
 
 }
 
