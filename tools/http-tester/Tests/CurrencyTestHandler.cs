@@ -124,7 +124,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
     private static async Task<WalletResponse> CreateTestWalletAsync(
         ICurrencyClient currencyClient,
         string suffix,
-        WalletOwnerType ownerType = WalletOwnerType.Account)
+        EntityType ownerType = EntityType.Account)
     {
         return await currencyClient.CreateWalletAsync(new CreateWalletRequest
         {

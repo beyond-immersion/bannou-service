@@ -491,6 +491,7 @@ Contract Binding Patterns
 
 1. ~~**Unbound event not implemented**~~: **FIXED** (2026-01-31) - Added `/item/instance/unbind` endpoint with admin-only permission. Clears `BoundToId` and `BoundAt`, publishes `ItemInstanceUnboundEvent` with reason and previous character ID. Returns BadRequest if item is not bound.
 2. **Deprecation without cascade**: Deprecating a template doesn't automatically migrate, disable, or destroy existing instances. Admin must manage instances separately.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/486 -->
 
 ---
 
