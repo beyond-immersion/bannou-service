@@ -13742,7 +13742,7 @@ export interface components {
        */
       characterId: string;
       /** @description Type of binding to apply */
-      bindType?: components['schemas']['SoulboundType'];
+      bindType: components['schemas']['SoulboundType'];
     };
     /** @description Request to bind a Git repository for automatic documentation sync */
     BindRepositoryRequest: {
@@ -17663,11 +17663,11 @@ export interface components {
       rotated?: boolean | null;
       /** @description Initial durability (defaults to template's maxDurability) */
       currentDurability?: number | null;
-      /** @description Instance-specific stat modifications */
+      /** @description Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description Player-assigned custom name */
       customName?: string | null;
-      /** @description Any other instance-specific data */
+      /** @description Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /** @description How this item instance was created */
       originType: components['schemas']['ItemOriginType'];
@@ -17760,15 +17760,15 @@ export interface components {
       scope: components['schemas']['ItemScope'];
       /** @description Realm IDs where this template is available (for realm_specific or multi_realm) */
       availableRealms?: string[] | null;
-      /** @description Game-defined stats (e.g., attack, defense) */
+      /** @description Game-defined stats (e.g., attack, defense). Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description Game-defined effects (e.g., on_use, on_equip) */
+      /** @description Game-defined effects (e.g., on_use, on_equip). Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description Game-defined requirements (e.g., level, strength) */
+      /** @description Game-defined requirements (e.g., level, strength). Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description Display properties (e.g., iconId, modelId) */
+      /** @description Display properties (e.g., iconId, modelId). Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description Any other game-specific data */
+      /** @description Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /**
        * Format: uuid
@@ -19129,24 +19129,22 @@ export interface components {
        * @description Instance ID to destroy
        */
       instanceId: string;
-      /** @description Reason for destruction (consumed, destroyed, expired, admin) */
-      reason: string;
+      /** @description Reason for destruction */
+      reason: components['schemas']['DestroyReason'];
     };
     /** @description Response after destroying an item instance */
     DestroyItemInstanceResponse: {
-      /** @description Whether destruction was successful */
-      destroyed: boolean;
       /**
        * Format: uuid
-       * @description Destroyed instance ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Template of destroyed instance
+       * @description Template of the destroyed instance
        */
       templateId: string;
     };
+    /**
+     * @description Reason for destroying an item instance
+     * @enum {string}
+     */
+    DestroyReason: 'consumed' | 'destroyed' | 'expired' | 'admin';
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
       /** @description Category of the device */
@@ -24133,11 +24131,11 @@ export interface components {
        * @description When item was bound
        */
       boundAt?: string | null;
-      /** @description Instance-specific stat modifications */
+      /** @description Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description Player-assigned custom name */
       customName?: string | null;
-      /** @description Other instance-specific data */
+      /** @description Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /** @description How this item instance was created */
       originType: components['schemas']['ItemOriginType'];
@@ -24221,9 +24219,9 @@ export interface components {
       /** @description Game-defined subcategory */
       subcategory?: string | null;
       /** @description Filtering tags */
-      tags?: string[];
+      tags: string[];
       /** @description Item rarity tier */
-      rarity?: components['schemas']['ItemRarity'];
+      rarity: components['schemas']['ItemRarity'];
       /** @description How quantities are tracked */
       quantityModel: components['schemas']['QuantityModel'];
       /** @description Maximum stack size */
@@ -24231,7 +24229,7 @@ export interface components {
       /** @description Unit for continuous quantities */
       unitOfMeasure?: string | null;
       /** @description Precision for weight values */
-      weightPrecision?: components['schemas']['WeightPrecision'];
+      weightPrecision: components['schemas']['WeightPrecision'];
       /**
        * Format: double
        * @description Weight value
@@ -24267,15 +24265,15 @@ export interface components {
       scope: components['schemas']['ItemScope'];
       /** @description Available realms */
       availableRealms?: string[] | null;
-      /** @description Game-defined stats */
+      /** @description Game-defined stats. Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description Game-defined effects */
+      /** @description Game-defined effects. Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description Game-defined requirements */
+      /** @description Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description Display properties */
+      /** @description Display properties. Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description Other game-specific data */
+      /** @description Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /**
        * Format: uuid
@@ -25385,7 +25383,7 @@ export interface components {
     /** @description Request to list item templates */
     ListItemTemplatesRequest: {
       /** @description Filter by game service */
-      gameId?: string;
+      gameId?: string | null;
       /** @description Filter by item category */
       category?: components['schemas']['ItemCategory'];
       /** @description Filter by subcategory */
@@ -27257,7 +27255,7 @@ export interface components {
       instanceId: string;
       /** @description Change to durability (positive to repair, negative for damage) */
       durabilityDelta?: number | null;
-      /** @description New custom stats (merges with existing) */
+      /** @description New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description New custom name */
       customName?: string | null;
@@ -27266,7 +27264,7 @@ export interface components {
        * @description Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
        */
       quantityDelta?: number | null;
-      /** @description New instance metadata (merges with existing) */
+      /** @description New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /**
        * Format: uuid
@@ -34302,15 +34300,15 @@ export interface components {
       maxDurability?: number | null;
       /** @description New available realms */
       availableRealms?: string[] | null;
-      /** @description New stats */
+      /** @description New stats. Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description New effects */
+      /** @description New effects. Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description New requirements */
+      /** @description New requirements. Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description New display properties */
+      /** @description New display properties. Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description New metadata */
+      /** @description New metadata. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /** @description Active status */
       isActive?: boolean | null;
@@ -34782,15 +34780,15 @@ export interface components {
        * @description Unique identifier of the entity using the item (character, account, or actor)
        */
       userId: string;
-      /** @description Type of user entity performing the use action (e.g., character, account, actor) */
-      userType: string;
+      /** @description Type of user entity performing the use action */
+      userType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Optional unique identifier of the target entity for directional item effects
        */
       targetId?: string | null;
       /** @description Type of target entity when targetId is provided */
-      targetType?: string | null;
+      targetType?: components['schemas']['EntityType'];
       /** @description Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention. */
       context?: {
         [key: string]: unknown;
@@ -34798,13 +34796,6 @@ export interface components {
     };
     /** @description Response containing the result of an item use attempt */
     UseItemResponse: {
-      /** @description Whether the item use behavior executed successfully */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Unique identifier of the item instance that was used
-       */
-      instanceId: string;
       /**
        * Format: uuid
        * @description Unique identifier of the item template defining the used item
@@ -34837,8 +34828,8 @@ export interface components {
        * @description User performing the step
        */
       userId: string;
-      /** @description Type of user entity (e.g., character, account, actor) */
-      userType: string;
+      /** @description Type of user entity performing the step */
+      userType: components['schemas']['EntityType'];
       /** @description Milestone code to complete in the use behavior contract */
       milestoneCode: string;
       /** @description Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific keys from this field by convention. */
@@ -34852,8 +34843,6 @@ export interface components {
     };
     /** @description Response from completing a multi-step item use milestone */
     UseItemStepResponse: {
-      /** @description Whether the step completed successfully */
-      success: boolean;
       /**
        * Format: uuid
        * @description Item instance ID

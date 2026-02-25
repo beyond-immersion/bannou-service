@@ -83,11 +83,11 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
 
         Configuration.DefaultMaxSeedsPerOwner = 3;
         Configuration.MaxSeedTypesPerGameService = 50;
-        Configuration.BondSharedGrowthMultiplier = 1.5;
+        Configuration.BondSharedGrowthMultiplier = 1.5f;
         Configuration.CapabilityRecomputeDebounceMs = 5000;
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
-        Configuration.BondStrengthGrowthRate = 0.1;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
+        Configuration.BondStrengthGrowthRate = 0.1f;
         Configuration.DefaultQueryPageSize = 100;
     }
 

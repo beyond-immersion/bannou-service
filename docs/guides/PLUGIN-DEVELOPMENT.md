@@ -48,7 +48,7 @@ Create your API specification in the `/schemas/` directory.
 
 ```yaml
 # schemas/example-api.yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Example Service API
   version: 1.0.0

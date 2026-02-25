@@ -70,7 +70,7 @@ public class WorldstateServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: WORLDSTATE_DEFAULT_TIME_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.1, Maximum = 10000)]
-    public double DefaultTimeRatio { get; set; } = 24.0;
+    public float DefaultTimeRatio { get; set; } = 24.0f;
 
     /// <summary>
     /// Default downtime handling policy for new realm clocks. Advance catches up missed time; Pause resumes from where the clock stopped.

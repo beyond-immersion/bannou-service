@@ -639,6 +639,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `INVENTORY_DEFAULT_MAX_SLOTS` | int | `20` | Default max slots for new slot-based containers |
 | `INVENTORY_DEFAULT_MAX_WEIGHT` | double | `100.0` | Default max weight for new weight-based containers |
 | `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | string | `self_plus_contents` | Default weight contribution mode for containers |
+| `INVENTORY_DELETE_LOCK_TIMEOUT_SECONDS` | int | `120` | Timeout for container deletion locks (longer than standard l... |
 | `INVENTORY_ENABLE_LAZY_CONTAINER_CREATION` | bool | `true` | Whether to enable lazy container creation for characters |
 | `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout for owner/type index list modification locks (shorte... |
 | `INVENTORY_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout for container modification locks |
@@ -651,7 +652,6 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `ITEM_BINDING_ALLOW_ADMIN_OVERRIDE` | bool | `true` | Whether admins can unbind soulbound items |
 | `ITEM_CAN_USE_MILESTONE_CODE` | string | `validate` | Milestone code to complete for CanUse validation contracts |
-| `ITEM_DEFAULT_MAX_STACK_SIZE` | int | `99` | Default max stack size for new templates when not specified |
 | `ITEM_DEFAULT_RARITY` | string | `common` | Default rarity for new templates when not specified |
 | `ITEM_DEFAULT_SOULBOUND_TYPE` | string | `none` | Default soulbound type for new templates |
 | `ITEM_DEFAULT_WEIGHT_PRECISION` | string | `decimal_2` | Default weight precision for new templates |
@@ -661,7 +661,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ITEM_MAX_INSTANCES_PER_QUERY` | int | `1000` | Maximum item instances returned in a single query |
 | `ITEM_ON_USE_FAILED_MILESTONE_CODE` | string | `handle_failure` | Milestone code to complete for OnUseFailed handler contracts |
 | `ITEM_SYSTEM_PARTY_ID` | string | **REQUIRED** | System party ID for item use contracts (null uses determinis... |
-| `ITEM_SYSTEM_PARTY_TYPE` | string | `system` | Entity type string for the system party in item use contract... |
+| `ITEM_SYSTEM_PARTY_TYPE` | string | `system` | Entity type for the system party in item use contracts |
 | `ITEM_TEMPLATE_CACHE_TTL_SECONDS` | int | `3600` | TTL for template cache entries in seconds (templates change ... |
 | `ITEM_USE_EVENT_BATCH_MAX_SIZE` | int | `100` | Maximum number of use records per batched event before force... |
 | `ITEM_USE_EVENT_DEDUPLICATION_WINDOW_SECONDS` | int | `60` | Time window in seconds for deduplicating item use events by ... |

@@ -446,13 +446,14 @@ public partial class InventoryService : IInventoryService
         DeleteContainerRequest body,
         CancellationToken cancellationToken = default)
     {
-        // Acquire distributed lock before reading to prevent TOCTOU races (per IMPLEMENTATION TENETS)
+        // Use extended delete lock timeout to account for serial item destruction/transfer
+        // (per IMPLEMENTATION TENETS - tunables must be config properties)
         var lockOwner = $"delete-container-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.InventoryLock,
             body.ContainerId.ToString(),
             lockOwner,
-            _configuration.LockTimeoutSeconds,
+            _configuration.DeleteLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResponse.Success)
@@ -504,7 +505,7 @@ public partial class InventoryService : IInventoryService
                                 new DestroyItemInstanceRequest
                                 {
                                     InstanceId = item.InstanceId,
-                                    Reason = "container_deleted"
+                                    Reason = DestroyReason.Destroyed
                                 }, cancellationToken);
                         }
                         catch (ApiException ex)
@@ -1472,7 +1473,7 @@ public partial class InventoryService : IInventoryService
                         new DestroyItemInstanceRequest
                         {
                             InstanceId = body.SourceInstanceId,
-                            Reason = "merged"
+                            Reason = DestroyReason.Consumed
                         }, cancellationToken);
                 }
                 catch (ApiException ex)

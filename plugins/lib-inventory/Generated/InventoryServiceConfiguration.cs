@@ -79,6 +79,13 @@ public class InventoryServiceConfiguration : BaseServiceConfiguration
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
+    /// Timeout for container deletion locks (longer than standard locks to account for serial item destruction/transfer)
+    /// Environment variable: INVENTORY_DELETE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int DeleteLockTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
     /// Timeout for owner/type index list modification locks (shorter than container locks)
     /// Environment variable: INVENTORY_LIST_LOCK_TIMEOUT_SECONDS
     /// </summary>

@@ -25,6 +25,7 @@ public partial class ItemService : IItemService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IContractClient _contractClient;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ItemService> _logger;
     private readonly ItemServiceConfiguration _configuration;
 
@@ -75,6 +76,7 @@ public partial class ItemService : IItemService
     /// <param name="stateStoreFactory">Factory for accessing state stores.</param>
     /// <param name="lockProvider">Provider for distributed locks.</param>
     /// <param name="contractClient">Client for Contract service (L1) - hard dependency per SERVICE HIERARCHY.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     public ItemService(
@@ -82,6 +84,7 @@ public partial class ItemService : IItemService
         IStateStoreFactory stateStoreFactory,
         IDistributedLockProvider lockProvider,
         IContractClient contractClient,
+        ITelemetryProvider telemetryProvider,
         ILogger<ItemService> logger,
         ItemServiceConfiguration configuration)
     {
@@ -89,6 +92,7 @@ public partial class ItemService : IItemService
         _stateStoreFactory = stateStoreFactory;
         _lockProvider = lockProvider;
         _contractClient = contractClient;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -134,7 +138,7 @@ public partial class ItemService : IItemService
             Tags = body.Tags?.ToList() ?? new List<string>(),
             Rarity = body.Rarity ?? _defaultRarity,
             QuantityModel = body.QuantityModel,
-            MaxStackSize = body.MaxStackSize > 0 ? body.MaxStackSize : _configuration.DefaultMaxStackSize,
+            MaxStackSize = body.MaxStackSize,
             UnitOfMeasure = body.UnitOfMeasure,
             WeightPrecision = body.WeightPrecision ?? _defaultWeightPrecision,
             Weight = body.Weight,
@@ -167,6 +171,8 @@ public partial class ItemService : IItemService
         };
 
         // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
+        // GetWithETagAsync returns null etag when key doesn't exist; TrySaveAsync treats
+        // empty string as "no existing version" for new entries (will never execute for updates)
         var claimResult = await stringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
         if (claimResult == null)
         {
@@ -299,7 +305,7 @@ public partial class ItemService : IItemService
         if (body.Description is not null) model.Description = body.Description;
         if (body.Subcategory is not null) model.Subcategory = body.Subcategory;
         if (body.Tags is not null) model.Tags = body.Tags.ToList();
-        if (body.Rarity != default) model.Rarity = body.Rarity;
+        if (body.Rarity.HasValue) model.Rarity = body.Rarity.Value;
         if (body.Weight.HasValue) model.Weight = body.Weight;
         if (body.Volume.HasValue) model.Volume = body.Volume;
         if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth;
@@ -548,6 +554,7 @@ public partial class ItemService : IItemService
         ModifyItemInstanceRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ModifyItemInstanceWithLockAsync");
         var lockOwner = $"modify-item-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.ItemLock,
@@ -572,6 +579,7 @@ public partial class ItemService : IItemService
         ModifyItemInstanceRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ModifyItemInstanceInternalAsync");
         var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
         var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
 
@@ -631,8 +639,10 @@ public partial class ItemService : IItemService
         // Update container indexes if container changed (after successful save)
         if (containerChanged)
         {
+            var newContainerId = body.NewContainerId
+                ?? throw new InvalidOperationException("NewContainerId is null when containerChanged is true");
             await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId}", body.InstanceId.ToString(), cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.NewContainerId!.Value}", body.InstanceId.ToString(), cancellationToken);
+            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{newContainerId}", body.InstanceId.ToString(), cancellationToken);
         }
 
         // Invalidate cache after write
@@ -792,7 +802,7 @@ public partial class ItemService : IItemService
 
         // Get template to check destroyable (uses cache)
         var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
-        if (template is not null && !template.Destroyable && body.Reason != "admin")
+        if (template is not null && !template.Destroyable && body.Reason != DestroyReason.Admin)
         {
             _logger.LogWarning("Item {InstanceId} is not destroyable", body.InstanceId);
             return (StatusCodes.BadRequest, null);
@@ -827,8 +837,6 @@ public partial class ItemService : IItemService
         _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
         return (StatusCodes.OK, new DestroyItemInstanceResponse
         {
-            Destroyed = true,
-            InstanceId = body.InstanceId,
             TemplateId = model.TemplateId
         });
     }
@@ -1016,8 +1024,6 @@ public partial class ItemService : IItemService
 
         return (StatusCodes.OK, new UseItemResponse
         {
-            Success = true,
-            InstanceId = body.InstanceId,
             TemplateId = template.TemplateId,
             ContractInstanceId = contractInstanceId.Value,
             Consumed = consumed,
@@ -1154,6 +1160,7 @@ public partial class ItemService : IItemService
             currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
 
             // Save updated instance
+            // etag is non-null here (instance was found above); coalesce satisfies compiler nullable analysis
             var saveResult = await instanceStore.TrySaveAsync(
                 $"{INST_PREFIX}{body.InstanceId}",
                 currentInstance,
@@ -1180,14 +1187,25 @@ public partial class ItemService : IItemService
         }
 
         // 8. Complete the specified milestone
-        var milestoneResponse = await _contractClient.CompleteMilestoneAsync(
-            new CompleteMilestoneRequest
-            {
-                ContractId = contractInstanceId,
-                MilestoneCode = body.MilestoneCode,
-                Evidence = body.Evidence
-            },
-            cancellationToken);
+        MilestoneResponse milestoneResponse;
+        try
+        {
+            milestoneResponse = await _contractClient.CompleteMilestoneAsync(
+                new CompleteMilestoneRequest
+                {
+                    ContractId = contractInstanceId,
+                    MilestoneCode = body.MilestoneCode,
+                    Evidence = body.Evidence
+                },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "Contract service error completing milestone {MilestoneCode} for item {InstanceId}, contract {ContractId}",
+                body.MilestoneCode, body.InstanceId, contractInstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
 
         if (milestoneResponse.Milestone.Status != MilestoneStatus.Completed)
         {
@@ -1265,6 +1283,7 @@ public partial class ItemService : IItemService
                     latestInstance.ContractBindingType = ContractBindingType.None;
                     latestInstance.ModifiedAt = DateTimeOffset.UtcNow;
 
+                    // latestEtag is non-null here (instance was found above); coalesce satisfies compiler nullable analysis
                     await instanceStore.TrySaveAsync(
                         $"{INST_PREFIX}{body.InstanceId}",
                         latestInstance,
@@ -1296,7 +1315,6 @@ public partial class ItemService : IItemService
 
         return (StatusCodes.OK, new UseItemStepResponse
         {
-            Success = true,
             InstanceId = body.InstanceId,
             ContractInstanceId = contractInstanceId,
             CompletedMilestone = body.MilestoneCode,
@@ -1313,6 +1331,7 @@ public partial class ItemService : IItemService
         Guid contractInstanceId,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetRemainingMilestonesAsync");
         try
         {
             var response = await _contractClient.GetContractInstanceAsync(
@@ -1340,7 +1359,7 @@ public partial class ItemService : IItemService
         Guid templateId,
         string templateCode,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid contractInstanceId,
         string milestoneCode,
         List<string>? remainingMilestones,
@@ -1348,6 +1367,7 @@ public partial class ItemService : IItemService
         bool consumed,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishStepCompletedEventAsync");
         await _messageBus.TryPublishAsync("item.use-step-completed", new ItemUseStepCompletedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1373,12 +1393,13 @@ public partial class ItemService : IItemService
         Guid templateId,
         string templateCode,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid contractInstanceId,
         string milestoneCode,
         string reason,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishStepFailedEventAsync");
         await _messageBus.TryPublishAsync("item.use-step-failed", new ItemUseStepFailedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1434,20 +1455,15 @@ public partial class ItemService : IItemService
     private async Task<(bool Passed, string? FailureReason)> ExecuteCanUseValidationAsync(
         Guid canUseTemplateId,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid instanceId,
         Guid templateId,
         object? context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ExecuteCanUseValidationAsync");
         try
         {
-            // Parse user entity type from string
-            if (!TryParseEntityType(userType, out var userEntityType))
-            {
-                return (false, $"Invalid user entity type: {userType}");
-            }
-
             // Get system party for the validation contract
             var template = await GetTemplateWithCacheAsync(templateId.ToString(), ct);
             if (template is null)
@@ -1494,15 +1510,6 @@ public partial class ItemService : IItemService
             _logger.LogWarning(ex, "CanUse validation failed for {InstanceId}", instanceId);
             return (false, ex.Message);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error in CanUse validation for {InstanceId}", instanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ExecuteCanUseValidation", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/use",
-                details: null, stack: ex.StackTrace);
-            return (false, "Internal validation error");
-        }
     }
 
     /// <summary>
@@ -1515,24 +1522,16 @@ public partial class ItemService : IItemService
     private async Task ExecuteOnUseFailedHandlerAsync(
         Guid onUseFailedTemplateId,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid instanceId,
         Guid templateId,
         string failureReason,
         object? context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ExecuteOnUseFailedHandlerAsync");
         try
         {
-            // Parse user entity type from string
-            if (!TryParseEntityType(userType, out _))
-            {
-                _logger.LogWarning(
-                    "Invalid user entity type {UserType} for OnUseFailed handler",
-                    userType);
-                return;
-            }
-
             // Get system party for the handler contract
             var template = await GetTemplateWithCacheAsync(templateId.ToString(), ct);
             if (template is null)
@@ -1590,10 +1589,6 @@ public partial class ItemService : IItemService
         {
             // Log but don't propagate - handler failures shouldn't break the main flow
             _logger.LogError(ex, "OnUseFailed handler error for {InstanceId}", instanceId);
-            await _messageBus.TryPublishErrorAsync(
-                "item", "ExecuteOnUseFailedHandler", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/item/use",
-                details: null, stack: ex.StackTrace);
         }
     }
 
@@ -1604,33 +1599,16 @@ public partial class ItemService : IItemService
     private async Task<Guid?> CreateItemUseContractInstanceAsync(
         Guid templateId,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid systemPartyId,
         Guid instanceId,
         Guid itemTemplateId,
         object? context,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.CreateItemUseContractInstanceAsync");
         try
         {
-            // Parse user entity type from string
-            if (!TryParseEntityType(userType, out var userEntityType))
-            {
-                _logger.LogWarning(
-                    "Invalid user entity type {UserType} for item use contract",
-                    userType);
-                return null;
-            }
-
-            // Parse system entity type from config
-            if (!TryParseEntityType(_configuration.SystemPartyType, out var systemEntityType))
-            {
-                _logger.LogWarning(
-                    "Invalid system entity type {SystemType} in configuration",
-                    _configuration.SystemPartyType);
-                return null;
-            }
-
             // Build game metadata with item context for prebound API substitution
             var gameMetadata = new Dictionary<string, object>
             {
@@ -1657,13 +1635,13 @@ public partial class ItemService : IItemService
                     new()
                     {
                         EntityId = userId,
-                        EntityType = userEntityType,
+                        EntityType = userType,
                         Role = "user"
                     },
                     new()
                     {
                         EntityId = systemPartyId,
-                        EntityType = systemEntityType,
+                        EntityType = _configuration.SystemPartyType,
                         Role = "system"
                     }
                 },
@@ -1680,38 +1658,6 @@ public partial class ItemService : IItemService
                 templateId);
             return null;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Unexpected error creating contract instance for template {TemplateId}",
-                templateId);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Parses a string entity type to the EntityType enum.
-    /// </summary>
-    private static bool TryParseEntityType(string value, out EntityType result)
-    {
-        // Try exact match first (case-insensitive)
-        if (Enum.TryParse<EntityType>(value, ignoreCase: true, out result))
-        {
-            return true;
-        }
-
-        // Handle common string variants
-        result = value.ToLowerInvariant() switch
-        {
-            "system" => EntityType.System,
-            "account" => EntityType.Account,
-            "character" => EntityType.Character,
-            "actor" => EntityType.Actor,
-            "guild" => EntityType.Guild,
-            _ => default
-        };
-
-        return result != default || value.Equals("system", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -1722,6 +1668,7 @@ public partial class ItemService : IItemService
         Guid contractInstanceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.CompleteUseMilestoneAsync");
         try
         {
             var request = new CompleteMilestoneRequest
@@ -1742,13 +1689,6 @@ public partial class ItemService : IItemService
                 contractInstanceId);
             return false;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Unexpected error completing milestone for contract {ContractId}",
-                contractInstanceId);
-            return false;
-        }
     }
 
     /// <summary>
@@ -1761,6 +1701,7 @@ public partial class ItemService : IItemService
         ItemTemplateModel template,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ConsumeItemAsync");
         // For now, always consume on use (MVP behavior)
         // Future: per-template configuration for consumable vs reusable items
         var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
@@ -1834,13 +1775,14 @@ public partial class ItemService : IItemService
         Guid templateId,
         string templateCode,
         Guid userId,
-        string userType,
+        EntityType userType,
         Guid? targetId,
-        string? targetType,
+        EntityType? targetType,
         bool consumed,
         Guid contractInstanceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.RecordUseSuccessAsync");
         var batchKey = $"{templateId}:{userId}";
         var now = DateTimeOffset.UtcNow;
         var windowSeconds = _configuration.UseEventDeduplicationWindowSeconds;
@@ -1899,10 +1841,11 @@ public partial class ItemService : IItemService
         Guid templateId,
         string templateCode,
         Guid userId,
-        string userType,
+        EntityType userType,
         string reason,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.RecordUseFailureAsync");
         var batchKey = $"{templateId}:{userId}";
         var now = DateTimeOffset.UtcNow;
         var windowSeconds = _configuration.UseEventDeduplicationWindowSeconds;
@@ -1953,6 +1896,7 @@ public partial class ItemService : IItemService
         ItemUseBatchState batch,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishItemUsedEventAsync");
         var (records, totalCount) = batch.GetSnapshot();
         if (records.Count == 0) return;
 
@@ -1978,6 +1922,7 @@ public partial class ItemService : IItemService
         ItemUseFailureBatchState batch,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PublishItemUseFailedEventAsync");
         var (records, totalCount) = batch.GetSnapshot();
         if (records.Count == 0) return;
 
@@ -2115,8 +2060,17 @@ public partial class ItemService : IItemService
 
     #region Helper Methods
 
+    /// <summary>
+    /// Resolves an item template by ID (preferred) or by code+gameId composite key.
+    /// </summary>
+    /// <param name="templateId">Template ID to look up directly.</param>
+    /// <param name="code">Template code for composite key lookup (requires gameId).</param>
+    /// <param name="gameId">Game ID for composite key lookup (requires code).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The resolved template, or null if not found.</returns>
     private async Task<ItemTemplateModel?> ResolveTemplateAsync(string? templateId, string? code, string? gameId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ResolveTemplateAsync");
         if (!string.IsNullOrEmpty(templateId))
         {
             return await GetTemplateWithCacheAsync(templateId, ct);
@@ -2141,6 +2095,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task AddToListAsync(string storeName, string key, string value, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.AddToListAsync");
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var maxRetries = _configuration.ListOperationMaxRetries;
 
@@ -2178,6 +2133,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task RemoveFromListAsync(string storeName, string key, string value, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.RemoveFromListAsync");
         var stringStore = _stateStoreFactory.GetStore<string>(storeName);
         var maxRetries = _configuration.ListOperationMaxRetries;
 
@@ -2215,6 +2171,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task<ItemTemplateModel?> GetTemplateWithCacheAsync(string templateId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetTemplateWithCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
         var cacheKey = $"{TPL_PREFIX}{templateId}";
 
@@ -2238,6 +2195,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task PopulateTemplateCacheAsync(string templateId, ItemTemplateModel model, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PopulateTemplateCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
         await cacheStore.SaveAsync($"{TPL_PREFIX}{templateId}", model,
             new StateOptions { Ttl = _configuration.TemplateCacheTtlSeconds }, ct);
@@ -2248,6 +2206,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task InvalidateTemplateCacheAsync(string templateId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.InvalidateTemplateCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateCache);
         await cacheStore.DeleteAsync($"{TPL_PREFIX}{templateId}", ct);
     }
@@ -2257,6 +2216,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task<ItemInstanceModel?> GetInstanceWithCacheAsync(string instanceId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetInstanceWithCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
         var cacheKey = $"{INST_PREFIX}{instanceId}";
 
@@ -2283,6 +2243,7 @@ public partial class ItemService : IItemService
         IEnumerable<string> instanceIds,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.GetInstancesBulkWithCacheAsync");
         var idList = instanceIds.ToList();
         if (idList.Count == 0) return new Dictionary<string, ItemInstanceModel>();
 
@@ -2344,6 +2305,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task PopulateInstanceCacheAsync(string instanceId, ItemInstanceModel model, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.PopulateInstanceCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
         await cacheStore.SaveAsync($"{INST_PREFIX}{instanceId}", model,
             new StateOptions { Ttl = _configuration.InstanceCacheTtlSeconds }, ct);
@@ -2354,6 +2316,7 @@ public partial class ItemService : IItemService
     /// </summary>
     private async Task InvalidateInstanceCacheAsync(string instanceId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.InvalidateInstanceCacheAsync");
         var cacheStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache);
         await cacheStore.DeleteAsync($"{INST_PREFIX}{instanceId}", ct);
     }
@@ -2362,6 +2325,11 @@ public partial class ItemService : IItemService
 
     #region Mapping Methods
 
+    /// <summary>
+    /// Maps an internal template storage model to its API response representation.
+    /// </summary>
+    /// <param name="model">The internal template model.</param>
+    /// <returns>The API response model.</returns>
     private static ItemTemplateResponse MapTemplateToResponse(ItemTemplateModel model)
     {
         return new ItemTemplateResponse
@@ -2411,6 +2379,11 @@ public partial class ItemService : IItemService
         };
     }
 
+    /// <summary>
+    /// Maps an internal instance storage model to its API response representation.
+    /// </summary>
+    /// <param name="model">The internal instance model.</param>
+    /// <returns>The API response model.</returns>
     private static ItemInstanceResponse MapInstanceToResponse(ItemInstanceModel model)
     {
         return new ItemInstanceResponse

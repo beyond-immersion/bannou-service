@@ -41,7 +41,7 @@ public class SeedDecayWorkerServiceTests
         _configuration = new SeedServiceConfiguration
         {
             GrowthDecayEnabled = false,
-            GrowthDecayRatePerDay = 0.01,
+            GrowthDecayRatePerDay = 0.01f,
             DecayWorkerIntervalSeconds = 900,
             DecayWorkerStartupDelaySeconds = 0,
             DefaultQueryPageSize = 100
@@ -204,7 +204,7 @@ public class SeedDecayWorkerServiceTests
     {
         // Arrange: type with 10% daily decay, seed inactive for 1 day
         _configuration.GrowthDecayEnabled = true;
-        _configuration.GrowthDecayRatePerDay = 0.1;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
 
         var seedType = CreateTestType(decayEnabled: null, decayRate: null);
         SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
@@ -265,7 +265,7 @@ public class SeedDecayWorkerServiceTests
     {
         // Arrange: two domains with different LastActivityAt times
         _configuration.GrowthDecayEnabled = true;
-        _configuration.GrowthDecayRatePerDay = 0.1;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
 
         var seedType = CreateTestType();
         SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
@@ -332,7 +332,7 @@ public class SeedDecayWorkerServiceTests
     {
         // Arrange: seed at "awakening" (requires 10), decay will drop total below 10
         _configuration.GrowthDecayEnabled = true;
-        _configuration.GrowthDecayRatePerDay = 0.5;
+        _configuration.GrowthDecayRatePerDay = 0.5f;
 
         var seedType = CreateTestType();
         SetupTypeQuery(new List<SeedTypeDefinitionModel> { seedType });
@@ -398,7 +398,7 @@ public class SeedDecayWorkerServiceTests
     {
         // Arrange: page size = 2, 3 seeds total → requires 2 pages
         _configuration.GrowthDecayEnabled = true;
-        _configuration.GrowthDecayRatePerDay = 0.1;
+        _configuration.GrowthDecayRatePerDay = 0.1f;
         _configuration.DefaultQueryPageSize = 2;
 
         var seedType = CreateTestType();

@@ -67,7 +67,7 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     /// Global daily decay rate applied to unused growth domains. Per-type overrides take precedence.
     /// Environment variable: SEED_GROWTH_DECAY_RATE_PER_DAY
     /// </summary>
-    public double GrowthDecayRatePerDay { get; set; } = 0.01;
+    public float GrowthDecayRatePerDay { get; set; } = 0.01f;
 
     /// <summary>
     /// Interval in seconds between growth decay worker cycles (default 15 minutes)
@@ -87,7 +87,7 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     /// Growth multiplier applied when bonded seeds grow together in the same context
     /// Environment variable: SEED_BOND_SHARED_GROWTH_MULTIPLIER
     /// </summary>
-    public double BondSharedGrowthMultiplier { get; set; } = 1.5;
+    public float BondSharedGrowthMultiplier { get; set; } = 1.5f;
 
     /// <summary>
     /// Maximum number of seed types that can be registered per game service
@@ -105,7 +105,7 @@ public class SeedServiceConfiguration : BaseServiceConfiguration
     /// Rate at which bond strength increases per unit of shared growth recorded
     /// Environment variable: SEED_BOND_STRENGTH_GROWTH_RATE
     /// </summary>
-    public double BondStrengthGrowthRate { get; set; } = 0.1;
+    public float BondStrengthGrowthRate { get; set; } = 0.1f;
 
     /// <summary>
     /// Default page size for queries that do not expose pagination parameters

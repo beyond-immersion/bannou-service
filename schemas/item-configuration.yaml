@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Item Service Configuration
   description: |
@@ -14,12 +14,6 @@ info:
 paths: {}
 x-service-configuration:
   properties:
-    defaultMaxStackSize:
-      type: integer
-      minimum: 1
-      env: ITEM_DEFAULT_MAX_STACK_SIZE
-      default: 99
-      description: Default max stack size for new templates when not specified
     defaultWeightPrecision:
       $ref: 'item-api.yaml#/components/schemas/WeightPrecision'
       env: ITEM_DEFAULT_WEIGHT_PRECISION

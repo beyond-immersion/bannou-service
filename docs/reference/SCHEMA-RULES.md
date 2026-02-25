@@ -240,7 +240,7 @@ info:
 Defined at the **root level** of `{service}-api.yaml`, declares the service's position in the hierarchy per [SERVICE-HIERARCHY.md](SERVICE-HIERARCHY.md). Controls plugin load order and enables safe cross-layer constructor injection.
 
 ```yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Location Service API
   version: 1.0.0
@@ -625,7 +625,7 @@ properties:
 
 ## Validation Keywords
 
-OpenAPI 3.0.3 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
+OpenAPI 3.0.4 validation keywords generate `[ConfigX]` attributes in C#, validated at service startup.
 
 | Keyword | Applies To | Schema Example | Generated Attribute |
 |---------|------------|----------------|---------------------|

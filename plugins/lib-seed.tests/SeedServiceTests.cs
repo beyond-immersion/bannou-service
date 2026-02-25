@@ -88,11 +88,11 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         // Default configuration
         Configuration.DefaultMaxSeedsPerOwner = 3;
         Configuration.MaxSeedTypesPerGameService = 50;
-        Configuration.BondSharedGrowthMultiplier = 1.5;
+        Configuration.BondSharedGrowthMultiplier = 1.5f;
         Configuration.CapabilityRecomputeDebounceMs = 5000;
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
-        Configuration.BondStrengthGrowthRate = 0.1;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
+        Configuration.BondStrengthGrowthRate = 0.1f;
         Configuration.DefaultQueryPageSize = 100;
     }
 
@@ -1157,7 +1157,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: global disabled, type enabled
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = true;
         seedType.GrowthDecayRatePerDay = 0.05f;
@@ -1175,7 +1175,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: global enabled, type explicitly disabled
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = false;
         seedType.GrowthDecayRatePerDay = null;
@@ -1192,7 +1192,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: type has no overrides, global config used
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.02;
+        Configuration.GrowthDecayRatePerDay = 0.02f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = null;
         seedType.GrowthDecayRatePerDay = null;
@@ -1210,7 +1210,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: null seed type (defensive path)
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.03;
+        Configuration.GrowthDecayRatePerDay = 0.03f;
 
         // Act
         var (enabled, rate) = SeedService.ResolveDecayConfig(null, Configuration);
@@ -1225,7 +1225,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     {
         // Arrange: type has only rate override, enabled falls back to global
         Configuration.GrowthDecayEnabled = true;
-        Configuration.GrowthDecayRatePerDay = 0.01;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
         var seedType = CreateTestSeedType();
         seedType.GrowthDecayEnabled = null;
         seedType.GrowthDecayRatePerDay = 0.1f;

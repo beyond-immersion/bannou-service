@@ -60,7 +60,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Game Service](#game-service-status) | L2 | 100% | 0 | Production-hardened registry. All 5 endpoints done. T9/T21/T26/T28/T30 compliant. Resource cleanup on delete. |
 | [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
 | [Inventory](#inventory-status) | L2 | 85% | 0 | Production-hardened (T8/T25/T26/T29/T30 compliant, 93 tests). 4 stubs remain: grid collision, weight propagation, equipment slots, RemoveItem cleanup. |
-| [Item](#item-status) | L2 | 88% | 0 | Dual-model system complete. "Itemize Anything" pattern works. Deprecation cascade pending. |
+| [Item](#item-status) | L2 | 92% | 0 | Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). Dual-model + Itemize Anything. Decay system pending (#407). |
 | [Location](#location-status) | L2 | 92% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking. No gaps. |
 | [Quest](#quest-status) | L2 | 85% | 0 | Well-architected over Contract. Prerequisites, rewards, caching all done. Extensions only. |
 | [Realm](#realm-status) | L2 | 95% | 0 | Fully feature-complete. Complex merge, deprecation, resource integration. No remaining gaps. |
@@ -711,9 +711,9 @@ gh issue list --search "Inventory:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [ITEM.md](plugins/ITEM.md)
 
-### Production Readiness: 88%
+### Production Readiness: 92%
 
-The dual-model item system (templates + instances) is fully operational with robust CRUD, cache read-through patterns, quantity model enforcement, soulbound types, and the "Itemize Anything" contract-delegation pattern (ephemeral, session, and lifecycle bindings). The `/item/use` and `/item/use-step` endpoints enable arbitrary item behaviors via Contract service prebound APIs. Bulk loading optimizations are in place. Only minor gaps remain: deprecation without instance cascade, no template deletion, and a few design considerations around container index validation and post-fetch filtering.
+Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). The dual-model item system (templates + instances) is fully operational with robust CRUD, cache read-through patterns, quantity model enforcement, soulbound types, and the "Itemize Anything" contract-delegation pattern (ephemeral, session, and lifecycle bindings). The `/item/use` and `/item/use-step` endpoints enable arbitrary item behaviors via Contract service prebound APIs. Bulk loading optimizations are in place. Schema enums for EntityType, DestroyReason, UnbindReason replace former string fields. Telemetry spans on all 24 async helper methods. Filler properties removed from responses. Only minor gaps remain: deprecation without instance cascade, item decay/expiration ([#407](https://github.com/beyond-immersion/bannou-service/issues/407)), and post-fetch filtering on list queries.
 
 ### Bug Count: 0
 
@@ -727,9 +727,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Template migration on deprecation** | When deprecating with `migrationTargetId`, existing instances are not automatically upgraded to the new template. Admin must manage instances manually. | No issue |
-| 2 | **Affix system** | Random or crafted modifiers (prefixes/suffixes) applied to item instances for equipment variation. Critical for RPG itemization depth. | No issue |
-| 3 | **Durability repair** | Endpoint to restore item durability with configurable repair costs. Needed for the economy/crafting loop. | No issue |
+| 1 | **Item Decay/Expiration** | Time-based item lifecycle (template-level decay config, instance `expiresAt`, background worker). Dependency for lib-status. | [#407](https://github.com/beyond-immersion/bannou-service/issues/407) |
+| 2 | **Template migration on deprecation** | When deprecating with `migrationTargetId`, existing instances are not automatically upgraded to the new template. Admin must manage instances manually. | No issue |
+| 3 | **Item Sockets** | Socket, linking, and gem placement system for item instances. Future L4 plugin. | [#430](https://github.com/beyond-immersion/bannou-service/issues/430) |
 
 ### GH Issues
 

@@ -59,7 +59,7 @@ Build lib-cinematic as a thin L4 GameFeatures plugin following the established B
 ### cinematic-api.yaml
 
 ```yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Cinematic Service API
   version: 1.0.0

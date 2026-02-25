@@ -1,6 +1,6 @@
 # Telemetry Service Configuration Schema
 # Defines OpenTelemetry exporter settings for distributed tracing and metrics
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Telemetry Service Configuration
   description: |

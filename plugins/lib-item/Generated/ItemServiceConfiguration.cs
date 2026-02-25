@@ -52,13 +52,6 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
 {
 
     /// <summary>
-    /// Default max stack size for new templates when not specified
-    /// Environment variable: ITEM_DEFAULT_MAX_STACK_SIZE
-    /// </summary>
-    [ConfigRange(Minimum = 1)]
-    public int DefaultMaxStackSize { get; set; } = 99;
-
-    /// <summary>
     /// Default weight precision for new templates
     /// Environment variable: ITEM_DEFAULT_WEIGHT_PRECISION
     /// </summary>

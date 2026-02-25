@@ -90,6 +90,7 @@ This plugin does not consume external events.
 | `DefaultWeightContribution` | `INVENTORY_DEFAULT_WEIGHT_CONTRIBUTION` | `self_plus_contents` | How weight propagates to parent |
 | `ContainerCacheTtlSeconds` | `INVENTORY_CONTAINER_CACHE_TTL_SECONDS` | `300` | Redis cache TTL (5 min) |
 | `LockTimeoutSeconds` | `INVENTORY_LOCK_TIMEOUT_SECONDS` | `30` | Container-level distributed lock expiry |
+| `DeleteLockTimeoutSeconds` | `INVENTORY_DELETE_LOCK_TIMEOUT_SECONDS` | `120` | Container deletion lock expiry (longer for serial item handling) |
 | `ListLockTimeoutSeconds` | `INVENTORY_LIST_LOCK_TIMEOUT_SECONDS` | `15` | Owner/type index list lock expiry |
 | `EnableLazyContainerCreation` | `INVENTORY_ENABLE_LAZY_CONTAINER_CREATION` | `true` | Allow get-or-create pattern |
 | `DefaultMaxSlots` | `INVENTORY_DEFAULT_MAX_SLOTS` | `20` | Default slot count for new containers |
@@ -104,7 +105,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<InventoryService>` | Scoped | Structured logging |
-| `InventoryServiceConfiguration` | Singleton | All 10 config properties |
+| `InventoryServiceConfiguration` | Singleton | All 11 config properties |
 | `IStateStoreFactory` | Singleton | MySQL+Redis state store access |
 | `IDistributedLockProvider` | Singleton | Container-level distributed locks |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -329,24 +330,29 @@ Stack Operations
 
 12. **GetOrCreateContainer and ListContainers bypass Redis cache**: These methods read containers directly from MySQL via `containerStore.GetAsync()` instead of using `GetContainerWithCacheAsync()`. Only GetContainer, AddItemToContainer, RemoveItemFromContainer, and other single-container operations use the Redis cache read-through. For high-frequency GetOrCreateContainer calls (e.g., lazy creation pattern), this means every call hits MySQL.
 
+13. **Category constraints enforced at inventory layer only**: AllowedCategories/ForbiddenCategories are validated by Inventory's `AddItemToContainerAsync` and `CheckContainerFitForItem`, but lib-item's `CreateItemInstanceAsync` and `ModifyItemInstanceAsync` do not enforce them. This is an intentional architectural boundary: Inventory is the placement/constraint layer, Item is the data layer. Item cannot depend on Inventory (circular dependency — Inventory already depends on Item). Services that need category enforcement must go through Inventory's `AddItemToContainer`; services that own their containers (Collection, Status, License) can safely call lib-item directly because they control both the container configuration and the items being placed.
+
 ### Design Considerations (Requires Planning)
 
 1. **N+1 query pattern**: `QueryItems` and `GetContainer(includeContents)` load items individually from the item service per container. Large inventories with many containers generate many cross-service calls.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/485 -->
 
 2. **No batch item operations**: Split, merge, and transfer operate on single items. Batch versions would require careful lock ordering to prevent deadlocks across multiple containers.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/483 -->
 
-3. **Category constraints are client-side only**: Allowed/forbidden category lists are checked in the inventory service, but lib-item doesn't enforce them. An item could be placed directly via lib-item without category validation, bypassing inventory.
+3. **Container deletion item handling is serial**: When deleting with "destroy" strategy, each item is destroyed individually with separate lib-item calls. A container with many items could take significant time under lock.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/483 -->
 
-4. **Container deletion item handling is serial**: When deleting with "destroy" strategy, each item is destroyed individually with separate lib-item calls. A container with many items could take significant time under lock.
+4. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/484 -->
 
-5. **No event consumption**: Inventory doesn't listen for item events (destroy, bind, modify). If an item is destroyed directly via lib-item (bypassing inventory), the container's UsedSlots/ContentsWeight counters become stale.
+5. ~~**Lock timeout not configurable per-operation**~~: **FIXED** (2026-02-25) - Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion operations. Standard operations still use `LockTimeoutSeconds` (30s). This prevents lock expiry during serial item destruction/transfer in containers with many items.
 
-6. **Lock timeout not configurable per-operation**: All container operations use the same `LockTimeoutSeconds`. Quick operations (update metadata) and slow operations (delete with destroy) share the same timeout.
+6. **QueryItems pagination is inefficient**: All items are fetched from all containers, then offset/limit is applied in memory. For owners with many containers and items, this is O(n) memory even for the first page.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/485 -->
 
-7. **QueryItems pagination is inefficient**: All items are fetched from all containers, then offset/limit is applied in memory. For owners with many containers and items, this is O(n) memory even for the first page.
-
-8. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+7. **No escrow integration**: lib-escrow has a placeholder comment mentioning inventory but no actual integration. Asset custody for items in escrow is not implemented. See [#153](https://github.com/beyond-immersion/bannou-service/issues/153).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/153 -->
 
 ---
 
@@ -367,6 +373,8 @@ Stack Operations
 - **[#485](https://github.com/beyond-immersion/bannou-service/issues/485)**: N+1 query pattern — batch item listing across containers
 
 ### Completed
+- **2026-02-25**: Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion; fixed DestroyReason string-to-enum for T25 compliance
+- **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
 - **2026-02-25**: Fixed MoveItem same-container bug — now persists slot position via ModifyItemInstanceAsync, acquires distributed lock, and publishes inventory-item.moved event with previous/new slot data
 - **2026-02-24**: L3 hardening pass - NRT fix, T8 filler removal from 7 responses, T29 metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, T26 sentinel fix, T30 telemetry spans, 24 new tests (93 total)
 - **2026-02-24**: Closed #310 (silent failure patterns) - IItemClient now constructor-injected (hard dependency)

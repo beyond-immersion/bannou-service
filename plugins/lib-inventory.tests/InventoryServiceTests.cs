@@ -884,7 +884,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             });
         _mockItemClient
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = instanceId });
+            .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = Guid.NewGuid() });
         _mockStringStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
@@ -903,7 +903,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         Assert.NotNull(response);
         Assert.Equal(1, response.ItemsHandled);
         _mockItemClient.Verify(c => c.DestroyItemInstanceAsync(
-            It.Is<DestroyItemInstanceRequest>(r => r.InstanceId == instanceId && r.Reason == "container_deleted"),
+            It.Is<DestroyItemInstanceRequest>(r => r.InstanceId == instanceId && r.Reason == DestroyReason.Destroyed),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2424,7 +2424,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 13 });
         _mockItemClient
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+            .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = templateId });
 
         var containerModel = CreateStoredContainerModel(containerId);
         _mockContainerStore
@@ -2474,7 +2474,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 10 });
         _mockItemClient
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+            .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = templateId });
 
         var containerModel = CreateStoredContainerModel(containerId);
         _mockContainerStore
@@ -2524,7 +2524,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 8 });
         _mockItemClient
             .Setup(c => c.DestroyItemInstanceAsync(It.IsAny<DestroyItemInstanceRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new DestroyItemInstanceResponse { Destroyed = true, InstanceId = sourceId });
+            .ReturnsAsync(new DestroyItemInstanceResponse { TemplateId = templateId });
 
         var containerModel = CreateStoredContainerModel(containerId);
         _mockContainerStore
@@ -2543,7 +2543,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         _mockItemClient.Verify(c => c.DestroyItemInstanceAsync(
             It.Is<DestroyItemInstanceRequest>(r =>
                 r.InstanceId == sourceId &&
-                r.Reason == "merged"),
+                r.Reason == DestroyReason.Consumed),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

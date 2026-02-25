@@ -1,6 +1,6 @@
 # State Service Configuration Schema
 # Defines connection settings for Redis and MySQL state stores
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: State Service Configuration
   description: |

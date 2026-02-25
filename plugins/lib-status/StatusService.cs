@@ -1017,7 +1017,7 @@ public partial class StatusService : IStatusService
                 try
                 {
                     await _itemClient.DestroyItemInstanceAsync(
-                        new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = "status-cleanup" },
+                        new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = DestroyReason.Destroyed },
                         cancellationToken);
                 }
                 catch (ApiException ex)
@@ -1273,7 +1273,7 @@ public partial class StatusService : IStatusService
                 try
                 {
                     await _itemClient.DestroyItemInstanceAsync(
-                        new DestroyItemInstanceRequest { InstanceId = itemInstanceId, Reason = "contract-compensation" },
+                        new DestroyItemInstanceRequest { InstanceId = itemInstanceId, Reason = DestroyReason.Destroyed },
                         cancellationToken);
                 }
                 catch (ApiException deleteEx)
@@ -1417,7 +1417,7 @@ public partial class StatusService : IStatusService
         try
         {
             await _itemClient.DestroyItemInstanceAsync(
-                new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = "status-removed" },
+                new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = DestroyReason.Destroyed },
                 cancellationToken);
         }
         catch (ApiException ex)

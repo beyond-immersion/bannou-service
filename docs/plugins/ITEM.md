@@ -20,7 +20,7 @@ The Item service implements the **"Itemize Anything"** pattern ([#280](https://g
 
 - Traditional items (weapons, armor, consumables)
 - Licenses and skills ([#281](https://github.com/beyond-immersion/bannou-service/issues/281))
-- Status effects and buffs ([#282](https://github.com/beyond-immersion/bannou-service/issues/282))
+- Status effects and buffs ([#282](https://github.com/beyond-immersion/bannou-service/issues/282)) — lib-status implemented
 - Memberships and subscriptions ([#284](https://github.com/beyond-immersion/bannou-service/issues/284))
 - Collectibles and achievements ([#286](https://github.com/beyond-immersion/bannou-service/issues/286))
 
@@ -139,7 +139,10 @@ This architecture enables:
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-inventory | Uses `IItemClient` for template lookups, instance creation/modification/destruction |
-| lib-escrow | References item instances for asset exchange operations |
+| lib-escrow | References item instances for asset exchange operations (integration not fully functional per [#153](https://github.com/beyond-immersion/bannou-service/issues/153)) |
+| lib-license | Uses item instances as license nodes on progression boards ([#281](https://github.com/beyond-immersion/bannou-service/issues/281)) |
+| lib-status | Uses item instances as status effects in per-entity containers ([#282](https://github.com/beyond-immersion/bannou-service/issues/282)) |
+| lib-affix | Stores per-item modifier data for item instances |
 
 ---
 
@@ -224,6 +227,7 @@ This plugin does not consume external events.
 | `IStateStoreFactory` | Singleton | Access to 5 state stores (4 data + 1 lock) |
 | `IMessageBus` | Scoped | Event publishing and error events |
 | `IDistributedLockProvider` | Scoped | Distributed locks for container change operations |
+| `ITelemetryProvider` | Singleton | Distributed tracing spans for all async helper methods |
 | `IContractClient` | Scoped | Contract service for item use behavior execution (L1 hard dependency) |
 
 Service lifetime is **Scoped** (per-request). No background services.
@@ -294,11 +298,10 @@ UseItemAsync(instanceId, userId, userType, targetId?, targetType?, context?)
     │       └── Batch size: ITEM_USE_EVENT_BATCH_MAX_SIZE (100)
     │
     └── 9. Return UseItemResponse
-            ├── success: true/false
             ├── contractInstanceId: the ephemeral contract
             ├── consumed: whether item was consumed
             ├── remainingQuantity: null if destroyed, else new quantity
-            └── failureReason: if success=false
+            └── failureReason: if use failed
 ```
 
 **Key Design Points**:
@@ -477,8 +480,10 @@ Contract Binding Patterns
 
 1. ~~**Unbind endpoint**~~: **FIXED** (2026-01-31) - Implemented as `/item/instance/unbind` with admin-only permission.
 2. **Template migration**: When deprecating with `migrationTargetId`, automatically upgrade instances to the new template.
-3. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes).
+3. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes). See lib-affix for the L4 modifier service.
 4. **Durability repair**: Endpoint to restore durability with configurable repair costs.
+5. **Item Decay/Expiration** ([#407](https://github.com/beyond-immersion/bannou-service/issues/407)): Time-based item lifecycle (template-level decay config, instance `expiresAt`, background worker for expiration). Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)) — native item expiration would allow simple timed buffs without full Contract lifecycle overhead.
+6. **Item Sockets** ([#430](https://github.com/beyond-immersion/bannou-service/issues/430)): Future L4 plugin (lib-socket) for socket, linking, and gem placement systems on item instances.
 
 ---
 
@@ -528,6 +533,8 @@ No bugs identified.
 
 9. **ListItemsByTemplate filters AFTER fetching all instances**: All instances are fetched then filtered by RealmId in memory. For templates with many instances, this fetches far more data than needed.
 
+10. **T29 Warning: `instanceMetadata` is opaque pass-through** ([#308](https://github.com/beyond-immersion/bannou-service/issues/308)): The `instanceMetadata` field on item instances uses `additionalProperties: true` and is opaque to Bannou. No plugin should read specific keys from this field by convention. Known violations (e.g., services reading `instanceMetadata.affixes` by convention) are tracked in #308 for migration to typed schemas. New code MUST NOT introduce convention-based metadata key reading.
+
 ---
 
 ## Work Tracking
@@ -544,7 +551,11 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **2026-01-31**: Unbind endpoint implementation - Added `/item/instance/unbind` endpoint with `UnbindItemInstanceAsync` method. Admin-only permission, clears binding state, and publishes `ItemInstanceUnboundEvent` with reason and previous character ID. Returns BadRequest (400) if item is not bound. Schema, generated code, and service implementation all updated.
 
-- **2026-01-31**: N+1 bulk loading optimization - Added `GetInstancesBulkWithCacheAsync` helper that performs two-tier bulk loading (Redis cache → MySQL persistent store for misses → bulk cache population). Applied to `ListItemsByContainer`, `ListItemsByTemplate`, and `BatchGetItemInstances`. Maximum 2 database round-trips regardless of item count. See Issue #168 for `IStateStore` bulk operations.
+- **2026-01-31**: N+1 bulk loading optimization - Added `GetInstancesBulkWithCacheAsync` helper that performs two-tier bulk loading (Redis cache → MySQL persistent store for misses → bulk cache population). Applied to `ListItemsByContainer`, `ListItemsByTemplate`, and `BatchGetItemInstances`. Maximum 2 database round-trips regardless of item count.
 
 ### Related (Cross-Service)
+- **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.
 - **[#164](https://github.com/beyond-immersion/bannou-service/issues/164)**: Item Removal/Drop Behavior - Owned by lib-inventory, but affects lib-item's container index and event patterns. See Design Considerations #4 and #5.
+- **[#308](https://github.com/beyond-immersion/bannou-service/issues/308)**: Replace `additionalProperties:true` metadata pattern with typed schemas - Affects `instanceMetadata` field. See Design Considerations #10.
+- **[#407](https://github.com/beyond-immersion/bannou-service/issues/407)**: Item Decay/Expiration System - Time-based item lifecycle. Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)). See Potential Extensions #5.
+- **[#430](https://github.com/beyond-immersion/bannou-service/issues/430)**: lib-socket - Item socket, linking, and gem placement system. See Potential Extensions #6.
