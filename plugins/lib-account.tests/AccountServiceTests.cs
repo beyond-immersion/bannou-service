@@ -4334,4 +4334,444 @@ public class AccountServiceTests
     }
 
     #endregion
+
+    #region BuildAccountQueryConditions Tests (via ListAccounts)
+
+    /// <summary>
+    /// Verifies that an email filter adds a Contains condition on $.Email.
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_WithEmailFilter_AddsEmailCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest { Email = "test@example.com" });
+
+        // Assert - should have base conditions (AccountId exists, DeletedAtUnix not exists) + email
+        Assert.NotNull(capturedConditions);
+        var emailCondition = capturedConditions.FirstOrDefault(c => c.Path == "$.Email");
+        Assert.NotNull(emailCondition);
+        Assert.Equal(QueryOperator.Contains, emailCondition.Operator);
+        Assert.Equal("test@example.com", emailCondition.Value);
+    }
+
+    /// <summary>
+    /// Verifies that a display name filter adds a Contains condition on $.DisplayName.
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_WithDisplayNameFilter_AddsDisplayNameCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest { DisplayName = "Alice" });
+
+        // Assert
+        Assert.NotNull(capturedConditions);
+        var nameCondition = capturedConditions.FirstOrDefault(c => c.Path == "$.DisplayName");
+        Assert.NotNull(nameCondition);
+        Assert.Equal(QueryOperator.Contains, nameCondition.Operator);
+        Assert.Equal("Alice", nameCondition.Value);
+    }
+
+    /// <summary>
+    /// Verifies that a verified filter adds an Equals condition on $.IsVerified.
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_WithVerifiedFilter_AddsVerifiedCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest { Verified = true });
+
+        // Assert
+        Assert.NotNull(capturedConditions);
+        var verifiedCondition = capturedConditions.FirstOrDefault(c => c.Path == "$.IsVerified");
+        Assert.NotNull(verifiedCondition);
+        Assert.Equal(QueryOperator.Equals, verifiedCondition.Operator);
+        Assert.Equal(true, verifiedCondition.Value);
+    }
+
+    /// <summary>
+    /// Verifies that multiple simultaneous filters all generate conditions.
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_WithMultipleFilters_AddsAllConditions()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest
+        {
+            Email = "test@example.com",
+            DisplayName = "Alice",
+            Verified = false
+        });
+
+        // Assert - 2 base conditions + 3 filters = 5 total
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(5, capturedConditions.Count);
+        Assert.NotNull(capturedConditions.FirstOrDefault(c => c.Path == "$.Email"));
+        Assert.NotNull(capturedConditions.FirstOrDefault(c => c.Path == "$.DisplayName"));
+        Assert.NotNull(capturedConditions.FirstOrDefault(c => c.Path == "$.IsVerified"));
+    }
+
+    /// <summary>
+    /// Verifies that empty/whitespace-only email filter is treated as absent (no condition added).
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_WithEmptyEmailFilter_DoesNotAddEmailCondition()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest { Email = "   " });
+
+        // Assert - only base conditions (AccountId exists + DeletedAtUnix not exists)
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(2, capturedConditions.Count);
+        Assert.Null(capturedConditions.FirstOrDefault(c => c.Path == "$.Email"));
+    }
+
+    /// <summary>
+    /// Verifies that no filters produces only the base conditions (type discriminator + soft-delete check).
+    /// </summary>
+    [Fact]
+    public async Task ListAccountsAsync_NoFilters_ProducesOnlyBaseConditions()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        IReadOnlyList<QueryCondition>? capturedConditions = null;
+
+        _mockJsonQueryableStore
+            .Setup(s => s.JsonQueryPagedAsync(
+                It.IsAny<IReadOnlyList<QueryCondition>?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<JsonSortSpec?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<IReadOnlyList<QueryCondition>?, int, int, JsonSortSpec?, CancellationToken>(
+                (conditions, _, _, _, _) => capturedConditions = conditions)
+            .ReturnsAsync(new JsonPagedResult<AccountModel>(
+                new List<JsonQueryResult<AccountModel>>(), 0, 0, 20));
+
+        // Act
+        await service.ListAccountsAsync(new ListAccountsRequest());
+
+        // Assert - AccountId exists + DeletedAtUnix not exists
+        Assert.NotNull(capturedConditions);
+        Assert.Equal(2, capturedConditions.Count);
+        Assert.NotNull(capturedConditions.FirstOrDefault(c =>
+            c.Path == "$.AccountId" && c.Operator == QueryOperator.Exists));
+        Assert.NotNull(capturedConditions.FirstOrDefault(c =>
+            c.Path == "$.DeletedAtUnix" && c.Operator == QueryOperator.NotExists));
+    }
+
+    #endregion
+
+    #region MetadataEquals Tests (via UpdateAccount)
+
+    /// <summary>
+    /// Verifies that updating with identical metadata does NOT publish a metadata change event.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_SameMetadata_DoesNotPublishMetadataChange()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var existingMetadata = new Dictionary<string, object>
+        {
+            { "theme", "dark" },
+            { "level", 5L }
+        };
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = existingMetadata,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Same metadata values (dict equality should be true)
+        var sameMetadata = new Dictionary<string, object>
+        {
+            { "theme", "dark" },
+            { "level", 5L }
+        };
+
+        // Act
+        var (status, _) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Metadata = sameMetadata
+        });
+
+        // Assert - no metadata change means no "metadata" in changed fields
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// Verifies that metadata with same keys but different values IS detected as a change.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_DifferentMetadataValues_PublishesMetadataChange()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = new Dictionary<string, object> { { "theme", "dark" } },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Same key, different value
+        var differentMetadata = new Dictionary<string, object> { { "theme", "light" } };
+
+        // Act
+        var (status, _) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Metadata = differentMetadata
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that adding a new metadata key (different count) IS detected as a change.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_MetadataWithExtraKey_PublishesMetadataChange()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = new Dictionary<string, object> { { "theme", "dark" } },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Extra key → different count → MetadataEquals returns false
+        var extraMetadata = new Dictionary<string, object>
+        {
+            { "theme", "dark" },
+            { "language", "en" }
+        };
+
+        // Act
+        var (status, _) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Metadata = extraMetadata
+        });
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// Verifies that setting metadata on an account with null metadata IS detected as a change.
+    /// </summary>
+    [Fact]
+    public async Task UpdateAccountAsync_NullExistingMetadata_NewMetadata_PublishesMetadataChange()
+    {
+        // Arrange
+        var service = CreateServiceWithConfiguration();
+        var accountId = Guid.NewGuid();
+        var account = new AccountModel
+        {
+            AccountId = accountId,
+            Email = "user@test.local",
+            Roles = new List<string> { "user" },
+            Metadata = null,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockAccountStore
+            .Setup(s => s.GetWithETagAsync($"account-{accountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((account, "etag-0"));
+
+        _mockAccountStore
+            .Setup(s => s.TrySaveAsync(
+                $"account-{accountId}",
+                It.IsAny<AccountModel>(),
+                "etag-0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        _mockAuthMethodsStore
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AuthMethodInfo>());
+
+        // Act
+        var (status, _) = await service.UpdateAccountAsync(new UpdateAccountRequest
+        {
+            AccountId = accountId,
+            Metadata = new Dictionary<string, object> { { "theme", "dark" } }
+        });
+
+        // Assert - null existing → empty dict, vs non-empty new → change detected
+        Assert.Equal(StatusCodes.OK, status);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "account.updated",
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("metadata")),
+            It.IsAny<PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

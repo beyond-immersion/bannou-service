@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Item;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Item;
 
@@ -291,6 +306,49 @@ public enum ContractBindingType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Reason for destroying an item instance
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DestroyReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"consumed")]
+    Consumed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"destroyed")]
+    Destroyed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    Expired = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"admin")]
+    Admin = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason for unbinding an item from a character
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum UnbindReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"admin")]
+    Admin = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"expiration")]
+    Expiration = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"transfer_override")]
+    TransferOverride = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new item template
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -301,9 +359,9 @@ public partial class CreateItemTemplateRequest
     /// Unique code within the game (immutable after creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 2)]
     [System.ComponentModel.DataAnnotations.RegularExpression(@"^[a-z][a-z0-9_]{1,63}$")]
     public string Code { get; set; } = default!;
 
@@ -311,18 +369,18 @@ public partial class CreateItemTemplateRequest
     /// Game service this template belongs to (immutable after creation)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string GameId { get; set; } = default!;
 
     /// <summary>
     /// Human-readable display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -476,31 +534,31 @@ public partial class CreateItemTemplateRequest
     public System.Collections.Generic.ICollection<System.Guid>? AvailableRealms { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined stats (e.g., attack, defense)
+    /// Game-defined stats (e.g., attack, defense). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stats")]
     public object? Stats { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined effects (e.g., on_use, on_equip)
+    /// Game-defined effects (e.g., on_use, on_equip). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
     public object? Effects { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined requirements (e.g., level, strength)
+    /// Game-defined requirements (e.g., level, strength). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requirements")]
     public object? Requirements { get; set; } = default!;
 
     /// <summary>
-    /// Display properties (e.g., iconId, modelId)
+    /// Display properties (e.g., iconId, modelId). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("display")]
     public object? Display { get; set; } = default!;
 
     /// <summary>
-    /// Any other game-specific data
+    /// Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -583,14 +641,14 @@ public partial class ListItemTemplatesRequest
     /// Filter by game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    public string GameId { get; set; } = default!;
+    public string? GameId { get; set; } = default!;
 
     /// <summary>
     /// Filter by item category
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemCategory Category { get; set; } = default!;
+    public ItemCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Filter by subcategory
@@ -609,14 +667,14 @@ public partial class ListItemTemplatesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemRarity Rarity { get; set; } = default!;
+    public ItemRarity? Rarity { get; set; } = default!;
 
     /// <summary>
     /// Filter by realm scope
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scope")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemScope Scope { get; set; } = default!;
+    public ItemScope? Scope { get; set; } = default!;
 
     /// <summary>
     /// Filter by realm availability
@@ -646,13 +704,14 @@ public partial class ListItemTemplatesRequest
     /// Pagination offset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
     /// <summary>
     /// Maximum results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 200)]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
     public int Limit { get; set; } = 50;
 
 }
@@ -704,7 +763,7 @@ public partial class UpdateItemTemplateRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemRarity Rarity { get; set; } = default!;
+    public ItemRarity? Rarity { get; set; } = default!;
 
     /// <summary>
     /// New weight value
@@ -767,31 +826,31 @@ public partial class UpdateItemTemplateRequest
     public System.Collections.Generic.ICollection<System.Guid>? AvailableRealms { get; set; } = default!;
 
     /// <summary>
-    /// New stats
+    /// New stats. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stats")]
     public object? Stats { get; set; } = default!;
 
     /// <summary>
-    /// New effects
+    /// New effects. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
     public object? Effects { get; set; } = default!;
 
     /// <summary>
-    /// New requirements
+    /// New requirements. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requirements")]
     public object? Requirements { get; set; } = default!;
 
     /// <summary>
-    /// New display properties
+    /// New display properties. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("display")]
     public object? Display { get; set; } = default!;
 
     /// <summary>
-    /// New metadata
+    /// New metadata. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -930,12 +989,16 @@ public partial class ItemTemplateResponse
     /// Filtering tags
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> Tags { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
     /// Item rarity tier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rarity")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public ItemRarity Rarity { get; set; } = default!;
 
@@ -964,6 +1027,8 @@ public partial class ItemTemplateResponse
     /// Precision for weight values
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("weightPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public WeightPrecision WeightPrecision { get; set; } = default!;
 
@@ -1052,31 +1117,31 @@ public partial class ItemTemplateResponse
     public System.Collections.Generic.ICollection<System.Guid>? AvailableRealms { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined stats
+    /// Game-defined stats. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stats")]
     public object? Stats { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined effects
+    /// Game-defined effects. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("effects")]
     public object? Effects { get; set; } = default!;
 
     /// <summary>
-    /// Game-defined requirements
+    /// Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requirements")]
     public object? Requirements { get; set; } = default!;
 
     /// <summary>
-    /// Display properties
+    /// Display properties. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("display")]
     public object? Display { get; set; } = default!;
 
     /// <summary>
-    /// Other game-specific data
+    /// Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1247,7 +1312,7 @@ public partial class CreateItemInstanceRequest
     public int? CurrentDurability { get; set; } = default!;
 
     /// <summary>
-    /// Instance-specific stat modifications
+    /// Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customStats")]
     public object? CustomStats { get; set; } = default!;
@@ -1260,7 +1325,7 @@ public partial class CreateItemInstanceRequest
     public string? CustomName { get; set; } = default!;
 
     /// <summary>
-    /// Any other instance-specific data
+    /// Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
@@ -1340,7 +1405,7 @@ public partial class ModifyItemInstanceRequest
     public int? DurabilityDelta { get; set; } = default!;
 
     /// <summary>
-    /// New custom stats (merges with existing)
+    /// New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customStats")]
     public object? CustomStats { get; set; } = default!;
@@ -1359,7 +1424,7 @@ public partial class ModifyItemInstanceRequest
     public double? QuantityDelta { get; set; } = default!;
 
     /// <summary>
-    /// New instance metadata (merges with existing)
+    /// New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
@@ -1417,6 +1482,8 @@ public partial class BindItemInstanceRequest
     /// Type of binding to apply
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bindType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public SoulboundType BindType { get; set; } = default!;
 
@@ -1438,13 +1505,13 @@ public partial class UnbindItemInstanceRequest
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for unbinding (admin, expiration, transfer_override)
+    /// Reason for unbinding
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(200)]
-    public string Reason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public UnbindReason Reason { get; set; } = default!;
 
 }
 
@@ -1464,12 +1531,13 @@ public partial class DestroyItemInstanceRequest
     public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for destruction (consumed, destroyed, expired, admin)
+    /// Reason for destruction
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DestroyReason Reason { get; set; } = default!;
 
 }
 
@@ -1561,7 +1629,7 @@ public partial class ItemInstanceResponse
     public System.DateTimeOffset? BoundAt { get; set; } = default!;
 
     /// <summary>
-    /// Instance-specific stat modifications
+    /// Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customStats")]
     public object? CustomStats { get; set; } = default!;
@@ -1573,7 +1641,7 @@ public partial class ItemInstanceResponse
     public string? CustomName { get; set; } = default!;
 
     /// <summary>
-    /// Other instance-specific data
+    /// Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceMetadata")]
     public object? InstanceMetadata { get; set; } = default!;
@@ -1634,21 +1702,7 @@ public partial class DestroyItemInstanceResponse
 {
 
     /// <summary>
-    /// Whether destruction was successful
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("destroyed")]
-    public bool Destroyed { get; set; } = default!;
-
-    /// <summary>
-    /// Destroyed instance ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
-
-    /// <summary>
-    /// Template of destroyed instance
+    /// Template of the destroyed instance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1699,13 +1753,14 @@ public partial class ListItemsByTemplateRequest
     /// Pagination offset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
     /// <summary>
     /// Maximum results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
-    [System.ComponentModel.DataAnnotations.Range(int.MinValue, 200)]
+    [System.ComponentModel.DataAnnotations.Range(1, 200)]
     public int Limit { get; set; } = 50;
 
 }
@@ -1752,6 +1807,7 @@ public partial class BatchGetItemInstancesRequest
     [System.Text.Json.Serialization.JsonPropertyName("instanceIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<System.Guid> InstanceIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
@@ -1806,13 +1862,13 @@ public partial class UseItemRequest
     public System.Guid UserId { get; set; } = default!;
 
     /// <summary>
-    /// Type of user entity performing the use action (e.g., character, account, actor)
+    /// Type of user entity performing the use action
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Optional unique identifier of the target entity for directional item effects
@@ -1824,8 +1880,8 @@ public partial class UseItemRequest
     /// Type of target entity when targetId is provided
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetType")]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string? TargetType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? TargetType { get; set; } = default!;
 
     /// <summary>
     /// Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention.
@@ -1841,20 +1897,6 @@ public partial class UseItemRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UseItemResponse
 {
-
-    /// <summary>
-    /// Whether the item use behavior executed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier of the item instance that was used
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("instanceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid InstanceId { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier of the item template defining the used item
@@ -1914,13 +1956,13 @@ public partial class UseItemStepRequest
     public System.Guid UserId { get; set; } = default!;
 
     /// <summary>
-    /// Type of user entity (e.g., character, account, actor)
+    /// Type of user entity performing the step
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64)]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Milestone code to complete in the use behavior contract
@@ -1951,12 +1993,6 @@ public partial class UseItemStepRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UseItemStepResponse
 {
-
-    /// <summary>
-    /// Whether the step completed successfully
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
     /// <summary>
     /// Item instance ID

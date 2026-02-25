@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Permission;
 using BeyondImmersion.BannouService.Protocol;
 using BeyondImmersion.BannouService.Services;
@@ -39,6 +40,7 @@ public partial class GameSessionService : IGameSessionService
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IConnectClient _connectClient;
+    private readonly IGameServiceClient _gameServiceClient;
     private readonly ITelemetryProvider _telemetryProvider;
 
     internal const string SESSION_KEY_PREFIX = "session:";
@@ -132,6 +134,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="permissionClient">Permission client for setting game-session:in_game state.</param>
     /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     /// <param name="connectClient">Connect client for querying connected sessions per account.</param>
+    /// <param name="gameServiceClient">Game service client for checking autoLobbyEnabled on game service definitions.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     public GameSessionService(
         IStateStoreFactory stateStoreFactory,
@@ -144,6 +147,7 @@ public partial class GameSessionService : IGameSessionService
         ISubscriptionClient subscriptionClient,
         IDistributedLockProvider lockProvider,
         IConnectClient connectClient,
+        IGameServiceClient gameServiceClient,
         ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -155,6 +159,7 @@ public partial class GameSessionService : IGameSessionService
         _subscriptionClient = subscriptionClient;
         _lockProvider = lockProvider;
         _connectClient = connectClient;
+        _gameServiceClient = gameServiceClient;
         _telemetryProvider = telemetryProvider;
 
         // Initialize supported game services from configuration
@@ -536,6 +541,13 @@ public partial class GameSessionService : IGameSessionService
         {
             _logger.LogWarning("Cannot perform action on finished lobby {LobbyId}", lobbyId);
             return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate that the player is actually in this session
+        if (!model.Players.Any(p => p.AccountId == accountId))
+        {
+            _logger.LogWarning("Player {AccountId} is not a member of lobby {LobbyId}", accountId, lobbyId);
+            return (StatusCodes.Forbidden, null);
         }
 
         // Validate action data is present for mutation actions
@@ -1395,10 +1407,27 @@ public partial class GameSessionService : IGameSessionService
                 .Where(stub => !(genericPublished && string.Equals(stub, "generic", StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
-            if (ourServices.Count > 0)
+            // Filter to services with autoLobbyEnabled (check via GameService)
+            // Games with autoLobbyEnabled=false have entry managed by higher-layer orchestration (e.g., Gardener)
+            var autoLobbyServices = new List<string>();
+            foreach (var stub in ourServices)
             {
-                _logger.LogDebug("Account {AccountId} has {Count} subscriptions matching our services: {Services}",
-                    accountId, ourServices.Count, string.Join(", ", ourServices));
+                if (await IsAutoLobbyEnabledAsync(stub))
+                {
+                    autoLobbyServices.Add(stub);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "Skipping lobby shortcut for {StubName}: autoLobbyEnabled is false (entry managed by higher-layer orchestration)",
+                        stub);
+                }
+            }
+
+            if (autoLobbyServices.Count > 0)
+            {
+                _logger.LogDebug("Account {AccountId} has {Count} auto-lobby subscriptions matching our services: {Services}",
+                    accountId, autoLobbyServices.Count, string.Join(", ", autoLobbyServices));
 
                 // Store subscriber session in lib-state (distributed tracking) if not already stored
                 if (!genericPublished)
@@ -1406,7 +1435,7 @@ public partial class GameSessionService : IGameSessionService
                     await StoreSubscriberSessionAsync(accountId, sessionId);
                 }
 
-                foreach (var stubName in ourServices)
+                foreach (var stubName in autoLobbyServices)
                 {
                     await PublishJoinShortcutAsync(sessionId, accountId, stubName);
                 }
@@ -1534,13 +1563,20 @@ public partial class GameSessionService : IGameSessionService
 
         _logger.LogDebug("Found {Count} connected sessions for account {AccountId}", connectedSessionsForAccount.Count, accountId);
 
+        // For active subscriptions, check if this game service has auto-lobby enabled
+        // Revocation path is unconditional — shortcuts may exist from when autoLobbyEnabled was true
+        bool shouldPublishShortcuts = isActive && await IsAutoLobbyEnabledAsync(stubName);
+
         foreach (var sessionId in connectedSessionsForAccount)
         {
             if (isActive)
             {
-                // Store in subscriber-sessions so join validation works
+                // Always store subscriber session for authorization tracking
                 await StoreSubscriberSessionAsync(accountId, sessionId);
-                await PublishJoinShortcutAsync(sessionId, accountId, stubName);
+                if (shouldPublishShortcuts)
+                {
+                    await PublishJoinShortcutAsync(sessionId, accountId, stubName);
+                }
             }
             else
             {
@@ -2014,6 +2050,43 @@ public partial class GameSessionService : IGameSessionService
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Checks if a game service has autoLobbyEnabled set to true.
+    /// Returns true (fail-open) if the game service cannot be queried,
+    /// preserving backward-compatible shortcut publishing behavior.
+    /// </summary>
+    /// <param name="stubName">The game service stub name to check.</param>
+    /// <returns>True if auto-lobby is enabled or the check failed; false if explicitly disabled.</returns>
+    private async Task<bool> IsAutoLobbyEnabledAsync(string stubName)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "GameSessionService.IsAutoLobbyEnabled");
+
+        try
+        {
+            var service = await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { StubName = stubName });
+            return service.AutoLobbyEnabled;
+        }
+        catch (ApiException ex)
+        {
+            // Game service not found or returned an error status - default to publishing shortcuts
+            // for backward compatibility (fail-open per IMPLEMENTATION TENETS)
+            _logger.LogWarning(ex,
+                "Failed to check autoLobbyEnabled for {StubName} (status {StatusCode}), defaulting to enabled",
+                stubName, ex.StatusCode);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Infrastructure failure (timeout, connection refused, etc.) - fail-open
+            _logger.LogWarning(ex,
+                "Unexpected error checking autoLobbyEnabled for {StubName}, defaulting to enabled",
+                stubName);
+            return true;
+        }
+    }
 
     private async Task<GameSessionResponse?> LoadSessionAsync(string sessionId, CancellationToken cancellationToken)
     {

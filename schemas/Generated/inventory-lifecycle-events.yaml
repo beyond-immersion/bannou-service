@@ -116,24 +116,61 @@ components:
         slotCost: &id021
           type: integer
           description: "Number of slots this container uses in its parent"
-        contentsWeight: &id022
+        parentGridWidth: &id022
+          type: integer
+          nullable: true
+          description: "Width this container occupies in parent grid"
+        parentGridHeight: &id023
+          type: integer
+          nullable: true
+          description: "Height this container occupies in parent grid"
+        parentVolume: &id024
+          type: number
+          format: double
+          nullable: true
+          description: "Volume this container occupies in parent"
+        contentsWeight: &id025
           type: number
           format: double
           description: "Total weight of direct contents"
-        totalWeight: &id023
+        totalWeight: &id026
           type: number
           format: double
           description: "Total weight including self and contents"
-        realmId: &id024
+        allowedCategories: &id027
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Item categories allowed in this container"
+        forbiddenCategories: &id028
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Item categories forbidden from this container"
+        allowedTags: &id029
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Required tags for items in this container"
+        tags: &id030
+          type: array
+          items: {type: string}
+          nullable: true
+          description: "Container tags for categorization"
+        metadata: &id031
+          type: object
+          nullable: true
+          description: "Game-specific container metadata"
+        realmId: &id032
           type: string
           format: uuid
           nullable: true
           description: "Realm ID this container belongs to"
-        createdAt: &id025
+        createdAt: &id033
           type: string
           format: date-time
           description: "When the container was created"
-        modifiedAt: &id026
+        modifiedAt: &id034
           type: string
           format: date-time
           nullable: true
@@ -189,11 +226,19 @@ components:
         selfWeight: *id019
         weightContribution: *id020
         slotCost: *id021
-        contentsWeight: *id022
-        totalWeight: *id023
-        realmId: *id024
-        createdAt: *id025
-        modifiedAt: *id026
+        parentGridWidth: *id022
+        parentGridHeight: *id023
+        parentVolume: *id024
+        contentsWeight: *id025
+        totalWeight: *id026
+        allowedCategories: *id027
+        forbiddenCategories: *id028
+        allowedTags: *id029
+        tags: *id030
+        metadata: *id031
+        realmId: *id032
+        createdAt: *id033
+        modifiedAt: *id034
         changedFields:
           type: array
           items:
@@ -249,11 +294,19 @@ components:
         selfWeight: *id019
         weightContribution: *id020
         slotCost: *id021
-        contentsWeight: *id022
-        totalWeight: *id023
-        realmId: *id024
-        createdAt: *id025
-        modifiedAt: *id026
+        parentGridWidth: *id022
+        parentGridHeight: *id023
+        parentVolume: *id024
+        contentsWeight: *id025
+        totalWeight: *id026
+        allowedCategories: *id027
+        forbiddenCategories: *id028
+        allowedTags: *id029
+        tags: *id030
+        metadata: *id031
+        realmId: *id032
+        createdAt: *id033
+        modifiedAt: *id034
         deletedReason:
           type: string
           nullable: true

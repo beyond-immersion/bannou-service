@@ -444,7 +444,7 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Estimated total size in bytes that triggers async processing. Default 100MB.
     /// Environment variable: ASSET_METABUNDLE_ASYNC_SIZE_BYTES_THRESHOLD
     /// </summary>
-    public int MetabundleAsyncSizeBytesThreshold { get; set; } = 104857600;
+    public long MetabundleAsyncSizeBytesThreshold { get; set; } = 104857600L;
 
     /// <summary>
     /// How long job status records are retained after completion (for polling)

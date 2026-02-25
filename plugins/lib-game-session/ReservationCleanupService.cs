@@ -252,12 +252,22 @@ public class ReservationCleanupService : BackgroundService
             var store = _stateStoreFactory.GetStore<CleanupSessionModel>(StateStoreDefinitions.GameSession);
             await store.DeleteAsync(SESSION_KEY_PREFIX + sessionId, cancellationToken);
 
-            // Remove from list
-            var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
-            var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
-            if (sessionIds.Remove(sessionId))
+            // Remove from session list under distributed lock (read-modify-write)
+            await using var listLock = await _lockProvider.LockAsync(
+                "game-session", SESSION_LIST_KEY, Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds, cancellationToken);
+            if (listLock.Success)
             {
-                await listStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
+                var listStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);
+                var sessionIds = await listStore.GetAsync(SESSION_LIST_KEY, cancellationToken) ?? new List<string>();
+                if (sessionIds.Remove(sessionId))
+                {
+                    await listStore.SaveAsync(SESSION_LIST_KEY, sessionIds, cancellationToken: cancellationToken);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Could not acquire session-list lock when cleaning up session {SessionId}", sessionId);
             }
         }
         catch (Exception ex)

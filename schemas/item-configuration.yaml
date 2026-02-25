@@ -16,6 +16,7 @@ x-service-configuration:
   properties:
     defaultMaxStackSize:
       type: integer
+      minimum: 1
       env: ITEM_DEFAULT_MAX_STACK_SIZE
       default: 99
       description: Default max stack size for new templates when not specified
@@ -26,16 +27,19 @@ x-service-configuration:
       description: Default weight precision for new templates
     templateCacheTtlSeconds:
       type: integer
+      minimum: 0
       env: ITEM_TEMPLATE_CACHE_TTL_SECONDS
       default: 3600
       description: TTL for template cache entries in seconds (templates change infrequently)
     instanceCacheTtlSeconds:
       type: integer
+      minimum: 0
       env: ITEM_INSTANCE_CACHE_TTL_SECONDS
       default: 900
       description: TTL for instance cache entries in seconds (15 minutes for active gameplay)
     maxInstancesPerQuery:
       type: integer
+      minimum: 1
       env: ITEM_MAX_INSTANCES_PER_QUERY
       default: 1000
       description: Maximum item instances returned in a single query
@@ -58,6 +62,7 @@ x-service-configuration:
     # List Operation Configuration
     listOperationMaxRetries:
       type: integer
+      minimum: 1
       env: ITEM_LIST_OPERATION_MAX_RETRIES
       default: 3
       description: Maximum retry attempts for optimistic concurrency on list operations
@@ -65,6 +70,7 @@ x-service-configuration:
     # Locking Configuration
     lockTimeoutSeconds:
       type: integer
+      minimum: 1
       env: ITEM_LOCK_TIMEOUT_SECONDS
       default: 30
       description: Timeout in seconds for distributed locks on item instance modifications
@@ -102,12 +108,10 @@ x-service-configuration:
       description: System party ID for item use contracts (null uses deterministic UUID from game ID)
 
     systemPartyType:
-      type: string
-      minLength: 1
-      maxLength: 64
+      $ref: 'item-api.yaml#/components/schemas/EntityType'
       env: ITEM_SYSTEM_PARTY_TYPE
       default: "system"
-      description: Entity type string for the system party in item use contracts
+      description: Entity type for the system party in item use contracts
 
     # CanUse Validation Configuration
     canUseMilestoneCode:

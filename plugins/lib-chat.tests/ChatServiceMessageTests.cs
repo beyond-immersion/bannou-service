@@ -1141,4 +1141,301 @@ public class ChatServiceMessageTests : ChatServiceTestBase
     }
 
     #endregion
+
+    #region ValidateMessageContent - Uncovered Branches
+
+    [Fact]
+    public async Task SendMessage_TextFormat_AllowedPattern_Mismatch_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom();
+        var roomType = CreateTestRoomType("text", MessageFormat.Text, PersistenceMode.Persistent);
+        roomType.ValidatorConfig = new ValidatorConfigModel { AllowedPattern = @"^[a-zA-Z ]+$" };
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Text with numbers should fail the alpha-only pattern
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent { Text = "Hello 123!" },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_TextFormat_AllowedPattern_Match_Succeeds()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom();
+        var roomType = CreateTestRoomType("text", MessageFormat.Text, PersistenceMode.Persistent);
+        roomType.ValidatorConfig = new ValidatorConfigModel { AllowedPattern = @"^[a-zA-Z ]+$" };
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        SetupParticipants(TestRoomId, sender);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        var (status, response) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent { Text = "Hello world" },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
+    [Fact]
+    public async Task SendMessage_SentimentFormat_IntensityOutOfRange_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "sentiment");
+        var roomType = CreateTestRoomType("sentiment", MessageFormat.Sentiment, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Intensity > 1.0 should fail
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent
+                {
+                    SentimentCategory = SentimentCategory.Excited,
+                    SentimentIntensity = 1.5f,
+                },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_SentimentFormat_NegativeIntensity_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "sentiment");
+        var roomType = CreateTestRoomType("sentiment", MessageFormat.Sentiment, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Intensity < 0.0 should fail
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent
+                {
+                    SentimentCategory = SentimentCategory.Supportive,
+                    SentimentIntensity = -0.5f,
+                },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_SentimentFormat_MissingIntensityOnly_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "sentiment");
+        var roomType = CreateTestRoomType("sentiment", MessageFormat.Sentiment, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Category present, intensity missing
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent
+                {
+                    SentimentCategory = SentimentCategory.Supportive,
+                    SentimentIntensity = null,
+                },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_EmojiFormat_NotInAllowedValues_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "emoji");
+        var roomType = CreateTestRoomType("emoji", MessageFormat.Emoji, PersistenceMode.Persistent);
+        roomType.ValidatorConfig = new ValidatorConfigModel
+        {
+            AllowedValues = new List<string> { "smile", "heart", "thumbsup" }
+        };
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        // Emoji code not in allowed values
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent { EmojiCode = "skull" },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_CustomFormat_MissingPayload_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "custom");
+        var roomType = CreateTestRoomType("custom", MessageFormat.Custom, PersistenceMode.Persistent);
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent { Text = "not custom" },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task SendMessage_CustomFormat_PayloadExceedsMaxLength_ReturnsBadRequest()
+    {
+        var service = CreateService();
+        SetCallerSession(TestSessionId);
+
+        var room = CreateTestRoom(roomTypeCode: "custom");
+        var roomType = CreateTestRoomType("custom", MessageFormat.Custom, PersistenceMode.Persistent);
+        roomType.ValidatorConfig = new ValidatorConfigModel { MaxMessageLength = 20 };
+        SetupRoomCache(room);
+        SetupFindRoomTypeByCode(roomType);
+
+        var sender = CreateTestParticipant(sessionId: TestSessionId);
+        MockParticipantStore
+            .Setup(s => s.HashGetAsync<ChatParticipantModel>(
+                TestRoomId.ToString(), TestSessionId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sender);
+
+        MockParticipantStore
+            .Setup(s => s.IncrementAsync(
+                It.IsAny<string>(), It.IsAny<long>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1L);
+
+        var (status, _) = await service.SendMessageAsync(
+            new SendMessageRequest
+            {
+                RoomId = TestRoomId,
+                Content = new SendMessageContent
+                {
+                    CustomPayload = "{\"data\": \"this is a very long custom payload that exceeds the limit\"}"
+                },
+            }, CancellationToken.None);
+
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    #endregion
 }

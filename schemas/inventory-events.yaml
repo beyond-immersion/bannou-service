@@ -79,8 +79,16 @@ x-lifecycle:
       selfWeight: { type: number, format: double, required: true, description: "Weight of the empty container itself" }
       weightContribution: { $ref: 'inventory-api.yaml#/components/schemas/WeightContribution', required: true, description: "How container weight propagates to parent" }
       slotCost: { type: integer, required: true, description: "Number of slots this container uses in its parent" }
+      parentGridWidth: { type: integer, nullable: true, description: "Width this container occupies in parent grid" }
+      parentGridHeight: { type: integer, nullable: true, description: "Height this container occupies in parent grid" }
+      parentVolume: { type: number, format: double, nullable: true, description: "Volume this container occupies in parent" }
       contentsWeight: { type: number, format: double, required: true, description: "Total weight of direct contents" }
       totalWeight: { type: number, format: double, required: true, description: "Total weight including self and contents" }
+      allowedCategories: { type: array, items: { type: string }, nullable: true, description: "Item categories allowed in this container" }
+      forbiddenCategories: { type: array, items: { type: string }, nullable: true, description: "Item categories forbidden from this container" }
+      allowedTags: { type: array, items: { type: string }, nullable: true, description: "Required tags for items in this container" }
+      tags: { type: array, items: { type: string }, nullable: true, description: "Container tags for categorization" }
+      metadata: { type: object, nullable: true, description: "Game-specific container metadata" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID this container belongs to" }
       createdAt: { type: string, format: date-time, required: true, description: "When the container was created" }
       modifiedAt: { type: string, format: date-time, nullable: true, description: "When the container was last modified" }
@@ -93,6 +101,7 @@ components:
     InventoryItemPlacedEvent:
       type: object
       description: Event when an item is placed in a container
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -150,6 +159,7 @@ components:
     InventoryItemRemovedEvent:
       type: object
       description: Event when an item is removed from a container
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -194,6 +204,7 @@ components:
     InventoryItemMovedEvent:
       type: object
       description: Event when an item moves between slots or containers
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -267,6 +278,7 @@ components:
     InventoryItemTransferredEvent:
       type: object
       description: Event when item ownership transfers
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -326,6 +338,7 @@ components:
     InventoryItemStackedEvent:
       type: object
       description: Event when items are stacked together
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -372,6 +385,7 @@ components:
     InventoryItemSplitEvent:
       type: object
       description: Event when a stack is split
+      additionalProperties: false
       required:
       - eventId
       - timestamp
@@ -418,6 +432,7 @@ components:
     InventoryContainerFullEvent:
       type: object
       description: Event when container reaches capacity
+      additionalProperties: false
       required:
       - eventId
       - timestamp

@@ -900,6 +900,392 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
 
     #endregion
 
+    #region ProcessOverdueMilestone Tests (via GetContractInstanceStatusAsync)
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_RequiredMilestoneOverdue_TriggersBreachAndFailed()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Required Milestone",
+                Required = true,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H" // 1 hour - already passed
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Setup breach store GetBulkAsync for loading active breaches after ReportBreachInternalAsync adds breach IDs
+        _mockBreachStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) =>
+                (IReadOnlyDictionary<string, BreachModel>)keys.ToDictionary(k => k, k => new BreachModel
+                {
+                    BreachId = Guid.NewGuid(),
+                    ContractId = contractId,
+                    BreachType = BreachType.MilestoneDeadline,
+                    Status = BreachStatus.Detected
+                }));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(MilestoneStatus.Failed, instance.Milestones[0].Status);
+        Assert.NotNull(instance.Milestones[0].FailedAt);
+
+        // Breach should have been saved
+        _mockBreachStore.Verify(
+            s => s.SaveAsync(It.Is<string>(k => k.StartsWith("breach:")), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_OptionalMilestoneOverdue_SkipBehavior_SkipsToNext()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.CurrentMilestoneIndex = 0;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Optional Skip Milestone",
+                Required = false,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H",
+                DeadlineBehavior = MilestoneDeadlineBehavior.Skip
+            },
+            new()
+            {
+                Code = "m2",
+                Name = "Next Milestone",
+                Required = true,
+                Status = MilestoneStatus.Pending
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Skipped, instance.Milestones[0].Status);
+        Assert.Equal(MilestoneStatus.Active, instance.Milestones[1].Status);
+        Assert.NotNull(instance.Milestones[1].ActivatedAt);
+        Assert.Equal(1, instance.CurrentMilestoneIndex);
+
+        // No breach should be created for skip behavior
+        _mockBreachStore.Verify(
+            s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_OptionalMilestoneOverdue_WarnBehavior_NoStateChange()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Optional Warn Milestone",
+                Required = false,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H",
+                DeadlineBehavior = MilestoneDeadlineBehavior.Warn
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        // Milestone stays Active - warn doesn't modify state
+        Assert.Equal(MilestoneStatus.Active, instance.Milestones[0].Status);
+
+        // No save should happen because ProcessOverdueMilestoneAsync returns false for Warn
+        _mockInstanceStore.Verify(
+            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_OptionalMilestoneOverdue_BreachBehavior_TriggersBreachAndFailed()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Optional Breach Milestone",
+                Required = false,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H",
+                DeadlineBehavior = MilestoneDeadlineBehavior.Breach
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        // Setup breach store GetBulkAsync for loading active breaches after ReportBreachInternalAsync
+        _mockBreachStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> keys, CancellationToken _) =>
+                (IReadOnlyDictionary<string, BreachModel>)keys.ToDictionary(k => k, k => new BreachModel
+                {
+                    BreachId = Guid.NewGuid(),
+                    ContractId = contractId,
+                    BreachType = BreachType.MilestoneDeadline,
+                    Status = BreachStatus.Detected
+                }));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Failed, instance.Milestones[0].Status);
+        Assert.NotNull(instance.Milestones[0].FailedAt);
+
+        // Breach should have been created
+        _mockBreachStore.Verify(
+            s => s.SaveAsync(It.Is<string>(k => k.StartsWith("breach:")), It.IsAny<BreachModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_MilestoneNotYetOverdue_NoAction()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Future Deadline Milestone",
+                Required = true,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow,
+                Deadline = "P1D" // 1 day from now - not overdue
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Active, instance.Milestones[0].Status);
+
+        // No save should happen because no milestone was processed
+        _mockInstanceStore.Verify(
+            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_MilestoneNoDeadline_NoAction()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "No Deadline Milestone",
+                Required = true,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = null // No deadline
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Active, instance.Milestones[0].Status);
+
+        // No save should happen
+        _mockInstanceStore.Verify(
+            s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_OptionalMilestoneOverdue_NullBehavior_DefaultsToSkip()
+    {
+        // Arrange: DeadlineBehavior is null, should default to Skip
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.CurrentMilestoneIndex = 0;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Optional Null Behavior",
+                Required = false,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H",
+                DeadlineBehavior = null // null defaults to Skip
+            },
+            new()
+            {
+                Code = "m2",
+                Name = "Next Milestone",
+                Required = true,
+                Status = MilestoneStatus.Pending
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Skipped, instance.Milestones[0].Status);
+        Assert.Equal(MilestoneStatus.Active, instance.Milestones[1].Status);
+        Assert.Equal(1, instance.CurrentMilestoneIndex);
+    }
+
+    [Fact]
+    public async Task GetContractInstanceStatusAsync_SkipBehavior_LastMilestone_NoNextToActivate()
+    {
+        // Arrange: Skip behavior on the last milestone - no next milestone to activate
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(contractId);
+        instance.Status = ContractStatus.Active;
+        instance.CurrentMilestoneIndex = 0;
+        instance.Milestones = new List<MilestoneInstanceModel>
+        {
+            new()
+            {
+                Code = "m1",
+                Name = "Last Optional Milestone",
+                Required = false,
+                Status = MilestoneStatus.Active,
+                ActivatedAt = DateTimeOffset.UtcNow.AddHours(-2),
+                Deadline = "PT1H",
+                DeadlineBehavior = MilestoneDeadlineBehavior.Skip
+            }
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync($"instance:{contractId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag-0"));
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(It.IsAny<string>(), It.IsAny<ContractInstanceModel>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag-1");
+
+        var request = new GetContractInstanceStatusRequest { ContractId = contractId };
+
+        // Act
+        var (status, response) = await service.GetContractInstanceStatusAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.Equal(MilestoneStatus.Skipped, instance.Milestones[0].Status);
+        // CurrentMilestoneIndex should NOT advance since there's no next milestone
+        Assert.Equal(0, instance.CurrentMilestoneIndex);
+    }
+
+    #endregion
+
     #region CompleteMilestone Tests
 
     [Fact]
@@ -1471,6 +1857,486 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         Assert.True(response.Allowed);
     }
 
+    [Fact]
+    public async Task CheckContractConstraintAsync_ExclusivityViolation_ReturnsNotAllowed()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "exclusive-deal",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "vendor" }
+                    },
+                    Terms = new ContractTermsModel { Exclusivity = true }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Allowed);
+        Assert.NotNull(response.ConflictingContracts);
+        Assert.Single(response.ConflictingContracts);
+        Assert.Equal("Entity has an exclusivity clause in an active contract", response.Reason);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_NonCompeteViolation_ReturnsNotAllowed()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "non-compete",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "employee" }
+                    },
+                    Terms = new ContractTermsModel { NonCompete = true }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.NonCompete
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Allowed);
+        Assert.NotNull(response.ConflictingContracts);
+        Assert.Single(response.ConflictingContracts);
+        Assert.Equal("Entity has a non-compete clause in an active contract", response.Reason);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_TimeCommitmentExclusiveOverlap_ReturnsNotAllowed()
+    {
+        // Arrange: Two active contracts both with exclusive time commitment and overlapping dates
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId1 = Guid.NewGuid();
+        var contractId2 = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId1.ToString(), contractId2.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId1}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId1,
+                    TemplateCode = "full-time-1",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = TimeCommitmentType.Exclusive
+                    },
+                    EffectiveFrom = now.AddDays(-10),
+                    EffectiveUntil = now.AddDays(20)
+                },
+                [$"instance:{contractId2}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId2,
+                    TemplateCode = "full-time-2",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = TimeCommitmentType.Exclusive
+                    },
+                    EffectiveFrom = now.AddDays(-5),
+                    EffectiveUntil = now.AddDays(30)
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.TimeCommitment
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.Allowed);
+        Assert.NotNull(response.ConflictingContracts);
+        Assert.Equal("Entity has conflicting exclusive time commitments in active contracts", response.Reason);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_TimeCommitmentPartial_ReturnsAllowed()
+    {
+        // Arrange: One exclusive, one partial — no conflict
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId1 = Guid.NewGuid();
+        var contractId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId1.ToString(), contractId2.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId1}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId1,
+                    TemplateCode = "full-time",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = TimeCommitmentType.Exclusive
+                    }
+                },
+                [$"instance:{contractId2}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId2,
+                    TemplateCode = "part-time",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = TimeCommitmentType.Partial
+                    }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.TimeCommitment
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+        Assert.Null(response.ConflictingContracts);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_EntityNotPartyInContract_ReturnsAllowed()
+    {
+        // Arrange: Contract exists but entity is not a party
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var otherEntityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "exclusive-deal",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = otherEntityId, EntityType = EntityType.Character, Role = "vendor" }
+                    },
+                    Terms = new ContractTermsModel { Exclusivity = true }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_NoTermsOnContract_ReturnsAllowed()
+    {
+        // Arrange: Active contract but Terms is null
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "simple-deal",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "vendor" }
+                    },
+                    Terms = null
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_InactiveContractWithExclusivity_ReturnsAllowed()
+    {
+        // Arrange: Contract has exclusivity but is not Active status
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "expired-deal",
+                    Status = ContractStatus.Fulfilled,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "vendor" }
+                    },
+                    Terms = new ContractTermsModel { Exclusivity = true }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert — completed contract doesn't block
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_ExclusivityFalse_ReturnsAllowed()
+    {
+        // Arrange: Contract has Exclusivity explicitly set to false
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "non-exclusive",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "vendor" }
+                    },
+                    Terms = new ContractTermsModel { Exclusivity = false }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.Exclusivity
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
+    [Fact]
+    public async Task CheckContractConstraintAsync_TimeCommitmentNullType_DefaultsToPartial()
+    {
+        // Arrange: TimeCommitment is true but TimeCommitmentType is null (defaults to Partial)
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId1 = Guid.NewGuid();
+        var contractId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("party-idx:")), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId1.ToString(), contractId2.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId1}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId1,
+                    TemplateCode = "default-type",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = null // defaults to Partial
+                    }
+                },
+                [$"instance:{contractId2}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId2,
+                    TemplateCode = "also-default",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    },
+                    Terms = new ContractTermsModel
+                    {
+                        TimeCommitment = true,
+                        TimeCommitmentType = null
+                    }
+                }
+            });
+
+        var request = new CheckConstraintRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            ConstraintType = ConstraintType.TimeCommitment
+        };
+
+        // Act
+        var (status, response) = await service.CheckContractConstraintAsync(request);
+
+        // Assert — both default to Partial, so no conflict
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.True(response.Allowed);
+    }
+
     #endregion
 
     #region QueryActiveContracts Tests
@@ -1536,6 +2402,303 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var (status, response) = await service.QueryActiveContractsAsync(request);
 
         // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Contracts);
+    }
+
+    /// <summary>
+    /// Verifies that template code filtering returns only matching contracts.
+    /// </summary>
+    [Fact]
+    public async Task QueryActiveContractsAsync_WithTemplateCodes_FiltersToMatchingCodes()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId1 = Guid.NewGuid();
+        var contractId2 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId1.ToString(), contractId2.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId1}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId1,
+                    TemplateCode = "quest_objective",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "hero" }
+                    }
+                },
+                [$"instance:{contractId2}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId2,
+                    TemplateCode = "employment_contract",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "employee" }
+                    }
+                }
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            TemplateCodes = new List<string> { "quest_objective" }
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Contracts);
+        Assert.Equal("quest_objective", response.Contracts.First().TemplateCode);
+    }
+
+    /// <summary>
+    /// Verifies that wildcard template codes (e.g., "quest_*") match prefix via StartsWith.
+    /// </summary>
+    [Fact]
+    public async Task QueryActiveContractsAsync_WithWildcardTemplateCodes_MatchesPrefix()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId1 = Guid.NewGuid();
+        var contractId2 = Guid.NewGuid();
+        var contractId3 = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId1.ToString(), contractId2.ToString(), contractId3.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId1}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId1,
+                    TemplateCode = "quest_main",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "hero" }
+                    }
+                },
+                [$"instance:{contractId2}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId2,
+                    TemplateCode = "quest_side",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "hero" }
+                    }
+                },
+                [$"instance:{contractId3}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId3,
+                    TemplateCode = "employment_contract",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    }
+                }
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            TemplateCodes = new List<string> { "quest_*" }
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert — "quest_*" matches "quest_main" and "quest_side" but not "employment_contract"
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Contracts.Count);
+        Assert.All(response.Contracts, c => Assert.StartsWith("quest_", c.TemplateCode));
+    }
+
+    /// <summary>
+    /// Verifies that template codes with no matches returns empty list.
+    /// </summary>
+    [Fact]
+    public async Task QueryActiveContractsAsync_WithTemplateCodes_NoMatch_ReturnsEmpty()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "employment_contract",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "worker" }
+                    }
+                }
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            TemplateCodes = new List<string> { "nonexistent_*" }
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Contracts);
+    }
+
+    /// <summary>
+    /// Verifies that only active contracts are returned when mixed statuses exist.
+    /// </summary>
+    [Fact]
+    public async Task QueryActiveContractsAsync_MixedStatuses_ReturnsOnlyActive()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var activeContractId = Guid.NewGuid();
+        var completedContractId = Guid.NewGuid();
+        var breachedContractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>
+            {
+                activeContractId.ToString(),
+                completedContractId.ToString(),
+                breachedContractId.ToString()
+            });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{activeContractId}"] = new ContractInstanceModel
+                {
+                    ContractId = activeContractId,
+                    TemplateCode = "active_deal",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "party" }
+                    }
+                },
+                [$"instance:{completedContractId}"] = new ContractInstanceModel
+                {
+                    ContractId = completedContractId,
+                    TemplateCode = "completed_deal",
+                    Status = ContractStatus.Fulfilled,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "party" }
+                    }
+                },
+                [$"instance:{breachedContractId}"] = new ContractInstanceModel
+                {
+                    ContractId = breachedContractId,
+                    TemplateCode = "breached_deal",
+                    Status = ContractStatus.Breached,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "party" }
+                    }
+                }
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Contracts);
+        Assert.Equal(activeContractId, response.Contracts.First().ContractId);
+    }
+
+    /// <summary>
+    /// Verifies that wildcard template code matching is case-insensitive.
+    /// </summary>
+    [Fact]
+    public async Task QueryActiveContractsAsync_WildcardMatch_IsCaseInsensitive()
+    {
+        // Arrange
+        var service = CreateService();
+        var entityId = Guid.NewGuid();
+        var contractId = Guid.NewGuid();
+
+        _mockListStore
+            .Setup(s => s.GetAsync($"party-idx:Character:{entityId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string> { contractId.ToString() });
+
+        _mockInstanceStore
+            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, ContractInstanceModel>
+            {
+                [$"instance:{contractId}"] = new ContractInstanceModel
+                {
+                    ContractId = contractId,
+                    TemplateCode = "Quest_Main",
+                    Status = ContractStatus.Active,
+                    Parties = new List<ContractPartyModel>
+                    {
+                        new() { EntityId = entityId, EntityType = EntityType.Character, Role = "hero" }
+                    }
+                }
+            });
+
+        var request = new QueryActiveContractsRequest
+        {
+            EntityId = entityId,
+            EntityType = EntityType.Character,
+            TemplateCodes = new List<string> { "quest_*" } // lowercase wildcard
+        };
+
+        // Act
+        var (status, response) = await service.QueryActiveContractsAsync(request);
+
+        // Assert — case-insensitive matching (StringComparer.OrdinalIgnoreCase)
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Single(response.Contracts);

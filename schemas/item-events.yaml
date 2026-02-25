@@ -66,7 +66,13 @@ info:
       event: ItemUseStepFailedEvent
       description: Published when a multi-step item use milestone fails
 
-# Lifecycle events auto-generated from this definition
+# Lifecycle events auto-generated from this definition.
+# Note: The generator produces standard Created/Updated/Deleted events for both entities.
+# Item uses custom event names for non-creation lifecycle states:
+#   - ItemTemplate: "deprecated" instead of "deleted" (templates are soft-disabled, not deleted)
+#   - ItemInstance: "modified" instead of "updated", "destroyed" instead of "deleted"
+# The custom events are defined in components/schemas below and listed in x-event-publications.
+# The auto-generated Updated/Deleted variants exist in Generated/ but are not published.
 x-lifecycle:
   ItemTemplate:
     model:
@@ -394,8 +400,8 @@ components:
           format: uuid
           description: Character the item was previously bound to
         reason:
-          type: string
-          description: Reason for unbinding (admin, expiration, transfer_override)
+          $ref: 'item-api.yaml#/components/schemas/UnbindReason'
+          description: Reason for unbinding
         unboundBy:
           type: string
           format: uuid
@@ -499,15 +505,15 @@ components:
           format: uuid
           description: Unique identifier of the entity that used the item
         userType:
-          type: string
-          description: Type of user entity (e.g., character, account, actor)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
         targetId:
           type: string
           format: uuid
           nullable: true
           description: Unique identifier of the target entity if item was used on a target
         targetType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Type of target entity when targetId is present
         usedAt:
@@ -552,8 +558,8 @@ components:
           format: uuid
           description: Unique identifier of the entity that attempted to use the item
         userType:
-          type: string
-          description: Type of user entity (e.g., character, account, actor)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of user entity
         failedAt:
           type: string
           format: date-time
@@ -607,7 +613,7 @@ components:
           format: uuid
           description: User who completed the step
         userType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of user entity
         contractInstanceId:
           type: string
@@ -669,7 +675,7 @@ components:
           format: uuid
           description: User who attempted the step
         userType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of user entity
         contractInstanceId:
           type: string

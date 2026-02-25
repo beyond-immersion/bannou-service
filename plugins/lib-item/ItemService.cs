@@ -1403,10 +1403,9 @@ public partial class ItemService : IItemService
     private Guid GetOrComputeSystemPartyId(string gameId)
     {
         // If configured explicitly, use that
-        if (!string.IsNullOrEmpty(_configuration.SystemPartyId) &&
-            Guid.TryParse(_configuration.SystemPartyId, out var configuredId))
+        if (_configuration.SystemPartyId.HasValue)
         {
-            return configuredId;
+            return _configuration.SystemPartyId.Value;
         }
 
         // Compute deterministic UUID from game ID using SHA-256

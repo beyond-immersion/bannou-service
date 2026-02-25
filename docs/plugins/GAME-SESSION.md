@@ -48,7 +48,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 
 **Current flow**: Gardener creates GameSession containers to back scenarios (`GameType="gardener-scenario"`), uses session IDs for cleanup tracking, and calls `LeaveGameSessionByIdAsync` on scenario completion. Matchmaking similarly creates containers with reservation tokens.
 
-**Coexistence**: Games that declare `autoLobbyEnabled: true` on their GameService definition get naive lobby shortcuts from GameSession on connect. Games that declare `autoLobbyEnabled: false` (like Arcadia) rely on Gardener for entry orchestration. Both coexist in the same deployment — see [Design Consideration #8](#design-considerations-requires-planning) for the planned `autoLobbyEnabled` property.
+**Coexistence**: Games that declare `autoLobbyEnabled: true` on their GameService definition get naive lobby shortcuts from GameSession on connect. Games that declare `autoLobbyEnabled: false` (like Arcadia) rely on Gardener for entry orchestration. Both coexist in the same deployment — GameSession checks `autoLobbyEnabled` via `IGameServiceClient` before publishing subscription-driven shortcuts.
 
 **L2-only deployments** (no L4): GameSession's subscription-driven shortcut pipeline provides basic game entry. Players get shortcuts, join lobbies, and the container tracks membership. This is functional but lacks the rich progressive discovery experience that Gardener provides.
 
@@ -70,8 +70,9 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | lib-permission (`IPermissionClient`) | Set/clear `game-session:in_game` state on join/leave |
 | lib-subscription (`ISubscriptionClient`) | Query account subscriptions for shortcut eligibility and startup cache warmup |
 | lib-connect (`IConnectClient`) | Query connected sessions for an account on `subscription.updated` events |
+| lib-game-service (`IGameServiceClient`) | Check `autoLobbyEnabled` on game service definitions before publishing subscription-driven lobby shortcuts |
 
-> **Note**: This plugin injects 3 service clients individually (Permission, Subscription, Connect). Explicit injection is preferred for dependency clarity per FOUNDATION TENETS.
+> **Note**: This plugin injects 4 service clients individually (Permission, Subscription, Connect, GameService). Explicit injection is preferred for dependency clarity per FOUNDATION TENETS.
 
 ---
 
@@ -81,7 +82,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 |-----------|-------|-------------|
 | lib-matchmaking | L4 | Creates matchmade sessions with reservations via `IGameSessionClient.CreateGameSessionAsync`; calls `PublishJoinShortcutAsync` to notify players |
 | lib-gardener | L4 | Creates `gardener-scenario` sessions to back player scenarios via `IGameSessionClient.CreateGameSessionAsync`; calls `LeaveGameSessionByIdAsync` on completion/abandonment; subscribes to `game-session.deleted` for observational logging |
-| lib-analytics | L4 | Maps session IDs to game-service IDs via `IGameSessionClient.GetGameSessionAsync`; subscribes to `game-session.created` and `game-session.deleted` for cache maintenance |
+| lib-analytics | L4 | Maps session IDs to game-service IDs via `IGameSessionClient.GetGameSessionAsync`; subscribes to `game-session.created`, `game-session.deleted`, and `game-session.action.performed` for event ingestion and cache maintenance |
 
 ---
 
@@ -117,7 +118,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 | Event Type | Trigger |
 |-----------|---------|
 | `ShortcutPublishedEvent` | Join shortcut pushed to player's WebSocket session |
-| `ChatMessageReceivedEvent` | Chat message delivered to player's WebSocket session |
+| `SessionChatReceivedEvent` | Chat message delivered to player's WebSocket session |
 | `SessionCancelledEvent` | Matchmade session cancelled notification pushed to affected players |
 
 ### Consumed Events
@@ -137,7 +138,7 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 |----------|---------|---------|---------|
 | `ServerSalt` | `GAME_SESSION_SERVER_SALT` | dev salt | Shared salt for GUID generation (required, fail-fast) |
 | `MaxPlayersPerSession` | `GAME_SESSION_MAX_PLAYERS_PER_SESSION` | `16` | Hard cap on players per session |
-| `DefaultSessionTimeoutSeconds` | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | `0` | Session TTL (0 = no expiry) |
+| `DefaultSessionTimeoutSeconds` | `GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS` | `null` | Session TTL (null = no expiry) |
 | `DefaultReservationTtlSeconds` | `GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS` | `60` | Default TTL for matchmade reservations |
 | `DefaultLobbyMaxPlayers` | `GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS` | `100` | Max players for auto-created lobbies |
 | `CleanupIntervalSeconds` | `GAME_SESSION_CLEANUP_INTERVAL_SECONDS` | `30` | Interval between reservation cleanup cycles |
@@ -308,7 +309,7 @@ Service lifetime is **Scoped** (per-request) for GameSessionService. Two Backgro
 
 ### Game Chat (1 endpoint)
 
-- **Chat** (`/sessions/chat`): Builds `ChatMessageReceivedEvent`. For whispers: sends to target (with `IsWhisperToMe=true`) and sender only. For public: broadcasts to all player WebSocket sessions via `PublishToSessionsAsync`.
+- **Chat** (`/sessions/chat`): Builds `SessionChatReceivedEvent`. For whispers: sends to target (with `IsWhisperToMe=true`) and sender only. For public: broadcasts to all player WebSocket sessions via `PublishToSessionsAsync`.
 
 ### Internal (1 endpoint)
 
@@ -405,13 +406,15 @@ Subscription Cache Architecture
 ## Stubs & Unimplemented Features
 
 1. **Actions endpoint echoes data**: `PerformGameActionAsync` publishes an event and returns the action data back without any game-specific logic. Actual game state mutation would need to be implemented per game type.
-2. **No player-in-session validation for actions**: The Actions endpoint checks lobby exists and isn't finished, but doesn't verify the requesting player is actually in the session (relies on permission-based access control instead).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/479 -->
+2. ~~**No player-in-session validation for actions**~~: **FIXED** (2026-02-25) - `PerformGameActionAsync` now checks `model.Players.Any(p => p.AccountId == accountId)` before allowing the action, returning `Forbidden` if the player is not a member. The `in_game` permission state alone was insufficient as it only confirms the player is in *some* session, not the target session.
 
 ---
 
 ## Potential Extensions
 
 1. **Game state machine**: Add per-game-type state machines that validate and apply actions (turns, moves, scoring).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/479 -->
 2. **Spectator mode**: Allow joining with a `Spectator` role that receives events but cannot perform actions.
 3. **Session persistence/replay**: Store action history for replay or late-join state reconstruction.
 4. **Cross-instance lobby sync**: Replace the single `session-list` key with a proper indexed query for scaling.
@@ -422,13 +425,13 @@ Subscription Cache Architecture
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Kick does not clear permission state**~~: **FIXED** (2026-01-31) - `KickPlayerAsync` now calls `_permissionClient.ClearSessionStateAsync` using the kicked player's WebSocket session ID (`playerToKick.SessionId`) before saving the session. Error handling matches the pattern in Leave methods (best-effort with logging and error event publishing).
+1. ~~**Session-list removal in cleanup service lacks distributed lock**~~: **FIXED** (2026-02-25) - `CancelExpiredSessionAsync` now acquires the `SESSION_LIST_KEY` distributed lock before the session-list read-modify-write, matching the pattern used in `CreateGameSessionAsync` and `GetOrCreateLobbySessionAsync`. On lock failure, logs warning and skips removal (best-effort, session data is already deleted).
 
 ### Intentional Quirks
 
 1. **Lobby stored twice**: Auto-created lobbies are saved under both `session:{sessionId}` and `lobby:{stubName}` keys. The lobby key enables O(1) lookup by game type; the session key enables the standard session operations. Potential for drift if one write fails.
 
-2. **Session timeout 0 = infinite**: When `DefaultSessionTimeoutSeconds` is 0, `SessionTtlOptions` is null and no TTL is applied to state store saves. Sessions persist indefinitely until explicitly deleted or cleaned up.
+2. **Null session timeout = no expiry**: `DefaultSessionTimeoutSeconds` is `int?` (nullable). When null (the default), `SessionTtlOptions` is null and no TTL is applied to state store saves. Sessions persist indefinitely until explicitly deleted or cleaned up.
 
 3. **Chat allows messages from non-members**: `SendChatMessageAsync` looks up the sender in the player list but doesn't fail if not found. A sender who isn't in the session can still broadcast messages - `SenderName` will be null but the message is delivered.
 
@@ -440,21 +443,19 @@ Subscription Cache Architecture
 
 ### Design Considerations (Requires Planning)
 
-1. ~~**Inline event models not in schema**~~: **FIXED** (2026-02-24) - `GameSessionCancelledEvent` (server) and `SessionCancelledEvent` (client) are now defined in the event and client-event schemas respectively and generated per FOUNDATION TENETS.
+1. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
 
-2. **Session list is a single key**: All session IDs are stored in one `session-list` key (a `List<string>`). Listing loads ALL IDs then loads each session individually. No database-level pagination. With thousands of sessions, this becomes a bottleneck.
+2. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
 
-3. **No cleanup of finished lobbies from session-list**: When a lobby's status becomes `Finished`, it remains in the `session-list` key. The cleanup service only handles matchmade session reservations, not lobby lifecycle.
+3. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
 
-4. **Join validates subscriber session but Leave does not**: `JoinGameSessionAsync` calls `IsValidSubscriberSessionAsync` to verify authorization, but leave operations only check player membership in the session. A player whose subscription expires while in a game can still leave.
+4. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
 
-5. **CleanupSessionModel duplicates fields**: The `ReservationCleanupService` defines its own minimal model classes (`CleanupSessionModel`, `CleanupReservationModel`, `CleanupPlayerModel`) rather than using the main `GameSessionModel`. Changes to the main model may not be reflected in cleanup logic.
+5. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
 
-6. **Move action special-cased for empty data**: `Move` is the only action type allowed to have null `ActionData`. Other actions log a debug message but proceed anyway, making the validation ineffective.
+6. ~~**Actions endpoint validates session existence, not player membership**~~: **FIXED** (2026-02-25) - `PerformGameActionAsync` now validates player membership via `model.Players.Any()` check. See Stubs item 2 for details.
 
-7. **Actions endpoint validates session existence, not player membership**: `PerformGameActionAsync` verifies the lobby exists and isn't finished but never checks if the requesting `AccountId` is actually a player in the session. Relies entirely on permission-based access control.
-
-8. **`autoLobbyEnabled` property on GameService definitions**: GameSession's subscription-driven shortcut pipeline currently publishes lobby shortcuts for ALL subscribed games on `session.connected`. Games with rich entry orchestration (Arcadia via Gardener) don't want naive lobby shortcuts — their entry flow is managed by L4. A boolean `autoLobbyEnabled` property (default `true`) on the GameService definition would let games opt out of naive lobby creation. GameSession's `HandleSessionConnectedAsync` would check this property before publishing shortcuts, skipping games where `autoLobbyEnabled: false`. This allows naive-lobby games and Gardener-orchestrated games to coexist in the same deployment. The property belongs on GameService (L2, same layer) rather than GameSession configuration because it describes a property of the game, not a deployment topology concern (which is what `SupportedGameServices` handles).
+7. ~~**`autoLobbyEnabled` property on GameService definitions**~~: **FIXED** (2026-02-25) - GameSession now checks `autoLobbyEnabled` via `IGameServiceClient.GetServiceAsync` before publishing subscription-driven lobby shortcuts. Both `HandleSessionConnectedInternalAsync` and `HandleSubscriptionUpdatedInternalAsync` gate shortcut publishing on this flag. Games with `autoLobbyEnabled: false` (like Arcadia) skip naive lobby shortcuts; entry is managed by higher-layer orchestration (Gardener). Fail-open: if GameService is unavailable, defaults to publishing (backward compatible). Subscriber session storage is unconditional (needed for join authorization). Shortcut revocation is unconditional (shortcuts may exist from when the flag was previously true).
 
 ---
 
@@ -464,6 +465,9 @@ Subscription Cache Architecture
 
 ### Completed
 
+- **2026-02-25**: Implemented `autoLobbyEnabled` check — GameSession now gates subscription-driven lobby shortcuts on `autoLobbyEnabled` from GameService definitions. Added `IGameServiceClient` dependency, `IsAutoLobbyEnabledAsync` helper with telemetry span and fail-open behavior, gating in both `HandleSessionConnectedInternalAsync` and `HandleSubscriptionUpdatedInternalAsync`. 4 new unit tests. Design Consideration #7 resolved.
+- **2026-02-25**: Audit fix — added player membership validation to `PerformGameActionAsync`. Previously only checked lobby existence and status; now returns `Forbidden` if `AccountId` is not in the session's Players list. Added 2 unit tests (non-member returns Forbidden, member returns OK).
+- **2026-02-25**: Audit fix — added distributed lock for session-list removal in `ReservationCleanupService.CancelExpiredSessionAsync`. Race condition between concurrent create + cleanup that could lose session IDs from the list.
 - **2026-02-24**: L3 hardening pass — voice removal, lifecycle events, type safety, telemetry, error handling, distributed locks, filler removal. See details below.
   - Removed all voice integration (IVoiceClient dependency, VoiceEnabled, VoiceRoomId, voice types from schema). Resolved L2→L3 hierarchy violation.
   - Added `game-session.updated` (with `changedFields`) and `game-session.deleted` (with `deletedReason`) lifecycle events — previously defined but never published.
@@ -474,4 +478,4 @@ Subscription Cache Architecture
   - Added distributed locks for session-list read-modify-write and lobby creation (double-check-under-lock in `GetOrCreateLobbySessionAsync`).
   - Added `ITelemetryProvider` and `StartActivity` spans to all internal async methods in `GameSessionService`, `ReservationCleanupService`, and `GameSessionStartupService`.
   - Fixed generic catch blocks in join methods to re-throw after rollback per IMPLEMENTATION TENETS; leave-session catch intentionally continues.
-- **2026-01-31**: Fixed "Kick does not clear permission state" bug - added permission clearing to `KickPlayerAsync` matching the Leave methods.
+

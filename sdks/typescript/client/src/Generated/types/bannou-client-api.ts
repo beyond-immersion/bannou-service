@@ -12575,20 +12575,8 @@ export interface components {
        */
       autoStack: boolean;
     };
-    /** @description Response after adding item */
+    /** @description Response after adding item. HTTP 200 confirms placement. */
     AddItemResponse: {
-      /** @description Whether add succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Added item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Container ID
-       */
-      containerId: string;
       /** @description Assigned slot */
       slotIndex?: number | null;
       /** @description Assigned X position */
@@ -16592,9 +16580,11 @@ export interface components {
        */
       realmId?: string | null;
       /** @description Container tags */
-      tags?: string[];
-      /** @description Game-specific data */
-      metadata?: Record<string, never> | null;
+      tags?: string[] | null;
+      /** @description Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -17378,8 +17368,10 @@ export interface components {
       realmId?: string | null;
       /** @description Container tags for filtering */
       tags?: string[] | null;
-      /** @description Game-specific container data */
-      metadata?: Record<string, never> | null;
+      /** @description Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to create a contract instance */
     CreateContractInstanceRequest: {
@@ -26919,15 +26911,8 @@ export interface components {
        */
       targetInstanceId: string;
     };
-    /** @description Response after merging */
+    /** @description Response after merging. HTTP 200 confirms merge. */
     MergeStacksResponse: {
-      /** @description Whether merge succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Merged stack ID
-       */
-      targetInstanceId: string;
       /**
        * Format: double
        * @description New quantity
@@ -27327,25 +27312,13 @@ export interface components {
       /** @description Rotate in target */
       rotated?: boolean | null;
     };
-    /** @description Response after moving item */
+    /** @description Response after moving item. HTTP 200 confirms move. */
     MoveItemResponse: {
-      /** @description Whether move succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Moved item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Previous container
+       * @description Container the item was moved from
        */
       sourceContainerId: string;
-      /**
-       * Format: uuid
-       * @description New container
-       */
-      targetContainerId: string;
       /** @description New slot */
       slotIndex?: number | null;
       /** @description New grid X */
@@ -30296,18 +30269,11 @@ export interface components {
        */
       instanceId: string;
     };
-    /** @description Response after removing item */
+    /** @description Response after removing item. HTTP 200 confirms removal. */
     RemoveItemResponse: {
-      /** @description Whether remove succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Removed item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Container removed from
+       * @description Container the item was removed from
        */
       previousContainerId: string;
     };
@@ -32587,15 +32553,8 @@ export interface components {
       /** @description Grid Y for new stack */
       targetSlotY?: number | null;
     };
-    /** @description Response after splitting */
+    /** @description Response after splitting. HTTP 200 confirms split. */
     SplitStackResponse: {
-      /** @description Whether split succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Original stack ID
-       */
-      originalInstanceId: string;
       /**
        * Format: uuid
        * @description New stack ID
@@ -33626,25 +33585,18 @@ export interface components {
        */
       quantity?: number | null;
     };
-    /** @description Response after transfer */
+    /** @description Response after transfer. HTTP 200 confirms transfer. */
     TransferItemResponse: {
-      /** @description Whether transfer succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Transferred item ID
+       * @description Transferred item ID (for partial transfers, this is the new split item)
        */
       instanceId: string;
       /**
        * Format: uuid
-       * @description Previous container
+       * @description Container the item was transferred from
        */
       sourceContainerId: string;
-      /**
-       * Format: uuid
-       * @description New container
-       */
-      targetContainerId: string;
       /**
        * Format: double
        * @description Amount transferred
@@ -34163,8 +34115,10 @@ export interface components {
       allowedTags?: string[] | null;
       /** @description New container tags */
       tags?: string[] | null;
-      /** @description New metadata */
-      metadata?: Record<string, never> | null;
+      /** @description New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to update contract metadata */
     UpdateContractMetadataRequest: {

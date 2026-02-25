@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -37,6 +38,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IConnectClient> _mockConnectClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IGameServiceClient> _mockGameServiceClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -63,6 +65,20 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockConnectClient = new Mock<IConnectClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockGameServiceClient = new Mock<IGameServiceClient>();
+
+        // Default: autoLobbyEnabled = true for backward compatibility with existing tests
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = Guid.NewGuid(),
+                StubName = TEST_GAME_TYPE,
+                DisplayName = "Test Game",
+                IsActive = true,
+                AutoLobbyEnabled = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -103,6 +119,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
             _mockConnectClient.Object,
+            _mockGameServiceClient.Object,
             _mockTelemetryProvider.Object);
     }
 
@@ -817,6 +834,86 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         Assert.Null(response);
     }
 
+    [Fact]
+    public async Task PerformGameActionAsync_WhenPlayerNotInSession_ShouldReturnForbidden()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var otherPlayerId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+        var request = new GameActionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE,
+            ActionType = GameActionType.Move
+        };
+
+        // Setup lobby with a DIFFERENT player (not the requesting account)
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new GamePlayer { AccountId = otherPlayerId, SessionId = Guid.NewGuid(), DisplayName = "Other" }
+            },
+            CurrentPlayers = 1,
+            MaxPlayers = 16,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Act
+        var (status, response) = await service.PerformGameActionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Forbidden, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task PerformGameActionAsync_WhenPlayerInSession_ShouldReturnOk()
+    {
+        // Arrange
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var clientSessionId = Guid.NewGuid();
+        var lobbyId = Guid.NewGuid();
+        var request = new GameActionRequest
+        {
+            SessionId = clientSessionId,
+            AccountId = accountId,
+            GameType = TEST_GAME_TYPE,
+            ActionType = GameActionType.Move
+        };
+
+        // Setup lobby with the requesting player
+        var lobby = new GameSessionModel
+        {
+            SessionId = lobbyId,
+            Status = SessionStatus.Active,
+            Players = new List<GamePlayer>
+            {
+                new GamePlayer { AccountId = accountId, SessionId = clientSessionId, DisplayName = "Player" }
+            },
+            CurrentPlayers = 1,
+            MaxPlayers = 16,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        SetupExistingLobby(TEST_GAME_TYPE, lobby);
+
+        // Act
+        var (status, response) = await service.PerformGameActionAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.NotEqual(Guid.Empty, response.ActionId);
+    }
+
     #endregion
 }
 
@@ -841,6 +938,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IConnectClient> _mockConnectClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IGameServiceClient> _mockGameServiceClient;
 
     private const string STATE_STORE = "game-session-statestore";
     private const string SESSION_KEY_PREFIX = "session:";
@@ -866,6 +964,20 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockConnectClient = new Mock<IConnectClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockGameServiceClient = new Mock<IGameServiceClient>();
+
+        // Default: autoLobbyEnabled = true for backward compatibility with existing tests
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(It.IsAny<GetServiceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = Guid.NewGuid(),
+                StubName = TEST_STUB_NAME,
+                DisplayName = "Test Game",
+                IsActive = true,
+                AutoLobbyEnabled = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
 
         var mockLockResponse = new Mock<ILockResponse>();
         mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -906,6 +1018,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
             _mockConnectClient.Object,
+            _mockGameServiceClient.Object,
             _mockTelemetryProvider.Object);
     }
 
@@ -1281,6 +1394,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
             _mockConnectClient.Object,
+            _mockGameServiceClient.Object,
             _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
@@ -1348,6 +1462,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
             _mockConnectClient.Object,
+            _mockGameServiceClient.Object,
             _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
@@ -1397,6 +1512,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             _mockSubscriptionClient.Object,
             _mockLockProvider.Object,
             _mockConnectClient.Object,
+            _mockGameServiceClient.Object,
             _mockTelemetryProvider.Object);
 
         var accountId = Guid.NewGuid();
@@ -1443,6 +1559,279 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Cleanup
         GameSessionService.RemoveAccountSubscription(accountId, "generic");
+    }
+
+    #endregion
+
+    #region AutoLobbyEnabled Tests
+
+    [Fact]
+    public async Task HandleSessionConnected_WithAutoLobbyDisabled_ShouldNotPublishShortcut()
+    {
+        // Arrange - Account subscribed to a game with autoLobbyEnabled = false
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Pre-populate subscription cache
+        GameSessionService.AddAccountSubscription(accountId, TEST_STUB_NAME);
+
+        // Override default mock: autoLobbyEnabled = false for this game service
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == TEST_STUB_NAME),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = Guid.NewGuid(),
+                StubName = TEST_STUB_NAME,
+                DisplayName = "Test Game",
+                IsActive = true,
+                AutoLobbyEnabled = false,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Act
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
+
+        // Assert - NO shortcut published because autoLobbyEnabled is false
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // Cleanup
+        GameSessionService.RemoveAccountSubscription(accountId, TEST_STUB_NAME);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnected_WithAutoLobbyEnabled_ShouldPublishShortcut()
+    {
+        // Arrange - Account subscribed to a game with autoLobbyEnabled = true (default mock)
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Pre-populate subscription cache
+        GameSessionService.AddAccountSubscription(accountId, TEST_STUB_NAME);
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Setup lobby creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_STUB_NAME, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                sessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
+
+        // Assert - shortcut was published because autoLobbyEnabled is true
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId.ToString(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        GameSessionService.RemoveAccountSubscription(accountId, TEST_STUB_NAME);
+    }
+
+    [Fact]
+    public async Task HandleSubscriptionUpdated_WithAutoLobbyDisabled_ShouldStoreSessionButNotPublishShortcut()
+    {
+        // Arrange - Active subscription update for a game with autoLobbyEnabled = false
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Override default mock: autoLobbyEnabled = false
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == TEST_STUB_NAME),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ServiceInfo
+            {
+                ServiceId = Guid.NewGuid(),
+                StubName = TEST_STUB_NAME,
+                DisplayName = "Test Game",
+                IsActive = true,
+                AutoLobbyEnabled = false,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        // Setup Connect to return this session as connected
+        _mockConnectClient
+            .Setup(c => c.GetAccountSessionsAsync(
+                It.Is<GetAccountSessionsRequest>(r => r.AccountId == accountId),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GetAccountSessionsResponse
+            {
+                SessionIds = new List<Guid> { sessionId }
+            });
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Act
+        await service.HandleSubscriptionUpdatedInternalAsync(
+            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+
+        // Assert - subscriber session was stored (for authorization tracking)
+        _mockSubscriberSessionsStore.Verify(s => s.TrySaveAsync(
+            SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+            It.IsAny<SubscriberSessionsModel>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - NO shortcut published because autoLobbyEnabled is false
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            It.IsAny<string>(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnected_WithAutoLobbyCheckFailed_ShouldDefaultToPublish()
+    {
+        // Arrange - GetServiceAsync throws ApiException (fail-open behavior)
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Pre-populate subscription cache
+        GameSessionService.AddAccountSubscription(accountId, TEST_STUB_NAME);
+
+        // Override default mock: GetServiceAsync throws ApiException
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == TEST_STUB_NAME),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Service unavailable", 503));
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Setup lobby creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_STUB_NAME, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                sessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
+
+        // Assert - shortcut WAS published (fail-open: defaults to true when GameService is unavailable)
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId.ToString(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        GameSessionService.RemoveAccountSubscription(accountId, TEST_STUB_NAME);
+    }
+
+    [Fact]
+    public async Task HandleSessionConnected_WithAutoLobbyCheckThrowsGenericException_ShouldDefaultToPublish()
+    {
+        // Arrange - GetServiceAsync throws a non-ApiException (infrastructure failure, fail-open behavior)
+        var service = CreateService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Pre-populate subscription cache
+        GameSessionService.AddAccountSubscription(accountId, TEST_STUB_NAME);
+
+        // Override default mock: GetServiceAsync throws generic exception (connection refused, timeout, etc.)
+        _mockGameServiceClient
+            .Setup(c => c.GetServiceAsync(
+                It.Is<GetServiceRequest>(r => r.StubName == TEST_STUB_NAME),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new System.Net.Http.HttpRequestException("Connection refused"));
+
+        // Setup subscriber session store
+        _mockSubscriberSessionsStore
+            .Setup(s => s.GetWithETagAsync(SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((SubscriberSessionsModel?)null, (string?)null));
+        _mockSubscriberSessionsStore
+            .Setup(s => s.TrySaveAsync(
+                SUBSCRIBER_SESSIONS_PREFIX + accountId.ToString(),
+                It.IsAny<SubscriberSessionsModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag1");
+
+        // Setup lobby creation
+        _mockGameSessionStore
+            .Setup(s => s.GetAsync(LOBBY_KEY_PREFIX + TEST_STUB_NAME, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((GameSessionModel?)null);
+        _mockListStore
+            .Setup(s => s.GetAsync(SESSION_LIST_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        _mockClientEventPublisher
+            .Setup(p => p.PublishToSessionAsync(
+                sessionId.ToString(),
+                It.IsAny<ShortcutPublishedEvent>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await service.HandleSessionConnectedInternalAsync(sessionId, accountId);
+
+        // Assert - shortcut WAS published (fail-open: defaults to true on any failure)
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
+            sessionId.ToString(),
+            It.IsAny<ShortcutPublishedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Cleanup
+        GameSessionService.RemoveAccountSubscription(accountId, TEST_STUB_NAME);
     }
 
     #endregion

@@ -59,7 +59,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Currency](#currency-status) | L2 | 85% | 0 | Production-hardened (7 bugs fixed, T25/T30 compliant). 8 stubs remain: hold expiration, currency expiration, analytics, pruning. |
 | [Game Service](#game-service-status) | L2 | 100% | 0 | Production-hardened registry. All 5 endpoints done. T9/T21/T26/T28/T30 compliant. Resource cleanup on delete. |
 | [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
-| [Inventory](#inventory-status) | L2 | 80% | 0 | Core container ops work. Grid collision, weight propagation, RemoveItem cleanup stubbed. |
+| [Inventory](#inventory-status) | L2 | 85% | 0 | Production-hardened (T8/T25/T26/T29/T30 compliant, 93 tests). 4 stubs remain: grid collision, weight propagation, equipment slots, RemoveItem cleanup. |
 | [Item](#item-status) | L2 | 88% | 0 | Dual-model system complete. "Itemize Anything" pattern works. Deprecation cascade pending. |
 | [Location](#location-status) | L2 | 92% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking. No gaps. |
 | [Quest](#quest-status) | L2 | 85% | 0 | Well-architected over Contract. Prerequisites, rewards, caching all done. Extensions only. |
@@ -679,9 +679,9 @@ gh issue list --search "Game Session:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [INVENTORY.md](plugins/INVENTORY.md)
 
-### Production Readiness: 80%
+### Production Readiness: 85%
 
-Container lifecycle management, item placement, stack operations (split/merge), transfer with tradeable/bound validation, and multi-constraint-model support (slot, weight, volumetric, unlimited) are all functional with distributed locking and cache-through patterns. However, four tracked stubs represent meaningful gaps: grid constraint is only approximated by slot count (no true collision detection), nested container weight propagation is not implemented, equipment slot specialization has no validation logic, and RemoveItem does not clear the item's ContainerId. Additionally, 8 design considerations note performance issues (N+1 query patterns, serial deletion, in-memory pagination) and lack of event consumption from lib-item.
+Production-hardened with comprehensive tenet compliance. All 16 endpoints functional with distributed locking, cache-through patterns, and multi-constraint-model support (slot, weight, volumetric, grid, unlimited). L3 hardening pass applied: T8 filler removal from 7 response schemas, T26 sentinel fix (Guid.Empty -> null), T29 metadata disclaimers, T30 telemetry spans on all 8 async helpers, NRT compliance, event schema `additionalProperties: false`, x-lifecycle model completion, and validation keywords throughout. 93 unit tests (24 added). Four tracked stubs remain: grid collision approximation (#196), nested weight propagation (#226), equipment slot validation (#226), and RemoveItem cleanup (#164). 8 design considerations note performance issues (N+1 queries, serial deletion, in-memory pagination) and lack of lib-item event consumption.
 
 ### Bug Count: 0
 

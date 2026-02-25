@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 166 |
-| Compliant (has marker) | 145 |
+| Total metadata bag properties | 169 |
+| Compliant (has marker) | 148 |
 | Non-compliant (missing marker) | 21 |
-| Compliance rate | 87% |
+| Compliance rate | 88% |
 
 ## Properties by Service
 
@@ -144,6 +144,14 @@ Compliant properties include one of these phrases in their description:
 | `JoinGameSessionByIdRequest` | `characterData` | `game-session-api.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |
 | `JoinGameSessionRequest` | `characterData` | `game-session-api.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |
 | `JoinGameSessionResponse` | `gameData` | `game-session-api.yaml` | Y | Game-specific initial state data. No Bannou plugin reads specific keys from t... |
+
+#### Inventory
+
+| Schema Type | Property | Schema File | Compliant | Description |
+|-------------|----------|-------------|-----------|-------------|
+| `ContainerResponse` | `metadata` | `inventory-api.yaml` | Y | Game-specific container data. Client-only metadata. No Bannou plugin reads sp... |
+| `CreateContainerRequest` | `metadata` | `inventory-api.yaml` | Y | Game-specific container data. Client-only metadata. No Bannou plugin reads sp... |
+| `UpdateContainerRequest` | `metadata` | `inventory-api.yaml` | Y | New game-specific container data. Client-only metadata. No Bannou plugin read... |
 
 #### Item
 

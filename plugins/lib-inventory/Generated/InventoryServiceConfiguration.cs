@@ -55,6 +55,7 @@ public class InventoryServiceConfiguration : BaseServiceConfiguration
     /// Default maximum nesting depth for containers
     /// Environment variable: INVENTORY_DEFAULT_MAX_NESTING_DEPTH
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultMaxNestingDepth { get; set; } = 3;
 
     /// <summary>
@@ -67,18 +68,21 @@ public class InventoryServiceConfiguration : BaseServiceConfiguration
     /// TTL for container cache entries
     /// Environment variable: INVENTORY_CONTAINER_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int ContainerCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// Timeout for container modification locks
     /// Environment variable: INVENTORY_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Timeout for owner/type index list modification locks (shorter than container locks)
     /// Environment variable: INVENTORY_LIST_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ListLockTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
@@ -91,24 +95,28 @@ public class InventoryServiceConfiguration : BaseServiceConfiguration
     /// Default max slots for new slot-based containers
     /// Environment variable: INVENTORY_DEFAULT_MAX_SLOTS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultMaxSlots { get; set; } = 20;
 
     /// <summary>
     /// Default max weight for new weight-based containers
     /// Environment variable: INVENTORY_DEFAULT_MAX_WEIGHT
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public double DefaultMaxWeight { get; set; } = 100.0;
 
     /// <summary>
     /// Maximum items to scan when counting items across containers
     /// Environment variable: INVENTORY_MAX_COUNT_QUERY_LIMIT
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxCountQueryLimit { get; set; } = 10000;
 
     /// <summary>
     /// Number of items to fetch per query page for inventory operations
     /// Environment variable: INVENTORY_QUERY_PAGE_SIZE
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int QueryPageSize { get; set; } = 200;
 
 }

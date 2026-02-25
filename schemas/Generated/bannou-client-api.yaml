@@ -16101,14 +16101,17 @@ components:
         slotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Specific slot (auto-assign if null)
         slotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid X position
         slotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid Y position
         rotated:
           type: boolean
@@ -16120,24 +16123,9 @@ components:
           description: Auto-merge with existing stacks
     AddItemResponse:
       type: object
-      description: Response after adding item
+      description: Response after adding item. HTTP 200 confirms placement.
       additionalProperties: false
-      required:
-      - success
-      - instanceId
-      - containerId
       properties:
-        success:
-          type: boolean
-          description: Whether add succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Added item ID
-        containerId:
-          type: string
-          format: uuid
-          description: Container ID
         slotIndex:
           type: integer
           nullable: true
@@ -22330,11 +22318,14 @@ components:
           type: array
           items:
             type: string
+          nullable: true
           description: Container tags
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: Game-specific data
+          description: Game-specific container data. Client-only metadata. No 
+            Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -23512,24 +23503,29 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: Maximum slots for slot-based containers
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Maximum weight capacity
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Internal grid width for grid containers
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Internal grid height for grid containers
         maxVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Maximum volume for volumetric containers
         parentContainerId:
           type: string
@@ -23543,11 +23539,13 @@ components:
         maxNestingDepth:
           type: integer
           nullable: true
+          minimum: 1
           description: Maximum nesting depth (null uses global default)
         selfWeight:
           type: number
           format: double
           default: 0
+          minimum: 0
           description: Empty container weight
         weightContribution:
           $ref: '#/components/schemas/WeightContribution'
@@ -23555,19 +23553,23 @@ components:
         slotCost:
           type: integer
           default: 1
+          minimum: 0
           description: Slots used in slot-based parent
         parentGridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Width footprint in grid-based parent
         parentGridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Height footprint in grid-based parent
         parentVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Volume footprint in volumetric parent
         allowedCategories:
           type: array
@@ -23600,8 +23602,10 @@ components:
           description: Container tags for filtering
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: Game-specific container data
+          description: Game-specific container data. Client-only metadata. No 
+            Bannou plugin reads specific keys from this field by convention.
     CreateContractInstanceRequest:
       type: object
       description: Request to create a contract instance
@@ -31459,19 +31463,23 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: Default max slots if creating
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Default max weight if creating
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Default grid width if creating
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Default grid height if creating
         realmId:
           type: string
@@ -38017,21 +38025,12 @@ components:
           description: Stack to merge into
     MergeStacksResponse:
       type: object
-      description: Response after merging
+      description: Response after merging. HTTP 200 confirms merge.
       additionalProperties: false
       required:
-      - success
-      - targetInstanceId
       - newQuantity
       - sourceDestroyed
       properties:
-        success:
-          type: boolean
-          description: Whether merge succeeded
-        targetInstanceId:
-          type: string
-          format: uuid
-          description: Merged stack ID
         newQuantity:
           type: number
           format: double
@@ -38720,14 +38719,17 @@ components:
         targetSlotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Target slot
         targetSlotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Target grid X
         targetSlotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Target grid Y
         rotated:
           type: boolean
@@ -38735,29 +38737,15 @@ components:
           description: Rotate in target
     MoveItemResponse:
       type: object
-      description: Response after moving item
+      description: Response after moving item. HTTP 200 confirms move.
       additionalProperties: false
       required:
-      - success
-      - instanceId
       - sourceContainerId
-      - targetContainerId
       properties:
-        success:
-          type: boolean
-          description: Whether move succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Moved item ID
         sourceContainerId:
           type: string
           format: uuid
-          description: Previous container
-        targetContainerId:
-          type: string
-          format: uuid
-          description: New container
+          description: Container the item was moved from
         slotIndex:
           type: integer
           nullable: true
@@ -41162,10 +41150,12 @@ components:
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
         limit:
           type: integer
           default: 50
+          minimum: 1
           maximum: 200
           description: Max results
     QueryItemsResponse:
@@ -43374,24 +43364,15 @@ components:
           description: Item instance ID to remove
     RemoveItemResponse:
       type: object
-      description: Response after removing item
+      description: Response after removing item. HTTP 200 confirms removal.
       additionalProperties: false
       required:
-      - success
-      - instanceId
       - previousContainerId
       properties:
-        success:
-          type: boolean
-          description: Whether remove succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Removed item ID
         previousContainerId:
           type: string
           format: uuid
-          description: Container removed from
+          description: Container the item was removed from
     RemoveLicenseDefinitionRequest:
       type: object
       description: Request to remove a license definition from a board template
@@ -46955,33 +46936,27 @@ components:
         targetSlotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Slot for new stack
         targetSlotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid X for new stack
         targetSlotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid Y for new stack
     SplitStackResponse:
       type: object
-      description: Response after splitting
+      description: Response after splitting. HTTP 200 confirms split.
       additionalProperties: false
       required:
-      - success
-      - originalInstanceId
       - newInstanceId
       - originalQuantity
       - newQuantity
       properties:
-        success:
-          type: boolean
-          description: Whether split succeeded
-        originalInstanceId:
-          type: string
-          format: uuid
-          description: Original stack ID
         newInstanceId:
           type: string
           format: uuid
@@ -48558,30 +48533,22 @@ components:
           description: Quantity to transfer (all if null)
     TransferItemResponse:
       type: object
-      description: Response after transfer
+      description: Response after transfer. HTTP 200 confirms transfer.
       additionalProperties: false
       required:
-      - success
       - instanceId
       - sourceContainerId
-      - targetContainerId
       - quantityTransferred
       properties:
-        success:
-          type: boolean
-          description: Whether transfer succeeded
         instanceId:
           type: string
           format: uuid
-          description: Transferred item ID
+          description: Transferred item ID (for partial transfers, this is the 
+            new split item)
         sourceContainerId:
           type: string
           format: uuid
-          description: Previous container
-        targetContainerId:
-          type: string
-          format: uuid
-          description: New container
+          description: Container the item was transferred from
         quantityTransferred:
           type: number
           format: double
@@ -49387,24 +49354,29 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: New max slots
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: New max weight
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: New grid width
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: New grid height
         maxVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: New max volume
         allowedCategories:
           type: array
@@ -49432,8 +49404,10 @@ components:
           description: New container tags
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: New metadata
+          description: New game-specific container data. Client-only metadata. 
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateContractMetadataRequest:
       type: object
       description: Request to update contract metadata

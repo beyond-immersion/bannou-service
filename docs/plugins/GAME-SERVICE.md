@@ -37,6 +37,7 @@ The Game Service is a minimal registry (L2 GameFoundation) that maintains a cata
 | lib-analytics | L4 | Uses `IGameServiceClient` for service validation |
 | lib-status | L4 | Uses `IGameServiceClient` for game service scoping of status templates |
 | lib-license | L4 | Uses `IGameServiceClient` for game service scoping of license boards |
+| lib-game-session | L2 | Uses `IGameServiceClient` to check `autoLobbyEnabled` before publishing subscription-driven lobby shortcuts |
 | lib-faction | L4 | Uses `IGameServiceClient` for game service scoping of faction entities |
 
 No services subscribe to game-service events.
@@ -153,6 +154,7 @@ None. The service is feature-complete for its scope.
 1. **Service metadata schema validation**: The `metadata` field could support schema validation per service type.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/228 -->
 2. **Service versioning**: Track deployment versions to inform clients of compatibility.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/480 -->
 
 ---
 
@@ -166,15 +168,19 @@ No bugs identified.
 
 1. **Update cannot set description to null**: Since `null` means "don't change" in the update request, there's no way to explicitly set description back to null once it has a value. Setting to empty string `""` works as a workaround.
 
+2. **No event consumers**: Three lifecycle events (`game-service.created`, `.updated`, `.deleted`) are published but no service currently subscribes to them. This is correct per FOUNDATION TENETS (Event-Driven Architecture): all meaningful state changes publish events even without current consumers. The events exist for future integration (e.g., analytics tracking, subscription service reacting to game service activation changes).
+
+3. **Service list as single key**: `game-service-list` stores all service IDs as a single `List<Guid>`. Every create/delete reads the full list, modifies it, and writes it back with ETag-based optimistic concurrency (configurable retry via `ServiceListRetryAttempts`). This pattern is appropriate because game services represent top-level games/applications (Arcadia, Fantasia) — realistically dozens, never thousands. The simplicity of a single-key list outweighs the theoretical scaling concern.
+
+4. **No concurrency control on updates**: `UpdateServiceAsync` uses plain `SaveAsync` without ETag-based optimistic concurrency or distributed locking. Two simultaneous updates to the same service will both succeed — last writer wins. This is acceptable because: all mutation endpoints require `admin` role, write frequency is extremely low (game service updates are rare admin operations), and there is no correctness invariant at risk (unlike `CreateServiceAsync` which uses distributed locking to enforce stub name uniqueness).
+
 ### Design Considerations (Requires Planning)
 
-1. **Service list as single key**: `game-service-list` stores all service IDs as a single `List<Guid>`. Every create/delete reads the full list, modifies it, and writes it back with ETag-based optimistic concurrency (configurable retry via `ServiceListRetryAttempts`). Not a problem with dozens of services, but would become a bottleneck with thousands.
+1. ~~**No event consumers**~~: **FIXED** (2026-02-25) - Not a gap. T5 requires publishing events for all meaningful state changes even without current consumers. Moved to Intentional Quirks.
 
-2. **No event consumers**: Three lifecycle events are published but no service currently subscribes to them. They exist for future integration (e.g., analytics tracking).
+2. ~~**No concurrency control on updates**~~: **FIXED** (2026-02-25) - Not a gap. Moved to Intentional Quirks. Last-writer-wins is appropriate for admin-only, low-frequency game service updates with no correctness invariant at risk.
 
-3. **No concurrency control on updates**: Two simultaneous updates to the same service will both succeed — last writer wins. Acceptable given admin-only access and low write frequency.
-
-4. **`autoLobbyEnabled` property for game entry mode**: GameSession (L2) currently publishes naive lobby shortcuts for all subscribed games on `session.connected`. Games with rich entry orchestration (e.g., Arcadia via Gardener L4) don't want this — their entry flow is managed by higher-layer services. A boolean `autoLobbyEnabled` property (default `true`) on the `GameServiceRegistryModel` would let games declare their entry mode. GameSession checks this before publishing shortcuts, skipping games where `autoLobbyEnabled: false`. This allows naive-lobby games and orchestrated-entry games to coexist in the same deployment. The property belongs here (on the game definition) because it describes how a game wants players to enter — a property of the game, not of GameSession's deployment topology.
+3. ~~**GameSession `autoLobbyEnabled` integration pending**~~: **FIXED** (2026-02-25) - GameSession now consumes the `autoLobbyEnabled` flag via `IGameServiceClient.GetServiceAsync`. Both `HandleSessionConnectedInternalAsync` and `HandleSubscriptionUpdatedInternalAsync` gate subscription-driven shortcut publishing on this flag. Fail-open on GameService errors (defaults to publishing). lib-game-session added to Dependents table.
 
 ---
 
@@ -182,6 +188,10 @@ No bugs identified.
 
 ### Completed
 
+- **2026-02-25**: Audit — "No concurrency control on updates" moved from Design Considerations to Intentional Quirks (appropriate for admin-only, low-frequency operations with no correctness invariant)
+- **2026-02-25**: GameSession now consumes `autoLobbyEnabled` flag — added lib-game-session to Dependents table, Design Consideration #3 resolved
+- **2026-02-25**: Audit — "No event consumers" moved from Design Considerations to Intentional Quirks (correct per T5: publish events even without consumers)
+- **2026-02-25**: Audit — moved "service list as single key" from Design Considerations to Intentional Quirks (appropriate for realistic scale of dozens of game services)
 - **2026-02-24**: L3 hardening pass — T26 (removed Guid.Empty sentinels), T30 (telemetry spans), T9 (distributed lock on stub name create), T21 (config for retry attempts, removed dead code), T28 (lib-resource cleanup on delete), x-resource-lifecycle schema, updated dependents list (5 missing), misleading event handler comment fixed
 
 ### Pending
