@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
@@ -235,7 +236,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
             var first = await currencyClient.GetOrCreateWalletAsync(new GetOrCreateWalletRequest
             {
                 OwnerId = ownerId,
-                OwnerType = WalletOwnerType.Account
+                OwnerType = EntityType.Account
             });
 
             if (!first.Created)
@@ -245,7 +246,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
             var second = await currencyClient.GetOrCreateWalletAsync(new GetOrCreateWalletRequest
             {
                 OwnerId = ownerId,
-                OwnerType = WalletOwnerType.Account
+                OwnerType = EntityType.Account
             });
 
             if (second.Created)
@@ -790,7 +791,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
             var created = await currencyClient.CreateWalletAsync(new CreateWalletRequest
             {
                 OwnerId = ownerId,
-                OwnerType = WalletOwnerType.Account
+                OwnerType = EntityType.Account
             });
 
             // Get by wallet ID
@@ -806,7 +807,7 @@ public class CurrencyTestHandler : BaseHttpTestHandler
             var byOwner = await currencyClient.GetWalletAsync(new GetWalletRequest
             {
                 OwnerId = ownerId,
-                OwnerType = WalletOwnerType.Account
+                OwnerType = EntityType.Account
             });
 
             if (byOwner.Wallet.WalletId != created.WalletId)

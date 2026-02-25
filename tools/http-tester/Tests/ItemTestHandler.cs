@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.ServiceClients;
@@ -391,11 +392,11 @@ public class ItemTestHandler : BaseHttpTestHandler
             var destroyed = await itemClient.DestroyItemInstanceAsync(new DestroyItemInstanceRequest
             {
                 InstanceId = created.InstanceId,
-                Reason = "Test destruction"
+                Reason = DestroyReason.Destroyed
             });
 
-            if (!destroyed.Destroyed)
-                return TestResult.Failed("Destroy returned destroyed=false");
+            if (destroyed.TemplateId != created.TemplateId)
+                return TestResult.Failed("Destroy returned wrong template ID");
 
             // Verify it's gone
             return await ExecuteExpectingAnyStatusAsync(
