@@ -278,13 +278,13 @@ public partial class CreateSeedRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type discriminator (e.g., "account", "actor", "realm", "character", "relationship").
-    /// <br/>
+    /// Owner entity type discriminator.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code (e.g., "guardian", "dungeon_core").
@@ -376,7 +376,8 @@ public partial class GetSeedsByOwnerRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by seed type.
@@ -421,7 +422,8 @@ public partial class ListSeedsRequest
     /// Filter by owner type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    public string? OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by game service.
@@ -839,9 +841,10 @@ public partial class RegisterSeedTypeRequest
     /// Entity types that can own seeds of this type.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
     /// <summary>
     /// Ordered growth phase definitions with thresholds.
@@ -1336,7 +1339,8 @@ public partial class SeedResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code.
@@ -1710,9 +1714,10 @@ public partial class SeedTypeResponse
     /// Allowed owner entity types.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("allowedOwnerTypes")]
+    // TODO(system.text.json): Add string enum item converter
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Collections.Generic.ICollection<EntityType> AllowedOwnerTypes { get; set; } = new System.Collections.ObjectModel.Collection<EntityType>();
 
     /// <summary>
     /// Phase definitions with thresholds.
@@ -2008,7 +2013,8 @@ public partial class PartnerSummary
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Partner's current growth phase.

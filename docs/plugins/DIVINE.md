@@ -212,6 +212,21 @@ Some services that list characters may want to exclude system realms by default.
 |-----------|-------------|
 | *(none yet)* | Divine is a new L4 service with no current consumers. Future dependents may include Variable Provider Factory implementations for ABML behavior expressions (`${divine.*}`) |
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies which first-class Bannou entity receives a blessing; all valid values (`character`, `account`, `deity`, etc.) are first-class Bannou entities |
+| `status` (DeityResponse) | C (System State/Mode) | `DeityStatus` enum (`active`, `dormant`, `archived`) | Deity lifecycle state machine position; system-managed lifecycle, not game content |
+| `tier` (BlessingResponse) | C (System State/Mode) | `BlessingTier` enum (`minor`, `standard`, `greater`, `supreme`) | Determines divinity cost, storage mechanism (Status vs Collection), and power level; service-specific classification |
+| `status` (BlessingResponse) | C (System State/Mode) | `BlessingStatus` enum (`active`, `revoked`) | Current blessing lifecycle state |
+| `domainCode` | B (Game Content Type) | Opaque string | Domain of divine influence (e.g., `"war"`, `"knowledge"`, `"nature"`); different games define different domains without schema changes |
+
+**Notes**:
+- `entityType` was recently migrated from plain string to the shared `EntityType` enum in `common-api.yaml`, confirming its Category A classification.
+- `domainCode` follows the same extensibility pattern as seed type codes, collection type codes, and relationship type codes -- opaque strings that are game-configurable at deployment time.
+- Follower management uses `characterId` directly (not `entityId` + `entityType` polymorphism) because only characters can be "watched" by gods in the attention system.
+
 ## State Storage
 
 ### Deity Store

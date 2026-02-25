@@ -18,9 +18,8 @@ info:
     simple TTL-based statuses use lib-item's native decay system (#407).
 
     **Ownership Model**: Statuses use polymorphic ownership (entityId + entityType),
-    following the Collection/License/Seed pattern. Entity types are opaque strings
-    (e.g., "character", "account") -- NOT enums, per SCHEMA-RULES.md guidance on
-    not enumerating entity types from other layers.
+    following the Collection/License/Seed pattern. Entity types use the shared
+    EntityType enum from common-api.yaml for type-safe polymorphic references.
 
     **Seed Integration**: Implements ISeedEvolutionListener for capability change
     notifications and queries ISeedClient for passive effects. Unified queries
@@ -1010,7 +1009,7 @@ components:
           format: uuid
           description: Entity to receive the status effect
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator (e.g., character, account)
         gameServiceId:
           type: string
@@ -1065,7 +1064,7 @@ components:
           format: uuid
           description: Entity to remove statuses from
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         sourceId:
           type: string
@@ -1087,7 +1086,7 @@ components:
           format: uuid
           description: Entity to cleanse statuses from
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -1110,7 +1109,7 @@ components:
           format: uuid
           description: Entity to check
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusCode:
           type: string
@@ -1129,7 +1128,7 @@ components:
           format: uuid
           description: Entity to list statuses for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           nullable: true
@@ -1267,7 +1266,7 @@ components:
           format: uuid
           description: Entity this status is applied to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -1360,7 +1359,7 @@ components:
           format: uuid
           description: Entity to get effects for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         includePassive:
           type: boolean
@@ -1380,7 +1379,7 @@ components:
           format: uuid
           description: Entity to get seed effects for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
 
     GetEffectsResponse:
@@ -1399,7 +1398,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         itemBasedCount:
           type: integer
@@ -1427,7 +1426,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         effects:
           type: array
@@ -1448,7 +1447,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type (e.g., character, account)
         ownerId:
           type: string

@@ -36,6 +36,24 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (characters, accounts, guilds, etc.). Recently migrated from removed `WalletOwnerType` to shared EntityType enum. |
+| `currencyCode` | B (Content Code) | Opaque string | Game-configurable currency identifier, unique per game. New currencies registered via API without schema changes (e.g., `gold`, `silver`, `divine_favor`, `dungeon_mana`). |
+| `referenceType` | B (Content Code) | Opaque string | Caller-supplied classification of what triggered a transaction (e.g., `escrow`, `quest`, `trade`). Open-ended for extensibility across consuming services. |
+| `scope` | C (System State) | `CurrencyScope` enum | Finite system-owned scope modes: `global`, `realm_specific`, `multi_realm`. Determines currency availability across realms. |
+| `precision` | C (System State) | `CurrencyPrecision` enum | Finite system-owned decimal precision modes: `integer`, `decimal_2`, `decimal_4`, `decimal_8`, `decimal_full`. Immutable after creation. |
+| `status` (wallet) | C (System State) | `WalletStatus` enum | Finite wallet lifecycle states: `active`, `frozen`, `closed`. System-owned transitions. |
+| `transactionType` | C (System State) | `TransactionType` enum | Finite faucet/sink classification for currency flow tracking: `mint`, `quest_reward`, `loot_drop`, `vendor_sale`, `trade`, `gift`, `fee`, `tax`, `escrow_deposit`, `escrow_release`, `escrow_refund`, `conversion_debit`, `conversion_credit`, `admin_adjustment`, `system`, `other`. |
+| `autogainMode` | C (System State) | `AutogainMode` enum | Finite calculation modes: `simple`, `compound`. System-owned operational modes. |
+| `capOverflowBehavior` | C (System State) | `CapOverflowBehavior` enum | Finite overflow handling modes: `reject`, `cap_and_lose`, `cap_and_return`. |
+| `expirationPolicy` | C (System State) | `ExpirationPolicy` enum | Finite expiration modes: `fixed_date`, `duration_from_earn`, `end_of_season`. |
+| `capType` (EarnCapReachedEvent) | C (System State) | `EarnCapType` enum | Binary cap period: `daily`, `weekly`. |
+
+---
+
 ## State Storage
 
 **Stores**: 8 state stores (5 MySQL, 3 Redis)

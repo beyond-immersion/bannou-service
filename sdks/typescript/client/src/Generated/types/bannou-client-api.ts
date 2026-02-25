@@ -13843,7 +13843,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity that received this blessing */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing */
       tier: components['schemas']['BlessingTier'];
       /** @description Item template code for the blessing effect */
@@ -13891,7 +13891,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity that received this blessing */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing */
       tier: components['schemas']['BlessingTier'];
       /**
@@ -13949,7 +13949,7 @@ export interface components {
        */
       boardId: string;
       /** @description Type of entity that owns this board */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Entity that owns this board
@@ -13997,7 +13997,7 @@ export interface components {
        */
       boardId: string;
       /** @description Type of entity that owns this board (e.g., character, account, guild) */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that owns this board
@@ -14045,7 +14045,7 @@ export interface components {
       /** @description Grid traversal mode for this template */
       adjacencyMode: components['schemas']['AdjacencyMode'];
       /** @description Owner types allowed to create boards from this template */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Whether the template is active (can create new board instances) */
       isActive: boolean;
       /**
@@ -15514,7 +15514,7 @@ export interface components {
     /** @description Request to cleanup all boards for a deleted owner entity */
     CleanupByOwnerRequest: {
       /** @description Type of entity whose boards should be cleaned up */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity whose boards should be cleaned up
@@ -15524,7 +15524,7 @@ export interface components {
     /** @description Result of owner board cleanup */
     CleanupByOwnerResponse: {
       /** @description Type of entity that was cleaned up */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that was cleaned up
@@ -15710,7 +15710,7 @@ export interface components {
        */
       sourceBoardId: string;
       /** @description Type of entity to clone the board to (must be in template's allowedOwnerTypes) */
-      targetOwnerType: string;
+      targetOwnerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the target entity
@@ -15735,7 +15735,7 @@ export interface components {
        */
       targetBoardId: string;
       /** @description Type of entity the board was cloned to */
-      targetOwnerType: string;
+      targetOwnerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity the board was cloned to
@@ -15759,7 +15759,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot containing deltas to collapse */
       slotName: string;
       /** @description Version to collapse to (latest if null) */
@@ -15805,7 +15805,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Type of collection */
       collectionType: components['schemas']['CollectionType'];
       /**
@@ -16981,7 +16981,7 @@ export interface components {
        */
       sourceOwnerId: string;
       /** @description Type of entity that owns the source save */
-      sourceOwnerType: components['schemas']['OwnerType'];
+      sourceOwnerType: components['schemas']['EntityType'];
       /** @description Name of the source slot to copy from */
       sourceSlotName: string;
       /** @description Version to copy (latest if null) */
@@ -16994,7 +16994,7 @@ export interface components {
        */
       targetOwnerId: string;
       /** @description Type of entity that will own the copied save */
-      targetOwnerType: components['schemas']['OwnerType'];
+      targetOwnerType: components['schemas']['EntityType'];
       /** @description Name of the target slot to copy to */
       targetSlotName: string;
       /** @description Category for new slot if auto-created */
@@ -17175,7 +17175,7 @@ export interface components {
     /** @description Request to create a board instance for an owner entity */
     CreateBoardRequest: {
       /** @description Type of entity that owns this board (e.g., character, account, realm, guild) */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that owns this board
@@ -17222,7 +17222,7 @@ export interface components {
       /** @description Grid traversal mode. Defaults to eight_way if not specified. */
       adjacencyMode?: components['schemas']['AdjacencyMode'] | null;
       /** @description Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild). */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
     };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
@@ -17275,8 +17275,8 @@ export interface components {
        * @description Entity that owns this collection
        */
       ownerId: string;
-      /** @description Entity type discriminator (e.g., account, character) */
-      ownerType: string;
+      /** @description Entity type discriminator */
+      ownerType: components['schemas']['EntityType'];
       /** @description Type of collection to create */
       collectionType: components['schemas']['CollectionType'];
       /**
@@ -18053,8 +18053,8 @@ export interface components {
        * @description The entity that owns this seed.
        */
       ownerId: string;
-      /** @description Entity type discriminator (e.g., "account", "actor", "realm", "character", "relationship"). */
-      ownerType: string;
+      /** @description Owner entity type discriminator. */
+      ownerType: components['schemas']['EntityType'];
       /** @description Registered seed type code (e.g., "guardian", "dungeon_core"). */
       seedTypeCode: string;
       /**
@@ -18079,7 +18079,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name (lowercase alphanumeric with hyphens, single char like "q" allowed) */
       slotName: string;
       /** @description Save category determining retention and cleanup behavior */
@@ -18186,7 +18186,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of owner entity */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID for realm-scoped wallets (null for global)
@@ -18966,7 +18966,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
     };
@@ -18998,7 +18998,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to delete */
@@ -19870,9 +19870,12 @@ export interface components {
       sourceArchiveId?: string | null;
     };
     /**
-     * @description Universal entity type identifier used across Bannou services.
-     *     Provides first-class support for various kinds of entities in analytics,
-     *     achievements, leaderboards, contracts, relationships, and other systems.
+     * @description Universal entity type identifier for first-class Bannou entities.
+     *     Used for polymorphic entity references (ownerType, entityType, partyType).
+     *
+     *     NOT for game-configurable content type codes (use opaque strings) or
+     *     service-specific roles that include non-entity values (use service-specific enums).
+     *     See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
      * @enum {string}
      */
     EntityType:
@@ -19888,6 +19891,10 @@ export interface components {
       | 'realm'
       | 'item'
       | 'monster'
+      | 'relationship'
+      | 'session'
+      | 'deity'
+      | 'dungeon'
       | 'custom'
       | 'other';
     /** @description Metadata for an unlocked entry instance tracking usage and discovery state */
@@ -20835,16 +20842,13 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns the saves to export */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Specific slots to export (all if null) */
       slotNames?: string[];
     };
     /** @description Response with pre-signed URL for downloading exported save archive */
     ExportSavesResponse: {
-      /**
-       * Format: uri
-       * @description Pre-signed URL to download export archive
-       */
+      /** @description Pre-signed URL to download export archive */
       downloadUrl: string;
       /**
        * Format: date-time
@@ -21779,7 +21783,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -22014,7 +22018,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * @description Whether to include seed-derived passive effects. Defaults to true because GetEffects is the unified query endpoint designed to return all active effects. Set to false to retrieve only item-based statuses from this endpoint.
        * @default true
@@ -22029,7 +22033,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Number of item-based status effects */
       itemBasedCount: number;
       /** @description Number of seed-derived passive effects */
@@ -22581,7 +22585,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of owner entity */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID for realm-scoped wallets
@@ -22999,7 +23003,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
     };
     /** @description Request to get a seed by ID. */
     GetSeedRequest: {
@@ -23027,7 +23031,7 @@ export interface components {
        */
       ownerId: string;
       /** @description The owner entity type. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Filter by seed type. */
       seedTypeCode?: string | null;
       /**
@@ -23077,7 +23081,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
     };
@@ -23282,7 +23286,7 @@ export interface components {
        */
       ownerId?: string | null;
       /** @description Owner type (requires ownerId) */
-      ownerType?: components['schemas']['WalletOwnerType'];
+      ownerType?: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID (required if using ownerId lookup)
@@ -23394,7 +23398,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity receiving the blessing (e.g., character, account, deity) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing (determines cost and storage mechanism) */
       tier: components['schemas']['BlessingTier'];
       /** @description Item template code for the blessing effect */
@@ -23410,7 +23414,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -23467,7 +23471,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator (e.g., character, account) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope for template lookup
@@ -23634,7 +23638,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -23722,7 +23726,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Status template code to check for */
       statusCode: string;
     };
@@ -24812,7 +24816,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity (e.g., character, account, deity) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * @description Page number for pagination
        * @default 1
@@ -24859,7 +24863,7 @@ export interface components {
     /** @description Request to list board instances for an owner entity */
     ListBoardsByOwnerRequest: {
       /** @description Type of entity that owns the boards */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Entity to list boards for
@@ -24977,7 +24981,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Optional filter by game service
@@ -26117,7 +26121,7 @@ export interface components {
       /** @description Filter by seed type. */
       seedTypeCode?: string | null;
       /** @description Filter by owner type. */
-      ownerType?: string | null;
+      ownerType?: components['schemas']['EntityType'] | null;
       /**
        * Format: uuid
        * @description Filter by game service.
@@ -26180,7 +26184,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns the save slots to list */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Optional filter by save category */
       category?: components['schemas']['SaveCategory'] | null;
       /**
@@ -26283,7 +26287,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Optional filter by status category */
       category?: components['schemas']['StatusCategory'] | null;
       /**
@@ -26456,7 +26460,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Specific version to load (defaults to latest) */
@@ -27064,7 +27068,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Specific version to migrate (defaults to latest) */
@@ -27678,11 +27682,6 @@ export interface components {
      * @enum {string}
      */
     OnDeleteAction: 'CASCADE' | 'RESTRICT' | 'DETACH';
-    /**
-     * @description Type of entity that owns this save slot
-     * @enum {string}
-     */
-    OwnerType: 'ACCOUNT' | 'CHARACTER' | 'SESSION' | 'REALM';
     /** @description Full content and metadata for a CMS-managed page */
     PageContent: {
       /** @description URL-friendly identifier for the page */
@@ -27837,7 +27836,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Partner's owner entity type. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Partner's current growth phase. */
       growthPhase: string;
       /** @description Partner's seed status. */
@@ -28144,7 +28143,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to pin */
@@ -28419,7 +28418,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot containing the version to promote */
       slotName: string;
       /** @description Old version to promote to latest */
@@ -28984,7 +28983,7 @@ export interface components {
        */
       ownerId?: string | null;
       /** @description Filter by owner type */
-      ownerType?: components['schemas']['OwnerType'] | null;
+      ownerType?: components['schemas']['EntityType'] | null;
       /** @description Filter by save category */
       category?: components['schemas']['SaveCategory'] | null;
       /**
@@ -29942,7 +29941,7 @@ export interface components {
       /** @description Maximum seeds of this type per owner entity. */
       maxPerOwner: number;
       /** @description Entity types that can own seeds of this type. */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Ordered growth phase definitions with thresholds. */
       growthPhases: components['schemas']['GrowthPhaseDefinition'][];
       /** @description Max bond participants. 0 = no bonding, 1 = pair bonds, N = group bonds of up to N+1 participants. */
@@ -30238,7 +30237,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Category of statuses to remove */
       category: components['schemas']['StatusCategory'];
       /** @description Why these statuses are being removed */
@@ -30252,7 +30251,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Source that originally granted the statuses
@@ -30323,7 +30322,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Current slot name */
       slotName: string;
       /** @description New slot name */
@@ -30872,7 +30871,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot to save the delta to */
       slotName: string;
       /** @description Version number this delta is based on */
@@ -30941,7 +30940,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name (auto-created if doesn't exist) */
       slotName: string;
       /** @description Category for auto-created slots (defaults to MANUAL_SAVE) */
@@ -31004,10 +31003,7 @@ export interface components {
       pinned?: boolean;
       /** @description Checkpoint name if pinned */
       checkpointName?: string | null;
-      /**
-       * Format: uri
-       * @description Pre-signed URL to retrieve thumbnail (if provided)
-       */
+      /** @description Pre-signed URL to retrieve thumbnail (if provided) */
       thumbnailUrl?: string | null;
       /**
        * @description True if this save overwrote a version from a different device.
@@ -31826,7 +31822,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Seed-derived passive effects */
       effects: components['schemas']['SeedEffectEntry'][];
     };
@@ -31855,7 +31851,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Owner entity type discriminator. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Registered seed type code. */
       seedTypeCode: string;
       /**
@@ -31941,7 +31937,7 @@ export interface components {
       /** @description Maximum seeds of this type per owner. */
       maxPerOwner: number;
       /** @description Allowed owner entity types. */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Phase definitions with thresholds. */
       growthPhases: components['schemas']['GrowthPhaseDefinition'][];
       /** @description Bond participant limit. */
@@ -31982,7 +31978,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -32310,7 +32306,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Save category determining retention and cleanup behavior */
@@ -32690,7 +32686,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Status template code */
       statusTemplateCode: string;
       /** @description Status category */
@@ -33880,7 +33876,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to unpin */
@@ -34023,7 +34019,7 @@ export interface components {
       /** @description Whether the template is active (can create new board instances) */
       isActive?: boolean | null;
       /** @description Updated allowed owner types. Narrowing checks for existing boards with removed types. */
-      allowedOwnerTypes?: string[] | null;
+      allowedOwnerTypes?: components['schemas']['EntityType'][] | null;
     };
     /** @description Request to update bundle metadata */
     UpdateBundleRequest: {
@@ -35245,7 +35241,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot to verify */
       slotName: string;
       /** @description Version to verify (latest if null) */
@@ -35455,11 +35451,6 @@ export interface components {
      * @enum {string}
      */
     VolumeShape: 'box' | 'sphere' | 'capsule' | 'cylinder';
-    /**
-     * @description Type of entity that owns a wallet
-     * @enum {string}
-     */
-    WalletOwnerType: 'account' | 'character' | 'npc' | 'guild' | 'faction' | 'location' | 'system';
     /** @description Wallet details */
     WalletResponse: {
       /**
@@ -35473,7 +35464,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Owner type */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID

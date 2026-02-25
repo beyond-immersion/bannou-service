@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -196,11 +197,11 @@ public class CurrencyServiceTests
     }
 
     [Fact]
-    public void WalletOwnerType_HasExpectedValues()
+    public void EntityType_HasExpectedValues()
     {
-        // Assert - verify enum values exist
-        Assert.True(Enum.IsDefined(typeof(WalletOwnerType), WalletOwnerType.Account));
-        Assert.True(Enum.IsDefined(typeof(WalletOwnerType), WalletOwnerType.Character));
+        // Assert - verify enum values exist for wallet owner types
+        Assert.True(Enum.IsDefined(typeof(EntityType), EntityType.Account));
+        Assert.True(Enum.IsDefined(typeof(EntityType), EntityType.Character));
     }
 
     #endregion
@@ -234,12 +235,12 @@ public class CurrencyServiceTests
         var request = new CreateWalletRequest
         {
             OwnerId = ownerId,
-            OwnerType = WalletOwnerType.Account
+            OwnerType = EntityType.Account
         };
 
         // Assert
         Assert.Equal(ownerId, request.OwnerId);
-        Assert.Equal(WalletOwnerType.Account, request.OwnerType);
+        Assert.Equal(EntityType.Account, request.OwnerType);
     }
 
     [Fact]
@@ -420,7 +421,7 @@ public class CurrencyConversionConcurrencyTests
         {
             WalletId = _walletId,
             OwnerId = _ownerId,
-            OwnerType = WalletOwnerType.Account,
+            OwnerType = EntityType.Account,
             Status = WalletStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
         };

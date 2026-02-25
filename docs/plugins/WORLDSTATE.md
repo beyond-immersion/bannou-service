@@ -174,6 +174,21 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `DowntimePolicy` | C (System State) | Service-specific enum (`Advance`, `Pause`) | Finite set of two system-owned policies for handling clock gaps after service downtime |
+| `TimeRatioChangeReason` | C (System State) | Service-specific enum (`Initial`, `AdminAdjustment`, `Event`, `Pause`, `Resume`) | Finite set of system-owned reasons for time ratio changes; used in ratio history tracking |
+| `TimeSyncReason` | C (System State) | Service-specific enum (`PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync`) | Finite set of system-owned reasons for client time sync events |
+| day period codes (e.g., `dawn`, `morning`, `night`) | B (Content Code) | Opaque string | Game-configurable day period names defined in calendar templates. Different games define different period structures (5 periods for Arcadia, 2 for a tidally locked world). Extensible without schema changes |
+| month codes (e.g., `frostmere`, `greenleaf`) | B (Content Code) | Opaque string | Game-configurable month names defined in calendar templates. Calendar structures vary per game service. Extensible without schema changes |
+| season codes (e.g., `winter`, `spring`, `wet`, `dry`) | B (Content Code) | Opaque string | Game-configurable season names defined in calendar templates. Referenced by Transit for seasonal connection availability. Extensible without schema changes |
+| era label codes | B (Content Code) | Opaque string | Game-configurable era names for year-range labeling in calendar templates. Optional, extensible without schema changes |
+| `calendarTemplateCode` | B (Content Code) | Opaque string | Unique identifier for calendar template definitions, registered via API per game service. Extensible without schema changes |
+
+---
+
 ## State Storage
 
 ### Realm Clock Store

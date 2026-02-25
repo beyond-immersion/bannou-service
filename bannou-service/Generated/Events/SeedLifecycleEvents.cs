@@ -68,7 +68,8 @@ public partial class SeedCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code
@@ -160,7 +161,8 @@ public partial class SeedUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code
@@ -260,7 +262,8 @@ public partial class SeedDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Registered seed type code

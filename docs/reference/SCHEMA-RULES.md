@@ -865,6 +865,10 @@ resourceType:
 
 **Test**: "Would adding a new service/entity type in a higher layer require modifying this enum?" If yes, use a string.
 
+**EntityType from common-api.yaml IS appropriate** for L2+ services referencing entity types within their own layer or lower. The hierarchy isolation exception ONLY applies when the enum would need to enumerate types from HIGHER layers (e.g., L1 enumerating L2+ types). L2 services like Currency, Seed, and Collection referencing `account`, `character`, `guild` (all L1/L2 entities) MUST use `$ref: 'common-api.yaml#/components/schemas/EntityType'`, not opaque strings.
+
+See the IMPLEMENTATION TENETS T14 polymorphic type field decision tree for the authoritative three-category classification (Category A: entity references → EntityType, Category B: game content codes → string, Category C: system state → service-specific enum).
+
 ### Correct Pattern
 
 ```yaml

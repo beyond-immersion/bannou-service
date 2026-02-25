@@ -421,6 +421,21 @@ Distributed locks use `IDistributedLockProvider` (L0 infrastructure), not a sepa
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `biomeCode` (on ClimateTemplate, LocationClimateBinding) | B (Content Code) | Opaque string | Biome type codes ("temperate_forest", "alpine", "desert", "tropical", "tundra"); game-configurable, a space game could define "vacuum", "atmosphere_thin" |
+| `seasonCode` (on temperature curves, weather distributions, atmospheric baselines, resource availability) | B (Content Code) | Opaque string | References Worldstate calendar season codes; game-configurable per calendar template |
+| `weatherCode` (on weather patterns, WeatherEvent override) | B (Content Code) | Opaque string | Weather pattern codes ("clear", "cloudy", "overcast", "light_rain", "heavy_rain", "storm", "snow", "fog", "haze"); game-configurable |
+| `eventCode` (on WeatherEvent) | B (Content Code) | Opaque string | Weather event codes ("thunderstorm", "drought", "blizzard", "heat_wave", "eclipse", "volcanic_ash"); game-configurable extraordinary phenomena |
+| `hourlyShape` (TemperatureCurveShape) | C (System State) | Service-specific enum | Finite set of intra-day temperature curve computation modes (Sinusoidal, Plateau, Spike); system-owned |
+| `precipitationType` (PrecipitationType) | C (System State) | Service-specific enum | Finite set of precipitation forms (None, Rain, Snow, Sleet, Hail); system-owned, used for crossover rule computation |
+| `scopeType` (WeatherEventScopeType) | C (System State) | Service-specific enum | Finite set of event scope levels (Realm, Location, LocationSubtree); system-owned, determines override precedence |
+| `sourceType` (WeatherEventSourceType) | C (System State) | Service-specific enum | Finite set of event origin types (Divine, Scheduled, GameEvent, Admin); system-owned tracking of who created the event |
+
+---
+
 ## Events
 
 ### Published Events

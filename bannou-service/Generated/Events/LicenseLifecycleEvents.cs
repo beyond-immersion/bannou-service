@@ -344,7 +344,8 @@ public partial class LicenseBoardCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Entity that owns this board
@@ -423,7 +424,8 @@ public partial class LicenseBoardUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Entity that owns this board
@@ -510,7 +512,8 @@ public partial class LicenseBoardDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Entity that owns this board

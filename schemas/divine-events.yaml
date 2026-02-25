@@ -129,7 +129,7 @@ components:
           format: uuid
           description: The entity receiving the blessing
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity receiving the blessing (e.g., character, account, deity)
         blessingId:
           type: string
@@ -169,7 +169,7 @@ components:
           format: uuid
           description: The entity losing the blessing
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity losing the blessing
         reason:
           type: string

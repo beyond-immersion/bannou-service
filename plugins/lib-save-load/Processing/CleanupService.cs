@@ -123,7 +123,7 @@ public class CleanupService : BackgroundService
         {
             // Skip SESSION-owned slots that are within the grace period
             // SaveSlotMetadata.OwnerType is now an enum - compare directly
-            if (slot.OwnerType == OwnerType.SESSION &&
+            if (slot.OwnerType == EntityType.Session &&
                 DateTimeOffset.UtcNow - slot.UpdatedAt < sessionGracePeriod)
             {
                 continue;

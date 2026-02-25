@@ -39,7 +39,7 @@ components:
           format: uuid
           description: "Entity that owns this seed"
         ownerType: &id003
-          type: string
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type discriminator"
         seedTypeCode: &id004
           type: string

@@ -26666,7 +26666,7 @@
             "description": "Entity that received this blessing"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that received this blessing"
           },
           "tier": {
@@ -26742,7 +26742,7 @@
             "description": "Entity that received this blessing"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that received this blessing"
           },
           "tier": {
@@ -26855,7 +26855,7 @@
             "description": "Unique board instance identifier"
           },
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this board"
           },
           "ownerId": {
@@ -26926,7 +26926,7 @@
             "description": "Board instance identifier"
           },
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this board (e.g., character, account, guild)"
           },
           "ownerId": {
@@ -27020,7 +27020,7 @@
           "allowedOwnerTypes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/EntityType"
             },
             "description": "Owner types allowed to create boards from this template"
           },
@@ -29822,7 +29822,7 @@
         ],
         "properties": {
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity whose boards should be cleaned up"
           },
           "ownerId": {
@@ -29843,7 +29843,7 @@
         ],
         "properties": {
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that was cleaned up"
           },
           "ownerId": {
@@ -30223,7 +30223,7 @@
             "description": "Source board instance to clone unlock state from"
           },
           "targetOwnerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity to clone the board to (must be in template's allowedOwnerTypes)"
           },
           "targetOwnerId": {
@@ -30263,7 +30263,7 @@
             "description": "New board instance created for the target"
           },
           "targetOwnerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity the board was cloned to"
           },
           "targetOwnerId": {
@@ -30302,7 +30302,7 @@
             "description": "Entity ID that owns the save slot"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -30394,9 +30394,7 @@
             "description": "Entity that owns this collection"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "collectionType": {
@@ -32677,7 +32675,7 @@
             "description": "Entity ID that owns the source save"
           },
           "sourceOwnerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns the source save"
           },
           "sourceSlotName": {
@@ -32699,7 +32697,7 @@
             "description": "Entity ID that will own the copied save"
           },
           "targetOwnerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that will own the copied save"
           },
           "targetSlotName": {
@@ -33039,7 +33037,7 @@
         ],
         "properties": {
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this board (e.g., character, account, realm, guild)"
           },
           "ownerId": {
@@ -33130,7 +33128,7 @@
           "allowedOwnerTypes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/EntityType"
             },
             "minItems": 1,
             "description": "Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild)."
@@ -33236,10 +33234,8 @@
             "description": "Entity that owns this collection"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
-            "description": "Entity type discriminator (e.g., account, character)"
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Entity type discriminator"
           },
           "collectionType": {
             "$ref": "#/components/schemas/CollectionType",
@@ -34786,8 +34782,8 @@
             "description": "The entity that owns this seed."
           },
           "ownerType": {
-            "type": "string",
-            "description": "Entity type discriminator (e.g., \"account\", \"actor\", \"realm\", \"character\", \"relationship\").\n"
+            "$ref": "#/components/schemas/EntityType",
+            "description": "Owner entity type discriminator."
           },
           "seedTypeCode": {
             "type": "string",
@@ -34836,7 +34832,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -35071,7 +35067,7 @@
             "description": "Owner entity ID"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/WalletOwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of owner entity"
           },
           "realmId": {
@@ -36481,7 +36477,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -36544,7 +36540,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -38224,7 +38220,7 @@
       },
       "EntityType": {
         "type": "string",
-        "description": "Universal entity type identifier used across Bannou services.\nProvides first-class support for various kinds of entities in analytics,\nachievements, leaderboards, contracts, relationships, and other systems.\n",
+        "description": "Universal entity type identifier for first-class Bannou entities.\nUsed for polymorphic entity references (ownerType, entityType, partyType).\n\nNOT for game-configurable content type codes (use opaque strings) or\nservice-specific roles that include non-entity values (use service-specific enums).\nSee IMPLEMENTATION TENETS polymorphic type field classification for guidance.\n",
         "enum": [
           "system",
           "account",
@@ -38238,6 +38234,10 @@
           "realm",
           "item",
           "monster",
+          "relationship",
+          "session",
+          "deity",
+          "dungeon",
           "custom",
           "other"
         ]
@@ -39895,7 +39895,7 @@
             "description": "Entity ID that owns the saves to export"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns the saves to export"
           },
           "slotNames": {
@@ -39918,7 +39918,6 @@
         "properties": {
           "downloadUrl": {
             "type": "string",
-            "format": "uri",
             "description": "Pre-signed URL to download export archive"
           },
           "expiresAt": {
@@ -41724,9 +41723,7 @@
             "description": "Entity that owns the collection"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -42173,7 +42170,7 @@
             "description": "Entity to get effects for"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "includePassive": {
@@ -42201,7 +42198,7 @@
             "description": "Entity these effects belong to"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "itemBasedCount": {
@@ -43184,7 +43181,7 @@
             "description": "Owner entity ID"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/WalletOwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of owner entity"
           },
           "realmId": {
@@ -43992,7 +43989,7 @@
             "description": "Entity to get seed effects for"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           }
         }
@@ -44044,7 +44041,7 @@
             "description": "The owner entity ID."
           },
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "The owner entity type."
           },
           "seedTypeCode": {
@@ -44135,7 +44132,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -44546,7 +44543,7 @@
             "description": "Owner ID (requires ownerType)"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/WalletOwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "nullable": true,
             "description": "Owner type (requires ownerId)"
           },
@@ -44745,7 +44742,7 @@
             "description": "Entity receiving the blessing"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity receiving the blessing (e.g., character, account, deity)"
           },
           "tier": {
@@ -44780,9 +44777,7 @@
             "description": "Entity that owns the collection"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -44881,7 +44876,7 @@
             "description": "Entity to receive the status effect"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator (e.g., character, account)"
           },
           "gameServiceId": {
@@ -45178,9 +45173,7 @@
             "description": "Entity that owns the collection"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -45358,7 +45351,7 @@
             "description": "Entity to check"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "statusCode": {
@@ -47358,7 +47351,7 @@
             "description": "Entity whose blessings to list"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity (e.g., character, account, deity)"
           },
           "page": {
@@ -47472,7 +47465,7 @@
         ],
         "properties": {
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns the boards"
           },
           "ownerId": {
@@ -47724,9 +47717,7 @@
             "description": "Entity to list collections for"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -49994,7 +49985,11 @@
             "description": "Filter by seed type."
           },
           "ownerType": {
-            "type": "string",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              }
+            ],
             "nullable": true,
             "description": "Filter by owner type."
           },
@@ -50116,7 +50111,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns the save slots to list"
           },
           "category": {
@@ -50317,7 +50312,7 @@
             "description": "Entity to list statuses for"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "category": {
@@ -50688,7 +50683,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -51905,7 +51900,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -53089,16 +53084,6 @@
         ],
         "description": "Action to take when the referenced resource is deleted.\nCASCADE: Delete dependent entities when resource is deleted\nRESTRICT: Block resource deletion if references exist\nDETACH: Set reference to null when resource is deleted\n"
       },
-      "OwnerType": {
-        "type": "string",
-        "enum": [
-          "ACCOUNT",
-          "CHARACTER",
-          "SESSION",
-          "REALM"
-        ],
-        "description": "Type of entity that owns this save slot"
-      },
       "PageContent": {
         "description": "Full content and metadata for a CMS-managed page",
         "type": "object",
@@ -53387,7 +53372,7 @@
             "description": "Partner's owner entity ID."
           },
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Partner's owner entity type."
           },
           "growthPhase": {
@@ -53958,7 +53943,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -54533,7 +54518,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -55658,7 +55643,7 @@
           "ownerType": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/OwnerType"
+                "$ref": "#/components/schemas/EntityType"
               }
             ],
             "nullable": true,
@@ -57553,7 +57538,7 @@
           "allowedOwnerTypes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/EntityType"
             },
             "description": "Entity types that can own seeds of this type."
           },
@@ -58103,7 +58088,7 @@
             "description": "Entity to cleanse statuses from"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "category": {
@@ -58132,7 +58117,7 @@
             "description": "Entity to remove statuses from"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "sourceId": {
@@ -58268,7 +58253,7 @@
             "description": "Entity ID that owns the slot"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -59347,7 +59332,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -59469,7 +59454,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -59579,7 +59564,6 @@
           },
           "thumbnailUrl": {
             "type": "string",
-            "format": "uri",
             "nullable": true,
             "description": "Pre-signed URL to retrieve thumbnail (if provided)"
           },
@@ -61160,7 +61144,7 @@
             "description": "Entity these effects belong to"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "effects": {
@@ -61234,7 +61218,7 @@
             "description": "The entity that owns this seed."
           },
           "ownerType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Owner entity type discriminator."
           },
           "seedTypeCode": {
@@ -61392,7 +61376,7 @@
           "allowedOwnerTypes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/EntityType"
             },
             "description": "Allowed owner entity types."
           },
@@ -61478,9 +61462,7 @@
             "description": "Entity whose collection to search"
           },
           "ownerType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64,
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "gameServiceId": {
@@ -62136,7 +62118,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -62860,7 +62842,7 @@
             "description": "Entity this status is applied to"
           },
           "entityType": {
-            "type": "string",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Entity type discriminator"
           },
           "statusTemplateCode": {
@@ -65116,7 +65098,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -65394,7 +65376,7 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/EntityType"
             },
             "minItems": 1,
             "description": "Updated allowed owner types. Narrowing checks for existing boards with removed types."
@@ -68081,7 +68063,7 @@
             "description": "ID of the owning entity"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/OwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Type of entity that owns this save slot"
           },
           "slotName": {
@@ -68498,19 +68480,6 @@
           "cylinder"
         ]
       },
-      "WalletOwnerType": {
-        "type": "string",
-        "description": "Type of entity that owns a wallet",
-        "enum": [
-          "account",
-          "character",
-          "npc",
-          "guild",
-          "faction",
-          "location",
-          "system"
-        ]
-      },
       "WalletResponse": {
         "type": "object",
         "description": "Wallet details",
@@ -68534,7 +68503,7 @@
             "description": "Owner entity ID"
           },
           "ownerType": {
-            "$ref": "#/components/schemas/WalletOwnerType",
+            "$ref": "#/components/schemas/EntityType",
             "description": "Owner type"
           },
           "realmId": {

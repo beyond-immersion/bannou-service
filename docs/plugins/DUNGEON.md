@@ -546,6 +546,19 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `personalityType` (on DungeonCoreModel) | B (Content Code) | Opaque string | Dungeon personality codes ("martial", "memorial", "scholarly", etc.); game-configurable, drives ABML behavior selection and character trait seeding |
+| `bondType` (on DungeonBondModel) | C (System State) | Service-specific enum | Finite set of bond relationship modes (Priest, Paladin, Corrupted); system-owned, determines contract terms and death behavior |
+| `species` (on InhabitantModel, genetic_library subdomain) | B (Content Code) | Opaque string | Creature species codes; references lib-species entity codes, game-configurable |
+| `manifestationType` (on DungeonMemoryModel) | C (System State) | Service-specific enum | Finite set of memory manifestation forms (item, scene decoration, environmental effect); system-owned, determines which service handles manifestation |
+| `entityType` (on bond master reference) | A (Entity Reference) | `EntityType` enum | Bond master can be account, character, or actor -- all first-class Bannou entities. Determines Pattern A (account) vs Pattern B (character) vs Corrupted (actor) |
+| `eventType` (on DungeonMemoryModel) | B (Content Code) | Opaque string | Memory event type codes (combat, exploration, death, ritual); game-configurable classification for significance scoring and manifestation selection |
+
+---
+
 ## Events
 
 ### Published Events

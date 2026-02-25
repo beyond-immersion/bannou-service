@@ -38,7 +38,7 @@ public partial class CollectionService
         _logger.LogInformation("Handling account.deleted for account {AccountId}", evt.AccountId);
         try
         {
-            await CleanupCollectionsForOwnerAsync(evt.AccountId, "account");
+            await CleanupCollectionsForOwnerAsync(evt.AccountId, EntityType.Account);
         }
         catch (Exception ex)
         {
@@ -63,7 +63,7 @@ public partial class CollectionService
     /// <param name="ownerId">The owner whose collections should be cleaned up.</param>
     /// <param name="ownerType">The owner type discriminator.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    internal async Task<int> CleanupCollectionsForOwnerAsync(Guid ownerId, string ownerType, CancellationToken cancellationToken = default)
+    internal async Task<int> CleanupCollectionsForOwnerAsync(Guid ownerId, EntityType ownerType, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.CleanupCollectionsForOwner");
 

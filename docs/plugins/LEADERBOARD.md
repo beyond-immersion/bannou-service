@@ -32,6 +32,22 @@ Real-time leaderboard management (L4 GameFeatures) built on Redis Sorted Sets. S
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies the type of entity on the leaderboard (account, character, guild, actor, custom); all valid values are first-class Bannou entities |
+| `entityTypes` (definition) | A (Entity Reference) | `EntityType[]` enum array (from `common-api.yaml`) | Restricts which entity types can appear on a leaderboard; same enum as individual `entityType` fields |
+| `sortOrder` | C (System State/Mode) | `SortOrder` enum (`descending`, `ascending`) | Determines ranking direction; system behavior configuration |
+| `updateMode` | C (System State/Mode) | `UpdateMode` enum (`replace`, `increment`, `max`, `min`) | Determines how new scores interact with existing scores; system behavior configuration |
+
+**Notes**:
+- `entityType` references the shared `EntityType` enum from `common-api.yaml`, confirming Category A. The leaderboard schema directly `$ref`s this enum for all entity type fields (score submission, rank queries, batch entries, event models).
+- The `leaderboardId` field is a human-readable string identifier (not a type field) -- it follows the same pattern as bundle IDs in Asset service.
+- Leaderboard has no opaque string type fields (Category B). Game-specific customization is achieved through the `metadata` fields (which are `additionalProperties: true` pass-through bags, not type discriminators).
+
+---
+
 ## State Storage
 
 **Stores**: 2 Redis stores (via lib-state `IStateStoreFactory`)

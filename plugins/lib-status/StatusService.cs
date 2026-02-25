@@ -92,11 +92,11 @@ public partial class StatusService : IStatusService
     private static string TemplateCodeKey(Guid gameServiceId, string code) => $"tpl:{gameServiceId}:{code}";
     private static string InstanceIdKey(Guid instanceId) => $"inst:{instanceId}";
     private static string ContainerIdKey(Guid containerId) => $"ctr:{containerId}";
-    private static string ContainerEntityKey(Guid entityId, string entityType, Guid gameServiceId) =>
+    private static string ContainerEntityKey(Guid entityId, EntityType entityType, Guid gameServiceId) =>
         $"ctr:{entityId}:{entityType}:{gameServiceId}";
-    private static string ActiveCacheKey(Guid entityId, string entityType) => $"active:{entityId}:{entityType}";
-    private static string SeedEffectsCacheKey(Guid entityId, string entityType) => $"seed:{entityId}:{entityType}";
-    private static string EntityLockKey(string entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
+    private static string ActiveCacheKey(Guid entityId, EntityType entityType) => $"active:{entityId}:{entityType}";
+    private static string SeedEffectsCacheKey(Guid entityId, EntityType entityType) => $"seed:{entityId}:{entityType}";
+    private static string EntityLockKey(EntityType entityType, Guid entityId) => $"entity:{entityType}:{entityId}";
 
     #endregion
 
@@ -1355,7 +1355,7 @@ public partial class StatusService : IStatusService
     /// Gets or creates an inventory container for an entity's status effects.
     /// </summary>
     private async Task<StatusContainerModel?> GetOrCreateContainerAsync(
-        Guid entityId, string entityType, Guid gameServiceId, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, Guid gameServiceId, CancellationToken cancellationToken)
     {
         var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
         var existing = await ContainerStore.GetAsync(entityKey, cancellationToken);
@@ -1502,7 +1502,7 @@ public partial class StatusService : IStatusService
     /// Filters out expired statuses during rebuild and publishes expiration events.
     /// </summary>
     private async Task<ActiveStatusCacheModel> GetOrBuildActiveCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         var cacheKey = ActiveCacheKey(entityId, entityType);
         var cached = await ActiveCacheStore.GetAsync(cacheKey, cancellationToken);
@@ -1581,7 +1581,7 @@ public partial class StatusService : IStatusService
     /// Gets the seed effects cache for an entity, building it from the Seed service on cache miss.
     /// </summary>
     private async Task<SeedEffectsCacheModel> GetOrBuildSeedEffectsCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         var cacheKey = SeedEffectsCacheKey(entityId, entityType);
         var cached = await SeedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
@@ -1653,7 +1653,7 @@ public partial class StatusService : IStatusService
     /// Invalidates the active status cache for an entity.
     /// </summary>
     private async Task InvalidateActiveCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         try
         {
@@ -1679,7 +1679,7 @@ public partial class StatusService : IStatusService
     /// Invalidates the seed effects cache for an entity.
     /// </summary>
     private async Task InvalidateSeedEffectsCacheAsync(
-        Guid entityId, string entityType, CancellationToken cancellationToken)
+        Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
         try
         {

@@ -1533,7 +1533,7 @@ public partial class QuestService : IQuestService
                     new GetOrCreateWalletRequest
                     {
                         OwnerId = characterId,
-                        OwnerType = WalletOwnerType.Character
+                        OwnerType = EntityType.Character
                     },
                     cancellationToken);
             }
@@ -2017,7 +2017,7 @@ public partial class QuestService : IQuestService
                     new GetOrCreateWalletRequest
                     {
                         OwnerId = characterId,
-                        OwnerType = WalletOwnerType.Character
+                        OwnerType = EntityType.Character
                     },
                     cancellationToken);
 

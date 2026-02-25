@@ -1711,10 +1711,8 @@ public partial class CollectionController
                     "description": "Entity that owns this collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
-                    "description": "Entity type discriminator (e.g., account, character)"
+                    "type": "object",
+                    "description": "Entity type discriminator"
                 },
                 "collectionType": {
                     "$ref": "#/$defs/CollectionType",
@@ -1766,9 +1764,7 @@ public partial class CollectionController
                     "description": "Entity that owns this collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -1798,7 +1794,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -1915,9 +1911,7 @@ public partial class CollectionController
                     "description": "Entity that owns this collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -1947,7 +1941,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2029,9 +2023,7 @@ public partial class CollectionController
                     "description": "Entity to list collections for"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -2094,9 +2086,7 @@ public partial class CollectionController
                     "description": "Entity that owns this collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -2243,9 +2233,7 @@ public partial class CollectionController
                     "description": "Entity that owns this collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "collectionType": {
@@ -2275,7 +2263,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2360,9 +2348,7 @@ public partial class CollectionController
                     "description": "Entity that owns the collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -2579,9 +2565,7 @@ public partial class CollectionController
                     "description": "Entity that owns the collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -3195,9 +3179,7 @@ public partial class CollectionController
                     "description": "Entity that owns the collection"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -3213,7 +3195,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -3374,9 +3356,7 @@ public partial class CollectionController
                     "description": "Entity whose collection to search"
                 },
                 "ownerType": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 64,
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "gameServiceId": {
@@ -3398,7 +3378,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
+            "description": "Opaque string code identifying the type of collection content.\ nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }

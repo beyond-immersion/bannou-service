@@ -53,19 +53,18 @@ paths:
         ownerType\",\n                \"seedTypeCode\"\n            ],\n            \"properties\": {\n                \"\
         ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
         \       \"description\": \"The entity that owns this seed.\"\n                },\n                \"ownerType\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Entity type discriminator (e.g.,
-        \\\"account\\\", \\\"actor\\\", \\\"realm\\\", \\\"character\\\", \\\"relationship\\\").\\n\"\n                },\n\
-        \                \"seedTypeCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Registered seed type code (e.g., \\\"guardian\\\", \\\"dungeon_core\\\").\"\n                },\n            \
-        \    \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Game service this seed is scoped
-        to. Null for cross-game seed types that are not scoped to any single game service.\"\n                },\n       \
-        \         \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Human-readable name. Auto-generated if omitted.\"\n                },\n  \
-        \              \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided seed-type-specific
-        initial data. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        \                    \"type\": \"object\",\n                    \"description\": \"Owner entity type discriminator.\"\
+        \n                },\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n           \
+        \         \"description\": \"Registered seed type code (e.g., \\\"guardian\\\", \\\"dungeon_core\\\").\"\n       \
+        \         },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Game service
+        this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service.\"\n       \
+        \         },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Human-readable name. Auto-generated if omitted.\"\n    \
+        \            },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"\
+        additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided
+        seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention.\"\n         \
+        \       }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedResponse\"\
         ,\n    \"$defs\": {\n        \"SeedResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Full seed entity response.\",\n            \"required\": [\n                \"seedId\",\n                \"ownerId\"\
@@ -75,7 +74,7 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this seed.\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"The entity that owns this seed.\"\n           \
-        \     },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \     },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Owner entity type discriminator.\"\n                },\n                \"seedTypeCode\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
@@ -133,7 +132,7 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this seed.\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"The entity that owns this seed.\"\n           \
-        \     },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \     },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Owner entity type discriminator.\"\n                },\n                \"seedTypeCode\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
@@ -182,7 +181,7 @@ paths:
         : \"Request to get seeds by owner.\",\n            \"required\": [\n                \"ownerId\",\n               \
         \ \"ownerType\"\n            ],\n            \"properties\": {\n                \"ownerId\": {\n                 \
         \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"The owner
-        entity ID.\"\n                },\n                \"ownerType\": {\n                    \"type\": \"string\",\n  \
+        entity ID.\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n  \
         \                  \"description\": \"The owner entity type.\"\n                },\n                \"seedTypeCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Filter by seed type.\"\n                },\n                \"includeArchived\": {\n                    \"type\"\
@@ -204,7 +203,7 @@ paths:
         \            \"description\": \"Unique identifier for this seed.\"\n                },\n                \"ownerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"The entity that owns this seed.\"\n                },\n                \"ownerType\": {\n       \
-        \             \"type\": \"string\",\n                    \"description\": \"Owner entity type discriminator.\"\n \
+        \             \"type\": \"object\",\n                    \"description\": \"Owner entity type discriminator.\"\n \
         \               },\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n             \
         \       \"description\": \"Registered seed type code.\"\n                },\n                \"gameServiceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
@@ -252,8 +251,9 @@ paths:
         ,\n    \"$defs\": {\n        \"ListSeedsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list seeds with optional filters.\",\n            \"properties\": {\n                \"seedTypeCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by seed type.\"\n                },\n                \"ownerType\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by owner type.\"\
+        : \"Filter by seed type.\"\n                },\n                \"ownerType\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"type\": \"object\"\n                        }\n        \
+        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by owner type.\"\
         \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
         \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Filter by game service.\"\n                },\n                \"growthPhase\": {\n                    \"type\": \"\
@@ -283,7 +283,7 @@ paths:
         \            \"description\": \"Unique identifier for this seed.\"\n                },\n                \"ownerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"The entity that owns this seed.\"\n                },\n                \"ownerType\": {\n       \
-        \             \"type\": \"string\",\n                    \"description\": \"Owner entity type discriminator.\"\n \
+        \             \"type\": \"object\",\n                    \"description\": \"Owner entity type discriminator.\"\n \
         \               },\n                \"seedTypeCode\": {\n                    \"type\": \"string\",\n             \
         \       \"description\": \"Registered seed type code.\"\n                },\n                \"gameServiceId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
@@ -345,7 +345,7 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this seed.\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"The entity that owns this seed.\"\n           \
-        \     },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \     },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Owner entity type discriminator.\"\n                },\n                \"seedTypeCode\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
@@ -405,7 +405,7 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this seed.\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"The entity that owns this seed.\"\n           \
-        \     },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \     },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Owner entity type discriminator.\"\n                },\n                \"seedTypeCode\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
@@ -465,7 +465,7 @@ paths:
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this seed.\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"The entity that owns this seed.\"\n           \
-        \     },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \     },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Owner entity type discriminator.\"\n                },\n                \"seedTypeCode\": {\n                \
         \    \"type\": \"string\",\n                    \"description\": \"Registered seed type code.\"\n                },\n\
         \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
@@ -785,7 +785,7 @@ paths:
         : \"Description of what this seed type represents.\"\n                },\n                \"maxPerOwner\": {\n   \
         \                 \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner
         entity.\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \                    \"items\": {\n                        \"type\": \"object\"\n                    },\n        \
         \            \"description\": \"Entity types that can own seeds of this type.\"\n                },\n            \
         \    \"growthPhases\": {\n                    \"type\": \"array\",\n                    \"items\": {\n           \
         \             \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\n                    },\n                    \"description\"\
@@ -871,7 +871,7 @@ paths:
         \ \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -989,7 +989,7 @@ paths:
         \ \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -1111,7 +1111,7 @@ paths:
         : \"Type description.\"\n                },\n                \"maxPerOwner\": {\n                    \"type\": \"\
         integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n                },\n \
         \               \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        : {\n                        \"type\": \"object\"\n                    },\n                    \"description\": \"\
         Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n                    \"type\"\
         : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -1296,7 +1296,7 @@ paths:
         \ \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -1423,7 +1423,7 @@ paths:
         \ \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -1548,7 +1548,7 @@ paths:
         \ \"description\": \"Type description.\"\n                },\n                \"maxPerOwner\": {\n               \
         \     \"type\": \"integer\",\n                    \"description\": \"Maximum seeds of this type per owner.\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Allowed owner entity types.\"\n                },\n                \"growthPhases\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/GrowthPhaseDefinition\"\
         \n                    },\n                    \"description\": \"Phase definitions with thresholds.\"\n          \
@@ -1944,7 +1944,7 @@ paths:
         \           \"format\": \"uuid\",\n                    \"description\": \"Partner seed ID.\"\n                },\n\
         \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Partner's owner entity ID.\"\n                },\n                \"ownerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Partner's owner entity type.\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Partner's owner entity type.\"\
         \n                },\n                \"growthPhase\": {\n                    \"type\": \"string\",\n            \
         \        \"description\": \"Partner's current growth phase.\"\n                },\n                \"status\": {\n\
         \                    \"$ref\": \"#/$defs/SeedStatus\",\n                    \"description\": \"Partner's seed status.\"\
@@ -2078,10 +2078,8 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
-          description: >
-            Entity type discriminator (e.g., "account", "actor", "realm",
-            "character", "relationship").
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Owner entity type discriminator.
         seedTypeCode:
           type: string
           description: Registered seed type code (e.g., "guardian", "dungeon_core").
@@ -2125,7 +2123,7 @@ components:
           format: uuid
           description: The owner entity ID.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: The owner entity type.
         seedTypeCode:
           type: string
@@ -2144,7 +2142,8 @@ components:
           nullable: true
           description: Filter by seed type.
         ownerType:
-          type: string
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type.
         gameServiceId:
@@ -2338,7 +2337,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity types that can own seeds of this type.
         growthPhases:
           type: array
@@ -2620,7 +2619,7 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type discriminator.
         seedTypeCode:
           type: string
@@ -2814,7 +2813,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Allowed owner entity types.
         growthPhases:
           type: array
@@ -2969,7 +2968,7 @@ components:
           format: uuid
           description: Partner's owner entity ID.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Partner's owner entity type.
         growthPhase:
           type: string

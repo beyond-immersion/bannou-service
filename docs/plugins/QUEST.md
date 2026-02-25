@@ -257,6 +257,25 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `questCode` | B (Content Code) | Opaque string | Game-configurable quest identifier, unique within game service. Extensible without schema changes. |
+| `objectiveCode` | B (Content Code) | Opaque string | Game-configurable objective identifier, unique within a quest definition. |
+| `targetEntityType` (on objectives) | B (Content Code) | Opaque string | Caller-supplied entity type for kill/collect objectives (e.g., `goblin`, `iron_ore`). Not constrained to Bannou entity types -- represents game content targets. |
+| `status` | C (System State) | `QuestStatus` enum | Finite quest lifecycle states: `ACTIVE`, `COMPLETED`, `FAILED`, `ABANDONED`, `EXPIRED`. |
+| `category` | C (System State) | `QuestCategory` enum | Finite quest organization categories: `MAIN`, `SIDE`, `BOUNTY`, `DAILY`, `WEEKLY`, `EVENT`, `TUTORIAL`. |
+| `difficulty` | C (System State) | `QuestDifficulty` enum | Finite difficulty tiers: `TRIVIAL`, `EASY`, `NORMAL`, `HARD`, `HEROIC`, `LEGENDARY`. |
+| `objectiveType` | C (System State) | `ObjectiveType` enum | Finite objective tracking modes: `KILL`, `COLLECT`, `DELIVER`, `TRAVEL`, `DISCOVER`, `TALK`, `CRAFT`, `ESCORT`, `DEFEND`, `CUSTOM`. |
+| `revealBehavior` (on objectives) | C (System State) | `ObjectiveRevealBehavior` enum | Finite visibility modes for hidden objectives: `ALWAYS`, `ON_PROGRESS`, `ON_COMPLETE`, `NEVER`. |
+| `prerequisiteType` | C (System State) | `PrerequisiteType` enum | Finite built-in prerequisite types: `QUEST_COMPLETED`, `CHARACTER_LEVEL`, `REPUTATION`, `ITEM_OWNED`, `CURRENCY_AMOUNT`. Dynamic L4 prerequisite types extend this via `IPrerequisiteProviderFactory` DI pattern. |
+| `reward.type` | C (System State) | Inline enum | Finite reward categories: `CURRENCY`, `ITEM`, `EXPERIENCE`, `REPUTATION`. Determines which reward fields are relevant. |
+| `errorCode` (AcceptQuestErrorResponse) | C (System State) | `AcceptQuestErrorCode` enum | Finite acceptance failure modes: `PREREQUISITES_NOT_MET`, `ALREADY_ACTIVE`, `ON_COOLDOWN`, `MAX_QUESTS_REACHED`, `DEFINITION_NOT_FOUND`, `DEFINITION_DEPRECATED`. |
+| `validationMode` | C (System State) | `PrerequisiteValidationMode` enum | Finite validation strategies: `FAIL_FAST`, `CHECK_ALL`. |
+
+---
+
 ## Stubs & Unimplemented Features
 
 1. ~~**Prerequisite validation for non-QUEST_COMPLETED types**~~: **IMPLEMENTED** (2026-02-07) in #320 - Full prerequisite validation now implemented:

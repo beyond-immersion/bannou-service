@@ -85,9 +85,11 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
         await InvalidateSeedEffectsCacheAsync(notification.OwnerId, notification.OwnerType);
     }
 
-    private async Task InvalidateSeedEffectsCacheAsync(Guid ownerId, string ownerType)
+    private async Task InvalidateSeedEffectsCacheAsync(Guid ownerId, EntityType ownerType)
     {
-        var cacheKey = $"seed:{ownerId}:{ownerType}";
+        // Use lowercase to match cache key format from StatusService.SeedEffectsCacheKey
+        var ownerTypeStr = ownerType.ToString().ToLowerInvariant();
+        var cacheKey = $"seed:{ownerId}:{ownerTypeStr}";
         try
         {
             await SeedEffectsCacheStore.DeleteAsync(cacheKey);

@@ -243,6 +243,20 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 | `gardener:active-gardens` | `Guid` (accountId) | Tracks accounts with active garden instances for background worker iteration |
 | `gardener:active-scenarios` | `Guid` (accountId) | Tracks accounts with active scenarios for lifecycle worker iteration |
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `DeploymentPhase` | C (System State) | Service-specific enum | Finite set of deployment phases (Alpha, Beta, Release); system-owned, gates scenario availability |
+| `ConnectivityMode` | C (System State) | Service-specific enum | Finite set of world connectivity modes (Isolated, WorldSlice, Persistent); system-owned, determines how scenario instances connect to the broader game world |
+| `ScenarioCategory` | C (System State) | Service-specific enum | Finite set of primary gameplay categories (Combat, Crafting, Social, Trade, Exploration, Magic, Survival, Mixed, Narrative, Tutorial); system-owned scenario classification |
+| `PoiType` | C (System State) | Service-specific enum | Finite set of sensory presentation types (Visual, Auditory, Environmental, Portal, Social); system-owned, determines POI rendering behavior |
+| `TriggerMode` | C (System State) | Service-specific enum | Finite set of POI trigger mechanisms (Proximity, Interaction, Prompted, Forced); system-owned operational modes |
+| `PoiStatus` | C (System State) | Service-specific enum | Finite set of POI lifecycle states (Active, Entered, Declined, Expired); system-owned state machine |
+| `ScenarioStatus` | C (System State) | Service-specific enum | Finite set of scenario lifecycle states (Initializing, Active, Completing, Completed, Abandoned); system-owned state machine |
+| `TemplateStatus` | C (System State) | Service-specific enum | Finite set of template lifecycle states (Draft, Active, Deprecated); system-owned state machine |
+| `ScenarioParticipantRole` | C (System State) | Service-specific enum | Finite set of participant roles (Primary, Partner); system-owned |
+
 ## Events
 
 ### Published Events

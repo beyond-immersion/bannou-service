@@ -39,6 +39,19 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `resourceType` (on all reference, cleanup, compression, snapshot, and archive models) | B (Content Code) | Opaque string | L1 service cannot enumerate L2+ entity types; values like `"character"`, `"realm"` are defined by higher-layer consumers at registration time. Explicitly documented in schema as intentionally not an enum per hierarchy isolation. |
+| `sourceType` (on reference, cleanup, and compression models) | B (Content Code) | Opaque string | Same L1 hierarchy isolation rationale as `resourceType`; values like `"actor"`, `"character-personality"`, `"character-history"` are defined by higher-layer services registering callbacks. |
+| `snapshotType` (on snapshot execute request and snapshot response) | B (Content Code) | Opaque string | Labels snapshot purpose (e.g., `"storyline_seed"`, `"analytics"`); caller-defined, extensible without schema changes. |
+| `OnDeleteAction` | C (System State) | Service-specific enum | Finite cleanup behavior modes (`CASCADE`, `RESTRICT`, `DETACH`) -- system-owned policies for resource deletion behavior. |
+| `CleanupPolicy` | C (System State) | Service-specific enum | Finite cleanup execution policies (`BEST_EFFORT`, `ALL_REQUIRED`) -- system-owned failure handling modes. |
+| `CompressionPolicy` | C (System State) | Service-specific enum | Finite compression execution policies (`BEST_EFFORT`, `ALL_REQUIRED`) -- system-owned failure handling modes. |
+
+---
+
 ## State Storage
 
 **Stores**: 6 state stores (5 Redis-backed, 1 MySQL-backed)

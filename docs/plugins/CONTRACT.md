@@ -35,6 +35,29 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` (on parties, consent, breach, termination, constraint, query) | A (Entity Reference) | `EntityType` enum (`$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity is a contract party, breach reporter, or constraint subject |
+| `guardianType` (on lock/unlock/transfer requests and events) | C (System State) | Opaque string (`maxLength: 64`) | System-mechanism identifier for the custody holder (e.g., `"escrow"`); not an entity type -- identifies the *kind of guardian system*, of which there may be only a few but they are not Bannou entities |
+| `ContractStatus` | C (System State) | Service-specific enum | Finite state machine states (`draft`, `proposed`, `pending`, `active`, `fulfilled`, `terminated`, `expired`, `declined`) |
+| `MilestoneStatus` | C (System State) | Service-specific enum | Finite milestone lifecycle states (`pending`, `active`, `completed`, `failed`, `skipped`) |
+| `BreachType` | C (System State) | Service-specific enum | Finite breach categories (`term_violation`, `milestone_missed`, `milestone_deadline`, `non_payment`) |
+| `BreachStatus` | C (System State) | Service-specific enum | Finite breach lifecycle states (`detected`, `cure_period`, `cured`, `escalated`, `forgiven`) |
+| `ConsentStatus` | C (System State) | Service-specific enum | Finite consent states (`pending`, `consented`, `declined`, `implicit`) |
+| `EnforcementMode` | C (System State) | Service-specific enum | Finite enforcement behavior modes (`advisory`, `event_only`, `consequence_based`, `community`) |
+| `TerminationPolicy` | C (System State) | Service-specific enum | Finite termination rule modes (`mutual_consent`, `unilateral_with_notice`, `unilateral_immediate`, `non_terminable`) |
+| `PaymentSchedule` | C (System State) | Service-specific enum | Finite payment timing modes (`one_time`, `recurring`, `milestone_based`) |
+| `ConstraintType` | C (System State) | Service-specific enum | Finite constraint check types (`exclusivity`, `non_compete`, `time_commitment`) |
+| `MetadataType` | C (System State) | Service-specific enum | Finite metadata partition types (`instance_data`, `runtime_state`) |
+| `MilestoneDeadlineBehavior` | C (System State) | Service-specific enum | Finite deadline handling modes (`skip`, `warn`, `breach`) |
+| `ValidationOutcome` | C (System State) | Service-specific enum | Finite prebound API validation results (`success`, `failure`, `transient_failure`) |
+| `TimeCommitmentType` | C (System State) | Service-specific enum | Finite time commitment modes (`exclusive`, `shared`, `flexible`, `fire_and_forget`) |
+| `ClauseCategory` | C (System State) | Service-specific enum | Finite clause handler categories (validation, execution, or both) |
+
+---
+
 ## State Storage
 
 **Stores**: 1 state store (Redis-backed)

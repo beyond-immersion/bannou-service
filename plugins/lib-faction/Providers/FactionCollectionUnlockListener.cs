@@ -4,6 +4,7 @@
 // Part of the Collection->Seed growth pipeline for faction entities.
 // =============================================================================
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
@@ -65,7 +66,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
     public async Task OnEntryUnlockedAsync(CollectionUnlockNotification notification, CancellationToken ct)
     {
         // Only process character-owned collection unlocks (faction growth comes from member activity)
-        if (!string.Equals(notification.OwnerType, "character", StringComparison.OrdinalIgnoreCase))
+        if (notification.OwnerType != EntityType.Character)
         {
             return;
         }

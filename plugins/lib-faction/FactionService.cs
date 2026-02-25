@@ -371,7 +371,7 @@ public partial class FactionService : IFactionService
             var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
             {
                 OwnerId = factionId,
-                OwnerType = "faction",
+                OwnerType = EntityType.Faction,
                 SeedTypeCode = _configuration.SeedTypeCode,
                 GameServiceId = body.GameServiceId,
                 DisplayName = body.Name,
@@ -748,7 +748,7 @@ public partial class FactionService : IFactionService
                 var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
                 {
                     OwnerId = factionId,
-                    OwnerType = "faction",
+                    OwnerType = EntityType.Faction,
                     SeedTypeCode = _configuration.SeedTypeCode,
                     GameServiceId = body.GameServiceId,
                     DisplayName = def.Name,

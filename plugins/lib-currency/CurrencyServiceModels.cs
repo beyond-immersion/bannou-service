@@ -105,7 +105,7 @@ internal class WalletModel
 {
     public Guid WalletId { get; set; }
     public Guid OwnerId { get; set; }
-    public WalletOwnerType OwnerType { get; set; } = WalletOwnerType.Account;
+    public EntityType OwnerType { get; set; } = EntityType.Account;
     public Guid? RealmId { get; set; }
     public WalletStatus Status { get; set; } = WalletStatus.Active;
     public string? FrozenReason { get; set; }

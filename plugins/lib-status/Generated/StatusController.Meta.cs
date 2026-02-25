@@ -1502,7 +1502,7 @@ public partial class StatusController
                     "description": "Entity to receive the status effect"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator (e.g., character, account)"
                 },
                 "gameServiceId": {
@@ -1738,7 +1738,7 @@ public partial class StatusController
                     "description": "Entity this status is applied to"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "statusTemplateCode": {
@@ -1882,7 +1882,7 @@ public partial class StatusController
                     "description": "Entity to remove statuses from"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "sourceId": {
@@ -1997,7 +1997,7 @@ public partial class StatusController
                     "description": "Entity to cleanse statuses from"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "category": {
@@ -2137,7 +2137,7 @@ public partial class StatusController
                     "description": "Entity to check"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "statusCode": {
@@ -2260,7 +2260,7 @@ public partial class StatusController
                     "description": "Entity to list statuses for"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "category": {
@@ -2533,7 +2533,7 @@ public partial class StatusController
                     "description": "Entity this status is applied to"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "statusTemplateCode": {
@@ -2676,7 +2676,7 @@ public partial class StatusController
                     "description": "Entity to get effects for"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "includePassive": {
@@ -2713,7 +2713,7 @@ public partial class StatusController
                     "description": "Entity these effects belong to"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "itemBasedCount": {
@@ -2886,7 +2886,7 @@ public partial class StatusController
                     "description": "Entity to get seed effects for"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 }
             }
@@ -2916,7 +2916,7 @@ public partial class StatusController
                     "description": "Entity these effects belong to"
                 },
                 "entityType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Entity type discriminator"
                 },
                 "effects": {
@@ -3039,7 +3039,7 @@ public partial class StatusController
             ],
             "properties": {
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type (e.g., character, account)"
                 },
                 "ownerId": {

@@ -112,6 +112,21 @@ Status uses opaque entity types (`entityType` as string, not enum) because effec
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` | A (Entity Reference) | `EntityType` enum | Identifies what kind of entity has a status effect (character, account, location, realm, faction, etc.). All valid values are first-class Bannou entities. Recently migrated from opaque string to the shared `EntityType` enum from `common-api.yaml`. |
+| `statusTemplateCode` | B (Game Content Type) | Opaque string | Identifies a specific status definition within a game service (e.g., `"blessing_of_commerce"`, `"poison_tier_2"`, `"death_penalty"`). Vocabulary defined per game at deployment time via template seeding. New codes require no schema changes. |
+| `category` | C (System State/Mode) | `StatusCategory` enum | Effect classification (`buff`, `debuff`, `death`, `subscription`, `event`, `passive`). Used for filtering and category-targeted cleanse operations. Finite set of system-defined categories. |
+| `stackBehavior` | C (System State/Mode) | `StackBehavior` enum | How multiple applications interact (`refresh_duration`, `independent`, `increase_intensity`, `replace`, `ignore`). Template-level configuration controlling grant resolution. |
+| `effectSource` | C (System State/Mode) | `EffectSource` enum | Whether an effect originates from an item or a seed capability (`item_based`, `seed_derived`). Source attribution in unified effects queries. |
+| `reason` (on `StatusRemovedEvent`, `StatusCleansedEvent`) | C (System State/Mode) | `StatusRemoveReason` enum | Why a status was removed (`expired`, `cleansed`, `cancelled`, `source_removed`, `admin`). Service-specific removal classification. |
+| `reason` (on `StatusGrantFailedEvent`) | C (System State/Mode) | `GrantFailureReason` enum | Why a grant was rejected (`template_not_found`, `entity_at_max_statuses`, `stack_limit_reached`, `stack_behavior_ignore`, `contract_failed`, `item_creation_failed`). |
+| `grantResult` | C (System State/Mode) | `GrantResult` enum | How a successful grant was resolved (`granted`, `stacked`, `refreshed`, `replaced`). Outcome classification for the grant flow. |
+
+---
+
 ## Events
 
 ### Published Events

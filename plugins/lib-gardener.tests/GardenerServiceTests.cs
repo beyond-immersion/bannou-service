@@ -153,7 +153,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         {
             SeedId = _testSeedId,
             OwnerId = _testAccountId,
-            OwnerType = "account",
+            OwnerType = EntityType.Account,
             SeedTypeCode = "guardian",
             GrowthPhase = growthPhase ?? "nascent",
             Status = status,
@@ -1522,11 +1522,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockSeedClient
             .Setup(c => c.GetSeedAsync(
                 It.Is<GetSeedRequest>(r => r.SeedId == _testSeedId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SeedResponse { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = "account" });
+            .ReturnsAsync(new SeedResponse { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = EntityType.Account });
         _mockSeedClient
             .Setup(c => c.GetSeedAsync(
                 It.Is<GetSeedRequest>(r => r.SeedId == partnerSeedId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SeedResponse { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = "account" });
+            .ReturnsAsync(new SeedResponse { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = EntityType.Account });
 
         var garden1 = CreateTestGarden(_testAccountId);
         var garden2 = CreateTestGarden(partnerAccountId);
@@ -1701,7 +1701,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SeedId: _testSeedId,
                 SeedTypeCode: "guardian",
                 OwnerId: _testAccountId,
-                OwnerType: "account",
+                OwnerType: EntityType.Account,
                 DomainChanges: new List<DomainChange>(),
                 TotalGrowth: 10.0f,
                 CrossPollinated: false,
@@ -1745,7 +1745,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 SeedId: _testSeedId,
                 SeedTypeCode: "guardian",
                 OwnerId: _testAccountId,
-                OwnerType: "account",
+                OwnerType: EntityType.Account,
                 PreviousPhase: "dormant",
                 NewPhase: "awakening",
                 TotalGrowth: 50.0f,

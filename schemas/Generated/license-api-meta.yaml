@@ -101,7 +101,7 @@ paths:
         \        \"$ref\": \"#/$defs/AdjacencyMode\"\n                        }\n                    ],\n                \
         \    \"nullable\": true,\n                    \"description\": \"Grid traversal mode. Defaults to eight_way if not
         specified.\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
+        ,\n                    \"items\": {\n                        \"type\": \"object\"\n                    },\n      \
         \              \"minItems\": 1,\n                    \"description\": \"Owner types allowed to create boards from
         this template. Each must map to a supported container owner type (e.g., character, account, location, guild).\"\n\
         \                }\n            }\n        },\n        \"GridPosition\": {\n            \"type\": \"object\",\n  \
@@ -138,7 +138,7 @@ paths:
         controls unlock behavior\"\n                },\n                \"adjacencyMode\": {\n                    \"$ref\"\
         : \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal mode for this template\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Owner types allowed to create boards from this template\"\n                },\n             \
         \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
         template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
@@ -215,7 +215,7 @@ paths:
         controls unlock behavior\"\n                },\n                \"adjacencyMode\": {\n                    \"$ref\"\
         : \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal mode for this template\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Owner types allowed to create boards from this template\"\n                },\n             \
         \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
         template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
@@ -303,7 +303,7 @@ paths:
         description\": \"Contract template that controls unlock behavior\"\n                },\n                \"adjacencyMode\"\
         : {\n                    \"$ref\": \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal
         mode for this template\"\n                },\n                \"allowedOwnerTypes\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"object\"\n                   \
         \ },\n                    \"description\": \"Owner types allowed to create boards from this template\"\n         \
         \       },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
         : \"Whether the template is active (can create new board instances)\"\n                },\n                \"createdAt\"\
@@ -364,7 +364,7 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Whether the template is active
         (can create new board instances)\"\n                },\n                \"allowedOwnerTypes\": {\n               \
         \     \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n          \
-        \              \"type\": \"string\"\n                    },\n                    \"minItems\": 1,\n              \
+        \              \"type\": \"object\"\n                    },\n                    \"minItems\": 1,\n              \
         \      \"description\": \"Updated allowed owner types. Narrowing checks for existing boards with removed types.\"\n\
         \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BoardTemplateResponse\"\
@@ -391,7 +391,7 @@ paths:
         controls unlock behavior\"\n                },\n                \"adjacencyMode\": {\n                    \"$ref\"\
         : \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal mode for this template\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Owner types allowed to create boards from this template\"\n                },\n             \
         \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
         template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
@@ -473,7 +473,7 @@ paths:
         controls unlock behavior\"\n                },\n                \"adjacencyMode\": {\n                    \"$ref\"\
         : \"#/$defs/AdjacencyMode\",\n                    \"description\": \"Grid traversal mode for this template\"\n   \
         \             },\n                \"allowedOwnerTypes\": {\n                    \"type\": \"array\",\n           \
-        \         \"items\": {\n                        \"type\": \"string\"\n                    },\n                   \
+        \         \"items\": {\n                        \"type\": \"object\"\n                    },\n                   \
         \ \"description\": \"Owner types allowed to create boards from this template\"\n                },\n             \
         \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
         template is active (can create new board instances)\"\n                },\n                \"createdAt\": {\n    \
@@ -935,7 +935,7 @@ paths:
         : \"Request to create a board instance for an owner entity\",\n            \"additionalProperties\": false,\n    \
         \        \"required\": [\n                \"ownerType\",\n                \"ownerId\",\n                \"boardTemplateId\"\
         ,\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"ownerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of entity that owns this
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
         board (e.g., character, account, realm, guild)\"\n                },\n                \"ownerId\": {\n           \
         \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
         ID of the entity that owns this board\"\n                },\n                \"boardTemplateId\": {\n            \
@@ -954,7 +954,7 @@ paths:
         ,\n                \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n         \
         \   ],\n            \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\
-        \n                },\n                \"ownerType\": {\n                    \"type\": \"string\",\n              \
+        \n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of entity that owns this board\"\n                },\n                \"ownerId\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this board\"\n                },\n                \"realmId\": {\n                    \"type\"\
@@ -1013,7 +1013,7 @@ paths:
         ,\n                \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n         \
         \   ],\n            \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\
-        \n                },\n                \"ownerType\": {\n                    \"type\": \"string\",\n              \
+        \n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of entity that owns this board\"\n                },\n                \"ownerId\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this board\"\n                },\n                \"realmId\": {\n                    \"type\"\
@@ -1058,7 +1058,7 @@ paths:
         ,\n    \"$defs\": {\n        \"ListBoardsByOwnerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list board instances for an owner entity\",\n            \"additionalProperties\": false,\n       \
         \     \"required\": [\n                \"ownerType\",\n                \"ownerId\"\n            ],\n            \"\
-        properties\": {\n                \"ownerType\": {\n                    \"type\": \"string\",\n                   \
+        properties\": {\n                \"ownerType\": {\n                    \"type\": \"object\",\n                   \
         \ \"description\": \"Type of entity that owns the boards\"\n                },\n                \"ownerId\": {\n \
         \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity to list boards for\"\n                },\n                \"gameServiceId\": {\n                    \"\
@@ -1077,7 +1077,7 @@ paths:
         ,\n                \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n         \
         \   ],\n            \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\
-        \n                },\n                \"ownerType\": {\n                    \"type\": \"string\",\n              \
+        \n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of entity that owns this board\"\n                },\n                \"ownerId\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this board\"\n                },\n                \"realmId\": {\n                    \"type\"\
@@ -1135,7 +1135,7 @@ paths:
         ,\n                \"gameServiceId\",\n                \"containerId\",\n                \"createdAt\"\n         \
         \   ],\n            \"properties\": {\n                \"boardId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Unique board instance identifier\"\
-        \n                },\n                \"ownerType\": {\n                    \"type\": \"string\",\n              \
+        \n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n              \
         \      \"description\": \"Type of entity that owns this board\"\n                },\n                \"ownerId\":
         {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this board\"\n                },\n                \"realmId\": {\n                    \"type\"\
@@ -1321,7 +1321,7 @@ paths:
         \         \"nodes\"\n            ],\n            \"properties\": {\n                \"boardId\": {\n             \
         \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
         Board instance identifier\"\n                },\n                \"ownerType\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Type of entity that owns this board (e.g., character, account, guild)\"\
+        object\",\n                    \"description\": \"Type of entity that owns this board (e.g., character, account, guild)\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity that owns this board\"\n     \
         \           },\n                \"boardTemplateId\": {\n                    \"type\": \"string\",\n              \
@@ -1524,7 +1524,7 @@ paths:
         \                \"targetOwnerId\"\n            ],\n            \"properties\": {\n                \"sourceBoardId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Source board instance to clone unlock state from\"\n                },\n                \"targetOwnerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Type of entity to clone the
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity to clone the
         board to (must be in template's allowedOwnerTypes)\"\n                },\n                \"targetOwnerId\": {\n \
         \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"ID of the target entity\"\n                },\n                \"targetRealmId\": {\n                    \"type\"\
@@ -1541,7 +1541,7 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Source board that
         was cloned from\"\n                },\n                \"targetBoardId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"New board instance created for
-        the target\"\n                },\n                \"targetOwnerType\": {\n                    \"type\": \"string\"\
+        the target\"\n                },\n                \"targetOwnerType\": {\n                    \"type\": \"object\"\
         ,\n                    \"description\": \"Type of entity the board was cloned to\"\n                },\n         \
         \       \"targetOwnerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"ID of the entity the board was cloned to\"\n                },\n       \
@@ -1588,7 +1588,7 @@ paths:
         ,\n    \"$defs\": {\n        \"CleanupByOwnerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to cleanup all boards for a deleted owner entity\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"ownerType\",\n                \"ownerId\"\n            ],\n        \
-        \    \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"string\",\n            \
+        \    \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"object\",\n            \
         \        \"description\": \"Type of entity whose boards should be cleaned up\"\n                },\n             \
         \   \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"ID of the entity whose boards should be cleaned up\"\n                }\n       \
@@ -1597,7 +1597,7 @@ paths:
         ,\n    \"$defs\": {\n        \"CleanupByOwnerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of owner board cleanup\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
         \                \"ownerType\",\n                \"ownerId\",\n                \"boardsDeleted\"\n            ],\n\
-        \            \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"string\",\n    \
+        \            \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"object\",\n    \
         \                \"description\": \"Type of entity that was cleaned up\"\n                },\n                \"ownerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the entity that was cleaned up\"\n                },\n                \"boardsDeleted\": {\n\
@@ -1763,7 +1763,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           minItems: 1
           description: Owner types allowed to create boards from this template. Each must map to a supported container 
             owner type (e.g., character, account, location, guild).
@@ -1805,7 +1805,7 @@ components:
           type: array
           nullable: true
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           minItems: 1
           description: Updated allowed owner types. Narrowing checks for existing boards with removed types.
     DeleteBoardTemplateRequest:
@@ -1893,7 +1893,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner types allowed to create boards from this template
         isActive:
           type: boolean
@@ -2170,7 +2170,7 @@ components:
       - gameServiceId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, account, realm, guild)
         ownerId:
           type: string
@@ -2221,7 +2221,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the boards
         ownerId:
           type: string
@@ -2250,7 +2250,7 @@ components:
           format: uuid
           description: Unique board instance identifier
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board
         ownerId:
           type: string
@@ -2407,7 +2407,7 @@ components:
           format: uuid
           description: Board instance identifier
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, account, guild)
         ownerId:
           type: string
@@ -2442,7 +2442,7 @@ components:
           format: uuid
           description: Source board instance to clone unlock state from
         targetOwnerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity to clone the board to (must be in template's allowedOwnerTypes)
         targetOwnerId:
           type: string
@@ -2475,7 +2475,7 @@ components:
           format: uuid
           description: New board instance created for the target
         targetOwnerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity the board was cloned to
         targetOwnerId:
           type: string
@@ -2497,7 +2497,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity whose boards should be cleaned up
         ownerId:
           type: string
@@ -2513,7 +2513,7 @@ components:
       - boardsDeleted
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that was cleaned up
         ownerId:
           type: string

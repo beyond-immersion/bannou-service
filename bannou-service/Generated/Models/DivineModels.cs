@@ -213,7 +213,8 @@ public partial class BlessingSummary
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Tier of the blessing
@@ -731,7 +732,8 @@ public partial class GrantBlessingRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Tier of the blessing (determines cost and storage mechanism)
@@ -806,7 +808,8 @@ public partial class ListBlessingsByEntityRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Page number for pagination
@@ -1266,7 +1269,8 @@ public partial class BlessingResponse
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Tier of the blessing

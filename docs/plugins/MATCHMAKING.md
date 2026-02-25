@@ -50,6 +50,19 @@ Ticket-based matchmaking (L4 GameFeatures) with skill windows, query matching, p
 | `match:{matchId}` | `MatchModel` | Formed match with accepted players, deadline, session ID |
 | `pending-match:{accountId}` | `Guid` | Pending match ID for reconnection support |
 
+### Type Field Classification
+
+Every polymorphic "type" or "kind" field in the Matchmaking domain falls into one of three categories:
+
+| Field | Model(s) | Cat | Values / Source | Rationale |
+|-------|----------|-----|-----------------|-----------|
+| `TicketStatus` | `TicketModel`, events | C | `searching`, `match_found`, `match_accepted`, `cancelled`, `expired` | Finite ticket lifecycle states the matchmaking engine manages. Service-owned enum (`TicketStatus`). |
+| `CancelReason` | `TicketModel`, cancel events | C | `cancelled_by_user`, `timeout`, `session_disconnected`, `party_disbanded`, `match_declined`, `queue_disabled` | Finite cancellation causes the service recognizes. Service-owned enum (`CancelReason`). |
+| `PartySkillAggregation` | `QueueModel` (queue config) | C | `highest`, `average`, `weighted` | Finite aggregation strategies for party skill rating. Service-owned enum (`PartySkillAggregation`). |
+| `SessionGameType` | Queue configuration | B | `"generic"` (default), game-specific strings | Game type code used for game session creation. Opaque string; each game service defines its own game types without schema changes. |
+
+**Category key**: **A** = Entity Reference (`EntityType` enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
+
 ---
 
 ## Events

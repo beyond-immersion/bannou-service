@@ -406,6 +406,25 @@ Paginated queries by gameServiceId, sourceType, claimantId, timeRange use `IJson
 | `ctx:{contextId}` | Loot context claim lock (prevents double-claiming in need/greed) |
 | `history-prune` | History pruning background worker singleton lock |
 
+### Type Field Classification
+
+Every polymorphic "type" or "kind" field in the Loot domain falls into one of three categories:
+
+| Field | Model(s) | Cat | Values / Source | Rationale |
+|-------|----------|-----|-----------------|-----------|
+| `entryType` | `LootEntry` | C | `item`, `currency`, `sub_table`, `nothing` | Finite entry kinds that the generation engine switches on. Service-owned enum (`EntryType`). |
+| `rollMode` | `LootTable` | C | `independent`, `sequential`, `pick_unique` | Finite pool-selection modes that govern duplicate behavior. Service-owned enum (`RollMode`). |
+| `category` | `LootTable` | B | `"creature"`, `"chest"`, `"quest"`, `"world_event"`, ... | Broad table classification. Opaque string so games can invent new source categories without schema changes. |
+| `sourceType` | `LootGenerationContext` | B | `"creature"`, `"chest"`, `"quest_reward"`, `"world_event"`, `"divine_gift"`, ... | What produced the loot. Opaque string; new source types are added per game without schema changes. |
+| `claimantType` | `LootGenerationContext` | B | `"character"`, `"party"`, `"npc"`, ... | Who is claiming. Opaque string to allow future claimant kinds (guilds, dungeon cores, etc.) without schema changes. |
+| `distributionMode` | `LootGenerationContext` | C | `personal`, `need_greed`, `round_robin`, `free_for_all`, `leader_assign` | Finite distribution strategies the service implements. Service-owned enum (`DistributionMode`). |
+| `pityCounterScope` | `LootEntry` | C | `"entity"`, `"realm"`, `"global"` | Finite scoping modes for pity counters. Service-owned enum (`PityCounterScope`). |
+| `quantityCurve` | `LootEntry` | C | `"linear"`, `"bell"`, `"exponential_decay"` | Finite distribution curve shapes the generation engine implements. Service-owned enum (`QuantityCurve`). |
+| `generationTier` | `LootEntry` | C | `1` (ref only), `2` (instance), `3` (enriched + affixes) | Finite tier levels determining generation complexity. Integer enum with fixed semantics. |
+| `displayRarity` | `LootEntry` | B | `"common"`, `"uncommon"`, `"rare"`, ... | Preview rarity label. Opaque string matching lib-item's rarity vocabulary; games define their own rarity tiers. |
+
+**Category key**: **A** = Entity Reference (`EntityType` enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
+
 ---
 
 ## Events

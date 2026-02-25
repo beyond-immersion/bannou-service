@@ -1869,7 +1869,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Type of owner entity"
                 },
                 "realmId": {
@@ -1879,19 +1879,6 @@ public partial class CurrencyController
                     "description": "Realm ID for realm-scoped wallets (null for global)"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -1925,7 +1912,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -1966,19 +1953,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2072,7 +2046,7 @@ public partial class CurrencyController
                     "description": "Owner ID (requires ownerType)"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "nullable": true,
                     "description": "Owner type (requires ownerId)"
                 },
@@ -2083,19 +2057,6 @@ public partial class CurrencyController
                     "description": "Realm ID (required if using ownerId lookup)"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -2151,7 +2112,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2192,19 +2153,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2333,7 +2281,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Type of owner entity"
                 },
                 "realmId": {
@@ -2343,19 +2291,6 @@ public partial class CurrencyController
                     "description": "Realm ID for realm-scoped wallets"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         }
     }
 }
@@ -2416,7 +2351,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2457,19 +2392,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2637,7 +2559,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2678,19 +2600,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -2813,7 +2722,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -2854,19 +2763,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",
@@ -3017,7 +2913,7 @@ public partial class CurrencyController
                     "description": "Owner entity ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/WalletOwnerType",
+                    "type": "object",
                     "description": "Owner type"
                 },
                 "realmId": {
@@ -3058,19 +2954,6 @@ public partial class CurrencyController
                     "description": "Last transaction timestamp"
                 }
             }
-        },
-        "WalletOwnerType": {
-            "type": "string",
-            "description": "Type of entity that owns a wallet",
-            "enum": [
-                "account",
-                "character",
-                "npc",
-                "guild",
-                "faction",
-                "location",
-                "system"
-            ]
         },
         "WalletStatus": {
             "type": "string",

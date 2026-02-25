@@ -108,7 +108,7 @@ x-lifecycle:
     model:
       walletId: { type: string, format: uuid, primary: true, required: true, description: "Unique wallet identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Owner entity ID" }
-      ownerType: { $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType', required: true, description: "Owner entity type" }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type" }
       realmId: { type: string, format: uuid, nullable: true, description: "Realm ID for realm-scoped wallets" }
       status: { $ref: 'currency-api.yaml#/components/schemas/WalletStatus', required: true, description: "Wallet status" }
       createdAt: { type: string, format: date-time, required: true, description: "When the wallet was created" }
@@ -161,7 +161,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -235,7 +235,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string
@@ -305,7 +305,7 @@ components:
           format: uuid
           description: Source wallet owner ID
         sourceOwnerType:
-          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Source wallet owner type
         targetWalletId:
           type: string
@@ -316,7 +316,7 @@ components:
           format: uuid
           description: Target wallet owner ID
         targetOwnerType:
-          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Target wallet owner type
         currencyDefinitionId:
           type: string
@@ -375,7 +375,7 @@ components:
           format: uuid
           description: Wallet owner ID
         ownerType:
-          $ref: 'currency-api.yaml#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Wallet owner type
         currencyDefinitionId:
           type: string

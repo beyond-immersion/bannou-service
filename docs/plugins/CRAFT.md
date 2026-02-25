@@ -527,6 +527,22 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `recipeType` | B (Content Code) | Opaque string | Game-configurable recipe paradigms ("production", "modification", "extraction", or custom types like "transmutation", "ritual"); extensible without schema changes |
+| `domain` | B (Content Code) | Opaque string | Proficiency domain codes ("blacksmithing", "enchanting", "alchemy"); game-defined at deployment time |
+| `category` | B (Content Code) | Opaque string | Broad recipe classification ("weapons", "potions", "enchantments"); game-defined for filtering |
+| `stationType` | B (Content Code) | Opaque string | Station type codes ("forge", "enchanting_table", "alchemy_bench", "loom"); game-configurable |
+| `toolCategory` | B (Content Code) | Opaque string | Tool category codes ("hammer", "inscription_tools"); game-configurable |
+| `affixOperation` | B (Content Code) | Opaque string | Affix operation codes ("apply_random", "remove_random", "reroll_all", "corrupt", etc.); maps to lib-affix operations |
+| `quantityCurve` (on extraction outputs) | C (System State) | Service-specific enum | Finite set of curve shapes ("linear", "bell", "exponential_decay"); system-owned computation modes |
+| `ownerType` (on StationDefinition) | A (Entity Reference) | `EntityType` enum | Station owners are first-class Bannou entities (characters, guilds, etc.) |
+| `entityType` (on session/proficiency keys) | A (Entity Reference) | `EntityType` enum | Crafting sessions and proficiency are polymorphically owned by Bannou entities |
+
+---
+
 ## Events
 
 ### Published Events

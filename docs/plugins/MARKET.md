@@ -388,6 +388,25 @@ Paginated queries by templateId, realmId, granularity, date range use `IJsonQuer
 | `restock-worker` | Restock background worker singleton lock |
 | `price-aggregation-worker` | Price aggregation background worker singleton lock |
 
+### Type Field Classification
+
+Every polymorphic "type" or "kind" field in the Market domain falls into one of three categories:
+
+| Field | Model(s) | Cat | Values / Source | Rationale |
+|-------|----------|-----|-----------------|-----------|
+| `MarketEntityType` | `AuctionListingModel` (seller), `AuctionBidModel` (bidder), settlement (buyer) | A | `character`, `guild`, `npc`, `system` | Identifies what kind of entity is transacting. Shared enum across seller/bidder/buyer roles; maps to first-class Bannou entity types. |
+| `catalogType` | `VendorCatalogModel` | C | `static`, `dynamic`, `personality_driven` | Finite pricing modes the vendor subsystem implements. Service-owned enum (`CatalogType`). |
+| `ListingStatus` | `AuctionListingModel` | C | `Active`, `Sold`, `Cancelled`, `Expired` | Finite auction lifecycle states. Service-owned enum (`ListingStatus`). |
+| `MarketDefinitionStatus` | `MarketDefinitionModel` | C | *(to be defined during schema creation)* | Finite market lifecycle states. Service-owned enum. |
+| `VendorStatus` | `VendorCatalogModel` | C | *(to be defined during schema creation)* | Finite vendor lifecycle states. Service-owned enum. |
+| `BidStatus` | `AuctionBidModel` | C | *(to be defined during schema creation)* | Finite bid lifecycle states. Service-owned enum. |
+| `PriceGranularity` | `PriceHistoryEntryModel` | C | `hour`, `day`, `week` | Finite time-bucket sizes for price aggregation. Service-owned enum (`PriceGranularity`). |
+| `AuctionSortOrder` | Auction search request | C | `price_asc`, `price_desc`, `time_remaining`, `bid_count` | Finite sort modes for listing queries. Service-owned enum (`AuctionSortOrder`). |
+| `PriceTrend` | Variable provider output | C | `up`, `down`, `stable` | Finite trend directions for NPC GOAP consumption. Service-owned enum (`PriceTrend`). |
+| `SupplySignal` | Variable provider output | C | `scarce`, `normal`, `abundant` | Finite supply indicators for NPC GOAP consumption. Service-owned enum (`SupplySignal`). |
+
+**Category key**: **A** = Entity Reference (`EntityType` enum or entity-identifying enum), **B** = Content Code (opaque string, game-configurable), **C** = System State (service-owned enum, finite).
+
 ---
 
 ## Events

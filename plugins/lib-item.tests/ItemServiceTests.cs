@@ -3353,4 +3353,230 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     }
 
     #endregion
+
+    #region Batch Event Flush Tests
+
+    [Fact]
+    public async Task UseItemAsync_ExpiredSuccessBatch_PublishesBeforeNewRecord()
+    {
+        // Arrange - set up a successful item use
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var contractInstanceId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "batch_test_item",
+            GameId = "game1",
+            Name = "Batch Test Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Discrete,
+            MaxStackSize = 99,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 50,
+            OriginType = ItemOriginType.Craft,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ContractInstanceResponse { ContractId = contractInstanceId });
+        _mockContractClient
+            .Setup(c => c.CompleteMilestoneAsync(It.IsAny<CompleteMilestoneRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MilestoneResponse
+            {
+                Milestone = new MilestoneInstanceResponse { Code = "use", Status = MilestoneStatus.Completed }
+            });
+        _mockInstanceStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ItemInstanceModel>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        // Inject a pre-expired batch into the static _useBatches dictionary via reflection.
+        // This simulates a batch that accumulated records and then the window expired.
+        var batchKey = $"{templateId}:{userId}";
+        var useBatchesField = typeof(ItemService).GetField("_useBatches",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(useBatchesField);
+        var useBatches = useBatchesField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<string, ItemUseBatchState>;
+        Assert.NotNull(useBatches);
+
+        // Create an expired batch with one record already in it
+        var expiredBatch = new ItemUseBatchState();
+        expiredBatch.AddRecord(new ItemUseRecord
+        {
+            InstanceId = Guid.NewGuid(),
+            TemplateId = templateId,
+            TemplateCode = "batch_test_item",
+            UserId = userId,
+            UserType = EntityType.Character,
+            UsedAt = DateTimeOffset.UtcNow.AddSeconds(-120),
+            Consumed = true,
+            ContractInstanceId = Guid.NewGuid()
+        });
+
+        // Set WindowStart to the past so it appears expired
+        var windowStartField = typeof(ItemUseBatchState).GetField("<WindowStart>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(windowStartField);
+        windowStartField.SetValue(expiredBatch, DateTimeOffset.UtcNow.AddSeconds(-120));
+        useBatches[batchKey] = expiredBatch;
+
+        // Capture published events
+        var capturedEvents = new List<(string Topic, object Event)>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+                capturedEvents.Add((topic, evt)))
+            .ReturnsAsync(true);
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = userId,
+            UserType = EntityType.Character
+        };
+
+        // Act - this should pre-flush the expired batch, then process the new use
+        var (status, response) = await service.UseItemAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // The expired batch should have been published as an item.used event
+        var usedEvents = capturedEvents.Where(e => e.Topic == "item.used").ToList();
+        Assert.True(usedEvents.Count >= 1, "Expected at least one item.used event from expired batch flush");
+        var flushedEvent = Assert.IsType<ItemUsedEvent>(usedEvents[0].Event);
+        Assert.Equal(1, flushedEvent.TotalCount);
+
+        // Clean up static state to avoid cross-test pollution
+        useBatches.TryRemove(batchKey, out _);
+    }
+
+    [Fact]
+    public async Task UseItemAsync_ExpiredFailureBatch_PublishesOnNextFailure()
+    {
+        // Arrange - set up a use that will fail via contract creation failure.
+        // The template HAS a UseBehaviorContractTemplateId so UseItemAsync passes validation,
+        // but CreateContractInstanceAsync throws ApiException → RecordUseFailureAsync is called.
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var contractTemplateId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+
+        var template = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = "fail_use_item",
+            GameId = "game1",
+            Name = "Fail Use Item",
+            Category = ItemCategory.Consumable,
+            QuantityModel = QuantityModel.Discrete,
+            MaxStackSize = 10,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UseBehaviorContractTemplateId = contractTemplateId
+        };
+        var instance = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 5,
+            OriginType = ItemOriginType.Loot,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        _mockInstanceCacheStore
+            .Setup(s => s.GetAsync($"inst:{instanceId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(instance);
+        _mockTemplateCacheStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        // Contract creation throws ApiException → CreateItemUseContractInstanceAsync returns null
+        _mockContractClient
+            .Setup(c => c.CreateContractInstanceAsync(It.IsAny<CreateContractInstanceRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Contract creation failed", 500));
+
+        // Inject a pre-expired failure batch via reflection
+        var batchKey = $"{templateId}:{userId}";
+        var failureBatchesField = typeof(ItemService).GetField("_failureBatches",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(failureBatchesField);
+        var failureBatches = failureBatchesField.GetValue(null) as System.Collections.Concurrent.ConcurrentDictionary<string, ItemUseFailureBatchState>;
+        Assert.NotNull(failureBatches);
+
+        var expiredBatch = new ItemUseFailureBatchState();
+        expiredBatch.AddRecord(new ItemUseFailureRecord
+        {
+            InstanceId = Guid.NewGuid(),
+            TemplateId = templateId,
+            TemplateCode = "fail_use_item",
+            UserId = userId,
+            UserType = EntityType.Character,
+            FailedAt = DateTimeOffset.UtcNow.AddSeconds(-120),
+            Reason = "previous_failure"
+        });
+
+        var windowStartField = typeof(ItemUseFailureBatchState).GetField("<WindowStart>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(windowStartField);
+        windowStartField.SetValue(expiredBatch, DateTimeOffset.UtcNow.AddSeconds(-120));
+        failureBatches[batchKey] = expiredBatch;
+
+        // Capture published events
+        var capturedEvents = new List<(string Topic, object Event)>();
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+                It.IsAny<string>(), It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
+                capturedEvents.Add((topic, evt)))
+            .ReturnsAsync(true);
+
+        var request = new UseItemRequest
+        {
+            InstanceId = instanceId,
+            UserId = userId,
+            UserType = EntityType.Character
+        };
+
+        // Act - contract creation fails, triggering RecordUseFailureAsync which pre-flushes
+        var (status, _) = await service.UseItemAsync(request);
+
+        // Assert - the request fails (contract creation error)
+        Assert.Equal(StatusCodes.BadRequest, status);
+
+        // The expired failure batch should have been published before the new failure was recorded
+        var failedEvents = capturedEvents.Where(e => e.Topic == "item.use-failed").ToList();
+        Assert.True(failedEvents.Count >= 1, "Expected at least one item.use-failed event from expired batch flush");
+        var flushedEvent = Assert.IsType<ItemUseFailedEvent>(failedEvents[0].Event);
+        Assert.Equal(1, flushedEvent.TotalCount);
+
+        // Clean up static state
+        failureBatches.TryRemove(batchKey, out _);
+    }
+
+    #endregion
 }

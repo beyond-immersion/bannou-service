@@ -216,7 +216,7 @@ public partial class GardenerService : IGardenerService
             new GetSeedsByOwnerRequest
             {
                 OwnerId = body.AccountId,
-                OwnerType = "account",
+                OwnerType = EntityType.Account,
                 SeedTypeCode = _configuration.SeedTypeCode
             }, cancellationToken);
 

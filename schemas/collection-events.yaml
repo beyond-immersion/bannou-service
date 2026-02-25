@@ -107,7 +107,7 @@ x-lifecycle:
     model:
       collectionId: { type: string, format: uuid, primary: true, required: true, description: "Unique collection instance identifier" }
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this collection" }
-      ownerType: { type: string, required: true, description: "Entity type discriminator" }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Entity type discriminator" }
       collectionType: { $ref: 'collection-api.yaml#/components/schemas/CollectionType', required: true, description: "Type of collection" }
       gameServiceId: { type: string, format: uuid, required: true, description: "Game service this collection is scoped to" }
       containerId: { type: string, format: uuid, required: true, description: "Inventory container holding unlocked entry items" }
@@ -159,7 +159,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -218,7 +218,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         entryCode:
           type: string
@@ -259,7 +259,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         collectionType:
           $ref: 'collection-api.yaml#/components/schemas/CollectionType'
@@ -307,7 +307,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         entryCode:
           type: string

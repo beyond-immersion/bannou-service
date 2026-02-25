@@ -47,6 +47,26 @@ No external services subscribe to asset events; all event consumption is interna
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `assetType` | C (System State/Mode) | `AssetType` enum (`texture`, `model`, `audio`, `behavior`, `bundle`, `prefab`, `other`) | Classifies asset content for processing pipeline routing; values are system-defined pipeline categories, not game content types |
+| `processingStatus` | C (System State/Mode) | `ProcessingStatus` enum (`pending`, `processing`, `complete`, `failed`) | Tracks position in the processing pipeline state machine |
+| `processingType` (events) | C (System State/Mode) | `ProcessingTypeEnum` enum (`mipmaps`, `lod_generation`, `transcode`, `compression`, `validation`, `behavior_compile`) | Identifies which processing operation is being performed; system pipeline stages |
+| `bundleType` | C (System State/Mode) | `BundleType` enum (`source`, `metabundle`) | Distinguishes original bundles from server-composed super-bundles; structural system distinction |
+| `compression` | C (System State/Mode) | `CompressionType` enum (`lz4`, `lzma`, `none`) | Algorithm selection for bundle compression; system infrastructure choice |
+| `format` | C (System State/Mode) | `BundleFormat` enum (`bannou`, `zip`) | Wire format for bundle download; system transport choice |
+| `realm` | B (Game Content Type) | Opaque string (`GameRealm`) | Realm stub name (e.g., `"shared"`, `"realm-1"`); references Realm service data, not a fixed enum |
+| `owner` (events) | -- (Polymorphic identifier) | Plain string | Dual-purpose: accountId (UUID) for user uploads, service name string for service uploads; not a type field per se |
+
+**Notes**:
+- Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
+- `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
+- `ProcessingErrorCode` enum exists in the service code (added to fix a T25 violation) but is an internal model enum, not an API/event schema type field.
+
+---
+
 ## State Storage
 
 ### Store: `asset-statestore` (Backend: Redis, prefix: `asset`)

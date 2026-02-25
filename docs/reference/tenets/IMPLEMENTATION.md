@@ -347,6 +347,34 @@ private static string BuildCompositeKey(...)
 
 Since lib-state stores cannot enforce foreign key constraints, implement validation in service logic and subscribe to `entity.deleted` events for cascade handling.
 
+### Polymorphic Type Field Classification (MANDATORY)
+
+Polymorphic type discriminator fields (`ownerType`, `entityType`, `partyType`, etc.) fall into exactly three categories. Apply the decision tree below mechanically — no judgment calls.
+
+**Category A — "What entity is this?"**: Identifies which kind of Bannou entity a polymorphic ID references.
+- Default type: `$ref: 'common-api.yaml#/components/schemas/EntityType'`
+- Exception: Use a service-specific enum if the valid set includes non-entity roles (see test 3 below)
+- Examples: `ownerType` in Seed, Collection, Currency; `entityType` in Divine blessings; `partyType` in Escrow
+
+**Category B — "What game content type?"**: Game-configurable domain content codes extensible without schema changes.
+- Type: Opaque `string`
+- Examples: `collectionType`, `seedType`, `questType`, `encounterType`, `roomType`
+
+**Category C — "What system state/mode?"**: Finite, system-owned behavioral/lifecycle modes.
+- Type: Service-specific enum
+- Examples: `constraintModel` (Inventory), `quantityModel` (Item), `bondType` (Contract), `escrowType` (Escrow)
+
+**Decision tree** (apply tests in order, stop at first match):
+
+| Test | Condition | Result | Example |
+|------|-----------|--------|---------|
+| 1 | Game designers define new values at deployment time? | Opaque `string` (Category B) | `seedType`, `collectionType` |
+| 2 | L1 service would need to enumerate L2+ entity types? | Opaque `string` (hierarchy isolation) | Resource `resourceType`/`sourceType` |
+| 3 | Valid values include non-entity roles? | Service-specific enum (Category A exception) | Inventory `ContainerOwnerType` includes `escrow`, `mail`, `vehicle` |
+| 4 | All valid values are Bannou entity types? | `$ref: EntityType` (Category A) | Seed `ownerType`, Currency wallet owner, Divine blessing target |
+
+**Key clarification**: Hierarchy isolation (test 2) applies ONLY when a lower-layer service would need to enumerate types from HIGHER layers. L2 services referencing entity types within L1/L2 (e.g., Currency referencing `account`, `character`, `guild`) is NOT a hierarchy violation — use `EntityType`.
+
 ---
 
 ## Tenet 17: Client Event Schema Pattern (RECOMMENDED)
@@ -572,7 +600,7 @@ public string OwnerId { get; set; } = string.Empty;    // Use Guid
 
 2. **External Third-Party APIs**: Parsing responses from Steam, Discord, payment processors that we don't control. Does NOT apply to Bannou-to-Bannou calls.
 
-3. **Intentionally Generic Services (Hierarchy Isolation)**: Lower-layer services that must NOT enumerate higher-layer types use opaque string identifiers to prevent coupling:
+3. **Intentionally Generic Services (Hierarchy Isolation)**: Lower-layer services that must NOT enumerate higher-layer types use opaque string identifiers to prevent coupling. This exception applies ONLY when a lower-layer service would need to enumerate types from HIGHER layers (L1 enumerating L2+ types). It does NOT apply to services referencing entity types within their own layer or lower.
 
 ```csharp
 // ACCEPTABLE: lib-resource (L1) uses strings to avoid enumerating L2+ services
@@ -582,9 +610,15 @@ public class RegisterReferenceRequest
     public string SourceType { get; set; } = string.Empty;    // Opaque - caller provides
 }
 // Creating an enum would make L1 depend on L4 types - hierarchy violation
+
+// NOT ACCEPTABLE: L2 service using string for entity types within L1/L2
+// Seed (L2) referencing account, character, faction — all L1/L2 entities
+// → Use EntityType enum, not string
 ```
 
-**When to apply**: Service is intentionally generic + at a lower layer + enum would require schema updates for new consumers + value is an opaque key, not semantic.
+**When to apply**: Service is at a lower layer AND enum would require enumerating types from HIGHER layers. See the T14 polymorphic type field decision tree for the authoritative classification.
+
+**When NOT to apply**: L2 services referencing L1/L2 entity types (Currency, Seed, Collection referencing `account`, `character`, `guild`, etc.) — these MUST use `EntityType`, not opaque strings. The hierarchy isolation exception does not apply within the same layer or to lower layers.
 
 See also: [SCHEMA-RULES.md "When NOT to Create Enums"](../SCHEMA-RULES.md#when-not-to-create-enums-service-hierarchy-consideration)
 

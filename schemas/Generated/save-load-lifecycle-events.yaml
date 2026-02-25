@@ -46,7 +46,7 @@ components:
           format: uuid
           description: "ID of the owning entity"
         ownerType: &id004
-          $ref: ../save-load-api.yaml#/components/schemas/OwnerType
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Type of entity that owns this save slot"
         slotName: &id005
           type: string

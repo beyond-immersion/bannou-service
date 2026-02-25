@@ -58,7 +58,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         try
         {
             var ownerIdStr = body.OwnerId.ToString();
-            var ownerTypeStr = body.OwnerType.ToString();
+            var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
 
             // Query slots for this owner
             // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum
@@ -232,7 +232,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             return (StatusCodes.OK, new ExportSavesResponse
             {
-                DownloadUrl = getAssetResponse.DownloadUrl,
+                DownloadUrl = getAssetResponse.DownloadUrl.ToString(),
                 ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
                 SizeBytes = archiveData.Length
             });
@@ -326,7 +326,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             }
 
             var targetOwnerIdStr = body.TargetOwnerId.ToString();
-            var targetOwnerTypeStr = body.TargetOwnerType.ToString();
+            var targetOwnerTypeStr = body.TargetOwnerType.ToString().ToLowerInvariant();
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 

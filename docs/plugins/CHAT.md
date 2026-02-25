@@ -40,6 +40,22 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `roomTypeCode` (on rooms, messages, events) | B (Content Code) | Opaque string | Room types are a dynamic registry of string codes; three built-in types (`text`, `sentiment`, `emoji`) plus unlimited custom types registered per game service via API. Extensible without schema changes. |
+| `senderType` (on join, participant, message models, and events) | B (Content Code) | Opaque string | Identifies what kind of entity sent a message (e.g., `"session"`, `"character"`, `"system"`, `"npc"`); opaque to Chat, defined by callers, extensible without schema changes. |
+| `MessageFormat` | C (System State) | Service-specific enum | Finite content format modes (`Text`, `Sentiment`, `Emoji`, `Custom`) determining validation rules for room messages. |
+| `PersistenceMode` | C (System State) | Service-specific enum | Finite storage modes (`Ephemeral`, `Persistent`) determining whether messages go to Redis (TTL) or MySQL (durable). |
+| `RoomTypeStatus` | C (System State) | Service-specific enum | Finite lifecycle states for room type definitions (`Active`, `Deprecated`). |
+| `ChatRoomStatus` | C (System State) | Service-specific enum | Finite room lifecycle states (`Active`, `Locked`, `Archived`). |
+| `ChatParticipantRole` | C (System State) | Service-specific enum | Finite participant privilege levels (`Owner`, `Moderator`, `Member`, `ReadOnly`) determining moderation capabilities. |
+| `ContractRoomAction` | C (System State) | Service-specific enum | Finite actions for contract lifecycle responses (`Continue`, `Lock`, `Archive`, `Delete`). |
+| `ChatRoomLockReason` | C (System State) | Service-specific enum | Finite reasons for room locking (`ContractFulfilled`, `ContractBreachDetected`, `ContractTerminated`, `ContractExpired`, `Manual`). |
+
+---
+
 ## State Storage
 
 ### Store: `chat-room-types` (Backend: MySQL, `IJsonQueryableStateStore`)

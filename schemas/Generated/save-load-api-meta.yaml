@@ -64,11 +64,11 @@ paths:
         \ \"pattern\": \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation
         (e.g., \\\"game-1\\\", \\\"game-2\\\")\"\n                },\n                \"ownerId\": {\n                   \
         \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the
-        owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        ,\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n        \
-        \        \"slotName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n     \
-        \               \"maxLength\": 64,\n                    \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n      \
-        \              \"description\": \"Slot name (lowercase alphanumeric with hyphens, single char like \\\"q\\\" allowed)\"\
+        owning entity\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n\
+        \                    \"description\": \"Type of entity that owns this save slot\"\n                },\n          \
+        \      \"slotName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n       \
+        \             \"maxLength\": 64,\n                    \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n        \
+        \            \"description\": \"Slot name (lowercase alphanumeric with hyphens, single char like \\\"q\\\" allowed)\"\
         \n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n \
         \                   \"description\": \"Save category determining retention and cleanup behavior\"\n              \
         \  },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
@@ -86,19 +86,16 @@ paths:
         (e.g., \\\"boss-fight\\\", \\\"chapter-3\\\")\"\n                },\n                \"metadata\": {\n           \
         \         \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Custom key-value metadata for the slot\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
-        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
-        entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n  \
-        \          \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
-        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
-        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
-        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
-        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
-        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n  \
-        \          \"type\": \"string\",\n            \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n\
-        \                \"BROTLI\"\n            ],\n            \"description\": \"Compression algorithm used for save data\"\
-        \n        }\n    }\n}"
+        Custom key-value metadata for the slot\"\n                }\n            }\n        },\n        \"SaveCategory\":
+        {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"\
+        AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\
+        \n            ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot
+        fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
+        nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20
+        versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\\n\"\n        },\n\
+        \        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"NONE\"\
+        ,\n                \"GZIP\",\n                \"BROTLI\"\n            ],\n            \"description\": \"Compression
+        algorithm used for save data\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Complete metadata for a save slot including version statistics\",\n            \"required\": [\n               \
@@ -107,40 +104,37 @@ paths:
         \        \"slotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
         \                 \"description\": \"Unique slot identifier\"\n                },\n                \"ownerId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
-        : \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns this save slot\"\n     \
-        \           },\n                \"slotName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"\
-        #/$defs/SaveCategory\",\n                    \"description\": \"Save category determining retention and cleanup behavior\"\
-        \n                },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Maximum versions to retain\"\n                },\n                \"retentionDays\":
-        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Days to retain versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n  \
-        \                  \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm
-        used for save data\"\n                },\n                \"versionCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current number of versions in slot\"\n                },\n             \
-        \   \"latestVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Latest version number (null if empty)\"\n                },\n              \
-        \  \"totalSizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n\
-        \                    \"description\": \"Total storage used by all versions\"\n                },\n               \
-        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
-        \                  \"description\": \"Slot creation timestamp\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Last modification timestamp\"\n                },\n                \"metadata\": {\n      \
-        \              \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Custom key-value metadata\"\n \
-        \               }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n \
-        \               \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
-        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
-        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
-        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
-        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
-        3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n           \
-        \ ],\n            \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
+        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n\
+        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
+        ,\n                    \"description\": \"Save category determining retention and cleanup behavior\"\n           \
+        \     },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum versions to retain\"\n                },\n                \"retentionDays\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Days to retain
+        versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n                    \"\
+        $ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm used for save data\"\
+        \n                },\n                \"versionCount\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Current number of versions in slot\"\n                },\n                \"latestVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Latest version number (null if empty)\"\n                },\n                \"totalSizeBytes\": {\n         \
+        \           \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Total storage used by all versions\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Slot creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Last modification
+        timestamp\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n    \
+        \                \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Custom key-value metadata\"\n                }\n            }\n        },\n\
+        \        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\"\
+        ,\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n           \
+        \     \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
+        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
+        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
+        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
+        rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n            ],\n          \
+        \  \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create or configure a save slot\",\n    \"description\": \"Creates a new
         save slot or updates configuration of an existing slot.\\nSlots are auto-created on first save, but pre-creation allows
         setting\\ncustom configuration (max versions, retention policy, etc.).\\n\",\n    \"tags\": [\n        \"Slots\"\n\
@@ -178,12 +172,9 @@ paths:
         ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
         \        \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
         \                  \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
-        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Slot name\"\n                }\n            }\n        },\n        \"OwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"\
-        CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\"\
-        : \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
+        save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Slot name\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Complete metadata for a save slot including version statistics\",\n            \"required\": [\n               \
@@ -192,40 +183,37 @@ paths:
         \        \"slotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
         \                 \"description\": \"Unique slot identifier\"\n                },\n                \"ownerId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
-        : \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns this save slot\"\n     \
-        \           },\n                \"slotName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"\
-        #/$defs/SaveCategory\",\n                    \"description\": \"Save category determining retention and cleanup behavior\"\
-        \n                },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Maximum versions to retain\"\n                },\n                \"retentionDays\":
-        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Days to retain versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n  \
-        \                  \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm
-        used for save data\"\n                },\n                \"versionCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current number of versions in slot\"\n                },\n             \
-        \   \"latestVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Latest version number (null if empty)\"\n                },\n              \
-        \  \"totalSizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n\
-        \                    \"description\": \"Total storage used by all versions\"\n                },\n               \
-        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
-        \                  \"description\": \"Slot creation timestamp\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Last modification timestamp\"\n                },\n                \"metadata\": {\n      \
-        \              \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Custom key-value metadata\"\n \
-        \               }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n \
-        \               \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
-        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
-        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
-        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
-        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
-        3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n           \
-        \ ],\n            \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
+        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n\
+        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
+        ,\n                    \"description\": \"Save category determining retention and cleanup behavior\"\n           \
+        \     },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum versions to retain\"\n                },\n                \"retentionDays\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Days to retain
+        versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n                    \"\
+        $ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm used for save data\"\
+        \n                },\n                \"versionCount\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Current number of versions in slot\"\n                },\n                \"latestVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Latest version number (null if empty)\"\n                },\n                \"totalSizeBytes\": {\n         \
+        \           \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Total storage used by all versions\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Slot creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Last modification
+        timestamp\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n    \
+        \                \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Custom key-value metadata\"\n                }\n            }\n        },\n\
+        \        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\"\
+        ,\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n           \
+        \     \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
+        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
+        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
+        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
+        rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n            ],\n          \
+        \  \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get slot metadata\",\n    \"description\": \"Returns slot configuration
         and version summary.\",\n    \"tags\": [\n        \"Slots\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"GetSlot\"\n}"
@@ -260,22 +248,19 @@ paths:
         \        \"description\": \"Game identifier for namespace isolation\"\n                },\n                \"ownerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n               \
-        \     \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns the save slots
-        to list\"\n                },\n                \"category\": {\n                    \"allOf\": [\n               \
-        \         {\n                            \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n         \
-        \           ],\n                    \"nullable\": true,\n                    \"description\": \"Optional filter by
-        save category\"\n                },\n                \"includeVersionCount\": {\n                    \"type\": \"\
-        boolean\",\n                    \"default\": true,\n                    \"description\": \"Include version count in
-        response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
-        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
-        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
-        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
-        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
-        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
-        3 versions, rolling).\\n\"\n        }\n    }\n}"
+        \     \"type\": \"object\",\n                    \"description\": \"Type of entity that owns the save slots to list\"\
+        \n                },\n                \"category\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n                    ],\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Optional filter by save category\"\
+        \n                },\n                \"includeVersionCount\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"default\": true,\n                    \"description\": \"Include version count in response\"\n\
+        \                }\n            }\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
+        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
+        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
+        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
+        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
+        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListSlotsResponse\"\
         ,\n    \"$defs\": {\n        \"ListSlotsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing a list of save slots for an owner\",\n            \"required\": [\n                \"slots\"\
@@ -291,32 +276,29 @@ paths:
         \   \"format\": \"uuid\",\n                    \"description\": \"Unique slot identifier\"\n                },\n \
         \               \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
-        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Slot name\"\n                },\n                \"category\": {\n     \
-        \               \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\": \"Save category determining
-        retention and cleanup behavior\"\n                },\n                \"maxVersions\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum versions to retain\"\n                },\n        \
-        \        \"retentionDays\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Days to retain versions (null = indefinite)\"\n                },\n      \
-        \          \"compressionType\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n                  \
-        \  \"description\": \"Compression algorithm used for save data\"\n                },\n                \"versionCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current number of versions
-        in slot\"\n                },\n                \"latestVersion\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Latest version number (null if empty)\"\
-        \n                },\n                \"totalSizeBytes\": {\n                    \"type\": \"integer\",\n        \
-        \            \"format\": \"int64\",\n                    \"description\": \"Total storage used by all versions\"\n\
-        \                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n               \
-        \     \"format\": \"date-time\",\n                    \"description\": \"Slot creation timestamp\"\n             \
-        \   },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"Last modification timestamp\"\n                },\n     \
-        \           \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Custom key-value metadata\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"\
-        type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n     \
-        \           \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity
-        that owns this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n         \
-        \   \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
+        save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Slot name\"\n                },\n                \"category\": {\n           \
+        \         \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\": \"Save category determining retention
+        and cleanup behavior\"\n                },\n                \"maxVersions\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Maximum versions to retain\"\n                },\n                \"retentionDays\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Days to retain versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n  \
+        \                  \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm
+        used for save data\"\n                },\n                \"versionCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Current number of versions in slot\"\n                },\n             \
+        \   \"latestVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Latest version number (null if empty)\"\n                },\n              \
+        \  \"totalSizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n\
+        \                    \"description\": \"Total storage used by all versions\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"Slot creation timestamp\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Last modification timestamp\"\n                },\n                \"metadata\": {\n      \
+        \              \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Custom key-value metadata\"\n \
+        \               }\n            }\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
         ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
         : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
         version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
@@ -365,12 +347,10 @@ paths:
         : \"^[a-z][a-z0-9-]*$\",\n                    \"description\": \"Game identifier for namespace isolation\"\n     \
         \           },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n      \
-        \          \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\"\
-        : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Slot name\"\n                }\n           \
-        \ }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n   \
-        \         ],\n            \"description\": \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        \          \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Type
+        of entity that owns this save slot\"\n                },\n                \"slotName\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Slot name\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteSlotResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteSlotResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a slot deletion operation with cleanup statistics\",\n            \"required\": [\n                \"\
@@ -419,16 +399,13 @@ paths:
         \n            ],\n            \"properties\": {\n                \"gameId\": {\n                    \"type\": \"string\"\
         ,\n                    \"description\": \"Game identifier\"\n                },\n                \"ownerId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Entity ID that owns the slot\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
-        : \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns this save slot\"\n     \
-        \           },\n                \"slotName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Current slot name\"\n                },\n                \"newSlotName\": {\n                   \
-        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n         \
-        \           \"pattern\": \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n                    \"description\": \"New slot name\"\
-        \n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n\
-        \                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        }\n    }\n}"
+        : \"Entity ID that owns the slot\"\n                },\n                \"ownerType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n\
+        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Current slot name\"\n                },\n                \"newSlotName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"pattern\"\
+        : \"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$\",\n                    \"description\": \"New slot name\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SlotResponse\"\
         ,\n    \"$defs\": {\n        \"SlotResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Complete metadata for a save slot including version statistics\",\n            \"required\": [\n               \
@@ -437,40 +414,37 @@ paths:
         \        \"slotId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
         \                 \"description\": \"Unique slot identifier\"\n                },\n                \"ownerId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
-        : \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns this save slot\"\n     \
-        \           },\n                \"slotName\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"\
-        #/$defs/SaveCategory\",\n                    \"description\": \"Save category determining retention and cleanup behavior\"\
-        \n                },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n           \
-        \         \"description\": \"Maximum versions to retain\"\n                },\n                \"retentionDays\":
-        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Days to retain versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n  \
-        \                  \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm
-        used for save data\"\n                },\n                \"versionCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current number of versions in slot\"\n                },\n             \
-        \   \"latestVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Latest version number (null if empty)\"\n                },\n              \
-        \  \"totalSizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n\
-        \                    \"description\": \"Total storage used by all versions\"\n                },\n               \
-        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
-        \                  \"description\": \"Slot creation timestamp\"\n                },\n                \"updatedAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"Last modification timestamp\"\n                },\n                \"metadata\": {\n      \
-        \              \"type\": \"object\",\n                    \"additionalProperties\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Custom key-value metadata\"\n \
-        \               }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n \
-        \               \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
-        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
-        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
-        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
-        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
-        3 versions, rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n      \
-        \      \"enum\": [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n           \
-        \ ],\n            \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
+        : \"ID of the owning entity\"\n                },\n                \"ownerType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n\
+        \                \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Slot name\"\n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
+        ,\n                    \"description\": \"Save category determining retention and cleanup behavior\"\n           \
+        \     },\n                \"maxVersions\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum versions to retain\"\n                },\n                \"retentionDays\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Days to retain
+        versions (null = indefinite)\"\n                },\n                \"compressionType\": {\n                    \"\
+        $ref\": \"#/$defs/CompressionType\",\n                    \"description\": \"Compression algorithm used for save data\"\
+        \n                },\n                \"versionCount\": {\n                    \"type\": \"integer\",\n          \
+        \          \"description\": \"Current number of versions in slot\"\n                },\n                \"latestVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Latest version number (null if empty)\"\n                },\n                \"totalSizeBytes\": {\n         \
+        \           \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
+        : \"Total storage used by all versions\"\n                },\n                \"createdAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        Slot creation timestamp\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Last modification
+        timestamp\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n    \
+        \                \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Custom key-value metadata\"\n                }\n            }\n        },\n\
+        \        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\"\
+        ,\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n           \
+        \     \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
+        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
+        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
+        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
+        rolling).\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"NONE\",\n                \"GZIP\",\n                \"BROTLI\"\n            ],\n          \
+        \  \"description\": \"Compression algorithm used for save data\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Rename a save slot\",\n    \"description\": \"Renames an existing slot
         without affecting its versions or data.\\nThe new name must not already exist for this owner.\\n\",\n    \"tags\"\
         : [\n        \"Slots\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"RenameSlot\"\n}"
@@ -560,7 +534,7 @@ paths:
         \              \"type\": \"string\",\n                    \"description\": \"Game identifier for namespace isolation\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n\
-        \                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\"\
+        \                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Slot name (auto-created if doesn't exist)\"\n\
         \                },\n                \"category\": {\n                    \"allOf\": [\n                        {\n\
@@ -584,16 +558,13 @@ paths:
         Custom metadata (e.g., level, playtime, location)\"\n                },\n                \"pinAsCheckpoint\": {\n\
         \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
         : 64,\n                    \"description\": \"If provided, pin this version with checkpoint name\"\n             \
-        \   }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"\
-        REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n  \
-        \      \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\"\
-        ,\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n           \
-        \     \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
-        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
-        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
-        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
-        rolling).\\n\"\n        }\n    }\n}"
+        \   }\n            }\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n         \
+        \       \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category
+        of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\\
+        nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max
+        10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state
+        captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveResponse\"\
         ,\n    \"$defs\": {\n        \"SaveResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Result of a save operation including version info and conflict detection\",\n            \"required\": [\n     \
@@ -613,21 +584,20 @@ paths:
         \   \"description\": \"Whether version was pinned\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Checkpoint name if pinned\"\n                },\n                \"thumbnailUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Pre-signed URL to retrieve thumbnail (if provided)\"\n                },\n              \
-        \  \"conflictDetected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if this save overwrote a version from a different device.\\nOnly relevant when deviceId is used for cloud sync.\\\
-        n\"\n                },\n                \"conflictingDeviceId\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Device ID of the overwritten version
-        (if conflict)\"\n                },\n                \"conflictingVersion\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Version number that was overwritten
-        (if conflict)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Save timestamp\"\n       \
-        \         },\n                \"versionsCleanedUp\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of old versions cleaned up by rolling policy\"\n                },\n           \
-        \     \"uploadPending\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately loadable from Redis cache, but
-        not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed URL to retrieve
+        thumbnail (if provided)\"\n                },\n                \"conflictDetected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this save overwrote a version from a different device.\\
+        nOnly relevant when deviceId is used for cloud sync.\\n\"\n                },\n                \"conflictingDeviceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Device ID of the overwritten version (if conflict)\"\n                },\n                \"conflictingVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Version number that was overwritten (if conflict)\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Save timestamp\"\n                },\n                \"versionsCleanedUp\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of old versions cleaned up by rolling policy\"\n     \
+        \           },\n                \"uploadPending\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"True if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately
+        loadable from Redis cache, but not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Save data to slot\",\n    \"description\": \"Creates a new version in the
         specified slot with the provided data.\\nIf the slot doesn't exist, it's auto-created with default configuration.\\
         n\\nLarge saves (>1MB by default) are automatically compressed.\\nRolling version cleanup is applied based on slot
@@ -670,18 +640,15 @@ paths:
         ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
         \        \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
         \                  \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
-        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
+        save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n      \
+        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Specific version to load (defaults to latest)\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
         {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
-        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
-        entity that owns this save slot\"\n        }\n    }\n}"
+        : \"Include version metadata in response\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadResponse\"\
         ,\n    \"$defs\": {\n        \"LoadResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Response containing loaded save data with integrity verification\",\n            \"required\": [\n             \
@@ -752,13 +719,13 @@ paths:
         \            \"gameId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Game
         identifier for namespace isolation\"\n                },\n                \"ownerId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning
-        entity\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        ,\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n        \
-        \        \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name of
-        the slot to save the delta to\"\n                },\n                \"baseVersion\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Version number this delta is based on\"\n                },\n\
-        \                \"delta\": {\n                    \"type\": \"string\",\n                    \"format\": \"byte\"\
-        ,\n                    \"description\": \"Base64-encoded delta/patch data.\\nFor JSON_PATCH: Array of RFC 6902 operations\\
+        entity\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n      \
+        \              \"description\": \"Type of entity that owns this save slot\"\n                },\n                \"\
+        slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the slot
+        to save the delta to\"\n                },\n                \"baseVersion\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Version number this delta is based on\"\n                },\n          \
+        \      \"delta\": {\n                    \"type\": \"string\",\n                    \"format\": \"byte\",\n      \
+        \              \"description\": \"Base64-encoded delta/patch data.\\nFor JSON_PATCH: Array of RFC 6902 operations\\
         nFor BSDIFF/XDELTA: Binary patch data\\n\"\n                },\n                \"algorithm\": {\n               \
         \     \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/DeltaAlgorithm\"\n\
         \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
@@ -772,14 +739,11 @@ paths:
         \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n\
         \                    \"additionalProperties\": {\n                        \"type\": \"string\"\n                 \
         \   },\n                    \"description\": \"Custom key-value metadata for this delta version\"\n              \
-        \  }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"\
-        REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n  \
-        \      \"DeltaAlgorithm\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"JSON_PATCH\"\
-        ,\n                \"BSDIFF\",\n                \"XDELTA\"\n            ],\n            \"default\": \"JSON_PATCH\"\
-        ,\n            \"description\": \"Algorithm used for delta computation.\\nJSON_PATCH: RFC 6902, best for structured
-        JSON data\\nBSDIFF: Binary diff, good for general binary data\\nXDELTA: RFC 3284 VCDIFF, efficient for large binary
-        files\\n\"\n        }\n    }\n}"
+        \  }\n            }\n        },\n        \"DeltaAlgorithm\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"JSON_PATCH\",\n                \"BSDIFF\",\n                \"XDELTA\"\n            ],\n\
+        \            \"default\": \"JSON_PATCH\",\n            \"description\": \"Algorithm used for delta computation.\\\
+        nJSON_PATCH: RFC 6902, best for structured JSON data\\nBSDIFF: Binary diff, good for general binary data\\nXDELTA:
+        RFC 3284 VCDIFF, efficient for large binary files\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveDeltaResponse\"\
         ,\n    \"$defs\": {\n        \"SaveDeltaResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of delta save operation with size and chain information\",\n            \"required\": [\n             \
@@ -846,18 +810,15 @@ paths:
         ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
         \        \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
         \                  \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
-        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
+        save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Slot name\"\n                },\n                \"versionNumber\": {\n      \
+        \              \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Specific version to load (defaults to latest)\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Load by checkpoint name instead of version number\"\n                },\n                \"includeMetadata\":
         {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
-        : \"Include version metadata in response\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
-        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
-        entity that owns this save slot\"\n        }\n    }\n}"
+        : \"Include version metadata in response\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LoadResponse\"\
         ,\n    \"$defs\": {\n        \"LoadResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Response containing loaded save data with integrity verification\",\n            \"required\": [\n             \
@@ -920,17 +881,14 @@ paths:
         \           \"description\": \"Game identifier for namespace isolation\"\n                },\n                \"ownerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Entity ID that owns the save slot\"\n                },\n                \"ownerType\": {\n     \
-        \               \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns
-        this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Name of the slot containing deltas to collapse\"\n                },\n   \
-        \             \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Version to collapse to (latest if null)\"\n                },\n    \
-        \            \"deleteIntermediates\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Delete intermediate delta versions after collapse\"\n            \
-        \    }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"\
-        REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        }\n   \
-        \ }\n}"
+        \               \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this save slot\"\
+        \n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"Name of the slot containing deltas to collapse\"\n                },\n                \"\
+        versionNumber\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Version to collapse to (latest if null)\"\n                },\n                \"\
+        deleteIntermediates\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n   \
+        \                 \"description\": \"Delete intermediate delta versions after collapse\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveResponse\"\
         ,\n    \"$defs\": {\n        \"SaveResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Result of a save operation including version info and conflict detection\",\n            \"required\": [\n     \
@@ -950,21 +908,20 @@ paths:
         \   \"description\": \"Whether version was pinned\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Checkpoint name if pinned\"\n                },\n                \"thumbnailUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Pre-signed URL to retrieve thumbnail (if provided)\"\n                },\n              \
-        \  \"conflictDetected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if this save overwrote a version from a different device.\\nOnly relevant when deviceId is used for cloud sync.\\\
-        n\"\n                },\n                \"conflictingDeviceId\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Device ID of the overwritten version
-        (if conflict)\"\n                },\n                \"conflictingVersion\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Version number that was overwritten
-        (if conflict)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Save timestamp\"\n       \
-        \         },\n                \"versionsCleanedUp\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of old versions cleaned up by rolling policy\"\n                },\n           \
-        \     \"uploadPending\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately loadable from Redis cache, but
-        not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed URL to retrieve
+        thumbnail (if provided)\"\n                },\n                \"conflictDetected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this save overwrote a version from a different device.\\
+        nOnly relevant when deviceId is used for cloud sync.\\n\"\n                },\n                \"conflictingDeviceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Device ID of the overwritten version (if conflict)\"\n                },\n                \"conflictingVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Version number that was overwritten (if conflict)\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Save timestamp\"\n                },\n                \"versionsCleanedUp\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of old versions cleaned up by rolling policy\"\n     \
+        \           },\n                \"uploadPending\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"True if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately
+        loadable from Redis cache, but not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Collapse delta chain into full snapshot\",\n    \"description\": \"Collapses
         a chain of delta versions into a single full snapshot.\\nUseful for reducing load latency or before deleting base
         versions.\\n\",\n    \"tags\": [\n        \"Saves\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"CollapseDeltas\"\
@@ -999,18 +956,15 @@ paths:
         \    \"ownerId\",\n                \"ownerType\",\n                \"slotName\"\n            ],\n            \"properties\"\
         : {\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n                \"\
-        ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type
-        of entity that owns this save slot\"\n                },\n                \"slotName\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Slot name\"\n                },\n                \"offset\"\
-        : {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Pagination offset\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 20,\n                    \"maximum\": 100,\n                    \"description\"\
+        ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that
+        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Slot name\"\n                },\n                \"offset\": {\n       \
+        \             \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\": \"\
+        Pagination offset\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 20,\n                    \"maximum\": 100,\n                    \"description\"\
         : \"Maximum results to return\"\n                },\n                \"pinnedOnly\": {\n                    \"type\"\
         : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Only return pinned
-        versions\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\"\
-        ,\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        }\n    }\n}"
+        versions\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListVersionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListVersionsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated list of save versions within a slot\",\n            \"required\": [\n                \"versions\",\n\
@@ -1077,16 +1031,13 @@ paths:
         \     \"ownerId\",\n                \"ownerType\",\n                \"slotName\",\n                \"versionNumber\"\
         \n            ],\n            \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\
-        \n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n   \
-        \                 \"description\": \"Type of entity that owns this save slot\"\n                },\n             \
-        \   \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\
-        \n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n         \
-        \           \"description\": \"Version to pin\"\n                },\n                \"checkpointName\": {\n     \
-        \               \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"description\"\
-        : \"Optional checkpoint name for easy retrieval\"\n                }\n            }\n        },\n        \"OwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"\
-        CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\"\
-        : \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        \n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n              \
+        \      \"description\": \"Type of entity that owns this save slot\"\n                },\n                \"slotName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\n             \
+        \   },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Version to pin\"\n                },\n                \"checkpointName\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 64,\n                    \"description\": \"Optional checkpoint name
+        for easy retrieval\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VersionResponse\"\
         ,\n    \"$defs\": {\n        \"VersionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Metadata for a single save version including size and checkpoint info\",\n            \"required\": [\n      \
@@ -1144,14 +1095,11 @@ paths:
         ,\n                \"ownerType\",\n                \"slotName\",\n                \"versionNumber\"\n            ],\n\
         \            \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n      \
         \              \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n         \
-        \       },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n             \
-        \       \"description\": \"Type of entity that owns this save slot\"\n                },\n                \"slotName\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\n             \
-        \   },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Version to unpin\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n           \
-        \     \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that
-        owns this save slot\"\n        }\n    }\n}"
+        \       },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Slot name\"\n                },\n          \
+        \      \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Version
+        to unpin\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VersionResponse\"\
         ,\n    \"$defs\": {\n        \"VersionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Metadata for a single save version including size and checkpoint info\",\n            \"required\": [\n      \
@@ -1213,14 +1161,11 @@ paths:
         ,\n                \"ownerType\",\n                \"slotName\",\n                \"versionNumber\"\n            ],\n\
         \            \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n      \
         \              \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n         \
-        \       },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n             \
-        \       \"description\": \"Type of entity that owns this save slot\"\n                },\n                \"slotName\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\n             \
-        \   },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Version to delete\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n           \
-        \     \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that
-        owns this save slot\"\n        }\n    }\n}"
+        \       },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
+        : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Slot name\"\n                },\n          \
+        \      \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Version
+        to delete\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteVersionResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteVersionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a version deletion operation with storage freed\",\n            \"required\": [\n                \"\
@@ -1262,42 +1207,39 @@ paths:
         \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by owner ID\"\n        \
         \        },\n                \"ownerType\": {\n                    \"allOf\": [\n                        {\n     \
-        \                       \"$ref\": \"#/$defs/OwnerType\"\n                        }\n                    ],\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Filter by owner type\"\n             \
-        \   },\n                \"category\": {\n                    \"allOf\": [\n                        {\n           \
-        \                 \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n                    ],\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Filter by save category\"\n             \
-        \   },\n                \"createdAfter\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Filter by creation
-        date\"\n                },\n                \"createdBefore\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Filter by creation date\"\n                },\n                \"pinnedOnly\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Only return pinned
-        versions\"\n                },\n                \"schemaVersion\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Filter by schema version\"\n    \
-        \            },\n                \"metadataFilter\": {\n                    \"type\": \"object\",\n              \
-        \      \"nullable\": true,\n                    \"additionalProperties\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Filter by metadata key-value pairs\"\n  \
-        \              },\n                \"offset\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"default\": 0,\n                    \"description\": \"Pagination offset\"\n                },\n              \
-        \  \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n              \
-        \      \"maximum\": 100,\n                    \"description\": \"Maximum results\"\n                },\n         \
-        \       \"sortBy\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n              \
-        \          \"created_at\",\n                        \"size\",\n                        \"version_number\"\n      \
-        \              ],\n                    \"default\": \"created_at\",\n                    \"description\": \"Sort field\"\
-        \n                },\n                \"sortOrder\": {\n                    \"type\": \"string\",\n              \
-        \      \"enum\": [\n                        \"asc\",\n                        \"desc\"\n                    ],\n \
-        \                   \"default\": \"desc\",\n                    \"description\": \"Sort order\"\n                }\n\
-        \            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\
-        \n            ],\n            \"description\": \"Type of entity that owns this save slot\"\n        },\n        \"\
-        SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n \
-        \               \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n              \
-        \  \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined behaviors.\\
-        nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic
-        saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT:
-        Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions,
-        rolling).\\n\"\n        }\n    }\n}"
+        \                       \"type\": \"object\"\n                        }\n                    ],\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Filter by owner type\"\n                },\n    \
+        \            \"category\": {\n                    \"allOf\": [\n                        {\n                      \
+        \      \"$ref\": \"#/$defs/SaveCategory\"\n                        }\n                    ],\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Filter by save category\"\n                },\n    \
+        \            \"createdAfter\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Filter by creation date\"\n   \
+        \             },\n                \"createdBefore\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Filter by creation date\"\n                },\n                \"pinnedOnly\": {\n                    \"type\": \"\
+        boolean\",\n                    \"nullable\": true,\n                    \"description\": \"Only return pinned versions\"\
+        \n                },\n                \"schemaVersion\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"description\": \"Filter by schema version\"\n              \
+        \  },\n                \"metadataFilter\": {\n                    \"type\": \"object\",\n                    \"nullable\"\
+        : true,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n         \
+        \           },\n                    \"description\": \"Filter by metadata key-value pairs\"\n                },\n\
+        \                \"offset\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
+        \                    \"description\": \"Pagination offset\"\n                },\n                \"limit\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"default\": 20,\n                    \"maximum\":
+        100,\n                    \"description\": \"Maximum results\"\n                },\n                \"sortBy\": {\n\
+        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"created_at\"\
+        ,\n                        \"size\",\n                        \"version_number\"\n                    ],\n       \
+        \             \"default\": \"created_at\",\n                    \"description\": \"Sort field\"\n                },\n\
+        \                \"sortOrder\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n  \
+        \                      \"asc\",\n                        \"desc\"\n                    ],\n                    \"\
+        default\": \"desc\",\n                    \"description\": \"Sort order\"\n                }\n            }\n    \
+        \    },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n               \
+        \ \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
+        ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
+        behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
+        periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
+        nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max
+        3 versions, rolling).\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuerySavesResponse\"\
         ,\n    \"$defs\": {\n        \"QuerySavesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Paginated results from a save query operation\",\n            \"required\": [\n                \"results\",\n\
@@ -1314,33 +1256,30 @@ paths:
         identifier\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"Slot name\"\n                },\n                \"ownerId\": {\n           \
         \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Owner ID\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        ,\n                    \"description\": \"Type of entity that owns this save slot\"\n                },\n        \
-        \        \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\"\
-        : \"Save category of the slot\"\n                },\n                \"versionNumber\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Version number\"\n                },\n              \
-        \  \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n    \
-        \                \"description\": \"Size in bytes\"\n                },\n                \"schemaVersion\": {\n  \
-        \                  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Schema version\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Display name\"\n              \
-        \  },\n                \"pinned\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether pinned\"\n                },\n                \"checkpointName\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Checkpoint name\"\n   \
-        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n \
-        \               \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Custom metadata\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n               \
-        \ \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns
-        this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n         \
-        \       \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category
-        of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\\
-        nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max
-        10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT: Full state
-        captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
+        Owner ID\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n    \
+        \                \"description\": \"Type of entity that owns this save slot\"\n                },\n              \
+        \  \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\":
+        \"Save category of the slot\"\n                },\n                \"versionNumber\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Version number\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Size in bytes\"\n                },\n                \"schemaVersion\": {\n                    \"\
+        type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Schema version\"\
+        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Display name\"\n                },\n        \
+        \        \"pinned\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        pinned\"\n                },\n                \"checkpointName\": {\n                    \"type\": \"string\",\n \
+        \                   \"nullable\": true,\n                    \"description\": \"Checkpoint name\"\n              \
+        \  },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n              \
+        \  \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n \
+        \                       \"type\": \"string\"\n                    },\n                    \"description\": \"Custom
+        metadata\"\n                }\n            }\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
+        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
+        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
+        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
+        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
+        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query saves with filters\",\n    \"description\": \"Search and filter saves
         across slots. Supports filtering by owner,\\ncategory, date range, metadata, and more. Paginated results.\\n\",\n\
         \    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"QuerySaves\"\n}"
@@ -1382,24 +1321,21 @@ paths:
         : \"Game identifier of the source save\"\n                },\n                \"sourceOwnerId\": {\n             \
         \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
         Entity ID that owns the source save\"\n                },\n                \"sourceOwnerType\": {\n              \
-        \      \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns the source
-        save\"\n                },\n                \"sourceSlotName\": {\n                    \"type\": \"string\",\n   \
-        \                 \"description\": \"Name of the source slot to copy from\"\n                },\n                \"\
-        sourceVersion\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Version to copy (latest if null)\"\n                },\n                \"targetGameId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Game identifier for the target
-        save\"\n                },\n                \"targetOwnerId\": {\n                    \"type\": \"string\",\n    \
-        \                \"format\": \"uuid\",\n                    \"description\": \"Entity ID that will own the copied
-        save\"\n                },\n                \"targetOwnerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        ,\n                    \"description\": \"Type of entity that will own the copied save\"\n                },\n   \
-        \             \"targetSlotName\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Name of the target slot to copy to\"\n                },\n                \"targetCategory\": {\n            \
-        \        \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\": \"Category for new slot if auto-created\"\
-        \n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n                \"SESSION\",\n\
-        \                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns this save slot\"\
-        \n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
-        \      \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
+        \      \"type\": \"object\",\n                    \"description\": \"Type of entity that owns the source save\"\n\
+        \                },\n                \"sourceSlotName\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"Name of the source slot to copy from\"\n                },\n                \"sourceVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Version to copy (latest if null)\"\n                },\n                \"targetGameId\": {\n                \
+        \    \"type\": \"string\",\n                    \"description\": \"Game identifier for the target save\"\n       \
+        \         },\n                \"targetOwnerId\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uuid\",\n                    \"description\": \"Entity ID that will own the copied save\"\n     \
+        \           },\n                \"targetOwnerType\": {\n                    \"type\": \"object\",\n              \
+        \      \"description\": \"Type of entity that will own the copied save\"\n                },\n                \"targetSlotName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Name of the target slot to
+        copy to\"\n                },\n                \"targetCategory\": {\n                    \"$ref\": \"#/$defs/SaveCategory\"\
+        ,\n                    \"description\": \"Category for new slot if auto-created\"\n                }\n           \
+        \ }\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
+        \         \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\"\
         ,\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\": \"Category of save with predefined
         behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered
         periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\
@@ -1424,21 +1360,20 @@ paths:
         \   \"description\": \"Whether version was pinned\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Checkpoint name if pinned\"\n                },\n                \"thumbnailUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Pre-signed URL to retrieve thumbnail (if provided)\"\n                },\n              \
-        \  \"conflictDetected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if this save overwrote a version from a different device.\\nOnly relevant when deviceId is used for cloud sync.\\\
-        n\"\n                },\n                \"conflictingDeviceId\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Device ID of the overwritten version
-        (if conflict)\"\n                },\n                \"conflictingVersion\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Version number that was overwritten
-        (if conflict)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Save timestamp\"\n       \
-        \         },\n                \"versionsCleanedUp\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of old versions cleaned up by rolling policy\"\n                },\n           \
-        \     \"uploadPending\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately loadable from Redis cache, but
-        not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed URL to retrieve
+        thumbnail (if provided)\"\n                },\n                \"conflictDetected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this save overwrote a version from a different device.\\
+        nOnly relevant when deviceId is used for cloud sync.\\n\"\n                },\n                \"conflictingDeviceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Device ID of the overwritten version (if conflict)\"\n                },\n                \"conflictingVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Version number that was overwritten (if conflict)\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Save timestamp\"\n                },\n                \"versionsCleanedUp\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of old versions cleaned up by rolling policy\"\n     \
+        \           },\n                \"uploadPending\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"True if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately
+        loadable from Redis cache, but not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Copy save to different slot or owner\",\n    \"description\": \"Copies
         a save version to a different slot or owner.\\nCan copy to same owner (different slot) or different owner (with admin).\\\
         n\",\n    \"tags\": [\n        \"Transfer\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"CopySave\"\
@@ -1474,25 +1409,21 @@ paths:
         : {\n                \"gameId\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Game identifier for namespace isolation\"\n                },\n                \"ownerId\": {\n              \
         \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity
-        ID that owns the saves to export\"\n                },\n                \"ownerType\": {\n                    \"$ref\"\
-        : \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that owns the saves to export\"\n\
-        \                },\n                \"slotNames\": {\n                    \"type\": \"array\",\n                \
-        \    \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Specific slots to export (all if null)\"\n                }\n            }\n        },\n        \"OwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"\
-        CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\"\
-        : \"Type of entity that owns this save slot\"\n        }\n    }\n}"
+        ID that owns the saves to export\"\n                },\n                \"ownerType\": {\n                    \"type\"\
+        : \"object\",\n                    \"description\": \"Type of entity that owns the saves to export\"\n           \
+        \     },\n                \"slotNames\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Specific slots to export (all if null)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ExportSavesResponse\"\
         ,\n    \"$defs\": {\n        \"ExportSavesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response with pre-signed URL for downloading exported save archive\",\n            \"required\": [\n         \
         \       \"downloadUrl\",\n                \"expiresAt\",\n                \"sizeBytes\"\n            ],\n        \
         \    \"properties\": {\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uri\",\n                    \"description\": \"Pre-signed URL to download export archive\"\
-        \n                },\n                \"expiresAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the download URL expires\"\n      \
-        \          },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"\
-        format\": \"int64\",\n                    \"description\": \"Archive size\"\n                }\n            }\n  \
-        \      }\n    }\n}"
+        \          \"description\": \"Pre-signed URL to download export archive\"\n                },\n                \"\
+        expiresAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"When the download URL expires\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Archive size\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Export saves for backup/portability\",\n    \"description\": \"Exports
         one or more slots with all versions as a downloadable archive.\\nReturns a pre-signed URL to download the export bundle.\\\
         n\",\n    \"tags\": [\n        \"Transfer\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ExportSaves\"\
@@ -1533,16 +1464,13 @@ paths:
         ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
         \        \"targetOwnerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Entity ID that will own the imported saves\"\n                },\n     \
-        \           \"targetOwnerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\"\
+        \           \"targetOwnerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Type of entity that will own the imported saves\"\n                },\n                \"conflictResolution\"\
         : {\n                    \"$ref\": \"#/$defs/ConflictResolution\",\n                    \"description\": \"How to
-        handle existing slots\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n           \
-        \     \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that
-        owns this save slot\"\n        },\n        \"ConflictResolution\": {\n            \"type\": \"string\",\n        \
-        \    \"enum\": [\n                \"SKIP\",\n                \"OVERWRITE\",\n                \"RENAME\",\n       \
-        \         \"FAIL\"\n            ],\n            \"description\": \"Strategy for handling conflicts during import\"\
-        \n        }\n    }\n}"
+        handle existing slots\"\n                }\n            }\n        },\n        \"ConflictResolution\": {\n       \
+        \     \"type\": \"string\",\n            \"enum\": [\n                \"SKIP\",\n                \"OVERWRITE\",\n\
+        \                \"RENAME\",\n                \"FAIL\"\n            ],\n            \"description\": \"Strategy for
+        handling conflicts during import\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ImportSavesResponse\"\
         ,\n    \"$defs\": {\n        \"ImportSavesResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of save archive import with success and conflict counts\",\n            \"required\": [\n             \
@@ -1592,14 +1520,11 @@ paths:
         ,\n                    \"description\": \"Game identifier for namespace isolation\"\n                },\n        \
         \        \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
         \                  \"description\": \"ID of the owning entity\"\n                },\n                \"ownerType\"\
-        : {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\": \"Type of entity that
-        owns this save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Name of the slot to verify\"\n                },\n                \"versionNumber\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Type of entity that owns this
+        save slot\"\n                },\n                \"slotName\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Name of the slot to verify\"\n                },\n                \"versionNumber\"\
         : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Version to verify (latest if null)\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
-        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
-        entity that owns this save slot\"\n        }\n    }\n}"
+        : \"Version to verify (latest if null)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VerifyIntegrityResponse\"\
         ,\n    \"$defs\": {\n        \"VerifyIntegrityResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of integrity verification with hash comparison details\",\n            \"required\": [\n              \
@@ -1651,16 +1576,13 @@ paths:
         \            \"type\": \"string\",\n                    \"description\": \"Game identifier for namespace isolation\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n                },\n\
-        \                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n                    \"description\"\
+        \                \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\"\
         : \"Type of entity that owns this save slot\"\n                },\n                \"slotName\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Name of the slot containing the version to promote\"\
         \n                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n         \
         \           \"description\": \"Old version to promote to latest\"\n                },\n                \"displayName\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Display name for promoted version\"\n                }\n            }\n        },\n        \"OwnerType\": {\n\
-        \            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\"\
-        ,\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of
-        entity that owns this save slot\"\n        }\n    }\n}"
+        : \"Display name for promoted version\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SaveResponse\"\
         ,\n    \"$defs\": {\n        \"SaveResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Result of a save operation including version info and conflict detection\",\n            \"required\": [\n     \
@@ -1680,21 +1602,20 @@ paths:
         \   \"description\": \"Whether version was pinned\"\n                },\n                \"checkpointName\": {\n \
         \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Checkpoint name if pinned\"\n                },\n                \"thumbnailUrl\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\": true,\n               \
-        \     \"description\": \"Pre-signed URL to retrieve thumbnail (if provided)\"\n                },\n              \
-        \  \"conflictDetected\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if this save overwrote a version from a different device.\\nOnly relevant when deviceId is used for cloud sync.\\\
-        n\"\n                },\n                \"conflictingDeviceId\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Device ID of the overwritten version
-        (if conflict)\"\n                },\n                \"conflictingVersion\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Version number that was overwritten
-        (if conflict)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"date-time\",\n                    \"description\": \"Save timestamp\"\n       \
-        \         },\n                \"versionsCleanedUp\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of old versions cleaned up by rolling policy\"\n                },\n           \
-        \     \"uploadPending\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True
-        if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately loadable from Redis cache, but
-        not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed URL to retrieve
+        thumbnail (if provided)\"\n                },\n                \"conflictDetected\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"True if this save overwrote a version from a different device.\\
+        nOnly relevant when deviceId is used for cloud sync.\\n\"\n                },\n                \"conflictingDeviceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Device ID of the overwritten version (if conflict)\"\n                },\n                \"conflictingVersion\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Version number that was overwritten (if conflict)\"\n                },\n                \"createdAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Save timestamp\"\n                },\n                \"versionsCleanedUp\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of old versions cleaned up by rolling policy\"\n     \
+        \           },\n                \"uploadPending\": {\n                    \"type\": \"boolean\",\n               \
+        \     \"description\": \"True if async upload is enabled and data is queued for MinIO upload.\\nSave is immediately
+        loadable from Redis cache, but not yet durable.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Promote old version to latest\",\n    \"description\": \"Creates a new
         version from an existing older version, effectively\\n\\\"promoting\\\" it to be the latest. Useful for rollback scenarios.\\\
         n\",\n    \"tags\": [\n        \"Versions\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"PromoteVersion\"\
@@ -1733,18 +1654,15 @@ paths:
         ,\n                \"ownerType\",\n                \"slotName\",\n                \"targetSchemaVersion\"\n      \
         \      ],\n            \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the owning entity\"\n \
-        \               },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\",\n     \
-        \               \"description\": \"Type of entity that owns this save slot\"\n                },\n               \
-        \ \"slotName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\n\
-        \                },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Specific version to migrate (defaults to latest)\"\n                },\n           \
-        \     \"targetSchemaVersion\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Target schema version to migrate to\"\n                },\n                \"dryRun\": {\n                    \"\
-        type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Validate migration
-        without saving\"\n                }\n            }\n        },\n        \"OwnerType\": {\n            \"type\": \"\
-        string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"CHARACTER\",\n               \
-        \ \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\": \"Type of entity that owns
-        this save slot\"\n        }\n    }\n}"
+        \               },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                \
+        \    \"description\": \"Type of entity that owns this save slot\"\n                },\n                \"slotName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Slot name\"\n             \
+        \   },\n                \"versionNumber\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Specific version to migrate (defaults to latest)\"\n                },\n                \"targetSchemaVersion\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Target schema version to migrate
+        to\"\n                },\n                \"dryRun\": {\n                    \"type\": \"boolean\",\n            \
+        \        \"default\": false,\n                    \"description\": \"Validate migration without saving\"\n       \
+        \         }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MigrateSaveResponse\"\
         ,\n    \"$defs\": {\n        \"MigrateSaveResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of a schema migration operation with version path details\",\n            \"required\": [\n           \
@@ -1914,19 +1832,17 @@ paths:
         \       \"dryRun\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
         \              \"description\": \"Preview cleanup without executing\"\n                },\n                \"olderThanDays\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Only cleanup versions older
-        than N days\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/OwnerType\"\
-        ,\n                    \"description\": \"Filter cleanup to specific owner type\"\n                },\n          \
-        \      \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\"\
-        : \"Filter cleanup to specific save category\"\n                }\n            }\n        },\n        \"OwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ACCOUNT\",\n                \"\
-        CHARACTER\",\n                \"SESSION\",\n                \"REALM\"\n            ],\n            \"description\"\
-        : \"Type of entity that owns this save slot\"\n        },\n        \"SaveCategory\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"QUICK_SAVE\",\n                \"AUTO_SAVE\",\n                \"MANUAL_SAVE\"\
-        ,\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\n            ],\n            \"description\"\
-        : \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1
-        version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\nMANUAL_SAVE: User-initiated named
-        saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20 versions, rolling).\\nSTATE_SNAPSHOT:
-        Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n    }\n}"
+        than N days\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n \
+        \                   \"description\": \"Filter cleanup to specific owner type\"\n                },\n             \
+        \   \"category\": {\n                    \"$ref\": \"#/$defs/SaveCategory\",\n                    \"description\"\
+        : \"Filter cleanup to specific save category\"\n                }\n            }\n        },\n        \"SaveCategory\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"QUICK_SAVE\",\n               \
+        \ \"AUTO_SAVE\",\n                \"MANUAL_SAVE\",\n                \"CHECKPOINT\",\n                \"STATE_SNAPSHOT\"\
+        \n            ],\n            \"description\": \"Category of save with predefined behaviors.\\nQUICK_SAVE: Single-slot
+        fast save, overwritten frequently (max 1 version).\\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\\
+        nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\\nCHECKPOINT: Progress markers (max 20
+        versions, rolling).\\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\\n\"\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AdminCleanupResponse\"\
         ,\n    \"$defs\": {\n        \"AdminCleanupResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of admin cleanup operation with storage reclamation details\",\n            \"required\": [\n         \
@@ -1999,14 +1915,6 @@ paths:
         \   \"operationId\": \"AdminStats\"\n}"
 components:
   schemas:
-    OwnerType:
-      type: string
-      enum:
-      - ACCOUNT
-      - CHARACTER
-      - SESSION
-      - REALM
-      description: Type of entity that owns this save slot
     SaveCategory:
       type: string
       enum:
@@ -2086,7 +1994,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2147,7 +2055,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2171,7 +2079,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the save slots to list
         category:
           allOf:
@@ -2202,7 +2110,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2227,7 +2135,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2319,7 +2227,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2409,7 +2317,6 @@ components:
           description: Checkpoint name if pinned
         thumbnailUrl:
           type: string
-          format: uri
           nullable: true
           description: Pre-signed URL to retrieve thumbnail (if provided)
         conflictDetected:
@@ -2457,7 +2364,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2534,7 +2441,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2632,7 +2539,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2658,7 +2565,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2680,7 +2587,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2713,7 +2620,7 @@ components:
           description: Filter by owner ID
         ownerType:
           allOf:
-          - $ref: '#/components/schemas/OwnerType'
+          - $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type
         category:
@@ -2808,7 +2715,7 @@ components:
           format: uuid
           description: Owner ID
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         category:
           $ref: '#/components/schemas/SaveCategory'
@@ -2858,7 +2765,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2997,7 +2904,7 @@ components:
           type: integer
           description: Only cleanup versions older than N days
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Filter cleanup to specific owner type
         category:
           $ref: '#/components/schemas/SaveCategory'
@@ -3100,7 +3007,7 @@ components:
           format: uuid
           description: Entity ID that owns the slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -3162,7 +3069,7 @@ components:
           format: uuid
           description: Entity ID that owns the source save
         sourceOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the source save
         sourceSlotName:
           type: string
@@ -3179,7 +3086,7 @@ components:
           format: uuid
           description: Entity ID that will own the copied save
         targetOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that will own the copied save
         targetSlotName:
           type: string
@@ -3203,7 +3110,7 @@ components:
           format: uuid
           description: Entity ID that owns the saves to export
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the saves to export
         slotNames:
           type: array
@@ -3220,7 +3127,6 @@ components:
       properties:
         downloadUrl:
           type: string
-          format: uri
           description: Pre-signed URL to download export archive
         expiresAt:
           type: string
@@ -3251,7 +3157,7 @@ components:
           format: uuid
           description: Entity ID that will own the imported saves
         targetOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that will own the imported saves
         conflictResolution:
           $ref: '#/components/schemas/ConflictResolution'
@@ -3295,7 +3201,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -3346,7 +3252,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -3389,7 +3295,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -3484,7 +3390,7 @@ components:
           format: uuid
           description: Entity ID that owns the save slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string

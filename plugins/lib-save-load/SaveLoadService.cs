@@ -99,7 +99,7 @@ public partial class SaveLoadService : ISaveLoadService
             body.GameId, body.OwnerType, body.OwnerId, body.SlotName);
 
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-        var ownerType = body.OwnerType.ToString();
+        var ownerType = body.OwnerType.ToString().ToLowerInvariant();
         var ownerId = body.OwnerId.ToString();
 
         // Check if slot already exists
@@ -169,7 +169,7 @@ public partial class SaveLoadService : ISaveLoadService
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
 
         var slotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString(),
+            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.SlotName);
         var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
@@ -220,7 +220,7 @@ public partial class SaveLoadService : ISaveLoadService
         var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         var slotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString(),
+            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.SlotName);
         var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
@@ -262,7 +262,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Get old slot key
         var oldSlotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString(),
+            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.SlotName);
         var slot = await slotStore.GetAsync(oldSlotKey, cancellationToken);
 
@@ -290,7 +290,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Check if new name already exists
         var newSlotKey = SaveSlotMetadata.GetStateKey(
-            body.GameId, body.OwnerType.ToString(),
+            body.GameId, body.OwnerType.ToString().ToLowerInvariant(),
             body.OwnerId.ToString(), body.NewSlotName);
         var existingNewSlot = await slotStore.GetAsync(newSlotKey, cancellationToken);
 
@@ -434,7 +434,7 @@ public partial class SaveLoadService : ISaveLoadService
         var pendingStore = _stateStoreFactory.GetCacheableStore<PendingUploadEntry>(StateStoreDefinitions.SaveLoadPending);
 
         // Convert request types to strings for state key construction
-        var ownerTypeStr = body.OwnerType.ToString();
+        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
         var ownerIdStr = body.OwnerId.ToString();
         var now = DateTimeOffset.UtcNow;
 
@@ -698,7 +698,7 @@ public partial class SaveLoadService : ISaveLoadService
         var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
 
         // Convert request types to strings for state key construction
-        var ownerTypeStr = body.OwnerType.ToString();
+        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
         var ownerIdStr = body.OwnerId.ToString();
 
         // Get the slot
@@ -868,7 +868,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Find the slot - convert types to strings for state key
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-        var ownerTypeStr = body.OwnerType.ToString();
+        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
         var ownerIdStr = body.OwnerId.ToString();
         var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
         var slot = await slotStore.GetAsync(slotKey, cancellationToken);
@@ -1205,7 +1205,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Find the slot
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-        var ownerType = body.OwnerType.ToString();
+        var ownerType = body.OwnerType.ToString().ToLowerInvariant();
         var ownerId = body.OwnerId.ToString();
         var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerType, ownerId, body.SlotName);
         var slot = await slotStore.GetAsync(slotKey, cancellationToken);
@@ -1830,7 +1830,7 @@ public partial class SaveLoadService : ISaveLoadService
         var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 
         // Find source slot
-        var sourceOwnerType = body.SourceOwnerType.ToString();
+        var sourceOwnerType = body.SourceOwnerType.ToString().ToLowerInvariant();
         var sourceOwnerId = body.SourceOwnerId.ToString();
         var sourceSlotKey = SaveSlotMetadata.GetStateKey(body.SourceGameId, sourceOwnerType, sourceOwnerId, body.SourceSlotName);
         var sourceSlot = await slotStore.GetAsync(sourceSlotKey, cancellationToken);
@@ -1872,7 +1872,7 @@ public partial class SaveLoadService : ISaveLoadService
         }
 
         // Find or create target slot (lock to prevent concurrent version number allocation)
-        var targetOwnerType = body.TargetOwnerType.ToString();
+        var targetOwnerType = body.TargetOwnerType.ToString().ToLowerInvariant();
         var targetOwnerId = body.TargetOwnerId.ToString();
         var targetSlotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerType, targetOwnerId, body.TargetSlotName);
 
@@ -2033,7 +2033,7 @@ public partial class SaveLoadService : ISaveLoadService
             body.SlotName, body.OwnerId);
 
         var ownerIdStr = body.OwnerId.ToString();
-        var ownerTypeStr = body.OwnerType.ToString();
+        var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
 
         // Find the slot
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
@@ -2111,7 +2111,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Get the slot
         var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
-        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
+        var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
         var slot = await slotStore.GetAsync(slotKey, cancellationToken);
 
         if (slot == null)
@@ -2583,7 +2583,7 @@ public partial class SaveLoadService : ISaveLoadService
     /// </summary>
     private async Task<SaveSlotMetadata?> FindSlotByOwnerAndNameAsync(
         Guid ownerId,
-        OwnerType ownerType,
+        EntityType ownerType,
         string slotName,
         CancellationToken cancellationToken)
     {

@@ -812,7 +812,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           minItems: 1
           description: Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild).
 
@@ -855,7 +855,7 @@ components:
           type: array
           nullable: true
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           minItems: 1
           description: Updated allowed owner types. Narrowing checks for existing boards with removed types.
 
@@ -946,7 +946,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner types allowed to create boards from this template
         isActive:
           type: boolean
@@ -1239,7 +1239,7 @@ components:
       - gameServiceId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, account, realm, guild)
         ownerId:
           type: string
@@ -1292,7 +1292,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the boards
         ownerId:
           type: string
@@ -1322,7 +1322,7 @@ components:
           format: uuid
           description: Unique board instance identifier
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board
         ownerId:
           type: string
@@ -1490,7 +1490,7 @@ components:
           format: uuid
           description: Board instance identifier
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, account, guild)
         ownerId:
           type: string
@@ -1530,7 +1530,7 @@ components:
           format: uuid
           description: Source board instance to clone unlock state from
         targetOwnerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity to clone the board to (must be in template's allowedOwnerTypes)
         targetOwnerId:
           type: string
@@ -1563,7 +1563,7 @@ components:
           format: uuid
           description: New board instance created for the target
         targetOwnerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity the board was cloned to
         targetOwnerId:
           type: string
@@ -1590,7 +1590,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity whose boards should be cleaned up
         ownerId:
           type: string
@@ -1607,7 +1607,7 @@ components:
       - boardsDeleted
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that was cleaned up
         ownerId:
           type: string

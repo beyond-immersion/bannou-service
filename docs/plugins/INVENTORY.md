@@ -41,6 +41,18 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | **EXCEPTION** (Mixed Entity + Non-Entity) | `ContainerOwnerType` enum | Service-specific enum rather than shared `EntityType` because it includes non-entity roles: `character`, `account`, `location`, `vehicle`, `guild`, `escrow`, `mail`, `other`. The `escrow` and `mail` values represent system custody contexts, not first-class Bannou entities. |
+| `containerType` | B (Content Code) | Opaque string | Game-configurable container classification (e.g., `inventory`, `bank`, `equipment_slot`, `loot_bag`, `mail_inbox`). Extensible without schema changes. |
+| `constraintModel` | C (System State) | `ContainerConstraintModel` enum | Finite system-owned capacity modes: `slot_only`, `weight_only`, `slot_and_weight`, `grid`, `volumetric`, `unlimited`. |
+| `weightContribution` | C (System State) | `WeightContribution` enum | Finite propagation modes: `none`, `self_only`, `self_plus_contents`. Controls how container weight propagates to parent. |
+| `constraintType` (ContainerFullEvent) | C (System State) | `ConstraintLimitType` enum | Finite capacity constraint types: `slots`, `weight`, `volume`, `grid`. Identifies which constraint was reached. |
+
+---
+
 ## State Storage
 
 **Stores**: 3 state stores

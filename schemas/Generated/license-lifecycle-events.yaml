@@ -172,7 +172,7 @@ components:
           format: uuid
           description: "Unique board instance identifier"
         ownerType: &id012
-          type: string
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Type of entity that owns this board"
         ownerId: &id013
           type: string

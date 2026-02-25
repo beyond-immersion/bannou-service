@@ -28,9 +28,12 @@ namespace BeyondImmersion.BannouService;
 using System = global::System;
 
 /// <summary>
-/// Universal entity type identifier used across Bannou services.
-/// <br/>Provides first-class support for various kinds of entities in analytics,
-/// <br/>achievements, leaderboards, contracts, relationships, and other systems.
+/// Universal entity type identifier for first-class Bannou entities.
+/// <br/>Used for polymorphic entity references (ownerType, entityType, partyType).
+/// <br/>
+/// <br/>NOT for game-configurable content type codes (use opaque strings) or
+/// <br/>service-specific roles that include non-entity values (use service-specific enums).
+/// <br/>See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -74,11 +77,23 @@ public enum EntityType
     [System.Runtime.Serialization.EnumMember(Value = @"monster")]
     Monster = 11,
 
+    [System.Runtime.Serialization.EnumMember(Value = @"relationship")]
+    Relationship = 12,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"session")]
+    Session = 13,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"deity")]
+    Deity = 14,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"dungeon")]
+    Dungeon = 15,
+
     [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 12,
+    Custom = 16,
 
     [System.Runtime.Serialization.EnumMember(Value = @"other")]
-    Other = 13,
+    Other = 17,
 
 }
 #pragma warning restore CS1591

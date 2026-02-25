@@ -486,6 +486,21 @@ flows:
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `axisCode` (on ArchetypeAxis) | B (Content Code) | Opaque string | Behavioral axis codes ("aggression", "territoriality", "curiosity", "fear_threshold", "sociality", etc.); game-configurable -- a horror game could define "stalking_patience", "ambush_preference" |
+| `speciesCode` (on BehavioralArchetype) | B (Content Code) | Opaque string | References lib-species entity codes; game-configurable species identifiers |
+| `archetypeCode` (on BehavioralArchetype) | B (Content Code) | Opaque string | Unique archetype identifier within game scope ("wolf", "cave-bear"); game-configurable |
+| `category` (on BehavioralArchetype) | B (Content Code) | Opaque string | Ecological role classification ("predator", "prey", "apex", "scavenger", "ambient", "pack", "solitary", "custom"); game-configurable |
+| `activityPattern` (on BehavioralArchetype) | C (System State) | Service-specific enum | Finite set of circadian activity modes ("diurnal", "nocturnal", "crepuscular", "cathemeral"); system-owned, used for time-of-day behavioral modulation |
+| `dietType` (on BehavioralArchetype) | C (System State) | Service-specific enum | Finite set of dietary classifications ("carnivore", "herbivore", "omnivore", "detritivore"); system-owned, affects resource interaction behavior |
+| `socialStructure` (on BehavioralArchetype) | C (System State) | Service-specific enum | Finite set of social organization modes ("solitary", "pair", "pack", "herd", "swarm", "colony"); system-owned, affects group behavior patterns |
+| `scopeType` (on EnvironmentalOverride) | C (System State) | Service-specific enum | Finite set of override scope levels (realm, location); system-owned, determines override resolution hierarchy |
+
+---
+
 ## Events
 
 ### Published Events

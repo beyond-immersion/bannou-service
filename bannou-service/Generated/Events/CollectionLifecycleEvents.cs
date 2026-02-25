@@ -582,7 +582,8 @@ public partial class CollectionCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection
@@ -655,7 +656,8 @@ public partial class CollectionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection
@@ -736,7 +738,8 @@ public partial class CollectionDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection

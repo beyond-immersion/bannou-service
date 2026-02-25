@@ -37,6 +37,17 @@ No services subscribe to relationship events.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entity1Type` / `entity2Type` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity participates in the relationship. All valid values are Bannou entities (character, account, realm, etc.) |
+| `sourceEntityType` / `targetEntityType` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Same as above, used in query/filter contexts to find relationships involving a specific entity type |
+| `relationshipTypeCode` | B (Content Code) | Opaque string | Game-configurable taxonomy codes (PARENT, FRIEND, RIVAL, WEAPON_WIELDER, etc.). Registered via API, not hardcoded. Uppercase-normalized. New codes added without schema changes |
+| `category` | B (Content Code) | Opaque string | Grouping label for relationship types (e.g., "FAMILY", "SOCIAL", "POLITICAL"). Game-configurable, used for filtering |
+
+---
+
 ## State Storage
 
 ### Relationship Store

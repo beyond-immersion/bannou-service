@@ -320,7 +320,7 @@ public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -385,7 +385,7 @@ public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -458,7 +458,7 @@ public partial class CurrencyWalletDeletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets

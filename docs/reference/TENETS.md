@@ -307,6 +307,9 @@ Tenets are organized into categories based on when they're needed:
 | Type-narrowing `object?` on `additionalProperties: true` field | T25, T29 | Keep `object?`; client metadata is opaque pass-through; do not inspect |
 | `JsonElement?` for client metadata field | T25, T29 | Use `object?`; type-narrowing implies inspection which violates T29 |
 | Pattern-matching or casting client metadata (`is JsonElement`) | T25, T29 | Store and return unchanged; service must not inspect structure |
+| String `ownerType`/`entityType` for L2+ entity references | T14, T25 | Use `$ref: EntityType` — hierarchy isolation only applies to L1 enumerating L2+ types |
+| Service-specific enum duplicating EntityType values | T14 | Use `$ref: EntityType` unless valid set includes non-entity roles (see T14 decision tree) |
+| L2 service using opaque string for entity types within L1/L2 | T14, T25 | EntityType is appropriate — hierarchy isolation does not apply within same layer or lower |
 | Using `Guid.Empty` to mean "none" | T26 | Make field `Guid?` nullable |
 | Using `-1` to mean "no index" | T26 | Make field `int?` nullable |
 | Using empty string for "absent" | T26 | Make field `string?` nullable |

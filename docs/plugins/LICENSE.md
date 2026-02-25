@@ -76,6 +76,17 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | Identifies what kind of entity owns a board (character, account, guild, location). All valid values are first-class Bannou entities. Recently migrated from opaque string to the shared `EntityType` enum from `common-api.yaml`. |
+| `adjacencyMode` | C (System State/Mode) | `AdjacencyMode` enum | Grid traversal mode (`four_way`, `eight_way`). Board-internal configuration controlling unlock adjacency validation. |
+| `status` (on `BoardNodeState`) | C (System State/Mode) | `LicenseStatus` enum | Node unlock status (`locked`, `unlockable`, `unlocked`). Computed state representing where a node stands in the unlock progression. |
+| `reason` (on `LicenseUnlockFailedEvent`) | C (System State/Mode) | `UnlockFailureReason` enum | Why an unlock attempt failed (`not_adjacent`, `insufficient_lp`, `contract_failed`, etc.). Service-specific error classification. |
+
+---
+
 ## Events
 
 ### Published Events

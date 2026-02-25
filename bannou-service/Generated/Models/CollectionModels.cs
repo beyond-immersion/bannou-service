@@ -647,13 +647,13 @@ public partial class CreateCollectionRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type discriminator (e.g., account, character)
+    /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection to create
@@ -709,10 +709,10 @@ public partial class ListCollectionsRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by game service
@@ -766,10 +766,10 @@ public partial class CollectionResponse
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection
@@ -847,10 +847,10 @@ public partial class GrantEntryRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -959,10 +959,10 @@ public partial class HasEntryRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -1225,10 +1225,10 @@ public partial class GetCompletionStatsRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -1335,10 +1335,10 @@ public partial class SelectContentForAreaRequest
     /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope

@@ -81,7 +81,7 @@ x-lifecycle:
     model:
       seedId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the seed" }
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this seed" }
-      ownerType: { type: string, required: true, description: "Owner entity type discriminator" }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type discriminator" }
       seedTypeCode: { type: string, required: true, description: "Registered seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this seed is scoped to. Null for cross-game seed types." }
       growthPhase: { type: string, required: true, description: "Current computed growth phase code" }
@@ -270,7 +270,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type
         seedTypeCode:
           type: string
@@ -310,7 +310,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type
         seedTypeCode:
           type: string

@@ -80,38 +80,6 @@ public enum CurrencyPrecision
 #pragma warning restore CS1591
 
 /// <summary>
-/// Type of entity that owns a wallet
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum WalletOwnerType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"account")]
-    Account = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"character")]
-    Character = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"npc")]
-    Npc = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"guild")]
-    Guild = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"faction")]
-    Faction = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"location")]
-    Location = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"system")]
-    System = 6,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Current status of a wallet
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -1038,7 +1006,7 @@ public partial class CreateWalletRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets (null for global)
@@ -1072,7 +1040,7 @@ public partial class GetWalletRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType? OwnerType { get; set; } = default!;
+    public EntityType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID (required if using ownerId lookup)
@@ -1104,7 +1072,7 @@ public partial class GetOrCreateWalletRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID for realm-scoped wallets
@@ -1212,7 +1180,7 @@ public partial class WalletResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public WalletOwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Realm ID

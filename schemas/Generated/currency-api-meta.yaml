@@ -748,14 +748,10 @@ paths:
         \                \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n    \
         \            \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Owner entity ID\"\n                },\n                \"ownerType\": {\n\
-        \                    \"$ref\": \"#/$defs/WalletOwnerType\",\n                    \"description\": \"Type of owner
-        entity\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Realm ID for realm-scoped wallets (null for global)\"\n                }\n            }\n        },\n        \"\
-        WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns a
-        wallet\",\n            \"enum\": [\n                \"account\",\n                \"character\",\n               \
-        \ \"npc\",\n                \"guild\",\n                \"faction\",\n                \"location\",\n            \
-        \    \"system\"\n            ]\n        }\n    }\n}"
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of owner entity\"\n      \
+        \          },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm ID for realm-scoped
+        wallets (null for global)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WalletResponse\"\
         ,\n    \"$defs\": {\n        \"WalletResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Wallet details\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
@@ -764,28 +760,24 @@ paths:
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique wallet identifier\"\n                },\n                \"ownerId\": {\n                    \"type\":
         \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\n\
-        \                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\",\n\
-        \                    \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n    \
-        \                \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\
-        \n                },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n               \
-        \ },\n                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\
-        \n                },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
+        \                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n               \
+        \     \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Realm ID\"\n                },\n                \"status\": {\n                  \
+        \  \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\n         \
+        \       },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n                },\n       \
+        \         \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\n    \
+        \            },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
-        \            }\n        },\n        \"WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns a wallet\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"faction\",\n               \
-        \ \"location\",\n                \"system\"\n            ]\n        },\n        \"WalletStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n        }\n    }\n\
-        }"
+        \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
+        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new wallet for an owner\",\n    \"description\": \"Creates a new
         wallet for a polymorphic owner (account, character, NPC, guild, etc.).\\nEach owner+ownerType+realm combination can
         have at most one wallet.\\n\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -824,15 +816,11 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Wallet ID (provide this or ownerId+ownerType)\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Owner
-        ID (requires ownerType)\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"\
-        #/$defs/WalletOwnerType\",\n                    \"nullable\": true,\n                    \"description\": \"Owner
-        type (requires ownerId)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID (required if using ownerId lookup)\"\n                }\n            }\n        },\n        \"WalletOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns a wallet\",\n    \
-        \        \"enum\": [\n                \"account\",\n                \"character\",\n                \"npc\",\n   \
-        \             \"guild\",\n                \"faction\",\n                \"location\",\n                \"system\"\n\
-        \            ]\n        }\n    }\n}"
+        ID (requires ownerType)\"\n                },\n                \"ownerType\": {\n                    \"type\": \"\
+        object\",\n                    \"nullable\": true,\n                    \"description\": \"Owner type (requires ownerId)\"\
+        \n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm
+        ID (required if using ownerId lookup)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/WalletWithBalancesResponse\"\
         ,\n    \"$defs\": {\n        \"WalletWithBalancesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Wallet with all non-zero balances\",\n            \"additionalProperties\": false,\n            \"\
@@ -848,41 +836,37 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique wallet identifier\"\n                },\n                \"ownerId\": {\n                \
         \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner
-        entity ID\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\"\
-        ,\n                    \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n  \
-        \                  \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\
-        \n                },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n               \
-        \ },\n                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\
-        \n                },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
+        entity ID\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n   \
+        \                 \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n          \
+        \          \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\n \
+        \               },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n                },\n\
+        \                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\n    \
+        \            },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
-        \            }\n        },\n        \"WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns a wallet\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"faction\",\n               \
-        \ \"location\",\n                \"system\"\n            ]\n        },\n        \"WalletStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n        },\n    \
-        \    \"BalanceSummary\": {\n            \"type\": \"object\",\n            \"description\": \"Summary of a balance
-        in a wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"currencyDefinitionId\"\
-        ,\n                \"currencyCode\",\n                \"amount\",\n                \"lockedAmount\",\n           \
-        \     \"effectiveAmount\"\n            ],\n            \"properties\": {\n                \"currencyDefinitionId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Currency definition ID\"\n                },\n                \"currencyCode\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Currency code for convenience\"\n          \
-        \      },\n                \"amount\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Total balance amount\"\n                },\n               \
-        \ \"lockedAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n  \
-        \                  \"description\": \"Amount reserved by authorization holds\"\n                },\n             \
-        \   \"effectiveAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"Available balance (amount - lockedAmount)\"\n                }\n       \
-        \     }\n        }\n    }\n}"
+        \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
+        ,\n                \"closed\"\n            ]\n        },\n        \"BalanceSummary\": {\n            \"type\": \"\
+        object\",\n            \"description\": \"Summary of a balance in a wallet\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"currencyDefinitionId\",\n                \"currencyCode\"\
+        ,\n                \"amount\",\n                \"lockedAmount\",\n                \"effectiveAmount\"\n         \
+        \   ],\n            \"properties\": {\n                \"currencyDefinitionId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Currency definition
+        ID\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n       \
+        \             \"description\": \"Currency code for convenience\"\n                },\n                \"amount\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Total balance amount\"\n                },\n                \"lockedAmount\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Amount reserved by authorization holds\"\n                },\n                \"effectiveAmount\": {\n           \
+        \         \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Available balance (amount - lockedAmount)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get wallet by ID or owner\",\n    \"description\": \"Retrieves a wallet
         by its ID, or by owner+ownerType+realm combination.\\nReturns the wallet with all non-zero balances.\\n\",\n    \"\
         tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getWallet\"\n}"
@@ -917,14 +901,10 @@ paths:
         [\n                \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n  \
         \              \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Owner entity ID\"\n                },\n                \"ownerType\": {\n\
-        \                    \"$ref\": \"#/$defs/WalletOwnerType\",\n                    \"description\": \"Type of owner
-        entity\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n        \
-        \            \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Realm ID for realm-scoped wallets\"\n                }\n            }\n        },\n        \"WalletOwnerType\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns a wallet\",\n      \
-        \      \"enum\": [\n                \"account\",\n                \"character\",\n                \"npc\",\n     \
-        \           \"guild\",\n                \"faction\",\n                \"location\",\n                \"system\"\n\
-        \            ]\n        }\n    }\n}"
+        \                    \"type\": \"object\",\n                    \"description\": \"Type of owner entity\"\n      \
+        \          },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm ID for realm-scoped
+        wallets\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetOrCreateWalletResponse\"\
         ,\n    \"$defs\": {\n        \"GetOrCreateWalletResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of get-or-create operation\",\n            \"additionalProperties\": false,\n            \"required\":
@@ -942,10 +922,10 @@ paths:
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique wallet identifier\"\
         \n                },\n                \"ownerId\": {\n                    \"type\": \"string\",\n                \
         \    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\n                },\n       \
-        \         \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\",\n                    \"description\"\
-        : \"Owner type\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Realm ID\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/WalletStatus\"\
+        \         \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Owner
+        type\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Realm ID\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/WalletStatus\"\
         ,\n                    \"description\": \"Current wallet status\"\n                },\n                \"frozenReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Reason wallet was frozen\"\n                },\n                \"frozenAt\": {\n                    \"type\"\
@@ -956,26 +936,23 @@ paths:
         string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
         \n                },\n                \"lastActivityAt\": {\n                    \"type\": \"string\",\n         \
         \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Last transaction timestamp\"\n                }\n            }\n        },\n        \"WalletOwnerType\": {\n \
-        \           \"type\": \"string\",\n            \"description\": \"Type of entity that owns a wallet\",\n         \
-        \   \"enum\": [\n                \"account\",\n                \"character\",\n                \"npc\",\n        \
-        \        \"guild\",\n                \"faction\",\n                \"location\",\n                \"system\"\n   \
-        \         ]\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
-        ,\n                \"closed\"\n            ]\n        },\n        \"BalanceSummary\": {\n            \"type\": \"\
-        object\",\n            \"description\": \"Summary of a balance in a wallet\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"currencyDefinitionId\",\n                \"currencyCode\"\
-        ,\n                \"amount\",\n                \"lockedAmount\",\n                \"effectiveAmount\"\n         \
-        \   ],\n            \"properties\": {\n                \"currencyDefinitionId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Currency definition
-        ID\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n       \
-        \             \"description\": \"Currency code for convenience\"\n                },\n                \"amount\":
-        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Total balance amount\"\n                },\n                \"lockedAmount\": {\n               \
-        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
-        Amount reserved by authorization holds\"\n                },\n                \"effectiveAmount\": {\n           \
-        \         \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"Available balance (amount - lockedAmount)\"\n                }\n            }\n        }\n    }\n}"
+        : \"Last transaction timestamp\"\n                }\n            }\n        },\n        \"WalletStatus\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\"\
+        : [\n                \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n       \
+        \ },\n        \"BalanceSummary\": {\n            \"type\": \"object\",\n            \"description\": \"Summary of
+        a balance in a wallet\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"currencyDefinitionId\",\n                \"currencyCode\",\n                \"amount\",\n                \"\
+        lockedAmount\",\n                \"effectiveAmount\"\n            ],\n            \"properties\": {\n            \
+        \    \"currencyDefinitionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Currency definition ID\"\n                },\n                \"currencyCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Currency code for convenience\"\
+        \n                },\n                \"amount\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"double\",\n                    \"description\": \"Total balance amount\"\n                },\n \
+        \               \"lockedAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Amount reserved by authorization holds\"\n                },\n \
+        \               \"effectiveAmount\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Available balance (amount - lockedAmount)\"\n              \
+        \  }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get existing wallet or create if not exists\",\n    \"description\": \"\
         Retrieves a wallet if it exists, otherwise creates a new one.\\nUpsert pattern for convenience.\\n\",\n    \"tags\"\
         : [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getOrCreateWallet\"\n}"
@@ -1025,28 +1002,24 @@ paths:
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique wallet identifier\"\n                },\n                \"ownerId\": {\n                    \"type\":
         \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\n\
-        \                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\",\n\
-        \                    \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n    \
-        \                \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\
-        \n                },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n               \
-        \ },\n                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\
-        \n                },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
+        \                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n               \
+        \     \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Realm ID\"\n                },\n                \"status\": {\n                  \
+        \  \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\n         \
+        \       },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n                },\n       \
+        \         \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\n    \
+        \            },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
-        \            }\n        },\n        \"WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns a wallet\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"faction\",\n               \
-        \ \"location\",\n                \"system\"\n            ]\n        },\n        \"WalletStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n        }\n    }\n\
-        }"
+        \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
+        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Freeze a wallet to prevent transactions\",\n    \"description\": \"Freezes
         a wallet, preventing all transactions. The reason is recorded\\nfor audit purposes. Frozen wallets can still be queried.\\\
         n\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"freezeWallet\"\
@@ -1092,28 +1065,24 @@ paths:
         \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique wallet identifier\"\n                },\n                \"ownerId\": {\n                    \"type\":
         \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner entity ID\"\n\
-        \                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\",\n\
-        \                    \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n       \
-        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n    \
-        \                \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\
-        \n                },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n               \
-        \ },\n                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\
-        \n                },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
+        \                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n               \
+        \     \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Realm ID\"\n                },\n                \"status\": {\n                  \
+        \  \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\n         \
+        \       },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n                },\n       \
+        \         \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\n    \
+        \            },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
-        \            }\n        },\n        \"WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns a wallet\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"faction\",\n               \
-        \ \"location\",\n                \"system\"\n            ]\n        },\n        \"WalletStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n        }\n    }\n\
-        }"
+        \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
+        ,\n                \"closed\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Unfreeze a frozen wallet\",\n    \"description\": \"Restores a frozen wallet
         to active status, allowing transactions again.\",\n    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"unfreezeWallet\"\n}"
@@ -1170,35 +1139,31 @@ paths:
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Unique wallet identifier\"\n                },\n                \"ownerId\": {\n                \
         \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Owner
-        entity ID\"\n                },\n                \"ownerType\": {\n                    \"$ref\": \"#/$defs/WalletOwnerType\"\
-        ,\n                    \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n  \
-        \                  \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\
-        \n                },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n               \
-        \ },\n                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\
-        \n                },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
+        entity ID\"\n                },\n                \"ownerType\": {\n                    \"type\": \"object\",\n   \
+        \                 \"description\": \"Owner type\"\n                },\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Realm ID\"\n                },\n                \"status\": {\n          \
+        \          \"$ref\": \"#/$defs/WalletStatus\",\n                    \"description\": \"Current wallet status\"\n \
+        \               },\n                \"frozenReason\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Reason wallet was frozen\"\n                },\n\
+        \                \"frozenAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When wallet was frozen\"\n    \
+        \            },\n                \"frozenBy\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Who froze the wallet\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Creation timestamp\"\n                },\n                \"lastActivityAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"Last transaction timestamp\"\n                }\n\
-        \            }\n        },\n        \"WalletOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns a wallet\",\n            \"enum\": [\n                \"account\",\n                \"\
-        character\",\n                \"npc\",\n                \"guild\",\n                \"faction\",\n               \
-        \ \"location\",\n                \"system\"\n            ]\n        },\n        \"WalletStatus\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Current status of a wallet\",\n            \"enum\": [\n     \
-        \           \"active\",\n                \"frozen\",\n                \"closed\"\n            ]\n        },\n    \
-        \    \"TransferredBalance\": {\n            \"type\": \"object\",\n            \"description\": \"A balance that was
-        transferred during wallet close\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
-        \              \"currencyDefinitionId\",\n                \"amount\"\n            ],\n            \"properties\":
-        {\n                \"currencyDefinitionId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Currency definition ID\"\n                },\n       \
-        \         \"amount\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
-        \                    \"description\": \"Amount transferred\"\n                }\n            }\n        }\n    }\n\
-        }"
+        \            }\n        },\n        \"WalletStatus\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Current status of a wallet\",\n            \"enum\": [\n                \"active\",\n                \"frozen\"\
+        ,\n                \"closed\"\n            ]\n        },\n        \"TransferredBalance\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"A balance that was transferred during wallet close\",\n            \"\
+        additionalProperties\": false,\n            \"required\": [\n                \"currencyDefinitionId\",\n         \
+        \       \"amount\"\n            ],\n            \"properties\": {\n                \"currencyDefinitionId\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Currency definition ID\"\n                },\n                \"amount\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"description\": \"Amount transferred\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Permanently close a wallet\",\n    \"description\": \"Permanently closes
         a wallet and transfers any remaining balances to a\\ndestination wallet. Closed wallets cannot be reopened.\\n\",\n\
         \    \"tags\": [\n        \"Wallet\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"closeWallet\"\n}"
@@ -3552,17 +3517,6 @@ components:
       - decimal_8
       - decimal_full
       - big_integer
-    WalletOwnerType:
-      type: string
-      description: Type of entity that owns a wallet
-      enum:
-      - account
-      - character
-      - npc
-      - guild
-      - faction
-      - location
-      - system
     WalletStatus:
       type: string
       description: Current status of a wallet
@@ -4130,7 +4084,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -4153,7 +4107,7 @@ components:
           nullable: true
           description: Owner ID (requires ownerType)
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Owner type (requires ownerId)
         realmId:
@@ -4174,7 +4128,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -4245,7 +4199,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner type
         realmId:
           type: string

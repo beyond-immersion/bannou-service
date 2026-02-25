@@ -1038,18 +1038,6 @@ components:
       - decimal_full
       - big_integer
 
-    WalletOwnerType:
-      type: string
-      description: Type of entity that owns a wallet
-      enum:
-      - account
-      - character
-      - npc
-      - guild
-      - faction
-      - location
-      - system
-
     WalletStatus:
       type: string
       description: Current status of a wallet
@@ -1642,7 +1630,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -1666,7 +1654,7 @@ components:
           nullable: true
           description: Owner ID (requires ownerType)
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Owner type (requires ownerId)
         realmId:
@@ -1688,7 +1676,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -1763,7 +1751,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner type
         realmId:
           type: string

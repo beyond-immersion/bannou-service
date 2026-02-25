@@ -4,6 +4,7 @@
 // Updates faction's currentPhase and status based on seed evolution.
 // =============================================================================
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -64,7 +65,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
         // Faction seeds are owned by factions (ownerType = "faction")
-        if (!string.Equals(notification.OwnerType, "faction", StringComparison.OrdinalIgnoreCase))
+        if (notification.OwnerType != EntityType.Faction)
         {
             return;
         }
@@ -82,7 +83,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
-        if (!string.Equals(notification.OwnerType, "faction", StringComparison.OrdinalIgnoreCase))
+        if (notification.OwnerType != EntityType.Faction)
         {
             return;
         }
@@ -139,7 +140,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
-        if (!string.Equals(notification.OwnerType, "faction", StringComparison.OrdinalIgnoreCase))
+        if (notification.OwnerType != EntityType.Faction)
         {
             return;
         }

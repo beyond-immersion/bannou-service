@@ -800,7 +800,8 @@ public partial class GrantStatusRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope for template lookup
@@ -886,7 +887,8 @@ public partial class RemoveBySourceRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Source that originally granted the statuses
@@ -919,7 +921,8 @@ public partial class RemoveByCategoryRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Category of statuses to remove
@@ -962,7 +965,8 @@ public partial class HasStatusRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Status template code to check for
@@ -995,7 +999,8 @@ public partial class ListStatusesRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by status category
@@ -1191,7 +1196,8 @@ public partial class StatusInstanceResponse
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Status template code
@@ -1329,7 +1335,8 @@ public partial class GetEffectsRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Whether to include seed-derived passive effects. Defaults to true because GetEffects is the unified query endpoint designed to return all active effects. Set to false to retrieve only item-based statuses from this endpoint.
@@ -1360,7 +1367,8 @@ public partial class GetSeedEffectsRequest
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
 }
 
@@ -1385,7 +1393,8 @@ public partial class GetEffectsResponse
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Number of item-based status effects
@@ -1430,7 +1439,8 @@ public partial class SeedEffectsResponse
     [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string EntityType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
 
     /// <summary>
     /// Seed-derived passive effects
@@ -1455,7 +1465,8 @@ public partial class CleanupByOwnerRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Owner entity identifier

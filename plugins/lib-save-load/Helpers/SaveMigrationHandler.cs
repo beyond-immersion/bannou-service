@@ -247,7 +247,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 return (StatusCodes.NotFound, null);
             }
 
-            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
+            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
 
             // Get source version
             var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);

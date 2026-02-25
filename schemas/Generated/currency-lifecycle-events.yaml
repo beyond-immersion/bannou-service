@@ -156,7 +156,7 @@ components:
           format: uuid
           description: "Owner entity ID"
         ownerType: &id011
-          $ref: ../currency-api.yaml#/components/schemas/WalletOwnerType
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type"
         realmId: &id012
           type: string

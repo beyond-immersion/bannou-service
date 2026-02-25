@@ -18120,7 +18120,7 @@ components:
           format: uuid
           description: Entity that received this blessing
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that received this blessing
         tier:
           $ref: '#/components/schemas/BlessingTier'
@@ -18180,7 +18180,7 @@ components:
           format: uuid
           description: Entity that received this blessing
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that received this blessing
         tier:
           $ref: '#/components/schemas/BlessingTier'
@@ -18274,7 +18274,7 @@ components:
           format: uuid
           description: Unique board instance identifier
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this board
         ownerId:
           type: string
@@ -18332,7 +18332,7 @@ components:
           format: uuid
           description: Board instance identifier
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, 
             account, guild)
         ownerId:
@@ -18408,7 +18408,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EntityType'
           description: Owner types allowed to create boards from this template
         isActive:
           type: boolean
@@ -20637,7 +20637,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity whose boards should be cleaned up
         ownerId:
           type: string
@@ -20653,7 +20653,7 @@ components:
       - boardsDeleted
       properties:
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that was cleaned up
         ownerId:
           type: string
@@ -20967,7 +20967,7 @@ components:
           format: uuid
           description: Source board instance to clone unlock state from
         targetOwnerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity to clone the board to (must be in 
             template's allowedOwnerTypes)
         targetOwnerId:
@@ -21002,7 +21002,7 @@ components:
           format: uuid
           description: New board instance created for the target
         targetOwnerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity the board was cloned to
         targetOwnerId:
           type: string
@@ -21032,7 +21032,7 @@ components:
           format: uuid
           description: Entity ID that owns the save slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -21118,9 +21118,7 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -22986,7 +22984,7 @@ components:
           format: uuid
           description: Entity ID that owns the source save
         sourceOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns the source save
         sourceSlotName:
           type: string
@@ -23003,7 +23001,7 @@ components:
           format: uuid
           description: Entity ID that will own the copied save
         targetOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that will own the copied save
         targetSlotName:
           type: string
@@ -23291,7 +23289,7 @@ components:
       - gameServiceId
       properties:
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this board (e.g., character, 
             account, realm, guild)
         ownerId:
@@ -23368,7 +23366,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EntityType'
           minItems: 1
           description: Owner types allowed to create boards from this template. 
             Each must map to a supported container owner type (e.g., character, 
@@ -23457,10 +23455,8 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Entity type discriminator (e.g., account, character)
+          $ref: '#/components/schemas/EntityType'
+          description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to create
@@ -24754,10 +24750,8 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
-          description: >
-            Entity type discriminator (e.g., "account", "actor", "realm",
-            "character", "relationship").
+          $ref: '#/components/schemas/EntityType'
+          description: Owner entity type discriminator.
         seedTypeCode:
           type: string
           description: Registered seed type code (e.g., "guardian", 
@@ -24802,7 +24796,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -25000,7 +24994,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -26137,7 +26131,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -26184,7 +26178,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -27510,9 +27504,12 @@ components:
     EntityType:
       type: string
       description: |
-        Universal entity type identifier used across Bannou services.
-        Provides first-class support for various kinds of entities in analytics,
-        achievements, leaderboards, contracts, relationships, and other systems.
+        Universal entity type identifier for first-class Bannou entities.
+        Used for polymorphic entity references (ownerType, entityType, partyType).
+
+        NOT for game-configurable content type codes (use opaque strings) or
+        service-specific roles that include non-entity values (use service-specific enums).
+        See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
       enum:
       - system
       - account
@@ -27526,6 +27523,10 @@ components:
       - realm
       - item
       - monster
+      - relationship
+      - session
+      - deity
+      - dungeon
       - custom
       - other
     EntryMetadata:
@@ -28915,7 +28916,7 @@ components:
           format: uuid
           description: Entity ID that owns the saves to export
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns the saves to export
         slotNames:
           type: array
@@ -28933,7 +28934,6 @@ components:
       properties:
         downloadUrl:
           type: string
-          format: uri
           description: Pre-signed URL to download export archive
         expiresAt:
           type: string
@@ -30365,9 +30365,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -30709,7 +30707,7 @@ components:
           format: uuid
           description: Entity to get effects for
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         includePassive:
           type: boolean
@@ -30734,7 +30732,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         itemBasedCount:
           type: integer
@@ -31509,7 +31507,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -32133,7 +32131,7 @@ components:
           format: uuid
           description: Entity to get seed effects for
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
     GetSeedRequest:
       type: object
@@ -32172,7 +32170,7 @@ components:
           format: uuid
           description: The owner entity ID.
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: The owner entity type.
         seedTypeCode:
           type: string
@@ -32244,7 +32242,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -32558,7 +32556,7 @@ components:
           nullable: true
           description: Owner ID (requires ownerType)
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Owner type (requires ownerId)
         realmId:
@@ -32718,7 +32716,7 @@ components:
           format: uuid
           description: Entity receiving the blessing
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity receiving the blessing (e.g., character, 
             account, deity)
         tier:
@@ -32747,9 +32745,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -32831,7 +32827,7 @@ components:
           format: uuid
           description: Entity to receive the status effect
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator (e.g., character, account)
         gameServiceId:
           type: string
@@ -33076,9 +33072,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -33213,7 +33207,7 @@ components:
           format: uuid
           description: Entity to check
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         statusCode:
           type: string
@@ -34834,7 +34828,7 @@ components:
           format: uuid
           description: Entity whose blessings to list
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity (e.g., character, account, deity)
         page:
           type: integer
@@ -34923,7 +34917,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns the boards
         ownerId:
           type: string
@@ -35111,9 +35105,7 @@ components:
           format: uuid
           description: Entity to list collections for
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -36856,7 +36848,8 @@ components:
           nullable: true
           description: Filter by seed type.
         ownerType:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type.
         gameServiceId:
@@ -36950,7 +36943,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns the save slots to list
         category:
           allOf:
@@ -37103,7 +37096,7 @@ components:
           format: uuid
           description: Entity to list statuses for
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           nullable: true
@@ -37389,7 +37382,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -38368,7 +38361,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -39332,14 +39325,6 @@ components:
         CASCADE: Delete dependent entities when resource is deleted
         RESTRICT: Block resource deletion if references exist
         DETACH: Set reference to null when resource is deleted
-    OwnerType:
-      type: string
-      enum:
-      - ACCOUNT
-      - CHARACTER
-      - SESSION
-      - REALM
-      description: Type of entity that owns this save slot
     PageContent:
       description: Full content and metadata for a CMS-managed page
       type: object
@@ -39567,7 +39552,7 @@ components:
           format: uuid
           description: Partner's owner entity ID.
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Partner's owner entity type.
         growthPhase:
           type: string
@@ -40031,7 +40016,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -40486,7 +40471,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -41356,7 +41341,7 @@ components:
           description: Filter by owner ID
         ownerType:
           allOf:
-          - $ref: '#/components/schemas/OwnerType'
+          - $ref: '#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type
         category:
@@ -42884,7 +42869,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EntityType'
           description: Entity types that can own seeds of this type.
         growthPhases:
           type: array
@@ -43350,7 +43335,7 @@ components:
           format: uuid
           description: Entity to cleanse statuses from
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -43373,7 +43358,7 @@ components:
           format: uuid
           description: Entity to remove statuses from
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         sourceId:
           type: string
@@ -43475,7 +43460,7 @@ components:
           format: uuid
           description: Entity ID that owns the slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -44339,7 +44324,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -44439,7 +44424,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -44530,7 +44515,6 @@ components:
           description: Checkpoint name if pinned
         thumbnailUrl:
           type: string
-          format: uri
           nullable: true
           description: Pre-signed URL to retrieve thumbnail (if provided)
         conflictDetected:
@@ -45807,7 +45791,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         effects:
           type: array
@@ -45863,7 +45847,7 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Owner entity type discriminator.
         seedTypeCode:
           type: string
@@ -45991,7 +45975,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EntityType'
           description: Allowed owner entity types.
         growthPhases:
           type: array
@@ -46063,9 +46047,7 @@ components:
           format: uuid
           description: Entity whose collection to search
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -46592,7 +46574,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -47205,7 +47187,7 @@ components:
           format: uuid
           description: Entity this status is applied to
         entityType:
-          type: string
+          $ref: '#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -49011,7 +48993,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -49239,7 +49221,7 @@ components:
           type: array
           nullable: true
           items:
-            type: string
+            $ref: '#/components/schemas/EntityType'
           minItems: 1
           description: Updated allowed owner types. Narrowing checks for 
             existing boards with removed types.
@@ -51394,7 +51376,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -51722,17 +51704,6 @@ components:
       - sphere
       - capsule
       - cylinder
-    WalletOwnerType:
-      type: string
-      description: Type of entity that owns a wallet
-      enum:
-      - account
-      - character
-      - npc
-      - guild
-      - faction
-      - location
-      - system
     WalletResponse:
       type: object
       description: Wallet details
@@ -51753,7 +51724,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: '#/components/schemas/EntityType'
           description: Owner type
         realmId:
           type: string

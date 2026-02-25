@@ -1891,7 +1891,7 @@ public partial class CurrencyService : ICurrencyService
         return await store.GetAsync($"{WALLET_PREFIX}{id}", ct);
     }
 
-    private async Task<WalletModel?> ResolveWalletAsync(Guid? walletId, Guid? ownerId, WalletOwnerType? ownerType, Guid? realmId, CancellationToken ct)
+    private async Task<WalletModel?> ResolveWalletAsync(Guid? walletId, Guid? ownerId, EntityType? ownerType, Guid? realmId, CancellationToken ct)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.currency", "CurrencyService.ResolveWalletAsync");
         if (walletId.HasValue)
@@ -2401,7 +2401,7 @@ public partial class CurrencyService : ICurrencyService
         };
     }
 
-    private static string BuildOwnerKey(Guid ownerId, WalletOwnerType ownerType, Guid? realmId)
+    private static string BuildOwnerKey(Guid ownerId, EntityType ownerType, Guid? realmId)
     {
         return realmId.HasValue ? $"{ownerId}:{ownerType}:{realmId.Value}" : $"{ownerId}:{ownerType}";
     }

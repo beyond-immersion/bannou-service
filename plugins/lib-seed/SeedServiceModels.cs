@@ -26,8 +26,8 @@ internal class SeedModel
     /// <summary>The entity that owns this seed.</summary>
     public Guid OwnerId { get; set; }
 
-    /// <summary>Owner entity type discriminator (e.g., "account", "actor", "realm").</summary>
-    public string OwnerType { get; set; } = string.Empty;
+    /// <summary>Owner entity type discriminator.</summary>
+    public EntityType OwnerType { get; set; }
 
     /// <summary>Registered seed type code.</summary>
     public string SeedTypeCode { get; set; } = string.Empty;
@@ -110,7 +110,7 @@ internal class SeedTypeDefinitionModel
     public int MaxPerOwner { get; set; }
 
     /// <summary>Entity types that can own seeds of this type.</summary>
-    public List<string> AllowedOwnerTypes { get; set; } = new();
+    public List<EntityType> AllowedOwnerTypes { get; set; } = new();
 
     /// <summary>Ordered growth phase definitions with thresholds.</summary>
     public List<GrowthPhaseDefinition> GrowthPhases { get; set; } = new();

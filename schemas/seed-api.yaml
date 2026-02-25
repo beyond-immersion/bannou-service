@@ -712,10 +712,8 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
-          description: >
-            Entity type discriminator (e.g., "account", "actor", "realm",
-            "character", "relationship").
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Owner entity type discriminator.
         seedTypeCode:
           type: string
           description: Registered seed type code (e.g., "guardian", "dungeon_core").
@@ -758,7 +756,7 @@ components:
           format: uuid
           description: The owner entity ID.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: The owner entity type.
         seedTypeCode:
           type: string
@@ -778,7 +776,8 @@ components:
           nullable: true
           description: Filter by seed type.
         ownerType:
-          type: string
+          allOf:
+            - $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type.
         gameServiceId:
@@ -961,7 +960,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity types that can own seeds of this type.
         growthPhases:
           type: array
@@ -1235,7 +1234,7 @@ components:
           format: uuid
           description: The entity that owns this seed.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type discriminator.
         seedTypeCode:
           type: string
@@ -1411,7 +1410,7 @@ components:
         allowedOwnerTypes:
           type: array
           items:
-            type: string
+            $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Allowed owner entity types.
         growthPhases:
           type: array
@@ -1553,7 +1552,7 @@ components:
           format: uuid
           description: Partner's owner entity ID.
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Partner's owner entity type.
         growthPhase:
           type: string

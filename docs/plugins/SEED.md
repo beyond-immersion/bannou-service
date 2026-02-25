@@ -39,6 +39,18 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (accounts, actors, realms, characters, relationships). Recently migrated to shared EntityType enum. |
+| `seedTypeCode` | B (Content Code) | Opaque string | Game-configurable seed type identifier. New types registered via API without schema changes (e.g., `guardian`, `dungeon_core`, `combat_archetype`). |
+| `growthPhase` | B (Content Code) | Opaque string | Phase labels defined per seed type in `GrowthPhases` configuration. Extensible per type without schema changes (e.g., `nascent`, `stirring`, `awakened`, `ancient`). Falls back to `"initial"` if no phases defined. |
+| `status` | C (System State) | `SeedStatus` enum | Finite lifecycle states: `active`, `dormant`, `archived`. System-owned transitions. |
+| `direction` (SeedPhaseChangedEvent) | C (System State) | `PhaseChangeDirection` enum | Binary system state: `progressed` or `regressed`. Determined by growth vs decay mechanics. |
+
+---
+
 ## State Storage
 
 **Store**: `seed-statestore` (Backend: MySQL)

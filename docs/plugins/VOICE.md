@@ -119,6 +119,23 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `tier` | C (System State/Mode) | `VoiceTier` enum (`p2p`, `scaled`) | Communication infrastructure tier; system topology choice, not game content |
+| `codec` | C (System State/Mode) | `VoiceCodec` enum (`opus`, `g711`, `g722`) | Audio codec selection; system infrastructure choice |
+| `broadcastState` / `state` | C (System State/Mode) | `BroadcastConsentState` enum (`Inactive`, `Pending`, `Approved`) | Tracks position in the broadcast consent state machine |
+| `reason` (VoiceRoomDeletedEvent) | C (System State/Mode) | `VoiceRoomDeletedReason` enum (`Manual`, `Empty`, `Error`) | Classifies the cause of room deletion; system lifecycle reason |
+| `reason` (VoiceRoomBroadcastStoppedEvent) | C (System State/Mode) | `VoiceBroadcastStoppedReason` enum (`ConsentRevoked`, `RoomClosed`, `Manual`, `Error`) | Classifies the cause of broadcast termination; system lifecycle reason |
+
+**Notes**:
+- Voice service has no `EntityType` enum fields (Category A). Participants are identified by `sessionId` (WebSocket session UUID), not by entity type polymorphism. This is a deliberate privacy-first design -- session IDs prevent leaking account information.
+- Voice service has no opaque string type fields (Category B). It is game-agnostic with no game-configurable content types.
+- All type fields are Category C (system state/mode), reflecting Voice's nature as a pure infrastructure primitive.
+
+---
+
 ## State Storage
 
 **Store**: `voice-statestore` (Backend: Redis, prefix: `voice`)

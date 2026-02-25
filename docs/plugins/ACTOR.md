@@ -177,6 +177,21 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ActorDeploymentMode` | C (System State) | Service-specific enum (`bannou`, `pool-per-type`, `shared-pool`, `auto-scale`) | Finite set of system-owned deployment topologies controlling how actors are distributed across nodes |
+| `ActorStatus` | C (System State) | Service-specific enum (`pending`, `starting`, `running`, `paused`, `stopping`, `stopped`, `error`) | Finite actor lifecycle state machine; system-owned transitions |
+| `ActorExitReason` | C (System State) | Service-specific enum (`behavior_complete`, `error`, `timeout`, `external_stop`) | Finite set of system-owned reasons an actor stopped executing |
+| `PerceptionSourceType` | C (System State) | Service-specific enum (`character`, `npc`, `object`, `environment`, `coordinator`, `scheduled`, `message`, `service`) | Finite set of perception source categories; system-owned, determines processing priority |
+| `OptionsQueryType` | C (System State) | Service-specific enum (`combat`, `dialogue`, `exploration`, `social`, `custom`) | Finite set of well-known option categories for actor query interface |
+| `category` | B (Content Code) | Opaque string | Actor template category identifier (e.g., "npc-brain", "world-admin", "event-brain", "cron-cleanup"). Game-configurable, extensible without schema changes |
+| `encounterType` | B (Content Code) | Opaque string | Type of encounter managed by Event Brain actors (e.g., "combat", "conversation", "choreography"). Game-configurable, extensible without schema changes |
+| `poolType` | B (Content Code) | Opaque string | Pool node type identifier (e.g., "shared", "npc-brain", "event-coordinator", or custom category). Registered at runtime, extensible |
+
+---
+
 ## State Storage
 
 **Stores**: 4 Redis state stores

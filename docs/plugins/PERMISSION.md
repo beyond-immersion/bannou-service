@@ -40,6 +40,18 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `role` / `newRole` (on session state, role updates, session info) | B (Content Code) | Opaque string | Role values (`"anonymous"`, `"user"`, `"developer"`, `"admin"`) are configurable via `PERMISSION_ROLE_HIERARCHY` env var, not a fixed enum. New roles can be added without schema changes. |
+| `state` / `newState` (on session state updates, permission matrix keys) | B (Content Code) | Opaque string | State values (`"default"`, `"authenticated"`, `"in_game"`, `"lobby"`, `"in_room"`, `"in_queue"`, etc.) are registered dynamically by each service's permission matrix. Extensible without schema changes. |
+| `serviceId` (on permission matrices, session states, validation) | B (Content Code) | Opaque string | Service identifiers are registered dynamically by each plugin at startup; the set of services is deployment-dependent. |
+| `CapabilityUpdateType` | C (System State) | Service-specific enum | Finite update delivery modes (`full`, `delta`) for capability push events. |
+| `CapabilityUpdateReason` | C (System State) | Service-specific enum | Finite reasons for capability recompilation (`session_created`, `session_state_changed`, `role_changed`, `service_registered`, `manual_refresh`). |
+
+---
+
 ## State Storage
 
 **Store**: `permission-statestore` (Backend: Redis, Prefix: `permission`)

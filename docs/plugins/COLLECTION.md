@@ -32,6 +32,19 @@ The Collection service (L2 GameFoundation) manages universal content unlock and 
 | lib-seed (`SeedCollectionUnlockListener`) | Implements `ICollectionUnlockListener` to drive seed growth from collection entry unlocks via tag-prefix matching against seed type `collectionGrowthMappings` |
 | lib-faction (`FactionCollectionUnlockListener`) | Implements `ICollectionUnlockListener` to react to collection entry unlocks for faction-related growth |
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (character, account, location, guild). Recently migrated to shared EntityType enum. Mapped to `ContainerOwnerType` for inventory container creation. |
+| `collectionType` | B (Content Code) | Opaque string (`CollectionType`) | Game-configurable collection content category. New types added without schema changes (e.g., `voice_gallery`, `scene_archive`, `music_library`, `bestiary`, `recipe_book`). |
+| `entryCode` | B (Content Code) | Opaque string | Game-configurable entry identifier, unique within collection type + game service. Represents specific collectible content (e.g., a particular voice line, scene, or creature). |
+| `areaCode` | B (Content Code) | Opaque string | Game-configurable area identifier for content selection configuration. Maps areas to theme sets for weighted random content selection. |
+| `category` (on entry templates) | B (Content Code) | Opaque string | Game-configurable subcategorization within a collection type. Used for filtering and completion stats breakdown. |
+| `reason` (CollectionEntryGrantFailedEvent) | C (System State) | `GrantFailureReason` enum | Finite system-owned failure modes for grant operations. |
+
+---
+
 ## State Storage
 
 ### Entry Templates Store

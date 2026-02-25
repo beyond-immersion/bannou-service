@@ -37,8 +37,8 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
-                    "description": "Entity type discriminator (e.g., \"account\", \"actor\", \"realm\", \"character\", \"relationship\").\n"
+                    "type": "object",
+                    "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
                     "type": "string",
@@ -98,7 +98,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -262,7 +262,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -391,7 +391,7 @@ public partial class SeedController
                     "description": "The owner entity ID."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "The owner entity type."
                 },
                 "seedTypeCode": {
@@ -462,7 +462,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -587,7 +587,11 @@ public partial class SeedController
                     "description": "Filter by seed type."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by owner type."
                 },
@@ -684,7 +688,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -859,7 +863,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -1023,7 +1027,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -1187,7 +1191,7 @@ public partial class SeedController
                     "description": "The entity that owns this seed."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Owner entity type discriminator."
                 },
                 "seedTypeCode": {
@@ -2020,7 +2024,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Entity types that can own seeds of this type."
                 },
@@ -2226,7 +2230,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -2525,7 +2529,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -2838,7 +2842,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -3295,7 +3299,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -3601,7 +3605,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -3901,7 +3905,7 @@ public partial class SeedController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Allowed owner entity types."
                 },
@@ -4974,7 +4978,7 @@ public partial class SeedController
                     "description": "Partner's owner entity ID."
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Partner's owner entity type."
                 },
                 "growthPhase": {

@@ -180,7 +180,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         int gridHeight = 5,
         AdjacencyMode adjacencyMode = AdjacencyMode.EightWay,
         bool isActive = true,
-        List<string>? allowedOwnerTypes = null)
+        List<EntityType>? allowedOwnerTypes = null)
     {
         return new BoardTemplateModel
         {
@@ -193,7 +193,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             StartingNodes = new List<GridPositionEntry> { new GridPositionEntry { X = 0, Y = 0 } },
             BoardContractTemplateId = TestContractTemplateId,
             AdjacencyMode = adjacencyMode,
-            AllowedOwnerTypes = allowedOwnerTypes ?? new List<string> { "character" },
+            AllowedOwnerTypes = allowedOwnerTypes ?? new List<EntityType> { EntityType.Character },
             IsActive = isActive,
             CreatedAt = DateTimeOffset.UtcNow
         };
@@ -224,7 +224,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
     private static BoardInstanceModel CreateTestBoard(
         Guid? boardId = null,
-        string ownerType = "character",
+        EntityType ownerType = EntityType.Character,
         Guid? ownerId = null,
         Guid? realmId = null,
         Guid? boardTemplateId = null,
@@ -368,7 +368,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
             BoardContractTemplateId = TestContractTemplateId,
             AdjacencyMode = AdjacencyMode.EightWay,
-            AllowedOwnerTypes = new List<string> { "character" }
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character }
         };
 
         // Act
@@ -409,7 +409,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridHeight = 5,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
             BoardContractTemplateId = TestContractTemplateId,
-            AllowedOwnerTypes = new List<string> { "character" }
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character }
         };
 
         // Act
@@ -437,7 +437,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridHeight = 3,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 5, Y = 5 } },
             BoardContractTemplateId = TestContractTemplateId,
-            AllowedOwnerTypes = new List<string> { "character" }
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character }
         };
 
         // Act
@@ -468,7 +468,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             GridHeight = 5,
             StartingNodes = new List<GridPosition> { new GridPosition { X = 0, Y = 0 } },
             BoardContractTemplateId = Guid.NewGuid(),
-            AllowedOwnerTypes = new List<string> { "character" }
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character }
         };
 
         // Act
@@ -895,7 +895,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
@@ -905,14 +905,14 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("character", response.OwnerType);
+        Assert.Equal(EntityType.Character, response.OwnerType);
         Assert.Equal(TestCharacterId, response.OwnerId);
         Assert.Equal(TestBoardTemplateId, response.BoardTemplateId);
         Assert.Equal(newContainerId, response.ContainerId);
 
         Assert.NotNull(savedBoard);
         Assert.Equal(newContainerId, savedBoard.ContainerId);
-        Assert.Equal("character", savedBoard.OwnerType);
+        Assert.Equal(EntityType.Character, savedBoard.OwnerType);
         Assert.Equal(TestCharacterId, savedBoard.OwnerId);
         Assert.Equal(TestRealmId, savedBoard.RealmId);
 
@@ -950,7 +950,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
@@ -985,7 +985,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
@@ -1014,7 +1014,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 OwnerId = Guid.NewGuid(),
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
@@ -1043,7 +1043,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         var (status, response) = await service.CreateBoardAsync(
             new CreateBoardRequest
             {
-                OwnerType = "character",
+                OwnerType = EntityType.Character,
                 OwnerId = TestCharacterId,
                 BoardTemplateId = TestBoardTemplateId,
                 GameServiceId = TestGameServiceId
@@ -1426,7 +1426,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Assert
         Assert.NotNull(capturedEvent);
         Assert.Equal(TestBoardId, capturedEvent.BoardId);
-        Assert.Equal("character", capturedEvent.OwnerType);
+        Assert.Equal(EntityType.Character, capturedEvent.OwnerType);
         Assert.Equal(TestCharacterId, capturedEvent.OwnerId);
         Assert.Equal("start_skill", capturedEvent.LicenseCode);
         Assert.Equal(0, capturedEvent.Position.X);
@@ -1759,7 +1759,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .ReturnsAsync(new List<BoardInstanceModel> { board1, board2 });
 
         var service = CreateService();
-        var request = new CleanupByOwnerRequest { OwnerType = "character", OwnerId = TestCharacterId };
+        var request = new CleanupByOwnerRequest { OwnerType = EntityType.Character, OwnerId = TestCharacterId };
 
         // Act
         var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
@@ -1767,7 +1767,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal("character", response.OwnerType);
+        Assert.Equal(EntityType.Character, response.OwnerType);
         Assert.Equal(TestCharacterId, response.OwnerId);
         Assert.Equal(2, response.BoardsDeleted);
 
@@ -1805,7 +1805,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .ReturnsAsync(new List<BoardInstanceModel>());
 
         var service = CreateService();
-        var request = new CleanupByOwnerRequest { OwnerType = "character", OwnerId = TestCharacterId };
+        var request = new CleanupByOwnerRequest { OwnerType = EntityType.Character, OwnerId = TestCharacterId };
 
         // Act
         var (status, response) = await service.CleanupByOwnerAsync(request, CancellationToken.None);
@@ -2202,7 +2202,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);
@@ -2211,14 +2211,14 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(sourceBoard.BoardId, response.SourceBoardId);
-        Assert.Equal("character", response.TargetOwnerType);
+        Assert.Equal(EntityType.Character, response.TargetOwnerType);
         Assert.Equal(targetOwnerId, response.TargetOwnerId);
         Assert.Equal(newContainerId, response.TargetContainerId);
         Assert.Equal(3, response.LicensesCloned);
         Assert.Equal(3, itemCallCount);
 
         Assert.NotNull(savedBoard);
-        Assert.Equal("character", savedBoard.OwnerType);
+        Assert.Equal(EntityType.Character, savedBoard.OwnerType);
         Assert.Equal(targetOwnerId, savedBoard.OwnerId);
         Assert.Equal(newContainerId, savedBoard.ContainerId);
         Assert.Equal(template.BoardTemplateId, savedBoard.BoardTemplateId);
@@ -2242,7 +2242,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = Guid.NewGuid(),
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = Guid.NewGuid()
             },
             CancellationToken.None);
@@ -2282,7 +2282,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);
@@ -2328,7 +2328,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);
@@ -2343,7 +2343,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     {
         // Arrange - template only allows "character", request targets "account"
         var sourceBoard = CreateTestBoard();
-        var template = CreateTestTemplate(allowedOwnerTypes: new List<string> { "character" });
+        var template = CreateTestTemplate(allowedOwnerTypes: new List<EntityType> { EntityType.Character });
 
         _mockBoardStore
             .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
@@ -2359,7 +2359,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "account",
+                TargetOwnerType = EntityType.Account,
                 TargetOwnerId = Guid.NewGuid()
             },
             CancellationToken.None);
@@ -2393,7 +2393,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = Guid.NewGuid()
             },
             CancellationToken.None);
@@ -2441,7 +2441,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);
@@ -2458,35 +2458,9 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             Times.Never);
     }
 
-    [Fact]
-    public async Task CloneBoard_InvalidOwnerTypeFormat_ReturnsBadRequest()
-    {
-        // Arrange
-        var sourceBoard = CreateTestBoard();
-
-        _mockBoardStore
-            .Setup(s => s.GetAsync($"board:{sourceBoard.BoardId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(sourceBoard);
-        _mockTemplateStore
-            .Setup(s => s.GetAsync($"board-tpl:{sourceBoard.BoardTemplateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateTestTemplate());
-
-        var service = CreateService();
-
-        // Act - ownerType contains ':' separator
-        var (status, response) = await service.CloneBoardAsync(
-            new CloneBoardRequest
-            {
-                SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character:npc",
-                TargetOwnerId = Guid.NewGuid()
-            },
-            CancellationToken.None);
-
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
-    }
+    // CloneBoard_InvalidOwnerTypeFormat_ReturnsBadRequest test removed:
+    // TargetOwnerType is now EntityType enum — colon-separated strings are
+    // impossible at the type level, making this validation test untestable.
 
     [Fact]
     public async Task CloneBoard_PublishesBoardCreatedAndClonedEvents()
@@ -2532,7 +2506,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);
@@ -2610,7 +2584,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             new CloneBoardRequest
             {
                 SourceBoardId = sourceBoard.BoardId,
-                TargetOwnerType = "character",
+                TargetOwnerType = EntityType.Character,
                 TargetOwnerId = targetOwnerId
             },
             CancellationToken.None);

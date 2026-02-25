@@ -46,7 +46,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -102,16 +102,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -121,7 +111,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -164,7 +154,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -221,16 +211,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -240,7 +220,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -339,7 +319,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -347,16 +327,6 @@ public partial class SaveLoadController
                     "description": "Slot name"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -390,7 +360,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -447,16 +417,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -466,7 +426,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -564,7 +524,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns the save slots to list"
                 },
                 "category": {
@@ -583,16 +543,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -602,7 +552,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -656,7 +606,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -712,16 +662,6 @@ public partial class SaveLoadController
                     "description": "Custom key-value metadata"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "SaveCategory": {
             "type": "string",
@@ -831,7 +771,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -839,16 +779,6 @@ public partial class SaveLoadController
                     "description": "Slot name"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -969,7 +899,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that owns the slot"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -984,16 +914,6 @@ public partial class SaveLoadController
                     "description": "New slot name"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -1027,7 +947,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -1084,16 +1004,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -1103,7 +1013,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1315,7 +1225,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -1375,16 +1285,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -1394,7 +1294,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -1455,13 +1355,12 @@ public partial class SaveLoadController
                 },
                 "thumbnailUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Pre-signed URL to retrieve thumbnail (if provided)"
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -1576,7 +1475,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -1599,16 +1498,6 @@ public partial class SaveLoadController
                     "description": "Include version metadata in response"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -1767,7 +1656,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -1816,16 +1705,6 @@ public partial class SaveLoadController
                     "description": "Custom key-value metadata for this delta version"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "DeltaAlgorithm": {
             "type": "string",
@@ -1985,7 +1864,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2008,16 +1887,6 @@ public partial class SaveLoadController
                     "description": "Include version metadata in response"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -2174,7 +2043,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that owns the save slot"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2192,16 +2061,6 @@ public partial class SaveLoadController
                     "description": "Delete intermediate delta versions after collapse"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -2262,13 +2121,12 @@ public partial class SaveLoadController
                 },
                 "thumbnailUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Pre-signed URL to retrieve thumbnail (if provided)"
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -2375,7 +2233,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2399,16 +2257,6 @@ public partial class SaveLoadController
                     "description": "Only return pinned versions"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -2587,7 +2435,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2604,16 +2452,6 @@ public partial class SaveLoadController
                     "description": "Optional checkpoint name for easy retrieval"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -2771,7 +2609,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2783,16 +2621,6 @@ public partial class SaveLoadController
                     "description": "Version to unpin"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -2950,7 +2778,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -2962,16 +2790,6 @@ public partial class SaveLoadController
                     "description": "Version to delete"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -3079,7 +2897,7 @@ public partial class SaveLoadController
                 "ownerType": {
                     "allOf": [
                         {
-                            "$ref": "#/$defs/OwnerType"
+                            "type": "object"
                         }
                     ],
                     "nullable": true,
@@ -3156,16 +2974,6 @@ public partial class SaveLoadController
                 }
             }
         },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
-        },
         "SaveCategory": {
             "type": "string",
             "enum": [
@@ -3175,7 +2983,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\ nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\ nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }
@@ -3235,7 +3043,7 @@ public partial class SaveLoadController
                     "description": "Owner ID"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "category": {
@@ -3283,16 +3091,6 @@ public partial class SaveLoadController
                     "description": "Custom metadata"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "SaveCategory": {
             "type": "string",
@@ -3394,7 +3192,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that owns the source save"
                 },
                 "sourceOwnerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns the source save"
                 },
                 "sourceSlotName": {
@@ -3416,7 +3214,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that will own the copied save"
                 },
                 "targetOwnerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that will own the copied save"
                 },
                 "targetSlotName": {
@@ -3428,16 +3226,6 @@ public partial class SaveLoadController
                     "description": "Category for new slot if auto-created"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "SaveCategory": {
             "type": "string",
@@ -3509,13 +3297,12 @@ public partial class SaveLoadController
                 },
                 "thumbnailUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Pre-signed URL to retrieve thumbnail (if provided)"
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -3626,7 +3413,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that owns the saves to export"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns the saves to export"
                 },
                 "slotNames": {
@@ -3637,16 +3424,6 @@ public partial class SaveLoadController
                     "description": "Specific slots to export (all if null)"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -3668,7 +3445,6 @@ public partial class SaveLoadController
             "properties": {
                 "downloadUrl": {
                     "type": "string",
-                    "format": "uri",
                     "description": "Pre-signed URL to download export archive"
                 },
                 "expiresAt": {
@@ -3773,7 +3549,7 @@ public partial class SaveLoadController
                     "description": "Entity ID that will own the imported saves"
                 },
                 "targetOwnerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that will own the imported saves"
                 },
                 "conflictResolution": {
@@ -3781,16 +3557,6 @@ public partial class SaveLoadController
                     "description": "How to handle existing slots"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "ConflictResolution": {
             "type": "string",
@@ -3926,7 +3692,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -3939,16 +3705,6 @@ public partial class SaveLoadController
                     "description": "Version to verify (latest if null)"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -4077,7 +3833,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -4094,16 +3850,6 @@ public partial class SaveLoadController
                     "description": "Display name for promoted version"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -4164,13 +3910,12 @@ public partial class SaveLoadController
                 },
                 "thumbnailUrl": {
                     "type": "string",
-                    "format": "uri",
                     "nullable": true,
                     "description": "Pre-signed URL to retrieve thumbnail (if provided)"
                 },
                 "conflictDetected": {
                     "type": "boolean",
-                    "description": "True if this save overwrote a version from a different device.\nOnly relevant when deviceId is used for cloud sync.\n"
+                    "description": "True if this save overwrote a version from a different device.\ nOnly relevant when deviceId is used for cloud sync.\n"
                 },
                 "conflictingDeviceId": {
                     "type": "string",
@@ -4278,7 +4023,7 @@ public partial class SaveLoadController
                     "description": "ID of the owning entity"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Type of entity that owns this save slot"
                 },
                 "slotName": {
@@ -4299,16 +4044,6 @@ public partial class SaveLoadController
                     "description": "Validate migration without saving"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         }
     }
 }
@@ -4766,7 +4501,7 @@ public partial class SaveLoadController
                     "description": "Only cleanup versions older than N days"
                 },
                 "ownerType": {
-                    "$ref": "#/$defs/OwnerType",
+                    "type": "object",
                     "description": "Filter cleanup to specific owner type"
                 },
                 "category": {
@@ -4774,16 +4509,6 @@ public partial class SaveLoadController
                     "description": "Filter cleanup to specific save category"
                 }
             }
-        },
-        "OwnerType": {
-            "type": "string",
-            "enum": [
-                "ACCOUNT",
-                "CHARACTER",
-                "SESSION",
-                "REALM"
-            ],
-            "description": "Type of entity that owns this save slot"
         },
         "SaveCategory": {
             "type": "string",
@@ -4794,7 +4519,7 @@ public partial class SaveLoadController
                 "CHECKPOINT",
                 "STATE_SNAPSHOT"
             ],
-            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
+            "description": "Category of save with predefined behaviors.\nQUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).\nAUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).\ nMANUAL_SAVE: User-initiated named saves (max 10 versions, no auto-cleanup).\nCHECKPOINT: Progress markers (max 20 versions, rolling).\nSTATE_SNAPSHOT: Full state captures for debugging (max 3 versions, rolling).\n"
         }
     }
 }

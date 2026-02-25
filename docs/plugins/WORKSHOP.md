@@ -389,6 +389,20 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `category` (on blueprint) | B (Content Code) | Opaque string | Game-configurable production categories (crafting, mining, farming, manufacturing, training, etc.). Extensible without schema changes. |
+| `ownerType` (on task) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a production task (character, npc, faction, location, account). All valid values are first-class Bannou entities. |
+| `workerType` | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of entity assigned as a worker (character, npc, actor). |
+| `workerTypes` (on blueprint) | B (Content Code) | Opaque string array | Game-configurable valid worker entity types for a blueprint. Null means any type is accepted. |
+| `requiresStationType` | B (Content Code) | Opaque string | Game-configurable station type requirement (via lib-craft station registry). |
+| `status` (on task) | C (System State) | Service-specific enum | Finite set of task lifecycle states (pending, running, paused:manual, paused:no_materials, paused:no_space, paused:no_workers, completed, cancelled, failed). System-owned state machine driving lazy evaluation and materialization logic. |
+| `tags` (on blueprint) | B (Content Code) | Opaque string array | Game-configurable searchable tags for blueprint categorization. |
+
+---
+
 ## Events
 
 ### Published Events

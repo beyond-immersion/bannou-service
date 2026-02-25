@@ -35,6 +35,16 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `category` | B (Content Code) | Opaque string | Game-configurable species grouping (e.g., "HUMANOID", "BEAST", "MAGICAL"). Extensible without schema changes; different games define different category taxonomies |
+
+Species has no Category A (entity reference) fields -- species are referenced by ID from Character, not via polymorphic type discriminators. Species has no Category C (system state) fields -- `isPlayable` and `isDeprecated` are booleans, not type discriminators.
+
+---
+
 ## State Storage
 
 **Store**: `species-statestore` (via `StateStoreDefinitions.Species`, Backend: MySQL)

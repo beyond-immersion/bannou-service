@@ -56,6 +56,16 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `encounterTypeCode` | B (Content Code) | Opaque string | Game-configurable encounter types (built-in: COMBAT, DIALOGUE, TRADE, QUEST, SOCIAL, CEREMONY; custom types registered at runtime). Extensible without schema changes. |
+| `outcome` | C (System State) | `EncounterOutcome` enum | Finite set of system-defined outcomes (POSITIVE, NEGATIVE, NEUTRAL, MEMORABLE, TRANSFORMATIVE) that drive sentiment calculation logic. |
+| `emotionalImpact` | C (System State) | `EmotionalImpact` enum | Finite set of emotional responses (GRATITUDE, ANGER, FEAR, RESPECT, CONTEMPT, AFFECTION, RIVALRY, INDIFFERENCE, GUILT, PRIDE) used in sentiment aggregation. |
+
+---
+
 ## Events
 
 ### Published Events

@@ -270,8 +270,8 @@ public partial class SeedService : ISeedService
 
         if (!string.IsNullOrEmpty(body.SeedTypeCode))
             conditions.Add(new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode });
-        if (!string.IsNullOrEmpty(body.OwnerType))
-            conditions.Add(new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType });
+        if (body.OwnerType.HasValue)
+            conditions.Add(new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType.Value.ToString() });
         if (body.GameServiceId.HasValue)
             conditions.Add(new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() });
         if (!string.IsNullOrEmpty(body.GrowthPhase))

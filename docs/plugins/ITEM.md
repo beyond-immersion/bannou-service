@@ -146,6 +146,24 @@ This architecture enables:
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `userType` (UseItem) | A (Entity Reference) | `EntityType` enum | Entity using the item. All valid values are first-class Bannou entities. |
+| `targetType` (UseItem) | A (Entity Reference) | `EntityType` enum (nullable) | Target entity for item use. All valid values are first-class Bannou entities when present. |
+| `code` (template) | B (Content Code) | Opaque string | Game-configurable item template identifier, unique within game service. Extensible without schema changes (e.g., `iron_sword`, `health_potion`, `quest_scroll`). |
+| `category` | C (System State) | `ItemCategory` enum | Finite item classification: `weapon`, `armor`, `consumable`, `material`, `quest`, `currency`, `container`, `decoration`, `tool`, `mount`, `pet`, `recipe`, `key`, `misc`. |
+| `quantityModel` | C (System State) | `QuantityModel` enum | Finite system-owned tracking modes: `discrete` (stackable integers), `continuous` (decimal weights), `unique` (quantity forced to 1). Immutable after creation. |
+| `rarity` | C (System State) | `ItemRarity` enum | Finite rarity tiers: `common`, `uncommon`, `rare`, `epic`, `legendary`. |
+| `soulboundType` | C (System State) | `SoulboundType` enum | Finite binding modes: `none`, `on_pickup`, `on_equip`, `on_use`. |
+| `scope` | C (System State) | `ItemScope` enum | Finite realm availability modes: `global`, `realm_specific`. Consistent with `CurrencyScope`. |
+| `originType` | C (System State) | `ItemOriginType` enum | Finite creation source classification: `loot`, `quest`, `craft`, `vendor`, `trade`, `gift`, `admin`, `system`, `migration`, `other`. |
+| `useBehavior` | C (System State) | `ItemUseBehavior` enum | Finite use consumption modes: `disabled`, `destroy_on_success`, `destroy_always`. |
+| `reason` (UnbindEvent) | C (System State) | `UnbindReason` enum | Finite unbinding modes for admin/system operations. |
+
+---
+
 ## State Storage
 
 **Stores**: 5 state stores (2 persistent MySQL + 2 cache Redis + 1 lock Redis)

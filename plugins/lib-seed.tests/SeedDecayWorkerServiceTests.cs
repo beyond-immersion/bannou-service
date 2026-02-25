@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -117,7 +118,7 @@ public class SeedDecayWorkerServiceTests
             DisplayName = "Guardian",
             Description = "Test type",
             MaxPerOwner = 3,
-            AllowedOwnerTypes = new List<string> { "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
         {
             new() { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },

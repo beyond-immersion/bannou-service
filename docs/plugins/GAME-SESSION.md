@@ -86,6 +86,19 @@ Gardener is the **player experience orchestrator** — the player-side counterpa
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `SessionType` | C (System State) | Service-specific enum (`lobby`, `matchmade`) | Finite set of two system-owned session modes with fundamentally different join behaviors (persistent vs time-limited with reservations) |
+| `SessionStatus` | C (System State) | Service-specific enum (`waiting`, `active`, `full`, `finished`) | Finite session lifecycle state machine; system-owned transitions |
+| `PlayerRole` | C (System State) | Service-specific enum (`player`, `spectator`, `moderator`) | Finite set of system-owned roles determining session permissions |
+| `ChatMessageType` | C (System State) | Service-specific enum (`public`, `whisper`, `system`) | Finite set of system-owned message delivery modes |
+| `GameActionType` | C (System State) | Service-specific enum (`move`, `interact`, `attack`, `cast_spell`, `use_item`) | Finite set of system-owned action categories for the session action system |
+| `GameType` | B (Content Code) | Opaque string | Game service stub name (e.g., "arcadia", "fantasia", "generic"). Extensible without schema changes; new games added by creating game service definitions |
+
+---
+
 ## State Storage
 
 **Store**: `game-session-statestore` (Backend: MySQL)

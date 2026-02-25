@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Seed.Caching;
 using BeyondImmersion.BannouService.Seed.Providers;
 
@@ -72,7 +73,7 @@ public class SeedProviderFactoryTests
         {
             SeedId = seedId,
             OwnerId = characterId,
-            OwnerType = "Character",
+            OwnerType = EntityType.Character,
             SeedTypeCode = "guardian",
             GameServiceId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,

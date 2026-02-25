@@ -70,7 +70,7 @@ public interface ICollectionUnlockListener
 /// </summary>
 /// <param name="CollectionId">The collection instance the entry was unlocked in.</param>
 /// <param name="OwnerId">Entity that owns the collection.</param>
-/// <param name="OwnerType">Entity type discriminator (e.g., "character", "account").</param>
+/// <param name="OwnerType">Owner entity type discriminator.</param>
 /// <param name="GameServiceId">Game service scope.</param>
 /// <param name="CollectionType">Type of collection (opaque string code).</param>
 /// <param name="EntryCode">Entry template code that was unlocked.</param>
@@ -81,7 +81,7 @@ public interface ICollectionUnlockListener
 public record CollectionUnlockNotification(
     Guid CollectionId,
     Guid OwnerId,
-    string OwnerType,
+    EntityType OwnerType,
     Guid GameServiceId,
     string CollectionType,
     string EntryCode,

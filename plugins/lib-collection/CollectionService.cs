@@ -111,8 +111,8 @@ public partial class CollectionService : ICollectionService
     private static string BuildTemplateByCodeKey(Guid gameServiceId, string collectionType, string code) =>
         $"tpl:{gameServiceId}:{collectionType}:{code}";
     private static string BuildCollectionKey(Guid collectionId) => $"col:{collectionId}";
-    private static string BuildCollectionByOwnerKey(Guid ownerId, string ownerType, Guid gameServiceId, string collectionType) =>
-        $"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}";
+    private static string BuildCollectionByOwnerKey(Guid ownerId, EntityType ownerType, Guid gameServiceId, string collectionType) =>
+        $"col:{ownerId}:{ownerType.ToString().ToLowerInvariant()}:{gameServiceId}:{collectionType}";
     private static string BuildAreaContentKey(Guid areaConfigId) => $"acc:{areaConfigId}";
     private static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
         $"acc:{gameServiceId}:{collectionType}:{areaCode}";
@@ -125,23 +125,17 @@ public partial class CollectionService : ICollectionService
     #region Owner Type Mapping
 
     /// <summary>
-    /// Maps an opaque owner type string to ContainerOwnerType for inventory operations.
-    /// Returns null if the owner type has no known mapping.
+    /// Maps an EntityType to ContainerOwnerType for inventory operations.
+    /// Returns null if the entity type has no known mapping.
     /// </summary>
-    private static ContainerOwnerType? MapToContainerOwnerType(string ownerType) => ownerType switch
+    private static ContainerOwnerType? MapToContainerOwnerType(EntityType ownerType) => ownerType switch
     {
-        "character" => ContainerOwnerType.Character,
-        "account" => ContainerOwnerType.Account,
-        "location" => ContainerOwnerType.Location,
-        "guild" => ContainerOwnerType.Guild,
+        EntityType.Character => ContainerOwnerType.Character,
+        EntityType.Account => ContainerOwnerType.Account,
+        EntityType.Location => ContainerOwnerType.Location,
+        EntityType.Guild => ContainerOwnerType.Guild,
         _ => null
     };
-
-    /// <summary>
-    /// Validates that an owner type string does not contain the key separator character.
-    /// </summary>
-    private static bool IsValidOwnerType(string ownerType)
-        => !string.IsNullOrWhiteSpace(ownerType) && !ownerType.Contains(':');
 
     #endregion
 
@@ -444,7 +438,7 @@ public partial class CollectionService : ICollectionService
     /// </summary>
     private async Task<CollectionInstanceModel> CreateCollectionInternalAsync(
         Guid ownerId,
-        string ownerType,
+        EntityType ownerType,
         string collectionType,
         Guid gameServiceId,
         CancellationToken cancellationToken)
@@ -510,7 +504,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         // Register reference with lib-resource for character-owned collections per FOUNDATION TENETS
-        if (ownerType == "character")
+        if (ownerType == EntityType.Character)
         {
             await RegisterCharacterReferenceAsync(
                 instance.CollectionId.ToString(), ownerId, cancellationToken);
@@ -566,7 +560,7 @@ public partial class CollectionService : ICollectionService
 
                 // Push milestone client event to collection owner's WebSocket sessions
                 await _entitySessionRegistry.PublishToEntitySessionsAsync(
-                    collection.OwnerType, collection.OwnerId,
+                    collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
                     new CollectionMilestoneReachedClientEvent
                     {
                         EventId = Guid.NewGuid(),
@@ -1091,12 +1085,6 @@ public partial class CollectionService : ICollectionService
             "Creating collection of type {CollectionType} for {OwnerType} {OwnerId} in game {GameServiceId}",
             body.CollectionType, body.OwnerType, body.OwnerId, body.GameServiceId);
 
-        if (!IsValidOwnerType(body.OwnerType))
-        {
-            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
-
         if (MapToContainerOwnerType(body.OwnerType) == null)
         {
             _logger.LogWarning("Owner type {OwnerType} cannot be mapped to inventory ContainerOwnerType", body.OwnerType);
@@ -1261,7 +1249,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         // Unregister reference with lib-resource for character-owned collections per FOUNDATION TENETS
-        if (collection.OwnerType == "character")
+        if (collection.OwnerType == EntityType.Character)
         {
             await UnregisterCharacterReferenceAsync(
                 collection.CollectionId.ToString(), collection.OwnerId, cancellationToken);
@@ -1284,12 +1272,6 @@ public partial class CollectionService : ICollectionService
         _logger.LogInformation(
             "Granting entry {EntryCode} of type {CollectionType} to {OwnerType} {OwnerId}",
             body.EntryCode, body.CollectionType, body.OwnerType, body.OwnerId);
-
-        if (!IsValidOwnerType(body.OwnerType))
-        {
-            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
 
         if (MapToContainerOwnerType(body.OwnerType) == null)
         {
@@ -1537,7 +1519,7 @@ public partial class CollectionService : ICollectionService
 
         // Push client event to collection owner's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
-            collection.OwnerType, collection.OwnerId,
+            collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
             new CollectionEntryUnlockedClientEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2278,7 +2260,7 @@ public partial class CollectionService : ICollectionService
 
         // Push discovery client event to collection owner's WebSocket sessions
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
-            collection.OwnerType, collection.OwnerId,
+            collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
             new CollectionDiscoveryAdvancedClientEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2316,7 +2298,7 @@ public partial class CollectionService : ICollectionService
     {
         _logger.LogInformation("Cleaning up collections for deleted character {CharacterId}", body.CharacterId);
 
-        var deletedCount = await CleanupCollectionsForOwnerAsync(body.CharacterId, "character", cancellationToken);
+        var deletedCount = await CleanupCollectionsForOwnerAsync(body.CharacterId, EntityType.Character, cancellationToken);
 
         return (StatusCodes.OK, new CleanupByCharacterResponse
         {

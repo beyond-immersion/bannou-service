@@ -1802,27 +1802,24 @@ public partial class ItemService : IItemService
             ContractInstanceId = contractInstanceId
         };
 
-        // Get or create batch state, checking for window expiry
-        var batch = _useBatches.AddOrUpdate(
-            batchKey,
-            _ => new ItemUseBatchState(),
-            (_, existing) =>
+        // Pre-flush: if an expired batch exists for this key, publish it before adding new records.
+        // Without this, AddOrUpdate would silently discard the old batch's records when replacing
+        // it with a fresh one on window expiry (IMPLEMENTATION TENETS).
+        if (_useBatches.TryGetValue(batchKey, out var existingBatch)
+            && (now - existingBatch.WindowStart).TotalSeconds >= windowSeconds)
+        {
+            if (_useBatches.TryRemove(batchKey, out var expiredBatch))
             {
-                // If window expired, start a new batch
-                if ((now - existing.WindowStart).TotalSeconds >= windowSeconds)
-                {
-                    return new ItemUseBatchState();
-                }
-                return existing;
-            });
+                await PublishItemUsedEventAsync(expiredBatch, cancellationToken);
+            }
+        }
 
+        // Get or create batch (pre-flush already removed expired batches)
+        var batch = _useBatches.GetOrAdd(batchKey, _ => new ItemUseBatchState());
         var totalCount = batch.AddRecord(record);
 
-        // Check if we should publish (batch full or this is the first record in a new window)
-        var shouldPublish = totalCount >= maxBatchSize;
-        var windowExpired = (now - batch.WindowStart).TotalSeconds >= windowSeconds && totalCount > 0;
-
-        if (shouldPublish || windowExpired)
+        // Publish if batch is full
+        if (totalCount >= maxBatchSize)
         {
             // Try to remove and publish (only one thread will succeed)
             if (_useBatches.TryRemove(batchKey, out var publishBatch))
@@ -1862,23 +1859,23 @@ public partial class ItemService : IItemService
             Reason = reason
         };
 
-        // Get or create batch state, checking for window expiry
-        var batch = _failureBatches.AddOrUpdate(
-            batchKey,
-            _ => new ItemUseFailureBatchState(),
-            (_, existing) =>
+        // Pre-flush: if an expired batch exists for this key, publish it before adding new records.
+        // Without this, AddOrUpdate would silently discard the old batch's records when replacing
+        // it with a fresh one on window expiry (IMPLEMENTATION TENETS).
+        if (_failureBatches.TryGetValue(batchKey, out var existingBatch)
+            && (now - existingBatch.WindowStart).TotalSeconds >= windowSeconds)
+        {
+            if (_failureBatches.TryRemove(batchKey, out var expiredBatch))
             {
-                // If window expired, start a new batch
-                if ((now - existing.WindowStart).TotalSeconds >= windowSeconds)
-                {
-                    return new ItemUseFailureBatchState();
-                }
-                return existing;
-            });
+                await PublishItemUseFailedEventAsync(expiredBatch, cancellationToken);
+            }
+        }
 
+        // Get or create batch (pre-flush already removed expired batches)
+        var batch = _failureBatches.GetOrAdd(batchKey, _ => new ItemUseFailureBatchState());
         var totalCount = batch.AddRecord(record);
 
-        // Check if we should publish (batch full)
+        // Publish if batch is full
         if (totalCount >= maxBatchSize)
         {
             // Try to remove and publish (only one thread will succeed)
@@ -2111,14 +2108,10 @@ public partial class ItemService : IItemService
             list.Add(value);
             var serialized = BannouJson.Serialize(list);
 
-            if (etag is null)
-            {
-                // First write - no concurrency concern
-                await stringStore.SaveAsync(key, serialized, cancellationToken: ct);
-                return;
-            }
-
-            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag, ct);
+            // Use TrySaveAsync for both paths. Empty etag = "create only if not exists"
+            // semantics across all backends (Redis transaction, InMemory TryAdd).
+            // This prevents two concurrent first-writes from losing one record (IMPLEMENTATION TENETS).
+            var newEtag = await stringStore.TrySaveAsync(key, serialized, etag ?? string.Empty, ct);
             if (newEtag is not null) return;
 
             _logger.LogDebug("Optimistic concurrency conflict on list {Key}, retry {Attempt}", key, attempt + 1);
@@ -2149,6 +2142,9 @@ public partial class ItemService : IItemService
 
             if (etag is null)
             {
+                // Backend returned data without ETag. Unconditional save is acceptable for
+                // removes — concurrent removes are idempotent (shrinking the list) and cannot
+                // lose data, unlike concurrent adds (IMPLEMENTATION TENETS).
                 await stringStore.SaveAsync(key, serialized, cancellationToken: ct);
                 return;
             }

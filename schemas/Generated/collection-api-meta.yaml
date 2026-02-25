@@ -18,9 +18,8 @@ info:
     is simpler — unlocks are direct grants without contract delegation.
 
     **Ownership Model**: Collections use polymorphic ownership (ownerId + ownerType),
-    following the Seed pattern. Owner types are opaque strings (e.g., "account",
-    "character") — NOT enums, per SCHEMA-RULES.md guidance on not enumerating
-    entity types from other layers. Owner validation is caller-responsibility.
+    following the Seed pattern. Owner types use the shared EntityType enum from
+    common-api.yaml for type safety across service boundaries.
 
     **Key Feature**: Dynamic content selection based on unlocked entries and area
     theme configurations (weighted random from library).
@@ -738,11 +737,10 @@ paths:
         \       \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"ownerId\": {\n       \
         \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this collection\"\n                },\n                \"ownerType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n         \
-        \           \"description\": \"Entity type discriminator (e.g., account, character)\"\n                },\n      \
-        \          \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"\
-        description\": \"Type of collection to create\"\n                },\n                \"gameServiceId\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        \ \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n\
+        \                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n              \
+        \      \"description\": \"Type of collection to create\"\n                },\n                \"gameServiceId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Game service this collection is scoped to\"\n                }\n            }\n        },\n        \"CollectionType\"\
         : {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of
         collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without
@@ -758,21 +756,21 @@ paths:
         description\": \"Unique collection instance identifier\"\n                },\n                \"ownerId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this collection\"\n                },\n                \"ownerType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n         \
-        \           \"description\": \"Entity type discriminator\"\n                },\n                \"collectionType\"\
-        : {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this collection is scoped to\"\
-        \n                },\n                \"containerId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked entry
-        items\"\n                },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Number of unlocked entries in this collection\"\n                },\n         \
-        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this collection was created\"\n                }\n            }\n \
-        \       },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque
-        string code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014
-        new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
-        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+        \ \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n\
+        \                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n              \
+        \      \"description\": \"Type of collection\"\n                },\n                \"gameServiceId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this collection is scoped to\"\n                },\n                \"containerId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Inventory container holding unlocked entry items\"\n                },\n                \"entryCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Number of unlocked entries in this
+        collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
+        \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a collection for an owner\",\n    \"description\": \"Create a collection
         instance for an owner entity. One collection per type\\nper game service per owner (ownerId + ownerType). Creates
         an inventory\\ncontainer (unlimited type) to hold unlocked entry items.\\n\",\n    \"tags\": [\n        \"Collection\"\
@@ -818,21 +816,21 @@ paths:
         description\": \"Unique collection instance identifier\"\n                },\n                \"ownerId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this collection\"\n                },\n                \"ownerType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n         \
-        \           \"description\": \"Entity type discriminator\"\n                },\n                \"collectionType\"\
-        : {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this collection is scoped to\"\
-        \n                },\n                \"containerId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked entry
-        items\"\n                },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Number of unlocked entries in this collection\"\n                },\n         \
-        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this collection was created\"\n                }\n            }\n \
-        \       },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque
-        string code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014
-        new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
-        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+        \ \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n\
+        \                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n              \
+        \      \"description\": \"Type of collection\"\n                },\n                \"gameServiceId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this collection is scoped to\"\n                },\n                \"containerId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Inventory container holding unlocked entry items\"\n                },\n                \"entryCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Number of unlocked entries in this
+        collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
+        \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a collection with unlocked entry summary\",\n    \"description\": \"\
         Retrieves a collection instance with its unlocked entry count.\",\n    \"tags\": [\n        \"Collection\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"getCollection\"\n}"
@@ -865,11 +863,10 @@ paths:
         : [\n                \"ownerId\",\n                \"ownerType\"\n            ],\n            \"properties\": {\n\
         \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Entity to list collections for\"\n                },\n                \"\
-        ownerType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n               \
-        \     \"maxLength\": 64,\n                    \"description\": \"Entity type discriminator\"\n                },\n\
-        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Optional filter by game
-        service\"\n                }\n            }\n        }\n    }\n}"
+        ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Optional filter by game service\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListCollectionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListCollectionsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"List of collections for an owner\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -885,19 +882,18 @@ paths:
         : \"uuid\",\n                    \"description\": \"Unique collection instance identifier\"\n                },\n\
         \                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Entity that owns this collection\"\n                },\n               \
-        \ \"ownerType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n           \
-        \         \"maxLength\": 64,\n                    \"description\": \"Entity type discriminator\"\n               \
-        \ },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n         \
-        \           \"description\": \"Type of collection\"\n                },\n                \"gameServiceId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this collection is scoped to\"\n                },\n                \"containerId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Inventory container holding unlocked entry items\"\n                },\n                \"entryCount\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"description\": \"Number of unlocked entries in this
-        collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
-        \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        \ \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type
+        discriminator\"\n                },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
+        ,\n                    \"description\": \"Type of collection\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service this collection is scoped to\"\n                },\n                \"containerId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Inventory container holding unlocked entry items\"\n                },\n                \"entryCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of unlocked entries
+        in this collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this collection was
+        created\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
         are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
         nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
         \  }\n    }\n}"
@@ -945,21 +941,21 @@ paths:
         description\": \"Unique collection instance identifier\"\n                },\n                \"ownerId\": {\n   \
         \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns this collection\"\n                },\n                \"ownerType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n         \
-        \           \"description\": \"Entity type discriminator\"\n                },\n                \"collectionType\"\
-        : {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this collection is scoped to\"\
-        \n                },\n                \"containerId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"description\": \"Inventory container holding unlocked entry
-        items\"\n                },\n                \"entryCount\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Number of unlocked entries in this collection\"\n                },\n         \
-        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When this collection was created\"\n                }\n            }\n \
-        \       },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque
-        string code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014
-        new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
-        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+        \ \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n\
+        \                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n              \
+        \      \"description\": \"Type of collection\"\n                },\n                \"gameServiceId\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this collection is scoped to\"\n                },\n                \"containerId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Inventory container holding unlocked entry items\"\n                },\n                \"entryCount\": {\n  \
+        \                  \"type\": \"integer\",\n                    \"description\": \"Number of unlocked entries in this
+        collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
+        \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a collection and its inventory container\",\n    \"description\"\
         : \"Delete a collection instance, destroying its inventory container and all contained entry items.\",\n    \"tags\"\
         : [\n        \"Collection\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCollection\"\n}"
@@ -1001,29 +997,28 @@ paths:
         ,\n                \"entryCode\",\n                \"collectionType\"\n            ],\n            \"properties\"\
         : {\n                \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Entity that owns the collection\"\n                },\n          \
-        \      \"ownerType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
-        \              \"maxLength\": 64,\n                    \"description\": \"Entity type discriminator\"\n          \
-        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n                },\n           \
-        \     \"entryCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n       \
-        \             \"maxLength\": 128,\n                    \"description\": \"Entry template code to grant\"\n       \
-        \         },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n \
-        \                   \"description\": \"Type of collection to grant into\"\n                },\n                \"\
-        metadata\": {\n                    \"nullable\": true,\n                    \"description\": \"Optional initial metadata
-        for the unlocked entry\",\n                    \"allOf\": [\n                        {\n                         \
-        \   \"$ref\": \"#/$defs/EntryMetadata\"\n                        }\n                    ]\n                }\n   \
-        \         }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
-        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
-        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"EntryMetadata\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Metadata for an unlocked entry instance tracking
-        usage and discovery state\",\n            \"additionalProperties\": false,\n            \"properties\": {\n      \
-        \          \"unlockedIn\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Context where the entry was unlocked (e.g., location code)\"\n           \
-        \     },\n                \"unlockedDuring\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Event or activity during which the entry was unlocked\"\n\
-        \                },\n                \"playCount\": {\n                    \"type\": \"integer\",\n              \
-        \      \"default\": 0,\n                    \"description\": \"Number of times this entry has been played or viewed\"\
+        \      \"ownerType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity
+        type discriminator\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n      \
+        \          },\n                \"entryCode\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Entry template code
+        to grant\"\n                },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
+        ,\n                    \"description\": \"Type of collection to grant into\"\n                },\n               \
+        \ \"metadata\": {\n                    \"nullable\": true,\n                    \"description\": \"Optional initial
+        metadata for the unlocked entry\",\n                    \"allOf\": [\n                        {\n                \
+        \            \"$ref\": \"#/$defs/EntryMetadata\"\n                        }\n                    ]\n             \
+        \   }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"\
+        EntryMetadata\": {\n            \"type\": \"object\",\n            \"description\": \"Metadata for an unlocked entry
+        instance tracking usage and discovery state\",\n            \"additionalProperties\": false,\n            \"properties\"\
+        : {\n                \"unlockedIn\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Context where the entry was unlocked (e.g., location code)\"\n   \
+        \             },\n                \"unlockedDuring\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Event or activity during which the entry was unlocked\"\
+        \n                },\n                \"playCount\": {\n                    \"type\": \"integer\",\n             \
+        \       \"default\": 0,\n                    \"description\": \"Number of times this entry has been played or viewed\"\
         \n                },\n                \"lastAccessedAt\": {\n                    \"type\": \"string\",\n         \
         \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When this entry was last accessed or played\"\n                },\n                \"favorited\": {\n        \
@@ -1088,18 +1083,17 @@ paths:
         \      \"entryCode\",\n                \"collectionType\"\n            ],\n            \"properties\": {\n       \
         \         \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
         \                   \"description\": \"Entity that owns the collection\"\n                },\n                \"ownerType\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 64,\n                    \"description\": \"Entity type discriminator\"\n                },\n                \"\
-        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Game service scope\"\n                },\n                \"entryCode\": {\n    \
-        \                \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\":
-        128,\n                    \"description\": \"Entry template code to check\"\n                },\n                \"\
-        collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\"\
-        : \"Type of collection to check\"\n                }\n            }\n        },\n        \"CollectionType\": {\n \
-        \           \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection
-        content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes.
-        Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string
-        code is valid.\\n\"\n        }\n    }\n}"
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n                },\n\
+        \                \"entryCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 128,\n                    \"description\": \"Entry template code to check\"\n\
+        \                },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
+        ,\n                    \"description\": \"Type of collection to check\"\n                }\n            }\n      \
+        \  },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string
+        code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types
+        can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
+        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasEntryResponse\"\
         ,\n    \"$defs\": {\n        \"HasEntryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of entry ownership check\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -1330,16 +1324,15 @@ paths:
         \      \"collectionType\"\n            ],\n            \"properties\": {\n                \"ownerId\": {\n       \
         \             \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Entity that owns the collection\"\n                },\n                \"ownerType\": {\n                    \"\
-        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n             \
-        \       \"description\": \"Entity type discriminator\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service scope\"\n                },\n                \"collectionType\": {\n                    \"$ref\"\
-        : \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection to get stats for\"\n    \
-        \            }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n    \
-        \        \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are
-        game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
-        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
-        \  }\n    }\n}"
+        type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n    \
+        \            \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Game service scope\"\n                },\n                \"collectionType\"\
+        : {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
+        to get stats for\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection
+        types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions
+        include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompletionStatsResponse\"\
         ,\n    \"$defs\": {\n        \"CompletionStatsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Completion statistics for a collection\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1406,18 +1399,18 @@ paths:
         \    \"gameServiceId\",\n                \"collectionType\",\n                \"areaCode\"\n            ],\n     \
         \       \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n           \
         \         \"format\": \"uuid\",\n                    \"description\": \"Entity whose collection to search\"\n    \
-        \            },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                   \
-        \ \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Entity type discriminator\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\n                },\n\
-        \                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\",\n              \
-        \      \"description\": \"Type of collection to select content from\"\n                },\n                \"areaCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 128,\n                    \"description\": \"Area code to select content for\"\n                }\n            }\n\
-        \        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque
-        string code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014
-        new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
-        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+        \            },\n                \"ownerType\": {\n                    \"type\": \"object\",\n                   \
+        \ \"description\": \"Entity type discriminator\"\n                },\n                \"gameServiceId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope\"\n                },\n                \"collectionType\": {\n                    \"$ref\"\
+        : \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection to select content from\"\n\
+        \                },\n                \"areaCode\": {\n                    \"type\": \"string\",\n                \
+        \    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Area code
+        to select content for\"\n                }\n            }\n        },\n        \"CollectionType\": {\n           \
+        \ \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection content.\\
+        nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common
+        conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is
+        valid.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContentSelectionResponse\"\
         ,\n    \"$defs\": {\n        \"ContentSelectionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Selected content entry for an area\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -2188,10 +2181,8 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Entity type discriminator (e.g., account, character)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to create
@@ -2223,9 +2214,7 @@ components:
           format: uuid
           description: Entity to list collections for
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -2266,9 +2255,7 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -2316,9 +2303,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -2387,9 +2372,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -2567,9 +2550,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -2642,9 +2623,7 @@ components:
           format: uuid
           description: Entity whose collection to search
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string

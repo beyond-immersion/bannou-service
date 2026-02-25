@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -58,7 +59,7 @@ public sealed class SeedDataCache : ISeedDataCache
             var seedsResponse = await client.GetSeedsByOwnerAsync(new GetSeedsByOwnerRequest
             {
                 OwnerId = characterId,
-                OwnerType = "Character",
+                OwnerType = EntityType.Character,
                 IncludeArchived = false
             }, ct);
 

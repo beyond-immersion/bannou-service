@@ -18,9 +18,8 @@ info:
     is simpler — unlocks are direct grants without contract delegation.
 
     **Ownership Model**: Collections use polymorphic ownership (ownerId + ownerType),
-    following the Seed pattern. Owner types are opaque strings (e.g., "account",
-    "character") — NOT enums, per SCHEMA-RULES.md guidance on not enumerating
-    entity types from other layers. Owner validation is caller-responsibility.
+    following the Seed pattern. Owner types use the shared EntityType enum from
+    common-api.yaml for type safety across service boundaries.
 
     **Key Feature**: Dynamic content selection based on unlocked entries and area
     theme configurations (weighted random from library).
@@ -1104,10 +1103,8 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Entity type discriminator (e.g., account, character)
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
           description: Type of collection to create
@@ -1141,9 +1138,7 @@ components:
           format: uuid
           description: Entity to list collections for
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1186,9 +1181,7 @@ components:
           format: uuid
           description: Entity that owns this collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         collectionType:
           $ref: '#/components/schemas/CollectionType'
@@ -1242,9 +1235,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1315,9 +1306,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1500,9 +1489,7 @@ components:
           format: uuid
           description: Entity that owns the collection
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string
@@ -1582,9 +1569,7 @@ components:
           format: uuid
           description: Entity whose collection to search
         ownerType:
-          type: string
-          minLength: 1
-          maxLength: 64
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         gameServiceId:
           type: string

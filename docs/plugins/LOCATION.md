@@ -39,6 +39,18 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `LocationType` | C (System State) | Service-specific enum (`CONTINENT`, `REGION`, `CITY`, `DISTRICT`, `BUILDING`, `ROOM`, `LANDMARK`, `OTHER`) | Finite set of structural categories defining the role of a location in the containment hierarchy. System-owned; adding new location types requires schema changes because they affect hierarchy semantics |
+| `BoundsPrecision` | C (System State) | Service-specific enum (`exact`, `approximate`, `none`) | Finite set of system-owned precision levels for spatial bounds data quality |
+| `CoordinateMode` | C (System State) | Service-specific enum (`inherit`, `local`, `portal`) | Finite set of system-owned modes describing how a location's coordinate system relates to its parent |
+| `TerritoryMode` | C (System State) | Service-specific enum (`exclusive`, `inclusive`) | Finite set of two system-owned validation modes for territory constraint checking |
+| `entityType` (entity presence) | B (Content Code) | Opaque string | Entity type for presence tracking (e.g., "character", "actor", "npc", "player"). Described as opaque string in the schema; game-configurable to support arbitrary entity type classifications without schema changes |
+
+---
+
 ## State Storage
 
 **Stores**:

@@ -477,6 +477,21 @@ TransitRouteOption:
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `modeCode` / `primaryModeCode` / `legModes` | B (Content Code) | Opaque string | Transit mode identifier (e.g., "walking", "horseback", "river_boat", "flying_mount", "wagon"). Registered via API, not hardcoded. New modes added without schema changes. Follows the pattern established by Seed type codes and Collection type codes |
+| `terrainType` | B (Content Code) | Opaque string | Terrain classification for connections (e.g., "road", "trail", "forest", "mountain", "river", "ocean", "swamp", "desert", "underground", "aerial"). Game-configurable, extensible without schema changes |
+| `entityType` (journey traveler) | B (Content Code) | Opaque string | Type of entity traveling (e.g., "character", "npc", "caravan", "army", "creature"). Game-configurable, not restricted to first-class Bannou entities (includes composite game concepts like caravans and armies) |
+| `tags` (mode/connection) | B (Content Code) | Opaque string array | Freeform classification tags (e.g., "mount", "vehicle", "magical", "aquatic", "trade_route", "military"). Game-configurable, extensible |
+| connection `status` | C (System State) | Service-specific enum (`open`, `closed`, `dangerous`, `blocked`, `seasonal_closed`) | Finite set of system-owned connection operational states; supports optimistic concurrency transitions |
+| journey `status` | C (System State) | Service-specific enum (`preparing`, `in_transit`, `at_waypoint`, `arrived`, `interrupted`, `abandoned`) | Finite journey lifecycle state machine; system-owned transitions |
+| journey leg `status` | C (System State) | Service-specific enum (`pending`, `in_progress`, `completed`, `skipped`) | Finite leg lifecycle state machine; system-owned transitions |
+| mode `status` | C (System State) | Service-specific enum (`active`, `deprecated`) | Finite set of two system-owned mode availability states |
+
+---
+
 ## State Storage
 
 ```yaml
