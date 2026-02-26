@@ -418,7 +418,7 @@ flows:
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Archetype definitions (MySQL), environmental overrides (MySQL), nature profile cache (Redis), distributed locks (Redis) |
-| lib-messaging (`IMessageBus`) | Publishing archetype events (created, updated, deprecated), error event publication |
+| lib-messaging (`IMessageBus`) | Publishing archetype events (created, updated), error event publication |
 | lib-messaging (`IEventConsumer`) | Subscribing to species events (deprecated, deleted), location events (deprecated, deleted) |
 | lib-species (`ISpeciesClient`) | Validating species existence when creating archetypes, querying species data for trait modifier cross-reference (L2) |
 | lib-game-service (`IGameServiceClient`) | Game service scope validation for archetypes (L2) |
@@ -508,8 +508,7 @@ flows:
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `ethology.archetype.created` | `EthologyArchetypeCreatedEvent` | New behavioral archetype registered. Includes archetypeCode, speciesCode, gameServiceId, axis codes and base values. |
-| `ethology.archetype.updated` | `EthologyArchetypeUpdatedEvent` | Archetype definition modified. Includes archetypeCode, changedFields list, previous and new values for changed axes. Triggers cache invalidation for all entities using this archetype. |
-| `ethology.archetype.deprecated` | `EthologyArchetypeDeprecatedEvent` | Archetype marked deprecated. Includes archetypeCode, reason. Existing entities continue using cached data; new entity creation with this archetype is rejected. |
+| `ethology.archetype.updated` | `EthologyArchetypeUpdatedEvent` | Archetype definition modified. Includes archetypeCode, changedFields list, previous and new values for changed axes. Covers deprecation (changedFields contains `isDeprecated`, `deprecatedAt`, `deprecationReason`). Triggers cache invalidation for all entities using this archetype. |
 | `ethology.override.created` | `EthologyOverrideCreatedEvent` | Environmental override registered. Includes archetypeCode, scopeType, scopeId, axis modifiers. Triggers cache invalidation for affected scope. |
 | `ethology.override.updated` | `EthologyOverrideUpdatedEvent` | Override modified. Includes overrideId, changedFields, previous/new modifiers. Triggers cache invalidation. |
 | `ethology.override.removed` | `EthologyOverrideRemovedEvent` | Override deactivated or deleted. Includes overrideId, archetypeCode, scopeType, scopeId. Triggers cache invalidation. |
@@ -598,7 +597,7 @@ All endpoints require `developer` role.
 
 - **ListArchetypes** (`/ethology/archetype/list`): Paged list of archetypes within a game service. Filterable by category, deprecated status.
 
-- **DeprecateArchetype** (`/ethology/archetype/deprecate`): Marks archetype deprecated with reason. Existing entities continue using cached data. New entity creation with this species is warned (not blocked -- the entity still needs SOME behavioral defaults). Publishes `ethology.archetype.deprecated`.
+- **DeprecateArchetype** (`/ethology/archetype/deprecate`): Marks archetype deprecated with reason. Idempotent -- returns OK if already deprecated. Existing entities continue using cached data. New entity creation with this species is warned (not blocked -- the entity still needs SOME behavioral defaults). Publishes `ethology.archetype.updated` with changedFields containing deprecation fields.
 
 - **SeedArchetypes** (`/ethology/archetype/seed`): Bulk creation/update of archetypes from configuration. Idempotent with `updateExisting` flag. Used during world initialization to define all species behavioral baselines at once.
 

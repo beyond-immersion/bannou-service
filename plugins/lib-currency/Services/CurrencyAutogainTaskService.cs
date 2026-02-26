@@ -206,7 +206,7 @@ public class CurrencyAutogainTaskService : BackgroundService
             // Acquire the balance lock (same lock used by credit/debit/transfer) to prevent
             // race conditions where autogain save overwrites concurrent balance modifications
             await using var lockResponse = await lockProvider.LockAsync(
-                "currency-balance", $"{walletId}:{definition.DefinitionId}",
+                StateStoreDefinitions.CurrencyLock, $"{walletId}:{definition.DefinitionId}",
                 Guid.NewGuid().ToString(), _configuration.BalanceLockTimeoutSeconds, cancellationToken);
 
             if (!lockResponse.Success)

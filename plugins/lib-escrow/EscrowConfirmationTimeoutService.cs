@@ -303,6 +303,8 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         agreement.Resolution = EscrowResolution.Refunded;
         agreement.ResolutionNotes = "Confirmation timeout expired - automatic refund";
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await agreementStore.TrySaveAsync(agreementKey, agreement, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {
@@ -372,6 +374,8 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         agreement.Resolution = resolution;
         agreement.ResolutionNotes = "Confirmation timeout expired - auto-confirmed";
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await agreementStore.TrySaveAsync(agreementKey, agreement, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {
@@ -441,6 +445,8 @@ public class EscrowConfirmationTimeoutService : BackgroundService
 
         agreement.Status = EscrowStatus.Disputed;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await agreementStore.TrySaveAsync(agreementKey, agreement, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {

@@ -244,7 +244,7 @@ public partial class QuestService : IQuestService
             Tags = body.Tags,
             QuestGiverCharacterId = body.QuestGiverCharacterId,
             GameServiceId = body.GameServiceId,
-            Deprecated = false,
+            IsDeprecated = false,
             CreatedAt = now
         };
 
@@ -323,7 +323,7 @@ public partial class QuestService : IQuestService
             d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
                 (body.Category == null || d.Category == body.Category) &&
                 (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
-                (body.IncludeDeprecated == true || !d.Deprecated),
+                (body.IncludeDeprecated == true || !d.IsDeprecated),
             cancellationToken: cancellationToken);
 
         // Filter by tags if specified
@@ -377,6 +377,8 @@ public partial class QuestService : IQuestService
             if (body.Tags != null)
                 definition.Tags = body.Tags.ToList();
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await DefinitionStore.TrySaveAsync(
                 definitionKey,
                 definition,
@@ -420,14 +422,18 @@ public partial class QuestService : IQuestService
                 return (StatusCodes.NotFound, null);
             }
 
-            if (definition.Deprecated)
+            if (definition.IsDeprecated)
             {
                 // Already deprecated - idempotent success
                 return (StatusCodes.OK, MapToDefinitionResponse(definition));
             }
 
-            definition.Deprecated = true;
+            definition.IsDeprecated = true;
+            definition.DeprecatedAt = DateTimeOffset.UtcNow;
+            definition.DeprecationReason = body.Reason;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await DefinitionStore.TrySaveAsync(
                 definitionKey,
                 definition,
@@ -486,7 +492,7 @@ public partial class QuestService : IQuestService
         }
 
         // Check deprecated
-        if (definition.Deprecated)
+        if (definition.IsDeprecated)
         {
             _logger.LogWarning("Cannot accept deprecated quest {Code}", definition.Code);
             return (StatusCodes.BadRequest, null);
@@ -805,6 +811,8 @@ public partial class QuestService : IQuestService
             instance.Status = QuestStatus.ABANDONED;
             instance.CompletedAt = now;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await InstanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null)
             {
@@ -927,7 +935,7 @@ public partial class QuestService : IQuestService
     {
         // Get all non-deprecated definitions
         var definitions = await DefinitionStore.QueryAsync(
-            d => !d.Deprecated &&
+            d => !d.IsDeprecated &&
                 (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
                 (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
             cancellationToken: cancellationToken);
@@ -1150,6 +1158,8 @@ public partial class QuestService : IQuestService
             var wasComplete = progress.IsComplete;
             progress.IsComplete = progress.CurrentCount >= progress.RequiredCount;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await ProgressStore.TrySaveAsync(
                 progressKey,
                 progress,
@@ -1796,6 +1806,8 @@ public partial class QuestService : IQuestService
             current.Status = QuestStatus.COMPLETED;
             current.CompletedAt = now;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await InstanceStore.TrySaveAsync(instanceKey, current, etag ?? string.Empty, cancellationToken: cancellationToken);
             if (saveResult == null) continue;
 
@@ -2176,7 +2188,9 @@ public partial class QuestService : IQuestService
                 FactionCode = r.FactionCode
             }).ToList(),
             Tags = definition.Tags,
-            Deprecated = definition.Deprecated,
+            IsDeprecated = definition.IsDeprecated,
+            DeprecatedAt = definition.DeprecatedAt,
+            DeprecationReason = definition.DeprecationReason,
             CreatedAt = definition.CreatedAt,
             GameServiceId = definition.GameServiceId
         };

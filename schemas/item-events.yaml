@@ -6,7 +6,7 @@ info:
     Lifecycle events are auto-generated from x-lifecycle definition.
 
     **Event Categories**:
-    - Template lifecycle: created, updated, deprecated
+    - Template lifecycle: created, updated (deprecation via changedFields)
     - Instance lifecycle: created, modified, destroyed
     - Binding events: bound, unbound
 
@@ -26,10 +26,7 @@ info:
       description: Published when a new item template is created
     - topic: item-template.updated
       event: ItemTemplateUpdatedEvent
-      description: Published when an item template is updated
-    - topic: item-template.deprecated
-      event: ItemTemplateDeprecatedEvent
-      description: Published when an item template is deprecated
+      description: Published when an item template is updated (including deprecation via changedFields)
 
     # Instance lifecycle events (auto-generated from x-lifecycle)
     - topic: item-instance.created
@@ -69,7 +66,7 @@ info:
 # Lifecycle events auto-generated from this definition.
 # Note: The generator produces standard Created/Updated/Deleted events for both entities.
 # Item uses custom event names for non-creation lifecycle states:
-#   - ItemTemplate: "deprecated" instead of "deleted" (templates are soft-disabled, not deleted)
+#   - ItemTemplate: deprecation published via "updated" with changedFields (per IMPLEMENTATION TENETS)
 #   - ItemInstance: "modified" instead of "updated", "destroyed" instead of "deleted"
 # The custom events are defined in components/schemas below and listed in x-event-publications.
 # The auto-generated Updated/Deleted variants exist in Generated/ but are not published.
@@ -94,6 +91,7 @@ x-lifecycle:
       isActive: { type: boolean, required: true, description: "Whether template is currently active" }
       isDeprecated: { type: boolean, required: true, description: "Whether template is deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "When the template was deprecated" }
+      deprecationReason: { type: string, nullable: true, description: "Reason for deprecation" }
       migrationTargetId: { type: string, format: uuid, nullable: true, description: "Template ID to migrate existing instances to" }
       createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
       updatedAt: { type: string, format: date-time, nullable: true, description: "When the template was last modified" }
@@ -127,75 +125,6 @@ components:
     # =========================================================================
     # Custom Lifecycle Events (non-standard lifecycle states)
     # =========================================================================
-
-    ItemTemplateDeprecatedEvent:
-      type: object
-      description: Event published when an item template is deprecated (soft-disable with optional migration)
-      additionalProperties: false
-      required:
-      - eventId
-      - timestamp
-      - templateId
-      - code
-      - gameId
-      - name
-      - category
-      - rarity
-      - quantityModel
-      - scope
-      - isActive
-      - createdAt
-      properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique event identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: When the event occurred
-        templateId:
-          type: string
-          format: uuid
-          description: Deprecated template ID
-        code:
-          type: string
-          description: Item template code
-        gameId:
-          type: string
-          description: Game service ID
-        name:
-          type: string
-          description: Template display name
-        category:
-          $ref: 'item-api.yaml#/components/schemas/ItemCategory'
-          description: Item category
-        rarity:
-          $ref: 'item-api.yaml#/components/schemas/ItemRarity'
-          description: Item rarity tier
-        quantityModel:
-          $ref: 'item-api.yaml#/components/schemas/QuantityModel'
-          description: Quantity tracking model
-        scope:
-          $ref: 'item-api.yaml#/components/schemas/ItemScope'
-          description: Realm availability scope
-        isActive:
-          type: boolean
-          description: Whether template is still active
-        createdAt:
-          type: string
-          format: date-time
-          description: When the template was created
-        updatedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the template was last modified
-        migrationTargetId:
-          type: string
-          format: uuid
-          nullable: true
-          description: Template ID to migrate existing instances to
 
     ItemInstanceModifiedEvent:
       type: object

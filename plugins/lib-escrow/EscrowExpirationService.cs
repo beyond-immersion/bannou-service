@@ -236,6 +236,8 @@ public class EscrowExpirationService : BackgroundService
             ? "Escrow expired - deposits automatically refunded"
             : "Escrow expired - no deposits to refund";
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await agreementStore.TrySaveAsync(agreementKey, currentAgreement, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {
@@ -347,6 +349,8 @@ public class EscrowExpirationService : BackgroundService
             existing.PendingCount--;
             existing.LastUpdated = now;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await partyPendingStore.TrySaveAsync(partyKey, existing, etag ?? string.Empty, cancellationToken);
             if (saveResult != null)
             {

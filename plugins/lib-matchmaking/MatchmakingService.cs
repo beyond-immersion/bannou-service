@@ -635,7 +635,7 @@ public partial class MatchmakingService : IMatchmakingService
 
         // Acquire lock on match (multiple players accept concurrently)
         await using var matchLock = await _lockProvider.LockAsync(
-            "matchmaking-match", matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, matchId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
         if (!matchLock.Success)
         {
             _logger.LogWarning("Could not acquire match lock for {MatchId}", matchId);
@@ -1413,7 +1413,7 @@ public partial class MatchmakingService : IMatchmakingService
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue list lock");
@@ -1432,7 +1432,7 @@ public partial class MatchmakingService : IMatchmakingService
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue list lock");
@@ -1505,7 +1505,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
@@ -1525,7 +1525,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire player tickets lock for {AccountId}", accountId);
@@ -1556,7 +1556,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);
@@ -1576,7 +1576,7 @@ public partial class MatchmakingService : IMatchmakingService
     {
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
-            "matchmaking-index", key, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Could not acquire queue tickets lock for {QueueId}", queueId);

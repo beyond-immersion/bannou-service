@@ -281,7 +281,8 @@ Auth publishes 10 audit event types (login successful/failed, registration, OAut
 
 ## Potential Extensions
 
-None identified.
+1. **Multi-device security client events**: Create `auth-client-events.yaml` with real-time security notifications pushed to all of a player's connected sessions via the Entity Session Registry (`("account", accountId)`). Phase 1: `AuthDeviceLoginEvent` (new login alerts), `AuthPasswordChangedEvent`, `AuthMfaEnabledEvent`, `AuthMfaDisabledEvent`. Phase 2: `AuthSuspiciousLoginEvent` (failed login alerts), `AuthExternalAccountLinkedEvent`, `AuthSessionTerminatedEvent` (remote logout confirmation). Depends on Entity Session Registry (#426).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/492 -->
 
 ## Known Quirks & Caveats
 

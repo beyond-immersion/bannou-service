@@ -436,7 +436,7 @@ public partial class StorylineService : IStorylineService
             RealmId = body.RealmId,
             GameServiceId = body.GameServiceId,
             TagsJson = body.Tags is not null ? BannouJson.Serialize(body.Tags) : null,
-            Deprecated = false,
+            IsDeprecated = false,
             CreatedAt = now,
             UpdatedAt = null,
             Etag = etag
@@ -545,7 +545,7 @@ public partial class StorylineService : IStorylineService
         // Filter deprecated
         if (!body.IncludeDeprecated)
         {
-            filtered = filtered.Where(d => !d.Deprecated);
+            filtered = filtered.Where(d => !d.IsDeprecated);
         }
 
         // Get total count before pagination
@@ -652,7 +652,9 @@ public partial class StorylineService : IStorylineService
             return StatusCodes.NotFound;
         }
 
-        existing.Deprecated = true;
+        existing.IsDeprecated = true;
+        existing.DeprecatedAt = DateTimeOffset.UtcNow;
+        existing.DeprecationReason = body.Reason;
         existing.Enabled = false;
         existing.UpdatedAt = DateTimeOffset.UtcNow;
         existing.Etag = Guid.NewGuid().ToString("N");
@@ -683,7 +685,7 @@ public partial class StorylineService : IStorylineService
 
             // Filter by scope and enabled status
             var candidates = allDefinitions
-                .Where(d => d.Enabled && !d.Deprecated)
+                .Where(d => d.Enabled && !d.IsDeprecated)
                 .Where(d => !d.RealmId.HasValue || d.RealmId == body.RealmId)
                 .Where(d => !d.GameServiceId.HasValue || d.GameServiceId == body.GameServiceId)
                 .ToList();
@@ -795,7 +797,7 @@ public partial class StorylineService : IStorylineService
         {
             blockingReason = "Scenario is disabled";
         }
-        else if (definition.Deprecated)
+        else if (definition.IsDeprecated)
         {
             blockingReason = "Scenario is deprecated";
         }
@@ -919,7 +921,7 @@ public partial class StorylineService : IStorylineService
         var lockResource = $"{body.CharacterId}:{body.ScenarioId}";
         var lockOwner = $"scenario-trigger-{executionId:N}";
         await using var lockHandle = await _lockProvider.LockAsync(
-            "storyline-scenario-lock",  // Lock store name
+            StateStoreDefinitions.StorylineLock,
             lockResource,
             lockOwner,
             _configuration.ScenarioTriggerLockTimeoutSeconds,
@@ -938,7 +940,7 @@ public partial class StorylineService : IStorylineService
             return (StatusCodes.NotFound, null);
         }
 
-        if (!definition.Enabled || definition.Deprecated)
+        if (!definition.Enabled || definition.IsDeprecated)
         {
             return (StatusCodes.BadRequest, null);
         }
@@ -1834,7 +1836,9 @@ public partial class StorylineService : IStorylineService
             Tags = string.IsNullOrEmpty(model.TagsJson)
                 ? null
                 : BannouJson.Deserialize<List<string>>(model.TagsJson),
-            Deprecated = model.Deprecated,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
             Etag = model.Etag
@@ -1862,7 +1866,9 @@ public partial class StorylineService : IStorylineService
             Name = model.Name,
             Priority = model.Priority,
             Enabled = model.Enabled,
-            Deprecated = model.Deprecated,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             ConditionCount = conditions?.Count ?? 0,
             PhaseCount = phases?.Count ?? 0,
             MutationCount = mutations?.Count ?? 0,

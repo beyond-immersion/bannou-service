@@ -274,7 +274,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Acquire distributed lock to prevent concurrent rename/modification
         // SlotId is Guid - convert to string for lock
         await using var slotLock = await _lockProvider.LockAsync(
-            "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId} during rename", slot.SlotId);
@@ -441,7 +441,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Lock the slot to prevent concurrent version number allocation
         var slotKey = SaveSlotMetadata.GetStateKey(body.GameId, ownerTypeStr, ownerIdStr, body.SlotName);
         await using var slotLock = await _lockProvider.LockAsync(
-            "save-load-slot", slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotKey}", slotKey);
@@ -882,7 +882,7 @@ public partial class SaveLoadService : ISaveLoadService
         // Lock the slot to prevent concurrent version number allocation
         // SlotId is Guid, convert to string for lock
         await using var slotLock = await _lockProvider.LockAsync(
-            "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -1586,7 +1586,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Lock the slot to prevent concurrent metadata modifications
         await using var slotLock = await _lockProvider.LockAsync(
-            "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 30, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);
@@ -1877,7 +1877,7 @@ public partial class SaveLoadService : ISaveLoadService
         var targetSlotKey = SaveSlotMetadata.GetStateKey(body.TargetGameId, targetOwnerType, targetOwnerId, body.TargetSlotName);
 
         await using var targetSlotLock = await _lockProvider.LockAsync(
-            "save-load-slot", targetSlotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, targetSlotKey, Guid.NewGuid().ToString(), 60, cancellationToken);
         if (!targetSlotLock.Success)
         {
             _logger.LogDebug("Could not acquire target slot lock for {SlotKey}", targetSlotKey);
@@ -2121,7 +2121,7 @@ public partial class SaveLoadService : ISaveLoadService
 
         // Lock the slot to prevent concurrent version number allocation
         await using var slotLock = await _lockProvider.LockAsync(
-            "save-load-slot", slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
+            StateStoreDefinitions.SaveLoadLock, slot.SlotId.ToString(), Guid.NewGuid().ToString(), 60, cancellationToken);
         if (!slotLock.Success)
         {
             _logger.LogDebug("Could not acquire slot lock for {SlotId}", slot.SlotId);

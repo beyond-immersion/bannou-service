@@ -116,8 +116,8 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ### Deprecation Operations (3 endpoints)
 
-- **DeprecateSpecies** (`/species/deprecate`): Sets `IsDeprecated=true`, stores timestamp and optional reason. Returns Conflict if already deprecated. Publishes update event.
-- **UndeprecateSpecies** (`/species/undeprecate`): Restores deprecated species to active. Returns Conflict if already active.
+- **DeprecateSpecies** (`/species/deprecate`): Sets `IsDeprecated=true`, stores timestamp and optional reason. Idempotent — returns OK with current state if already deprecated. Publishes update event.
+- **UndeprecateSpecies** (`/species/undeprecate`): Restores deprecated species to active. Idempotent — returns OK with current state if not deprecated.
 - **MergeSpecies** (`/species/merge`): Source must be deprecated. Paginates through characters via `ICharacterClient.ListCharactersAsync` (page size from config). Updates each character's species. Partial failures continue (logs warning per failed character). Optional `deleteAfterMerge` flag. Publishes `species.merged`.
 
 ### Realm Association (2 endpoints)

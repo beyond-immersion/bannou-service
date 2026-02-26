@@ -972,6 +972,13 @@ public partial class LocationService : ILocationService
             return StatusCodes.NotFound;
         }
 
+        // Category A entities require deprecation before deletion per IMPLEMENTATION TENETS
+        if (!model.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot delete location {LocationId} - must be deprecated first (Category A)", body.LocationId);
+            return StatusCodes.BadRequest;
+        }
+
         // Check for children
         var parentIndexKey = BuildParentIndexKey(model.RealmId, body.LocationId);
         var childIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location).GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
@@ -1082,9 +1089,11 @@ public partial class LocationService : ILocationService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Location {LocationId} already deprecated, returning OK (idempotent)", body.LocationId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = true;
@@ -1118,9 +1127,11 @@ public partial class LocationService : ILocationService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            return (StatusCodes.BadRequest, null);
+            _logger.LogDebug("Location {LocationId} not deprecated, returning OK (idempotent)", body.LocationId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = false;

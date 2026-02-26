@@ -219,6 +219,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 data.Version++;
                 data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
                 if (saveResult != null)
                 {
@@ -588,6 +590,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
                 data.Version++;
                 data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
                 if (saveResult != null)
                 {

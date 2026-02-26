@@ -769,10 +769,11 @@ public partial class SpeciesService : ISpeciesService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            _logger.LogDebug("Species already deprecated: {SpeciesId}", body.SpeciesId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Species {SpeciesId} already deprecated, returning OK (idempotent)", body.SpeciesId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = true;
@@ -804,10 +805,11 @@ public partial class SpeciesService : ISpeciesService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            _logger.LogDebug("Species not deprecated: {SpeciesId}", body.SpeciesId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Species {SpeciesId} not deprecated, returning OK (idempotent)", body.SpeciesId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = false;

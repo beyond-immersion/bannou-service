@@ -156,7 +156,7 @@ public class ReservationCleanupService : BackgroundService
             {
                 // Acquire per-session lock to prevent duplicate cancellation across instances
                 await using var sessionLock = await _lockProvider.LockAsync(
-                    "game-session", SESSION_KEY_PREFIX + sessionId, Guid.NewGuid().ToString(),
+                    StateStoreDefinitions.GameSessionLock, SESSION_KEY_PREFIX + sessionId, Guid.NewGuid().ToString(),
                     _configuration.LockTimeoutSeconds, cancellationToken);
                 if (!sessionLock.Success)
                 {
@@ -254,7 +254,7 @@ public class ReservationCleanupService : BackgroundService
 
             // Remove from session list under distributed lock (read-modify-write)
             await using var listLock = await _lockProvider.LockAsync(
-                "game-session", SESSION_LIST_KEY, Guid.NewGuid().ToString(),
+                StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(),
                 _configuration.LockTimeoutSeconds, cancellationToken);
             if (listLock.Success)
             {

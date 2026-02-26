@@ -2362,7 +2362,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Acquire pool lock to serialize pool state changes
         await using var poolLock = await _lockProvider.LockAsync(
-            "orchestrator-pool", body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.OrchestratorLock, body.PoolType, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!poolLock.Success)
         {
             _logger.LogWarning("Could not acquire pool lock for acquire in pool {PoolType}", body.PoolType);
@@ -2471,7 +2471,7 @@ public partial class OrchestratorService : IOrchestratorService
 
         // Acquire pool lock to serialize pool state changes
         await using var poolLock = await _lockProvider.LockAsync(
-            "orchestrator-pool", poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
+            StateStoreDefinitions.OrchestratorLock, poolType, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!poolLock.Success)
         {
             _logger.LogWarning("Could not acquire pool lock for release in pool {PoolType}", poolType);

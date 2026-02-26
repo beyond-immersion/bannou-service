@@ -356,7 +356,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         // Distributed lock to prevent lost updates from concurrent session modifications
         await using var lockResponse = await _lockProvider.LockAsync(
-            "permission", sessionIdStr, $"permission-state:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.PermissionLock, sessionIdStr, $"permission-state:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -401,7 +401,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         // Distributed lock to prevent lost updates from concurrent session modifications
         await using var lockResponse = await _lockProvider.LockAsync(
-            "permission", sessionIdStr, $"permission-role:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.PermissionLock, sessionIdStr, $"permission-role:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {

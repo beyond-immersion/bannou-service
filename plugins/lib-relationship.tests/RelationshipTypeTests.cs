@@ -646,7 +646,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     }
 
     [Fact]
-    public async Task UndeprecateRelationshipTypeAsync_NotDeprecated_ReturnsBadRequest()
+    public async Task UndeprecateRelationshipTypeAsync_NotDeprecated_ReturnsOk()
     {
         // Arrange
         var service = CreateService();
@@ -663,9 +663,9 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         // Act
         var (status, response) = await service.UndeprecateRelationshipTypeAsync(request);
 
-        // Assert - schema specifies 400 for "Relationship type is not deprecated"
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion

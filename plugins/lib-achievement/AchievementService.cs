@@ -288,6 +288,8 @@ public partial class AchievementService : IAchievementService
             return (StatusCodes.OK, MapToResponse(definition, definition.EarnedCount));
         }
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await definitionStore.TrySaveAsync(key, definition, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -437,7 +439,7 @@ public partial class AchievementService : IAchievementService
         var progressKey = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
         await using var progressLock = await _lockProvider.LockAsync(
-            "achievement-progress", progressKey, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+            StateStoreDefinitions.AchievementLock, progressKey, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
         if (!progressLock.Success)
         {
             _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", progressKey);
@@ -592,7 +594,7 @@ public partial class AchievementService : IAchievementService
         var key = GetEntityProgressKey(body.GameServiceId, body.EntityType, body.EntityId);
 
         await using var progressLock = await _lockProvider.LockAsync(
-            "achievement-progress", key, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+            StateStoreDefinitions.AchievementLock, key, Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
         if (!progressLock.Success)
         {
             _logger.LogWarning("Could not acquire progress lock for {ProgressKey}", key);
@@ -1020,6 +1022,8 @@ public partial class AchievementService : IAchievementService
             }
 
             freshDef.EarnedCount++;
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var savedEtag = await definitionStore.TrySaveAsync(defKey, freshDef, defEtag ?? string.Empty, cancellationToken);
             if (savedEtag != null)
             {

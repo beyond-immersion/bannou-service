@@ -235,8 +235,10 @@ TransitMode:
   # Scope
   realmRestrictions: [uuid]         # Empty = available in all realms. If set, only these realms.
 
-  # Status
-  status: enum                      # active | deprecated
+  # Deprecation (standard triple-field model per QUALITY TENETS)
+  isDeprecated: boolean             # Whether this mode is deprecated
+  deprecatedAt: timestamp?          # When deprecation occurred (null if not deprecated)
+  deprecationReason: string?        # Why this mode was deprecated (null if not deprecated)
 
   # Metadata
   tags: [string]                    # Freeform tags ("mount", "vehicle", "magical", "aquatic")
@@ -488,7 +490,7 @@ TransitRouteOption:
 | connection `status` | C (System State) | Service-specific enum (`open`, `closed`, `dangerous`, `blocked`, `seasonal_closed`) | Finite set of system-owned connection operational states; supports optimistic concurrency transitions |
 | journey `status` | C (System State) | Service-specific enum (`preparing`, `in_transit`, `at_waypoint`, `arrived`, `interrupted`, `abandoned`) | Finite journey lifecycle state machine; system-owned transitions |
 | journey leg `status` | C (System State) | Service-specific enum (`pending`, `in_progress`, `completed`, `skipped`) | Finite leg lifecycle state machine; system-owned transitions |
-| mode `status` | C (System State) | Service-specific enum (`active`, `deprecated`) | Finite set of two system-owned mode availability states |
+| mode `isDeprecated` / `deprecatedAt` / `deprecationReason` | C (System State) | Standard triple-field deprecation model (`boolean`, `timestamp?`, `string?`) | Standard deprecation lifecycle per QUALITY TENETS; replaces enum status |
 
 ---
 
@@ -746,7 +748,7 @@ transit.discovery.revealed:
 ### Mode Status Events (Custom)
 
 ```yaml
-# Custom events -- modes use register/deprecate semantics, not standard CRUD lifecycle.
+# Custom events -- modes use register/update semantics, not standard CRUD lifecycle.
 # These are NOT x-lifecycle generated.
 transit.mode.registered:
   description: "A new transit mode was registered"
@@ -754,11 +756,12 @@ transit.mode.registered:
     code: string
     name: string
 
-transit.mode.deprecated:
-  description: "A transit mode was deprecated"
+transit.mode.updated:
+  description: "A transit mode was updated (covers property changes and deprecation via changedFields)"
   payload:
     code: string
-    reason: string
+    changedFields: [string]         # List of fields that changed. Deprecation includes
+                                    # "isDeprecated", "deprecatedAt", "deprecationReason".
 ```
 
 ### Connection Lifecycle Events (x-lifecycle)
@@ -977,14 +980,14 @@ TransitServiceConfiguration:
 
 /transit/mode/deprecate:
   access: developer
-  description: "Deprecate a transit mode (existing journeys continue, new journeys cannot use it)"
+  description: "Deprecate a transit mode (existing journeys continue, new journeys cannot use it). Sets the triple-field deprecation model: isDeprecated=true, deprecatedAt=now, deprecationReason=reason. Idempotent: returns OK if already deprecated (caller's intent is satisfied)."
   request:
     code: string
     reason: string
   response: { mode: TransitMode }
+  emits: transit.mode.updated       # changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
   errors:
     - MODE_NOT_FOUND
-    - ALREADY_DEPRECATED
 ```
 
 ### Connection Management

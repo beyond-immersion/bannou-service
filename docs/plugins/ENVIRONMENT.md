@@ -82,6 +82,8 @@ ClimateTemplate:
   depthTemperatureRate:   float          # Temperature change per depth unit (default: +0.003, geothermal)
 
   isDeprecated:      bool
+  deprecatedAt:      DateTimeOffset?
+  deprecationReason: string?
   createdAt:         DateTime
   updatedAt:         DateTime
 ```
@@ -447,9 +449,8 @@ Distributed locks use `IDistributedLockProvider` (L0 infrastructure), not a sepa
 | `environment.weather-event.ended` | `EnvironmentWeatherEventEndedEvent` | Weather event ended (expired or cancelled). Includes eventId, eventCode, scopeType, scopeId, reason ("expired", "cancelled", "superseded"). |
 | `environment.resource-availability.changed` | `EnvironmentResourceAvailabilityChangedEvent` | Seasonal resource availability changed for a realm (on season boundary or weather event). Includes realmId, previousAbundance, currentAbundance, season. |
 | `environment-climate.created` | `EnvironmentClimateCreatedEvent` | Climate template created. Auto-generated via `x-lifecycle` in `environment-events.yaml`. |
-| `environment-climate.updated` | `EnvironmentClimateUpdatedEvent` | Climate template updated. Auto-generated via `x-lifecycle` with `changedFields`. |
+| `environment-climate.updated` | `EnvironmentClimateUpdatedEvent` | Climate template updated (including deprecation state changes). Auto-generated via `x-lifecycle` with `changedFields`. Deprecation is communicated via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason`. |
 | `environment-climate.deleted` | `EnvironmentClimateDeletedEvent` | Climate template deleted (via cleanup). Auto-generated via `x-lifecycle` with `deletedReason`. |
-| `environment-climate.deprecated` | `EnvironmentClimateDeprecatedEvent` | Climate template deprecated. Manually-defined custom event (not part of standard lifecycle). |
 
 **`x-event-publications`**: ALL published events (condition changes, weather events, resource availability, and lifecycle) must be listed in `x-event-publications` in `environment-events.yaml` per SCHEMA-RULES, serving as the authoritative registry of what environment emits.
 
@@ -594,11 +595,11 @@ WeatherEffectSpatialData:
 
 - **GetClimate** (`/environment/climate/get`): Returns full climate template by ID or by gameServiceId + biomeCode.
 
-- **ListClimates** (`/environment/climate/list`): Paged list of climate templates within a game service.
+- **ListClimates** (`/environment/climate/list`): Paged list of climate templates within a game service. Accepts `includeDeprecated: boolean (default: false)` filter parameter.
 
 - **UpdateClimate** (`/environment/climate/update`): Acquires distributed lock. Partial update. Validates structural consistency. Invalidates climate cache and all condition caches for locations using this template. Active weather computations use updated template starting next refresh cycle.
 
-- **DeprecateClimate** (`/environment/climate/deprecate`): Marks deprecated with reason. Existing locations continue resolving. New location bindings with this biome code emit a warning.
+- **DeprecateClimate** (`/environment/climate/deprecate`): Marks a climate template as deprecated using triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the provided `deprecationReason`. Idempotent -- returns OK if already deprecated. Existing locations continue resolving. New location bindings with this biome code emit a warning.
 
 - **BulkSeedClimates** (`/environment/climate/bulk-seed`): Bulk creation for world initialization. Idempotent with `updateExisting` flag. Accepts an array of climate template definitions. This is the primary path from "service deployed" to "climates exist" -- called during world initialization alongside Location's bulk seeding. Follows Location's two-pass seeding pattern: first pass creates templates, second pass resolves any cross-references (templates referencing other templates' season codes). Designed for configuration-driven initialization where climate data is defined in YAML seed files and loaded via admin API at deployment time, the same pattern as Species and Location bulk seeding.
 

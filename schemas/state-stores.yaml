@@ -58,6 +58,12 @@ x-state-stores:
     service: Permission
     purpose: Permission cache and session capabilities
 
+  permission-lock:
+    backend: redis
+    prefix: "permission:lock"
+    service: Permission
+    purpose: Distributed locks for session capability compilation
+
   # ============================================================================
   # Chat Stores (L1 AppFoundation Service)
   # ============================================================================
@@ -234,6 +240,12 @@ x-state-stores:
     service: Matchmaking
     purpose: Matchmaking queue and ticket state
 
+  matchmaking-lock:
+    backend: redis
+    prefix: "mm:lock"
+    service: Matchmaking
+    purpose: Distributed locks for match processing and queue index modifications
+
   # ============================================================================
   # Analytics Stores
   # ============================================================================
@@ -297,6 +309,12 @@ x-state-stores:
     service: Achievement
     purpose: Player achievement progress
 
+  achievement-lock:
+    backend: redis
+    prefix: "ach:lock"
+    service: Achievement
+    purpose: Distributed locks for achievement progress updates
+
   # ============================================================================
   # Save-Load Stores
   # ============================================================================
@@ -327,6 +345,12 @@ x-state-stores:
     prefix: "saveload:pending"
     service: SaveLoad
     purpose: Pending save operations
+
+  save-load-lock:
+    backend: redis
+    prefix: "saveload:lock"
+    service: SaveLoad
+    purpose: Distributed locks for save slot operations
 
   # ============================================================================
   # MySQL Stores - Durable/Queryable Data
@@ -373,6 +397,12 @@ x-state-stores:
     backend: mysql
     service: GameSession
     purpose: Game session state and history
+
+  game-session-lock:
+    backend: redis
+    prefix: "game-session:lock"
+    service: GameSession
+    purpose: Distributed locks for session lifecycle and reservation operations
 
   location-statestore:
     backend: mysql
@@ -475,6 +505,12 @@ x-state-stores:
     service: Orchestrator
     purpose: Primary orchestrator state
 
+  orchestrator-lock:
+    backend: redis
+    prefix: "orch:lock"
+    service: Orchestrator
+    purpose: Distributed locks for pool management operations
+
   # ============================================================================
   # Mesh Stores - Service Endpoint Discovery
   # ============================================================================
@@ -529,6 +565,12 @@ x-state-stores:
     purpose: Contract templates, instances, breaches, and indexes
     enableSearch: true
 
+  contract-lock:
+    backend: redis
+    prefix: "contract:lock"
+    service: Contract
+    purpose: Distributed locks for contract instance and index operations
+
   # ============================================================================
   # Currency Stores
   # ============================================================================
@@ -575,6 +617,12 @@ x-state-stores:
     backend: mysql
     service: Currency
     purpose: Authorization hold records
+
+  currency-lock:
+    backend: redis
+    prefix: "currency:lock"
+    service: Currency
+    purpose: Distributed locks for wallet, balance, hold, and index operations
 
   # ============================================================================
   # Item Stores
@@ -807,6 +855,12 @@ x-state-stores:
     prefix: "storyline:scenario:idemp"
     service: Storyline
     purpose: Scenario trigger idempotency keys for deduplication
+
+  storyline-lock:
+    backend: redis
+    prefix: "storyline:lock"
+    service: Storyline
+    purpose: Distributed locks for scenario trigger operations
 
   # ============================================================================
   # Seed Stores - Progressive Growth Entities

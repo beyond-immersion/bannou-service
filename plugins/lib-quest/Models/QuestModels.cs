@@ -60,8 +60,14 @@ internal class QuestDefinitionModel
     /// <summary>Game service this quest belongs to.</summary>
     public Guid GameServiceId { get; set; }
 
-    /// <summary>Whether deprecated.</summary>
-    public bool Deprecated { get; set; }
+    /// <summary>Whether this quest definition is deprecated.</summary>
+    public bool IsDeprecated { get; set; }
+
+    /// <summary>When the quest definition was deprecated.</summary>
+    public DateTimeOffset? DeprecatedAt { get; set; }
+
+    /// <summary>Reason for deprecation.</summary>
+    public string? DeprecationReason { get; set; }
 
     /// <summary>Creation timestamp.</summary>
     public DateTimeOffset CreatedAt { get; set; }

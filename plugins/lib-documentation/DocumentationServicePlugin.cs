@@ -28,7 +28,7 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
             var fallbackLogger = sp.GetRequiredService<ILogger<SearchIndexService>>();
 
             // Check if Redis Search is available
-            if (stateStoreFactory.SupportsSearch("documentation-statestore"))
+            if (stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
                 logger.LogInformation("Using Redis Search (FT.*) for documentation full-text search");
                 var messageBus = sp.GetRequiredService<IMessageBus>();

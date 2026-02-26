@@ -155,7 +155,7 @@ Service lifetime is **Scoped** (per-request).
 - **UpdateLocation** (`/location/update`): Partial update for name, description, locationType, bounds, boundsPrecision, coordinateMode, localOrigin, metadata. Tracks `changedFields`. Does not allow parent or code changes (use separate endpoints). Publishes `location.updated`.
 - **SetLocationParent** (`/location/set-parent`): Circular reference detection via `IsDescendantOfAsync` (max 20 depth). Validates new parent is in same realm. Updates old parent's child index, new parent's child index, root-locations index. Cascading depth update for all descendants via `UpdateDescendantDepthsAsync`. Publishes update event.
 - **RemoveLocationParent** (`/location/remove-parent`): Makes location a root (depth=0). Updates parent index and root-locations index. Cascading depth update for descendants.
-- **DeleteLocation** (`/location/delete`): Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`. Does NOT require deprecation first (unlike species/relationship types).
+- **DeleteLocation** (`/location/delete`): Requires deprecation first (BadRequest if not deprecated, per Category A IMPLEMENTATION TENETS). Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`.
 - **DeprecateLocation** (`/location/deprecate`): Sets `IsDeprecated=true` with timestamp and reason. Location remains queryable. Publishes update event.
 - **UndeprecateLocation** (`/location/undeprecate`): Restores deprecated location. Returns BadRequest if not deprecated.
 - **TransferLocationToRealm** (`/location/transfer-realm`): Moves a location to a different realm. Validates target realm exists and is active via `IRealmClient`. Checks code uniqueness in target realm (returns 409 Conflict on collision). Removes from all source realm indexes (code, realm, parent, root), clears parent (becomes root, depth 0), saves with new realm ID, adds to target realm indexes. Idempotent (no-op if already in target realm). Publishes `location.updated` with changed fields: `realmId`, `parentLocationId`, `depth`. Invalidates cache. Used by Realm merge for tree migration — caller is responsible for re-parenting descendants after transfer.
@@ -281,15 +281,15 @@ None currently identified.
 
 ### Intentional Quirks
 
-1. **Delete doesn't require deprecation**: Unlike species and relationship types, locations can be hard-deleted without first being deprecated. However, they cannot be deleted if they have child locations.
+1. ~~**Delete doesn't require deprecation**~~: **FIXED** (2026-02-26) - Location is Category A per IMPLEMENTATION TENETS (T31). `DeleteLocationAsync` now rejects with `BadRequest` if the location is not deprecated first. Locations must be deprecated before deletion, matching the pattern used by Species, Realm, and Relationship Type.
 
 2. **Realm validation only at creation and transfer**: `CreateLocation` and `TransferLocationToRealm` validate realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm.
 
 3. ~~**Seed update doesn't publish events**~~: **FIXED** (2026-02-25) - Seed updates now track changed fields, update the Redis cache via `PopulateLocationCacheAsync`, and publish `location.updated` events via `PublishLocationUpdatedEventAsync`. Only publishes when fields actually changed (no-change updates are silent). Matches the pattern used by `UpdateLocationAsync`.
 
-4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
+4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. This is structurally necessary, not just a validation choice: `ListLocationsByParentAsync` must load the parent entity to obtain its `RealmId` for constructing the `parent-index:{realmId}:{parentId}` key. Without the parent, the index key cannot be built. In contrast, `ListLocationsByRealmAsync` and `ListRootLocationsAsync` receive the `RealmId` directly in the request and build their index keys without entity lookups.
 
-5. **Undeprecate returns BadRequest not Conflict**: Unlike `DeprecateLocation` which returns Conflict when already deprecated, `UndeprecateLocation` returns BadRequest when not deprecated. Inconsistent error status pattern.
+5. ~~**Undeprecate returns BadRequest not Conflict**~~: **FIXED** (2026-02-26) - Both `DeprecateLocationAsync` and `UndeprecateLocationAsync` are now idempotent per IMPLEMENTATION TENETS (T31). Deprecating an already-deprecated location returns OK with current state. Undeprecating a non-deprecated location returns OK with current state. No events published and no state changes on idempotent calls.
 
 6. **Delete blocks when lib-resource unavailable**: `DeleteLocation` returns `ServiceUnavailable` (503) if `IResourceClient` is not reachable when checking external references. This fail-closed behavior protects referential integrity but means location deletion depends on lib-resource availability.
 
@@ -313,5 +313,6 @@ None currently identified.
 
 ## Work Tracking
 
+- **2026-02-26**: Audit fix — T31 deprecation lifecycle compliance. Three changes: (1) `DeprecateLocationAsync` now returns OK when already deprecated (idempotent), (2) `UndeprecateLocationAsync` now returns OK when not deprecated (idempotent), (3) `DeleteLocationAsync` now requires deprecation before deletion (Category A). Previously: deprecation returned Conflict, undeprecation returned BadRequest, and delete had no deprecation guard.
 - **2026-02-25**: Audit fix — `SeedLocationsAsync` now publishes `location.updated` events and updates Redis cache when updating existing locations with `updateExisting=true`. Previously used direct `SaveAsync` bypassing both event publishing and cache population (FOUNDATION TENETS violation).
 - **2026-02-12**: Issue [#145](https://github.com/beyond-immersion/bannou-service/issues/145) - Implemented `LocationContextProviderFactory` (`IVariableProviderFactory`) providing `${location.*}` namespace to Actor behavior system. Includes `LocationDataCache` (ConcurrentDictionary with configurable TTL) and `LocationContextProvider` resolving zone, name, region, type, depth, realm, nearby POIs, and entity count.

@@ -1527,10 +1527,11 @@ public partial class RelationshipService : IRelationshipService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            _logger.LogDebug("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Relationship type {TypeId} already deprecated, returning OK (idempotent)", body.RelationshipTypeId);
+            return (StatusCodes.OK, MapToTypeResponse(model));
         }
 
         model.IsDeprecated = true;
@@ -1580,10 +1581,11 @@ public partial class RelationshipService : IRelationshipService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
-            return (StatusCodes.BadRequest, null);
+            _logger.LogDebug("Relationship type {TypeId} not deprecated, returning OK (idempotent)", body.RelationshipTypeId);
+            return (StatusCodes.OK, MapToTypeResponse(model));
         }
 
         model.IsDeprecated = false;

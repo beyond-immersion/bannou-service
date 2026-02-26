@@ -605,7 +605,8 @@ public partial class FactionService : IFactionService
 
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
-        if (model.Status != FactionStatus.Deprecated) return (StatusCodes.BadRequest, null);
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
+        if (model.Status != FactionStatus.Deprecated) return (StatusCodes.OK, MapToResponse(model));
 
         model.Status = FactionStatus.Active;
         model.UpdatedAt = DateTimeOffset.UtcNow;

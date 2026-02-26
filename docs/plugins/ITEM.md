@@ -198,8 +198,7 @@ This architecture enables:
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `item-template.created` | `ItemTemplateCreatedEvent` | Template created |
-| `item-template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed |
-| `item-template.deprecated` | `ItemTemplateDeprecatedEvent` | Template deprecated |
+| `item-template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (including deprecation — `changedFields` contains deprecation fields) |
 | `item-instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
 | `item-instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name changed |
 | `item-instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted |
@@ -264,11 +263,11 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **GetItemTemplate** (`/item/template/get`): Dual lookup via `ResolveTemplateAsync`: by templateId (direct) or by code+gameId (index lookup). Uses `GetTemplateWithCacheAsync` (cache → persistent store → populate cache).
 - **ListItemTemplates** (`/item/template/list`): Loads game index, fetches each template. Filters: category, subcategory, tags, rarity, scope, realm, active status, search (name/description). Pagination via offset/limit.
 - **UpdateItemTemplate** (`/item/template/update`): Updates mutable fields only. Invalidates template cache after save. Publishes `item-template.updated`.
-- **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template inactive. Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item-template.deprecated`.
+- **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template deprecated with triple-field model (IsDeprecated, DeprecatedAt, DeprecationReason). Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item-template.updated` with deprecation changedFields.
 
 ### Instance Operations (8 endpoints)
 
-- **CreateItemInstance** (`/item/instance/create`): Validates template exists and is active (but not IsDeprecated - see quirk #8). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
+- **CreateItemInstance** (`/item/instance/create`): Validates template exists, is active, and is not deprecated (Category B instance creation guard). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
 - **GetItemInstance** (`/item/instance/get`): Cache read-through pattern. Returns instance with template reference.
 - **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item-instance.modified`.
 - **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item-instance.bound`.
@@ -535,11 +534,11 @@ No bugs identified.
 
 6. **Bind doesn't enforce SoulboundType**: `BindItemInstanceAsync` binds any item regardless of its template's `SoulboundType`. The soulbound type is metadata for game logic, not enforced by the service.
 
-7. **Deprecate is idempotent (no conflict)**: Unlike other services that return Conflict if already deprecated, `DeprecateItemTemplateAsync` will re-deprecate with a new timestamp, overwriting the original deprecation timestamp.
+7. ~~**Deprecate is idempotent (no conflict)**~~: **NORMALIZED** (2026-02-26) — All deprecation is now idempotent per IMPLEMENTATION TENETS deprecation lifecycle. This is standard behavior, not a quirk.
 
-8. **CreateInstance validates IsActive but not IsDeprecated**: Checks `!template.IsActive` but not `template.IsDeprecated`. A deprecated but still-active template can continue spawning new instances.
+8. ~~**CreateInstance validates IsActive but not IsDeprecated**~~: **FIXED** (2026-02-26) — `CreateItemInstanceAsync` now checks `template.IsDeprecated` and returns BadRequest for deprecated templates, per IMPLEMENTATION TENETS deprecation lifecycle (Category B instance creation guard).
 
-9. **No template deletion**: Templates can only be deprecated, never deleted. This preserves instance referential integrity — instances reference templates by ID, and deleting a template would orphan them. Consistent with the deprecation-only pattern used by other services (Species, Realm). The template store grows monotonically; use deprecation with `migrationTargetId` for upgrade paths.
+9. **No template deletion**: Templates can only be deprecated, never deleted. This is standard Category B behavior per IMPLEMENTATION TENETS deprecation lifecycle — templates whose instances outlive them are terminal-deprecation-only. Preserves instance referential integrity; use deprecation with `migrationTargetId` for upgrade paths.
 
 10. **JSON-stored complex fields are opaque pass-through**: Stats, effects, requirements, display, and metadata on templates (plus customStats and instanceMetadata on instances) are stored as serialized JSON strings with no schema validation. This is intentional T29 compliance — all schema descriptions explicitly state "Opaque to Bannou; no plugin reads keys by convention." These are client-side display data and game-specific implementation data per T29's two legitimate uses.
 
@@ -574,6 +573,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Empty container/template index cleanup**: Fixed (2026-02-26). `RemoveFromListAsync` now deletes keys when lists become empty instead of persisting empty `[]` arrays.
 - **ListItemsByTemplate in-memory filtering**: Fixed (2026-02-26). `ListItemsByTemplateAsync` now uses `IQueryableStateStore.QueryAsync()` with LINQ predicate to push TemplateId+RealmId filtering to MySQL instead of loading all instances into memory.
 - **T29 `instanceMetadata` documentation cleanup**: Audited (2026-02-26). Code audit confirmed zero T29 violations — no plugin reads `instanceMetadata` keys by convention. Removed inaccurate claim about `instanceMetadata.affixes` violations (lib-affix stores data in its own state store per T29). Added AUDIT marker pointing to systemic #308.
+- **T31 deprecation lifecycle compliance** (2026-02-26): Three changes: (1) Deprecated event replaced with `item-template.updated` + `changedFields`, (2) `DeprecationReason` field added to schema and model, (3) `CreateItemInstanceAsync` now guards against deprecated templates. Quirks #7 and #8 resolved; quirk #9 reworded as standard Category B behavior.
 
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.

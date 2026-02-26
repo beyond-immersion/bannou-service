@@ -53,7 +53,6 @@ public partial class WorldstateService : IWorldstateService
     private readonly ILogger<WorldstateService> _logger;
     private readonly WorldstateServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "worldstate-statestore";
 
     public WorldstateService(
         IMessageBus messageBus,

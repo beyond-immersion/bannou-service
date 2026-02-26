@@ -539,10 +539,11 @@ public partial class RealmService : IRealmService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            _logger.LogDebug("Realm already deprecated: {RealmId}", body.RealmId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Realm {RealmId} already deprecated, returning OK (idempotent)", body.RealmId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = true;
@@ -577,10 +578,11 @@ public partial class RealmService : IRealmService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            _logger.LogDebug("Realm is not deprecated: {RealmId}", body.RealmId);
-            return (StatusCodes.BadRequest, null);
+            _logger.LogDebug("Realm {RealmId} not deprecated, returning OK (idempotent)", body.RealmId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = false;
@@ -1154,6 +1156,8 @@ public partial class RealmService : IRealmService
             }
 
             realmIds.Add(realmId);
+            // etag is null when list key doesn't exist yet; empty string signals
+            // "create new" to TrySaveAsync (will never conflict on new entries)
             var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
@@ -1182,6 +1186,8 @@ public partial class RealmService : IRealmService
                 return; // Not in list or already removed
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {

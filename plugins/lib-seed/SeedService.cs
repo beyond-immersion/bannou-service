@@ -839,10 +839,11 @@ public partial class SeedService : ISeedService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            _logger.LogDebug("Seed type already deprecated: {SeedTypeCode}", body.SeedTypeCode);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Seed type {SeedTypeCode} already deprecated, returning OK (idempotent)", body.SeedTypeCode);
+            return (StatusCodes.OK, MapTypeToResponse(model));
         }
 
         model.IsDeprecated = true;
@@ -891,10 +892,11 @@ public partial class SeedService : ISeedService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            _logger.LogDebug("Seed type not deprecated: {SeedTypeCode}", body.SeedTypeCode);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Seed type {SeedTypeCode} not deprecated, returning OK (idempotent)", body.SeedTypeCode);
+            return (StatusCodes.OK, MapTypeToResponse(model));
         }
 
         model.IsDeprecated = false;

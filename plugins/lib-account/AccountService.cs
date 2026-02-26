@@ -566,6 +566,8 @@ public partial class AccountService : IAccountService
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save updated account with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -760,6 +762,8 @@ public partial class AccountService : IAccountService
         authMethods.Add(newMethod);
 
         // Save updated auth methods with optimistic concurrency
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var savedEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
@@ -950,6 +954,8 @@ public partial class AccountService : IAccountService
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1003,6 +1009,8 @@ public partial class AccountService : IAccountService
         account.DeletedAt = DateTimeOffset.UtcNow;
 
         // Save the soft-deleted account with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1083,6 +1091,8 @@ public partial class AccountService : IAccountService
         authMethods.Remove(methodToRemove);
 
         // Save updated auth methods with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newAuthEtag = await _authMethodStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
         if (newAuthEtag == null)
         {
@@ -1125,6 +1135,8 @@ public partial class AccountService : IAccountService
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save updated account with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1160,6 +1172,8 @@ public partial class AccountService : IAccountService
         account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1197,6 +1211,8 @@ public partial class AccountService : IAccountService
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save updated account with optimistic concurrency check
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1294,6 +1310,8 @@ public partial class AccountService : IAccountService
         account.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Save with ETag — if concurrent modification, rollback new index
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await _accountStore.TrySaveAsync(
             accountKey, account, etag ?? string.Empty, cancellationToken);
 
@@ -1664,6 +1682,8 @@ public partial class AccountService : IAccountService
                 account.Roles = currentRoles.ToList();
                 account.UpdatedAt = DateTimeOffset.UtcNow;
 
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var newEtag = await _accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
                 if (newEtag == null)
                 {

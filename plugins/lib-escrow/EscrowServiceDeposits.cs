@@ -166,6 +166,8 @@ public partial class EscrowService
                 agreementModel.Status = newStatus;
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {

@@ -307,6 +307,9 @@ None. All 30 API endpoints are fully implemented with complete business logic, v
 3. **Message reactions**: Allow participants to add emoji reactions to messages, stored as a separate model linked by message ID.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-22:https://github.com/beyond-immersion/bannou-service/issues/452 -->
 
+4. **Client event extensions for role changes, moderation, and room updates**: Fill gaps in the client event surface. `ChatParticipantRoleChangedClientEvent` for promotions/demotions (especially the silent owner-leave promotion in quirk #5), `ChatParticipantUnbannedClientEvent` and `ChatParticipantUnmutedClientEvent` to complete the moderation event set, and `ChatRoomUpdatedClientEvent` for room setting changes. All use the existing `("chat-room", roomId)` entity session registry mapping. Also includes future moderation extensions: message deletion notifications, room-wide moderation alerts, and slow mode notifications (contingent on underlying moderation features being implemented). Depends on Entity Session Registry (#426).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/493 -->
+
 ---
 
 ## Known Quirks & Caveats

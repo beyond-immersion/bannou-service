@@ -497,7 +497,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var service = CreateService();
         var definitionId = Guid.NewGuid();
         var existingModel = CreateTestDefinitionModel(definitionId);
-        existingModel.Deprecated = false;
+        existingModel.IsDeprecated = false;
 
         _mockDefinitionStore
             .Setup(s => s.QueryAsync(
@@ -525,7 +525,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.True(response.Deprecated);
+        Assert.True(response.IsDeprecated);
     }
 
     [Fact]
@@ -729,7 +729,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var service = CreateService();
         var definitionId = Guid.NewGuid();
         var definition = CreateTestDefinitionModel(definitionId);
-        definition.Deprecated = true;
+        definition.IsDeprecated = true;
 
         _mockDefinitionStore
             .Setup(s => s.QueryAsync(
@@ -1777,7 +1777,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             Tags = null,
             QuestGiverCharacterId = null,
             GameServiceId = Guid.NewGuid(),
-            Deprecated = false,
+            IsDeprecated = false,
             CreatedAt = DateTimeOffset.UtcNow
         };
     }

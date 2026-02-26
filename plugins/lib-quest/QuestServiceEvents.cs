@@ -276,6 +276,8 @@ public partial class QuestService
             current.Status = newStatus;
             current.CompletedAt = timestamp;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await InstanceStore.TrySaveAsync(
                 instanceKey,
                 current,

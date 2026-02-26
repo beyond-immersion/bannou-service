@@ -111,8 +111,8 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 
 ### Deprecation Operations (2 endpoints)
 
-- **Deprecate**: Sets `isDeprecated = true`, records timestamp and optional reason. Publishes `realm.updated` with deprecation fields in `changedFields`.
-- **Undeprecate**: Clears deprecation state. Returns 400 Bad Request if realm is not currently deprecated.
+- **Deprecate**: Sets `isDeprecated = true`, records timestamp and optional reason. Idempotent — returns OK with current state if already deprecated. Publishes `realm.updated` with deprecation fields in `changedFields`.
+- **Undeprecate**: Clears deprecation state. Idempotent — returns OK with current state if not deprecated.
 
 ### Merge Operation (1 endpoint)
 
@@ -225,7 +225,7 @@ None identified.
 
 6. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
 
-7. **Deprecate is not idempotent**: Returns `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
+7. ~~**Deprecate is not idempotent**~~: **FIXED** (2026-02-26) — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS deprecation lifecycle. Deprecating an already-deprecated realm returns OK with current state. Undeprecating a non-deprecated realm returns OK with current state.
 
 8. **Event publishing uses aggressive retry with fail-loud crash semantics**: State store writes and event publishing are separate operations (no transactional outbox). However, lib-messaging's `TryPublishAsync` implements a sophisticated retry system via `MessageRetryBuffer`:
    - **On publish failure**: Messages are buffered in-memory and `TryPublishAsync` returns `true` (because delivery WILL be retried)
@@ -261,6 +261,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-08**: Reference counting for safe deletion implemented via lib-resource integration. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) (closed). DeleteRealm now checks references and executes cleanup callbacks before proceeding.
 - **2026-02-08**: Realm statistics evaluated and closed — entity count tracking belongs in Analytics (L4), not Realm (L2). See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) (closed).
 - **2026-02-08**: Realm merge feature implemented. Three-phase migration (species → locations root-first → characters) with continue-on-individual-failure policy, configurable page size, and optional post-merge deletion. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) (closed). Also added `/location/transfer-realm` endpoint as prerequisite.
+- **2026-02-26**: T31 deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS. Quirk #7 resolved.
 
 ### Ready for Implementation
 

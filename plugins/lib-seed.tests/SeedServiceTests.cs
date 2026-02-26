@@ -3298,7 +3298,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     }
 
     [Fact]
-    public async Task DeprecateSeedType_AlreadyDeprecated_ReturnsConflict()
+    public async Task DeprecateSeedType_AlreadyDeprecated_ReturnsOk()
     {
         var service = CreateService();
         var seedType = CreateTestSeedType();
@@ -3308,11 +3308,13 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
             .ReturnsAsync(seedType);
 
-        var (status, _) = await service.DeprecateSeedTypeAsync(
+        // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        var (status, response) = await service.DeprecateSeedTypeAsync(
             new DeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion
@@ -3368,7 +3370,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
     }
 
     [Fact]
-    public async Task UndeprecateSeedType_NotDeprecated_ReturnsConflict()
+    public async Task UndeprecateSeedType_NotDeprecated_ReturnsOk()
     {
         var service = CreateService();
         var seedType = CreateTestSeedType();
@@ -3378,11 +3380,13 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             .Setup(s => s.GetAsync($"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()))
             .ReturnsAsync(seedType);
 
-        var (status, _) = await service.UndeprecateSeedTypeAsync(
+        // Idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        var (status, response) = await service.UndeprecateSeedTypeAsync(
             new UndeprecateSeedTypeRequest { SeedTypeCode = "guardian", GameServiceId = _testGameServiceId },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     #endregion

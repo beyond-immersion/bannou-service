@@ -111,6 +111,8 @@ LootTable:
   # Metadata
   isActive: bool
   isDeprecated: bool
+  deprecatedAt: DateTimeOffset?
+  deprecationReason: string?
   description: string
 ```
 
@@ -434,8 +436,7 @@ Every polymorphic "type" or "kind" field in the Loot domain falls into one of th
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `loot-table.created` | `LootTableCreatedEvent` | Table definition created (lifecycle) |
-| `loot-table.updated` | `LootTableUpdatedEvent` | Table definition updated (lifecycle); includes `ChangedFields` |
-| `loot-table.deprecated` | `LootTableDeprecatedEvent` | Table definition deprecated (lifecycle) |
+| `loot-table.updated` | `LootTableUpdatedEvent` | Table definition updated (lifecycle); includes `ChangedFields`. Covers deprecation state changes (changedFields contains `isDeprecated`, `deprecatedAt`, `deprecationReason`) |
 | `loot.generated` | `LootGeneratedEvent` | Loot generated from a table (batch: includes all rolled entries, created items, currency amounts) |
 | `loot.distributed` | `LootDistributedEvent` | Generated loot distributed to recipients (includes distribution mode and per-recipient assignments) |
 | `loot.claimed` | `LootClaimedEvent` | Individual item claimed from a free-for-all or need/greed context |
@@ -531,11 +532,11 @@ All endpoints require `developer` role.
 
 - **GetTable** (`/loot/table/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by tableId or by gameServiceId + code.
 
-- **ListTables** (`/loot/table/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), isActive. Returns table summaries (no entry details -- use GetTable for full definition).
+- **ListTables** (`/loot/table/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), isActive, includeDeprecated (boolean, default: false). Returns table summaries (no entry details -- use GetTable for full definition).
 
 - **UpdateTable** (`/loot/table/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId (identity-level). Entry additions/removals/modifications are part of the update payload. Re-validates cycle detection on sub-table changes. Invalidates cache. Publishes `loot-table.updated` with `changedFields`.
 
-- **DeprecateTable** (`/loot/table/deprecate`): Marks inactive. Optional `migrationTargetCode` for directing future generation to a replacement table. Existing references from other tables (as sub-tables) are NOT automatically updated -- they continue referencing the deprecated table (which still functions but logs deprecation warnings during generation). Invalidates cache. Publishes `loot-table.deprecated`.
+- **DeprecateTable** (`/loot/table/deprecate`): Marks deprecated with triple-field semantics: sets `isDeprecated: true`, records `deprecatedAt` timestamp, and stores the caller-provided `deprecationReason`. Idempotent -- returns OK if already deprecated (caller's intent is satisfied). Optional `migrationTargetCode` for directing future generation to a replacement table. Existing references from other tables (as sub-tables) are NOT automatically updated -- they continue referencing the deprecated table (which still functions but logs deprecation warnings during generation). Invalidates cache. Publishes `loot-table.updated` with changedFields containing deprecation fields.
 
 - **SeedTables** (`/loot/table/seed`): Bulk creation, skipping tables whose code already exists (idempotent). Validates game service once. Validates all sub-table references within the batch (entries can reference other tables in the same batch). Returns created/skipped counts. Populates cache for all created tables.
 

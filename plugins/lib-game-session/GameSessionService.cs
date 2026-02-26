@@ -28,7 +28,7 @@ namespace BeyondImmersion.BannouService.GameSession;
 /// Manages game sessions for multiplayer games.
 /// Handles session shortcuts for subscribed accounts via mesh pubsub events.
 /// </summary>
-[BannouService("game-session", typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
+[BannouService(StateStoreDefinitions.GameSessionLock, typeof(IGameSessionService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class GameSessionService : IGameSessionService
 {
     private readonly IStateStoreFactory _stateStoreFactory;
@@ -286,7 +286,7 @@ public partial class GameSessionService : IGameSessionService
 
         // Add to session list under distributed lock (read-modify-write)
         await using var listLock = await _lockProvider.LockAsync(
-            "game-session", SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!listLock.Success)
         {
             _logger.LogWarning("Could not acquire session-list lock when creating session {SessionId}", session.SessionId);
@@ -384,7 +384,7 @@ public partial class GameSessionService : IGameSessionService
         // Acquire lock on session (multiple players may join concurrently)
         var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
         await using var sessionLock = await _lockProvider.LockAsync(
-            "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!sessionLock.Success)
         {
             _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
@@ -452,7 +452,7 @@ public partial class GameSessionService : IGameSessionService
             await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
             {
                 SessionId = body.SessionId,
-                ServiceId = "game-session",
+                ServiceId = StateStoreDefinitions.GameSessionLock,
                 NewState = "in_game"
             }, cancellationToken);
         }
@@ -610,7 +610,7 @@ public partial class GameSessionService : IGameSessionService
         // Acquire lock on session (multiple players may leave concurrently)
         var sessionKey = SESSION_KEY_PREFIX + lobbyId.ToString();
         await using var sessionLock = await _lockProvider.LockAsync(
-            "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!sessionLock.Success)
         {
             _logger.LogWarning("Could not acquire session lock for lobby {LobbyId}", lobbyId);
@@ -643,7 +643,7 @@ public partial class GameSessionService : IGameSessionService
             await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
             {
                 SessionId = body.SessionId,
-                ServiceId = "game-session"
+                ServiceId = StateStoreDefinitions.GameSessionLock
             }, cancellationToken);
         }
         catch (ApiException ex)
@@ -653,7 +653,7 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
                 body.SessionId, ex.StatusCode);
             await _messageBus.TryPublishErrorAsync(
-                "game-session",
+                StateStoreDefinitions.GameSessionLock,
                 "ClearSessionState",
                 "api_exception",
                 ex.Message,
@@ -668,7 +668,7 @@ public partial class GameSessionService : IGameSessionService
             // Continue anyway - player wants to leave, don't trap them; state cleaned up on session expiry
             _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.SessionId);
             await _messageBus.TryPublishErrorAsync(
-                "game-session",
+                StateStoreDefinitions.GameSessionLock,
                 "ClearSessionState",
                 ex.GetType().Name,
                 ex.Message,
@@ -736,7 +736,7 @@ public partial class GameSessionService : IGameSessionService
         // Acquire lock on session (multiple players may join concurrently)
         var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
         await using var sessionLock = await _lockProvider.LockAsync(
-            "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!sessionLock.Success)
         {
             _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
@@ -846,7 +846,7 @@ public partial class GameSessionService : IGameSessionService
             await _permissionClient.UpdateSessionStateAsync(new Permission.SessionStateUpdate
             {
                 SessionId = body.WebSocketSessionId,
-                ServiceId = "game-session",
+                ServiceId = StateStoreDefinitions.GameSessionLock,
                 NewState = "in_game"
             }, cancellationToken);
         }
@@ -933,7 +933,7 @@ public partial class GameSessionService : IGameSessionService
         // Acquire lock on session (multiple players may leave concurrently)
         var sessionKey = SESSION_KEY_PREFIX + gameSessionId;
         await using var sessionLock = await _lockProvider.LockAsync(
-            "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!sessionLock.Success)
         {
             _logger.LogWarning("Could not acquire session lock for {GameSessionId}", gameSessionId);
@@ -966,7 +966,7 @@ public partial class GameSessionService : IGameSessionService
                 await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
                 {
                     SessionId = body.WebSocketSessionId.Value,
-                    ServiceId = "game-session"
+                    ServiceId = StateStoreDefinitions.GameSessionLock
                 }, cancellationToken);
             }
             catch (ApiException ex)
@@ -975,7 +975,7 @@ public partial class GameSessionService : IGameSessionService
                 _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
                     body.WebSocketSessionId.Value, ex.StatusCode);
                 await _messageBus.TryPublishErrorAsync(
-                    "game-session",
+                    StateStoreDefinitions.GameSessionLock,
                     "ClearSessionState",
                     "api_exception",
                     ex.Message,
@@ -989,7 +989,7 @@ public partial class GameSessionService : IGameSessionService
                 // Unexpected error - continue anyway, state cleaned up on session expiry
                 _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.WebSocketSessionId.Value);
                 await _messageBus.TryPublishErrorAsync(
-                    "game-session",
+                    StateStoreDefinitions.GameSessionLock,
                     "ClearSessionState",
                     ex.GetType().Name,
                     ex.Message,
@@ -1079,7 +1079,7 @@ public partial class GameSessionService : IGameSessionService
         var routeGuid = GuidGenerator.GenerateSessionShortcutGuid(
             targetSessionIdStr,
             shortcutName,
-            "game-session",
+            StateStoreDefinitions.GameSessionLock,
             _serverSalt);
 
         // Generate target GUID (v5 for service capability) - points to join-session endpoint
@@ -1112,8 +1112,8 @@ public partial class GameSessionService : IGameSessionService
                 {
                     Name = shortcutName,
                     Description = $"Join matchmade game session {gameSessionId}",
-                    SourceService = "game-session",
-                    TargetService = "game-session",
+                    SourceService = StateStoreDefinitions.GameSessionLock,
+                    TargetService = StateStoreDefinitions.GameSessionLock,
                     TargetMethod = "POST",
                     TargetEndpoint = "/sessions/join-session",
                     CreatedAt = DateTimeOffset.UtcNow,
@@ -1150,7 +1150,7 @@ public partial class GameSessionService : IGameSessionService
         // Acquire lock on session (concurrent modification protection)
         var sessionKey = SESSION_KEY_PREFIX + sessionId;
         await using var sessionLock = await _lockProvider.LockAsync(
-            "game-session", sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.GameSessionLock, sessionKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds, cancellationToken);
         if (!sessionLock.Success)
         {
             _logger.LogWarning("Could not acquire session lock for {SessionId}", sessionId);
@@ -1184,7 +1184,7 @@ public partial class GameSessionService : IGameSessionService
             await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
             {
                 SessionId = playerToKick.SessionId,
-                ServiceId = "game-session"
+                ServiceId = StateStoreDefinitions.GameSessionLock
             }, cancellationToken);
         }
         catch (ApiException ex)
@@ -1193,7 +1193,7 @@ public partial class GameSessionService : IGameSessionService
             _logger.LogWarning(ex, "Permission service error clearing session state for kicked player {SessionId}: {StatusCode}",
                 playerToKick.SessionId, ex.StatusCode);
             await _messageBus.TryPublishErrorAsync(
-                "game-session",
+                StateStoreDefinitions.GameSessionLock,
                 "ClearSessionState",
                 "api_exception",
                 ex.Message,
@@ -1207,7 +1207,7 @@ public partial class GameSessionService : IGameSessionService
             // Unexpected error - continue anyway, state cleaned up on session expiry
             _logger.LogError(ex, "Failed to clear session state for kicked player {SessionId}", playerToKick.SessionId);
             await _messageBus.TryPublishErrorAsync(
-                "game-session",
+                StateStoreDefinitions.GameSessionLock,
                 "ClearSessionState",
                 ex.GetType().Name,
                 ex.Message,
@@ -1816,7 +1816,7 @@ public partial class GameSessionService : IGameSessionService
             var routeGuid = GuidGenerator.GenerateSessionShortcutGuid(
                 sessionIdStr,
                 shortcutName,
-                "game-session",
+                StateStoreDefinitions.GameSessionLock,
                 _serverSalt);
 
             // Generate target GUID (v5 for service capability)
@@ -1849,8 +1849,8 @@ public partial class GameSessionService : IGameSessionService
                     {
                         Name = shortcutName,
                         Description = $"Join the {stubName} game lobby",
-                        SourceService = "game-session",
-                        TargetService = "game-session",
+                        SourceService = StateStoreDefinitions.GameSessionLock,
+                        TargetService = StateStoreDefinitions.GameSessionLock,
                         TargetMethod = "POST",
                         TargetEndpoint = "/sessions/join",
                         CreatedAt = DateTimeOffset.UtcNow
@@ -1895,7 +1895,7 @@ public partial class GameSessionService : IGameSessionService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 SessionId = sessionId,
-                RevokeByService = "game-session",
+                RevokeByService = StateStoreDefinitions.GameSessionLock,
                 Reason = $"Subscription to {stubName} ended"
             };
 
@@ -1943,7 +1943,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Lock on lobby key to prevent duplicate lobby creation across instances
             await using var lobbyLock = await _lockProvider.LockAsync(
-                "game-session", lobbyKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds);
+                StateStoreDefinitions.GameSessionLock, lobbyKey, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds);
             if (!lobbyLock.Success)
             {
                 _logger.LogWarning("Could not acquire lobby lock for {StubName}, retrying read", stubName);
@@ -1983,7 +1983,7 @@ public partial class GameSessionService : IGameSessionService
 
             // Add to session list under distributed lock (read-modify-write)
             await using var listLock = await _lockProvider.LockAsync(
-                "game-session", SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds);
+                StateStoreDefinitions.GameSessionLock, SESSION_LIST_KEY, Guid.NewGuid().ToString(), _configuration.LockTimeoutSeconds);
             if (listLock.Success)
             {
                 var sessionListStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.GameSession);

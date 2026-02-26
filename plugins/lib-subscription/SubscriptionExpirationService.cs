@@ -264,6 +264,8 @@ public class SubscriptionExpirationService : BackgroundService
                 return; // Nothing to remove
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var result = await indexStore.TrySaveAsync(SUBSCRIPTION_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {

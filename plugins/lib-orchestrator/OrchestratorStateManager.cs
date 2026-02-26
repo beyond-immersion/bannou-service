@@ -20,10 +20,9 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
 
-    // Store names matching lib-state configuration
-    private const string HEARTBEATS_STORE = "orchestrator-heartbeats";
-    private const string ROUTINGS_STORE = "orchestrator-routings";
-    private const string CONFIG_STORE = "orchestrator-config";
+    private const string HEARTBEATS_STORE = StateStoreDefinitions.OrchestratorHeartbeats;
+    private const string ROUTINGS_STORE = StateStoreDefinitions.OrchestratorRoutings;
+    private const string CONFIG_STORE = StateStoreDefinitions.OrchestratorConfig;
 
     // Index keys for tracking known entities (avoids KEYS/SCAN)
     private const string HEARTBEAT_INDEX_KEY = "_index";

@@ -235,6 +235,8 @@ public class MemoryDecaySchedulerService : BackgroundService
             perspective.MemoryStrength = (float)Math.Max(0, previousStrength - decayAmount);
             perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {

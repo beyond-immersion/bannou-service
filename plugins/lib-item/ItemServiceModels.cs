@@ -72,6 +72,7 @@ internal class ItemTemplateModel
     public bool IsActive { get; set; }
     public bool IsDeprecated { get; set; }
     public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public Guid? MigrationTargetId { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }

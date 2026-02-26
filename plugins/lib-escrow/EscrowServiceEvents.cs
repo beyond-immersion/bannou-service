@@ -126,6 +126,8 @@ public partial class EscrowService
             agreementModel.LastValidatedAt = now;
             agreementModel.ValidationFailures = null;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {
@@ -230,6 +232,8 @@ public partial class EscrowService
             agreementModel.CompletedAt = now;
             agreementModel.ResolutionNotes = refundReason;
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await AgreementStore.TrySaveAsync(agreementKey, agreementModel, etag ?? string.Empty);
             if (saveResult == null)
             {

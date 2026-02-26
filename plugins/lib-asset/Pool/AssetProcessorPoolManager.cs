@@ -28,10 +28,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     private readonly ILogger<AssetProcessorPoolManager> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    /// <summary>
-    /// Processor pool state store name. Matches StateStoreDefinitions.AssetProcessorPool after next regeneration.
-    /// </summary>
-    private const string ProcessorPoolStore = "asset-processor-pool";
+    private const string ProcessorPoolStore = StateStoreDefinitions.AssetProcessorPool;
     private const string INDEX_SUFFIX = ":index";
 
     /// <summary>

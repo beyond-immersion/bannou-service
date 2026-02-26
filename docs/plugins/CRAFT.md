@@ -153,6 +153,8 @@ RecipeDefinition:
   # Metadata
   isActive: bool
   isDeprecated: bool
+  deprecatedAt: DateTimeOffset?
+  deprecationReason: string?
 ```
 
 **Key design decisions**:
@@ -550,8 +552,7 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `craft-recipe.created` | `CraftRecipeCreatedEvent` | Recipe definition created (lifecycle) |
-| `craft-recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (lifecycle) |
-| `craft-recipe.deprecated` | `CraftRecipeDeprecatedEvent` | Recipe definition deprecated (lifecycle) |
+| `craft-recipe.updated` | `CraftRecipeUpdatedEvent` | Recipe definition updated (lifecycle); deprecation is signaled via `changedFields` containing `isDeprecated`, `deprecatedAt`, `deprecationReason` |
 | `craft-session.started` | `CraftSessionStartedEvent` | Crafting session started |
 | `craft-session.step-completed` | `CraftStepCompletedEvent` | A recipe step completed (includes quality contribution) |
 | `craft-session.completed` | `CraftSessionCompletedEvent` | Session completed successfully (includes output items, quality score) |
@@ -632,11 +633,11 @@ All endpoints require `developer` role.
 
 - **GetRecipe** (`/craft/recipe/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by recipeId or by gameServiceId + code.
 
-- **ListRecipes** (`/craft/recipe/list`): Paged JSON query with required gameServiceId filter. Optional filters: recipeType, domain, category, tags (any match), proficiency requirements range. Sorted by domain then category.
+- **ListRecipes** (`/craft/recipe/list`): Paged JSON query with required gameServiceId filter. Optional filters: recipeType, domain, category, tags (any match), proficiency requirements range, `includeDeprecated: boolean (default: false)`. Sorted by domain then category.
 
 - **UpdateRecipe** (`/craft/recipe/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeType (identity-level). Invalidates caches. Publishes `craft-recipe.updated`.
 
-- **DeprecateRecipe** (`/craft/recipe/deprecate`): Marks inactive. Active sessions using this recipe continue to completion. Invalidates caches. Publishes `craft-recipe.deprecated`.
+- **DeprecateRecipe** (`/craft/recipe/deprecate`): Sets `isDeprecated: true`, `deprecatedAt: DateTimeOffset.UtcNow`, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active sessions using this recipe continue to completion. Invalidates caches. Publishes `craft-recipe.updated` with `changedFields` containing deprecation fields.
 
 - **SeedRecipes** (`/craft/recipe/seed`): Bulk creation, skipping existing codes (idempotent). Validates game service once. Returns created/skipped counts.
 

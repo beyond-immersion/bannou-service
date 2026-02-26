@@ -996,6 +996,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         if (body.RememberedAs != null) perspective.RememberedAs = body.RememberedAs;
         perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1056,6 +1058,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         perspective.MemoryStrength = Math.Clamp(perspective.MemoryStrength + boost, 0f, 1f);
         perspective.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1787,6 +1791,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.PerspectiveIds.Contains(perspectiveId))
             {
                 index.PerspectiveIds.Add(perspectiveId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1821,6 +1827,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!globalIndex.CharacterIds.Contains(characterId))
             {
                 globalIndex.CharacterIds.Add(characterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1849,6 +1857,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.PerspectiveIds.Remove(perspectiveId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1883,6 +1893,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             globalIndex.CharacterIds.Remove(characterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await globalIndexStore.TrySaveAsync(GLOBAL_CHAR_INDEX_KEY, globalIndex, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1908,6 +1920,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.TypeCodes.Contains(typeCode))
             {
                 index.TypeCodes.Add(typeCode);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1935,6 +1949,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.TypeCodes.Remove(typeCode);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(CUSTOM_TYPE_INDEX_KEY, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -1965,6 +1981,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.EncounterIds.Contains(encounterId))
             {
                 index.EncounterIds.Add(encounterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -1999,6 +2017,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.EncounterIds.Remove(encounterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2195,6 +2215,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     if (!index.EncounterIds.Contains(encounterId))
                     {
                         index.EncounterIds.Add(encounterId);
+                        // etag is null when key doesn't exist yet; empty string signals
+                        // "create new" to TrySaveAsync (will never conflict on new entries)
                         var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                         if (saveResult == null)
                         {
@@ -2230,6 +2252,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                     }
 
                     index.EncounterIds.Remove(encounterId);
+                    // GetWithETagAsync returns non-null etag for existing records;
+                    // coalesce satisfies compiler's nullable analysis (will never execute)
                     var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                     if (saveResult == null)
                     {
@@ -2257,6 +2281,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.EncounterIds.Contains(encounterId))
             {
                 index.EncounterIds.Add(encounterId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -2287,6 +2313,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             }
 
             index.EncounterIds.Remove(encounterId);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2319,6 +2347,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
             if (!index.PerspectiveIds.Contains(perspectiveId))
             {
                 index.PerspectiveIds.Add(perspectiveId);
+                // etag is null when key doesn't exist yet; empty string signals
+                // "create new" to TrySaveAsync (will never conflict on new entries)
                 var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
                 if (saveResult == null)
                 {
@@ -2353,6 +2383,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
                 return;
             }
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await indexStore.TrySaveAsync(key, index, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {
@@ -2667,6 +2699,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         freshPerspective.MemoryStrength = Math.Max(0, freshPerspective.MemoryStrength - decayAmount);
         freshPerspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var saveResult = await store.TrySaveAsync(perspectiveKey, freshPerspective, etag ?? string.Empty, cancellationToken);
         if (saveResult == null)
         {

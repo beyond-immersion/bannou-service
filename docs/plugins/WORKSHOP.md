@@ -76,6 +76,8 @@ ProductionBlueprint:
   # Metadata
   isActive: bool
   isDeprecated: bool
+  deprecatedAt: DateTimeOffset?
+  deprecationReason: string?
 ```
 
 **Key design decisions**:
@@ -410,8 +412,7 @@ Paginated queries by gameServiceId + optional filters (category, tags, recipeCod
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `workshop-blueprint.created` | `WorkshopBlueprintCreatedEvent` | Blueprint created (lifecycle) |
-| `workshop-blueprint.updated` | `WorkshopBlueprintUpdatedEvent` | Blueprint updated (lifecycle) |
-| `workshop-blueprint.deprecated` | `WorkshopBlueprintDeprecatedEvent` | Blueprint deprecated (lifecycle) |
+| `workshop-blueprint.updated` | `WorkshopBlueprintUpdatedEvent` | Blueprint updated (lifecycle). Covers deprecation via `changedFields` containing deprecation fields. |
 | `workshop.task.created` | `WorkshopTaskCreatedEvent` | Production task created. Includes blueprintId, ownerId, inventories. |
 | `workshop.task.started` | `WorkshopTaskStartedEvent` | Task transitioned to running (first worker assigned, or autonomous task started). |
 | `workshop.task.paused` | `WorkshopTaskPausedEvent` | Task paused. Includes status reason (manual, no_materials, no_space, no_workers). |
@@ -495,11 +496,11 @@ All endpoints require `developer` role.
 
 - **GetBlueprint** (`/workshop/blueprint/get`): Supports lookup by blueprintId or by gameServiceId + code.
 
-- **ListBlueprints** (`/workshop/blueprint/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), recipeCode, minWorkers range, isActive, isDeprecated.
+- **ListBlueprints** (`/workshop/blueprint/list`): Paged JSON query with required gameServiceId filter. Optional filters: category, tags (any match), recipeCode, minWorkers range, isActive, includeDeprecated (boolean, default: false).
 
 - **UpdateBlueprint** (`/workshop/blueprint/update`): Acquires distributed lock. Partial update. **Cannot change**: code, gameServiceId, recipeCode (identity-level). Active tasks using this blueprint continue with their creation-time snapshot; new tasks use updated values. Publishes `workshop-blueprint.updated`.
 
-- **DeprecateBlueprint** (`/workshop/blueprint/deprecate`): Marks inactive. Active tasks continue. New tasks cannot use deprecated blueprints. Publishes `workshop-blueprint.deprecated`.
+- **DeprecateBlueprint** (`/workshop/blueprint/deprecate`): Marks blueprint as deprecated with triple-field semantics: sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from request. Idempotent: returns OK if already deprecated. Active tasks continue. New tasks cannot use deprecated blueprints. Publishes `workshop-blueprint.updated` with `changedFields` containing deprecation fields.
 
 - **SeedBlueprints** (`/workshop/blueprint/seed`): Bulk creation, skipping existing codes (idempotent). Returns created/skipped counts.
 

@@ -118,7 +118,7 @@ public partial class ChatService : IChatService
 
         // Distributed lock prevents TOCTOU race on uniqueness check
         await using var lockResponse = await _lockProvider.LockAsync(
-            "chat", "register-room-type", typeKey,
+            StateStoreDefinitions.ChatLock, "register-room-type", typeKey,
             _configuration.LockExpirySeconds, cancellationToken);
         if (!lockResponse.Success)
         {

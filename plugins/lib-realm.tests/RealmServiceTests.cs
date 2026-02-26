@@ -685,7 +685,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     }
 
     [Fact]
-    public async Task DeprecateRealmAsync_WhenAlreadyDeprecated_ShouldReturnConflict()
+    public async Task DeprecateRealmAsync_WhenAlreadyDeprecated_ShouldReturnOk()
     {
         // Arrange
         var service = CreateService();
@@ -700,8 +700,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Act
         var (status, response) = await service.DeprecateRealmAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -756,7 +757,7 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     }
 
     [Fact]
-    public async Task UndeprecateRealmAsync_WhenNotDeprecated_ShouldReturnBadRequest()
+    public async Task UndeprecateRealmAsync_WhenNotDeprecated_ShouldReturnOk()
     {
         // Arrange
         var service = CreateService();
@@ -771,8 +772,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Act
         var (status, response) = await service.UndeprecateRealmAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
+        // Assert — idempotent per IMPLEMENTATION TENETS: caller's intent is already satisfied
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]

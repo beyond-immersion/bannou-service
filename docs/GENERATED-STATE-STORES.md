@@ -12,6 +12,7 @@ This document lists all state store components used in Bannou.
 | `account-lock` | Redis | Account | Distributed locks for account email uniqueness during creation |
 | `account-statestore` | MySQL | Account | Persistent account data |
 | `achievement-definition` | Redis | Achievement | Achievement definitions |
+| `achievement-lock` | Redis | Achievement | Distributed locks for achievement progress updates |
 | `achievement-progress` | Redis | Achievement | Player achievement progress |
 | `actor-assignments` | Redis | Actor | Actor-to-node assignments |
 | `actor-instances` | Redis | Actor | Active actor instance registry |
@@ -46,6 +47,7 @@ This document lists all state store components used in Bannou.
 | `collection-instances` | MySQL | Collection | Per-owner collection containers linking entities to collection types |
 | `collection-lock` | Redis | Collection | Distributed locks for collection mutations and grant operations |
 | `connect-statestore` | Redis | Connect | WebSocket session state |
+| `contract-lock` | Redis | Contract | Distributed locks for contract instance and index operations |
 | `contract-statestore` | Redis | Contract | Contract templates, instances, breaches, and indexes |
 | `currency-balance-cache` | Redis | Currency | Real-time balance lookups (cached, refreshed on access) |
 | `currency-balances` | MySQL | Currency | Currency balance records per wallet |
@@ -53,6 +55,7 @@ This document lists all state store components used in Bannou.
 | `currency-holds` | MySQL | Currency | Authorization hold records |
 | `currency-holds-cache` | Redis | Currency | Authorization hold state for pre-auth scenarios |
 | `currency-idempotency` | Redis | Currency | Idempotency key deduplication |
+| `currency-lock` | Redis | Currency | Distributed locks for wallet, balance, hold, and index operations |
 | `currency-transactions` | MySQL | Currency | Immutable transaction history |
 | `currency-wallets` | MySQL | Currency | Wallet ownership and status |
 | `divine-attention` | Redis | Divine | Active attention slot tracking per deity (ephemeral, high-frequency reads) |
@@ -77,6 +80,7 @@ This document lists all state store components used in Bannou.
 | `faction-territory-statestore` | MySQL | Faction | Territory claim records linking factions to controlled locations |
 | `game-service-lock` | Redis | GameService | Distributed locks for stub name uniqueness |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
+| `game-session-lock` | Redis | GameSession | Distributed locks for session lifecycle and reservation operations |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
 | `gardener-garden-instances` | Redis | Gardener | Active garden instance state per player (ephemeral, TTL-based) |
 | `gardener-lock` | Redis | Gardener | Distributed locks for garden orchestration and scenario mutations |
@@ -107,6 +111,7 @@ This document lists all state store components used in Bannou.
 | `location-lock` | Redis | Location | Distributed locks for concurrent index modifications |
 | `location-statestore` | MySQL | Location | Location hierarchy and metadata |
 | `mapping-statestore` | Redis | Mapping | Spatial map data and channels |
+| `matchmaking-lock` | Redis | Matchmaking | Distributed locks for match processing and queue index modifications |
 | `matchmaking-statestore` | Redis | Matchmaking | Matchmaking queue and ticket state |
 | `mesh-appid-index` | Redis | Mesh | App-ID to instance-ID mapping index |
 | `mesh-circuit-breaker` | Redis | Mesh | Distributed circuit breaker state for cross-instance failure tracking |
@@ -122,8 +127,10 @@ This document lists all state store components used in Bannou.
 | `obligation-violations` | MySQL | Obligation | Violation history records (durable, queryable by character/contract/type) |
 | `orchestrator-config` | Redis | Orchestrator | Configuration version and metadata |
 | `orchestrator-heartbeats` | Redis | Orchestrator | Service heartbeat tracking |
+| `orchestrator-lock` | Redis | Orchestrator | Distributed locks for pool management operations |
 | `orchestrator-routings` | Redis | Orchestrator | Service-to-app-id routing tables |
 | `orchestrator-statestore` | Redis | Orchestrator | Primary orchestrator state |
+| `permission-lock` | Redis | Permission | Distributed locks for session capability compilation |
 | `permission-statestore` | Redis | Permission | Permission cache and session capabilities |
 | `quest-character-index` | Redis | Quest | Character to active quest instance mapping |
 | `quest-cooldown` | Redis | Quest | Per-character quest cooldown tracking |
@@ -144,6 +151,7 @@ This document lists all state store components used in Bannou.
 | `resource-refcounts` | Redis | Resource | Reference counts and source tracking per resource |
 | `resource-snapshots` | Redis | Resource | Ephemeral snapshots of living resources (TTL-based auto-expiry for storyline/actor consumption) |
 | `save-load-cache` | Redis | SaveLoad | Recently accessed save data cache |
+| `save-load-lock` | Redis | SaveLoad | Distributed locks for save slot operations |
 | `save-load-pending` | Redis | SaveLoad | Pending save operations |
 | `save-load-schemas` | MySQL | SaveLoad | Registered save data schemas |
 | `save-load-slots` | MySQL | SaveLoad | Save slot metadata and ownership |
@@ -162,6 +170,7 @@ This document lists all state store components used in Bannou.
 | `status-lock` | Redis | Status | Distributed locks for status mutations and template updates |
 | `status-seed-effects-cache` | Redis | Status | Cached seed-derived effects per entity (invalidated on capability.updated events) |
 | `status-templates` | MySQL | Status | Status template definitions (durable, queryable by category/code/gameServiceId) |
+| `storyline-lock` | Redis | Storyline | Distributed locks for scenario trigger operations |
 | `storyline-plan-index` | Redis | Storyline | Plan index by realm for list queries |
 | `storyline-plans` | Redis | Storyline | Cached composed storyline plans (ephemeral, TTL from config) |
 | `storyline-scenario-active` | Redis | Storyline | Active scenario tracking per character (set membership) |
@@ -177,7 +186,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 167 stores (100 Redis, 67 MySQL)
+**Total**: 176 stores (109 Redis, 67 MySQL)
 
 ## Naming Conventions
 

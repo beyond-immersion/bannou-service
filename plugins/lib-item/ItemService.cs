@@ -211,6 +211,7 @@ public partial class ItemService : IItemService
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             MigrationTargetId = model.MigrationTargetId,
             CreatedAt = now,
             UpdatedAt = model.UpdatedAt
@@ -358,6 +359,7 @@ public partial class ItemService : IItemService
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             MigrationTargetId = model.MigrationTargetId,
             CreatedAt = model.CreatedAt,
             UpdatedAt = now
@@ -383,6 +385,7 @@ public partial class ItemService : IItemService
         var now = DateTimeOffset.UtcNow;
         model.IsDeprecated = true;
         model.DeprecatedAt = now;
+        model.DeprecationReason = body.Reason;
         model.MigrationTargetId = body.MigrationTargetId;
         model.UpdatedAt = now;
 
@@ -391,7 +394,8 @@ public partial class ItemService : IItemService
         // Invalidate cache after write
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item-template.deprecated", new ItemTemplateDeprecatedEvent
+        // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -399,13 +403,25 @@ public partial class ItemService : IItemService
             Code = model.Code,
             GameId = model.GameId,
             Name = model.Name,
+            Description = model.Description,
             Category = model.Category,
             Rarity = model.Rarity,
             QuantityModel = model.QuantityModel,
+            MaxStackSize = model.MaxStackSize,
             Scope = model.Scope,
+            SoulboundType = model.SoulboundType,
+            Tradeable = model.Tradeable,
+            Destroyable = model.Destroyable,
+            HasDurability = model.HasDurability,
+            MaxDurability = model.MaxDurability,
             IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            MigrationTargetId = model.MigrationTargetId,
             CreatedAt = model.CreatedAt,
-            UpdatedAt = now
+            UpdatedAt = now,
+            ChangedFields = new List<string> { "isDeprecated", "deprecatedAt", "deprecationReason", "migrationTargetId" }
         }, cancellationToken);
 
         _logger.LogDebug("Deprecated item template {TemplateId}", body.TemplateId);
@@ -435,6 +451,13 @@ public partial class ItemService : IItemService
         if (!template.IsActive)
         {
             _logger.LogWarning("Template is not active: {TemplateId}", body.TemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Per IMPLEMENTATION TENETS: deprecated templates must not produce new instances
+        if (template.IsDeprecated)
+        {
+            _logger.LogWarning("Cannot create instance from deprecated template: {TemplateId}", body.TemplateId);
             return (StatusCodes.BadRequest, null);
         }
 
@@ -2384,6 +2407,7 @@ public partial class ItemService : IItemService
             IsActive = model.IsActive,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
             MigrationTargetId = model.MigrationTargetId,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt

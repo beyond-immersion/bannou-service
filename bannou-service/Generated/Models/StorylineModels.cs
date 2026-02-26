@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Storyline;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -1126,10 +1141,23 @@ public partial class ScenarioDefinition
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Whether scenario is soft-deleted
+    /// Whether scenario definition is deprecated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecated")]
-    public bool Deprecated { get; set; } = false;
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = false;
+
+    /// <summary>
+    /// When the scenario definition was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When definition was created
@@ -1666,8 +1694,21 @@ public partial class ScenarioDefinitionSummary
     /// <summary>
     /// Whether deprecated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecated")]
-    public bool Deprecated { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Number of trigger conditions
@@ -1827,6 +1868,13 @@ public partial class DeprecateScenarioDefinitionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
 
 }
 

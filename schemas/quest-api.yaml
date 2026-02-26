@@ -717,7 +717,7 @@ components:
       type: object
       description: Complete quest definition including objectives, prerequisites, and rewards
       additionalProperties: false
-      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, deprecated, createdAt, gameServiceId]
+      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, isDeprecated, createdAt, gameServiceId]
       properties:
         definitionId:
           type: string
@@ -784,9 +784,19 @@ components:
           items:
             type: string
           description: Tags
-        deprecated:
+        isDeprecated:
           type: boolean
-          description: Whether deprecated
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -910,6 +920,11 @@ components:
           type: string
           format: uuid
           description: Definition to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
 
     # === INSTANCE MODELS ===
     AcceptQuestRequest:

@@ -643,7 +643,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     }
 
     [Fact]
-    public async Task DeprecateItemTemplateAsync_PublishesDeprecatedEvent()
+    public async Task DeprecateItemTemplateAsync_PublishesUpdatedEventWithChangedFields()
     {
         // Arrange
         var service = CreateService();
@@ -678,13 +678,16 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         // Act
         await service.DeprecateItemTemplateAsync(request);
 
-        // Assert
-        Assert.Equal("item-template.deprecated", capturedTopic);
+        // Assert — per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
+        Assert.Equal("item-template.updated", capturedTopic);
         Assert.NotNull(capturedEvent);
-        var typedEvent = Assert.IsType<ItemTemplateDeprecatedEvent>(capturedEvent);
+        var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
         Assert.Equal(templateId, typedEvent.TemplateId);
         Assert.Equal(model.Code, typedEvent.Code);
         Assert.Equal(model.GameId, typedEvent.GameId);
+        Assert.True(typedEvent.IsDeprecated);
+        Assert.Contains("isDeprecated", typedEvent.ChangedFields);
+        Assert.Contains("deprecatedAt", typedEvent.ChangedFields);
     }
 
     [Fact]
@@ -810,6 +813,36 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var (status, response) = await service.CreateItemInstanceAsync(request);
 
         // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task CreateItemInstanceAsync_DeprecatedTemplate_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateService();
+        var templateId = Guid.NewGuid();
+        var template = CreateStoredTemplateModel(templateId);
+        template.IsDeprecated = true;
+
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"tpl:{templateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        var request = new CreateItemInstanceRequest
+        {
+            TemplateId = templateId,
+            ContainerId = Guid.NewGuid(),
+            RealmId = Guid.NewGuid(),
+            Quantity = 1,
+            OriginType = ItemOriginType.Loot
+        };
+
+        // Act
+        var (status, response) = await service.CreateItemInstanceAsync(request);
+
+        // Assert — per IMPLEMENTATION TENETS: deprecated templates must not produce new instances
         Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
     }
