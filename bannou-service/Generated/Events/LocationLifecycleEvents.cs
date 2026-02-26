@@ -154,7 +154,7 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata associated with the location
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -300,7 +300,7 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata associated with the location
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -454,7 +454,7 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
-    /// Additional custom metadata associated with the location
+    /// Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

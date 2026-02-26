@@ -21,7 +21,6 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | lib-state (`IStateStoreFactory`) | MySQL persistence for locations, code indexes, realm indexes, parent indexes |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for concurrent index modifications |
 | lib-messaging (`IMessageBus`) | Publishing location lifecycle events; error event publishing |
-| lib-messaging (`IEventConsumer`) | Event handler registration (partial class pattern, no handlers) |
 | lib-realm (`IRealmClient`) | Realm existence validation on creation; realm code resolution during seed |
 | lib-resource (`IResourceClient`) | Reference tracking checks before deletion; cleanup coordination |
 | lib-contract (`IContractClient`) | Territory clause type registration during plugin startup (hard dependency — fail-fast per FOUNDATION TENETS) |
@@ -105,6 +104,8 @@ This plugin does not consume external events.
 | `EntityPresenceCleanupIntervalSeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | `60` | Interval between background cleanup cycles for expired set members |
 | `EntityPresenceCleanupStartupDelaySeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | `15` | Delay before entity presence cleanup worker starts processing |
 | `MaxEntitiesPerLocationQuery` | `LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY` | `100` | Maximum entities returned by list-entities-at-location (pagination cap) |
+| `ContextCacheTtlSeconds` | `LOCATION_CONTEXT_CACHE_TTL_SECONDS` | `10` | TTL for location context cache entries used by variable provider |
+| `ContextNearbyPoisLimit` | `LOCATION_CONTEXT_NEARBY_POIS_LIMIT` | `50` | Maximum nearby POIs to include in location context data |
 
 ---
 
@@ -113,15 +114,18 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LocationService>` | Scoped | Structured logging |
-| `LocationServiceConfiguration` | Singleton | All 9 config properties |
+| `LocationServiceConfiguration` | Singleton | All 11 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IDistributedLockProvider` | Singleton | Distributed locks for index concurrency |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event handler registration |
 | `IRealmClient` | Scoped | Realm validation |
 | `IResourceClient` | Scoped | Reference tracking checks before deletion |
+| `ITelemetryProvider` | Singleton | Distributed tracing spans for async helpers |
+| `ILocationDataCache` | Singleton | ConcurrentDictionary cache for location context provider data |
 
 Service lifetime is **Scoped** (per-request).
+
+**Variable Provider**: `LocationContextProviderFactory` implements `IVariableProviderFactory` providing the `${location.*}` namespace to Actor (L2) via the Variable Provider Factory pattern. Variables: `zone` (location code), `name`, `region` (nearest REGION ancestor code), `type` (LocationType), `depth`, `realm` (realm code), `nearby_pois` (sibling location codes), `entity_count` (entities at current location). Data loaded via `ILocationDataCache` which caches pre-resolved context per character with configurable TTL.
 
 **Background Services**:
 - `EntityPresenceCleanupWorker` — Periodically cleans up stale members from location-entities sets. When an entity's presence TTL expires, the entity-location key is removed by Redis automatically, but the entity remains in the location's entity set. This worker evicts those stale set members using the `location-entities:__index__` index set for discovery.
@@ -159,9 +163,9 @@ Service lifetime is **Scoped** (per-request).
 ### Entity Presence Operations (4 endpoints)
 
 - **ReportEntityPosition** (`/location/report-entity-position`): Reports an entity's current location. Validates location exists, saves ephemeral presence with configurable TTL (`EntityPresenceTtlSeconds`, default 30s). Detects location changes via caller-hint (`previousLocationId`) fast path or atomic GETSET fallback. On actual location change: updates entity sets (removes from old location set, adds to new), maintains index set, publishes `location.entity-arrived` and `location.entity-departed` events. TTL refreshes are silent (no events).
-- **GetEntityLocation** (`/location/get-entity-location`): Returns current location for an entity by type+ID. Reads from presence store; returns `Found=false` if TTL expired or never reported.
+- **GetEntityLocation** (`/location/get-entity-location`): Returns current location for an entity by type+ID. Reads from presence store; returns null `LocationId` if TTL expired or never reported.
 - **ListEntitiesAtLocation** (`/location/list-entities-at-location`): Lists entities at a specific location. Reads from Redis Set, optionally filters by `entityType`, paginates with `offset`/`limit` (capped by `MaxEntitiesPerLocationQuery`, default 100). Hydrates each member from presence store, skipping stale entries. Returns `EntityPresenceEntry` objects with entity details and `reportedAt` timestamps.
-- **ClearEntityPosition** (`/location/clear-entity-position`): Explicitly removes an entity's presence. Deletes presence key, removes from location's entity set, publishes `location.entity-departed`. Returns `Cleared=false` if entity had no active presence.
+- **ClearEntityPosition** (`/location/clear-entity-position`): Explicitly removes an entity's presence. Deletes presence key, removes from location's entity set, publishes `location.entity-departed`. Returns null `PreviousLocationId` if entity had no active presence.
 
 ---
 
@@ -258,7 +262,7 @@ State Store Layout
 
 ## Stubs & Unimplemented Features
 
-None. All features are fully implemented.
+None. All endpoints and the `${location.*}` variable provider are fully implemented.
 
 ---
 
@@ -306,6 +310,7 @@ None currently identified.
 
 ## Work Tracking
 
+- **2026-02-12**: Issue [#145](https://github.com/beyond-immersion/bannou-service/issues/145) - Implemented `LocationContextProviderFactory` (`IVariableProviderFactory`) providing `${location.*}` namespace to Actor behavior system. Includes `LocationDataCache` (ConcurrentDictionary with configurable TTL) and `LocationContextProvider` resolving zone, name, region, type, depth, realm, nearby POIs, and entity count.
 - **2026-02-12**: Issue [#406](https://github.com/beyond-immersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
 - **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
 - **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior

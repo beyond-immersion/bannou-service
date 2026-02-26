@@ -503,7 +503,9 @@ Contract Binding Patterns
 ## Potential Extensions
 
 1. **Template migration**: When deprecating with `migrationTargetId`, automatically upgrade instances to the new template.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/489 -->
 2. **Affix system**: Random or crafted modifiers applied to instances (prefixes/suffixes). See lib-affix for the L4 modifier service.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/490 -->
 3. **Durability repair**: Endpoint to restore durability with configurable repair costs.
 4. **Item Decay/Expiration** ([#407](https://github.com/beyond-immersion/bannou-service/issues/407)): Time-based item lifecycle (template-level decay config, instance `expiresAt`, background worker for expiration). Dependency for lib-status ([#417](https://github.com/beyond-immersion/bannou-service/issues/417)) — native item expiration would allow simple timed buffs without full Contract lifecycle overhead.
 5. **Item Sockets** ([#430](https://github.com/beyond-immersion/bannou-service/issues/430)): Future L4 plugin (lib-socket) for socket, linking, and gem placement systems on item instances.

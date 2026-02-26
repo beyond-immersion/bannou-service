@@ -50,7 +50,7 @@ x-lifecycle:
       boundsPrecision: { $ref: 'location-api.yaml#/components/schemas/BoundsPrecision', required: true, description: "Precision level of spatial bounds" }
       coordinateMode: { $ref: 'location-api.yaml#/components/schemas/CoordinateMode', required: true, description: "How this location's coordinate system relates to its parent" }
       localOrigin: { $ref: 'common-api.yaml#/components/schemas/Position3D', nullable: true, description: "Origin point for local or inherited coordinate systems" }
-      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom metadata associated with the location" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention." }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }
 
@@ -108,6 +108,7 @@ components:
         - entityType
         - entityId
         - locationId
+        - realmId
       properties:
         eventId:
           type: string
@@ -128,3 +129,11 @@ components:
           type: string
           format: uuid
           description: ID of the location the entity departed from
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm the location belongs to
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)

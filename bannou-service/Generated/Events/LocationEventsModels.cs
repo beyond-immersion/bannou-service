@@ -141,6 +141,20 @@ public partial class LocationEntityDepartedEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid LocationId { get; set; } = default!;
 
+    /// <summary>
+    /// ID of the realm the location belongs to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Identifier of the reporter (service name or session ID)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reportedBy")]
+    public string? ReportedBy { get; set; } = default!;
+
 }
 
 

@@ -32,9 +32,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "location-statestore";
     private const string CACHE_STORE = "location-cache";
@@ -55,9 +55,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockRealmClient = new Mock<IRealmClient>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Default lock provider behavior - always succeed with proper disposable
         var mockLockResponse = new Mock<ILockResponse>();
@@ -117,9 +117,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockRealmClient.Object,
-            _mockEventConsumer.Object,
             _mockLockProvider.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>

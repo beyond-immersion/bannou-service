@@ -92,7 +92,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom metadata associated with the location"
+          description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt: &id017
           type: string
           format: date-time

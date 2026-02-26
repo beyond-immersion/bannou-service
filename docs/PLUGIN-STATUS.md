@@ -61,7 +61,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
 | [Inventory](#inventory-status) | L2 | 85% | 0 | Production-hardened (T8/T25/T26/T29/T30 compliant, 93 tests). 4 stubs remain: grid collision, weight propagation, equipment slots, RemoveItem cleanup. |
 | [Item](#item-status) | L2 | 92% | 0 | Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). Dual-model + Itemize Anything. Decay system pending (#407). |
-| [Location](#location-status) | L2 | 92% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking. No gaps. |
+| [Location](#location-status) | L2 | 97% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking, ${location.*} variable provider. Hardened to L3. |
 | [Quest](#quest-status) | L2 | 85% | 0 | Well-architected over Contract. Prerequisites, rewards, caching all done. Extensions only. |
 | [Realm](#realm-status) | L2 | 95% | 0 | Fully feature-complete. Complex merge, deprecation, resource integration. No remaining gaps. |
 | [Relationship](#relationship-status) | L2 | 90% | 0 | All 21 endpoints done. Bidirectional enforcement, type taxonomy, soft-delete. Index scaling gaps. |
@@ -743,9 +743,9 @@ gh issue list --search "Item:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [LOCATION.md](plugins/LOCATION.md)
 
-### Production Readiness: 92%
+### Production Readiness: 97%
 
-All 24 endpoints are fully implemented with no stubs. Hierarchical location management with circular reference prevention, cascading depth updates, code-based lookups, bulk seeding with two-pass parent resolution, territory constraint validation for Contract integration, realm transfer, and deprecation lifecycle. Recent additions include spatial coordinates with AABB queries (`/location/query/by-position`) and entity presence tracking with TTL-based ephemeral Redis storage, a background cleanup worker, and arrived/departed events. No bugs, no stubs, no design considerations, and no pending extensions.
+All 24 endpoints are fully implemented with no stubs. Hierarchical location management with circular reference prevention, cascading depth updates, code-based lookups, bulk seeding with two-pass parent resolution, territory constraint validation for Contract integration, realm transfer, and deprecation lifecycle. Includes spatial coordinates with AABB queries (`/location/query/by-position`), entity presence tracking with TTL-based ephemeral Redis storage, a background cleanup worker, arrived/departed events, and a `${location.*}` variable provider for Actor behavior system. Hardened: T30 telemetry spans on all async helpers, T7 compliant error handling (no duplicate try-catch), T8 filler properties removed, T9 lock failures throw instead of silently returning, NRT-compliant schema with validation keywords, x-resource-lifecycle declared.
 
 ### Bug Count: 0
 

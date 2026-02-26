@@ -797,12 +797,6 @@ public partial class LocationExistsResponse
     public bool IsActive { get; set; } = default!;
 
     /// <summary>
-    /// The location ID if found
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("locationId")]
-    public System.Guid? LocationId { get; set; } = default!;
-
-    /// <summary>
     /// The realm ID if location found
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
@@ -844,30 +838,36 @@ public partial class SeedLocation
     /// Unique code for the location within realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Display name
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(200, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Description
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Code of the realm (resolved during seeding)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string RealmCode { get; set; } = default!;
 
     /// <summary>
@@ -883,6 +883,8 @@ public partial class SeedLocation
     /// Code of the parent location (resolved during seeding)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentLocationCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string? ParentLocationCode { get; set; } = default!;
 
     /// <summary>
@@ -1059,6 +1061,8 @@ public partial class LocationResponse
     /// Precision level of spatial bounds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BoundsPrecision BoundsPrecision { get; set; } = default!;
 
@@ -1066,6 +1070,8 @@ public partial class LocationResponse
     /// How this location's coordinate system relates to its parent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public CoordinateMode CoordinateMode { get; set; } = default!;
 
@@ -1233,17 +1239,11 @@ public partial class ReportEntityPositionRequest
 }
 
 /// <summary>
-/// Result of reporting entity presence
+/// Result of reporting entity presence. HTTP 200 confirms the position was recorded.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ReportEntityPositionResponse
 {
-
-    /// <summary>
-    /// Whether the position was successfully recorded
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("recorded")]
-    public bool Recorded { get; set; } = default!;
 
     /// <summary>
     /// Location ID the entity arrived at (only set when location changed)
@@ -1285,20 +1285,14 @@ public partial class GetEntityLocationRequest
 }
 
 /// <summary>
-/// Result of querying an entity's current location
+/// Result of querying an entity's current location. All fields are null if no active presence exists.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GetEntityLocationResponse
 {
 
     /// <summary>
-    /// Whether a non-expired presence binding exists for this entity
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("found")]
-    public bool Found { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the location the entity is currently at
+    /// ID of the location the entity is currently at (null if no active presence)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("locationId")]
     public System.Guid? LocationId { get; set; } = default!;
@@ -1308,18 +1302,6 @@ public partial class GetEntityLocationResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
     public System.Guid? RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of entity (echoed back)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
-    public string? EntityType { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the entity (echoed back)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
-    public System.Guid? EntityId { get; set; } = default!;
 
     /// <summary>
     /// When the presence was last reported
@@ -1360,12 +1342,14 @@ public partial class ListEntitiesAtLocationRequest
     /// Page number (1-indexed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Page { get; set; } = 1;
 
     /// <summary>
     /// Number of entities per page
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
     public int PageSize { get; set; } = 50;
 
 }
@@ -1464,17 +1448,11 @@ public partial class ClearEntityPositionRequest
 }
 
 /// <summary>
-/// Result of clearing entity presence
+/// Result of clearing entity presence. HTTP 200 confirms the operation completed.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ClearEntityPositionResponse
 {
-
-    /// <summary>
-    /// Whether the entity had an active presence that was cleared
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cleared")]
-    public bool Cleared { get; set; } = default!;
 
     /// <summary>
     /// Location the entity was removed from (null if entity had no active presence)

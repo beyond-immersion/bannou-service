@@ -15615,10 +15615,8 @@ export interface components {
        */
       entityId: string;
     };
-    /** @description Result of clearing entity presence */
+    /** @description Result of clearing entity presence. HTTP 200 confirms the operation completed. */
     ClearEntityPositionResponse: {
-      /** @description Whether the entity had an active presence that was cleared */
-      cleared: boolean;
       /**
        * Format: uuid
        * @description Location the entity was removed from (null if entity had no active presence)
@@ -22104,13 +22102,11 @@ export interface components {
        */
       entityId: string;
     };
-    /** @description Result of querying an entity's current location */
+    /** @description Result of querying an entity's current location. All fields are null if no active presence exists. */
     GetEntityLocationResponse: {
-      /** @description Whether a non-expired presence binding exists for this entity */
-      found: boolean;
       /**
        * Format: uuid
-       * @description ID of the location the entity is currently at
+       * @description ID of the location the entity is currently at (null if no active presence)
        */
       locationId?: string | null;
       /**
@@ -22118,13 +22114,6 @@ export interface components {
        * @description ID of the realm the location belongs to
        */
       realmId?: string | null;
-      /** @description Type of entity (echoed back) */
-      entityType?: string | null;
-      /**
-       * Format: uuid
-       * @description ID of the entity (echoed back)
-       */
-      entityId?: string | null;
       /**
        * Format: date-time
        * @description When the presence was last reported
@@ -26532,11 +26521,6 @@ export interface components {
       isActive: boolean;
       /**
        * Format: uuid
-       * @description The location ID if found
-       */
-      locationId?: string | null;
-      /**
-       * Format: uuid
        * @description The realm ID if location found
        */
       realmId?: string | null;
@@ -26552,9 +26536,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more pages after the current page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are pages before the current page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description Complete location data returned from API operations */
     LocationResponse: {
@@ -26595,9 +26579,9 @@ export interface components {
       /** @description Optional spatial extent in world coordinates */
       bounds?: components['schemas']['BoundingBox3D'] | null;
       /** @description Precision level of spatial bounds */
-      boundsPrecision?: components['schemas']['BoundsPrecision'];
+      boundsPrecision: components['schemas']['BoundsPrecision'];
       /** @description How this location's coordinate system relates to its parent */
-      coordinateMode?: components['schemas']['CoordinateMode'];
+      coordinateMode: components['schemas']['CoordinateMode'];
       /** @description Origin point for local or inherited coordinate systems */
       localOrigin?: components['schemas']['Position3D'] | null;
       /** @description Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
@@ -30376,10 +30360,8 @@ export interface components {
       /** @description Identifier of the reporter (service name or session ID) */
       reportedBy?: string | null;
     };
-    /** @description Result of reporting entity presence */
+    /** @description Result of reporting entity presence. HTTP 200 confirms the position was recorded. */
     ReportEntityPositionResponse: {
-      /** @description Whether the position was successfully recorded */
-      recorded: boolean;
       /**
        * Format: uuid
        * @description Location ID the entity arrived at (only set when location changed)
