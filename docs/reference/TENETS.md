@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 8.0
-> **Last Updated**: 2026-02-11
+> **Version**: 9.0
+> **Last Updated**: 2026-02-25
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -18,7 +18,7 @@ When documenting tenet compliance in source code comments, **NEVER use specific 
 
 **Instead, use category names:**
 - `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29
-- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
+- `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
 
@@ -178,7 +178,7 @@ Tenets are organized into categories based on when they're needed:
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30 | While actively writing service code |
+| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 > **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
@@ -222,6 +222,7 @@ Tenets are organized into categories based on when they're needed:
 | **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
 | **T26** | No Sentinel Values | Never use magic values (Guid.Empty, -1, empty string) for absence; use nullable types |
 | **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
+| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; no deprecation on instances |
 
 ---
 
@@ -343,6 +344,15 @@ Tenets are organized into categories based on when they're needed:
 | Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
 | Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
+| Adding deprecation to instance data (characters, sessions, etc.) | T31 | Use immediate hard delete; deprecation is for definitions only |
+| Bare boolean for deprecation (no timestamp or reason) | T31 | Use triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason` |
+| Missing `DeprecationReason` on Category A entity | T31 | Add `DeprecationReason` field; audit context is mandatory for world-building definitions |
+| Non-idempotent deprecation (returning Conflict) | T31 | Return `OK` when already deprecated; caller's intent is satisfied |
+| Non-idempotent undeprecation (returning BadRequest/Conflict) | T31 | Return `OK` when not deprecated (Category A only) |
+| Delete without requiring deprecation (Category A) | T31 | Reject delete with `BadRequest` if `IsDeprecated == false` |
+| Dedicated deprecation event (`item-template.deprecated`) | T31 | Use `*.updated` event with `changedFields` containing deprecation fields |
+| Missing `includeDeprecated` on list endpoint | T31 | Add parameter with `default: false` to all list/query endpoints |
+| Category B entity missing instance creation guard | T31 | Check `IsDeprecated` before creating instances; reject with `BadRequest` |
 
 ---
 

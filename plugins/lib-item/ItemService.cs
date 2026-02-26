@@ -1985,31 +1985,37 @@ public partial class ItemService : IItemService
         ListItemsByTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+        using var activity = _telemetryProvider.StartActivity("bannou.item", "ItemService.ListItemsByTemplateAsync");
 
-        var idsJson = await stringStore.GetAsync($"{INST_TEMPLATE_INDEX}{body.TemplateId}", cancellationToken);
-        var ids = string.IsNullOrEmpty(idsJson)
-            ? new List<string>()
-            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+        // Query MySQL directly with TemplateId + optional RealmId filter
+        // per IMPLEMENTATION TENETS — pushes filtering to the database instead of
+        // loading all instances and filtering in memory
+        var queryableStore = _stateStoreFactory.GetQueryableStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
 
-        // Load all instances in bulk (cache + persistent store)
-        var modelsById = await GetInstancesBulkWithCacheAsync(ids, cancellationToken);
+        var templateId = body.TemplateId;
+        IReadOnlyList<ItemInstanceModel> matchingInstances;
 
-        // Filter and map to responses
-        var items = new List<ItemInstanceResponse>();
-        foreach (var id in ids)
+        if (body.RealmId.HasValue)
         {
-            if (!modelsById.TryGetValue(id, out var model)) continue;
-
-            // Apply realm filter
-            if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
-
-            items.Add(MapInstanceToResponse(model));
+            var realmId = body.RealmId.Value;
+            matchingInstances = await queryableStore.QueryAsync(
+                m => m.TemplateId == templateId && m.RealmId == realmId,
+                cancellationToken);
+        }
+        else
+        {
+            matchingInstances = await queryableStore.QueryAsync(
+                m => m.TemplateId == templateId,
+                cancellationToken);
         }
 
         var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
-        var totalCount = items.Count;
-        var paged = items.Skip(body.Offset).Take(effectiveLimit).ToList();
+        var totalCount = matchingInstances.Count;
+        var paged = matchingInstances
+            .Skip(body.Offset)
+            .Take(effectiveLimit)
+            .Select(MapInstanceToResponse)
+            .ToList();
 
         return (StatusCodes.OK, new ListItemsResponse
         {
@@ -2137,6 +2143,15 @@ public partial class ItemService : IItemService
 
             var list = BannouJson.Deserialize<List<string>>(json) ?? new List<string>();
             if (!list.Remove(value)) return;
+
+            // If list is now empty, delete the key to prevent empty index accumulation.
+            // All readers handle missing keys identically to empty lists via
+            // string.IsNullOrEmpty check, and AddToListAsync recreates from scratch.
+            if (list.Count == 0)
+            {
+                await stringStore.DeleteAsync(key, ct);
+                return;
+            }
 
             var serialized = BannouJson.Serialize(list);
 

@@ -104,14 +104,13 @@ public partial class AccountService : IAccountService
             sortSpec,
             cancellationToken);
 
-        // Map results to response models with auth methods
-        var accounts = new List<AccountResponse>();
-        foreach (var item in result.Items)
+        // Map results to response models with auth methods loaded in parallel
+        var authMethodTasks = result.Items.Select(async item =>
         {
             var authMethods = await GetAuthMethodsForAccountAsync(
                 item.Value.AccountId.ToString(), cancellationToken);
 
-            accounts.Add(new AccountResponse
+            return new AccountResponse
             {
                 AccountId = item.Value.AccountId,
                 Email = item.Value.Email,
@@ -124,8 +123,10 @@ public partial class AccountService : IAccountService
                 MfaSecret = item.Value.MfaSecret,
                 MfaRecoveryCodes = item.Value.MfaRecoveryCodes,
                 AuthMethods = authMethods
-            });
-        }
+            };
+        });
+
+        var accounts = (await Task.WhenAll(authMethodTasks)).ToList();
 
         var response = new AccountListResponse
         {
@@ -287,7 +288,7 @@ public partial class AccountService : IAccountService
         CreateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Creating account for email: {Email}", body.Email ?? "(no email - OAuth/Steam)");
+        _logger.LogDebug("Creating account (hasEmail={HasEmail})", body.Email != null);
 
         // If email provided, acquire lock and work inside the using scope
         if (!string.IsNullOrEmpty(body.Email))
@@ -303,7 +304,7 @@ public partial class AccountService : IAccountService
 
             if (!emailLock.Success)
             {
-                _logger.LogWarning("Failed to acquire email lock for {Email}", body.Email);
+                _logger.LogWarning("Failed to acquire email lock during account creation");
                 return (StatusCodes.Conflict, null);
             }
 
@@ -313,7 +314,7 @@ public partial class AccountService : IAccountService
 
             if (!string.IsNullOrEmpty(existingAccountId))
             {
-                _logger.LogWarning("Account with email {Email} already exists (AccountId: {AccountId})", body.Email, existingAccountId);
+                _logger.LogWarning("Account with provided email already exists (AccountId: {AccountId})", existingAccountId);
                 return (StatusCodes.Conflict, null);
             }
 
@@ -343,7 +344,7 @@ public partial class AccountService : IAccountService
         if (roles.Count == 0)
         {
             roles.Add("user");
-            _logger.LogDebug("Assigning default 'user' role to new account: {Email}", body.Email);
+            _logger.LogDebug("Assigning default 'user' role to new account");
         }
 
         // Apply ENV-based admin role assignment
@@ -352,7 +353,7 @@ public partial class AccountService : IAccountService
             if (!roles.Contains("admin"))
             {
                 roles.Add("admin");
-                _logger.LogInformation("Auto-assigning admin role to {Email} based on configuration", body.Email);
+                _logger.LogInformation("Auto-assigning admin role to new account based on configuration");
             }
         }
 
@@ -379,8 +380,8 @@ public partial class AccountService : IAccountService
                 accountId.ToString());
         }
 
-        _logger.LogInformation("Account created: {AccountId} for email: {Email} with roles: {Roles}",
-            accountId, body.Email ?? "(no email - OAuth/Steam)", string.Join(", ", roles));
+        _logger.LogInformation("Account created: {AccountId} with roles: {Roles}",
+            accountId, string.Join(", ", roles));
 
         // Publish account created event
         await PublishAccountCreatedEventAsync(account, cancellationToken);
@@ -424,7 +425,7 @@ public partial class AccountService : IAccountService
 
             if (adminEmails.Contains(emailLower))
             {
-                _logger.LogDebug("Email {Email} matches AdminEmails configuration", email);
+                _logger.LogDebug("Email matches AdminEmails configuration");
                 return true;
             }
         }
@@ -439,7 +440,7 @@ public partial class AccountService : IAccountService
 
             if (emailLower.EndsWith(domain))
             {
-                _logger.LogDebug("Email {Email} matches AdminEmailDomain {Domain}", email, domain);
+                _logger.LogDebug("Email matches AdminEmailDomain configuration");
                 return true;
             }
         }
@@ -607,7 +608,7 @@ public partial class AccountService : IAccountService
         CancellationToken cancellationToken = default)
     {
         var email = body.Email;
-        _logger.LogDebug("Retrieving account by email: {Email}", email);
+        _logger.LogDebug("Retrieving account by email");
 
         // Get the account ID from email index
         var accountId = await _indexStore.GetAsync(
@@ -616,7 +617,7 @@ public partial class AccountService : IAccountService
 
         if (string.IsNullOrEmpty(accountId))
         {
-            _logger.LogWarning("No account found for email: {Email}", email);
+            _logger.LogWarning("No account found for provided email");
             return (StatusCodes.NotFound, null);
         }
 
@@ -625,14 +626,14 @@ public partial class AccountService : IAccountService
 
         if (account == null)
         {
-            _logger.LogWarning("Account data not found for ID: {AccountId} (from email: {Email})", accountId, email);
+            _logger.LogWarning("Account data not found for ID: {AccountId} (from email lookup)", accountId);
             return (StatusCodes.NotFound, null);
         }
 
         // Check if account is soft-deleted
         if (account.DeletedAt.HasValue)
         {
-            _logger.LogWarning("Account is deleted for email: {Email}, AccountId: {AccountId}", email, accountId);
+            _logger.LogWarning("Account is deleted: {AccountId} (from email lookup)", accountId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -656,7 +657,7 @@ public partial class AccountService : IAccountService
             AuthMethods = authMethods
         };
 
-        _logger.LogInformation("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
+        _logger.LogInformation("Account retrieved by email: {AccountId}", accountId);
         return (StatusCodes.OK, response);
     }
 
@@ -907,7 +908,7 @@ public partial class AccountService : IAccountService
         if (body.DisplayName != null && body.DisplayName != account.DisplayName)
         {
             account.DisplayName = body.DisplayName;
-            changedFields.Add("display_name");
+            changedFields.Add("displayName");
         }
 
         // Handle metadata update if provided
@@ -1233,7 +1234,7 @@ public partial class AccountService : IAccountService
 
         if (!emailLock.Success)
         {
-            _logger.LogWarning("Failed to acquire email lock for {Email}", newEmail);
+            _logger.LogWarning("Failed to acquire email lock for email change on account {AccountId}", accountId);
             return (StatusCodes.Conflict, null);
         }
 
@@ -1243,8 +1244,7 @@ public partial class AccountService : IAccountService
 
         if (!string.IsNullOrEmpty(existingAccountId))
         {
-            _logger.LogWarning("Email {Email} already in use by account {ExistingAccountId}",
-                newEmail, existingAccountId);
+            _logger.LogWarning("New email already in use by account {ExistingAccountId}", existingAccountId);
             return (StatusCodes.Conflict, null);
         }
 
@@ -1315,8 +1315,7 @@ public partial class AccountService : IAccountService
                 $"{EMAIL_INDEX_KEY_PREFIX}{oldNormalizedEmail}", cancellationToken);
         }
 
-        _logger.LogInformation("Email updated for account {AccountId}: {OldEmail} -> {NewEmail}",
-            accountId, oldEmail ?? "(none)", newEmail);
+        _logger.LogInformation("Email updated for account {AccountId}", accountId);
 
         // Publish event with changed fields
         var changedFields = new List<string> { "email", "isVerified" };
@@ -1548,7 +1547,7 @@ public partial class AccountService : IAccountService
         CountAccountsRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Counting accounts with filters - Email: {Email}, DisplayName: {DisplayName}, Verified: {Verified}, Role: {Role}",
+        _logger.LogDebug("Counting accounts with filters - HasEmail: {HasEmail}, HasDisplayName: {HasDisplayName}, Verified: {Verified}, Role: {Role}",
             body.Email != null, body.DisplayName != null, body.Verified, body.Role);
 
         var conditions = BuildAccountQueryConditions(body.Email, body.DisplayName, body.Verified);

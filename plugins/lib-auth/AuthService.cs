@@ -96,7 +96,7 @@ public partial class AuthService : IAuthService
         LoginRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Processing login request for email: {Email}", body.Email);
+        _logger.LogDebug("Processing login request");
 
         if (string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
         {
@@ -111,15 +111,15 @@ public partial class AuthService : IAuthService
 
         if (currentAttempts.HasValue && currentAttempts.Value >= _configuration.MaxLoginAttempts)
         {
-            _logger.LogWarning("Rate limit exceeded for email: {Email} ({Attempts} attempts)", body.Email, currentAttempts.Value);
-            await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.RateLimited);
+            _logger.LogWarning("Rate limit exceeded ({Attempts} attempts)", currentAttempts.Value);
+            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.RateLimited);
             // Return Unauthorized (not a dedicated 429) to avoid leaking rate-limit state to attackers.
             // The audit event carries the RateLimited reason for internal monitoring.
             return (StatusCodes.Unauthorized, null);
         }
 
         // Lookup account by email via AccountClient
-        _logger.LogDebug("Looking up account by email via AccountClient: {Email}", body.Email);
+        _logger.LogDebug("Looking up account by email via AccountClient");
 
         AccountResponse account;
         try
@@ -129,15 +129,15 @@ public partial class AuthService : IAuthService
 
             if (account == null)
             {
-                _logger.LogWarning("No account found for email: {Email}", body.Email);
+                _logger.LogWarning("No account found for provided email");
                 return (StatusCodes.Unauthorized, null);
             }
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
             // Account not found - return Unauthorized (don't reveal whether account exists)
-            _logger.LogWarning("Account not found for email: {Email}", body.Email);
-            await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.AccountNotFound);
+            _logger.LogWarning("Account not found for provided email");
+            await PublishLoginFailedEventAsync(UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.AccountNotFound);
             // Increment rate limit counter even for non-existent accounts to prevent enumeration
             await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
             return (StatusCodes.Unauthorized, null);
@@ -152,7 +152,7 @@ public partial class AuthService : IAuthService
         // Verify password against stored hash
         if (string.IsNullOrWhiteSpace(account.PasswordHash))
         {
-            _logger.LogWarning("Account has no password hash stored: {Email}", body.Email);
+            _logger.LogWarning("Account has no password hash stored: {AccountId}", account.AccountId);
             return (StatusCodes.Unauthorized, null);
         }
 
@@ -160,15 +160,15 @@ public partial class AuthService : IAuthService
 
         if (!passwordValid)
         {
-            _logger.LogWarning("Password verification failed for email: {Email}", body.Email);
-            await PublishLoginFailedEventAsync(body.Email, AuthLoginFailedReason.InvalidCredentials, account.AccountId);
+            _logger.LogWarning("Password verification failed for account {AccountId}", account.AccountId);
+            await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId);
             await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
             return (StatusCodes.Unauthorized, null);
         }
 
         // Login successful - clear rate limit counter
         await authCacheStore.DeleteCounterAsync(rateLimitKey, cancellationToken);
-        _logger.LogDebug("Password verification successful for email: {Email}", body.Email);
+        _logger.LogDebug("Password verification successful for account {AccountId}", account.AccountId);
 
         // Check if MFA is enabled for this account
         if (account.MfaEnabled)
@@ -192,11 +192,10 @@ public partial class AuthService : IAuthService
         // Store refresh token
         await _tokenService.StoreRefreshTokenAsync(account.AccountId, refreshToken, cancellationToken);
 
-        _logger.LogInformation("Successfully authenticated user: {Email} (ID: {AccountId})",
-            body.Email, account.AccountId);
+        _logger.LogInformation("Successfully authenticated user: {AccountId}", account.AccountId);
 
         // Publish audit event for successful login
-        await PublishLoginSuccessfulEventAsync(account.AccountId, body.Email, sessionId);
+        await PublishLoginSuccessfulEventAsync(account.AccountId, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId);
 
         return (StatusCodes.OK, new LoginResponse
         {
@@ -226,7 +225,7 @@ public partial class AuthService : IAuthService
         _logger.LogDebug("Password hashed successfully for registration");
 
         // Create account via AccountClient service call
-        _logger.LogDebug("Creating account via AccountClient for registration: {Email}", body.Email);
+        _logger.LogDebug("Creating account via AccountClient for registration");
 
         var createRequest = new CreateAccountRequest
         {
@@ -250,7 +249,7 @@ public partial class AuthService : IAuthService
         }
         catch (ApiException ex) when (ex.StatusCode == 409)
         {
-            _logger.LogWarning("Account with email {Email} already exists", body.Email);
+            _logger.LogWarning("Account with provided email already exists");
             return (StatusCodes.Conflict, null);
         }
         catch (ApiException ex) when (ex.StatusCode == 400)
@@ -322,8 +321,8 @@ public partial class AuthService : IAuthService
             return (StatusCodes.Unauthorized, null);
         }
 
-        _logger.LogInformation("OAuth user info retrieved for provider {Provider}: ProviderId={ProviderId}, Email={Email}",
-            provider, userInfo.ProviderId, userInfo.Email);
+        _logger.LogInformation("OAuth user info retrieved for provider {Provider}: ProviderId={ProviderId}",
+            provider, userInfo.ProviderId);
 
         // Find or create account linked to this OAuth identity
         var (account, isNewAccount) = await _oauthService.FindOrCreateOAuthAccountAsync(provider, userInfo, cancellationToken);
@@ -733,7 +732,7 @@ public partial class AuthService : IAuthService
         PasswordResetRequest body,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Processing password reset request for email: {Email}", body.Email);
+        _logger.LogInformation("Processing password reset request");
 
         if (string.IsNullOrWhiteSpace(body.Email))
         {
@@ -751,7 +750,7 @@ public partial class AuthService : IAuthService
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
             // Account not found - log but return success to prevent enumeration
-            _logger.LogInformation("Password reset requested for non-existent email: {Email}", body.Email);
+            _logger.LogInformation("Password reset requested for non-existent email");
         }
 
         if (account != null)
@@ -1370,7 +1369,7 @@ public partial class AuthService : IAuthService
 
         _logger.LogInformation("MFA verification successful for account {AccountId} via {Method}", accountId.Value, method);
         await PublishMfaVerifiedEventAsync(accountId.Value, method, sessionId, recoveryCodesRemaining);
-        await PublishLoginSuccessfulEventAsync(accountId.Value, account.Email ?? accountId.Value.ToString(), sessionId);
+        await PublishLoginSuccessfulEventAsync(accountId.Value, account.DisplayName ?? UNKNOWN_DISPLAY_NAME, sessionId);
 
         return (StatusCodes.OK, new AuthResponse
         {
@@ -1629,6 +1628,7 @@ public partial class AuthService : IAuthService
     }
 
     // Auth audit event topics
+    private const string UNKNOWN_DISPLAY_NAME = "(unknown)";
     private const string AUTH_LOGIN_SUCCESSFUL_TOPIC = "auth.login.successful";
     private const string AUTH_LOGIN_FAILED_TOPIC = "auth.login.failed";
     private const string AUTH_REGISTRATION_SUCCESSFUL_TOPIC = "auth.registration.successful";
@@ -1682,11 +1682,11 @@ public partial class AuthService : IAuthService
             };
 
             await _messageBus.TryPublishAsync(AUTH_LOGIN_FAILED_TOPIC, eventModel);
-            _logger.LogDebug("Published AuthLoginFailedEvent for username {Username}, reason: {Reason}", username, reason);
+            _logger.LogDebug("Published AuthLoginFailedEvent for account {AccountId}, reason: {Reason}", accountId, reason);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to publish AuthLoginFailedEvent for username {Username}", username);
+            _logger.LogWarning(ex, "Failed to publish AuthLoginFailedEvent for account {AccountId}", accountId);
         }
     }
 

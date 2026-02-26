@@ -2,7 +2,7 @@
 
 > **Category**: Coding Patterns & Practices
 > **When to Reference**: While actively writing service code
-> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30
+> **Tenets**: T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31
 
 These tenets define the patterns you follow while implementing services.
 
@@ -775,6 +775,207 @@ Services that need to create spans must have access to `ITelemetryProvider`. Thi
 
 ---
 
+## Tenet 31: Deprecation Lifecycle (MANDATORY)
+
+**Rule**: Entities that other entities reference by ID MUST support a deprecation lifecycle before deletion. Entities that are never referenced by ID MUST NOT have deprecation — use immediate deletion. The pattern, storage, behavior, and cleanup rules are standardized below.
+
+### Why Deprecation Exists
+
+Deprecation solves one problem: **entities referenced by other entities cannot be safely deleted without a transition period.** Deleting a species while thousands of characters reference it corrupts the character data. Deleting an item template while instances persist across the game world makes those instances unresolvable.
+
+Deprecation is NOT a soft-delete mechanism, NOT a "be safe" default, and NOT a substitute for proper cleanup. It exists exclusively to protect referential integrity during a managed phase-out.
+
+### The Decision Tree
+
+Before adding deprecation to any entity, apply this tree mechanically:
+
+```
+Does persistent data in OTHER services/entities store this entity's ID?
+├── YES → Category A: Deprecate-Before-Delete
+│         (World-building definitions with eventual deletion)
+│
+├── NO, but instances of this template persist with this template's ID?
+│   └── Category B: Deprecate-Only (no delete endpoint)
+│         (Content templates where instances outlive the template's relevance)
+│
+└── NO references at all
+    └── No deprecation. Immediate hard delete.
+        (Instances, sessions, configuration, sub-entity data)
+```
+
+### Category A: World-Building Definitions (Deprecate → [Merge] → Delete)
+
+These are foundational definitions that other entities reference by ID. Deletion would orphan or corrupt downstream data. The transition period gives operators and automated systems time to migrate references.
+
+**Current Category A entities**: Species, Realm, Relationship Type, Seed Type, Location.
+
+**Lifecycle**: `Active` → `Deprecated` → (optional `Merge`) → `Delete`
+
+**Required endpoints**:
+- `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
+- `POST /{entity}/undeprecate` — reverses deprecation (decisions can be reversed)
+- `POST /{entity}/delete` — permanent removal (MUST reject if not deprecated)
+- `POST /{entity}/merge` — optional, for entities with many cross-service references
+
+**Required storage fields** (triple-field model on internal `*Model`):
+
+```csharp
+/// <summary>Whether this entity is deprecated and should not be used for new references.</summary>
+public bool IsDeprecated { get; set; }
+
+/// <summary>When deprecation occurred, null if not deprecated.</summary>
+public DateTimeOffset? DeprecatedAt { get; set; }
+
+/// <summary>Audit reason for deprecation, null if not deprecated.</summary>
+public string? DeprecationReason { get; set; }
+```
+
+All three fields are MANDATORY for Category A. `DeprecationReason` provides audit context for why a world-building definition is being phased out. Omitting it (bare boolean or timestamp-only) is a violation.
+
+**Delete flow** (mandatory sequence):
+1. Verify `IsDeprecated == true` — reject with `BadRequest` if not
+2. `CheckReferencesAsync` via lib-resource
+3. If references exist: `ExecuteCleanupAsync` with `ALL_REQUIRED` policy
+4. If cleanup fails: return `Conflict`
+5. Delete from state store + indexes
+6. Publish `*.deleted` event
+
+### Category B: Content Templates (Deprecate-Only, No Delete)
+
+These are templates/definitions where instances persist independently. The template must remain readable forever because historical instances reference it. Deprecation prevents new instances while preserving the template as a read-only archive.
+
+**Current Category B entities**: Item Template, Quest Definition, Chat Room Type, Gardener Scenario Template, Storyline Scenario Definition.
+
+**Lifecycle**: `Active` → `Deprecated` (terminal — no delete endpoint)
+
+**Required endpoints**:
+- `POST /{entity}/deprecate` — marks deprecated, publishes `*.updated` event
+- NO undeprecate endpoint (the "no new instances" guarantee is part of the system's contract)
+- NO delete endpoint (template persists forever)
+
+**Required storage**: Either the triple-field model (matching Category A) OR a status enum when the entity has additional lifecycle states beyond active/deprecated:
+
+```yaml
+# Status enum pattern (when entity has Draft/Active/Deprecated lifecycle)
+TemplateStatus:
+  type: string
+  enum: [Draft, Active, Deprecated]
+```
+
+When using the triple-field model, `DeprecationReason` is RECOMMENDED but not required for Category B (content management decisions are typically less consequential than world-building decisions).
+
+**Instance creation guard**: All services with Category B entities MUST check deprecation status before creating new instances and reject with `BadRequest` if deprecated. This check is the entire purpose of Category B deprecation.
+
+### What Does NOT Get Deprecation
+
+The following entity types MUST use immediate hard delete (no deprecation):
+
+| Type | Examples | Why No Deprecation |
+|------|----------|-------------------|
+| **Instance data** | Characters, relationships, encounters, save slots, inventory containers | Concrete instances, not definitions. No entity's *meaning* depends on them existing. lib-resource handles cascade cleanup of dependent data. |
+| **Session/ephemeral data** | Game sessions, matchmaking tickets, voice rooms | Transient by nature. TTL or explicit cleanup. |
+| **Configuration singletons** | Worldstate realm configs, currency definitions, calendar templates | Per-realm settings. You update or remove configuration, you don't "deprecate" it. |
+| **Sub-entity data** | Character personality, character history, character encounters | Components of a parent entity, not standalone definitions. Cleaned up via lib-resource when parent is deleted. |
+
+Adding deprecation to these entity types is **over-engineering** and a violation of this tenet. If you think an entity needs deprecation but falls into one of these categories, the entity likely belongs in Category A or B and the categorization above needs review — present the case rather than adding deprecation to instance data.
+
+### Behavioral Rules (All Categories)
+
+**Idempotency**: Deprecation MUST be idempotent. If the entity is already deprecated, return `OK` (not `Conflict`). The caller's intent is "this entity should be deprecated" — if it already is, the intent is satisfied. This is critical for automated systems (god-actors, background workers) that may retry operations.
+
+```csharp
+// CORRECT: Idempotent deprecation
+if (entity.IsDeprecated)
+    return (StatusCodes.OK, MapToResponse(entity));
+
+// FORBIDDEN: Non-idempotent deprecation
+if (entity.IsDeprecated)
+    return (StatusCodes.Conflict, null);  // Punishes the caller for a satisfied precondition
+```
+
+**Undeprecation idempotency**: For Category A entities, undeprecation MUST also be idempotent. If not deprecated, return `OK`.
+
+**Error codes**: Operations that fail due to wrong deprecation state MUST return `BadRequest` (not `Conflict`). The entity is not in the expected state — this is a precondition failure, not a competing write.
+
+| Scenario | Status Code |
+|----------|-------------|
+| Deprecate: already deprecated | `OK` (idempotent) |
+| Undeprecate: not deprecated | `OK` (idempotent, Category A only) |
+| Delete: not deprecated (Category A) | `BadRequest` |
+| Create instance: template deprecated (Category B) | `BadRequest` |
+
+**Events**: Deprecation state changes MUST be published as `*.updated` events with `changedFields` containing the deprecation field names (e.g., `["isDeprecated", "deprecatedAt", "deprecationReason"]`). Do NOT create dedicated deprecation events (e.g., `item-template.deprecated`). Deprecation is a field change, not a separate lifecycle event. Consumers already subscribe to `*.updated` for all field changes.
+
+```yaml
+# CORRECT: Deprecation is a field change published via the standard updated event
+# species.updated with changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
+
+# FORBIDDEN: Dedicated deprecation event
+# item-template.deprecated  ← forces consumers to subscribe to two topics
+```
+
+**List filtering**: All list/query endpoints for entities with deprecation MUST support an `includeDeprecated` parameter (default `false`). Deprecated entities are excluded from list results by default but accessible when explicitly requested.
+
+```yaml
+# Schema pattern for list endpoints
+includeDeprecated:
+  type: boolean
+  default: false
+  description: Whether to include deprecated entities in results
+```
+
+### Merge Pattern (Category A Extension)
+
+Merge is an OPTIONAL extension for Category A entities with many cross-service references. Not all Category A entities need merge — it's valuable when thousands of instances reference the deprecated definition and manual migration is impractical.
+
+**Requirements when implementing merge**:
+1. Source entity MUST be deprecated (reject with `BadRequest` if not)
+2. Target entity MUST NOT be deprecated (reject with `BadRequest` if deprecated)
+3. Use distributed locks on both source and target entity indexes
+4. Track partial failures in a `failedEntityIds` response field
+5. Support optional `deleteAfterMerge` flag (skipped automatically on partial failure)
+6. Publish `*.merged` event with source ID, target ID, migrated count, and failed IDs
+
+**Current entities with merge**: Species, Realm, Relationship Type.
+
+### Cross-Service Deprecation Checks
+
+When a service creates entities that reference a definition in another service, it SHOULD check the definition's deprecation status and reject creation if deprecated. Use the target service's `Exists` endpoint or client, which returns `isActive` as `false` for deprecated entities.
+
+```csharp
+// CORRECT: Check deprecation before creating referencing entity
+var (status, exists) = await _realmClient.RealmExistsAsync(
+    new RealmExistsRequest { RealmId = body.RealmId }, ct);
+if (status != StatusCodes.OK || exists?.IsActive != true)
+    return (StatusCodes.BadRequest, null);  // Realm is deprecated or missing
+```
+
+### Known Violations (Tracked for Remediation)
+
+These are existing violations to be fixed, NOT patterns to follow:
+
+| Service | Violation | Correct Behavior |
+|---------|-----------|-----------------|
+| Species | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
+| Realm | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
+| Location | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
+| Relationship Type | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
+| Seed Type | Returns `Conflict` on already-deprecated | Return `OK` (idempotent) |
+| Species | Returns `Conflict` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Realm | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Location | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Relationship Type | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Seed Type | Returns `Conflict` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Faction | Returns `BadRequest` on undeprecate-when-not-deprecated | Return `OK` (idempotent) |
+| Location | Delete does not require deprecation first | Require deprecation (Category A) |
+| Item Template | Uses dedicated `item-template.deprecated` event | Use `*.updated` with `changedFields` |
+| Item Template | Missing `DeprecationReason` field | Add to model and schema |
+| Quest Definition | Bare boolean, no timestamp or reason | Add full triple-field model |
+| Storyline Scenario | Bare boolean, no timestamp or reason | Add full triple-field model (or status enum) |
+| Item Template | Does not block instance creation for deprecated templates | Add deprecation check in `CreateInstanceAsync` |
+
+---
+
 ## Quick Reference: Implementation Violations
 
 | Violation | Tenet | Fix |
@@ -823,9 +1024,21 @@ Services that need to create spans must have access to `ITelemetryProvider`. Thi
 | Span on non-async synchronous method | T30 | Only async methods need spans |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
 | Span name not following `{component}.{class}.{method}` pattern | T30 | Use `"bannou.{service}", "{Class}.{Method}"` format |
+| Adding deprecation to instance data (characters, sessions, etc.) | T31 | Use immediate hard delete; deprecation is for definitions only |
+| Bare boolean for deprecation (no timestamp or reason) | T31 | Use triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason` |
+| Missing `DeprecationReason` on Category A entity | T31 | Add `DeprecationReason` field; audit context is mandatory for world-building definitions |
+| Non-idempotent deprecation (returning Conflict) | T31 | Return `OK` when already deprecated; caller's intent is satisfied |
+| Non-idempotent undeprecation (returning BadRequest/Conflict) | T31 | Return `OK` when not deprecated (Category A only) |
+| Delete without requiring deprecation (Category A) | T31 | Reject delete with `BadRequest` if `IsDeprecated == false` |
+| Undeprecate endpoint on Category B entity | T31 | Remove; Category B deprecation is one-way |
+| Delete endpoint on Category B entity | T31 | Remove; Category B templates persist forever |
+| Dedicated deprecation event (`item-template.deprecated`) | T31 | Use `*.updated` event with `changedFields` containing deprecation fields |
+| Missing `includeDeprecated` on list endpoint | T31 | Add parameter with `default: false` to all list/query endpoints |
+| Not checking deprecation before creating referencing entity | T31 | Check target's `Exists` or deprecation status; reject with `BadRequest` if deprecated |
+| Category B entity missing instance creation guard | T31 | Check `IsDeprecated` before creating instances; reject with `BadRequest` |
 
 > **Schema-related violations** (shared type in events schema, API `$ref` to events, cross-service `$ref`) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30. See [TENETS.md](../TENETS.md) for the complete index.*
+*This document covers tenets T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31. See [TENETS.md](../TENETS.md) for the complete index.*

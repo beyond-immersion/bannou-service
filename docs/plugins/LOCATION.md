@@ -32,6 +32,7 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-realm | Calls `ListRootLocationsAsync`, `GetLocationDescendantsAsync`, `TransferLocationToRealmAsync`, `SetLocationParentAsync` via `ILocationClient` during realm merge |
+| lib-faction | Calls `LocationExistsAsync` via `ILocationClient` for territory claim location validation |
 | lib-character-encounter | Stores `LocationId` as optional encounter context (stores reference but does not call `ILocationClient`) |
 
 **Contract Integration**: Location registers a `territory_constraint` clause type with Contract during plugin startup. Contract service will call `/location/validate-territory` via `IServiceNavigator` when evaluating territory constraint clauses. This enables Contract to validate territorial boundaries without a direct dependency on Location (SERVICE_HIERARCHY compliant: L2 Location registers with L1 Contract).
@@ -276,7 +277,7 @@ None currently identified.
 
 ### Bugs
 
-1. ~~**T4 Violation: Graceful degradation for L1 dependency**~~: **FIXED** (2026-02-08) - Changed `GetService<IContractClient>()` to `GetRequiredService<IContractClient>()` and removed null-check early return. Added `ServiceProvider ?? throw` guard. Removed catch-all exception handlers — only 409 Conflict (idempotent) is caught. Contract (L1) is guaranteed available when Location (L2) runs; failures now crash startup as expected per FOUNDATION TENETS.
+None currently identified.
 
 ### Intentional Quirks
 
@@ -284,7 +285,7 @@ None currently identified.
 
 2. **Realm validation only at creation and transfer**: `CreateLocation` and `TransferLocationToRealm` validate realm existence via `IRealmClient`. Subsequent operations (update, set-parent) do not re-validate the realm.
 
-3. **Seed update doesn't publish events**: When updating existing locations during seed with `updateExisting=true`, no `location.updated` event is published. The update uses direct `SaveAsync` bypassing the normal event publishing path.
+3. ~~**Seed update doesn't publish events**~~: **FIXED** (2026-02-25) - Seed updates now track changed fields, update the Redis cache via `PopulateLocationCacheAsync`, and publish `location.updated` events via `PublishLocationUpdatedEventAsync`. Only publishes when fields actually changed (no-change updates are silent). Matches the pattern used by `UpdateLocationAsync`.
 
 4. **ListLocationsByParent returns NotFound for missing parent**: If the parent location doesn't exist, returns NotFound. Other list operations (ListByRealm, ListRoot) return empty lists for missing realms/indexes. Inconsistent behavior.
 
@@ -303,14 +304,14 @@ None currently identified.
 ### Design Considerations
 
 1. **Location-bound contracts** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Adding `boundContractIds` to the location model would enable territory-bound agreements with inheritance semantics (child locations inherit parent's effective contracts). This would allow querying "what contracts apply at this location?" by walking the ancestor chain, enabling game-layer territory rule enforcement without Contract (L1) depending on Location (L2). Design questions: should contracts be directly bound to locations or mediated by a separate binding table? What are the inheritance semantics (simple merge vs priority/override)? Is this a Location concern (L2) or a game rules concern (L4)?
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/274 -->
 
 2. **Ground containers** ([#164](https://github.com/beyond-immersion/bannou-service/issues/164), [#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Location-owned "ground" containers for items dropped or lost in the game world. Would add a `groundContainerId` and `groundContainerCreationPolicy` (on-demand, explicit, inherit-parent, disabled) to the location model. Cross-cutting with lib-inventory — Inventory provides the container/item mechanics, Location provides the spatial anchor. Design questions: on-demand creation vs explicit seeding, TTL/capacity/cleanup policies per location type, hierarchy-aware drop behavior (walking up the tree to find nearest location with ground container).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/164 -->
 
 ---
 
 ## Work Tracking
 
+- **2026-02-25**: Audit fix — `SeedLocationsAsync` now publishes `location.updated` events and updates Redis cache when updating existing locations with `updateExisting=true`. Previously used direct `SaveAsync` bypassing both event publishing and cache population (FOUNDATION TENETS violation).
 - **2026-02-12**: Issue [#145](https://github.com/beyond-immersion/bannou-service/issues/145) - Implemented `LocationContextProviderFactory` (`IVariableProviderFactory`) providing `${location.*}` namespace to Actor behavior system. Includes `LocationDataCache` (ConcurrentDictionary with configurable TTL) and `LocationContextProvider` resolving zone, name, region, type, depth, realm, nearby POIs, and entity count.
-- **2026-02-12**: Issue [#406](https://github.com/beyond-immersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
-- **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
-- **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior

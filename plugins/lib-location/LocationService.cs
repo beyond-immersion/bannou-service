@@ -1204,19 +1204,68 @@ public partial class LocationService : ILocationService
 
                         if (existingModel != null)
                         {
-                            existingModel.Name = seedLocation.Name;
-                            if (seedLocation.Description != null) existingModel.Description = seedLocation.Description;
-                            existingModel.LocationType = seedLocation.LocationType;
-                            if (seedLocation.Bounds != null) existingModel.Bounds = seedLocation.Bounds;
-                            if (seedLocation.BoundsPrecision.HasValue) existingModel.BoundsPrecision = seedLocation.BoundsPrecision.Value;
-                            if (seedLocation.CoordinateMode.HasValue) existingModel.CoordinateMode = seedLocation.CoordinateMode.Value;
-                            if (seedLocation.LocalOrigin != null) existingModel.LocalOrigin = seedLocation.LocalOrigin;
-                            if (seedLocation.Metadata != null) existingModel.Metadata = seedLocation.Metadata;
-                            existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+                            var changedFields = new List<string>();
 
-                            await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, existingModel, cancellationToken: cancellationToken);
+                            if (seedLocation.Name != existingModel.Name)
+                            {
+                                existingModel.Name = seedLocation.Name;
+                                changedFields.Add("name");
+                            }
+
+                            if (seedLocation.Description != null && seedLocation.Description != existingModel.Description)
+                            {
+                                existingModel.Description = seedLocation.Description;
+                                changedFields.Add("description");
+                            }
+
+                            if (seedLocation.LocationType != existingModel.LocationType)
+                            {
+                                existingModel.LocationType = seedLocation.LocationType;
+                                changedFields.Add("locationType");
+                            }
+
+                            if (seedLocation.Bounds != null)
+                            {
+                                existingModel.Bounds = seedLocation.Bounds;
+                                changedFields.Add("bounds");
+                            }
+
+                            if (seedLocation.BoundsPrecision.HasValue && seedLocation.BoundsPrecision.Value != existingModel.BoundsPrecision)
+                            {
+                                existingModel.BoundsPrecision = seedLocation.BoundsPrecision.Value;
+                                changedFields.Add("boundsPrecision");
+                            }
+
+                            if (seedLocation.CoordinateMode.HasValue && seedLocation.CoordinateMode.Value != existingModel.CoordinateMode)
+                            {
+                                existingModel.CoordinateMode = seedLocation.CoordinateMode.Value;
+                                changedFields.Add("coordinateMode");
+                            }
+
+                            if (seedLocation.LocalOrigin != null)
+                            {
+                                existingModel.LocalOrigin = seedLocation.LocalOrigin;
+                                changedFields.Add("localOrigin");
+                            }
+
+                            if (seedLocation.Metadata != null)
+                            {
+                                existingModel.Metadata = seedLocation.Metadata;
+                                changedFields.Add("metadata");
+                            }
+
+                            if (changedFields.Count > 0)
+                            {
+                                existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+
+                                await _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location).SaveAsync(locationKey, existingModel, cancellationToken: cancellationToken);
+
+                                await PopulateLocationCacheAsync(locationKey, existingModel, cancellationToken);
+                                await PublishLocationUpdatedEventAsync(existingModel, changedFields, cancellationToken);
+                            }
+
                             updated++;
-                            _logger.LogDebug("Updated existing location: {Code}", code);
+                            _logger.LogDebug("Updated existing location: {Code}, changed fields: {ChangedFields}", code, changedFields);
                         }
                     }
                     else
