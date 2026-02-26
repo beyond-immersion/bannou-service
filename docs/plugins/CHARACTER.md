@@ -264,6 +264,8 @@ None currently tracked.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/253 -->
 2. **Character purge background service**: Automated purge of characters eligible for cleanup (zero references past grace period). Dead `CharacterRetentionDays` config was removed (T21 violation); new config with clear semantics should be designed when this is implemented. Deferred until operational need arises.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/263 -->
+3. **Client events for real-time character state updates** ([#498](https://github.com/beyond-immersion/bannou-service/issues/498)): Push `CharacterUpdated` (death, name change, status transitions with changedFields) and `CharacterRealmTransferred` (realm migration for UI context switch) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `character → session` bindings. Multi-observer scenarios handled naturally — multiple sessions registered for the same character all receive updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/498 -->
 
 ---
 

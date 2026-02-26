@@ -36682,6 +36682,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Definition to deprecate"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
           }
         }
       },
@@ -36717,6 +36723,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Scenario to deprecate"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
           }
         }
       },
@@ -46365,6 +46377,12 @@
             "nullable": true,
             "description": "When template was deprecated"
           },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
+          },
           "migrationTargetId": {
             "type": "string",
             "format": "uuid",
@@ -55861,7 +55879,7 @@
           "repeatable",
           "maxQuestors",
           "objectives",
-          "deprecated",
+          "isDeprecated",
           "createdAt",
           "gameServiceId"
         ],
@@ -55951,9 +55969,21 @@
             },
             "description": "Tags"
           },
-          "deprecated": {
+          "isDeprecated": {
             "type": "boolean",
-            "description": "Whether deprecated"
+            "description": "Whether this quest definition is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the quest definition was deprecated"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
           },
           "createdAt": {
             "type": "string",
@@ -59779,10 +59809,22 @@
             "nullable": true,
             "description": "Classification tags for filtering"
           },
-          "deprecated": {
+          "isDeprecated": {
             "type": "boolean",
             "default": false,
-            "description": "Whether scenario is soft-deleted"
+            "description": "Whether scenario definition is deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the scenario definition was deprecated"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
           },
           "createdAt": {
             "type": "string",
@@ -59836,9 +59878,21 @@
             "type": "boolean",
             "description": "Whether enabled"
           },
-          "deprecated": {
+          "isDeprecated": {
             "type": "boolean",
             "description": "Whether deprecated"
+          },
+          "deprecatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When deprecated"
+          },
+          "deprecationReason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500,
+            "description": "Reason for deprecation"
           },
           "conditionCount": {
             "type": "integer",

@@ -269,7 +269,8 @@ None. All endpoints and the `${location.*}` variable provider are fully implemen
 
 ## Potential Extensions
 
-None currently identified.
+1. **Client events for entity presence changes** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)): Push `LocationPresenceChanged` (entity arrived/departed with changeType discriminator) client event via `IClientEventPublisher` using the Entity Session Registry (#426). Requires new `location → session` registration in Gardener — added when a player's character enters a location, enabling all players at a location to receive presence updates ("who's in the room"). Optional stretch: `LocationUpdated` for dynamic world state changes (war damage, seasonal changes).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
 
 ---
 

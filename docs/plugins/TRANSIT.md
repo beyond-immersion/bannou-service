@@ -1599,6 +1599,9 @@ This service is entirely aspirational -- no schema, code, or tests exist. Implem
 
 5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
 
+6. **Client events for journey tracking and route discovery** ([#501](https://github.com/beyond-immersion/bannou-service/issues/501)): Push `TransitJourneyUpdated` (consolidated with status discriminator for in_transit/at_waypoint/arrived/interrupted/abandoned), `TransitDiscoveryRevealed`, and `TransitConnectionStatusChanged` client events via `IClientEventPublisher` using the Entity Session Registry (#426). Journey events target `character → session` bindings (Gardener). Connection status events target `realm → session` bindings (Agency, already registered for Worldstate time sync). Should be included in Transit's initial implementation, not retrofitted.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/501 -->
+
 ---
 
 ## Variable Provider (`${transit.*}`)

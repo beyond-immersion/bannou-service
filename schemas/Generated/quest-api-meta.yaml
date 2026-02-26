@@ -168,12 +168,12 @@ paths:
         : false,\n            \"required\": [\n                \"definitionId\",\n                \"contractTemplateId\",\n\
         \                \"code\",\n                \"name\",\n                \"category\",\n                \"difficulty\"\
         ,\n                \"repeatable\",\n                \"maxQuestors\",\n                \"objectives\",\n          \
-        \      \"deprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n      \
-        \      \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n       \
-        \         },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n        \
-        \        },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \      \"isDeprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n    \
+        \        \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n     \
+        \           },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n      \
+        \          },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Quest code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"Quest name\"\n                },\n                \"description\": {\n      \
         \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -199,18 +199,23 @@ paths:
         \                    \"description\": \"Rewards\"\n                },\n                \"tags\": {\n             \
         \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
         \                \"type\": \"string\"\n                    },\n                    \"description\": \"Tags\"\n   \
-        \             },\n                \"deprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether deprecated\"\n                },\n                \"createdAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"gameServiceId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n\
-        \                }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n     \
-        \           \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n  \
-        \          ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
-        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        \             },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this quest definition is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the quest definition was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason
+        for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n \
+        \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
+        \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
+        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
+        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
@@ -319,12 +324,12 @@ paths:
         : false,\n            \"required\": [\n                \"definitionId\",\n                \"contractTemplateId\",\n\
         \                \"code\",\n                \"name\",\n                \"category\",\n                \"difficulty\"\
         ,\n                \"repeatable\",\n                \"maxQuestors\",\n                \"objectives\",\n          \
-        \      \"deprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n      \
-        \      \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n       \
-        \         },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n        \
-        \        },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \      \"isDeprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n    \
+        \        \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n     \
+        \           },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n      \
+        \          },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Quest code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"Quest name\"\n                },\n                \"description\": {\n      \
         \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -350,18 +355,23 @@ paths:
         \                    \"description\": \"Rewards\"\n                },\n                \"tags\": {\n             \
         \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
         \                \"type\": \"string\"\n                    },\n                    \"description\": \"Tags\"\n   \
-        \             },\n                \"deprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether deprecated\"\n                },\n                \"createdAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"gameServiceId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n\
-        \                }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n     \
-        \           \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n  \
-        \          ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
-        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        \             },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this quest definition is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the quest definition was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason
+        for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n \
+        \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
+        \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
+        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
+        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
@@ -494,7 +504,7 @@ paths:
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"definitionId\",\n         \
         \       \"contractTemplateId\",\n                \"code\",\n                \"name\",\n                \"category\"\
         ,\n                \"difficulty\",\n                \"repeatable\",\n                \"maxQuestors\",\n          \
-        \      \"objectives\",\n                \"deprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\
+        \      \"objectives\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\
         \n            ],\n            \"properties\": {\n                \"definitionId\": {\n                    \"type\"\
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition
         ID\"\n                },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n \
@@ -525,18 +535,23 @@ paths:
         \                    \"description\": \"Rewards\"\n                },\n                \"tags\": {\n             \
         \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
         \                \"type\": \"string\"\n                    },\n                    \"description\": \"Tags\"\n   \
-        \             },\n                \"deprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether deprecated\"\n                },\n                \"createdAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"gameServiceId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n\
-        \                }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n     \
-        \           \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n  \
-        \          ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
-        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        \             },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this quest definition is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the quest definition was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason
+        for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n \
+        \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
+        \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
+        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
+        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
@@ -662,12 +677,12 @@ paths:
         : false,\n            \"required\": [\n                \"definitionId\",\n                \"contractTemplateId\",\n\
         \                \"code\",\n                \"name\",\n                \"category\",\n                \"difficulty\"\
         ,\n                \"repeatable\",\n                \"maxQuestors\",\n                \"objectives\",\n          \
-        \      \"deprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n      \
-        \      \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n       \
-        \         },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n        \
-        \        },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \      \"isDeprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n    \
+        \        \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n     \
+        \           },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n      \
+        \          },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Quest code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"Quest name\"\n                },\n                \"description\": {\n      \
         \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -693,18 +708,23 @@ paths:
         \                    \"description\": \"Rewards\"\n                },\n                \"tags\": {\n             \
         \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
         \                \"type\": \"string\"\n                    },\n                    \"description\": \"Tags\"\n   \
-        \             },\n                \"deprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether deprecated\"\n                },\n                \"createdAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"gameServiceId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n\
-        \                }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n     \
-        \           \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n  \
-        \          ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
-        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        \             },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this quest definition is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the quest definition was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason
+        for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n \
+        \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
+        \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
+        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
+        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
@@ -804,20 +824,22 @@ paths:
         \   \"description\": \"Request to mark a quest definition as deprecated\",\n            \"additionalProperties\":
         false,\n            \"required\": [\n                \"definitionId\"\n            ],\n            \"properties\"\
         : {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Definition to deprecate\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        : \"uuid\",\n                    \"description\": \"Definition to deprecate\"\n                },\n              \
+        \  \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"QuestDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Complete quest definition including objectives, prerequisites, and rewards\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"definitionId\",\n                \"contractTemplateId\",\n\
         \                \"code\",\n                \"name\",\n                \"category\",\n                \"difficulty\"\
         ,\n                \"repeatable\",\n                \"maxQuestors\",\n                \"objectives\",\n          \
-        \      \"deprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n      \
-        \      \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n       \
-        \         },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n             \
-        \       \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n        \
-        \        },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        \      \"isDeprecated\",\n                \"createdAt\",\n                \"gameServiceId\"\n            ],\n    \
+        \        \"properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Unique quest definition ID\"\n     \
+        \           },\n                \"contractTemplateId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Underlying contract template ID\"\n      \
+        \          },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Quest code\"\n                },\n                \"name\": {\n                    \"type\": \"string\",\n   \
         \                 \"description\": \"Quest name\"\n                },\n                \"description\": {\n      \
         \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
@@ -843,18 +865,23 @@ paths:
         \                    \"description\": \"Rewards\"\n                },\n                \"tags\": {\n             \
         \       \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n        \
         \                \"type\": \"string\"\n                    },\n                    \"description\": \"Tags\"\n   \
-        \             },\n                \"deprecated\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"Whether deprecated\"\n                },\n                \"createdAt\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"gameServiceId\": {\n                    \"type\":
-        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n\
-        \                }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n     \
-        \           \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n  \
-        \          ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
-        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
-        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        \             },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether this quest definition is deprecated\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the quest definition was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason
+        for deprecation\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n \
+        \               },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Game service ID\"\n                }\n    \
+        \        }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n \
+        \               \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n          \
+        \  \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n    \
+        \            \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n\
+        \            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
@@ -1367,40 +1394,45 @@ paths:
         prerequisites, and rewards\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
         \         \"definitionId\",\n                \"contractTemplateId\",\n                \"code\",\n                \"\
         name\",\n                \"category\",\n                \"difficulty\",\n                \"repeatable\",\n       \
-        \         \"maxQuestors\",\n                \"objectives\",\n                \"deprecated\",\n                \"createdAt\"\
-        ,\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"definitionId\"\
+        \         \"maxQuestors\",\n                \"objectives\",\n                \"isDeprecated\",\n                \"\
+        createdAt\",\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"\
+        definitionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n        \
+        \            \"description\": \"Unique quest definition ID\"\n                },\n                \"contractTemplateId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique quest definition ID\"\n                },\n                \"contractTemplateId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Underlying contract template ID\"\n                },\n                \"code\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Quest code\"\n                },\n                \"name\":
-        {\n                    \"type\": \"string\",\n                    \"description\": \"Quest name\"\n              \
-        \  },\n                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Quest description\"\n                },\n                \"category\"\
-        : {\n                    \"description\": \"Quest category for organization\",\n                    \"$ref\": \"#/$defs/QuestCategory\"\
-        \n                },\n                \"difficulty\": {\n                    \"description\": \"Difficulty rating
-        of the quest\",\n                    \"$ref\": \"#/$defs/QuestDifficulty\"\n                },\n                \"\
-        levelRequirement\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Minimum level required\"\n                },\n                \"repeatable\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether repeatable\"\n       \
-        \         },\n                \"cooldownSeconds\": {\n                    \"type\": \"integer\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Cooldown for repeatable quests\"\n             \
-        \   },\n                \"deadlineSeconds\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Time limit\"\n                },\n                \"maxQuestors\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Max party size\"\n       \
-        \         },\n                \"objectives\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/ObjectiveDefinition\"\n                    },\n          \
-        \          \"description\": \"Quest objectives\"\n                },\n                \"prerequisites\": {\n     \
-        \               \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/PrerequisiteDefinition\"\n                    },\n                  \
-        \  \"description\": \"Prerequisites\"\n                },\n                \"rewards\": {\n                    \"\
-        type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                  \
-        \      \"$ref\": \"#/$defs/RewardDefinition\"\n                    },\n                    \"description\": \"Rewards\"\
-        \n                },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
-        nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n              \
-        \      },\n                    \"description\": \"Tags\"\n                },\n                \"deprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether deprecated\"\n       \
-        \         },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Underlying contract template ID\"\n                },\n                \"code\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"Quest code\"\n                },\n        \
+        \        \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Quest name\"\
+        \n                },\n                \"description\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Quest description\"\n                },\n   \
+        \             \"category\": {\n                    \"description\": \"Quest category for organization\",\n       \
+        \             \"$ref\": \"#/$defs/QuestCategory\"\n                },\n                \"difficulty\": {\n       \
+        \             \"description\": \"Difficulty rating of the quest\",\n                    \"$ref\": \"#/$defs/QuestDifficulty\"\
+        \n                },\n                \"levelRequirement\": {\n                    \"type\": \"integer\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Minimum level required\"\n            \
+        \    },\n                \"repeatable\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether repeatable\"\n                },\n                \"cooldownSeconds\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Cooldown for repeatable
+        quests\"\n                },\n                \"deadlineSeconds\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Time limit\"\n                },\n\
+        \                \"maxQuestors\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Max party size\"\n                },\n                \"objectives\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ObjectiveDefinition\"\n         \
+        \           },\n                    \"description\": \"Quest objectives\"\n                },\n                \"\
+        prerequisites\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n          \
+        \          \"items\": {\n                        \"$ref\": \"#/$defs/PrerequisiteDefinition\"\n                  \
+        \  },\n                    \"description\": \"Prerequisites\"\n                },\n                \"rewards\": {\n\
+        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/RewardDefinition\"\n                    },\n                    \"\
+        description\": \"Rewards\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"description\": \"Tags\"\n                },\n            \
+        \    \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        this quest definition is deprecated\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the quest definition was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n      \
+        \          },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n      \
         \          \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Game service ID\"\n                }\n            }\n        },\n      \
@@ -2264,7 +2296,7 @@ components:
       - repeatable
       - maxQuestors
       - objectives
-      - deprecated
+      - isDeprecated
       - createdAt
       - gameServiceId
       properties:
@@ -2333,9 +2365,19 @@ components:
           items:
             type: string
           description: Tags
-        deprecated:
+        isDeprecated:
           type: boolean
-          description: Whether deprecated
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -2458,6 +2500,11 @@ components:
           type: string
           format: uuid
           description: Definition to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
     AcceptQuestRequest:
       type: object
       description: Request to accept a quest and create an active instance

@@ -365,7 +365,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -455,9 +455,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -797,7 +809,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -887,9 +899,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1312,7 +1336,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -1402,9 +1426,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1802,7 +1838,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -1892,9 +1928,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -2205,6 +2253,12 @@ public partial class QuestController
                     "type": "string",
                     "format": "uuid",
                     "description": "Definition to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 }
             }
         }
@@ -2231,7 +2285,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -2321,9 +2375,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3807,7 +3873,7 @@ public partial class QuestController
                 "repeatable",
                 "maxQuestors",
                 "objectives",
-                "deprecated",
+                "isDeprecated",
                 "createdAt",
                 "gameServiceId"
             ],
@@ -3897,9 +3963,21 @@ public partial class QuestController
                     },
                     "description": "Tags"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
-                    "description": "Whether deprecated"
+                    "description": "Whether this quest definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the quest definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",

@@ -306,6 +306,9 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 5. **Localization support**: Quest names and descriptions are single-language. Could add localization key support for multi-language games.
 
+6. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
+
 ---
 
 ## Known Quirks & Caveats

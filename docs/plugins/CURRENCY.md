@@ -459,6 +459,8 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
 8. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
+9. **Client events for real-time wallet updates** ([#494](https://github.com/beyond-immersion/bannou-service/issues/494)): Push `CurrencyBalanceChanged`, `CurrencyWalletFrozen`, and `CurrencyWalletUnfrozen` client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `currency → session` bindings. A consolidated `BalanceChanged` event with transaction type discriminator covers credits, debits, transfers, and autogain for real-time wallet HUD updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/494 -->
 
 ---
 

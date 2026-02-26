@@ -189,6 +189,9 @@ None identified.
 
 6. **Proration support**: Handle mid-cycle upgrades/downgrades with prorated billing periods.
 
+7. **Client events for real-time subscription status** ([#500](https://github.com/beyond-immersion/bannou-service/issues/500)): Push `SubscriptionStatusChanged` client event via `IClientEventPublisher` when subscriptions are created, cancelled, expired (by background worker), or renewed. Uses Connect's existing `account → session` routing (not Entity Session Registry) since subscriptions are account-scoped. Especially important for background expiration where the player didn't initiate the change.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/500 -->
+
 ---
 
 ## Known Quirks & Caveats

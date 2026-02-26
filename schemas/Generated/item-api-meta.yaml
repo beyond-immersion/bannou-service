@@ -264,31 +264,33 @@ paths:
         \                    \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n\
+        \                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
+        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
+        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
+        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
+        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
+        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
+        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
         n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
@@ -422,31 +424,33 @@ paths:
         \                    \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n\
+        \                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
+        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
+        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
+        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
+        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
+        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
+        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
         n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
@@ -612,31 +616,33 @@ paths:
         \                    \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n\
+        \                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
+        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
+        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
+        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
+        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
+        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
+        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
         n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
@@ -833,31 +839,33 @@ paths:
         \                    \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n\
+        \                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
+        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
+        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
+        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
+        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
+        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
+        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
         n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
@@ -994,31 +1002,33 @@ paths:
         \                    \"description\": \"Whether template is deprecated\"\n                },\n                \"deprecatedAt\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
         \   \"nullable\": true,\n                    \"description\": \"When template was deprecated\"\n                },\n\
-        \                \"migrationTargetId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Migration target template\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Last update timestamp\"\n                }\n            }\n        },\n\
-        \        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Item classification
-        category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\",\n                \"\
-        accessory\",\n                \"consumable\",\n                \"material\",\n                \"container\",\n   \
-        \             \"quest\",\n                \"currency_like\",\n                \"misc\",\n                \"custom\"\
-        \n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n                \"uncommon\",\n   \
-        \             \"rare\",\n                \"epic\",\n                \"legendary\",\n                \"custom\"\n \
-        \           ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How quantities are tracked for this item type\",\n            \"enum\": [\n                \"discrete\",\n   \
-        \             \"continuous\",\n                \"unique\"\n            ]\n        },\n        \"WeightPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight values (consistent with
-        CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n                \"decimal_1\",\n   \
-        \             \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n        \"SoulboundType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"When item becomes bound to a character\",\n\
-        \            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n                \"on_equip\"\
-        ,\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\",\n            \"enum\"\
-        : [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\n         \
-        \   ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
+        \                \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation\"\n\
+        \                },\n                \"migrationTargetId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Migration target template\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Last update timestamp\"\n              \
+        \  }\n            }\n        },\n        \"ItemCategory\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Item classification category\",\n            \"enum\": [\n                \"weapon\",\n                \"armor\"\
+        ,\n                \"accessory\",\n                \"consumable\",\n                \"material\",\n              \
+        \  \"container\",\n                \"quest\",\n                \"currency_like\",\n                \"misc\",\n   \
+        \             \"custom\"\n            ]\n        },\n        \"ItemRarity\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Item rarity tier\",\n            \"enum\": [\n                \"common\",\n      \
+        \          \"uncommon\",\n                \"rare\",\n                \"epic\",\n                \"legendary\",\n \
+        \               \"custom\"\n            ]\n        },\n        \"QuantityModel\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"How quantities are tracked for this item type\",\n            \"enum\": [\n    \
+        \            \"discrete\",\n                \"continuous\",\n                \"unique\"\n            ]\n        },\n\
+        \        \"WeightPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision for weight
+        values (consistent with CurrencyPrecision)\",\n            \"enum\": [\n                \"integer\",\n           \
+        \     \"decimal_1\",\n                \"decimal_2\",\n                \"decimal_3\"\n            ]\n        },\n \
+        \       \"SoulboundType\": {\n            \"type\": \"string\",\n            \"description\": \"When item becomes
+        bound to a character\",\n            \"enum\": [\n                \"none\",\n                \"on_pickup\",\n    \
+        \            \"on_equip\",\n                \"on_use\"\n            ]\n        },\n        \"ItemScope\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Realm availability scope (consistent with CurrencyScope)\"\
+        ,\n            \"enum\": [\n                \"global\",\n                \"realm_specific\",\n                \"multi_realm\"\
+        \n            ]\n        },\n        \"ItemUseBehavior\": {\n            \"type\": \"string\",\n            \"description\"\
         : \"Controls item consumption on use.\\n- disabled: Item cannot be used (/item/use returns 400)\\n- destroy_on_success:
         Item consumed only if use behavior succeeds (default)\\n- destroy_always: Item consumed regardless of success/failure\\\
         n\",\n            \"enum\": [\n                \"disabled\",\n                \"destroy_on_success\",\n          \
@@ -2805,6 +2815,11 @@ components:
           format: date-time
           nullable: true
           description: When template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         migrationTargetId:
           type: string
           format: uuid

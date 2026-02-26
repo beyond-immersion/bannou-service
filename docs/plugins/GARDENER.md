@@ -136,7 +136,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 |-----------|------|-------|
 | **Connect** | Hosts the Entity Session Registry implementation (Redis infrastructure, register/unregister/query API). Already manages `account → session` mappings via `account-sessions:{accountId}`; the entity registry generalizes this to arbitrary `(entityType, entityId) → Set<sessionId>`. | L1 |
 | **Game Session** | Registers `game-service → session` mappings via the registry API | L2 |
-| **Gardener** | Primary registrar for gameplay entities: `seed → session`, `character → session`, `collection → session`, `inventory → session`, `currency → session`, `status → session` | L4 |
+| **Gardener** | Primary registrar for gameplay entities: `seed → session`, `character → session`, `collection → session`, `inventory → session`, `currency → session`, `status → session`, `location → session` | L4 |
 
 **Why Connect (L1), not Game Session (L2)**: Entity→session mappings are pure session routing infrastructure -- mapping any entity to WebSocket session IDs. This has no game-service boundary, no realm scoping, and no concept of "game session." Connect already owns session lifecycle (creation, heartbeat, disconnect cleanup, reconnection) and the `account-sessions` index. The entity registry is a natural generalization of what Connect already does. Placing it at L1 means it's available in ALL deployments (app-only, game, full) without requiring a no-op default implementation, and all layers (L1, L2, L3, L4) can both register and query mappings.
 
@@ -447,7 +447,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 │  │ Register(character, charA, sessionId)   │◄──┘      │          │
 │  │ Register(inventory, invId, sessionId)   │          ▼          │
 │  │ Register(collection, colId, sessionId)  │  Unregister(charA)  │
-│  │ ...                                     │  Register(charB)    │
+│  │ Register(location, locId, sessionId)    │  Register(charB)    │
+│  │ ...                                     │  Update(location)   │
 │  └─────────────────────────────────────────┘                     │
 └────────────────────────────────────────────────────────────────────┘
          │
@@ -525,7 +526,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 14. **Per-garden entity associations**: Gardens do not currently track associated entities (characters, collections, inventories, wallets). The target architecture gives each garden its own set of entities that the player can interact with, managed dynamically by the gardener behavior. For example, a lobby garden offers character selection from a roster; an in-game garden binds the selected character and its inventory/wallet.
 
-15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session) in the Entity Session Registry hosted by Connect (L1). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture.
+15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session, location→session) in the Entity Session Registry hosted by Connect (L1). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. The `location → session` binding ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)) is updated atomically when a character moves between locations (unregister old, register new). See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture, and [#502](https://github.com/beyond-immersion/bannou-service/issues/502) for the full L1/L2 client event rollout plan.
 
 16. **Dynamic character switching**: No mechanism exists for players to switch between characters within a garden (e.g., L1/R1 on a joystick). The target architecture has the gardener behavior managing character bindings in real-time, updating entity session registrations as the player switches context.
 
@@ -570,6 +571,9 @@ Player connects → Gardener triggers divine actor for garden-tending
 8. **Analytics milestone integration for scoring**: The plan specified consuming `analytics.milestone.reached` events to enrich scenario selection. When Analytics publishes this event, a subscription could be added to boost templates that align with player milestone achievements.
 
 9. **Gardener-to-Gardener communication for co-op gardens**: When multiple players share a cooperative garden, their gardener behaviors need to coordinate. This could use the existing pair bond mechanism for bonded players, but ad-hoc multiplayer gardens (matchmade groups, guild activities) need a coordination pattern. Possible approaches: shared garden state in Redis, inter-actor messaging via the Actor runtime, or a dedicated co-op coordination layer.
+
+10. **Location → session registration** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)): Add `("location", locationId)` entity session registration when a player's character enters a location, enabling Location (L2) to push entity presence change client events to all players at a location. Registration updated atomically (unregister old location, register new) when the character moves between locations. Part of the broader L1/L2 client event rollout ([#502](https://github.com/beyond-immersion/bannou-service/issues/502)).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
 
 ## Known Quirks & Caveats
 

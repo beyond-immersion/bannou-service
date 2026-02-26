@@ -545,6 +545,12 @@ public partial class ItemController
                     "nullable": true,
                     "description": "When template was deprecated"
                 },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
+                },
                 "migrationTargetId": {
                     "type": "string",
                     "format": "uuid",
@@ -962,6 +968,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -1490,6 +1502,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -2077,6 +2095,12 @@ public partial class ItemController
                     "nullable": true,
                     "description": "When template was deprecated"
                 },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
+                },
                 "migrationTargetId": {
                     "type": "string",
                     "format": "uuid",
@@ -2498,6 +2522,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",

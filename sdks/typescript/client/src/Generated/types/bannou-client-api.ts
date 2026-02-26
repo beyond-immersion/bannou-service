@@ -19073,6 +19073,8 @@ export interface components {
        * @description Definition to deprecate
        */
       definitionId: string;
+      /** @description Reason for deprecation */
+      reason?: string | null;
     };
     /** @description Request to deprecate a room type (prevents new room creation) */
     DeprecateRoomTypeRequest: {
@@ -19091,6 +19093,8 @@ export interface components {
        * @description Scenario to deprecate
        */
       scenarioId: string;
+      /** @description Reason for deprecation */
+      reason?: string | null;
     };
     /** @description Request to deprecate a seed type, preventing new seed creation. */
     DeprecateSeedTypeRequest: {
@@ -24296,6 +24300,8 @@ export interface components {
        * @description When template was deprecated
        */
       deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: uuid
        * @description Migration target template
@@ -29119,8 +29125,15 @@ export interface components {
       rewards?: components['schemas']['RewardDefinition'][] | null;
       /** @description Tags */
       tags?: string[] | null;
-      /** @description Whether deprecated */
-      deprecated: boolean;
+      /** @description Whether this quest definition is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the quest definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -31120,10 +31133,17 @@ export interface components {
       /** @description Classification tags for filtering */
       tags?: string[] | null;
       /**
-       * @description Whether scenario is soft-deleted
+       * @description Whether scenario definition is deprecated
        * @default false
        */
-      deprecated: boolean;
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the scenario definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When definition was created
@@ -31153,7 +31173,14 @@ export interface components {
       /** @description Whether enabled */
       enabled: boolean;
       /** @description Whether deprecated */
-      deprecated?: boolean;
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /** @description Number of trigger conditions */
       conditionCount?: number;
       /** @description Number of phases */

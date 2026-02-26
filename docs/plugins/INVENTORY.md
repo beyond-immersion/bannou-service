@@ -307,6 +307,8 @@ Stack Operations
 
 7. **Mail as remote inventory**: Implement a mailbox system using inventory containers with COD (cash-on-delivery) escrow integration. See [#283](https://github.com/beyond-immersion/bannou-service/issues/283).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/283 -->
+8. **Client events for real-time container updates** ([#495](https://github.com/beyond-immersion/bannou-service/issues/495)): Push `InventoryItemChanged` (consolidated with changeType discriminator for placed/removed/moved/stacked/split), `InventoryContainerFull`, and `InventoryItemTransferred` (targets both source and target owner sessions) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `inventory → session` bindings.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/495 -->
 
 ---
 

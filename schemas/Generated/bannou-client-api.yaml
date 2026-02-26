@@ -26290,6 +26290,11 @@ components:
           type: string
           format: uuid
           description: Definition to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
     DeprecateRoomTypeRequest:
       type: object
       additionalProperties: false
@@ -26316,6 +26321,11 @@ components:
           type: string
           format: uuid
           description: Scenario to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
     DeprecateSeedTypeRequest:
       type: object
       description: Request to deprecate a seed type, preventing new seed 
@@ -34044,6 +34054,11 @@ components:
           format: date-time
           nullable: true
           description: When template was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         migrationTargetId:
           type: string
           format: uuid
@@ -41515,7 +41530,7 @@ components:
       - repeatable
       - maxQuestors
       - objectives
-      - deprecated
+      - isDeprecated
       - createdAt
       - gameServiceId
       properties:
@@ -41584,9 +41599,19 @@ components:
           items:
             type: string
           description: Tags
-        deprecated:
+        isDeprecated:
           type: boolean
-          description: Whether deprecated
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -44694,10 +44719,20 @@ components:
             type: string
           nullable: true
           description: Classification tags for filtering
-        deprecated:
+        isDeprecated:
           type: boolean
           default: false
-          description: Whether scenario is soft-deleted
+          description: Whether scenario definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the scenario definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -44739,9 +44774,19 @@ components:
         enabled:
           type: boolean
           description: Whether enabled
-        deprecated:
+        isDeprecated:
           type: boolean
           description: Whether deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         conditionCount:
           type: integer
           description: Number of trigger conditions

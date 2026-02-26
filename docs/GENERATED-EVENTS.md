@@ -379,7 +379,6 @@ This document lists all events defined in Bannou's event schemas.
 | `ItemInstanceDestroyedEvent` | Custom | `item-instance-destroyed` | Event published when an item instance is permanent... |
 | `ItemInstanceModifiedEvent` | Custom | `item-instance-modified` | Event published when an item instance is modified ... |
 | `ItemInstanceUnboundEvent` | Custom | `item-instance-unbound` | Event published when an item binding is removed (a... |
-| `ItemTemplateDeprecatedEvent` | Custom | `item-template-deprecated` | Event published when an item template is deprecate... |
 | `ItemUseFailedEvent` | Custom | `item-use-failed` | Published when item use attempts fail, batched wit... |
 | `ItemUseStepCompletedEvent` | Custom | `item-use-step-completed` | Published when a multi-step item use milestone is ... |
 | `ItemUseStepFailedEvent` | Custom | `item-use-step-failed` | Published when a multi-step item use milestone fai... |
