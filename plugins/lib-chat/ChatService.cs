@@ -562,6 +562,24 @@ public partial class ChatService : IChatService
             ChangedFields = changedFields,
         }, cancellationToken);
 
+        var participants = await GetParticipantsAsync(model.RoomId, cancellationToken);
+        var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+        if (sessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatRoomUpdatedClientEvent
+            {
+                RoomId = model.RoomId,
+                RoomTypeCode = model.RoomTypeCode,
+                DisplayName = model.DisplayName,
+                Status = model.Status,
+                ParticipantCount = (int)participantCount,
+                MaxParticipants = GetEffectiveMaxParticipants(model, null),
+                IsArchived = model.IsArchived,
+                CreatedAt = model.CreatedAt,
+                ChangedFields = changedFields,
+            }, cancellationToken);
+        }
+
         return (StatusCodes.OK, MapToRoomResponse(model, participantCount));
     }
 
@@ -853,8 +871,36 @@ public partial class ChatService : IChatService
             {
                 var newOwner = remaining.FirstOrDefault(p => p.Role == ChatParticipantRole.Moderator)
                     ?? remaining.OrderBy(p => p.JoinedAt).First();
+                var oldRole = newOwner.Role;
                 newOwner.Role = ChatParticipantRole.Owner;
                 await SaveParticipantAsync(body.RoomId, newOwner, cancellationToken);
+
+                var now = DateTimeOffset.UtcNow;
+                await _messageBus.TryPublishAsync("chat-participant.role-changed", new ChatParticipantRoleChangedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    RoomId = body.RoomId,
+                    ParticipantSessionId = newOwner.SessionId,
+                    OldRole = oldRole,
+                    NewRole = ChatParticipantRole.Owner,
+                    ChangedBySessionId = null,
+                }, cancellationToken);
+
+                var promotionSessionIds = remaining.Select(p => p.SessionId.ToString()).ToList();
+                if (promotionSessionIds.Count > 0)
+                {
+                    await _clientEventPublisher.PublishToSessionsAsync(promotionSessionIds, new ChatParticipantRoleChangedClientEvent
+                    {
+                        RoomId = body.RoomId,
+                        ParticipantSessionId = newOwner.SessionId,
+                        DisplayName = newOwner.DisplayName,
+                        OldRole = oldRole,
+                        NewRole = ChatParticipantRole.Owner,
+                        ChangedBySessionId = null,
+                        ChangedByDisplayName = null,
+                    }, cancellationToken);
+                }
             }
         }
 
@@ -1098,6 +1144,34 @@ public partial class ChatService : IChatService
     public async Task<(StatusCodes, ChatRoomResponse?)> UnbanParticipantAsync(
         UnbanParticipantRequest body, CancellationToken cancellationToken)
     {
+        var callerSessionId = GetCallerSessionId();
+        if (callerSessionId == null)
+        {
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+            Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+        var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+        if (caller == null || (caller.Role != ChatParticipantRole.Owner && caller.Role != ChatParticipantRole.Moderator))
+        {
+            return (StatusCodes.Forbidden, null);
+        }
+
         var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
         var ban = await _banStore.GetAsync(banKey, cancellationToken);
         if (ban == null)
@@ -1107,10 +1181,25 @@ public partial class ChatService : IChatService
 
         await _banStore.DeleteAsync(banKey, cancellationToken);
 
-        var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
-        if (model == null)
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.TryPublishAsync("chat-participant.unbanned", new ChatParticipantUnbannedEvent
         {
-            return (StatusCodes.NotFound, null);
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RoomId = body.RoomId,
+            TargetSessionId = body.TargetSessionId,
+            UnbannedBySessionId = callerSessionId.Value,
+        }, cancellationToken);
+
+        var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+        if (sessionIds.Count > 0)
+        {
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantUnbannedClientEvent
+            {
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                UnbannedByDisplayName = caller.DisplayName,
+            }, cancellationToken);
         }
 
         var unbanCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
@@ -1183,6 +1272,157 @@ public partial class ChatService : IChatService
         return (StatusCodes.OK, MapToRoomResponse(model, muteCount));
     }
 
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> UnmuteParticipantAsync(
+        UnmuteParticipantRequest body, CancellationToken cancellationToken)
+    {
+        var callerSessionId = GetCallerSessionId();
+        if (callerSessionId == null)
+        {
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+            Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+        var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+        if (caller == null || (caller.Role != ChatParticipantRole.Owner && caller.Role != ChatParticipantRole.Moderator))
+        {
+            return (StatusCodes.Forbidden, null);
+        }
+
+        var target = await GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
+        if (target == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (!target.IsMuted)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        target.IsMuted = false;
+        target.MutedUntil = null;
+        await SaveParticipantAsync(body.RoomId, target, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.TryPublishAsync("chat-participant.unmuted", new ChatParticipantUnmutedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RoomId = body.RoomId,
+            TargetSessionId = body.TargetSessionId,
+            UnmutedBySessionId = callerSessionId.Value,
+        }, cancellationToken);
+
+        var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantUnmutedClientEvent
+        {
+            RoomId = body.RoomId,
+            TargetSessionId = body.TargetSessionId,
+            TargetDisplayName = target.DisplayName,
+        }, cancellationToken);
+
+        var unmuteCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+        return (StatusCodes.OK, MapToRoomResponse(model, unmuteCount));
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> ChangeParticipantRoleAsync(
+        ChangeParticipantRoleRequest body, CancellationToken cancellationToken)
+    {
+        var callerSessionId = GetCallerSessionId();
+        if (callerSessionId == null)
+        {
+            return (StatusCodes.Unauthorized, null);
+        }
+
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+            Guid.NewGuid().ToString(), _configuration.LockExpirySeconds, cancellationToken);
+        if (!lockResponse.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+        var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+        var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+        if (caller == null || caller.Role != ChatParticipantRole.Owner)
+        {
+            return (StatusCodes.Forbidden, null);
+        }
+
+        // Cannot change own role
+        if (body.TargetSessionId == callerSessionId.Value)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Cannot promote to Owner (ownership transfer happens on owner leave)
+        if (body.NewRole == ChatParticipantRole.Owner)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+        if (target == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var oldRole = target.Role;
+        target.Role = body.NewRole;
+        await SaveParticipantAsync(body.RoomId, target, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        await _messageBus.TryPublishAsync("chat-participant.role-changed", new ChatParticipantRoleChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RoomId = body.RoomId,
+            ParticipantSessionId = body.TargetSessionId,
+            OldRole = oldRole,
+            NewRole = body.NewRole,
+            ChangedBySessionId = callerSessionId.Value,
+        }, cancellationToken);
+
+        var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantRoleChangedClientEvent
+        {
+            RoomId = body.RoomId,
+            ParticipantSessionId = body.TargetSessionId,
+            DisplayName = target.DisplayName,
+            OldRole = oldRole,
+            NewRole = body.NewRole,
+            ChangedBySessionId = callerSessionId.Value,
+            ChangedByDisplayName = caller.DisplayName,
+        }, cancellationToken);
+
+        var roleCount = await GetParticipantCountAsync(body.RoomId, cancellationToken);
+        return (StatusCodes.OK, MapToRoomResponse(model, roleCount));
+    }
+
     // ============================================================================
     // MESSAGE OPERATIONS
     // ============================================================================
@@ -1226,6 +1466,28 @@ public partial class ChatService : IChatService
             {
                 sender.IsMuted = false;
                 sender.MutedUntil = null;
+                await SaveParticipantAsync(body.RoomId, sender, cancellationToken);
+
+                await _messageBus.TryPublishAsync("chat-participant.unmuted", new ChatParticipantUnmutedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = body.RoomId,
+                    TargetSessionId = callerSessionId.Value,
+                    UnmutedBySessionId = callerSessionId.Value,
+                }, cancellationToken);
+
+                var unmuteParticipants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+                var unmuteSessionIds = unmuteParticipants.Select(p => p.SessionId.ToString()).ToList();
+                if (unmuteSessionIds.Count > 0)
+                {
+                    await _clientEventPublisher.PublishToSessionsAsync(unmuteSessionIds, new ChatParticipantUnmutedClientEvent
+                    {
+                        RoomId = body.RoomId,
+                        TargetSessionId = callerSessionId.Value,
+                        TargetDisplayName = sender.DisplayName,
+                    }, cancellationToken);
+                }
             }
             else
             {

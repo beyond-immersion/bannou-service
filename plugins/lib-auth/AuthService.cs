@@ -6,8 +6,10 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Auth.Services;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,6 +30,10 @@ public partial class AuthService : IAuthService
     private readonly AuthServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
+    // Entity session registry for publishing client events to account WebSocket sessions
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
+
     // Helper services for better separation of concerns and testability
     private readonly ITokenService _tokenService;
     private readonly ISessionService _sessionService;
@@ -43,6 +49,8 @@ public partial class AuthService : IAuthService
         AuthServiceConfiguration configuration,
         AppConfiguration appConfiguration,
         ILogger<AuthService> logger,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider,
         ITokenService tokenService,
         ISessionService sessionService,
         IOAuthProviderService oauthService,
@@ -57,6 +65,8 @@ public partial class AuthService : IAuthService
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _logger = logger;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
         _tokenService = tokenService;
         _sessionService = sessionService;
         _oauthService = oauthService;
@@ -161,8 +171,8 @@ public partial class AuthService : IAuthService
         if (!passwordValid)
         {
             _logger.LogWarning("Password verification failed for account {AccountId}", account.AccountId);
-            await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId);
             await IncrementLoginAttemptCounterAsync(authCacheStore, rateLimitKey, cancellationToken);
+            await PublishLoginFailedEventAsync(account.DisplayName ?? UNKNOWN_DISPLAY_NAME, AuthLoginFailedReason.InvalidCredentials, account.AccountId, attemptCount: (int?)((currentAttempts ?? 0) + 1));
             return (StatusCodes.Unauthorized, null);
         }
 
@@ -654,6 +664,29 @@ public partial class AuthService : IAuthService
                 invalidatedSessions,
                 SessionInvalidatedEventReason.Logout,
                 cancellationToken);
+
+            // Notify remaining sessions about session termination (multi-device security)
+            if (body?.AllSessions == true)
+            {
+                // Bulk invalidation — terminatedSessionId is null
+                await PublishClientEventToAccountSessionsAsync(validateResponse.AccountId, new AuthSessionTerminatedClientEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Reason = SessionInvalidatedEventReason.Logout
+                }, cancellationToken);
+            }
+            else
+            {
+                // Single session terminated
+                await PublishClientEventToAccountSessionsAsync(validateResponse.AccountId, new AuthSessionTerminatedClientEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    TerminatedSessionId = validateResponse.SessionKey,
+                    Reason = SessionInvalidatedEventReason.Logout
+                }, cancellationToken);
+            }
         }
 
         return StatusCodes.OK;
@@ -721,6 +754,15 @@ public partial class AuthService : IAuthService
                 new List<string> { sessionKey },
                 SessionInvalidatedEventReason.AdminAction,
                 cancellationToken);
+
+            // Notify remaining sessions about remote session termination (multi-device security)
+            await PublishClientEventToAccountSessionsAsync(sessionData.AccountId, new AuthSessionTerminatedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TerminatedSessionId = sessionId,
+                Reason = SessionInvalidatedEventReason.AdminAction
+            }, cancellationToken);
         }
 
         _logger.LogInformation("Session {SessionId} terminated successfully", sessionId);
@@ -1663,12 +1705,20 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthLoginSuccessfulEvent for account {AccountId}", accountId);
         }
+
+        // Notify existing sessions about new login (multi-device security)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthDeviceLoginClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            LoginSessionId = sessionId
+        });
     }
 
     /// <summary>
     /// Publish AuthLoginFailedEvent for brute force detection and security monitoring.
     /// </summary>
-    private async Task PublishLoginFailedEventAsync(string username, AuthLoginFailedReason reason, Guid? accountId = null)
+    private async Task PublishLoginFailedEventAsync(string username, AuthLoginFailedReason reason, Guid? accountId = null, int? attemptCount = null)
     {
         try
         {
@@ -1687,6 +1737,18 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish AuthLoginFailedEvent for account {AccountId}", accountId);
+        }
+
+        // Notify account sessions about suspicious login (only when accountId is known
+        // to avoid leaking account existence for unknown emails)
+        if (accountId.HasValue)
+        {
+            await PublishClientEventToAccountSessionsAsync(accountId.Value, new AuthSuspiciousLoginClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                AttemptCount = attemptCount
+            });
         }
     }
 
@@ -1741,6 +1803,25 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthOAuthLoginSuccessfulEvent for account {AccountId}", accountId);
         }
+
+        // Notify existing sessions about new login (multi-device security)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthDeviceLoginClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            LoginSessionId = sessionId
+        });
+
+        // Notify all sessions when a new OAuth provider is linked
+        if (isNewAccount)
+        {
+            await PublishClientEventToAccountSessionsAsync(accountId, new AuthExternalAccountLinkedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Provider = provider
+            });
+        }
     }
 
     /// <summary>
@@ -1767,6 +1848,25 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthSteamLoginSuccessfulEvent for account {AccountId}", accountId);
         }
+
+        // Notify existing sessions about new login (multi-device security)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthDeviceLoginClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            LoginSessionId = sessionId
+        });
+
+        // Notify all sessions when a new Steam provider is linked
+        if (isNewAccount)
+        {
+            await PublishClientEventToAccountSessionsAsync(accountId, new AuthExternalAccountLinkedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                Provider = Provider.Steam
+            });
+        }
     }
 
     /// <summary>
@@ -1790,6 +1890,13 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthPasswordResetSuccessfulEvent for account {AccountId}", accountId);
         }
+
+        // Notify all sessions about password change (multi-device security)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthPasswordChangedClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow
+        });
     }
 
     /// <summary>
@@ -1812,6 +1919,13 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthMfaEnabledEvent for account {AccountId}", accountId);
         }
+
+        // Notify all sessions about MFA activation (multi-device security)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthMfaEnabledClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow
+        });
     }
 
     /// <summary>
@@ -1836,6 +1950,14 @@ public partial class AuthService : IAuthService
         {
             _logger.LogWarning(ex, "Failed to publish AuthMfaDisabledEvent for account {AccountId}", accountId);
         }
+
+        // Notify all sessions about MFA removal (security alert)
+        await PublishClientEventToAccountSessionsAsync(accountId, new AuthMfaDisabledClientEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            DisabledBy = disabledBy
+        });
     }
 
     /// <summary>
@@ -1884,6 +2006,34 @@ public partial class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish AuthMfaFailedEvent for account {AccountId}", accountId);
+        }
+    }
+
+    #endregion
+
+    #region Client Event Publishing (Multi-Device Security Notifications)
+
+    /// <summary>
+    /// Publish a client event to all WebSocket sessions for the given account.
+    /// Uses the Entity Session Registry for account-to-session routing.
+    /// Failures are logged but do not affect the caller (fire-and-forget for client notifications).
+    /// </summary>
+    private async Task PublishClientEventToAccountSessionsAsync<TEvent>(
+        Guid accountId, TEvent clientEvent, CancellationToken ct = default)
+        where TEvent : BaseClientEvent
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.auth", "AuthService.PublishClientEventToAccountSessions");
+        try
+        {
+            var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "account", accountId, clientEvent, ct);
+            _logger.LogDebug("Published {EventName} to {SessionCount} sessions for account {AccountId}",
+                clientEvent.EventName, count, accountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to publish {EventName} to account {AccountId} sessions",
+                clientEvent.EventName, accountId);
         }
     }
 

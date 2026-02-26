@@ -1,0 +1,219 @@
+openapi: 3.0.4
+info:
+  title: Auth Client Events API
+  description: |
+    Server-to-client push events for the Auth service.
+    These events provide real-time multi-device security notifications
+    delivered via WebSocket to all of an account's connected sessions.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "auth.{event_type}" naming convention.
+
+    Events are published via IEntitySessionRegistry.PublishToEntitySessionsAsync
+    using ("account", accountId) entity mapping. The login event fires BEFORE
+    the new session connects to WebSocket, so it targets existing sessions
+    (other devices). The new session gets its own capabilities via the normal
+    SessionCapabilitiesEvent flow.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Phase 1: Core Security Events
+    # ============================================
+
+    AuthDeviceLoginClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all existing sessions when a new login occurs on the account.
+        Enables "You logged in from another device" notifications.
+        The new session that triggered the login does NOT receive this event
+        (it hasn't connected to WebSocket yet).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - loginSessionId
+      properties:
+        eventName:
+          type: string
+          default: "auth.device_login"
+          description: Fixed event type identifier
+        loginSessionId:
+          type: string
+          format: uuid
+          description: Session ID of the new login that triggered this event
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the new login request
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the new login request
+
+    AuthPasswordChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions when the account's password is reset.
+        Confirmation that password was changed, pushed to all open sessions.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+      properties:
+        eventName:
+          type: string
+          default: "auth.password_changed"
+          description: Fixed event type identifier
+
+    AuthMfaEnabledClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions when MFA is enabled on the account.
+        Confirmation of MFA activation across all devices.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+      properties:
+        eventName:
+          type: string
+          default: "auth.mfa_enabled"
+          description: Fixed event type identifier
+
+    AuthMfaDisabledClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions when MFA is disabled on the account.
+        Security alert that MFA protection was removed.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - disabledBy
+      properties:
+        eventName:
+          type: string
+          default: "auth.mfa_disabled"
+          description: Fixed event type identifier
+        disabledBy:
+          $ref: 'auth-api.yaml#/components/schemas/MfaDisabledBy'
+          description: Who triggered the MFA disable (Self or Admin)
+
+    # ============================================
+    # Phase 2: Extended Security Events
+    # ============================================
+
+    AuthSuspiciousLoginClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions when a failed login attempt occurs with a known account.
+        Only published when the failed attempt's accountId is present (non-null),
+        to avoid leaking account existence for unknown emails.
+        Notifies on every failed attempt regardless of count.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+      properties:
+        eventName:
+          type: string
+          default: "auth.suspicious_login"
+          description: Fixed event type identifier
+        ipAddress:
+          type: string
+          nullable: true
+          description: IP address of the failed login attempt
+        userAgent:
+          type: string
+          nullable: true
+          description: User agent string from the failed login request
+        attemptCount:
+          type: integer
+          nullable: true
+          description: Number of failed attempts in the current rate-limit window
+
+    AuthExternalAccountLinkedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions when a new OAuth provider is linked to the account.
+        Confirmation that a new external authentication method was added.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - provider
+      properties:
+        eventName:
+          type: string
+          default: "auth.external_account_linked"
+          description: Fixed event type identifier
+        provider:
+          $ref: 'auth-api.yaml#/components/schemas/Provider'
+          description: OAuth provider that was linked
+
+    AuthSessionTerminatedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to remaining sessions when a session is remotely terminated.
+        Confirmation when remotely logging out a device or when sessions
+        are invalidated for security reasons.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "auth.session_terminated"
+          description: Fixed event type identifier
+        terminatedSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the specific session that was terminated (null for bulk invalidation)
+        reason:
+          $ref: 'auth-api.yaml#/components/schemas/SessionInvalidatedEventReason'
+          description: Reason why the session was terminated

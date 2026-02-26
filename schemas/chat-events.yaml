@@ -82,6 +82,12 @@ info:
     - topic: chat-participant.unmuted
       event: ChatParticipantUnmutedEvent
       description: Published when a participant is unmuted in a chat room
+    - topic: chat-participant.role-changed
+      event: ChatParticipantRoleChangedEvent
+      description: Published when a participant's role changes (manual or automatic promotion)
+    - topic: chat-participant.unbanned
+      event: ChatParticipantUnbannedEvent
+      description: Published when a participant is unbanned from a chat room
 
     # Message events
     - topic: chat-message.sent
@@ -365,6 +371,78 @@ components:
           type: string
           format: uuid
           description: Connect session ID of the moderator who removed the mute
+
+    ChatParticipantRoleChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant's role changes (manual or automatic owner-leave promotion)
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - oldRole
+        - newRole
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the role change occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the role change occurred
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the participant whose role changed
+        oldRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: Previous role
+        newRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: New role
+        changedBySessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of who changed the role (null for automatic promotion)
+
+    ChatParticipantUnbannedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a participant is unbanned from a chat room
+      required:
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+        - unbannedBySessionId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the unban occurred
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was unbanned from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the unbanned participant
+        unbannedBySessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the moderator who removed the ban
 
     # =========================================================================
     # Message Events

@@ -380,6 +380,7 @@ components:
       x-client-event: true
       description: |
         Sent to all room participants when someone is unmuted.
+        Fires on both explicit moderator unmute and lazy auto-unmute on message send.
       required:
         - eventName
         - eventId
@@ -404,9 +405,150 @@ components:
           nullable: true
           description: Display name of the unmuted participant
 
+    ChatParticipantRoleChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when a participant's role changes.
+        Covers both manual role changes and automatic owner promotion on owner departure.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - participantSessionId
+        - oldRole
+        - newRole
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_role_changed"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room where the role change occurred
+        participantSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the participant whose role changed
+        displayName:
+          type: string
+          nullable: true
+          description: Display name of the participant whose role changed
+        oldRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: Previous role
+        newRole:
+          $ref: 'chat-api.yaml#/components/schemas/ChatParticipantRole'
+          description: New role
+        changedBySessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of who changed the role (null for automatic promotion)
+        changedByDisplayName:
+          type: string
+          nullable: true
+          description: Display name of who changed the role (null for automatic promotion)
+
+    ChatParticipantUnbannedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when a ban is lifted.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - targetSessionId
+      properties:
+        eventName:
+          type: string
+          default: "chat.participant_unbanned"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room the participant was unbanned from
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Connect session ID of the unbanned participant
+        unbannedByDisplayName:
+          type: string
+          nullable: true
+          description: Display name of the moderator who removed the ban
+
     # ============================================
     # Room State Events
     # ============================================
+
+    ChatRoomUpdatedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to room participants when room settings change.
+        Includes full room state plus changedFields list for efficient UI updates.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - roomTypeCode
+        - status
+        - participantCount
+        - maxParticipants
+        - isArchived
+        - createdAt
+        - changedFields
+      properties:
+        eventName:
+          type: string
+          default: "chat.room_updated"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Room that was updated
+        roomTypeCode:
+          type: string
+          description: Room type code
+        displayName:
+          type: string
+          nullable: true
+          description: Current room display name
+        status:
+          $ref: 'chat-api.yaml#/components/schemas/ChatRoomStatus'
+          description: Current room lifecycle status
+        participantCount:
+          type: integer
+          description: Current number of participants
+        maxParticipants:
+          type: integer
+          description: Maximum allowed participants
+        isArchived:
+          type: boolean
+          description: Whether the room has been archived
+        createdAt:
+          type: string
+          format: date-time
+          description: When the room was created
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that changed in this update
 
     ChatRoomLockedClientEvent:
       allOf:
