@@ -3,8 +3,10 @@
 // Base implementation for behavior layers in the stack.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Stack;
@@ -26,6 +28,10 @@ namespace BeyondImmersion.BannouService.Behavior.Stack;
 public abstract class BehaviorLayerBase : IBehaviorLayer
 {
     private readonly ILogger? _logger;
+    /// <summary>
+    /// Telemetry provider for span instrumentation, available to derived classes.
+    /// </summary>
+    protected readonly ITelemetryProvider? _telemetryProvider;
     private bool _isActive;
 
     /// <summary>
@@ -36,18 +42,21 @@ public abstract class BehaviorLayerBase : IBehaviorLayer
     /// <param name="category">The behavior category.</param>
     /// <param name="priority">Priority within the category.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     protected BehaviorLayerBase(
         string id,
         string displayName,
         BehaviorCategory category,
         int priority,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         Id = id;
         DisplayName = displayName;
         Category = category;
         Priority = priority;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _isActive = true; // Active by default
     }
 
@@ -113,6 +122,7 @@ public abstract class BehaviorLayerBase : IBehaviorLayer
         BehaviorEvaluationContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "BehaviorLayerBase.EvaluateAsync");
         if (!_isActive)
         {
             return Array.Empty<IntentEmission>();
@@ -181,14 +191,16 @@ public sealed class DelegateBehaviorLayer : BehaviorLayerBase
     /// <param name="priority">Priority within the category.</param>
     /// <param name="evaluator">The evaluation delegate.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public DelegateBehaviorLayer(
         string id,
         string displayName,
         BehaviorCategory category,
         int priority,
         Func<BehaviorEvaluationContext, CancellationToken, ValueTask<IReadOnlyList<IntentEmission>>> evaluator,
-        ILogger? logger = null)
-        : base(id, displayName, category, priority, logger)
+        ILogger? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
+        : base(id, displayName, category, priority, logger, telemetryProvider)
     {
         _evaluator = evaluator;
     }
@@ -243,14 +255,16 @@ public sealed class ModelBehaviorLayer : BehaviorLayerBase
     /// <param name="priority">Priority within the category.</param>
     /// <param name="modelEvaluator">Function that evaluates the model and returns emissions.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public ModelBehaviorLayer(
         string id,
         string displayName,
         BehaviorCategory category,
         int priority,
         Func<BehaviorEvaluationContext, IReadOnlyList<IntentEmission>>? modelEvaluator = null,
-        ILogger? logger = null)
-        : base(id, displayName, category, priority, logger)
+        ILogger? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
+        : base(id, displayName, category, priority, logger, telemetryProvider)
     {
         _modelEvaluator = modelEvaluator;
     }

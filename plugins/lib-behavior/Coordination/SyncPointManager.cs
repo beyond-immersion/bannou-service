@@ -3,9 +3,11 @@
 // Manages cross-entity synchronization points in cutscenes.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Behavior;
-using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 
@@ -30,6 +32,7 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
     private readonly IReadOnlySet<Guid> _defaultParticipants;
     private readonly TimeSpan? _defaultTimeout;
     private readonly ILogger<SyncPointManager>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly CancellationTokenSource _disposeCts;
     private bool _disposed;
 
@@ -39,14 +42,17 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
     /// <param name="defaultParticipants">Default participant set for unspecified sync points.</param>
     /// <param name="defaultTimeout">Default timeout (null = no timeout).</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public SyncPointManager(
         IReadOnlySet<Guid> defaultParticipants,
         TimeSpan? defaultTimeout = null,
-        ILogger<SyncPointManager>? logger = null)
+        ILogger<SyncPointManager>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _defaultParticipants = defaultParticipants;
         _defaultTimeout = defaultTimeout;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _syncPoints = new ConcurrentDictionary<string, SyncPointTracker>(StringComparer.OrdinalIgnoreCase);
         _disposeCts = new CancellationTokenSource();
     }
@@ -102,6 +108,7 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
         Guid entityId,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "SyncPointManager.ReportReachedAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrEmpty(syncPointId);
 
@@ -148,6 +155,7 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
         string syncPointId,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "SyncPointManager.WaitForAllAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrEmpty(syncPointId);
 
@@ -220,6 +228,7 @@ public sealed class SyncPointManager : ISyncPointManager, IDisposable
         TimeSpan timeout,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "SyncPointManager.StartTimeoutTimerAsync");
         try
         {
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _disposeCts.Token);

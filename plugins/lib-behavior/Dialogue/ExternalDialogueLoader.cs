@@ -3,7 +3,9 @@
 // Loads external dialogue YAML files with caching support.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using YamlDotNet.Serialization;
@@ -32,6 +34,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     private readonly ExternalDialogueLoaderOptions _options;
     private readonly IDeserializer _deserializer;
     private readonly ILogger<ExternalDialogueLoader>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly object _directoryLock = new();
     private bool _disposed;
 
@@ -39,8 +42,9 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// Creates a new external dialogue loader with default options.
     /// </summary>
     /// <param name="logger">Optional logger.</param>
-    public ExternalDialogueLoader(ILogger<ExternalDialogueLoader>? logger = null)
-        : this(new ExternalDialogueLoaderOptions(), logger)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public ExternalDialogueLoader(ILogger<ExternalDialogueLoader>? logger = null, ITelemetryProvider? telemetryProvider = null)
+        : this(new ExternalDialogueLoaderOptions(), logger, telemetryProvider)
     {
     }
 
@@ -49,12 +53,15 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// </summary>
     /// <param name="options">Loader options.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public ExternalDialogueLoader(
         ExternalDialogueLoaderOptions options,
-        ILogger<ExternalDialogueLoader>? logger = null)
+        ILogger<ExternalDialogueLoader>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _options = options;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _directories = new List<DialogueDirectory>();
         _cache = new MemoryCache(new MemoryCacheOptions());
 
@@ -109,6 +116,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// <inheritdoc/>
     public async Task<ExternalDialogueFile?> LoadAsync(string reference, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadAsync");
         ArgumentException.ThrowIfNullOrEmpty(reference);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
@@ -164,6 +172,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
     /// <inheritdoc/>
     public async Task<ExternalDialogueFile?> ReloadAsync(string reference, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.ReloadAsync");
         ArgumentException.ThrowIfNullOrEmpty(reference);
 
         // Remove from cache
@@ -212,6 +221,7 @@ public sealed class ExternalDialogueLoader : IExternalDialogueLoader, IDisposabl
         string filePath,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ExternalDialogueLoader.LoadFileAsync");
         try
         {
             var content = await File.ReadAllTextAsync(filePath, ct);

@@ -3,8 +3,10 @@
 // Manages a stack of behavior layers for an entity with priority-based merging.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Stack;
@@ -31,6 +33,7 @@ public sealed class BehaviorStack : IBehaviorStack
     private readonly List<IBehaviorLayer> _layers;
     private readonly IIntentStackMerger _merger;
     private readonly ILogger<BehaviorStack>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly object _lock = new();
 
     /// <summary>
@@ -40,16 +43,19 @@ public sealed class BehaviorStack : IBehaviorStack
     /// <param name="archetype">The entity's archetype.</param>
     /// <param name="merger">The merger for combining layer outputs.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public BehaviorStack(
         Guid entityId,
         IArchetypeDefinition archetype,
         IIntentStackMerger merger,
-        ILogger<BehaviorStack>? logger = null)
+        ILogger<BehaviorStack>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         EntityId = entityId;
         Archetype = archetype;
         _merger = merger;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _layers = new List<IBehaviorLayer>();
     }
 
@@ -237,6 +243,7 @@ public sealed class BehaviorStack : IBehaviorStack
         BehaviorEvaluationContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "BehaviorStack.EvaluateAsync");
 
         var output = new BehaviorStackOutput(EntityId);
 

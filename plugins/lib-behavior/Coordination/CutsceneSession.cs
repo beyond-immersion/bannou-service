@@ -3,7 +3,9 @@
 // Represents an active multiplayer cutscene session with synchronization.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -30,6 +32,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
     private readonly InputWindowManager _inputWindowManager;
     private readonly Func<Guid, object?>? _behaviorDefaultResolver;
     private readonly ILogger<CutsceneSession>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private CutsceneSessionState _state;
     private string? _abortReason;
     private bool _disposed;
@@ -43,13 +46,15 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
     /// <param name="options">Session options.</param>
     /// <param name="behaviorDefaultResolver">Optional resolver for behavior defaults.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public CutsceneSession(
         string sessionId,
         string cinematicId,
         IReadOnlyList<Guid> participants,
         CutsceneSessionOptions options,
         Func<Guid, object?>? behaviorDefaultResolver = null,
-        ILogger<CutsceneSession>? logger = null)
+        ILogger<CutsceneSession>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         SessionId = sessionId;
         CinematicId = cinematicId;
@@ -57,6 +62,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         Options = options;
         _behaviorDefaultResolver = behaviorDefaultResolver;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
         StartedAt = DateTime.UtcNow;
         _state = CutsceneSessionState.Initializing;
@@ -122,6 +128,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         Guid entityId,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneSession.ReportSyncReachedAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state != CutsceneSessionState.Active && _state != CutsceneSessionState.WaitingForSync)
@@ -160,6 +167,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         InputWindowOptions options,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneSession.CreateInputWindowAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CutsceneSessionState.Completed || _state == CutsceneSessionState.Aborted)
@@ -205,6 +213,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
         object input,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneSession.SubmitInputAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var result = await _inputWindowManager.SubmitAsync(windowId, entityId, input, ct);
@@ -230,6 +239,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
     /// <inheritdoc/>
     public async Task CompleteAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneSession.CompleteAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CutsceneSessionState.Completed || _state == CutsceneSessionState.Aborted)
@@ -251,6 +261,7 @@ public sealed class CutsceneSession : ICutsceneSession, IDisposable
     /// <inheritdoc/>
     public async Task AbortAsync(string reason, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CutsceneSession.AbortAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CutsceneSessionState.Completed || _state == CutsceneSessionState.Aborted)

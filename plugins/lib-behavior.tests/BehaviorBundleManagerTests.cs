@@ -22,6 +22,7 @@ public class BehaviorBundleManagerTests
     private readonly Mock<IStateStore<BundleMembership>> _mockMembershipStore;
     private readonly Mock<IStateStore<CachedGoapMetadata>> _mockGoapMetadataStore;
     private readonly BehaviorServiceConfiguration _configuration;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public BehaviorBundleManagerTests()
     {
@@ -32,6 +33,7 @@ public class BehaviorBundleManagerTests
         _mockMembershipStore = new Mock<IStateStore<BundleMembership>>();
         _mockGoapMetadataStore = new Mock<IStateStore<CachedGoapMetadata>>();
         _configuration = new BehaviorServiceConfiguration();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup state store factory to return appropriate stores
         _mockStateStoreFactory
@@ -52,7 +54,8 @@ public class BehaviorBundleManagerTests
             _mockStateStoreFactory.Object,
             _mockAssetClient.Object,
             _configuration,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
     #region Constructor Tests
 

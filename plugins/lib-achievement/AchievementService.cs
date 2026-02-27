@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("lib-achievement.tests")]
@@ -40,6 +41,7 @@ public partial class AchievementService : IAchievementService
     private readonly AchievementServiceConfiguration _configuration;
     private readonly IEnumerable<IPlatformAchievementSync> _platformSyncs;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
@@ -55,7 +57,8 @@ public partial class AchievementService : IAchievementService
         AchievementServiceConfiguration configuration,
         IEventConsumer eventConsumer,
         IEnumerable<IPlatformAchievementSync> platformSyncs,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -63,6 +66,8 @@ public partial class AchievementService : IAchievementService
         _configuration = configuration;
         _platformSyncs = platformSyncs;
         _lockProvider = lockProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -1010,6 +1015,7 @@ public partial class AchievementService : IAchievementService
         string defKey,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.IncrementEarnedCountAsync");
         var maxAttempts = Math.Max(1, _configuration.EarnedCountRetryAttempts);
 
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -1051,6 +1057,7 @@ public partial class AchievementService : IAchievementService
         int totalPoints,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishUnlockEventAsync");
         var isRare = definition.EarnedCount < _configuration.RarityThresholdEarnedCount;
         double? rarityPercent = definition.RarityPercent;
 
@@ -1094,6 +1101,7 @@ public partial class AchievementService : IAchievementService
         Platform platform,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.SyncAchievementToPlatformAsync");
         var syncProvider = _platformSyncs.FirstOrDefault(s => s.Platform == platform);
         if (syncProvider == null)
         {
@@ -1229,6 +1237,7 @@ public partial class AchievementService : IAchievementService
         string platformAchievementId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.ExecutePlatformUnlockWithRetriesAsync");
         if (_configuration.MockPlatformSync)
         {
             _logger.LogInformation(
@@ -1300,6 +1309,7 @@ public partial class AchievementService : IAchievementService
         PlatformSyncResult result,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishPlatformSyncEventAsync");
         var syncEvent = new AchievementPlatformSyncedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1367,6 +1377,7 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionCreatedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionCreatedEventAsync");
         try
         {
             var eventModel = new AchievementDefinitionCreatedEvent
@@ -1396,6 +1407,7 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionUpdatedEventAsync(AchievementDefinitionData definition, List<string> changedFields, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionUpdatedEventAsync");
         try
         {
             var eventModel = new AchievementDefinitionUpdatedEvent
@@ -1424,6 +1436,7 @@ public partial class AchievementService : IAchievementService
     /// </summary>
     private async Task PublishDefinitionDeletedEventAsync(AchievementDefinitionData definition, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.PublishDefinitionDeletedEventAsync");
         try
         {
             var eventModel = new AchievementDefinitionDeletedEvent

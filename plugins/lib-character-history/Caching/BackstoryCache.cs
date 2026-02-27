@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Caching;
 
@@ -20,6 +21,7 @@ public sealed class BackstoryCache : IBackstoryCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BackstoryCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, CachedBackstory> _backstoryCache = new();
     private readonly TimeSpan _cacheTtl;
 
@@ -29,16 +31,20 @@ public sealed class BackstoryCache : IBackstoryCache
     public BackstoryCache(
         IServiceScopeFactory scopeFactory,
         ILogger<BackstoryCache> logger,
-        CharacterHistoryServiceConfiguration config)
+        CharacterHistoryServiceConfiguration config,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromSeconds(config.BackstoryCacheTtlSeconds);
     }
 
     /// <inheritdoc/>
     public async Task<BackstoryResponse?> GetOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-history", "BackstoryCache.GetOrLoadAsync");
         // Check cache first
         if (_backstoryCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {

@@ -3,9 +3,11 @@
 // Provides localization from file-based string tables.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Behavior;
-using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -37,6 +39,7 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     private readonly ConcurrentDictionary<string, ILocalizationSource> _sources;
     private readonly LocalizationConfiguration _config;
     private readonly ILogger<FileLocalizationProvider>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly SemaphoreSlim _reloadLock;
     private bool _disposed;
 
@@ -44,8 +47,9 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     /// Creates a new file localization provider with default configuration.
     /// </summary>
     /// <param name="logger">Optional logger.</param>
-    public FileLocalizationProvider(ILogger<FileLocalizationProvider>? logger = null)
-        : this(new LocalizationConfiguration(), logger)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public FileLocalizationProvider(ILogger<FileLocalizationProvider>? logger = null, ITelemetryProvider? telemetryProvider = null)
+        : this(new LocalizationConfiguration(), logger, telemetryProvider)
     {
     }
 
@@ -54,12 +58,15 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     /// </summary>
     /// <param name="config">Localization configuration.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public FileLocalizationProvider(
         LocalizationConfiguration config,
-        ILogger<FileLocalizationProvider>? logger = null)
+        ILogger<FileLocalizationProvider>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _config = config;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _sources = new ConcurrentDictionary<string, ILocalizationSource>(StringComparer.OrdinalIgnoreCase);
         _reloadLock = new SemaphoreSlim(1, 1);
     }
@@ -192,6 +199,7 @@ public sealed class FileLocalizationProvider : IAggregateLocalizationProvider, I
     /// <inheritdoc/>
     public async Task ReloadAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "FileLocalizationProvider.ReloadAsync");
         await _reloadLock.WaitAsync(ct);
         try
         {
@@ -254,6 +262,7 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
     private readonly string _filePattern;
     private readonly IDeserializer _deserializer;
     private readonly ILogger<YamlFileLocalizationSource>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly ConcurrentDictionary<string, Dictionary<string, string>> _localeData;
     private readonly SemaphoreSlim _loadLock;
     private bool _disposed;
@@ -266,18 +275,21 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
     /// <param name="filePattern">File pattern (e.g., "strings.{locale}.yaml").</param>
     /// <param name="priority">Source priority.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public YamlFileLocalizationSource(
         string name,
         string directory,
         string filePattern = "strings.{locale}.yaml",
         int priority = 0,
-        ILogger<YamlFileLocalizationSource>? logger = null)
+        ILogger<YamlFileLocalizationSource>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         Name = name;
         _directory = directory;
         _filePattern = filePattern;
         Priority = priority;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
 
         _localeData = new ConcurrentDictionary<string, Dictionary<string, string>>(
             StringComparer.OrdinalIgnoreCase);
@@ -313,6 +325,7 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
     /// <inheritdoc/>
     public async Task ReloadAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "YamlFileLocalizationSource.ReloadAsync");
         await _loadLock.WaitAsync(ct);
         try
         {
@@ -415,6 +428,7 @@ public sealed class YamlFileLocalizationSource : ILocalizationSource, IDisposabl
 
     private async Task LoadLocaleFileAsync(string locale, string filePath, CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "YamlFileLocalizationSource.LoadLocaleFileAsync");
         try
         {
             var content = await File.ReadAllTextAsync(filePath, ct);

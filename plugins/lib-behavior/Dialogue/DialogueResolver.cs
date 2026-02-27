@@ -3,7 +3,9 @@
 // Resolves dialogue text through the three-step resolution pipeline.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.Bannou.Behavior.Dialogue;
@@ -28,18 +30,22 @@ public sealed class DialogueResolver : IDialogueResolver
 {
     private readonly IExternalDialogueLoader _loader;
     private readonly ILogger<DialogueResolver>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Creates a new dialogue resolver.
     /// </summary>
     /// <param name="loader">External dialogue file loader.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public DialogueResolver(
         IExternalDialogueLoader loader,
-        ILogger<DialogueResolver>? logger = null)
+        ILogger<DialogueResolver>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _loader = loader;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -49,6 +55,7 @@ public sealed class DialogueResolver : IDialogueResolver
         IDialogueExpressionContext context,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "DialogueResolver.ResolveAsync");
 
         // If no external reference, use inline directly
         if (string.IsNullOrEmpty(reference.ExternalRef))
@@ -102,6 +109,7 @@ public sealed class DialogueResolver : IDialogueResolver
         IDialogueExpressionContext context,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "DialogueResolver.ResolveOptionsAsync");
 
         var results = new List<ResolvedDialogueOption>(options.Count);
 
@@ -120,6 +128,7 @@ public sealed class DialogueResolver : IDialogueResolver
         IDialogueExpressionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "DialogueResolver.ResolveOptionAsync");
         // Evaluate availability condition
         var isAvailable = string.IsNullOrEmpty(option.Condition) ||
                         context.EvaluateCondition(option.Condition);

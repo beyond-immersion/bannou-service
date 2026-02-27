@@ -37,6 +37,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IEncounterDataCache> _mockEncounterDataCache;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "character-encounter-statestore";
 
@@ -58,6 +59,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockEncounterDataCache = new Mock<IEncounterDataCache>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -133,7 +135,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             Configuration,
             _mockCharacterClient.Object,
             _mockEncounterDataCache.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>

@@ -4,9 +4,11 @@
 // Manages entity control acquisition/release and state synchronization.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Runtime;
@@ -32,6 +34,7 @@ public sealed class CinematicRunner : IDisposable
     private readonly ControlGateManager _controlGates;
     private readonly IStateSync _stateSync;
     private readonly ILogger<CinematicRunner>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     private string _cinematicId = string.Empty;
     private HashSet<Guid> _controlledEntities = new();
@@ -48,16 +51,19 @@ public sealed class CinematicRunner : IDisposable
     /// <param name="controlGates">The control gate manager.</param>
     /// <param name="stateSync">The state sync service.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public CinematicRunner(
         CinematicInterpreter interpreter,
         ControlGateManager controlGates,
         IStateSync stateSync,
-        ILogger<CinematicRunner>? logger = null)
+        ILogger<CinematicRunner>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _interpreter = interpreter;
         _controlGates = controlGates;
         _stateSync = stateSync;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _state = CinematicRunnerState.Idle;
     }
 
@@ -118,6 +124,7 @@ public sealed class CinematicRunner : IDisposable
         ControlHandoff? defaultHandoff = null,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CinematicRunner.StartAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (string.IsNullOrEmpty(cinematicId))
@@ -242,6 +249,7 @@ public sealed class CinematicRunner : IDisposable
         ControlHandoff? handoff = null,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CinematicRunner.CompleteAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CinematicRunnerState.Idle)
@@ -286,6 +294,7 @@ public sealed class CinematicRunner : IDisposable
     /// <param name="ct">Cancellation token.</param>
     public async Task AbortAsync(CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CinematicRunner.AbortAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         if (_state == CinematicRunnerState.Idle)
@@ -340,6 +349,7 @@ public sealed class CinematicRunner : IDisposable
         ControlHandoff handoff,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "CinematicRunner.ReturnEntityControlAsync");
         // Get final state for this entity
         if (!_entityFinalStates.TryGetValue(entityId, out var finalState))
         {

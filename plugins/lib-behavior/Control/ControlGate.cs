@@ -3,8 +3,10 @@
 // Per-entity control gating for Intent Channel access.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
@@ -16,6 +18,7 @@ public sealed class ControlGate : IControlGate
 {
     private readonly object _lock = new();
     private readonly ILogger<ControlGate>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly HashSet<string> _behaviorInputChannels;
 
     private ControlSource _currentSource;
@@ -27,10 +30,12 @@ public sealed class ControlGate : IControlGate
     /// </summary>
     /// <param name="entityId">The entity ID.</param>
     /// <param name="logger">Optional logger.</param>
-    public ControlGate(Guid entityId, ILogger<ControlGate>? logger = null)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public ControlGate(Guid entityId, ILogger<ControlGate>? logger = null, ITelemetryProvider? telemetryProvider = null)
     {
         EntityId = entityId;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _currentSource = ControlSource.Behavior;
         _currentOptions = ControlOptions.ForBehavior();
         _behaviorInputChannels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -112,6 +117,7 @@ public sealed class ControlGate : IControlGate
     /// <inheritdoc/>
     public async Task<bool> TakeControlAsync(ControlOptions options)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ControlGate.TakeControlAsync");
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();
@@ -164,6 +170,7 @@ public sealed class ControlGate : IControlGate
     /// <inheritdoc/>
     public async Task ReturnControlAsync(ControlHandoff handoff)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ControlGate.ReturnControlAsync");
 
         // Yield to ensure proper async pattern per IMPLEMENTATION TENETS
         await Task.Yield();

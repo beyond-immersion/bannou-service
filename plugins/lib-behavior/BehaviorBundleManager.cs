@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Services;
@@ -15,6 +16,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     private readonly IAssetClient _assetClient;
     private readonly BehaviorServiceConfiguration _configuration;
     private readonly ILogger<BehaviorBundleManager> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store names and key prefixes now come from configuration
 
@@ -25,16 +27,20 @@ public class BehaviorBundleManager : IBehaviorBundleManager
     /// <param name="assetClient">Asset client for bundle operations.</param>
     /// <param name="configuration">Behavior service configuration.</param>
     /// <param name="logger">Logger for structured logging.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public BehaviorBundleManager(
         IStateStoreFactory stateStoreFactory,
         IAssetClient assetClient,
         BehaviorServiceConfiguration configuration,
-        ILogger<BehaviorBundleManager> logger)
+        ILogger<BehaviorBundleManager> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _assetClient = assetClient;
         _configuration = configuration;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -54,6 +60,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         BehaviorMetadata metadata,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.RecordBehaviorAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
         ArgumentException.ThrowIfNullOrWhiteSpace(assetId, nameof(assetId));
 
@@ -113,6 +120,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string bundleId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.AddToBundleAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
         ArgumentException.ThrowIfNullOrWhiteSpace(assetId, nameof(assetId));
         ArgumentException.ThrowIfNullOrWhiteSpace(bundleId, nameof(bundleId));
@@ -153,6 +161,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string bundleId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.CreateAssetBundleAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(bundleId, nameof(bundleId));
 
         _logger.LogDebug("Creating asset bundle for behavior bundle {BundleId}", bundleId);
@@ -213,6 +222,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string behaviorId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.GetMetadataAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
         var metadataStore = _stateStoreFactory.GetStore<BehaviorMetadata>(StateStoreDefinitions.Behavior);
@@ -231,6 +241,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string bundleId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.GetBundleMembershipAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(bundleId, nameof(bundleId));
 
         var membershipStore = _stateStoreFactory.GetStore<BundleMembership>(StateStoreDefinitions.Behavior);
@@ -249,6 +260,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string behaviorId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.RemoveBehaviorAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
         _logger.LogDebug("Removing behavior {BehaviorId}", behaviorId);
@@ -298,6 +310,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         CachedGoapMetadata metadata,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.SaveGoapMetadataAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
         var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
@@ -325,6 +338,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string behaviorId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.GetGoapMetadataAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
         var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);
@@ -343,6 +357,7 @@ public class BehaviorBundleManager : IBehaviorBundleManager
         string behaviorId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorBundleManager.RemoveGoapMetadataAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(behaviorId, nameof(behaviorId));
 
         var store = _stateStoreFactory.GetStore<CachedGoapMetadata>(StateStoreDefinitions.Behavior);

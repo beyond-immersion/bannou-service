@@ -31,6 +31,7 @@ public class BehaviorServiceTests
     private readonly Mock<IAssetClient> _mockAssetClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IBehaviorBundleManager> _mockBundleManager;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public BehaviorServiceTests()
     {
@@ -43,6 +44,7 @@ public class BehaviorServiceTests
         _mockAssetClient = new Mock<IAssetClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockBundleManager = new Mock<IBehaviorBundleManager>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
     }
 
     #region Constructor Tests
@@ -373,7 +375,8 @@ public class BehaviorServiceTests
             _compiler,
             _mockAssetClient.Object,
             _mockHttpClientFactory.Object,
-            _mockBundleManager.Object);
+            _mockBundleManager.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #endregion

@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 // Note: InternalsVisibleTo attributes are in AssemblyInfo.cs
 
@@ -28,6 +29,7 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     private readonly IDualIndexHelper<ParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<BackstoryData, BackstoryElementData> _backstoryHelper;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string PARTICIPATION_KEY_PREFIX = "participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "participation-event-";
@@ -52,13 +54,16 @@ public partial class CharacterHistoryService : ICharacterHistoryService
         IEventConsumer eventConsumer,
         CharacterHistoryServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _resourceClient = resourceClient;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<ParticipationData>(

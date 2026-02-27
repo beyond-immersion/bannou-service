@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Achievement.Sync;
 
@@ -13,6 +15,7 @@ namespace BeyondImmersion.BannouService.Achievement.Sync;
 public class XboxAchievementSync : IPlatformAchievementSync
 {
     private readonly ILogger<XboxAchievementSync> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <inheritdoc />
     public Platform Platform => Platform.Xbox;
@@ -24,14 +27,17 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// <summary>
     /// Initializes a new instance of the XboxAchievementSync.
     /// </summary>
-    public XboxAchievementSync(ILogger<XboxAchievementSync> logger)
+    public XboxAchievementSync(ILogger<XboxAchievementSync> logger, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
     public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "XboxAchievementSync.IsLinkedAsync");
         _logger.LogDebug("Xbox sync not implemented - IsLinkedAsync returning false for {AccountId}", accountId);
         await Task.CompletedTask;
         return false;
@@ -40,6 +46,7 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "XboxAchievementSync.GetExternalIdAsync");
         _logger.LogDebug("Xbox sync not implemented - GetExternalIdAsync returning null for {AccountId}", accountId);
         await Task.CompletedTask;
         return null;
@@ -48,6 +55,7 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<PlatformSyncResult> UnlockAsync(string externalUserId, string platformAchievementId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "XboxAchievementSync.UnlockAsync");
         _logger.LogWarning("Xbox achievement sync not implemented - {AchievementId} for {UserId}",
             platformAchievementId, externalUserId);
 
@@ -62,6 +70,7 @@ public class XboxAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<PlatformSyncResult> SetProgressAsync(string externalUserId, string platformAchievementId, int current, int target, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "XboxAchievementSync.SetProgressAsync");
         _logger.LogWarning("Xbox progress sync not implemented - {AchievementId} ({Current}/{Target}) for {UserId}",
             platformAchievementId, current, target, externalUserId);
 

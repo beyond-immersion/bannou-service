@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 
@@ -18,13 +19,16 @@ namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 public sealed class CombatPreferencesProviderFactory : IVariableProviderFactory
 {
     private readonly IPersonalityDataCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new combat preferences provider factory.
     /// </summary>
-    public CombatPreferencesProviderFactory(IPersonalityDataCache cache)
+    public CombatPreferencesProviderFactory(IPersonalityDataCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -33,6 +37,7 @@ public sealed class CombatPreferencesProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "CombatPreferencesProviderFactory.CreateAsync");
         if (!characterId.HasValue)
         {
             return CombatPreferencesProvider.Empty;

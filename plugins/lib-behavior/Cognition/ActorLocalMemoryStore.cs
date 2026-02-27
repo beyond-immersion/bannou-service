@@ -4,6 +4,7 @@
 // Stores memories per-entity with keyword-based relevance matching.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
@@ -38,6 +39,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration _configuration;
     private readonly ILogger<ActorLocalMemoryStore> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Store name and key prefixes now come from configuration
 
@@ -47,14 +49,18 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// <param name="stateStoreFactory">State store factory for Redis/in-memory storage.</param>
     /// <param name="configuration">Behavior service configuration.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ActorLocalMemoryStore(
         IStateStoreFactory stateStoreFactory,
         BeyondImmersion.BannouService.Behavior.BehaviorServiceConfiguration configuration,
-        ILogger<ActorLocalMemoryStore> logger)
+        ILogger<ActorLocalMemoryStore> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -64,6 +70,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         int limit,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.FindRelevantAsync");
 
         if (perceptions.Count == 0 || limit <= 0)
         {
@@ -119,6 +126,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         IReadOnlyList<Memory> context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.StoreExperienceAsync");
 
         var memoryId = Guid.NewGuid().ToString();
 
@@ -157,6 +165,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         int limit,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.GetAllAsync");
 
         if (limit <= 0)
         {
@@ -201,6 +210,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
         string memoryId,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.RemoveAsync");
 
         _logger.LogDebug(
             "Removing memory {MemoryId} for entity {EntityId}",
@@ -222,6 +232,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// <inheritdoc/>
     public async Task ClearAsync(string entityId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.ClearAsync");
 
         _logger.LogDebug("Clearing all memories for entity {EntityId}", entityId);
 
@@ -260,6 +271,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// </summary>
     private async Task AddToMemoryIndexAsync(string entityId, string memoryId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.AddToMemoryIndexAsync");
         var indexKey = BuildMemoryIndexKey(entityId);
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
         List<string> evictedIds = [];
@@ -346,6 +358,7 @@ public sealed class ActorLocalMemoryStore : IMemoryStore
     /// </summary>
     private async Task RemoveFromMemoryIndexAsync(string entityId, string memoryId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "ActorLocalMemoryStore.RemoveFromMemoryIndexAsync");
         var indexKey = BuildMemoryIndexKey(entityId);
         var store = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.AgentMemories);
 

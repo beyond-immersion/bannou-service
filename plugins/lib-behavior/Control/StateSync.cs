@@ -3,7 +3,9 @@
 // Synchronizes entity state from cinematic back to behavior when control returns.
 // =============================================================================
 
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
@@ -97,29 +99,33 @@ public sealed class StateSync : IStateSync
 {
     private readonly IEntityStateRegistry _stateRegistry;
     private readonly ILogger<StateSync>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Creates a new state sync service.
     /// </summary>
     /// <param name="stateRegistry">The entity state registry to update.</param>
     /// <param name="logger">Optional logger.</param>
-    public StateSync(IEntityStateRegistry stateRegistry, ILogger<StateSync>? logger = null)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public StateSync(IEntityStateRegistry stateRegistry, ILogger<StateSync>? logger = null, ITelemetryProvider? telemetryProvider = null)
     {
         _stateRegistry = stateRegistry;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
     /// Creates a new state sync service with a default registry.
     /// </summary>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     /// <remarks>
     /// This constructor creates an internal EntityStateRegistry instance.
     /// For production use, prefer the constructor that takes IEntityStateRegistry
     /// to enable sharing state across components.
     /// </remarks>
-    public StateSync(ILogger<StateSync>? logger = null)
-        : this(new EntityStateRegistry(), logger)
+    public StateSync(ILogger<StateSync>? logger = null, ITelemetryProvider? telemetryProvider = null)
+        : this(new EntityStateRegistry(), logger, telemetryProvider)
     {
     }
 
@@ -142,6 +148,7 @@ public sealed class StateSync : IStateSync
         ControlHandoff handoff,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "StateSync.SyncStateAsync");
 
         // Skip sync if not requested
         if (!handoff.SyncState)
@@ -211,6 +218,7 @@ public sealed class StateSync : IStateSync
         EntityState state,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "StateSync.SyncInstantAsync");
         // Check for cancellation before proceeding
         ct.ThrowIfCancellationRequested();
 

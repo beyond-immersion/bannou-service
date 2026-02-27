@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 // Note: InternalsVisibleTo is in AssemblyInfo.cs
@@ -27,6 +28,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private readonly IMessageBus _messageBus;
     private readonly IPersonalityDataCache _personalityCache;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
@@ -52,7 +54,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         IMessageBus messageBus,
         IEventConsumer eventConsumer,
         IPersonalityDataCache personalityCache,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
@@ -60,6 +63,8 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _messageBus = messageBus;
         _personalityCache = personalityCache;
         _resourceClient = resourceClient;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
