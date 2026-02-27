@@ -17,6 +17,13 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `AssetProcessingFailedEvent` | `asset.processing.failed` | Sent when asset processing fails. Includes retry information... |
 | `AssetReadyEvent` | `asset.ready` | Final notification that an asset is ready for use. |
 | `AssetUploadCompleteEvent` | `asset.upload.complete` | Sent when an asset upload has completed (success or failure)... |
+| `AuthDeviceLoginClientEvent` | `auth.device_login` | Sent to all existing sessions when a new login occurs on the... |
+| `AuthExternalAccountLinkedClientEvent` | `auth.external_account_linked` | Sent to all sessions when a new OAuth provider is linked to ... |
+| `AuthMfaDisabledClientEvent` | `auth.mfa_disabled` | Sent to all sessions when MFA is disabled on the account. |
+| `AuthMfaEnabledClientEvent` | `auth.mfa_enabled` | Sent to all sessions when MFA is enabled on the account. |
+| `AuthPasswordChangedClientEvent` | `auth.password_changed` | Sent to all sessions when the account's password is reset. |
+| `AuthSessionTerminatedClientEvent` | `auth.session_terminated` | Sent to remaining sessions when a session is remotely termin... |
+| `AuthSuspiciousLoginClientEvent` | `auth.suspicious_login` | Sent to all sessions when a failed login attempt occurs with... |
 | `ChatMessageDeletedClientEvent` | `chat.message_deleted` | Sent to room participants when a message is deleted. |
 | `ChatMessagePinnedEvent` | `chat.message_pinned` | Sent to room participants when a message is pinned or unpinn... |
 | `ChatMessageReceivedEvent` | `chat.message_received` | Sent to room participants when a new message is received. |
@@ -25,9 +32,12 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `ChatParticipantKickedClientEvent` | `chat.participant_kicked` | Sent to all room participants when someone is kicked. |
 | `ChatParticipantLeftClientEvent` | `chat.participant_left` | Sent to room participants when someone leaves the room. |
 | `ChatParticipantMutedClientEvent` | `chat.participant_muted` | Sent to all room participants when someone is muted. |
+| `ChatParticipantRoleChangedClientEvent` | `chat.participant_role_changed` | Sent to room participants when a participant's role changes. |
+| `ChatParticipantUnbannedClientEvent` | `chat.participant_unbanned` | Sent to room participants when a ban is lifted. |
 | `ChatParticipantUnmutedClientEvent` | `chat.participant_unmuted` | Sent to all room participants when someone is unmuted. |
 | `ChatRoomDeletedClientEvent` | `chat.room_deleted` | Sent to room participants when the room is being deleted. |
 | `ChatRoomLockedClientEvent` | `chat.room_locked` | Sent to room participants when the room is locked. |
+| `ChatRoomUpdatedClientEvent` | `chat.room_updated` | Sent to room participants when room settings change. |
 | `ChatTypingStartedClientEvent` | `chat.typing_started` | Sent to room participants when someone starts typing. |
 | `ChatTypingStoppedClientEvent` | `chat.typing_stopped` | Sent to room participants when someone stops typing. |
 | `CollectionDiscoveryAdvancedClientEvent` | `collection.discovery_advanced` | Sent to the collection owner when progressive discovery adva... |
@@ -235,6 +245,89 @@ Sent when an asset upload has completed (success or failure).
 
 ---
 
+## Auth Client Events API
+
+Server-to-client push events for the Auth service. These events provide real-time multi-device security notifications delivered via WebSocket to all of an account's connected sessions.
+
+### `AuthDeviceLoginClientEvent`
+
+**Event Name**: `auth.device_login`
+
+Sent to all existing sessions when a new login occurs on the account.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `ipAddress` | IP address of the new login request |
+| `loginSessionId` | Session ID of the new login that triggered this ev |
+| `userAgent` | User agent string from the new login request |
+
+### `AuthExternalAccountLinkedClientEvent`
+
+**Event Name**: `auth.external_account_linked`
+
+Sent to all sessions when a new OAuth provider is linked to the account.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `provider` | OAuth provider that was linked |
+
+### `AuthMfaDisabledClientEvent`
+
+**Event Name**: `auth.mfa_disabled`
+
+Sent to all sessions when MFA is disabled on the account.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `disabledBy` | Who triggered the MFA disable (Self or Admin) |
+
+### `AuthMfaEnabledClientEvent`
+
+**Event Name**: `auth.mfa_enabled`
+
+Sent to all sessions when MFA is enabled on the account.
+
+### `AuthPasswordChangedClientEvent`
+
+**Event Name**: `auth.password_changed`
+
+Sent to all sessions when the account's password is reset.
+
+### `AuthSessionTerminatedClientEvent`
+
+**Event Name**: `auth.session_terminated`
+
+Sent to remaining sessions when a session is remotely terminated.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `reason` | Reason why the session was terminated |
+| `terminatedSessionId` | ID of the specific session that was terminated (nu |
+
+### `AuthSuspiciousLoginClientEvent`
+
+**Event Name**: `auth.suspicious_login`
+
+Sent to all sessions when a failed login attempt occurs with a known account.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `attemptCount` | Number of failed attempts in the current rate-limi |
+| `ipAddress` | IP address of the failed login attempt |
+| `userAgent` | User agent string from the failed login request |
+
+---
+
 ## Chat Client Events API
 
 Server-to-client push events for the Chat service. These events notify connected clients of real-time chat activity: messages received, participant changes, and room state updates. Delivered via We...
@@ -368,6 +461,38 @@ Sent to all room participants when someone is muted.
 | `targetDisplayName` | Display name of the muted participant |
 | `targetSessionId` | Connect session ID of the muted participant |
 
+### `ChatParticipantRoleChangedClientEvent`
+
+**Event Name**: `chat.participant_role_changed`
+
+Sent to room participants when a participant's role changes.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changedByDisplayName` | Display name of who changed the role (null for aut |
+| `changedBySessionId` | Session ID of who changed the role (null for autom |
+| `displayName` | Display name of the participant whose role changed |
+| `newRole` | New role |
+| `oldRole` | Previous role |
+| `participantSessionId` | Connect session ID of the participant whose role c |
+| `roomId` | Room where the role change occurred |
+
+### `ChatParticipantUnbannedClientEvent`
+
+**Event Name**: `chat.participant_unbanned`
+
+Sent to room participants when a ban is lifted.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `roomId` | Room the participant was unbanned from |
+| `targetSessionId` | Connect session ID of the unbanned participant |
+| `unbannedByDisplayName` | Display name of the moderator who removed the ban |
+
 ### `ChatParticipantUnmutedClientEvent`
 
 **Event Name**: `chat.participant_unmuted`
@@ -407,6 +532,26 @@ Sent to room participants when the room is locked.
 |----------|-------------|
 | `reason` | Reason the room was locked |
 | `roomId` | Room that was locked |
+
+### `ChatRoomUpdatedClientEvent`
+
+**Event Name**: `chat.room_updated`
+
+Sent to room participants when room settings change.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changedFields` | List of field names that changed in this update |
+| `createdAt` | When the room was created |
+| `displayName` | Current room display name |
+| `isArchived` | Whether the room has been archived |
+| `maxParticipants` | Maximum allowed participants |
+| `participantCount` | Current number of participants |
+| `roomId` | Room that was updated |
+| `roomTypeCode` | Room type code |
+| `status` | Current room lifecycle status |
 
 ### `ChatTypingStartedClientEvent`
 
@@ -977,8 +1122,8 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 52
-- **Services with events**: 8
+- **Total event types**: 62
+- **Services with events**: 9
 
 ---
 

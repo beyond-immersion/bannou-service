@@ -36,10 +36,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateBoardTemplateRequest'],
-      Schemas['BoardTemplateResponse']
-    >('/license/board-template/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateBoardTemplateRequest'], Schemas['BoardTemplateResponse']>(
+      '/license/board-template/create', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetBoardTemplateRequest'],
-      Schemas['BoardTemplateResponse']
-    >('/license/board-template/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetBoardTemplateRequest'], Schemas['BoardTemplateResponse']>(
+      '/license/board-template/get', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListBoardTemplatesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListBoardTemplatesRequest'],
-      Schemas['ListBoardTemplatesResponse']
-    >('/license/board-template/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListBoardTemplatesRequest'], Schemas['ListBoardTemplatesResponse']>(
+      '/license/board-template/list', request, channel, timeout
+    );
   }
 
   /**
@@ -90,10 +87,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateBoardTemplateRequest'],
-      Schemas['BoardTemplateResponse']
-    >('/license/board-template/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateBoardTemplateRequest'], Schemas['BoardTemplateResponse']>(
+      '/license/board-template/update', request, channel, timeout
+    );
   }
 
   /**
@@ -108,10 +104,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeleteBoardTemplateRequest'],
-      Schemas['BoardTemplateResponse']
-    >('/license/board-template/delete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeleteBoardTemplateRequest'], Schemas['BoardTemplateResponse']>(
+      '/license/board-template/delete', request, channel, timeout
+    );
   }
 
   /**
@@ -126,10 +121,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LicenseDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AddLicenseDefinitionRequest'],
-      Schemas['LicenseDefinitionResponse']
-    >('/license/definition/add', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AddLicenseDefinitionRequest'], Schemas['LicenseDefinitionResponse']>(
+      '/license/definition/add', request, channel, timeout
+    );
   }
 
   /**
@@ -144,10 +138,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LicenseDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetLicenseDefinitionRequest'],
-      Schemas['LicenseDefinitionResponse']
-    >('/license/definition/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetLicenseDefinitionRequest'], Schemas['LicenseDefinitionResponse']>(
+      '/license/definition/get', request, channel, timeout
+    );
   }
 
   /**
@@ -162,10 +155,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListLicenseDefinitionsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListLicenseDefinitionsRequest'],
-      Schemas['ListLicenseDefinitionsResponse']
-    >('/license/definition/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListLicenseDefinitionsRequest'], Schemas['ListLicenseDefinitionsResponse']>(
+      '/license/definition/list', request, channel, timeout
+    );
   }
 
   /**
@@ -180,10 +172,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LicenseDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateLicenseDefinitionRequest'],
-      Schemas['LicenseDefinitionResponse']
-    >('/license/definition/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateLicenseDefinitionRequest'], Schemas['LicenseDefinitionResponse']>(
+      '/license/definition/update', request, channel, timeout
+    );
   }
 
   /**
@@ -198,10 +189,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['LicenseDefinitionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['RemoveLicenseDefinitionRequest'],
-      Schemas['LicenseDefinitionResponse']
-    >('/license/definition/remove', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['RemoveLicenseDefinitionRequest'], Schemas['LicenseDefinitionResponse']>(
+      '/license/definition/remove', request, channel, timeout
+    );
   }
 
   /**
@@ -217,10 +207,7 @@ export class LicenseProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardResponse']>> {
     return this.client.invokeAsync<Schemas['CreateBoardRequest'], Schemas['BoardResponse']>(
-      '/license/board/create',
-      request,
-      channel,
-      timeout
+      '/license/board/create', request, channel, timeout
     );
   }
 
@@ -237,10 +224,7 @@ export class LicenseProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardResponse']>> {
     return this.client.invokeAsync<Schemas['GetBoardRequest'], Schemas['BoardResponse']>(
-      '/license/board/get',
-      request,
-      channel,
-      timeout
+      '/license/board/get', request, channel, timeout
     );
   }
 
@@ -256,10 +240,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListBoardsByOwnerResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListBoardsByOwnerRequest'],
-      Schemas['ListBoardsByOwnerResponse']
-    >('/license/board/list-by-owner', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListBoardsByOwnerRequest'], Schemas['ListBoardsByOwnerResponse']>(
+      '/license/board/list-by-owner', request, channel, timeout
+    );
   }
 
   /**
@@ -275,10 +258,7 @@ export class LicenseProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteBoardRequest'], Schemas['BoardResponse']>(
-      '/license/board/delete',
-      request,
-      channel,
-      timeout
+      '/license/board/delete', request, channel, timeout
     );
   }
 
@@ -294,10 +274,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UnlockLicenseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UnlockLicenseRequest'],
-      Schemas['UnlockLicenseResponse']
-    >('/license/unlock', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UnlockLicenseRequest'], Schemas['UnlockLicenseResponse']>(
+      '/license/unlock', request, channel, timeout
+    );
   }
 
   /**
@@ -312,10 +291,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckUnlockableResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CheckUnlockableRequest'],
-      Schemas['CheckUnlockableResponse']
-    >('/license/check-unlockable', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CheckUnlockableRequest'], Schemas['CheckUnlockableResponse']>(
+      '/license/check-unlockable', request, channel, timeout
+    );
   }
 
   /**
@@ -331,10 +309,7 @@ export class LicenseProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BoardStateResponse']>> {
     return this.client.invokeAsync<Schemas['BoardStateRequest'], Schemas['BoardStateResponse']>(
-      '/license/board-state',
-      request,
-      channel,
-      timeout
+      '/license/board-state', request, channel, timeout
     );
   }
 
@@ -350,10 +325,9 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedBoardTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SeedBoardTemplateRequest'],
-      Schemas['SeedBoardTemplateResponse']
-    >('/license/board-template/seed', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SeedBoardTemplateRequest'], Schemas['SeedBoardTemplateResponse']>(
+      '/license/board-template/seed', request, channel, timeout
+    );
   }
 
   /**
@@ -369,10 +343,7 @@ export class LicenseProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CloneBoardResponse']>> {
     return this.client.invokeAsync<Schemas['CloneBoardRequest'], Schemas['CloneBoardResponse']>(
-      '/license/board/clone',
-      request,
-      channel,
-      timeout
+      '/license/board/clone', request, channel, timeout
     );
   }
 
@@ -388,9 +359,8 @@ export class LicenseProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByOwnerResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByOwnerRequest'],
-      Schemas['CleanupByOwnerResponse']
-    >('/license/cleanup-by-owner', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByOwnerRequest'], Schemas['CleanupByOwnerResponse']>(
+      '/license/cleanup-by-owner', request, channel, timeout
+    );
   }
 }

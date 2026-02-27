@@ -112,6 +112,28 @@ public sealed class ChatEventSubscriptions
     }
 
     /// <summary>
+    /// Subscribe to <see cref="ChatParticipantRoleChangedClientEvent"/> events.
+    /// Sent to room participants when a participant's role changes.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnChatParticipantRoleChangedClient(Action<ChatParticipantRoleChangedClientEvent> handler)
+    {
+        return _client.OnEvent<ChatParticipantRoleChangedClientEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="ChatParticipantUnbannedClientEvent"/> events.
+    /// Sent to room participants when a ban is lifted.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnChatParticipantUnbannedClient(Action<ChatParticipantUnbannedClientEvent> handler)
+    {
+        return _client.OnEvent<ChatParticipantUnbannedClientEvent>(handler);
+    }
+
+    /// <summary>
     /// Subscribe to <see cref="ChatParticipantUnmutedClientEvent"/> events.
     /// Sent to all room participants when someone is unmuted.
     /// </summary>
@@ -142,6 +164,17 @@ public sealed class ChatEventSubscriptions
     public IEventSubscription OnChatRoomLockedClient(Action<ChatRoomLockedClientEvent> handler)
     {
         return _client.OnEvent<ChatRoomLockedClientEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="ChatRoomUpdatedClientEvent"/> events.
+    /// Sent to room participants when room settings change.
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnChatRoomUpdatedClient(Action<ChatRoomUpdatedClientEvent> handler)
+    {
+        return _client.OnEvent<ChatRoomUpdatedClientEvent>(handler);
     }
 
     /// <summary>

@@ -925,18 +925,13 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `QUEST_COOLDOWN_CACHE_TTL_SECONDS` | int | `86400` | TTL for quest cooldown tracking |
 | `QUEST_DATA_CACHE_TTL_SECONDS` | int | `120` | TTL for in-memory quest data cache used by actor behavior ex... |
-| `QUEST_DEFAULT_DEADLINE_SECONDS` | int | `604800` | Default quest deadline in seconds (7 days) |
+| `QUEST_DEFAULT_REWARD_CONTAINER_MAX_SLOTS` | int | `100` | Maximum slots in quest reward inventory containers |
 | `QUEST_DEFINITION_CACHE_TTL_SECONDS` | int | `3600` | TTL for quest definition cache in Redis |
-| `QUEST_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL for idempotency keys (24 hours) |
 | `QUEST_LOCK_EXPIRY_SECONDS` | int | `30` | Distributed lock expiry for quest mutations |
-| `QUEST_LOCK_RETRY_ATTEMPTS` | int | `3` | Retry attempts when lock acquisition fails |
 | `QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER` | int | `25` | Maximum concurrent active quests per character |
 | `QUEST_MAX_CONCURRENCY_RETRIES` | int | `5` | ETag concurrency retry attempts |
-| `QUEST_MAX_QUESTORS_PER_QUEST` | int | `5` | Maximum party members per quest instance |
-| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior.
-CHECK_ALL (defaul... |
+| `QUEST_PREREQUISITE_VALIDATION_MODE` | string | `CHECK_ALL` | Controls prerequisite validation behavior (FAIL_FAST stops o... |
 | `QUEST_PROGRESS_CACHE_TTL_SECONDS` | int | `300` | TTL for objective progress cache |
 
 ### Realm
@@ -1210,9 +1205,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 918
+- **Total properties**: 914
 - **Required (no default)**: 55
-- **Optional (has default)**: 863
+- **Optional (has default)**: 859
 
 ## Environment Variable Naming Convention
 

@@ -36,10 +36,9 @@ export class CharacterHistoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ParticipationListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetParticipationRequest'],
-      Schemas['ParticipationListResponse']
-    >('/character-history/get-participation', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetParticipationRequest'], Schemas['ParticipationListResponse']>(
+      '/character-history/get-participation', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class CharacterHistoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ParticipationListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetEventParticipantsRequest'],
-      Schemas['ParticipationListResponse']
-    >('/character-history/get-event-participants', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetEventParticipantsRequest'], Schemas['ParticipationListResponse']>(
+      '/character-history/get-event-participants', request, channel, timeout
+    );
   }
 
   /**
@@ -73,10 +71,7 @@ export class CharacterHistoryProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BackstoryResponse']>> {
     return this.client.invokeAsync<Schemas['GetBackstoryRequest'], Schemas['BackstoryResponse']>(
-      '/character-history/get-backstory',
-      request,
-      channel,
-      timeout
+      '/character-history/get-backstory', request, channel, timeout
     );
   }
 
@@ -92,9 +87,8 @@ export class CharacterHistoryProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterHistoryArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCompressDataRequest'],
-      Schemas['CharacterHistoryArchive']
-    >('/character-history/get-compress-data', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['CharacterHistoryArchive']>(
+      '/character-history/get-compress-data', request, channel, timeout
+    );
   }
 }

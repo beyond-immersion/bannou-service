@@ -37,10 +37,7 @@ export class GardenerProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GardenStateResponse']>> {
     return this.client.invokeAsync<Schemas['EnterGardenRequest'], Schemas['GardenStateResponse']>(
-      '/gardener/garden/enter',
-      request,
-      channel,
-      timeout
+      '/gardener/garden/enter', request, channel, timeout
     );
   }
 
@@ -56,10 +53,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GardenStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetGardenStateRequest'],
-      Schemas['GardenStateResponse']
-    >('/gardener/garden/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetGardenStateRequest'], Schemas['GardenStateResponse']>(
+      '/gardener/garden/get', request, channel, timeout
+    );
   }
 
   /**
@@ -74,10 +70,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PositionUpdateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdatePositionRequest'],
-      Schemas['PositionUpdateResponse']
-    >('/gardener/garden/update-position', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdatePositionRequest'], Schemas['PositionUpdateResponse']>(
+      '/gardener/garden/update-position', request, channel, timeout
+    );
   }
 
   /**
@@ -93,10 +88,7 @@ export class GardenerProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['LeaveGardenResponse']>> {
     return this.client.invokeAsync<Schemas['LeaveGardenRequest'], Schemas['LeaveGardenResponse']>(
-      '/gardener/garden/leave',
-      request,
-      channel,
-      timeout
+      '/gardener/garden/leave', request, channel, timeout
     );
   }
 
@@ -113,10 +105,7 @@ export class GardenerProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListPoisResponse']>> {
     return this.client.invokeAsync<Schemas['ListPoisRequest'], Schemas['ListPoisResponse']>(
-      '/gardener/poi/list',
-      request,
-      channel,
-      timeout
+      '/gardener/poi/list', request, channel, timeout
     );
   }
 
@@ -132,10 +121,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PoiInteractionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['InteractWithPoiRequest'],
-      Schemas['PoiInteractionResponse']
-    >('/gardener/poi/interact', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['InteractWithPoiRequest'], Schemas['PoiInteractionResponse']>(
+      '/gardener/poi/interact', request, channel, timeout
+    );
   }
 
   /**
@@ -151,10 +139,7 @@ export class GardenerProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeclinePoiResponse']>> {
     return this.client.invokeAsync<Schemas['DeclinePoiRequest'], Schemas['DeclinePoiResponse']>(
-      '/gardener/poi/decline',
-      request,
-      channel,
-      timeout
+      '/gardener/poi/decline', request, channel, timeout
     );
   }
 
@@ -170,10 +155,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EnterScenarioRequest'],
-      Schemas['ScenarioStateResponse']
-    >('/gardener/scenario/enter', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['EnterScenarioRequest'], Schemas['ScenarioStateResponse']>(
+      '/gardener/scenario/enter', request, channel, timeout
+    );
   }
 
   /**
@@ -188,10 +172,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetScenarioStateRequest'],
-      Schemas['ScenarioStateResponse']
-    >('/gardener/scenario/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetScenarioStateRequest'], Schemas['ScenarioStateResponse']>(
+      '/gardener/scenario/get', request, channel, timeout
+    );
   }
 
   /**
@@ -206,10 +189,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioCompletionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CompleteScenarioRequest'],
-      Schemas['ScenarioCompletionResponse']
-    >('/gardener/scenario/complete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CompleteScenarioRequest'], Schemas['ScenarioCompletionResponse']>(
+      '/gardener/scenario/complete', request, channel, timeout
+    );
   }
 
   /**
@@ -224,10 +206,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AbandonScenarioResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AbandonScenarioRequest'],
-      Schemas['AbandonScenarioResponse']
-    >('/gardener/scenario/abandon', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AbandonScenarioRequest'], Schemas['AbandonScenarioResponse']>(
+      '/gardener/scenario/abandon', request, channel, timeout
+    );
   }
 
   /**
@@ -242,10 +223,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ChainScenarioRequest'],
-      Schemas['ScenarioStateResponse']
-    >('/gardener/scenario/chain', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ChainScenarioRequest'], Schemas['ScenarioStateResponse']>(
+      '/gardener/scenario/chain', request, channel, timeout
+    );
   }
 
   /**
@@ -260,10 +240,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreateTemplateRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/create', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreateTemplateRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/create', request, channel, timeout
+    );
   }
 
   /**
@@ -278,10 +257,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTemplateRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTemplateRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/get', request, channel, timeout
+    );
   }
 
   /**
@@ -296,10 +274,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetTemplateByCodeRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/get-by-code', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetTemplateByCodeRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/get-by-code', request, channel, timeout
+    );
   }
 
   /**
@@ -314,10 +291,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListTemplatesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListTemplatesRequest'],
-      Schemas['ListTemplatesResponse']
-    >('/gardener/template/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListTemplatesRequest'], Schemas['ListTemplatesResponse']>(
+      '/gardener/template/list', request, channel, timeout
+    );
   }
 
   /**
@@ -332,10 +308,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateTemplateRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateTemplateRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/update', request, channel, timeout
+    );
   }
 
   /**
@@ -350,10 +325,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeprecateTemplateRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/deprecate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeprecateTemplateRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/deprecate', request, channel, timeout
+    );
   }
 
   /**
@@ -368,10 +342,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeleteTemplateRequest'],
-      Schemas['ScenarioTemplateResponse']
-    >('/gardener/template/delete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeleteTemplateRequest'], Schemas['ScenarioTemplateResponse']>(
+      '/gardener/template/delete', request, channel, timeout
+    );
   }
 
   /**
@@ -386,10 +359,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PhaseConfigResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetPhaseConfigRequest'],
-      Schemas['PhaseConfigResponse']
-    >('/gardener/phase/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetPhaseConfigRequest'], Schemas['PhaseConfigResponse']>(
+      '/gardener/phase/get', request, channel, timeout
+    );
   }
 
   /**
@@ -404,10 +376,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PhaseConfigResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdatePhaseConfigRequest'],
-      Schemas['PhaseConfigResponse']
-    >('/gardener/phase/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdatePhaseConfigRequest'], Schemas['PhaseConfigResponse']>(
+      '/gardener/phase/update', request, channel, timeout
+    );
   }
 
   /**
@@ -422,10 +393,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PhaseMetricsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetPhaseMetricsRequest'],
-      Schemas['PhaseMetricsResponse']
-    >('/gardener/phase/get-metrics', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetPhaseMetricsRequest'], Schemas['PhaseMetricsResponse']>(
+      '/gardener/phase/get-metrics', request, channel, timeout
+    );
   }
 
   /**
@@ -440,10 +410,9 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ScenarioStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['EnterTogetherRequest'],
-      Schemas['ScenarioStateResponse']
-    >('/gardener/bond/enter-together', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['EnterTogetherRequest'], Schemas['ScenarioStateResponse']>(
+      '/gardener/bond/enter-together', request, channel, timeout
+    );
   }
 
   /**
@@ -458,9 +427,8 @@ export class GardenerProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SharedGardenStateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetSharedGardenRequest'],
-      Schemas['SharedGardenStateResponse']
-    >('/gardener/bond/get-shared-garden', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetSharedGardenRequest'], Schemas['SharedGardenStateResponse']>(
+      '/gardener/bond/get-shared-garden', request, channel, timeout
+    );
   }
 }

@@ -15,6 +15,7 @@ public sealed class BannouClientEvents
 {
     private readonly BannouClient _client;
     private AssetEventSubscriptions? _asset;
+    private AuthEventSubscriptions? _auth;
     private ChatEventSubscriptions? _chat;
     private CollectionEventSubscriptions? _collection;
     private GameSessionEventSubscriptions? _gamesession;
@@ -33,6 +34,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public AssetEventSubscriptions Asset =>
         _asset ??= new AssetEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Auth service.
+    /// </summary>
+    public AuthEventSubscriptions Auth =>
+        _auth ??= new AuthEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Chat service.

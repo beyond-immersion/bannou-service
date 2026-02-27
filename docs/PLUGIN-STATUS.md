@@ -62,7 +62,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Inventory](#inventory-status) | L2 | 85% | 0 | Production-hardened (T8/T25/T26/T29/T30 compliant, 93 tests). 4 stubs remain: grid collision, weight propagation, equipment slots, RemoveItem cleanup. |
 | [Item](#item-status) | L2 | 92% | 0 | Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). Dual-model + Itemize Anything. Decay system pending (#407). |
 | [Location](#location-status) | L2 | 97% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking, ${location.*} variable provider. Hardened to L3. |
-| [Quest](#quest-status) | L2 | 85% | 0 | Well-architected over Contract. Prerequisites, rewards, caching all done. Extensions only. |
+| [Quest](#quest-status) | L2 | 95% | 0 | Production-hardened (T9/T25/T26/T30 compliant, 46 tests). Orchestration over Contract. Prerequisites, rewards, caching done. Extensions only. |
 | [Realm](#realm-status) | L2 | 95% | 0 | Fully feature-complete. Complex merge, deprecation, resource integration. No remaining gaps. |
 | [Relationship](#relationship-status) | L2 | 90% | 0 | All 21 endpoints done. Bidirectional enforcement, type taxonomy, soft-delete. Index scaling gaps. |
 | [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
@@ -775,9 +775,9 @@ gh issue list --search "Location:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [QUEST.md](plugins/QUEST.md)
 
-### Production Readiness: 85%
+### Production Readiness: 95%
 
-Well-architected orchestration layer over Contract with all previously-stubbed core features now implemented: full prerequisite validation (built-in L2 + dynamic L4 via IPrerequisiteProviderFactory), reward distribution via Contract prebound APIs, configurable quest data caching with event-driven invalidation, and Variable Provider Factory integration for Actor ABML expressions. All known bugs are fixed. The remaining gaps are pure extensions (quest chains, dynamic objectives, shared party progress) that are nice-to-haves rather than production blockers.
+Production-hardened orchestration layer over Contract. Full prerequisite validation (built-in L2 + dynamic L4 via IPrerequisiteProviderFactory), reward distribution via Contract prebound APIs, configurable quest data caching with event-driven invalidation, and Variable Provider Factory integration for Actor ABML expressions. Hardened to L3: schema fixes (consolidated RewardType enum, NRT-compliant events, validation keywords on all integer fields, dead types removed), code fixes (T9 ETag concurrency on CharacterIndex writes, T25 enum-typed PrerequisiteValidationMode, T26 nullable Guid for QuestGiverCharacterId, T30 telemetry spans on all async helpers, T21 DefaultRewardContainerMaxSlots wired to config), and 46 passing unit tests including contract event handler coverage. The remaining gaps are pure extensions (quest chains, dynamic objectives, shared party progress).
 
 ### Bug Count: 0
 

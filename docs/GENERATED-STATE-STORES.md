@@ -136,7 +136,6 @@ This document lists all state store components used in Bannou.
 | `quest-cooldown` | Redis | Quest | Per-character quest cooldown tracking |
 | `quest-definition-cache` | Redis | Quest | Quest definition read-through cache |
 | `quest-definition-statestore` | MySQL | Quest | Quest definitions with contract template IDs and metadata |
-| `quest-idempotency` | Redis | Quest | Idempotency keys for accept/complete operations |
 | `quest-instance-statestore` | MySQL | Quest | Quest instances with status and party information |
 | `quest-objective-progress` | Redis | Quest | Real-time objective progress tracking |
 | `realm-history-statestore` | MySQL | RealmHistory | Realm historical events and lore |
@@ -186,7 +185,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 176 stores (109 Redis, 67 MySQL)
+**Total**: 175 stores (108 Redis, 67 MySQL)
 
 ## Naming Conventions
 

@@ -36,10 +36,9 @@ export class ObligationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ActionMappingResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SetActionMappingRequest'],
-      Schemas['ActionMappingResponse']
-    >('/obligation/action-mapping/set', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SetActionMappingRequest'], Schemas['ActionMappingResponse']>(
+      '/obligation/action-mapping/set', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class ObligationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListActionMappingsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListActionMappingsRequest'],
-      Schemas['ListActionMappingsResponse']
-    >('/obligation/action-mapping/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListActionMappingsRequest'], Schemas['ListActionMappingsResponse']>(
+      '/obligation/action-mapping/list', request, channel, timeout
+    );
   }
 
   /**
@@ -71,9 +69,7 @@ export class ObligationProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteActionMappingRequest']>(
-      '/obligation/action-mapping/delete',
-      request,
-      channel
+      '/obligation/action-mapping/delete', request, channel
     );
   }
 
@@ -89,10 +85,9 @@ export class ObligationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['QueryViolationsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['QueryViolationsRequest'],
-      Schemas['QueryViolationsResponse']
-    >('/obligation/query-violations', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['QueryViolationsRequest'], Schemas['QueryViolationsResponse']>(
+      '/obligation/query-violations', request, channel, timeout
+    );
   }
 
   /**
@@ -107,10 +102,9 @@ export class ObligationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['InvalidateCacheResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['InvalidateCacheRequest'],
-      Schemas['InvalidateCacheResponse']
-    >('/obligation/invalidate-cache', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['InvalidateCacheRequest'], Schemas['InvalidateCacheResponse']>(
+      '/obligation/invalidate-cache', request, channel, timeout
+    );
   }
 
   /**
@@ -126,10 +120,7 @@ export class ObligationProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ObligationArchive']>> {
     return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['ObligationArchive']>(
-      '/obligation/get-compress-data',
-      request,
-      channel,
-      timeout
+      '/obligation/get-compress-data', request, channel, timeout
     );
   }
 
@@ -145,9 +136,8 @@ export class ObligationProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/obligation/cleanup-by-character', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByCharacterRequest'], Schemas['CleanupByCharacterResponse']>(
+      '/obligation/cleanup-by-character', request, channel, timeout
+    );
   }
 }

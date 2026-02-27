@@ -20,7 +20,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Encounter Service API](#character-encounter) | `client.CharacterEncounter` | 21 | Character encounter tracking service for memorable interacti... |
 | [Bannou Character History Service API](#character-history) | `client.CharacterHistory` | 12 | Historical event participation and backstory management for ... |
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
-| [Chat Service API](#chat) | `client.Chat` | 30 | Typed message channel service (L1 AppFoundation) providing u... |
+| [Chat Service API](#chat) | `client.Chat` | 32 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 21 | Universal content unlock and archive system for collectible ... |
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
@@ -581,6 +581,8 @@ Typed message channel service (L1 AppFoundation) providing universal communicati
 | `BanparticipantAsync` | `BanParticipantRequest` | `ChatRoomResponse` | Ban a participant from the room |
 | `UnbanparticipantAsync` | `UnbanParticipantRequest` | `ChatRoomResponse` | Unban a participant |
 | `MuteparticipantAsync` | `MuteParticipantRequest` | `ChatRoomResponse` | Mute a participant |
+| `UnmuteparticipantAsync` | `UnmuteParticipantRequest` | `ChatRoomResponse` | Unmute a participant |
+| `ChangeparticipantroleAsync` | `ChangeParticipantRoleRequest` | `ChatRoomResponse` | Change a participant's role |
 | `SendmessageAsync` | `SendMessageRequest` | `ChatMessageResponse` | Send a message to a room |
 | `SendmessagebatchAsync` | `SendMessageBatchRequest` | `SendMessageBatchResponse` | Send multiple messages |
 | `GetMessagehistoryAsync` | `MessageHistoryRequest` | `MessageHistoryResponse` | Get message history |
@@ -2454,7 +2456,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 54
-- **Total methods**: 850
+- **Total methods**: 852
 
 ---
 

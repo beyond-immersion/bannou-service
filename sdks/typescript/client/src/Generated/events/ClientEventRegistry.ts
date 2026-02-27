@@ -26,340 +26,68 @@ export interface EventMetadata {
  * Map of event names to their metadata.
  */
 export const eventRegistry = new Map<string, EventMetadata>([
-  [
-    'asset.bundle.creation.complete',
-    {
-      eventName: 'asset.bundle.creation.complete',
-      typeName: 'BundleCreationCompleteEvent',
-      service: 'asset',
-    },
-  ],
-  [
-    'asset.bundle.validation.complete',
-    {
-      eventName: 'asset.bundle.validation.complete',
-      typeName: 'BundleValidationCompleteEvent',
-      service: 'asset',
-    },
-  ],
-  [
-    'asset.bundle.validation.failed',
-    {
-      eventName: 'asset.bundle.validation.failed',
-      typeName: 'BundleValidationFailedEvent',
-      service: 'asset',
-    },
-  ],
-  [
-    'asset.metabundle.creation.complete',
-    {
-      eventName: 'asset.metabundle.creation.complete',
-      typeName: 'MetabundleCreationCompleteEvent',
-      service: 'asset',
-    },
-  ],
-  [
-    'asset.processing.complete',
-    {
-      eventName: 'asset.processing.complete',
-      typeName: 'AssetProcessingCompleteEvent',
-      service: 'asset',
-    },
-  ],
-  [
-    'asset.processing.failed',
-    {
-      eventName: 'asset.processing.failed',
-      typeName: 'AssetProcessingFailedEvent',
-      service: 'asset',
-    },
-  ],
+  ['asset.bundle.creation.complete', { eventName: 'asset.bundle.creation.complete', typeName: 'BundleCreationCompleteEvent', service: 'asset' }],
+  ['asset.bundle.validation.complete', { eventName: 'asset.bundle.validation.complete', typeName: 'BundleValidationCompleteEvent', service: 'asset' }],
+  ['asset.bundle.validation.failed', { eventName: 'asset.bundle.validation.failed', typeName: 'BundleValidationFailedEvent', service: 'asset' }],
+  ['asset.metabundle.creation.complete', { eventName: 'asset.metabundle.creation.complete', typeName: 'MetabundleCreationCompleteEvent', service: 'asset' }],
+  ['asset.processing.complete', { eventName: 'asset.processing.complete', typeName: 'AssetProcessingCompleteEvent', service: 'asset' }],
+  ['asset.processing.failed', { eventName: 'asset.processing.failed', typeName: 'AssetProcessingFailedEvent', service: 'asset' }],
   ['asset.ready', { eventName: 'asset.ready', typeName: 'AssetReadyEvent', service: 'asset' }],
-  [
-    'asset.upload.complete',
-    { eventName: 'asset.upload.complete', typeName: 'AssetUploadCompleteEvent', service: 'asset' },
-  ],
-  [
-    'chat.message_deleted',
-    {
-      eventName: 'chat.message_deleted',
-      typeName: 'ChatMessageDeletedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.message_pinned',
-    { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedEvent', service: 'chat' },
-  ],
-  [
-    'chat.message_received',
-    { eventName: 'chat.message_received', typeName: 'ChatMessageReceivedEvent', service: 'chat' },
-  ],
-  [
-    'chat.participant_banned',
-    {
-      eventName: 'chat.participant_banned',
-      typeName: 'ChatParticipantBannedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.participant_joined',
-    {
-      eventName: 'chat.participant_joined',
-      typeName: 'ChatParticipantJoinedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.participant_kicked',
-    {
-      eventName: 'chat.participant_kicked',
-      typeName: 'ChatParticipantKickedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.participant_left',
-    {
-      eventName: 'chat.participant_left',
-      typeName: 'ChatParticipantLeftClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.participant_muted',
-    {
-      eventName: 'chat.participant_muted',
-      typeName: 'ChatParticipantMutedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.participant_unmuted',
-    {
-      eventName: 'chat.participant_unmuted',
-      typeName: 'ChatParticipantUnmutedClientEvent',
-      service: 'chat',
-    },
-  ],
-  [
-    'chat.room_deleted',
-    { eventName: 'chat.room_deleted', typeName: 'ChatRoomDeletedClientEvent', service: 'chat' },
-  ],
-  [
-    'chat.room_locked',
-    { eventName: 'chat.room_locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' },
-  ],
-  [
-    'chat.typing_started',
-    { eventName: 'chat.typing_started', typeName: 'ChatTypingStartedClientEvent', service: 'chat' },
-  ],
-  [
-    'chat.typing_stopped',
-    { eventName: 'chat.typing_stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' },
-  ],
-  [
-    'collection.discovery_advanced',
-    {
-      eventName: 'collection.discovery_advanced',
-      typeName: 'CollectionDiscoveryAdvancedClientEvent',
-      service: 'collection',
-    },
-  ],
-  [
-    'collection.entry_unlocked',
-    {
-      eventName: 'collection.entry_unlocked',
-      typeName: 'CollectionEntryUnlockedClientEvent',
-      service: 'collection',
-    },
-  ],
-  [
-    'collection.milestone_reached',
-    {
-      eventName: 'collection.milestone_reached',
-      typeName: 'CollectionMilestoneReachedClientEvent',
-      service: 'collection',
-    },
-  ],
-  [
-    'connect.capability_manifest',
-    {
-      eventName: 'connect.capability_manifest',
-      typeName: 'CapabilityManifestEvent',
-      service: 'common',
-    },
-  ],
-  [
-    'connect.disconnect_notification',
-    {
-      eventName: 'connect.disconnect_notification',
-      typeName: 'DisconnectNotificationEvent',
-      service: 'common',
-    },
-  ],
-  [
-    'game_session.action_result',
-    {
-      eventName: 'game_session.action_result',
-      typeName: 'GameActionResultEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.chat_received',
-    {
-      eventName: 'game_session.chat_received',
-      typeName: 'SessionChatReceivedEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.player_joined',
-    {
-      eventName: 'game_session.player_joined',
-      typeName: 'PlayerJoinedEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.player_kicked',
-    {
-      eventName: 'game_session.player_kicked',
-      typeName: 'PlayerKickedEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.player_left',
-    { eventName: 'game_session.player_left', typeName: 'PlayerLeftEvent', service: 'game-session' },
-  ],
-  [
-    'game_session.session_cancelled',
-    {
-      eventName: 'game_session.session_cancelled',
-      typeName: 'SessionCancelledEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.state_changed',
-    {
-      eventName: 'game_session.state_changed',
-      typeName: 'SessionStateChangedEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'game_session.state_updated',
-    {
-      eventName: 'game_session.state_updated',
-      typeName: 'GameStateUpdatedEvent',
-      service: 'game-session',
-    },
-  ],
-  [
-    'matchmaking.cancelled',
-    {
-      eventName: 'matchmaking.cancelled',
-      typeName: 'MatchmakingCancelledEvent',
-      service: 'matchmaking',
-    },
-  ],
-  [
-    'matchmaking.match_confirmed',
-    {
-      eventName: 'matchmaking.match_confirmed',
-      typeName: 'MatchConfirmedEvent',
-      service: 'matchmaking',
-    },
-  ],
-  [
-    'matchmaking.match_declined',
-    {
-      eventName: 'matchmaking.match_declined',
-      typeName: 'MatchDeclinedEvent',
-      service: 'matchmaking',
-    },
-  ],
-  [
-    'matchmaking.match_found',
-    { eventName: 'matchmaking.match_found', typeName: 'MatchFoundEvent', service: 'matchmaking' },
-  ],
-  [
-    'matchmaking.player_accepted',
-    {
-      eventName: 'matchmaking.player_accepted',
-      typeName: 'MatchPlayerAcceptedEvent',
-      service: 'matchmaking',
-    },
-  ],
-  [
-    'matchmaking.queue_joined',
-    { eventName: 'matchmaking.queue_joined', typeName: 'QueueJoinedEvent', service: 'matchmaking' },
-  ],
-  [
-    'matchmaking.status_update',
-    {
-      eventName: 'matchmaking.status_update',
-      typeName: 'MatchmakingStatusUpdateEvent',
-      service: 'matchmaking',
-    },
-  ],
+  ['asset.upload.complete', { eventName: 'asset.upload.complete', typeName: 'AssetUploadCompleteEvent', service: 'asset' }],
+  ['auth.device_login', { eventName: 'auth.device_login', typeName: 'AuthDeviceLoginClientEvent', service: 'auth' }],
+  ['auth.external_account_linked', { eventName: 'auth.external_account_linked', typeName: 'AuthExternalAccountLinkedClientEvent', service: 'auth' }],
+  ['auth.mfa_disabled', { eventName: 'auth.mfa_disabled', typeName: 'AuthMfaDisabledClientEvent', service: 'auth' }],
+  ['auth.mfa_enabled', { eventName: 'auth.mfa_enabled', typeName: 'AuthMfaEnabledClientEvent', service: 'auth' }],
+  ['auth.password_changed', { eventName: 'auth.password_changed', typeName: 'AuthPasswordChangedClientEvent', service: 'auth' }],
+  ['auth.session_terminated', { eventName: 'auth.session_terminated', typeName: 'AuthSessionTerminatedClientEvent', service: 'auth' }],
+  ['auth.suspicious_login', { eventName: 'auth.suspicious_login', typeName: 'AuthSuspiciousLoginClientEvent', service: 'auth' }],
+  ['chat.message_deleted', { eventName: 'chat.message_deleted', typeName: 'ChatMessageDeletedClientEvent', service: 'chat' }],
+  ['chat.message_pinned', { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedEvent', service: 'chat' }],
+  ['chat.message_received', { eventName: 'chat.message_received', typeName: 'ChatMessageReceivedEvent', service: 'chat' }],
+  ['chat.participant_banned', { eventName: 'chat.participant_banned', typeName: 'ChatParticipantBannedClientEvent', service: 'chat' }],
+  ['chat.participant_joined', { eventName: 'chat.participant_joined', typeName: 'ChatParticipantJoinedClientEvent', service: 'chat' }],
+  ['chat.participant_kicked', { eventName: 'chat.participant_kicked', typeName: 'ChatParticipantKickedClientEvent', service: 'chat' }],
+  ['chat.participant_left', { eventName: 'chat.participant_left', typeName: 'ChatParticipantLeftClientEvent', service: 'chat' }],
+  ['chat.participant_muted', { eventName: 'chat.participant_muted', typeName: 'ChatParticipantMutedClientEvent', service: 'chat' }],
+  ['chat.participant_role_changed', { eventName: 'chat.participant_role_changed', typeName: 'ChatParticipantRoleChangedClientEvent', service: 'chat' }],
+  ['chat.participant_unbanned', { eventName: 'chat.participant_unbanned', typeName: 'ChatParticipantUnbannedClientEvent', service: 'chat' }],
+  ['chat.participant_unmuted', { eventName: 'chat.participant_unmuted', typeName: 'ChatParticipantUnmutedClientEvent', service: 'chat' }],
+  ['chat.room_deleted', { eventName: 'chat.room_deleted', typeName: 'ChatRoomDeletedClientEvent', service: 'chat' }],
+  ['chat.room_locked', { eventName: 'chat.room_locked', typeName: 'ChatRoomLockedClientEvent', service: 'chat' }],
+  ['chat.room_updated', { eventName: 'chat.room_updated', typeName: 'ChatRoomUpdatedClientEvent', service: 'chat' }],
+  ['chat.typing_started', { eventName: 'chat.typing_started', typeName: 'ChatTypingStartedClientEvent', service: 'chat' }],
+  ['chat.typing_stopped', { eventName: 'chat.typing_stopped', typeName: 'ChatTypingStoppedClientEvent', service: 'chat' }],
+  ['collection.discovery_advanced', { eventName: 'collection.discovery_advanced', typeName: 'CollectionDiscoveryAdvancedClientEvent', service: 'collection' }],
+  ['collection.entry_unlocked', { eventName: 'collection.entry_unlocked', typeName: 'CollectionEntryUnlockedClientEvent', service: 'collection' }],
+  ['collection.milestone_reached', { eventName: 'collection.milestone_reached', typeName: 'CollectionMilestoneReachedClientEvent', service: 'collection' }],
+  ['connect.capability_manifest', { eventName: 'connect.capability_manifest', typeName: 'CapabilityManifestEvent', service: 'common' }],
+  ['connect.disconnect_notification', { eventName: 'connect.disconnect_notification', typeName: 'DisconnectNotificationEvent', service: 'common' }],
+  ['game_session.action_result', { eventName: 'game_session.action_result', typeName: 'GameActionResultEvent', service: 'game-session' }],
+  ['game_session.chat_received', { eventName: 'game_session.chat_received', typeName: 'SessionChatReceivedEvent', service: 'game-session' }],
+  ['game_session.player_joined', { eventName: 'game_session.player_joined', typeName: 'PlayerJoinedEvent', service: 'game-session' }],
+  ['game_session.player_kicked', { eventName: 'game_session.player_kicked', typeName: 'PlayerKickedEvent', service: 'game-session' }],
+  ['game_session.player_left', { eventName: 'game_session.player_left', typeName: 'PlayerLeftEvent', service: 'game-session' }],
+  ['game_session.session_cancelled', { eventName: 'game_session.session_cancelled', typeName: 'SessionCancelledEvent', service: 'game-session' }],
+  ['game_session.state_changed', { eventName: 'game_session.state_changed', typeName: 'SessionStateChangedEvent', service: 'game-session' }],
+  ['game_session.state_updated', { eventName: 'game_session.state_updated', typeName: 'GameStateUpdatedEvent', service: 'game-session' }],
+  ['matchmaking.cancelled', { eventName: 'matchmaking.cancelled', typeName: 'MatchmakingCancelledEvent', service: 'matchmaking' }],
+  ['matchmaking.match_confirmed', { eventName: 'matchmaking.match_confirmed', typeName: 'MatchConfirmedEvent', service: 'matchmaking' }],
+  ['matchmaking.match_declined', { eventName: 'matchmaking.match_declined', typeName: 'MatchDeclinedEvent', service: 'matchmaking' }],
+  ['matchmaking.match_found', { eventName: 'matchmaking.match_found', typeName: 'MatchFoundEvent', service: 'matchmaking' }],
+  ['matchmaking.player_accepted', { eventName: 'matchmaking.player_accepted', typeName: 'MatchPlayerAcceptedEvent', service: 'matchmaking' }],
+  ['matchmaking.queue_joined', { eventName: 'matchmaking.queue_joined', typeName: 'QueueJoinedEvent', service: 'matchmaking' }],
+  ['matchmaking.status_update', { eventName: 'matchmaking.status_update', typeName: 'MatchmakingStatusUpdateEvent', service: 'matchmaking' }],
   ['system.error', { eventName: 'system.error', typeName: 'SystemErrorEvent', service: 'common' }],
-  [
-    'system.notification',
-    { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' },
-  ],
-  [
-    'voice.broadcast_consent_request',
-    {
-      eventName: 'voice.broadcast_consent_request',
-      typeName: 'VoiceBroadcastConsentRequestEvent',
-      service: 'voice',
-    },
-  ],
-  [
-    'voice.broadcast_consent_update',
-    {
-      eventName: 'voice.broadcast_consent_update',
-      typeName: 'VoiceBroadcastConsentUpdateEvent',
-      service: 'voice',
-    },
-  ],
-  [
-    'voice.peer_joined',
-    { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedEvent', service: 'voice' },
-  ],
-  [
-    'voice.peer_left',
-    { eventName: 'voice.peer_left', typeName: 'VoicePeerLeftEvent', service: 'voice' },
-  ],
-  [
-    'voice.peer_updated',
-    { eventName: 'voice.peer_updated', typeName: 'VoicePeerUpdatedEvent', service: 'voice' },
-  ],
-  [
-    'voice.room_closed',
-    { eventName: 'voice.room_closed', typeName: 'VoiceRoomClosedEvent', service: 'voice' },
-  ],
-  [
-    'voice.room_state',
-    { eventName: 'voice.room_state', typeName: 'VoiceRoomStateEvent', service: 'voice' },
-  ],
-  [
-    'voice.tier_upgrade',
-    { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' },
-  ],
-  [
-    'worldstate.time_sync',
-    {
-      eventName: 'worldstate.time_sync',
-      typeName: 'WorldstateTimeSyncEvent',
-      service: 'worldstate',
-    },
-  ],
+  ['system.notification', { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' }],
+  ['voice.broadcast_consent_request', { eventName: 'voice.broadcast_consent_request', typeName: 'VoiceBroadcastConsentRequestEvent', service: 'voice' }],
+  ['voice.broadcast_consent_update', { eventName: 'voice.broadcast_consent_update', typeName: 'VoiceBroadcastConsentUpdateEvent', service: 'voice' }],
+  ['voice.peer_joined', { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedEvent', service: 'voice' }],
+  ['voice.peer_left', { eventName: 'voice.peer_left', typeName: 'VoicePeerLeftEvent', service: 'voice' }],
+  ['voice.peer_updated', { eventName: 'voice.peer_updated', typeName: 'VoicePeerUpdatedEvent', service: 'voice' }],
+  ['voice.room_closed', { eventName: 'voice.room_closed', typeName: 'VoiceRoomClosedEvent', service: 'voice' }],
+  ['voice.room_state', { eventName: 'voice.room_state', typeName: 'VoiceRoomStateEvent', service: 'voice' }],
+  ['voice.tier_upgrade', { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' }],
+  ['worldstate.time_sync', { eventName: 'worldstate.time_sync', typeName: 'WorldstateTimeSyncEvent', service: 'worldstate' }],
 ]);
 
 /**
@@ -391,7 +119,7 @@ export function getAllEventNames(): string[] {
  * @param service - Service name (e.g., 'game-session', 'connect')
  */
 export function getEventsByService(service: string): EventMetadata[] {
-  return Array.from(eventRegistry.values()).filter((e) => e.service === service);
+  return Array.from(eventRegistry.values()).filter(e => e.service === service);
 }
 
 /**

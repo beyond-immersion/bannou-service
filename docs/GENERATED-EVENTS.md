@@ -102,6 +102,18 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
 
+### Auth (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AuthDeviceLoginClientEvent` | Custom | `auth-device-login-client` | Sent to all existing sessions when a new login occ... |
+| `AuthExternalAccountLinkedClientEvent` | Custom | `auth-external-account-linked-client` | Sent to all sessions when a new OAuth provider is ... |
+| `AuthMfaDisabledClientEvent` | Custom | `auth-mfa-disabled-client` | Sent to all sessions when MFA is disabled on the a... |
+| `AuthMfaEnabledClientEvent` | Custom | `auth-mfa-enabled-client` | Sent to all sessions when MFA is enabled on the ac... |
+| `AuthPasswordChangedClientEvent` | Custom | `auth-password-changed-client` | Sent to all sessions when the account's password i... |
+| `AuthSessionTerminatedClientEvent` | Custom | `auth-session-terminated-client` | Sent to remaining sessions when a session is remot... |
+| `AuthSuspiciousLoginClientEvent` | Custom | `auth-suspicious-login-client` | Sent to all sessions when a failed login attempt o... |
+
 ### Behavior
 
 | Event | Type | Likely Topic | Description |
@@ -163,6 +175,8 @@ This document lists all events defined in Bannou's event schemas.
 | `ChatParticipantKickedEvent` | Custom | `chat-participant-kicked` | Published when a participant is kicked from a chat... |
 | `ChatParticipantLeftEvent` | Custom | `chat-participant-left` | Published when a participant leaves a chat room |
 | `ChatParticipantMutedEvent` | Custom | `chat-participant-muted` | Published when a participant is muted in a chat ro... |
+| `ChatParticipantRoleChangedEvent` | Custom | `chat-participant-role-changed` | Published when a participant's role changes (manua... |
+| `ChatParticipantUnbannedEvent` | Custom | `chat-participant-unbanned` | Published when a participant is unbanned from a ch... |
 | `ChatParticipantUnmutedEvent` | Custom | `chat-participant-unmuted` | Published when a participant is unmuted in a chat ... |
 | `ChatRoomArchivedEvent` | Custom | `chat-room-archived` | Published when a chat room is archived via Resourc... |
 | `ChatRoomLockedEvent` | Custom | `chat-room-locked` | Published when a chat room is locked (contract-tri... |
@@ -179,9 +193,12 @@ This document lists all events defined in Bannou's event schemas.
 | `ChatParticipantKickedClientEvent` | Custom | `chat-participant-kicked-client` | Sent to all room participants when someone is kick... |
 | `ChatParticipantLeftClientEvent` | Custom | `chat-participant-left-client` | Sent to room participants when someone leaves the ... |
 | `ChatParticipantMutedClientEvent` | Custom | `chat-participant-muted-client` | Sent to all room participants when someone is mute... |
+| `ChatParticipantRoleChangedClientEvent` | Custom | `chat-participant-role-changed-client` | Sent to room participants when a participant's rol... |
+| `ChatParticipantUnbannedClientEvent` | Custom | `chat-participant-unbanned-client` | Sent to room participants when a ban is lifted. |
 | `ChatParticipantUnmutedClientEvent` | Custom | `chat-participant-unmuted-client` | Sent to all room participants when someone is unmu... |
 | `ChatRoomDeletedClientEvent` | Lifecycle (Deleted) | `chat-room.deleted-client` | Sent to room participants when the room is being d... |
 | `ChatRoomLockedClientEvent` | Custom | `chat-room-locked-client` | Sent to room participants when the room is locked. |
+| `ChatRoomUpdatedClientEvent` | Lifecycle (Updated) | `chat-room.updated-client` | Sent to room participants when room settings chang... |
 | `ChatTypingStartedClientEvent` | Custom | `chat-typing-started-client` | Sent to room participants when someone starts typi... |
 | `ChatTypingStoppedClientEvent` | Custom | `chat-typing-stopped-client` | Sent to room participants when someone stops typin... |
 

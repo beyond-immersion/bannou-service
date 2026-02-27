@@ -36,10 +36,9 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PersonalityResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetPersonalityRequest'],
-      Schemas['PersonalityResponse']
-    >('/character-personality/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetPersonalityRequest'], Schemas['PersonalityResponse']>(
+      '/character-personality/get', request, channel, timeout
+    );
   }
 
   /**
@@ -54,10 +53,9 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CombatPreferencesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCombatPreferencesRequest'],
-      Schemas['CombatPreferencesResponse']
-    >('/character-personality/get-combat', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCombatPreferencesRequest'], Schemas['CombatPreferencesResponse']>(
+      '/character-personality/get-combat', request, channel, timeout
+    );
   }
 
   /**
@@ -72,10 +70,9 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CharacterPersonalityArchive']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCompressDataRequest'],
-      Schemas['CharacterPersonalityArchive']
-    >('/character-personality/get-compress-data', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['CharacterPersonalityArchive']>(
+      '/character-personality/get-compress-data', request, channel, timeout
+    );
   }
 
   /**
@@ -90,9 +87,8 @@ export class CharacterPersonalityProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/character-personality/cleanup-by-character', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByCharacterRequest'], Schemas['CleanupByCharacterResponse']>(
+      '/character-personality/cleanup-by-character', request, channel, timeout
+    );
   }
 }

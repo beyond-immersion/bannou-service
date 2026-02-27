@@ -348,8 +348,6 @@ public static class StateStoreDefinitions
     public const string QuestDefinitionCache = "quest-definition-cache";
     /// <summary>Quest definitions with contract template IDs and metadata</summary>
     public const string QuestDefinition = "quest-definition-statestore";
-    /// <summary>Idempotency keys for accept/complete operations</summary>
-    public const string QuestIdempotency = "quest-idempotency";
     /// <summary>Quest instances with status and party information</summary>
     public const string QuestInstance = "quest-instance-statestore";
     /// <summary>Real-time objective progress tracking</summary>
@@ -613,7 +611,6 @@ public static class StateStoreDefinitions
             [QuestCooldown] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:cd" },
             [QuestDefinitionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:def" },
             [QuestDefinition] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_definition_statestore" },
-            [QuestIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:idem" },
             [QuestInstance] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_instance_statestore" },
             [QuestObjectiveProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:prog" },
             [RealmHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_history_statestore" },
@@ -801,7 +798,6 @@ public static class StateStoreDefinitions
             [QuestCooldown] = new StoreMetadata("Quest", "Per-character quest cooldown tracking", "redis"),
             [QuestDefinitionCache] = new StoreMetadata("Quest", "Quest definition read-through cache", "redis"),
             [QuestDefinition] = new StoreMetadata("Quest", "Quest definitions with contract template IDs and metadata", "mysql"),
-            [QuestIdempotency] = new StoreMetadata("Quest", "Idempotency keys for accept/complete operations", "redis"),
             [QuestInstance] = new StoreMetadata("Quest", "Quest instances with status and party information", "mysql"),
             [QuestObjectiveProgress] = new StoreMetadata("Quest", "Real-time objective progress tracking", "redis"),
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),

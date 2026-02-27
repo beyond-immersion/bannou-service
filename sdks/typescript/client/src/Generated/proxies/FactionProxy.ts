@@ -37,10 +37,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['CreateFactionRequest'], Schemas['FactionResponse']>(
-      '/faction/create',
-      request,
-      channel,
-      timeout
+      '/faction/create', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['GetFactionRequest'], Schemas['FactionResponse']>(
-      '/faction/get',
-      request,
-      channel,
-      timeout
+      '/faction/get', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['GetFactionByCodeRequest'], Schemas['FactionResponse']>(
-      '/faction/get-by-code',
-      request,
-      channel,
-      timeout
+      '/faction/get-by-code', request, channel, timeout
     );
   }
 
@@ -97,10 +88,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListFactionsResponse']>> {
     return this.client.invokeAsync<Schemas['ListFactionsRequest'], Schemas['ListFactionsResponse']>(
-      '/faction/list',
-      request,
-      channel,
-      timeout
+      '/faction/list', request, channel, timeout
     );
   }
 
@@ -117,10 +105,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateFactionRequest'], Schemas['FactionResponse']>(
-      '/faction/update',
-      request,
-      channel,
-      timeout
+      '/faction/update', request, channel, timeout
     );
   }
 
@@ -137,10 +122,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['DeprecateFactionRequest'], Schemas['FactionResponse']>(
-      '/faction/deprecate',
-      request,
-      channel,
-      timeout
+      '/faction/deprecate', request, channel, timeout
     );
   }
 
@@ -156,10 +138,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UndeprecateFactionRequest'],
-      Schemas['FactionResponse']
-    >('/faction/undeprecate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UndeprecateFactionRequest'], Schemas['FactionResponse']>(
+      '/faction/undeprecate', request, channel, timeout
+    );
   }
 
   /**
@@ -174,10 +155,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DesignateRealmBaselineRequest'],
-      Schemas['FactionResponse']
-    >('/faction/designate-realm-baseline', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DesignateRealmBaselineRequest'], Schemas['FactionResponse']>(
+      '/faction/designate-realm-baseline', request, channel, timeout
+    );
   }
 
   /**
@@ -193,10 +173,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionResponse']>> {
     return this.client.invokeAsync<Schemas['GetRealmBaselineRequest'], Schemas['FactionResponse']>(
-      '/faction/get-realm-baseline',
-      request,
-      channel,
-      timeout
+      '/faction/get-realm-baseline', request, channel, timeout
     );
   }
 
@@ -213,10 +190,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionMemberResponse']>> {
     return this.client.invokeAsync<Schemas['AddMemberRequest'], Schemas['FactionMemberResponse']>(
-      '/faction/member/add',
-      request,
-      channel,
-      timeout
+      '/faction/member/add', request, channel, timeout
     );
   }
 
@@ -231,9 +205,7 @@ export class FactionProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['RemoveMemberRequest']>(
-      '/faction/member/remove',
-      request,
-      channel
+      '/faction/member/remove', request, channel
     );
   }
 
@@ -250,10 +222,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListMembersResponse']>> {
     return this.client.invokeAsync<Schemas['ListMembersRequest'], Schemas['ListMembersResponse']>(
-      '/faction/member/list',
-      request,
-      channel,
-      timeout
+      '/faction/member/list', request, channel, timeout
     );
   }
 
@@ -269,10 +238,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListMembershipsByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListMembershipsByCharacterRequest'],
-      Schemas['ListMembershipsByCharacterResponse']
-    >('/faction/member/list-by-character', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListMembershipsByCharacterRequest'], Schemas['ListMembershipsByCharacterResponse']>(
+      '/faction/member/list-by-character', request, channel, timeout
+    );
   }
 
   /**
@@ -287,10 +255,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionMemberResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateMemberRoleRequest'],
-      Schemas['FactionMemberResponse']
-    >('/faction/member/update-role', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateMemberRoleRequest'], Schemas['FactionMemberResponse']>(
+      '/faction/member/update-role', request, channel, timeout
+    );
   }
 
   /**
@@ -305,10 +272,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckMembershipResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CheckMembershipRequest'],
-      Schemas['CheckMembershipResponse']
-    >('/faction/member/check', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CheckMembershipRequest'], Schemas['CheckMembershipResponse']>(
+      '/faction/member/check', request, channel, timeout
+    );
   }
 
   /**
@@ -323,10 +289,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['TerritoryClaimResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ClaimTerritoryRequest'],
-      Schemas['TerritoryClaimResponse']
-    >('/faction/territory/claim', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ClaimTerritoryRequest'], Schemas['TerritoryClaimResponse']>(
+      '/faction/territory/claim', request, channel, timeout
+    );
   }
 
   /**
@@ -340,9 +305,7 @@ export class FactionProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['ReleaseTerritoryRequest']>(
-      '/faction/territory/release',
-      request,
-      channel
+      '/faction/territory/release', request, channel
     );
   }
 
@@ -358,10 +321,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListTerritoryClaimsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListTerritoryClaimsRequest'],
-      Schemas['ListTerritoryClaimsResponse']
-    >('/faction/territory/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListTerritoryClaimsRequest'], Schemas['ListTerritoryClaimsResponse']>(
+      '/faction/territory/list', request, channel, timeout
+    );
   }
 
   /**
@@ -376,10 +338,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ControllingFactionResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetControllingFactionRequest'],
-      Schemas['ControllingFactionResponse']
-    >('/faction/territory/get-controlling', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetControllingFactionRequest'], Schemas['ControllingFactionResponse']>(
+      '/faction/territory/get-controlling', request, channel, timeout
+    );
   }
 
   /**
@@ -395,10 +356,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['NormDefinitionResponse']>> {
     return this.client.invokeAsync<Schemas['DefineNormRequest'], Schemas['NormDefinitionResponse']>(
-      '/faction/norm/define',
-      request,
-      channel,
-      timeout
+      '/faction/norm/define', request, channel, timeout
     );
   }
 
@@ -415,10 +373,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['NormDefinitionResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateNormRequest'], Schemas['NormDefinitionResponse']>(
-      '/faction/norm/update',
-      request,
-      channel,
-      timeout
+      '/faction/norm/update', request, channel, timeout
     );
   }
 
@@ -433,9 +388,7 @@ export class FactionProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteNormRequest']>(
-      '/faction/norm/delete',
-      request,
-      channel
+      '/faction/norm/delete', request, channel
     );
   }
 
@@ -452,10 +405,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListNormsResponse']>> {
     return this.client.invokeAsync<Schemas['ListNormsRequest'], Schemas['ListNormsResponse']>(
-      '/faction/norm/list',
-      request,
-      channel,
-      timeout
+      '/faction/norm/list', request, channel, timeout
     );
   }
 
@@ -471,10 +421,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByCharacterResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByCharacterRequest'],
-      Schemas['CleanupByCharacterResponse']
-    >('/faction/cleanup-by-character', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByCharacterRequest'], Schemas['CleanupByCharacterResponse']>(
+      '/faction/cleanup-by-character', request, channel, timeout
+    );
   }
 
   /**
@@ -489,10 +438,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByRealmResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByRealmRequest'],
-      Schemas['CleanupByRealmResponse']
-    >('/faction/cleanup-by-realm', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByRealmRequest'], Schemas['CleanupByRealmResponse']>(
+      '/faction/cleanup-by-realm', request, channel, timeout
+    );
   }
 
   /**
@@ -507,10 +455,9 @@ export class FactionProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByLocationResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CleanupByLocationRequest'],
-      Schemas['CleanupByLocationResponse']
-    >('/faction/cleanup-by-location', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CleanupByLocationRequest'], Schemas['CleanupByLocationResponse']>(
+      '/faction/cleanup-by-location', request, channel, timeout
+    );
   }
 
   /**
@@ -526,10 +473,7 @@ export class FactionProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FactionArchive']>> {
     return this.client.invokeAsync<Schemas['GetCompressDataRequest'], Schemas['FactionArchive']>(
-      '/faction/get-compress-data',
-      request,
-      channel,
-      timeout
+      '/faction/get-compress-data', request, channel, timeout
     );
   }
 }

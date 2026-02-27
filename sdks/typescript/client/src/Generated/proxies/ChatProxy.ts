@@ -37,10 +37,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RoomTypeResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterRoomTypeRequest'], Schemas['RoomTypeResponse']>(
-      '/chat/type/register',
-      request,
-      channel,
-      timeout
+      '/chat/type/register', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RoomTypeResponse']>> {
     return this.client.invokeAsync<Schemas['GetRoomTypeRequest'], Schemas['RoomTypeResponse']>(
-      '/chat/type/get',
-      request,
-      channel,
-      timeout
+      '/chat/type/get', request, channel, timeout
     );
   }
 
@@ -76,10 +70,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListRoomTypesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListRoomTypesRequest'],
-      Schemas['ListRoomTypesResponse']
-    >('/chat/type/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListRoomTypesRequest'], Schemas['ListRoomTypesResponse']>(
+      '/chat/type/list', request, channel, timeout
+    );
   }
 
   /**
@@ -95,10 +88,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['RoomTypeResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateRoomTypeRequest'], Schemas['RoomTypeResponse']>(
-      '/chat/type/update',
-      request,
-      channel,
-      timeout
+      '/chat/type/update', request, channel, timeout
     );
   }
 
@@ -114,10 +104,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RoomTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeprecateRoomTypeRequest'],
-      Schemas['RoomTypeResponse']
-    >('/chat/type/deprecate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeprecateRoomTypeRequest'], Schemas['RoomTypeResponse']>(
+      '/chat/type/deprecate', request, channel, timeout
+    );
   }
 
   /**
@@ -133,10 +122,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['CreateRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/create',
-      request,
-      channel,
-      timeout
+      '/chat/room/create', request, channel, timeout
     );
   }
 
@@ -153,10 +139,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['GetRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/get',
-      request,
-      channel,
-      timeout
+      '/chat/room/get', request, channel, timeout
     );
   }
 
@@ -173,10 +156,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListRoomsResponse']>> {
     return this.client.invokeAsync<Schemas['ListRoomsRequest'], Schemas['ListRoomsResponse']>(
-      '/chat/room/list',
-      request,
-      channel,
-      timeout
+      '/chat/room/list', request, channel, timeout
     );
   }
 
@@ -193,10 +173,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/update',
-      request,
-      channel,
-      timeout
+      '/chat/room/update', request, channel, timeout
     );
   }
 
@@ -213,10 +190,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/delete',
-      request,
-      channel,
-      timeout
+      '/chat/room/delete', request, channel, timeout
     );
   }
 
@@ -233,10 +207,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['ArchiveRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/archive',
-      request,
-      channel,
-      timeout
+      '/chat/room/archive', request, channel, timeout
     );
   }
 
@@ -253,10 +224,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['JoinRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/join',
-      request,
-      channel,
-      timeout
+      '/chat/room/join', request, channel, timeout
     );
   }
 
@@ -273,10 +241,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['LeaveRoomRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/leave',
-      request,
-      channel,
-      timeout
+      '/chat/room/leave', request, channel, timeout
     );
   }
 
@@ -292,10 +257,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ParticipantsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListParticipantsRequest'],
-      Schemas['ParticipantsResponse']
-    >('/chat/room/participants', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListParticipantsRequest'], Schemas['ParticipantsResponse']>(
+      '/chat/room/participants', request, channel, timeout
+    );
   }
 
   /**
@@ -311,10 +275,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['KickParticipantRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/participant/kick',
-      request,
-      channel,
-      timeout
+      '/chat/room/participant/kick', request, channel, timeout
     );
   }
 
@@ -331,10 +292,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['BanParticipantRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/participant/ban',
-      request,
-      channel,
-      timeout
+      '/chat/room/participant/ban', request, channel, timeout
     );
   }
 
@@ -351,10 +309,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['UnbanParticipantRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/participant/unban',
-      request,
-      channel,
-      timeout
+      '/chat/room/participant/unban', request, channel, timeout
     );
   }
 
@@ -371,10 +326,41 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
     return this.client.invokeAsync<Schemas['MuteParticipantRequest'], Schemas['ChatRoomResponse']>(
-      '/chat/room/participant/mute',
-      request,
-      channel,
-      timeout
+      '/chat/room/participant/mute', request, channel, timeout
+    );
+  }
+
+  /**
+   * Unmute a participant
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async unmuteParticipantAsync(
+    request: Schemas['UnmuteParticipantRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
+    return this.client.invokeAsync<Schemas['UnmuteParticipantRequest'], Schemas['ChatRoomResponse']>(
+      '/chat/room/participant/unmute', request, channel, timeout
+    );
+  }
+
+  /**
+   * Change a participant's role
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async changeParticipantRoleAsync(
+    request: Schemas['ChangeParticipantRoleRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ChatRoomResponse']>> {
+    return this.client.invokeAsync<Schemas['ChangeParticipantRoleRequest'], Schemas['ChatRoomResponse']>(
+      '/chat/room/participant/change-role', request, channel, timeout
     );
   }
 
@@ -391,10 +377,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatMessageResponse']>> {
     return this.client.invokeAsync<Schemas['SendMessageRequest'], Schemas['ChatMessageResponse']>(
-      '/chat/message/send',
-      request,
-      channel,
-      timeout
+      '/chat/message/send', request, channel, timeout
     );
   }
 
@@ -410,10 +393,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SendMessageBatchResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SendMessageBatchRequest'],
-      Schemas['SendMessageBatchResponse']
-    >('/chat/message/send-batch', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SendMessageBatchRequest'], Schemas['SendMessageBatchResponse']>(
+      '/chat/message/send-batch', request, channel, timeout
+    );
   }
 
   /**
@@ -428,10 +410,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MessageHistoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['MessageHistoryRequest'],
-      Schemas['MessageHistoryResponse']
-    >('/chat/message/history', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['MessageHistoryRequest'], Schemas['MessageHistoryResponse']>(
+      '/chat/message/history', request, channel, timeout
+    );
   }
 
   /**
@@ -447,10 +428,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatMessageResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteMessageRequest'], Schemas['ChatMessageResponse']>(
-      '/chat/message/delete',
-      request,
-      channel,
-      timeout
+      '/chat/message/delete', request, channel, timeout
     );
   }
 
@@ -467,10 +445,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatMessageResponse']>> {
     return this.client.invokeAsync<Schemas['PinMessageRequest'], Schemas['ChatMessageResponse']>(
-      '/chat/message/pin',
-      request,
-      channel,
-      timeout
+      '/chat/message/pin', request, channel, timeout
     );
   }
 
@@ -487,10 +462,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ChatMessageResponse']>> {
     return this.client.invokeAsync<Schemas['UnpinMessageRequest'], Schemas['ChatMessageResponse']>(
-      '/chat/message/unpin',
-      request,
-      channel,
-      timeout
+      '/chat/message/unpin', request, channel, timeout
     );
   }
 
@@ -506,10 +478,9 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SearchMessagesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SearchMessagesRequest'],
-      Schemas['SearchMessagesResponse']
-    >('/chat/message/search', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SearchMessagesRequest'], Schemas['SearchMessagesResponse']>(
+      '/chat/message/search', request, channel, timeout
+    );
   }
 
   /**
@@ -525,10 +496,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListRoomsResponse']>> {
     return this.client.invokeAsync<Schemas['AdminListRoomsRequest'], Schemas['ListRoomsResponse']>(
-      '/chat/admin/rooms',
-      request,
-      channel,
-      timeout
+      '/chat/admin/rooms', request, channel, timeout
     );
   }
 
@@ -545,10 +513,7 @@ export class ChatProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AdminStatsResponse']>> {
     return this.client.invokeAsync<Schemas['AdminGetStatsRequest'], Schemas['AdminStatsResponse']>(
-      '/chat/admin/stats',
-      request,
-      channel,
-      timeout
+      '/chat/admin/stats', request, channel, timeout
     );
   }
 
@@ -564,9 +529,8 @@ export class ChatProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AdminCleanupResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['AdminForceCleanupRequest'],
-      Schemas['AdminCleanupResponse']
-    >('/chat/admin/cleanup', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['AdminForceCleanupRequest'], Schemas['AdminCleanupResponse']>(
+      '/chat/admin/cleanup', request, channel, timeout
+    );
   }
 }

@@ -37,10 +37,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedResponse']>> {
     return this.client.invokeAsync<Schemas['CreateSeedRequest'], Schemas['SeedResponse']>(
-      '/seed/create',
-      request,
-      channel,
-      timeout
+      '/seed/create', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedResponse']>> {
     return this.client.invokeAsync<Schemas['GetSeedRequest'], Schemas['SeedResponse']>(
-      '/seed/get',
-      request,
-      channel,
-      timeout
+      '/seed/get', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListSeedsResponse']>> {
     return this.client.invokeAsync<Schemas['GetSeedsByOwnerRequest'], Schemas['ListSeedsResponse']>(
-      '/seed/get-by-owner',
-      request,
-      channel,
-      timeout
+      '/seed/get-by-owner', request, channel, timeout
     );
   }
 
@@ -97,10 +88,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListSeedsResponse']>> {
     return this.client.invokeAsync<Schemas['ListSeedsRequest'], Schemas['ListSeedsResponse']>(
-      '/seed/list',
-      request,
-      channel,
-      timeout
+      '/seed/list', request, channel, timeout
     );
   }
 
@@ -117,10 +105,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateSeedRequest'], Schemas['SeedResponse']>(
-      '/seed/update',
-      request,
-      channel,
-      timeout
+      '/seed/update', request, channel, timeout
     );
   }
 
@@ -137,10 +122,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedResponse']>> {
     return this.client.invokeAsync<Schemas['ActivateSeedRequest'], Schemas['SeedResponse']>(
-      '/seed/activate',
-      request,
-      channel,
-      timeout
+      '/seed/activate', request, channel, timeout
     );
   }
 
@@ -157,10 +139,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedResponse']>> {
     return this.client.invokeAsync<Schemas['ArchiveSeedRequest'], Schemas['SeedResponse']>(
-      '/seed/archive',
-      request,
-      channel,
-      timeout
+      '/seed/archive', request, channel, timeout
     );
   }
 
@@ -177,10 +156,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrowthResponse']>> {
     return this.client.invokeAsync<Schemas['GetGrowthRequest'], Schemas['GrowthResponse']>(
-      '/seed/growth/get',
-      request,
-      channel,
-      timeout
+      '/seed/growth/get', request, channel, timeout
     );
   }
 
@@ -197,10 +173,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrowthResponse']>> {
     return this.client.invokeAsync<Schemas['RecordGrowthRequest'], Schemas['GrowthResponse']>(
-      '/seed/growth/record',
-      request,
-      channel,
-      timeout
+      '/seed/growth/record', request, channel, timeout
     );
   }
 
@@ -217,10 +190,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrowthResponse']>> {
     return this.client.invokeAsync<Schemas['RecordGrowthBatchRequest'], Schemas['GrowthResponse']>(
-      '/seed/growth/record-batch',
-      request,
-      channel,
-      timeout
+      '/seed/growth/record-batch', request, channel, timeout
     );
   }
 
@@ -236,10 +206,9 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrowthPhaseResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetGrowthPhaseRequest'],
-      Schemas['GrowthPhaseResponse']
-    >('/seed/growth/get-phase', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetGrowthPhaseRequest'], Schemas['GrowthPhaseResponse']>(
+      '/seed/growth/get-phase', request, channel, timeout
+    );
   }
 
   /**
@@ -254,10 +223,9 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CapabilityManifestResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCapabilityManifestRequest'],
-      Schemas['CapabilityManifestResponse']
-    >('/seed/capability/get-manifest', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCapabilityManifestRequest'], Schemas['CapabilityManifestResponse']>(
+      '/seed/capability/get-manifest', request, channel, timeout
+    );
   }
 
   /**
@@ -273,10 +241,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterSeedTypeRequest'], Schemas['SeedTypeResponse']>(
-      '/seed/type/register',
-      request,
-      channel,
-      timeout
+      '/seed/type/register', request, channel, timeout
     );
   }
 
@@ -293,10 +258,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
     return this.client.invokeAsync<Schemas['GetSeedTypeRequest'], Schemas['SeedTypeResponse']>(
-      '/seed/type/get',
-      request,
-      channel,
-      timeout
+      '/seed/type/get', request, channel, timeout
     );
   }
 
@@ -312,10 +274,9 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListSeedTypesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListSeedTypesRequest'],
-      Schemas['ListSeedTypesResponse']
-    >('/seed/type/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListSeedTypesRequest'], Schemas['ListSeedTypesResponse']>(
+      '/seed/type/list', request, channel, timeout
+    );
   }
 
   /**
@@ -331,10 +292,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateSeedTypeRequest'], Schemas['SeedTypeResponse']>(
-      '/seed/type/update',
-      request,
-      channel,
-      timeout
+      '/seed/type/update', request, channel, timeout
     );
   }
 
@@ -350,10 +308,9 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeprecateSeedTypeRequest'],
-      Schemas['SeedTypeResponse']
-    >('/seed/type/deprecate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeprecateSeedTypeRequest'], Schemas['SeedTypeResponse']>(
+      '/seed/type/deprecate', request, channel, timeout
+    );
   }
 
   /**
@@ -368,10 +325,9 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedTypeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UndeprecateSeedTypeRequest'],
-      Schemas['SeedTypeResponse']
-    >('/seed/type/undeprecate', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UndeprecateSeedTypeRequest'], Schemas['SeedTypeResponse']>(
+      '/seed/type/undeprecate', request, channel, timeout
+    );
   }
 
   /**
@@ -385,9 +341,7 @@ export class SeedProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteSeedTypeRequest']>(
-      '/seed/type/delete',
-      request,
-      channel
+      '/seed/type/delete', request, channel
     );
   }
 
@@ -404,10 +358,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BondResponse']>> {
     return this.client.invokeAsync<Schemas['InitiateBondRequest'], Schemas['BondResponse']>(
-      '/seed/bond/initiate',
-      request,
-      channel,
-      timeout
+      '/seed/bond/initiate', request, channel, timeout
     );
   }
 
@@ -424,10 +375,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BondResponse']>> {
     return this.client.invokeAsync<Schemas['ConfirmBondRequest'], Schemas['BondResponse']>(
-      '/seed/bond/confirm',
-      request,
-      channel,
-      timeout
+      '/seed/bond/confirm', request, channel, timeout
     );
   }
 
@@ -444,10 +392,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BondResponse']>> {
     return this.client.invokeAsync<Schemas['GetBondRequest'], Schemas['BondResponse']>(
-      '/seed/bond/get',
-      request,
-      channel,
-      timeout
+      '/seed/bond/get', request, channel, timeout
     );
   }
 
@@ -464,10 +409,7 @@ export class SeedProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BondResponse']>> {
     return this.client.invokeAsync<Schemas['GetBondForSeedRequest'], Schemas['BondResponse']>(
-      '/seed/bond/get-for-seed',
-      request,
-      channel,
-      timeout
+      '/seed/bond/get-for-seed', request, channel, timeout
     );
   }
 
@@ -483,9 +425,8 @@ export class SeedProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BondPartnersResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetBondPartnersRequest'],
-      Schemas['BondPartnersResponse']
-    >('/seed/bond/get-partners', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetBondPartnersRequest'], Schemas['BondPartnersResponse']>(
+      '/seed/bond/get-partners', request, channel, timeout
+    );
   }
 }

@@ -37,10 +37,7 @@ export class ValidateProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateAbmlResponse']>> {
     return this.client.invokeAsync<Schemas['ValidateAbmlRequest'], Schemas['ValidateAbmlResponse']>(
-      '/validate',
-      request,
-      channel,
-      timeout
+      '/validate', request, channel, timeout
     );
   }
 }

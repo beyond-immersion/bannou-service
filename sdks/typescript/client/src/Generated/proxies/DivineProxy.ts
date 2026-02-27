@@ -37,10 +37,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['CreateDeityRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/create',
-      request,
-      channel,
-      timeout
+      '/divine/deity/create', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['GetDeityRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/get',
-      request,
-      channel,
-      timeout
+      '/divine/deity/get', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['GetDeityByCodeRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/get-by-code',
-      request,
-      channel,
-      timeout
+      '/divine/deity/get-by-code', request, channel, timeout
     );
   }
 
@@ -97,10 +88,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListDeitiesResponse']>> {
     return this.client.invokeAsync<Schemas['ListDeitiesRequest'], Schemas['ListDeitiesResponse']>(
-      '/divine/deity/list',
-      request,
-      channel,
-      timeout
+      '/divine/deity/list', request, channel, timeout
     );
   }
 
@@ -117,10 +105,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateDeityRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/update',
-      request,
-      channel,
-      timeout
+      '/divine/deity/update', request, channel, timeout
     );
   }
 
@@ -137,10 +122,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['ActivateDeityRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/activate',
-      request,
-      channel,
-      timeout
+      '/divine/deity/activate', request, channel, timeout
     );
   }
 
@@ -157,10 +139,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeityResponse']>> {
     return this.client.invokeAsync<Schemas['DeactivateDeityRequest'], Schemas['DeityResponse']>(
-      '/divine/deity/deactivate',
-      request,
-      channel,
-      timeout
+      '/divine/deity/deactivate', request, channel, timeout
     );
   }
 
@@ -175,9 +154,7 @@ export class DivineProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['DeleteDeityRequest']>(
-      '/divine/deity/delete',
-      request,
-      channel
+      '/divine/deity/delete', request, channel
     );
   }
 
@@ -193,10 +170,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DivinityBalanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetDivinityBalanceRequest'],
-      Schemas['DivinityBalanceResponse']
-    >('/divine/divinity/get-balance', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetDivinityBalanceRequest'], Schemas['DivinityBalanceResponse']>(
+      '/divine/divinity/get-balance', request, channel, timeout
+    );
   }
 
   /**
@@ -211,10 +187,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DivinityBalanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['CreditDivinityRequest'],
-      Schemas['DivinityBalanceResponse']
-    >('/divine/divinity/credit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['CreditDivinityRequest'], Schemas['DivinityBalanceResponse']>(
+      '/divine/divinity/credit', request, channel, timeout
+    );
   }
 
   /**
@@ -229,10 +204,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DivinityBalanceResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DebitDivinityRequest'],
-      Schemas['DivinityBalanceResponse']
-    >('/divine/divinity/debit', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DebitDivinityRequest'], Schemas['DivinityBalanceResponse']>(
+      '/divine/divinity/debit', request, channel, timeout
+    );
   }
 
   /**
@@ -247,10 +221,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DivinityHistoryResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetDivinityHistoryRequest'],
-      Schemas['DivinityHistoryResponse']
-    >('/divine/divinity/get-history', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetDivinityHistoryRequest'], Schemas['DivinityHistoryResponse']>(
+      '/divine/divinity/get-history', request, channel, timeout
+    );
   }
 
   /**
@@ -266,10 +239,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BlessingResponse']>> {
     return this.client.invokeAsync<Schemas['GrantBlessingRequest'], Schemas['BlessingResponse']>(
-      '/divine/blessing/grant',
-      request,
-      channel,
-      timeout
+      '/divine/blessing/grant', request, channel, timeout
     );
   }
 
@@ -286,10 +256,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BlessingResponse']>> {
     return this.client.invokeAsync<Schemas['RevokeBlessingRequest'], Schemas['BlessingResponse']>(
-      '/divine/blessing/revoke',
-      request,
-      channel,
-      timeout
+      '/divine/blessing/revoke', request, channel, timeout
     );
   }
 
@@ -305,10 +272,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListBlessingsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListBlessingsByEntityRequest'],
-      Schemas['ListBlessingsResponse']
-    >('/divine/blessing/list-by-entity', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListBlessingsByEntityRequest'], Schemas['ListBlessingsResponse']>(
+      '/divine/blessing/list-by-entity', request, channel, timeout
+    );
   }
 
   /**
@@ -323,10 +289,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListBlessingsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListBlessingsByDeityRequest'],
-      Schemas['ListBlessingsResponse']
-    >('/divine/blessing/list-by-deity', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListBlessingsByDeityRequest'], Schemas['ListBlessingsResponse']>(
+      '/divine/blessing/list-by-deity', request, channel, timeout
+    );
   }
 
   /**
@@ -342,10 +307,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['BlessingResponse']>> {
     return this.client.invokeAsync<Schemas['GetBlessingRequest'], Schemas['BlessingResponse']>(
-      '/divine/blessing/get',
-      request,
-      channel,
-      timeout
+      '/divine/blessing/get', request, channel, timeout
     );
   }
 
@@ -362,10 +324,7 @@ export class DivineProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['FollowerResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterFollowerRequest'], Schemas['FollowerResponse']>(
-      '/divine/follower/register',
-      request,
-      channel,
-      timeout
+      '/divine/follower/register', request, channel, timeout
     );
   }
 
@@ -380,9 +339,7 @@ export class DivineProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['UnregisterFollowerRequest']>(
-      '/divine/follower/unregister',
-      request,
-      channel
+      '/divine/follower/unregister', request, channel
     );
   }
 
@@ -398,10 +355,9 @@ export class DivineProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListFollowersResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetFollowersRequest'],
-      Schemas['ListFollowersResponse']
-    >('/divine/follower/get-followers', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetFollowersRequest'], Schemas['ListFollowersResponse']>(
+      '/divine/follower/get-followers', request, channel, timeout
+    );
   }
 
   /**
@@ -415,9 +371,7 @@ export class DivineProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['CleanupByCharacterRequest']>(
-      '/divine/cleanup-by-character',
-      request,
-      channel
+      '/divine/cleanup-by-character', request, channel
     );
   }
 
@@ -432,9 +386,7 @@ export class DivineProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['CleanupByGameServiceRequest']>(
-      '/divine/cleanup-by-game-service',
-      request,
-      channel
+      '/divine/cleanup-by-game-service', request, channel
     );
   }
 }

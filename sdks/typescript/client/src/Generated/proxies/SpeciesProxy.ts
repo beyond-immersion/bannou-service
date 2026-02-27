@@ -37,10 +37,7 @@ export class SpeciesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SpeciesResponse']>> {
     return this.client.invokeAsync<Schemas['GetSpeciesRequest'], Schemas['SpeciesResponse']>(
-      '/species/get',
-      request,
-      channel,
-      timeout
+      '/species/get', request, channel, timeout
     );
   }
 
@@ -57,10 +54,7 @@ export class SpeciesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SpeciesResponse']>> {
     return this.client.invokeAsync<Schemas['GetSpeciesByCodeRequest'], Schemas['SpeciesResponse']>(
-      '/species/get-by-code',
-      request,
-      channel,
-      timeout
+      '/species/get-by-code', request, channel, timeout
     );
   }
 
@@ -77,10 +71,7 @@ export class SpeciesProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SpeciesListResponse']>> {
     return this.client.invokeAsync<Schemas['ListSpeciesRequest'], Schemas['SpeciesListResponse']>(
-      '/species/list',
-      request,
-      channel,
-      timeout
+      '/species/list', request, channel, timeout
     );
   }
 
@@ -96,9 +87,8 @@ export class SpeciesProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SpeciesListResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListSpeciesByRealmRequest'],
-      Schemas['SpeciesListResponse']
-    >('/species/list-by-realm', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListSpeciesByRealmRequest'], Schemas['SpeciesListResponse']>(
+      '/species/list-by-realm', request, channel, timeout
+    );
   }
 }

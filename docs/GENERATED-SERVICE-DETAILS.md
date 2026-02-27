@@ -103,7 +103,7 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 
 ## Chat {#chat}
 
-**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 30 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/chat-api.yaml` | **Endpoints**: 32 | **Deep Dive**: [docs/plugins/CHAT.md](plugins/CHAT.md)
 
 The Chat service (L1 AppFoundation) provides universal typed message channel primitives for real-time communication. Room types determine valid message formats (text, sentiment, emoji, custom-validated payloads), with rooms optionally governed by Contract instances for lifecycle management. Supports ephemeral (Redis TTL) and persistent (MySQL) message storage, participant moderation (kick/ban/mute), rate limiting via atomic Redis counters, typing indicators via Redis sorted set with server-side expiry, and automatic idle room cleanup. Three built-in room types (text, sentiment, emoji) are registered on startup. Internal-only, never internet-facing.
 
@@ -460,7 +460,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 75
-- **Total endpoints**: 857
+- **Total endpoints**: 859
 
 ---
 

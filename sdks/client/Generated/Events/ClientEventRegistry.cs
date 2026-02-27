@@ -7,6 +7,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Asset.ClientEvents;
+using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
@@ -29,6 +30,13 @@ public static class ClientEventRegistry
         { typeof(AssetProcessingFailedEvent), "asset.processing.failed" },
         { typeof(AssetReadyEvent), "asset.ready" },
         { typeof(AssetUploadCompleteEvent), "asset.upload.complete" },
+        { typeof(AuthDeviceLoginClientEvent), "auth.device_login" },
+        { typeof(AuthExternalAccountLinkedClientEvent), "auth.external_account_linked" },
+        { typeof(AuthMfaDisabledClientEvent), "auth.mfa_disabled" },
+        { typeof(AuthMfaEnabledClientEvent), "auth.mfa_enabled" },
+        { typeof(AuthPasswordChangedClientEvent), "auth.password_changed" },
+        { typeof(AuthSessionTerminatedClientEvent), "auth.session_terminated" },
+        { typeof(AuthSuspiciousLoginClientEvent), "auth.suspicious_login" },
         { typeof(BundleCreationCompleteEvent), "asset.bundle.creation.complete" },
         { typeof(BundleValidationCompleteEvent), "asset.bundle.validation.complete" },
         { typeof(BundleValidationFailedEvent), "asset.bundle.validation.failed" },
@@ -41,9 +49,12 @@ public static class ClientEventRegistry
         { typeof(ChatParticipantKickedClientEvent), "chat.participant_kicked" },
         { typeof(ChatParticipantLeftClientEvent), "chat.participant_left" },
         { typeof(ChatParticipantMutedClientEvent), "chat.participant_muted" },
+        { typeof(ChatParticipantRoleChangedClientEvent), "chat.participant_role_changed" },
+        { typeof(ChatParticipantUnbannedClientEvent), "chat.participant_unbanned" },
         { typeof(ChatParticipantUnmutedClientEvent), "chat.participant_unmuted" },
         { typeof(ChatRoomDeletedClientEvent), "chat.room_deleted" },
         { typeof(ChatRoomLockedClientEvent), "chat.room_locked" },
+        { typeof(ChatRoomUpdatedClientEvent), "chat.room_updated" },
         { typeof(ChatTypingStartedClientEvent), "chat.typing_started" },
         { typeof(ChatTypingStoppedClientEvent), "chat.typing_stopped" },
         { typeof(CollectionDiscoveryAdvancedClientEvent), "collection.discovery_advanced" },
@@ -89,6 +100,13 @@ public static class ClientEventRegistry
         { "asset.processing.failed", typeof(AssetProcessingFailedEvent) },
         { "asset.ready", typeof(AssetReadyEvent) },
         { "asset.upload.complete", typeof(AssetUploadCompleteEvent) },
+        { "auth.device_login", typeof(AuthDeviceLoginClientEvent) },
+        { "auth.external_account_linked", typeof(AuthExternalAccountLinkedClientEvent) },
+        { "auth.mfa_disabled", typeof(AuthMfaDisabledClientEvent) },
+        { "auth.mfa_enabled", typeof(AuthMfaEnabledClientEvent) },
+        { "auth.password_changed", typeof(AuthPasswordChangedClientEvent) },
+        { "auth.session_terminated", typeof(AuthSessionTerminatedClientEvent) },
+        { "auth.suspicious_login", typeof(AuthSuspiciousLoginClientEvent) },
         { "chat.message_deleted", typeof(ChatMessageDeletedClientEvent) },
         { "chat.message_pinned", typeof(ChatMessagePinnedEvent) },
         { "chat.message_received", typeof(ChatMessageReceivedEvent) },
@@ -97,9 +115,12 @@ public static class ClientEventRegistry
         { "chat.participant_kicked", typeof(ChatParticipantKickedClientEvent) },
         { "chat.participant_left", typeof(ChatParticipantLeftClientEvent) },
         { "chat.participant_muted", typeof(ChatParticipantMutedClientEvent) },
+        { "chat.participant_role_changed", typeof(ChatParticipantRoleChangedClientEvent) },
+        { "chat.participant_unbanned", typeof(ChatParticipantUnbannedClientEvent) },
         { "chat.participant_unmuted", typeof(ChatParticipantUnmutedClientEvent) },
         { "chat.room_deleted", typeof(ChatRoomDeletedClientEvent) },
         { "chat.room_locked", typeof(ChatRoomLockedClientEvent) },
+        { "chat.room_updated", typeof(ChatRoomUpdatedClientEvent) },
         { "chat.typing_started", typeof(ChatTypingStartedClientEvent) },
         { "chat.typing_stopped", typeof(ChatTypingStoppedClientEvent) },
         { "collection.discovery_advanced", typeof(CollectionDiscoveryAdvancedClientEvent) },

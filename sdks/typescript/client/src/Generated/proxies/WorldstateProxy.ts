@@ -37,10 +37,7 @@ export class WorldstateProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GameTimeSnapshot']>> {
     return this.client.invokeAsync<Schemas['GetRealmTimeRequest'], Schemas['GameTimeSnapshot']>(
-      '/worldstate/clock/get-realm-time',
-      request,
-      channel,
-      timeout
+      '/worldstate/clock/get-realm-time', request, channel, timeout
     );
   }
 
@@ -56,10 +53,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GameTimeSnapshot']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRealmTimeByCodeRequest'],
-      Schemas['GameTimeSnapshot']
-    >('/worldstate/clock/get-realm-time-by-code', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetRealmTimeByCodeRequest'], Schemas['GameTimeSnapshot']>(
+      '/worldstate/clock/get-realm-time-by-code', request, channel, timeout
+    );
   }
 
   /**
@@ -74,10 +70,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BatchGetRealmTimesResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['BatchGetRealmTimesRequest'],
-      Schemas['BatchGetRealmTimesResponse']
-    >('/worldstate/clock/batch-get-realm-times', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['BatchGetRealmTimesRequest'], Schemas['BatchGetRealmTimesResponse']>(
+      '/worldstate/clock/batch-get-realm-times', request, channel, timeout
+    );
   }
 
   /**
@@ -92,10 +87,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetElapsedGameTimeResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetElapsedGameTimeRequest'],
-      Schemas['GetElapsedGameTimeResponse']
-    >('/worldstate/clock/get-elapsed-game-time', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetElapsedGameTimeRequest'], Schemas['GetElapsedGameTimeResponse']>(
+      '/worldstate/clock/get-elapsed-game-time', request, channel, timeout
+    );
   }
 
   /**
@@ -110,10 +104,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['TriggerTimeSyncResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['TriggerTimeSyncRequest'],
-      Schemas['TriggerTimeSyncResponse']
-    >('/worldstate/clock/trigger-sync', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['TriggerTimeSyncRequest'], Schemas['TriggerTimeSyncResponse']>(
+      '/worldstate/clock/trigger-sync', request, channel, timeout
+    );
   }
 
   /**
@@ -128,10 +121,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['InitializeRealmClockResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['InitializeRealmClockRequest'],
-      Schemas['InitializeRealmClockResponse']
-    >('/worldstate/clock/initialize', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['InitializeRealmClockRequest'], Schemas['InitializeRealmClockResponse']>(
+      '/worldstate/clock/initialize', request, channel, timeout
+    );
   }
 
   /**
@@ -147,10 +139,7 @@ export class WorldstateProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SetTimeRatioResponse']>> {
     return this.client.invokeAsync<Schemas['SetTimeRatioRequest'], Schemas['SetTimeRatioResponse']>(
-      '/worldstate/clock/set-ratio',
-      request,
-      channel,
-      timeout
+      '/worldstate/clock/set-ratio', request, channel, timeout
     );
   }
 
@@ -167,10 +156,7 @@ export class WorldstateProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['AdvanceClockResponse']>> {
     return this.client.invokeAsync<Schemas['AdvanceClockRequest'], Schemas['AdvanceClockResponse']>(
-      '/worldstate/clock/advance',
-      request,
-      channel,
-      timeout
+      '/worldstate/clock/advance', request, channel, timeout
     );
   }
 
@@ -186,10 +172,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CalendarTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['SeedCalendarRequest'],
-      Schemas['CalendarTemplateResponse']
-    >('/worldstate/calendar/seed', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['SeedCalendarRequest'], Schemas['CalendarTemplateResponse']>(
+      '/worldstate/calendar/seed', request, channel, timeout
+    );
   }
 
   /**
@@ -204,10 +189,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CalendarTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetCalendarRequest'],
-      Schemas['CalendarTemplateResponse']
-    >('/worldstate/calendar/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetCalendarRequest'], Schemas['CalendarTemplateResponse']>(
+      '/worldstate/calendar/get', request, channel, timeout
+    );
   }
 
   /**
@@ -222,10 +206,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListCalendarsResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListCalendarsRequest'],
-      Schemas['ListCalendarsResponse']
-    >('/worldstate/calendar/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListCalendarsRequest'], Schemas['ListCalendarsResponse']>(
+      '/worldstate/calendar/list', request, channel, timeout
+    );
   }
 
   /**
@@ -240,10 +223,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CalendarTemplateResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateCalendarRequest'],
-      Schemas['CalendarTemplateResponse']
-    >('/worldstate/calendar/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateCalendarRequest'], Schemas['CalendarTemplateResponse']>(
+      '/worldstate/calendar/update', request, channel, timeout
+    );
   }
 
   /**
@@ -258,10 +240,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteCalendarResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['DeleteCalendarRequest'],
-      Schemas['DeleteCalendarResponse']
-    >('/worldstate/calendar/delete', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['DeleteCalendarRequest'], Schemas['DeleteCalendarResponse']>(
+      '/worldstate/calendar/delete', request, channel, timeout
+    );
   }
 
   /**
@@ -276,10 +257,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmConfigResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['GetRealmConfigRequest'],
-      Schemas['RealmConfigResponse']
-    >('/worldstate/realm-config/get', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['GetRealmConfigRequest'], Schemas['RealmConfigResponse']>(
+      '/worldstate/realm-config/get', request, channel, timeout
+    );
   }
 
   /**
@@ -294,10 +274,9 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RealmConfigResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['UpdateRealmConfigRequest'],
-      Schemas['RealmConfigResponse']
-    >('/worldstate/realm-config/update', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['UpdateRealmConfigRequest'], Schemas['RealmConfigResponse']>(
+      '/worldstate/realm-config/update', request, channel, timeout
+    );
   }
 
   /**
@@ -312,9 +291,8 @@ export class WorldstateProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListRealmClocksResponse']>> {
-    return this.client.invokeAsync<
-      Schemas['ListRealmClocksRequest'],
-      Schemas['ListRealmClocksResponse']
-    >('/worldstate/realm-config/list', request, channel, timeout);
+    return this.client.invokeAsync<Schemas['ListRealmClocksRequest'], Schemas['ListRealmClocksResponse']>(
+      '/worldstate/realm-config/list', request, channel, timeout
+    );
   }
 }

@@ -133,6 +133,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | `LockRetryAttempts` | `QUEST_LOCK_RETRY_ATTEMPTS` | 3 | Retry attempts when lock acquisition fails |
 | `MaxConcurrencyRetries` | `QUEST_MAX_CONCURRENCY_RETRIES` | 5 | ETag concurrency retry attempts |
 | `IdempotencyTtlSeconds` | `QUEST_IDEMPOTENCY_TTL_SECONDS` | 86400 | TTL for idempotency keys (24 hours) |
+| `DefaultRewardContainerMaxSlots` | `QUEST_DEFAULT_REWARD_CONTAINER_MAX_SLOTS` | 100 | Maximum slots in quest reward inventory containers |
 
 ---
 
@@ -148,6 +149,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | `IContractClient` | Contract service integration for template/instance management |
 | `ICharacterClient` | Character validation during quest acceptance |
 | `IQuestDataCache` | In-memory TTL cache for actor behavior expressions |
+| `ITelemetryProvider` | Distributed tracing span instrumentation |
 | `QuestProviderFactory` | IVariableProviderFactory implementation for Actor integration |
 | `QuestProvider` | IVariableProvider exposing `${quest.*}` variables |
 
@@ -270,8 +272,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 | `objectiveType` | C (System State) | `ObjectiveType` enum | Finite objective tracking modes: `KILL`, `COLLECT`, `DELIVER`, `TRAVEL`, `DISCOVER`, `TALK`, `CRAFT`, `ESCORT`, `DEFEND`, `CUSTOM`. |
 | `revealBehavior` (on objectives) | C (System State) | `ObjectiveRevealBehavior` enum | Finite visibility modes for hidden objectives: `ALWAYS`, `ON_PROGRESS`, `ON_COMPLETE`, `NEVER`. |
 | `prerequisiteType` | C (System State) | `PrerequisiteType` enum | Finite built-in prerequisite types: `QUEST_COMPLETED`, `CHARACTER_LEVEL`, `REPUTATION`, `ITEM_OWNED`, `CURRENCY_AMOUNT`. Dynamic L4 prerequisite types extend this via `IPrerequisiteProviderFactory` DI pattern. |
-| `reward.type` | C (System State) | Inline enum | Finite reward categories: `CURRENCY`, `ITEM`, `EXPERIENCE`, `REPUTATION`. Determines which reward fields are relevant. |
-| `errorCode` (AcceptQuestErrorResponse) | C (System State) | `AcceptQuestErrorCode` enum | Finite acceptance failure modes: `PREREQUISITES_NOT_MET`, `ALREADY_ACTIVE`, `ON_COOLDOWN`, `MAX_QUESTS_REACHED`, `DEFINITION_NOT_FOUND`, `DEFINITION_DEPRECATED`. |
+| `reward.type` | C (System State) | `RewardType` enum | Finite reward categories: `CURRENCY`, `ITEM`, `EXPERIENCE`, `REPUTATION`. Determines which reward fields are relevant. |
 | `validationMode` | C (System State) | `PrerequisiteValidationMode` enum | Finite validation strategies: `FAIL_FAST`, `CHECK_ALL`. |
 
 ---
@@ -357,5 +358,15 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
   - Added BuildRewardPreboundApis for CURRENCY and ITEM rewards via Contract
   - Added ResolveTemplateValuesAsync for wallet/container ID resolution
   - Added PrerequisiteValidationMode configuration (CHECK_ALL vs FAIL_FAST)
-  - Added FailedPrerequisite model and AcceptQuestErrorResponse for detailed failure info
+  - Added internal PrerequisiteFailure model for prerequisite check logging
 - **2026-02-07**: Fixed T21 violation - `QuestDataCache` TTL is now configurable via `QuestDataCacheTtlSeconds` (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120)
+- **2026-02-26**: Production hardening audit - Schema, code, and test fixes across 17 items:
+  - **Schema (T1)**: Consolidated inline RewardType enum to `$ref`; removed dead types AcceptQuestErrorResponse, AcceptQuestErrorCode, FailedPrerequisite; fixed NRT violations in event schemas; added validation keywords to API and config integer properties; fixed non-required/non-nullable fields on CreateQuestDefinitionRequest
+  - **Config (T21/T25)**: Changed PrerequisiteValidationMode from string to `$ref` enum; added DefaultRewardContainerMaxSlots (default: 100); added minimum/maximum bounds to all 12 integer config properties
+  - **Code (T9)**: Added ETag-based optimistic concurrency to all CharacterIndex mutation sites via new `UpdateCharacterIndexAsync` helper with retry loop
+  - **Code (T25)**: Fixed PrerequisiteValidationMode string comparison to enum equality
+  - **Code (T26)**: Replaced Guid.Empty sentinel for QuestGiverCharacterId with nullable Guid chain
+  - **Code (T30)**: Added ITelemetryProvider + StartActivity spans to all 15 private async methods across QuestService.cs and QuestServiceEvents.cs
+  - **Code (T21)**: Replaced hardcoded `MaxSlots = 100` with `_configuration.DefaultRewardContainerMaxSlots`
+  - **Code (T2)**: Fixed incorrect L4 layer comments to L2 in QuestServicePlugin and QuestProvider
+  - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
