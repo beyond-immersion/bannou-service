@@ -3,10 +3,10 @@
 // Resolves semantic binding names (hero, villain) to entity IDs in cutscenes.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Coordination;
 

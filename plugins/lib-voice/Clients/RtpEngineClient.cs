@@ -1,9 +1,9 @@
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice.Clients;
 

@@ -3,10 +3,10 @@
 // Resolves dialogue text through the three-step resolution pipeline.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Dialogue;
 

@@ -3,11 +3,11 @@
 // Represents an active multiplayer cutscene session with synchronization.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 

@@ -36,6 +36,7 @@ public class DocumentationServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<BeyondImmersion.BannouService.Asset.IAssetClient> _mockAssetClient;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
@@ -64,6 +65,7 @@ public class DocumentationServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockAssetClient = new Mock<BeyondImmersion.BannouService.Asset.IAssetClient>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -92,7 +94,8 @@ public class DocumentationServiceTests
             _mockContentTransformService.Object,
             _mockLockProvider.Object,
             _mockAssetClient.Object,
-            _mockHttpClientFactory.Object);
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

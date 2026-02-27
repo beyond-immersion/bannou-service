@@ -17,6 +17,7 @@ public class SearchIndexServiceTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<HashSet<Guid>>> _mockGuidSetStore;
     private readonly Mock<ILogger<SearchIndexService>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly SearchIndexService _service;
 
@@ -28,6 +29,7 @@ public class SearchIndexServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockGuidSetStore = new Mock<IStateStore<HashSet<Guid>>>();
         _mockLogger = new Mock<ILogger<SearchIndexService>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new DocumentationServiceConfiguration();
 
         // Setup factory to return typed stores
@@ -37,7 +39,8 @@ public class SearchIndexServiceTests
         _service = new SearchIndexService(
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

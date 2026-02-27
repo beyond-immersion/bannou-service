@@ -374,7 +374,15 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
     public async Task UnbanParticipant_BanExists_DeletesBanAndReturnsOK()
     {
         var service = CreateService();
+        var modSession = Guid.NewGuid();
         var targetSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
 
         var ban = new ChatBanModel
         {
@@ -385,9 +393,6 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
             BannedAt = DateTimeOffset.UtcNow.AddHours(-1),
         };
         SetupBan(TestRoomId, targetSession, ban);
-
-        var room = CreateTestRoom();
-        SetupRoomCache(room);
 
         var (status, response) = await service.UnbanParticipantAsync(new UnbanParticipantRequest
         {
@@ -406,6 +411,15 @@ public class ChatServiceParticipantTests : ChatServiceTestBase
     public async Task UnbanParticipant_NoBan_ReturnsNotFound()
     {
         var service = CreateService();
+        var modSession = Guid.NewGuid();
+        SetCallerSession(modSession);
+
+        var room = CreateTestRoom();
+        SetupRoom(room);
+
+        var moderator = CreateTestParticipant(sessionId: modSession, role: ChatParticipantRole.Moderator);
+        SetupParticipants(TestRoomId, moderator);
+
         MockBanStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ChatBanModel?)null);

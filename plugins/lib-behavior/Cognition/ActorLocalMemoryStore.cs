@@ -4,10 +4,10 @@
 // Stores memories per-entity with keyword-based relevance matching.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Abml.Cognition;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 

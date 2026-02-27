@@ -3446,7 +3446,7 @@ public class AccountServiceTests
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "account.updated",
-            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("display_name")),
+            It.Is<AccountUpdatedEvent>(e => e.ChangedFields.Contains("displayName")),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);

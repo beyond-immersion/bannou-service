@@ -4,12 +4,12 @@
 // Manages entity control acquisition/release and state synchronization.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Control;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Runtime;
 

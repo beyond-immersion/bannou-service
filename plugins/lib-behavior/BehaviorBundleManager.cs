@@ -1,8 +1,8 @@
-using System.Diagnostics;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior;
 

@@ -1,10 +1,9 @@
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
-
+using System.Diagnostics;
 // Type aliases to shadow Docker.DotNet types with our Orchestrator types
 using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
 using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;

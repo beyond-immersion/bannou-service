@@ -673,7 +673,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permission.SessionStateUpdate>(u =>
                 u.SessionId == clientSessionId &&
-                u.ServiceId == "game-session" &&
+                u.ServiceId == StateStoreDefinitions.GameSessionLock &&
                 u.NewState == "in_game"),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -728,7 +728,7 @@ public class GameSessionServiceTests : ServiceTestBase<GameSessionServiceConfigu
         _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
             It.Is<BeyondImmersion.BannouService.Permission.ClearSessionStateRequest>(u =>
                 u.SessionId == clientSessionId &&
-                u.ServiceId == "game-session"),
+                u.ServiceId == StateStoreDefinitions.GameSessionLock),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1071,7 +1071,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             sessionId.ToString(),
             It.Is<ShortcutPublishedEvent>(e =>
                 e.SessionId == sessionId &&
-                e.Shortcut.Metadata.SourceService == "game-session"),
+                e.Shortcut.Metadata.SourceService == StateStoreDefinitions.GameSessionLock),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Cleanup static cache
@@ -1214,7 +1214,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             sessionId.ToString(),
             It.Is<ShortcutRevokedEvent>(e =>
                 e.SessionId == sessionId &&
-                e.RevokeByService == "game-session"),
+                e.RevokeByService == StateStoreDefinitions.GameSessionLock),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

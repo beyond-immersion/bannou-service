@@ -1,8 +1,8 @@
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using BeyondImmersion.BannouService.Services;
-using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 

@@ -591,7 +591,7 @@ public class CurrencyConversionConcurrencyTests
 
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "currency-balance",
+                StateStoreDefinitions.CurrencyLock,
                 It.Is<string>(k => k.Contains(_toCurrencyId.ToString())),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failedLock.Object);
@@ -618,7 +618,7 @@ public class CurrencyConversionConcurrencyTests
         // (once for debit, once for compensating credit)
         _mockLockProvider.Verify(
             l => l.LockAsync(
-                "currency-balance",
+                StateStoreDefinitions.CurrencyLock,
                 It.Is<string>(k => k.Contains(_fromCurrencyId.ToString())),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.AtLeast(2));

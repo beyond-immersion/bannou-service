@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
@@ -7,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 

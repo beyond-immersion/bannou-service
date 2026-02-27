@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -10,7 +9,7 @@ using BeyondImmersion.BannouService.Voice.Clients;
 using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
+using System.Diagnostics;
 // Alias to disambiguate from internal SipCredentials type in Services namespace
 using ClientSipCredentials = BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials;
 

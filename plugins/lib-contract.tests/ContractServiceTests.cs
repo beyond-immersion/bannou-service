@@ -4364,7 +4364,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "contract-instance",
+                StateStoreDefinitions.ContractLock,
                 contractId.ToString(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -4397,7 +4397,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "contract-instance",
+                StateStoreDefinitions.ContractLock,
                 contractId.ToString(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -4432,7 +4432,7 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "contract-instance",
+                StateStoreDefinitions.ContractLock,
                 contractId.ToString(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),

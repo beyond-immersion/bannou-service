@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using LibOrchestrator;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -15,6 +16,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
     private readonly Mock<ILogger<SmartRestartManager>> _mockLogger;
     private readonly Mock<IServiceHealthMonitor> _mockHealthMonitor;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly List<SmartRestartManager> _createdManagers = new();
 
@@ -23,6 +25,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
         _mockLogger = new Mock<ILogger<SmartRestartManager>>();
         _mockHealthMonitor = new Mock<IServiceHealthMonitor>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             DockerHost = "unix:///var/run/docker.sock"
@@ -46,7 +49,8 @@ public class SmartRestartManagerTests : IAsyncLifetime
             _mockLogger.Object,
             _configuration,
             _mockHealthMonitor.Object,
-            _mockEventManager.Object);
+            _mockEventManager.Object,
+            _mockTelemetryProvider.Object);
         _createdManagers.Add(manager);
         return manager;
     }

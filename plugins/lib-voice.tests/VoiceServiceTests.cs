@@ -32,6 +32,7 @@ public class VoiceServiceTests
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IPermissionClient> _mockPermissionClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public VoiceServiceTests()
     {
@@ -47,6 +48,7 @@ public class VoiceServiceTests
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockPermissionClient = new Mock<IPermissionClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
@@ -71,7 +73,8 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockPermissionClient.Object);
+            _mockPermissionClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -515,7 +518,8 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            mockPermissionClient.Object);
+            mockPermissionClient.Object,
+            _mockTelemetryProvider.Object);
 
         var roomId = Guid.NewGuid();
         var joiningSessionId = Guid.NewGuid();
@@ -2009,6 +2013,7 @@ public class ParticipantEvictionWorkerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<VoiceRoomData>> _mockRoomStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public ParticipantEvictionWorkerTests()
     {
@@ -2024,6 +2029,7 @@ public class ParticipantEvictionWorkerTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockPermissionClient = new Mock<IPermissionClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockRoomStore = new Mock<IStateStore<VoiceRoomData>>();
         _mockStringStore = new Mock<IStateStore<string>>();
@@ -2054,7 +2060,8 @@ public class ParticipantEvictionWorkerTests
             mockServiceProvider.Object,
             _mockEndpointRegistry.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>

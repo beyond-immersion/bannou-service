@@ -3,11 +3,11 @@
 // Manages cross-entity synchronization points in cutscenes.
 // =============================================================================
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 

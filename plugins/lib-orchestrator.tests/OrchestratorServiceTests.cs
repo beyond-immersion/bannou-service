@@ -31,6 +31,7 @@ public class OrchestratorServiceTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly AppConfiguration _appConfiguration;
 
     public OrchestratorServiceTests()
@@ -56,6 +57,7 @@ public class OrchestratorServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup HTTP client factory to return a mock client
         _mockHttpClientFactory
@@ -90,6 +92,7 @@ public class OrchestratorServiceTests
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
             _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -665,6 +668,7 @@ public class ServiceHealthMonitorTests
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -674,6 +678,7 @@ public class ServiceHealthMonitorTests
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -696,7 +701,8 @@ public class ServiceHealthMonitorTests
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockControlPlaneProvider.Object,
-            new DefaultMeshInstanceIdentifier());
+            new DefaultMeshInstanceIdentifier(),
+            _mockTelemetryProvider.Object);
     }
 
     [Fact]
@@ -843,6 +849,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
     private readonly Mock<IOrchestratorStateManager> _mockStateManager;
     private readonly Mock<IOrchestratorEventManager> _mockEventManager;
     private readonly Mock<IControlPlaneServiceProvider> _mockControlPlaneProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -855,6 +862,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         _mockStateManager = new Mock<IOrchestratorStateManager>();
         _mockEventManager = new Mock<IOrchestratorEventManager>();
         _mockControlPlaneProvider = new Mock<IControlPlaneServiceProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -887,7 +895,8 @@ public class ServiceHealthMonitorRoutingProtectionTests
             _mockStateManager.Object,
             _mockEventManager.Object,
             _mockControlPlaneProvider.Object,
-            new DefaultMeshInstanceIdentifier());
+            new DefaultMeshInstanceIdentifier(),
+            _mockTelemetryProvider.Object);
     }
 
     [Fact]
@@ -1208,7 +1217,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
         Assert.NotNull(manager);
     }
 
@@ -1219,7 +1229,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act
         var (isHealthy, message, _) = await manager.CheckHealthAsync();
@@ -1236,7 +1247,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act
         var result = await manager.GetConfigVersionAsync();
@@ -1252,7 +1264,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act
         var result = await manager.GetServiceHeartbeatsAsync();
@@ -1268,7 +1281,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act
         var result = await manager.GetServiceRoutingsAsync();
@@ -1284,7 +1298,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
         var heartbeat = new ServiceHeartbeatEvent
         {
             ServiceId = Guid.NewGuid(),
@@ -1304,7 +1319,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
         var routing = new ServiceRouting
         {
             AppId = "test-app",
@@ -1324,7 +1340,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act
         var result = await manager.RestoreConfigurationVersionAsync(1);
@@ -1340,7 +1357,8 @@ public class OrchestratorStateManagerTests
         using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act & Assert - Should not throw (manager is disposed explicitly, then again by using)
         var exception = Record.Exception(() => manager.Dispose());
@@ -1354,7 +1372,8 @@ public class OrchestratorStateManagerTests
         await using var manager = new OrchestratorStateManager(
             Mock.Of<IStateStoreFactory>(),
             Mock.Of<ILogger<OrchestratorStateManager>>(),
-            new OrchestratorServiceConfiguration());
+            new OrchestratorServiceConfiguration(),
+            Mock.Of<ITelemetryProvider>());
 
         // Act & Assert - Should not throw (manager is disposed explicitly, then again by await using)
         var exception = await Record.ExceptionAsync(async () => await manager.DisposeAsync());
@@ -1382,6 +1401,7 @@ public class OrchestratorResetToDefaultTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
 
@@ -1398,6 +1418,7 @@ public class OrchestratorResetToDefaultTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new OrchestratorServiceConfiguration
         {
             HeartbeatTimeoutSeconds = 90,
@@ -1443,6 +1464,7 @@ public class OrchestratorResetToDefaultTests
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
             _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -1781,6 +1803,7 @@ public class OrchestratorProcessingPoolTests
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public OrchestratorProcessingPoolTests()
     {
@@ -1805,6 +1828,7 @@ public class OrchestratorProcessingPoolTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup HTTP client factory to return a mock client
         _mockHttpClientFactory
@@ -1839,6 +1863,7 @@ public class OrchestratorProcessingPoolTests
             _mockBackendDetector.Object,
             _mockLockProvider.Object,
             _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -2130,7 +2155,7 @@ public class OrchestratorProcessingPoolTests
         failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "orchestrator-pool",
+                StateStoreDefinitions.OrchestratorLock,
                 "actor-shared",
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -2188,7 +2213,7 @@ public class OrchestratorProcessingPoolTests
         failedLockResponse.Setup(l => l.Success).Returns(false);
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "orchestrator-pool",
+                StateStoreDefinitions.OrchestratorLock,
                 poolType,
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -2285,19 +2310,21 @@ public class OrchestratorProcessingPoolTests
 public class PresetLoaderTests
 {
     private readonly Mock<ILogger<PresetLoader>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly string _testPresetsDirectory;
     private static readonly string FixturesDirectory = Path.Combine(AppContext.BaseDirectory, "fixtures");
 
     public PresetLoaderTests()
     {
         _mockLogger = new Mock<ILogger<PresetLoader>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _testPresetsDirectory = Path.Combine(Path.GetTempPath(), $"preset-tests-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_testPresetsDirectory);
     }
 
     private PresetLoader CreateLoader()
     {
-        return new PresetLoader(_mockLogger.Object, _testPresetsDirectory);
+        return new PresetLoader(_mockLogger.Object, _testPresetsDirectory, _mockTelemetryProvider.Object);
     }
 
     private async Task CreatePresetFileAsync(string name, string content)
@@ -2469,7 +2496,7 @@ public class PresetLoaderTests
     public async Task ListPresetsAsync_WithNonexistentDirectory_ShouldReturnEmptyList()
     {
         // Arrange
-        var loader = new PresetLoader(_mockLogger.Object, "/nonexistent/directory");
+        var loader = new PresetLoader(_mockLogger.Object, "/nonexistent/directory", _mockTelemetryProvider.Object);
 
         // Act
         var presets = await loader.ListPresetsAsync();

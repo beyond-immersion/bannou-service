@@ -532,7 +532,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task DeprecateLocationAsync_WhenAlreadyDeprecated_ShouldReturnConflict()
+    public async Task DeprecateLocationAsync_WhenAlreadyDeprecated_ShouldReturnOkIdempotent()
     {
         // Arrange
         var service = CreateService();
@@ -548,9 +548,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Act
         var (status, response) = await service.DeprecateLocationAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
-        Assert.Null(response);
+        // Assert - IMPLEMENTATION TENETS: deprecation must be idempotent (return OK when already deprecated)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -605,7 +605,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task UndeprecateLocationAsync_WhenNotDeprecated_ShouldReturnBadRequest()
+    public async Task UndeprecateLocationAsync_WhenNotDeprecated_ShouldReturnOkIdempotent()
     {
         // Arrange
         var service = CreateService();
@@ -621,9 +621,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Act
         var (status, response) = await service.UndeprecateLocationAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+        // Assert - IMPLEMENTATION TENETS: undeprecation must be idempotent (return OK when not deprecated)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]

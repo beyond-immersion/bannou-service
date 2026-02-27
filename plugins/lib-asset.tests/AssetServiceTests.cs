@@ -40,6 +40,7 @@ public class AssetServiceTests
     private readonly Mock<IAssetProcessorPoolManager> _mockProcessorPoolManager = new();
     private readonly Mock<IBundleConverter> _mockBundleConverter = new();
     private readonly Mock<IEventConsumer> _mockEventConsumer = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
 
     public AssetServiceTests()
     {
@@ -2832,6 +2833,7 @@ public class AssetServiceTests
             _mockOrchestratorClient.Object,
             _mockProcessorPoolManager.Object,
             _mockBundleConverter.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
     }
 
@@ -2871,6 +2873,7 @@ public class MinioWebhookHandlerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory = new();
     private readonly Mock<IStateStore<UploadSession>> _mockUploadSessionStore = new();
     private readonly Mock<IMessageBus> _mockMessageBus = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
     private readonly Mock<ILogger<MinioWebhookHandler>> _mockLogger = new();
     private readonly AssetServiceConfiguration _configuration = new();
 
@@ -2886,6 +2889,7 @@ public class MinioWebhookHandlerTests
         return new MinioWebhookHandler(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _configuration);
     }
@@ -3119,6 +3123,7 @@ public class MinioWebhookHandlerTests
 public class AssetEventEmitterTests
 {
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher = new();
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider = new();
     private readonly Mock<ILogger<AssetEventEmitter>> _mockLogger = new();
 
     public AssetEventEmitterTests()
@@ -3129,6 +3134,7 @@ public class AssetEventEmitterTests
     {
         return new AssetEventEmitter(
             _mockClientEventPublisher.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object);
     }
 

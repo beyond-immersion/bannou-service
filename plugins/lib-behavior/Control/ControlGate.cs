@@ -3,11 +3,11 @@
 // Per-entity control gating for Intent Channel access.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Archetypes;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
 

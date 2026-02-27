@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using LibGit2Sharp;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 

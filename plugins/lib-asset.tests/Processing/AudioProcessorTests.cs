@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Asset;
 using BeyondImmersion.BannouService.Asset.Processing;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ public class AudioProcessorTests
 {
     private readonly Mock<IAssetStorageProvider> _mockStorageProvider;
     private readonly Mock<IFFmpegService> _mockFfmpegService;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<AudioProcessor>> _mockLogger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -22,6 +24,7 @@ public class AudioProcessorTests
     {
         _mockStorageProvider = new Mock<IAssetStorageProvider>();
         _mockFfmpegService = new Mock<IFFmpegService>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<AudioProcessor>>();
         _configuration = new AssetServiceConfiguration
         {
@@ -37,6 +40,7 @@ public class AudioProcessorTests
         new AudioProcessor(
             _mockStorageProvider.Object,
             _mockFfmpegService.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _configuration);
 
@@ -274,6 +278,7 @@ public class AudioProcessorTests
         var processor = new AudioProcessor(
             _mockStorageProvider.Object,
             _mockFfmpegService.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             config);
 

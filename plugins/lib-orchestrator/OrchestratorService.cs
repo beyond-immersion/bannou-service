@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
@@ -10,6 +9,7 @@ using LibOrchestrator;
 using LibOrchestrator.Backends;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 

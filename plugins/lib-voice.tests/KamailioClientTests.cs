@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ namespace BeyondImmersion.BannouService.Voice.Tests;
 public class KamailioClientTests : IDisposable
 {
     private readonly Mock<ILogger<KamailioClient>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<HttpMessageHandler> _mockHandler;
     private readonly List<HttpClient> _createdHttpClients = new();
     private readonly List<HttpResponseMessage> _createdResponses = new();
@@ -21,6 +23,7 @@ public class KamailioClientTests : IDisposable
     public KamailioClientTests()
     {
         _mockLogger = new Mock<ILogger<KamailioClient>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockHandler = new Mock<HttpMessageHandler>();
     }
 
@@ -70,7 +73,7 @@ public class KamailioClientTests : IDisposable
 
     private KamailioClient CreateClient(HttpClient httpClient)
     {
-        return new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object);
+        return new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object, _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -81,7 +84,7 @@ public class KamailioClientTests : IDisposable
         ServiceConstructorValidator.ValidateServiceConstructor<KamailioClient>();
         var httpClient = new HttpClient();
         _createdHttpClients.Add(httpClient);
-        var client = new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object);
+        var client = new KamailioClient(httpClient, "localhost", 5080, TimeSpan.FromSeconds(5), _mockLogger.Object, _mockTelemetryProvider.Object);
         Assert.NotNull(client);
     }
 

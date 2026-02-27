@@ -1,9 +1,9 @@
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace LibOrchestrator;
 

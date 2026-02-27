@@ -3,13 +3,13 @@
 // Server-side coordination for multi-participant cutscenes.
 // =============================================================================
 
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Behavior.Runtime;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Coordination;
 

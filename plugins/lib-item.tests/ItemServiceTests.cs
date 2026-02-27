@@ -29,6 +29,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IContractClient> _mockContractClient;
+    private readonly Mock<IQueryableStateStore<ItemInstanceModel>> _mockInstanceQueryableStore;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<ItemService>> _mockLogger;
 
@@ -44,6 +45,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockContractClient = new Mock<IContractClient>();
+        _mockInstanceQueryableStore = new Mock<IQueryableStateStore<ItemInstanceModel>>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<ItemService>>();
 
@@ -79,6 +81,11 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceCache))
             .Returns(_mockInstanceCacheStore.Object);
+
+        // Instance queryable store (MySQL LINQ queries)
+        _mockStateStoreFactory
+            .Setup(f => f.GetQueryableStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore))
+            .Returns(_mockInstanceQueryableStore.Object);
 
         // Default cache stores return null (cache miss) so tests hit persistent stores
         _mockTemplateCacheStore
@@ -1713,26 +1720,16 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var service = CreateService();
         var templateId = Guid.NewGuid();
         var targetRealm = Guid.NewGuid();
-        var otherId = Guid.NewGuid();
         var matchId = Guid.NewGuid();
 
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BannouJson.Serialize(new List<string> { matchId.ToString(), otherId.ToString() }));
-
         var matchModel = CreateStoredInstanceModel(matchId);
+        matchModel.TemplateId = templateId;
         matchModel.RealmId = targetRealm;
-        var otherModel = CreateStoredInstanceModel(otherId);
-        otherModel.RealmId = Guid.NewGuid();
 
-        // Implementation uses GetBulkAsync for performance
-        _mockInstanceStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new Dictionary<string, ItemInstanceModel>
-            {
-                [$"inst:{matchId}"] = matchModel,
-                [$"inst:{otherId}"] = otherModel
-            });
+        // Implementation uses GetQueryableStore for MySQL LINQ queries
+        _mockInstanceQueryableStore
+            .Setup(s => s.QueryAsync(It.IsAny<System.Linq.Expressions.Expression<Func<ItemInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ItemInstanceModel> { matchModel });
 
         var request = new ListItemsByTemplateRequest
         {
@@ -1761,19 +1758,17 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         var templateId = Guid.NewGuid();
         var ids = Enumerable.Range(0, 5).Select(_ => Guid.NewGuid()).ToList();
 
-        _mockInstanceStringStore
-            .Setup(s => s.GetAsync($"inst-template:{templateId}", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BannouJson.Serialize(ids.Select(id => id.ToString()).ToList()));
-
-        // Implementation uses GetBulkAsync for performance
-        var bulkResult = new Dictionary<string, ItemInstanceModel>();
-        foreach (var id in ids)
+        // Implementation uses GetQueryableStore for MySQL LINQ queries
+        var queryResult = ids.Select(id =>
         {
-            bulkResult[$"inst:{id}"] = CreateStoredInstanceModel(id);
-        }
-        _mockInstanceStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(bulkResult);
+            var model = CreateStoredInstanceModel(id);
+            model.TemplateId = templateId;
+            return model;
+        }).ToList();
+
+        _mockInstanceQueryableStore
+            .Setup(s => s.QueryAsync(It.IsAny<System.Linq.Expressions.Expression<Func<ItemInstanceModel, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(queryResult);
 
         var request = new ListItemsByTemplateRequest
         {

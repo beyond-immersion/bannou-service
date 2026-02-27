@@ -3,10 +3,10 @@
 // Synchronizes entity state from cinematic back to behavior when control returns.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
 

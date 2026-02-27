@@ -3,12 +3,12 @@
 // Builds cognition pipelines from templates with overrides applied.
 // =============================================================================
 
-using System.Diagnostics;
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.Bannou.Behavior.Cognition;
 

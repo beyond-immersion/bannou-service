@@ -15,12 +15,14 @@ public class ScaledTierCoordinatorTests
     private readonly Mock<ILogger<ScaledTierCoordinator>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public ScaledTierCoordinatorTests()
     {
         _mockRtpEngineClient = new Mock<IRtpEngineClient>();
         _mockLogger = new Mock<ILogger<ScaledTierCoordinator>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new VoiceServiceConfiguration
         {
             ScaledMaxParticipants = 100,
@@ -40,7 +42,8 @@ public class ScaledTierCoordinatorTests
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
             _mockMessageBus.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

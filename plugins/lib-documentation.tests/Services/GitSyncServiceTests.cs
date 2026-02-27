@@ -17,6 +17,7 @@ public class GitSyncServiceTests
 {
     private readonly Mock<ILogger<GitSyncService>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly GitSyncService _service;
 
@@ -24,11 +25,12 @@ public class GitSyncServiceTests
     {
         _mockLogger = new Mock<ILogger<GitSyncService>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new DocumentationServiceConfiguration
         {
             GitStoragePath = Path.Combine(Path.GetTempPath(), "bannou-git-test-" + Guid.NewGuid().ToString("N")[..8])
         };
-        _service = new GitSyncService(_mockLogger.Object, _configuration, _mockMessageBus.Object);
+        _service = new GitSyncService(_mockLogger.Object, _configuration, _mockMessageBus.Object, _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
