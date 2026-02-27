@@ -37,7 +37,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SlotResponse']>> {
     return this.client.invokeAsync<Schemas['CreateSlotRequest'], Schemas['SlotResponse']>(
-      '/save-load/slot/create', request, channel, timeout
+      '/save-load/slot/create',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SlotResponse']>> {
     return this.client.invokeAsync<Schemas['GetSlotRequest'], Schemas['SlotResponse']>(
-      '/save-load/slot/get', request, channel, timeout
+      '/save-load/slot/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +77,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListSlotsResponse']>> {
     return this.client.invokeAsync<Schemas['ListSlotsRequest'], Schemas['ListSlotsResponse']>(
-      '/save-load/slot/list', request, channel, timeout
+      '/save-load/slot/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -88,7 +97,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteSlotResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteSlotRequest'], Schemas['DeleteSlotResponse']>(
-      '/save-load/slot/delete', request, channel, timeout
+      '/save-load/slot/delete',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -105,7 +117,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SlotResponse']>> {
     return this.client.invokeAsync<Schemas['RenameSlotRequest'], Schemas['SlotResponse']>(
-      '/save-load/slot/rename', request, channel, timeout
+      '/save-load/slot/rename',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -122,7 +137,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SaveResponse']>> {
     return this.client.invokeAsync<Schemas['SaveRequest'], Schemas['SaveResponse']>(
-      '/save-load/save', request, channel, timeout
+      '/save-load/save',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -139,7 +157,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['LoadResponse']>> {
     return this.client.invokeAsync<Schemas['LoadRequest'], Schemas['LoadResponse']>(
-      '/save-load/load', request, channel, timeout
+      '/save-load/load',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -156,7 +177,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SaveDeltaResponse']>> {
     return this.client.invokeAsync<Schemas['SaveDeltaRequest'], Schemas['SaveDeltaResponse']>(
-      '/save-load/save-delta', request, channel, timeout
+      '/save-load/save-delta',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -173,7 +197,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['LoadResponse']>> {
     return this.client.invokeAsync<Schemas['LoadRequest'], Schemas['LoadResponse']>(
-      '/save-load/load-with-deltas', request, channel, timeout
+      '/save-load/load-with-deltas',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -190,7 +217,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SaveResponse']>> {
     return this.client.invokeAsync<Schemas['CollapseDeltasRequest'], Schemas['SaveResponse']>(
-      '/save-load/collapse-deltas', request, channel, timeout
+      '/save-load/collapse-deltas',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -207,7 +237,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListVersionsResponse']>> {
     return this.client.invokeAsync<Schemas['ListVersionsRequest'], Schemas['ListVersionsResponse']>(
-      '/save-load/version/list', request, channel, timeout
+      '/save-load/version/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +257,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['VersionResponse']>> {
     return this.client.invokeAsync<Schemas['PinVersionRequest'], Schemas['VersionResponse']>(
-      '/save-load/version/pin', request, channel, timeout
+      '/save-load/version/pin',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +277,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['VersionResponse']>> {
     return this.client.invokeAsync<Schemas['UnpinVersionRequest'], Schemas['VersionResponse']>(
-      '/save-load/version/unpin', request, channel, timeout
+      '/save-load/version/unpin',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -257,9 +296,10 @@ export class SaveLoadProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteVersionResponse']>> {
-    return this.client.invokeAsync<Schemas['DeleteVersionRequest'], Schemas['DeleteVersionResponse']>(
-      '/save-load/version/delete', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['DeleteVersionRequest'],
+      Schemas['DeleteVersionResponse']
+    >('/save-load/version/delete', request, channel, timeout);
   }
 
   /**
@@ -275,7 +315,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['QuerySavesResponse']>> {
     return this.client.invokeAsync<Schemas['QuerySavesRequest'], Schemas['QuerySavesResponse']>(
-      '/save-load/query', request, channel, timeout
+      '/save-load/query',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -292,7 +335,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SaveResponse']>> {
     return this.client.invokeAsync<Schemas['CopySaveRequest'], Schemas['SaveResponse']>(
-      '/save-load/copy', request, channel, timeout
+      '/save-load/copy',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -309,7 +355,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExportSavesResponse']>> {
     return this.client.invokeAsync<Schemas['ExportSavesRequest'], Schemas['ExportSavesResponse']>(
-      '/save-load/export', request, channel, timeout
+      '/save-load/export',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -325,9 +374,10 @@ export class SaveLoadProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['VerifyIntegrityResponse']>> {
-    return this.client.invokeAsync<Schemas['VerifyIntegrityRequest'], Schemas['VerifyIntegrityResponse']>(
-      '/save-load/verify', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['VerifyIntegrityRequest'],
+      Schemas['VerifyIntegrityResponse']
+    >('/save-load/verify', request, channel, timeout);
   }
 
   /**
@@ -343,7 +393,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SaveResponse']>> {
     return this.client.invokeAsync<Schemas['PromoteVersionRequest'], Schemas['SaveResponse']>(
-      '/save-load/version/promote', request, channel, timeout
+      '/save-load/version/promote',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -360,7 +413,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['MigrateSaveResponse']>> {
     return this.client.invokeAsync<Schemas['MigrateSaveRequest'], Schemas['MigrateSaveResponse']>(
-      '/save-load/migrate', request, channel, timeout
+      '/save-load/migrate',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -377,7 +433,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SchemaResponse']>> {
     return this.client.invokeAsync<Schemas['RegisterSchemaRequest'], Schemas['SchemaResponse']>(
-      '/save-load/schema/register', request, channel, timeout
+      '/save-load/schema/register',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -394,7 +453,10 @@ export class SaveLoadProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListSchemasResponse']>> {
     return this.client.invokeAsync<Schemas['ListSchemasRequest'], Schemas['ListSchemasResponse']>(
-      '/save-load/schema/list', request, channel, timeout
+      '/save-load/schema/list',
+      request,
+      channel,
+      timeout
     );
   }
 }

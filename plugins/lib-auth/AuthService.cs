@@ -1,4 +1,5 @@
 using BCrypt.Net;
+using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Account;
@@ -9,7 +10,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -35,7 +35,9 @@ export class VoiceProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['AnswerPeerRequest']>(
-      '/voice/peer/answer', request, channel
+      '/voice/peer/answer',
+      request,
+      channel
     );
   }
 
@@ -51,9 +53,10 @@ export class VoiceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BroadcastConsentStatus']>> {
-    return this.client.invokeAsync<Schemas['BroadcastConsentRequest'], Schemas['BroadcastConsentStatus']>(
-      '/voice/room/broadcast/request', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['BroadcastConsentRequest'],
+      Schemas['BroadcastConsentStatus']
+    >('/voice/room/broadcast/request', request, channel, timeout);
   }
 
   /**
@@ -68,9 +71,10 @@ export class VoiceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BroadcastConsentStatus']>> {
-    return this.client.invokeAsync<Schemas['BroadcastConsentResponse'], Schemas['BroadcastConsentStatus']>(
-      '/voice/room/broadcast/consent', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['BroadcastConsentResponse'],
+      Schemas['BroadcastConsentStatus']
+    >('/voice/room/broadcast/consent', request, channel, timeout);
   }
 
   /**
@@ -84,7 +88,9 @@ export class VoiceProxy {
     channel: number = 0
   ): Promise<void> {
     return this.client.sendEventAsync<Schemas['StopBroadcastConsentRequest']>(
-      '/voice/room/broadcast/stop', request, channel
+      '/voice/room/broadcast/stop',
+      request,
+      channel
     );
   }
 
@@ -100,8 +106,9 @@ export class VoiceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['BroadcastConsentStatus']>> {
-    return this.client.invokeAsync<Schemas['BroadcastStatusRequest'], Schemas['BroadcastConsentStatus']>(
-      '/voice/room/broadcast/status', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['BroadcastStatusRequest'],
+      Schemas['BroadcastConsentStatus']
+    >('/voice/room/broadcast/status', request, channel, timeout);
   }
 }

@@ -759,12 +759,6 @@ x-state-stores:
     service: Quest
     purpose: Per-character quest cooldown tracking
 
-  quest-idempotency:
-    backend: redis
-    prefix: "quest:idem"
-    service: Quest
-    purpose: Idempotency keys for accept/complete operations
-
   # ============================================================================
   # Resource Lifecycle Stores
   # ============================================================================

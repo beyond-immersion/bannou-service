@@ -2793,6 +2793,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatRoomResponse'
+  /chat/room/participant/unmute:
+    post:
+      operationId: UnmuteParticipant
+      summary: Unmute a participant
+      description: Removes a mute from a participant, allowing them to send 
+        messages again. Caller must be Owner or Moderator.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnmuteParticipantRequest'
+      responses:
+        '200':
+          description: Participant unmuted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+  /chat/room/participant/change-role:
+    post:
+      operationId: ChangeParticipantRole
+      summary: Change a participant's role
+      description: >
+        Changes a participant's role within a chat room. Only the room Owner can change
+        roles.
+        Cannot change own role or promote to Owner (ownership transfer happens automatically
+        when the owner leaves via LeaveRoom).
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeParticipantRoleRequest'
+      responses:
+        '200':
+          description: Role changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
   /chat/message/send:
     post:
       operationId: SendMessage
@@ -19497,6 +19546,26 @@ components:
           type: string
           format: uuid
           description: Template to chain into
+    ChangeParticipantRoleRequest:
+      type: object
+      additionalProperties: false
+      description: Request to change a participant's role in a chat room
+      required:
+      - roomId
+      - targetSessionId
+      - newRole
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room containing the participant
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant whose role will change
+        newRole:
+          $ref: '#/components/schemas/ChatParticipantRole'
+          description: New role to assign to the participant
     CharacterArchive:
       description: |
         Compressed archive of a dead character.
@@ -24510,12 +24579,18 @@ components:
       - code
       - name
       - objectives
+      - gameServiceId
+      - category
+      - difficulty
       properties:
         code:
           type: string
+          minLength: 1
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique quest code (uppercase, underscores)
         name:
           type: string
+          minLength: 1
           description: Display name of the quest
         description:
           type: string
@@ -24538,17 +24613,21 @@ components:
         cooldownSeconds:
           type: integer
           nullable: true
+          minimum: 0
           description: Cooldown in seconds for repeatable quests
         deadlineSeconds:
           type: integer
           nullable: true
+          minimum: 1
           description: Time limit in seconds (null for no deadline)
         maxQuestors:
           type: integer
           default: 1
+          minimum: 1
           description: Maximum party members (1 for solo)
         objectives:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/ObjectiveDefinition'
           description: List of quest objectives (ordered)
@@ -36188,10 +36267,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListQuestDefinitionsResponse:
       type: object
@@ -36230,10 +36312,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListQuestsResponse:
       type: object
@@ -39153,9 +39238,11 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           description: Unique objective code within quest
         name:
           type: string
+          minLength: 1
           description: Display name of the objective
         description:
           type: string
@@ -39166,6 +39253,7 @@ components:
           $ref: '#/components/schemas/ObjectiveType'
         requiredCount:
           type: integer
+          minimum: 1
           description: Count needed to complete
         targetEntityType:
           type: string
@@ -39185,8 +39273,11 @@ components:
           default: false
           description: Whether objective is hidden initially
         revealBehavior:
-          description: When a hidden objective is revealed in the quest log
-          $ref: '#/components/schemas/ObjectiveRevealBehavior'
+          description: When a hidden objective is revealed in the quest log 
+            (null defaults to ALWAYS)
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/ObjectiveRevealBehavior'
         optional:
           type: boolean
           default: false
@@ -40386,6 +40477,7 @@ components:
         minLevel:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum level for CHARACTER_LEVEL type
         factionCode:
           type: string
@@ -40406,6 +40498,7 @@ components:
         minAmount:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum amount for CURRENCY_AMOUNT type
     PrerequisiteType:
       type: string
@@ -43586,6 +43679,7 @@ components:
           description: Objective code
         incrementBy:
           type: integer
+          minimum: 1
           description: Amount to increment progress
         trackedEntityId:
           type: string
@@ -44158,13 +44252,8 @@ components:
       - type
       properties:
         type:
-          type: string
-          enum:
-          - CURRENCY
-          - ITEM
-          - EXPERIENCE
-          - REPUTATION
           description: Type of reward
+          $ref: '#/components/schemas/RewardType'
         currencyCode:
           type: string
           nullable: true
@@ -44172,6 +44261,7 @@ components:
         amount:
           type: integer
           nullable: true
+          minimum: 1
           description: Amount for CURRENCY/EXPERIENCE rewards
         itemCode:
           type: string
@@ -44180,11 +44270,20 @@ components:
         quantity:
           type: integer
           nullable: true
+          minimum: 1
           description: Quantity for ITEM rewards
         factionCode:
           type: string
           nullable: true
           description: Faction code for REPUTATION rewards
+    RewardType:
+      type: string
+      enum:
+      - CURRENCY
+      - ITEM
+      - EXPERIENCE
+      - REPUTATION
+      description: Type of reward granted on quest completion
     RoomTypeResponse:
       type: object
       additionalProperties: false
@@ -48988,6 +49087,22 @@ components:
             at grant time)
           allOf:
           - $ref: '#/components/schemas/EntryMetadata'
+    UnmuteParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unmute a participant in a chat room
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room containing the muted participant
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to unmute
     UnpinMessageRequest:
       type: object
       additionalProperties: false

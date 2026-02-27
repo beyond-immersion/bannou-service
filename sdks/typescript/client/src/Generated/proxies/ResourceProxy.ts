@@ -36,9 +36,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RegisterReferenceResponse']>> {
-    return this.client.invokeAsync<Schemas['RegisterReferenceRequest'], Schemas['RegisterReferenceResponse']>(
-      '/resource/register', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['RegisterReferenceRequest'],
+      Schemas['RegisterReferenceResponse']
+    >('/resource/register', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['UnregisterReferenceResponse']>> {
-    return this.client.invokeAsync<Schemas['UnregisterReferenceRequest'], Schemas['UnregisterReferenceResponse']>(
-      '/resource/unregister', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UnregisterReferenceRequest'],
+      Schemas['UnregisterReferenceResponse']
+    >('/resource/unregister', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckReferencesResponse']>> {
-    return this.client.invokeAsync<Schemas['CheckReferencesRequest'], Schemas['CheckReferencesResponse']>(
-      '/resource/check', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CheckReferencesRequest'],
+      Schemas['CheckReferencesResponse']
+    >('/resource/check', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListReferencesResponse']>> {
-    return this.client.invokeAsync<Schemas['ListReferencesRequest'], Schemas['ListReferencesResponse']>(
-      '/resource/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListReferencesRequest'],
+      Schemas['ListReferencesResponse']
+    >('/resource/list', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExecuteCleanupResponse']>> {
-    return this.client.invokeAsync<Schemas['ExecuteCleanupRequest'], Schemas['ExecuteCleanupResponse']>(
-      '/resource/cleanup/execute', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ExecuteCleanupRequest'],
+      Schemas['ExecuteCleanupResponse']
+    >('/resource/cleanup/execute', request, channel, timeout);
   }
 
   /**
@@ -121,9 +126,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListCleanupCallbacksResponse']>> {
-    return this.client.invokeAsync<Schemas['ListCleanupCallbacksRequest'], Schemas['ListCleanupCallbacksResponse']>(
-      '/resource/cleanup/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListCleanupCallbacksRequest'],
+      Schemas['ListCleanupCallbacksResponse']
+    >('/resource/cleanup/list', request, channel, timeout);
   }
 
   /**
@@ -138,9 +144,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExecuteCompressResponse']>> {
-    return this.client.invokeAsync<Schemas['ExecuteCompressRequest'], Schemas['ExecuteCompressResponse']>(
-      '/resource/compress/execute', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ExecuteCompressRequest'],
+      Schemas['ExecuteCompressResponse']
+    >('/resource/compress/execute', request, channel, timeout);
   }
 
   /**
@@ -155,9 +162,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListCompressCallbacksResponse']>> {
-    return this.client.invokeAsync<Schemas['ListCompressCallbacksRequest'], Schemas['ListCompressCallbacksResponse']>(
-      '/resource/compress/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListCompressCallbacksRequest'],
+      Schemas['ListCompressCallbacksResponse']
+    >('/resource/compress/list', request, channel, timeout);
   }
 
   /**
@@ -173,7 +181,10 @@ export class ResourceProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetArchiveResponse']>> {
     return this.client.invokeAsync<Schemas['GetArchiveRequest'], Schemas['GetArchiveResponse']>(
-      '/resource/archive/get', request, channel, timeout
+      '/resource/archive/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -189,9 +200,10 @@ export class ResourceProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ExecuteSnapshotResponse']>> {
-    return this.client.invokeAsync<Schemas['ExecuteSnapshotRequest'], Schemas['ExecuteSnapshotResponse']>(
-      '/resource/snapshot/execute', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ExecuteSnapshotRequest'],
+      Schemas['ExecuteSnapshotResponse']
+    >('/resource/snapshot/execute', request, channel, timeout);
   }
 
   /**
@@ -207,7 +219,10 @@ export class ResourceProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetSnapshotResponse']>> {
     return this.client.invokeAsync<Schemas['GetSnapshotRequest'], Schemas['GetSnapshotResponse']>(
-      '/resource/snapshot/get', request, channel, timeout
+      '/resource/snapshot/get',
+      request,
+      channel,
+      timeout
     );
   }
 }

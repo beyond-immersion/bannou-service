@@ -3959,6 +3959,361 @@ public partial class ChatController
 
     #endregion
 
+    #region Meta Endpoints for UnmuteParticipant
+
+    private static readonly string _UnmuteParticipant_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/UnmuteParticipantRequest",
+    "$defs": {
+        "UnmuteParticipantRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to unmute a participant in a chat room",
+            "required": [
+                "roomId",
+                "targetSessionId"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Room containing the muted participant"
+                },
+                "targetSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID of participant to unmute"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _UnmuteParticipant_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ChatRoomResponse",
+    "$defs": {
+        "ChatRoomResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
+            "required": [
+                "roomId",
+                "roomTypeCode",
+                "status",
+                "participantCount",
+                "isArchived",
+                "createdAt"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique room identifier"
+                },
+                "roomTypeCode": {
+                    "type": "string",
+                    "description": "Room type code"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Connect session ID if companion room"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Governing contract ID"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable room name"
+                },
+                "status": {
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
+                },
+                "participantCount": {
+                    "type": "integer",
+                    "description": "Current number of participants"
+                },
+                "maxParticipants": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum participant limit"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether the room has been archived"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the room was created"
+                },
+                "metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "ChatRoomStatus": {
+            "type": "string",
+            "description": "Current state of a chat room",
+            "enum": [
+                "Active",
+                "Locked",
+                "Archived"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _UnmuteParticipant_Info = """
+{
+    "summary": "Unmute a participant",
+    "description": "Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "UnmuteParticipant"
+}
+""";
+
+    /// <summary>Returns endpoint information for UnmuteParticipant</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/unmute/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnmuteParticipant_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/unmute",
+            _UnmuteParticipant_Info));
+
+    /// <summary>Returns request schema for UnmuteParticipant</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/unmute/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnmuteParticipant_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/unmute",
+            "request-schema",
+            _UnmuteParticipant_RequestSchema));
+
+    /// <summary>Returns response schema for UnmuteParticipant</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/unmute/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnmuteParticipant_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/unmute",
+            "response-schema",
+            _UnmuteParticipant_ResponseSchema));
+
+    /// <summary>Returns full schema for UnmuteParticipant</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/unmute/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UnmuteParticipant_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/unmute",
+            _UnmuteParticipant_Info,
+            _UnmuteParticipant_RequestSchema,
+            _UnmuteParticipant_ResponseSchema));
+
+    #endregion
+
+    #region Meta Endpoints for ChangeParticipantRole
+
+    private static readonly string _ChangeParticipantRole_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ChangeParticipantRoleRequest",
+    "$defs": {
+        "ChangeParticipantRoleRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to change a participant's role in a chat room",
+            "required": [
+                "roomId",
+                "targetSessionId",
+                "newRole"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Room containing the participant"
+                },
+                "targetSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Session ID of participant whose role will change"
+                },
+                "newRole": {
+                    "$ref": "#/$defs/ChatParticipantRole",
+                    "description": "New role to assign to the participant"
+                }
+            }
+        },
+        "ChatParticipantRole": {
+            "type": "string",
+            "description": "Participant role within a chat room determining moderation privileges",
+            "enum": [
+                "Owner",
+                "Moderator",
+                "Member",
+                "ReadOnly"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ChangeParticipantRole_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ChatRoomResponse",
+    "$defs": {
+        "ChatRoomResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Chat room details including status and participant count",
+            "required": [
+                "roomId",
+                "roomTypeCode",
+                "status",
+                "participantCount",
+                "isArchived",
+                "createdAt"
+            ],
+            "properties": {
+                "roomId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique room identifier"
+                },
+                "roomTypeCode": {
+                    "type": "string",
+                    "description": "Room type code"
+                },
+                "sessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Connect session ID if companion room"
+                },
+                "contractId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Governing contract ID"
+                },
+                "displayName": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Human-readable room name"
+                },
+                "status": {
+                    "$ref": "#/$defs/ChatRoomStatus",
+                    "description": "Current room status"
+                },
+                "participantCount": {
+                    "type": "integer",
+                    "description": "Current number of participants"
+                },
+                "maxParticipants": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum participant limit"
+                },
+                "isArchived": {
+                    "type": "boolean",
+                    "description": "Whether the room has been archived"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the room was created"
+                },
+                "metadata": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Client-only metadata stored as JSON string. No Bannou plugin reads specific keys from this field by convention."
+                }
+            }
+        },
+        "ChatRoomStatus": {
+            "type": "string",
+            "description": "Current state of a chat room",
+            "enum": [
+                "Active",
+                "Locked",
+                "Archived"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _ChangeParticipantRole_Info = """
+{
+    "summary": "Change a participant's role",
+    "description": "Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "ChangeParticipantRole"
+}
+""";
+
+    /// <summary>Returns endpoint information for ChangeParticipantRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/change-role/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ChangeParticipantRole_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/change-role",
+            _ChangeParticipantRole_Info));
+
+    /// <summary>Returns request schema for ChangeParticipantRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/change-role/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ChangeParticipantRole_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/change-role",
+            "request-schema",
+            _ChangeParticipantRole_RequestSchema));
+
+    /// <summary>Returns response schema for ChangeParticipantRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/change-role/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ChangeParticipantRole_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/change-role",
+            "response-schema",
+            _ChangeParticipantRole_ResponseSchema));
+
+    /// <summary>Returns full schema for ChangeParticipantRole</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/chat/room/participant/change-role/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ChangeParticipantRole_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Chat",
+            "POST",
+            "/chat/room/participant/change-role",
+            _ChangeParticipantRole_Info,
+            _ChangeParticipantRole_RequestSchema,
+            _ChangeParticipantRole_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for SendMessage
 
     private static readonly string _SendMessage_RequestSchema = """

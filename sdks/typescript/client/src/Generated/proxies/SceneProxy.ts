@@ -37,7 +37,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SceneResponse']>> {
     return this.client.invokeAsync<Schemas['CreateSceneRequest'], Schemas['SceneResponse']>(
-      '/scene/create', request, channel, timeout
+      '/scene/create',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -54,7 +57,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetSceneResponse']>> {
     return this.client.invokeAsync<Schemas['GetSceneRequest'], Schemas['GetSceneResponse']>(
-      '/scene/get', request, channel, timeout
+      '/scene/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -71,7 +77,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListScenesResponse']>> {
     return this.client.invokeAsync<Schemas['ListScenesRequest'], Schemas['ListScenesResponse']>(
-      '/scene/list', request, channel, timeout
+      '/scene/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -88,7 +97,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SceneResponse']>> {
     return this.client.invokeAsync<Schemas['UpdateSceneRequest'], Schemas['SceneResponse']>(
-      '/scene/update', request, channel, timeout
+      '/scene/update',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -105,7 +117,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DeleteSceneResponse']>> {
     return this.client.invokeAsync<Schemas['DeleteSceneRequest'], Schemas['DeleteSceneResponse']>(
-      '/scene/delete', request, channel, timeout
+      '/scene/delete',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -122,7 +137,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidationResult']>> {
     return this.client.invokeAsync<Schemas['ValidateSceneRequest'], Schemas['ValidationResult']>(
-      '/scene/validate', request, channel, timeout
+      '/scene/validate',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -139,7 +157,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CheckoutResponse']>> {
     return this.client.invokeAsync<Schemas['CheckoutRequest'], Schemas['CheckoutResponse']>(
-      '/scene/checkout', request, channel, timeout
+      '/scene/checkout',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -156,7 +177,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CommitResponse']>> {
     return this.client.invokeAsync<Schemas['CommitRequest'], Schemas['CommitResponse']>(
-      '/scene/commit', request, channel, timeout
+      '/scene/commit',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -173,7 +197,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['DiscardResponse']>> {
     return this.client.invokeAsync<Schemas['DiscardRequest'], Schemas['DiscardResponse']>(
-      '/scene/discard', request, channel, timeout
+      '/scene/discard',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -190,7 +217,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HeartbeatResponse']>> {
     return this.client.invokeAsync<Schemas['HeartbeatRequest'], Schemas['HeartbeatResponse']>(
-      '/scene/heartbeat', request, channel, timeout
+      '/scene/heartbeat',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -207,7 +237,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HistoryResponse']>> {
     return this.client.invokeAsync<Schemas['HistoryRequest'], Schemas['HistoryResponse']>(
-      '/scene/history', request, channel, timeout
+      '/scene/history',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -223,9 +256,10 @@ export class SceneProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetValidationRulesResponse']>> {
-    return this.client.invokeAsync<Schemas['GetValidationRulesRequest'], Schemas['GetValidationRulesResponse']>(
-      '/scene/get-validation-rules', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetValidationRulesRequest'],
+      Schemas['GetValidationRulesResponse']
+    >('/scene/get-validation-rules', request, channel, timeout);
   }
 
   /**
@@ -241,7 +275,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SearchScenesResponse']>> {
     return this.client.invokeAsync<Schemas['SearchScenesRequest'], Schemas['SearchScenesResponse']>(
-      '/scene/search', request, channel, timeout
+      '/scene/search',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -257,9 +294,10 @@ export class SceneProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['FindReferencesResponse']>> {
-    return this.client.invokeAsync<Schemas['FindReferencesRequest'], Schemas['FindReferencesResponse']>(
-      '/scene/find-references', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['FindReferencesRequest'],
+      Schemas['FindReferencesResponse']
+    >('/scene/find-references', request, channel, timeout);
   }
 
   /**
@@ -274,9 +312,10 @@ export class SceneProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['FindAssetUsageResponse']>> {
-    return this.client.invokeAsync<Schemas['FindAssetUsageRequest'], Schemas['FindAssetUsageResponse']>(
-      '/scene/find-asset-usage', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['FindAssetUsageRequest'],
+      Schemas['FindAssetUsageResponse']
+    >('/scene/find-asset-usage', request, channel, timeout);
   }
 
   /**
@@ -292,7 +331,10 @@ export class SceneProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['SceneResponse']>> {
     return this.client.invokeAsync<Schemas['DuplicateSceneRequest'], Schemas['SceneResponse']>(
-      '/scene/duplicate', request, channel, timeout
+      '/scene/duplicate',
+      request,
+      channel,
+      timeout
     );
   }
 }

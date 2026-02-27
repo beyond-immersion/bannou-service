@@ -54,114 +54,122 @@ paths:
         ,\n    \"$defs\": {\n        \"CreateQuestDefinitionRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to create a new quest definition with objectives and rewards\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"code\",\n                \"name\",\n                \"objectives\"\
-        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique quest code (uppercase, underscores)\"\n                },\n     \
-        \           \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the quest\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Quest description for players\"\
-        \n                },\n                \"category\": {\n                    \"description\": \"Quest category for organization\"\
-        ,\n                    \"$ref\": \"#/$defs/QuestCategory\"\n                },\n                \"difficulty\": {\n\
-        \                    \"description\": \"Difficulty rating of the quest\",\n                    \"$ref\": \"#/$defs/QuestDifficulty\"\
-        \n                },\n                \"levelRequirement\": {\n                    \"type\": \"integer\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Minimum character level required\"\n  \
-        \              },\n                \"repeatable\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"default\": false,\n                    \"description\": \"Whether quest can be repeated\"\n              \
-        \  },\n                \"cooldownSeconds\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Cooldown in seconds for repeatable quests\"\n          \
-        \      },\n                \"deadlineSeconds\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"nullable\": true,\n                    \"description\": \"Time limit in seconds (null for no deadline)\"\n  \
-        \              },\n                \"maxQuestors\": {\n                    \"type\": \"integer\",\n              \
-        \      \"default\": 1,\n                    \"description\": \"Maximum party members (1 for solo)\"\n            \
-        \    },\n                \"objectives\": {\n                    \"type\": \"array\",\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/ObjectiveDefinition\"\n                    },\n                 \
-        \   \"description\": \"List of quest objectives (ordered)\"\n                },\n                \"prerequisites\"\
-        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/PrerequisiteDefinition\"\n                    },\n              \
-        \      \"description\": \"Requirements to accept the quest\"\n                },\n                \"rewards\": {\n\
-        \                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"$ref\": \"#/$defs/RewardDefinition\"\n                    },\n                    \"\
-        description\": \"Rewards granted on completion\"\n                },\n                \"tags\": {\n              \
-        \      \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n         \
-        \               \"type\": \"string\"\n                    },\n                    \"description\": \"Tags for filtering
-        and organization\"\n                },\n                \"questGiverCharacterId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Character who offers this quest (null for any)\"\n                },\n                \"\
-        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Game service this quest belongs to\"\n                }\n            }\n        },\n\
-        \        \"QuestCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"MAIN\"\
-        ,\n                \"SIDE\",\n                \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\"\
-        ,\n                \"EVENT\",\n                \"TUTORIAL\"\n            ],\n            \"description\": \"Category
-        of quest for organization\"\n        },\n        \"QuestDifficulty\": {\n            \"type\": \"string\",\n     \
-        \       \"enum\": [\n                \"TRIVIAL\",\n                \"EASY\",\n                \"NORMAL\",\n      \
-        \          \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\n            ],\n            \"description\"\
-        : \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Definition of a single quest objective with tracking parameters\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
-        ,\n                \"objectiveType\",\n                \"requiredCount\"\n            ],\n            \"properties\"\
-        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Unique objective code within quest\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Display name of the objective\"\n                },\n      \
-        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        ,\n                \"gameServiceId\",\n                \"category\",\n                \"difficulty\"\n           \
+        \ ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n                    \"\
+        description\": \"Unique quest code (uppercase, underscores)\"\n                },\n                \"name\": {\n \
+        \                   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"Display name of the quest\"\n                },\n                \"description\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Quest description for
+        players\"\n                },\n                \"category\": {\n                    \"description\": \"Quest category
+        for organization\",\n                    \"$ref\": \"#/$defs/QuestCategory\"\n                },\n               \
+        \ \"difficulty\": {\n                    \"description\": \"Difficulty rating of the quest\",\n                  \
+        \  \"$ref\": \"#/$defs/QuestDifficulty\"\n                },\n                \"levelRequirement\": {\n          \
+        \          \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Minimum character level required\"\n                },\n                \"repeatable\": {\n                    \"\
+        type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether quest
+        can be repeated\"\n                },\n                \"cooldownSeconds\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Cooldown in seconds for repeatable quests\"\n                },\n                \"deadlineSeconds\": {\n    \
+        \                \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Time limit in seconds (null for no deadline)\"\n                },\n\
+        \                \"maxQuestors\": {\n                    \"type\": \"integer\",\n                    \"default\":
+        1,\n                    \"minimum\": 1,\n                    \"description\": \"Maximum party members (1 for solo)\"\
+        \n                },\n                \"objectives\": {\n                    \"type\": \"array\",\n              \
+        \      \"minItems\": 1,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ObjectiveDefinition\"\
+        \n                    },\n                    \"description\": \"List of quest objectives (ordered)\"\n          \
+        \      },\n                \"prerequisites\": {\n                    \"type\": \"array\",\n                    \"\
+        nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PrerequisiteDefinition\"\
+        \n                    },\n                    \"description\": \"Requirements to accept the quest\"\n            \
+        \    },\n                \"rewards\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RewardDefinition\"\n      \
+        \              },\n                    \"description\": \"Rewards granted on completion\"\n                },\n  \
+        \              \"tags\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n  \
+        \                  \"items\": {\n                        \"type\": \"string\"\n                    },\n          \
+        \          \"description\": \"Tags for filtering and organization\"\n                },\n                \"questGiverCharacterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Character who offers this quest (null for any)\"\n     \
+        \           },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Game service this quest belongs to\"\n        \
+        \        }\n            }\n        },\n        \"QuestCategory\": {\n            \"type\": \"string\",\n         \
+        \   \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n                \"BOUNTY\",\n             \
+        \   \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n                \"TUTORIAL\"\n          \
+        \  ],\n            \"description\": \"Category of quest for organization\"\n        },\n        \"QuestDifficulty\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"TRIVIAL\",\n                \"\
+        EASY\",\n                \"NORMAL\",\n                \"HARD\",\n                \"HEROIC\",\n                \"LEGENDARY\"\
+        \n            ],\n            \"description\": \"Difficulty rating of the quest\"\n        },\n        \"ObjectiveDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Definition of a single quest objective with
+        tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
+        \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
+        \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
         : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
         \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
-        \            \"type\": \"integer\",\n                    \"description\": \"Count needed to complete\"\n         \
-        \       },\n                \"targetEntityType\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect objectives\"\n      \
-        \          },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Subtype filter (e.g., species:wolf)\"\n    \
-        \            },\n                \"targetLocationId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Location
-        for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                    \"type\":
-        \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether objective is
-        hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"description\"\
-        : \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
+        Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
+        objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Subtype filter (e.g., species:wolf)\"\
+        \n                },\n                \"targetLocationId\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
+        \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
+        objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestDefinitionResponse\"\
         ,\n    \"$defs\": {\n        \"QuestDefinitionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Complete quest definition including objectives, prerequisites, and rewards\",\n            \"additionalProperties\"\
@@ -220,13 +228,14 @@ paths:
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
         \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique objective code within quest\"\n                },\n             \
-        \   \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of
-        the objective\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objective description\"\n     \
-        \           },\n                \"objectiveType\": {\n                    \"description\": \"Type of objective determining
-        progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n        \
-        \        \"requiredCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
+        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
         Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
         objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
@@ -236,53 +245,57 @@ paths:
         : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
         \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
-        description\": \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new quest definition\",\n    \"description\": \"Creates a quest
         definition wrapping a contract template with quest metadata.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"createQuestDefinition\"\n}"
@@ -376,13 +389,14 @@ paths:
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
         \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique objective code within quest\"\n                },\n             \
-        \   \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of
-        the objective\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objective description\"\n     \
-        \           },\n                \"objectiveType\": {\n                    \"description\": \"Type of objective determining
-        progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n        \
-        \        \"requiredCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
+        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
         Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
         objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
@@ -392,53 +406,57 @@ paths:
         : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
         \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
-        description\": \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get quest definition by ID or code\",\n    \"description\": \"Retrieves
         a quest definition by its unique identifier or code.\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"getQuestDefinition\"\n}"
@@ -481,9 +499,10 @@ paths:
         \      },\n                \"includeDeprecated\": {\n                    \"type\": \"boolean\",\n                \
         \    \"default\": false,\n                    \"description\": \"Include deprecated definitions\"\n              \
         \  },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\":
-        50,\n                    \"description\": \"Max results\"\n                },\n                \"offset\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Pagination offset\"\n                }\n            }\n        },\n        \"QuestCategory\": {\n            \"\
+        50,\n                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\"\
+        : \"Max results per page\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\":
+        \"Pagination offset\"\n                }\n            }\n        },\n        \"QuestCategory\": {\n            \"\
         type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n                \"SIDE\",\n             \
         \   \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\",\n           \
         \     \"TUTORIAL\"\n            ],\n            \"description\": \"Category of quest for organization\"\n        },\n\
@@ -556,13 +575,14 @@ paths:
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
         \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique objective code within quest\"\n                },\n             \
-        \   \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of
-        the objective\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objective description\"\n     \
-        \           },\n                \"objectiveType\": {\n                    \"description\": \"Type of objective determining
-        progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n        \
-        \        \"requiredCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
+        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
         Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
         objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
@@ -572,53 +592,57 @@ paths:
         : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
         \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
-        description\": \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List quest definitions with filtering\",\n    \"description\": \"Lists
         quest definitions with optional filtering by category, difficulty, tags.\",\n    \"tags\": [\n        \"Definitions\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listQuestDefinitions\"\n}"
@@ -729,13 +753,14 @@ paths:
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
         \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique objective code within quest\"\n                },\n             \
-        \   \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of
-        the objective\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objective description\"\n     \
-        \           },\n                \"objectiveType\": {\n                    \"description\": \"Type of objective determining
-        progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n        \
-        \        \"requiredCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
+        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
         Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
         objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
@@ -745,53 +770,57 @@ paths:
         : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
         \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
-        description\": \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update quest definition metadata\",\n    \"description\": \"Updates quest
         metadata (not contract template - that's immutable).\",\n    \"tags\": [\n        \"Definitions\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"updateQuestDefinition\"\n}"
@@ -886,13 +915,14 @@ paths:
         tracking parameters\",\n            \"additionalProperties\": false,\n            \"required\": [\n              \
         \  \"code\",\n                \"name\",\n                \"objectiveType\",\n                \"requiredCount\"\n \
         \           ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique objective code within quest\"\n                },\n             \
-        \   \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of
-        the objective\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Objective description\"\n     \
-        \           },\n                \"objectiveType\": {\n                    \"description\": \"Type of objective determining
-        progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n        \
-        \        \"requiredCount\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        ,\n                    \"minLength\": 1,\n                    \"description\": \"Unique objective code within quest\"\
+        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
+        \ \"minLength\": 1,\n                    \"description\": \"Display name of the objective\"\n                },\n\
+        \                \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
+        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
+        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
         Count needed to complete\"\n                },\n                \"targetEntityType\": {\n                    \"type\"\
         : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect
         objectives\"\n                },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\"\
@@ -902,53 +932,57 @@ paths:
         : \"Location for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                \
         \    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether
         objective is hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"\
-        description\": \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
+        description\": \"When a hidden objective is revealed in the quest log (null defaults to ALWAYS)\",\n             \
+        \       \"nullable\": true,\n                    \"allOf\": [\n                        {\n                       \
+        \     \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\n                        }\n                    ]\n          \
+        \      },\n                \"optional\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether objective is optional for completion\"\n                }\n\
+        \            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n                \"TRAVEL\"\
+        ,\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n                \"ESCORT\"\
+        ,\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n            \"description\": \"Type of
+        objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\",\n    \
+        \            \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When a hidden
+        objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\",\n   \
+        \         \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n\
+        \            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of prerequisite
+        check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n                \"questCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"minLevel\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n       \
+        \             \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"\
+        factionCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n           \
+        \         \"description\": \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item
+        code for ITEM_OWNED type\"\n                },\n                \"currencyCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT
+        type\"\n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n       \
+        \             \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum
+        amount for CURRENCY_AMOUNT type\"\n                }\n            }\n        },\n        \"PrerequisiteType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n              \
+        \  \"CHARACTER_LEVEL\",\n                \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\
+        \n            ],\n            \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\"\
         ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
         \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        reward\",\n                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark quest definition as deprecated\",\n    \"description\": \"Marks a
         quest definition as deprecated. No new instances can be created.\",\n    \"tags\": [\n        \"Definitions\"\n  \
         \  ],\n    \"deprecated\": false,\n    \"operationId\": \"deprecateQuestDefinition\"\n}"
@@ -1276,10 +1310,11 @@ paths:
         \               \"items\": {\n                        \"$ref\": \"#/$defs/QuestStatus\"\n                    },\n\
         \                    \"description\": \"Filter by statuses (null for all)\"\n                },\n                \"\
         limit\": {\n                    \"type\": \"integer\",\n                    \"default\": 50,\n                   \
-        \ \"description\": \"Max results\"\n                },\n                \"offset\": {\n                    \"type\"\
-        : \"integer\",\n                    \"default\": 0,\n                    \"description\": \"Pagination offset\"\n\
-        \                }\n            }\n        },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n   \
-        \         \"enum\": [\n                \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n\
+        \ \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Max results per page\"\
+        \n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                \
+        \    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"Pagination offset\"\
+        \n                }\n            }\n        },\n        \"QuestStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"ACTIVE\",\n                \"COMPLETED\",\n                \"FAILED\",\n\
         \                \"ABANDONED\",\n                \"EXPIRED\"\n            ],\n            \"description\": \"Current
         status of a quest instance\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListQuestsResponse\"\
@@ -1446,70 +1481,75 @@ paths:
         ,\n            \"description\": \"Definition of a single quest objective with tracking parameters\",\n           \
         \ \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"objectiveType\",\n                \"requiredCount\"\n            ],\n            \"properties\"\
-        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Unique objective code within quest\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Display name of the objective\"\n                },\n      \
-        \          \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Objective description\"\n                },\n                \"objectiveType\"\
-        : {\n                    \"description\": \"Type of objective determining progress tracking logic\",\n           \
-        \         \"$ref\": \"#/$defs/ObjectiveType\"\n                },\n                \"requiredCount\": {\n        \
-        \            \"type\": \"integer\",\n                    \"description\": \"Count needed to complete\"\n         \
-        \       },\n                \"targetEntityType\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Entity type for kill/collect objectives\"\n      \
-        \          },\n                \"targetEntitySubtype\": {\n                    \"type\": \"string\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Subtype filter (e.g., species:wolf)\"\n    \
-        \            },\n                \"targetLocationId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Location
-        for travel/deliver objectives\"\n                },\n                \"hidden\": {\n                    \"type\":
-        \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether objective is
-        hidden initially\"\n                },\n                \"revealBehavior\": {\n                    \"description\"\
-        : \"When a hidden objective is revealed in the quest log\",\n                    \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
-        \n                },\n                \"optional\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"Whether objective is optional for completion\"\n\
-        \                }\n            }\n        },\n        \"ObjectiveType\": {\n            \"type\": \"string\",\n \
-        \           \"enum\": [\n                \"KILL\",\n                \"COLLECT\",\n                \"DELIVER\",\n \
-        \               \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\",\n                \"CRAFT\",\n\
-        \                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\n            ],\n          \
-        \  \"description\": \"Type of objective determining progress tracking logic\"\n        },\n        \"ObjectiveRevealBehavior\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"ALWAYS\",\n                \"ON_PROGRESS\"\
-        ,\n                \"ON_COMPLETE\",\n                \"NEVER\"\n            ],\n            \"description\": \"When
-        a hidden objective is revealed in the quest log\"\n        },\n        \"PrerequisiteDefinition\": {\n           \
-        \ \"type\": \"object\",\n            \"description\": \"Requirement that must be met before a quest can be accepted\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n         \
-        \   ],\n            \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of
-        prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\n                },\n          \
-        \      \"questCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Quest code for QUEST_COMPLETED type\"\n                },\n                \"\
-        minLevel\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Minimum level for CHARACTER_LEVEL type\"\n                },\n                \"factionCode\"\
+        : {\n                \"code\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"description\": \"Unique objective code within quest\"\n                },\n               \
+        \ \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                \
+        \    \"description\": \"Display name of the objective\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Objective description\"\n                },\n                \"objectiveType\": {\n                    \"description\"\
+        : \"Type of objective determining progress tracking logic\",\n                    \"$ref\": \"#/$defs/ObjectiveType\"\
+        \n                },\n                \"requiredCount\": {\n                    \"type\": \"integer\",\n         \
+        \           \"minimum\": 1,\n                    \"description\": \"Count needed to complete\"\n                },\n\
+        \                \"targetEntityType\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Entity type for kill/collect objectives\"\n                },\n  \
+        \              \"targetEntitySubtype\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Subtype filter (e.g., species:wolf)\"\n                },\n      \
+        \          \"targetLocationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Location for travel/deliver
+        objectives\"\n                },\n                \"hidden\": {\n                    \"type\": \"boolean\",\n    \
+        \                \"default\": false,\n                    \"description\": \"Whether objective is hidden initially\"\
+        \n                },\n                \"revealBehavior\": {\n                    \"description\": \"When a hidden
+        objective is revealed in the quest log (null defaults to ALWAYS)\",\n                    \"nullable\": true,\n   \
+        \                 \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/ObjectiveRevealBehavior\"\
+        \n                        }\n                    ]\n                },\n                \"optional\": {\n        \
+        \            \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether objective is optional for completion\"\n                }\n            }\n        },\n        \"ObjectiveType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"KILL\",\n                \"COLLECT\"\
+        ,\n                \"DELIVER\",\n                \"TRAVEL\",\n                \"DISCOVER\",\n                \"TALK\"\
+        ,\n                \"CRAFT\",\n                \"ESCORT\",\n                \"DEFEND\",\n                \"CUSTOM\"\
+        \n            ],\n            \"description\": \"Type of objective determining progress tracking logic\"\n       \
+        \ },\n        \"ObjectiveRevealBehavior\": {\n            \"type\": \"string\",\n            \"enum\": [\n       \
+        \         \"ALWAYS\",\n                \"ON_PROGRESS\",\n                \"ON_COMPLETE\",\n                \"NEVER\"\
+        \n            ],\n            \"description\": \"When a hidden objective is revealed in the quest log\"\n        },\n\
+        \        \"PrerequisiteDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Requirement
+        that must be met before a quest can be accepted\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"type\"\n            ],\n            \"properties\": {\n                \"type\": {\n      \
+        \              \"description\": \"Type of prerequisite check\",\n                    \"$ref\": \"#/$defs/PrerequisiteType\"\
+        \n                },\n                \"questCode\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Quest code for QUEST_COMPLETED type\"\n       \
+        \         },\n                \"minLevel\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 0,\n                    \"description\": \"Minimum level for CHARACTER_LEVEL
+        type\"\n                },\n                \"factionCode\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Faction code for REPUTATION type\"\n  \
+        \              },\n                \"minReputation\": {\n                    \"type\": \"integer\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Minimum reputation for REPUTATION type\"\n  \
+        \              },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED type\"\n                },\n\
+        \                \"currencyCode\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\n                },\n   \
+        \             \"minAmount\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"minimum\": 0,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\
+        \n                }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n         \
+        \       \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n  \
+        \          \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n        \
+        \    \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n    \
+        \        \"properties\": {\n                \"type\": {\n                    \"description\": \"Type of reward\",\n\
+        \                    \"$ref\": \"#/$defs/RewardType\"\n                },\n                \"currencyCode\": {\n \
+        \                   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Currency code for CURRENCY rewards\"\n                },\n                \"amount\": {\n                    \"\
+        type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n             \
+        \       \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n                },\n                \"itemCode\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION type\"\n                },\n                \"minReputation\": {\n               \
-        \     \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Minimum
-        reputation for REPUTATION type\"\n                },\n                \"itemCode\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Item code for ITEM_OWNED
-        type\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY_AMOUNT type\"\
-        \n                },\n                \"minAmount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Minimum amount for CURRENCY_AMOUNT type\"\n  \
-        \              }\n            }\n        },\n        \"PrerequisiteType\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"QUEST_COMPLETED\",\n                \"CHARACTER_LEVEL\",\n           \
-        \     \"REPUTATION\",\n                \"ITEM_OWNED\",\n                \"CURRENCY_AMOUNT\"\n            ],\n    \
-        \        \"description\": \"Type of prerequisite check\"\n        },\n        \"RewardDefinition\": {\n          \
-        \  \"type\": \"object\",\n            \"description\": \"Reward granted when a quest is completed\",\n           \
-        \ \"additionalProperties\": false,\n            \"required\": [\n                \"type\"\n            ],\n      \
-        \      \"properties\": {\n                \"type\": {\n                    \"type\": \"string\",\n               \
-        \     \"enum\": [\n                        \"CURRENCY\",\n                        \"ITEM\",\n                    \
-        \    \"EXPERIENCE\",\n                        \"REPUTATION\"\n                    ],\n                    \"description\"\
-        : \"Type of reward\"\n                },\n                \"currencyCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Currency code for CURRENCY rewards\"\
-        \n                },\n                \"amount\": {\n                    \"type\": \"integer\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Amount for CURRENCY/EXPERIENCE rewards\"\n      \
-        \          },\n                \"itemCode\": {\n                    \"type\": \"string\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Item code for ITEM rewards\"\n                },\n     \
-        \           \"quantity\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        }\n    }\n}"
+        : \"Item code for ITEM rewards\"\n                },\n                \"quantity\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Quantity for ITEM rewards\"\n                },\n                \"factionCode\": {\n       \
+        \             \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Faction code for REPUTATION rewards\"\n                }\n            }\n        },\n        \"RewardType\": {\n\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"CURRENCY\",\n                \"ITEM\"\
+        ,\n                \"EXPERIENCE\",\n                \"REPUTATION\"\n            ],\n            \"description\": \"\
+        Type of reward granted on quest completion\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List quests available to accept\",\n    \"description\": \"Lists quests
         a character can accept (prerequisites met, not on cooldown, not active).\",\n    \"tags\": [\n        \"Instances\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAvailableQuests\"\n}"
@@ -1640,10 +1680,11 @@ paths:
         : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Quest instance\"\n\
         \                },\n                \"objectiveCode\": {\n                    \"type\": \"string\",\n           \
         \         \"description\": \"Objective code\"\n                },\n                \"incrementBy\": {\n          \
-        \          \"type\": \"integer\",\n                    \"description\": \"Amount to increment progress\"\n       \
-        \         },\n                \"trackedEntityId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Entity
-        that contributed to progress (for deduplication)\"\n                }\n            }\n        }\n    }\n}"
+        \          \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"Amount
+        to increment progress\"\n                },\n                \"trackedEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Entity that contributed to progress (for deduplication)\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ObjectiveProgressResponse\"\
         ,\n    \"$defs\": {\n        \"ObjectiveProgressResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response with objective progress and milestone completion status\",\n            \"additionalProperties\": false,\n\
@@ -2026,6 +2067,14 @@ components:
         Controls how prerequisite validation handles multiple prerequisites.
         FAIL_FAST: Stop on first failure, return that failure.
         CHECK_ALL: Check all prerequisites, return all failures for richer error info.
+    RewardType:
+      type: string
+      enum:
+      - CURRENCY
+      - ITEM
+      - EXPERIENCE
+      - REPUTATION
+      description: Type of reward granted on quest completion
     CreateQuestDefinitionRequest:
       type: object
       description: Request to create a new quest definition with objectives and rewards
@@ -2034,12 +2083,18 @@ components:
       - code
       - name
       - objectives
+      - gameServiceId
+      - category
+      - difficulty
       properties:
         code:
           type: string
+          minLength: 1
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique quest code (uppercase, underscores)
         name:
           type: string
+          minLength: 1
           description: Display name of the quest
         description:
           type: string
@@ -2062,17 +2117,21 @@ components:
         cooldownSeconds:
           type: integer
           nullable: true
+          minimum: 0
           description: Cooldown in seconds for repeatable quests
         deadlineSeconds:
           type: integer
           nullable: true
+          minimum: 1
           description: Time limit in seconds (null for no deadline)
         maxQuestors:
           type: integer
           default: 1
+          minimum: 1
           description: Maximum party members (1 for solo)
         objectives:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/ObjectiveDefinition'
           description: List of quest objectives (ordered)
@@ -2115,9 +2174,11 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           description: Unique objective code within quest
         name:
           type: string
+          minLength: 1
           description: Display name of the objective
         description:
           type: string
@@ -2128,6 +2189,7 @@ components:
           $ref: '#/components/schemas/ObjectiveType'
         requiredCount:
           type: integer
+          minimum: 1
           description: Count needed to complete
         targetEntityType:
           type: string
@@ -2147,8 +2209,10 @@ components:
           default: false
           description: Whether objective is hidden initially
         revealBehavior:
-          description: When a hidden objective is revealed in the quest log
-          $ref: '#/components/schemas/ObjectiveRevealBehavior'
+          description: When a hidden objective is revealed in the quest log (null defaults to ALWAYS)
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/ObjectiveRevealBehavior'
         optional:
           type: boolean
           default: false
@@ -2170,6 +2234,7 @@ components:
         minLevel:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum level for CHARACTER_LEVEL type
         factionCode:
           type: string
@@ -2190,6 +2255,7 @@ components:
         minAmount:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum amount for CURRENCY_AMOUNT type
     RewardDefinition:
       type: object
@@ -2199,13 +2265,8 @@ components:
       - type
       properties:
         type:
-          type: string
-          enum:
-          - CURRENCY
-          - ITEM
-          - EXPERIENCE
-          - REPUTATION
           description: Type of reward
+          $ref: '#/components/schemas/RewardType'
         currencyCode:
           type: string
           nullable: true
@@ -2213,6 +2274,7 @@ components:
         amount:
           type: integer
           nullable: true
+          minimum: 1
           description: Amount for CURRENCY/EXPERIENCE rewards
         itemCode:
           type: string
@@ -2221,67 +2283,12 @@ components:
         quantity:
           type: integer
           nullable: true
+          minimum: 1
           description: Quantity for ITEM rewards
         factionCode:
           type: string
           nullable: true
           description: Faction code for REPUTATION rewards
-    FailedPrerequisite:
-      type: object
-      description: Details about a failed prerequisite check during quest acceptance
-      additionalProperties: false
-      required:
-      - type
-      - reason
-      properties:
-        type:
-          $ref: '#/components/schemas/PrerequisiteType'
-          description: Type of prerequisite that failed
-        code:
-          type: string
-          nullable: true
-          description: Specific code (quest code, currency code, item code, etc.)
-        reason:
-          type: string
-          description: Human-readable failure reason
-        currentValue:
-          type: string
-          nullable: true
-          description: Current value (e.g., "50 gold", "3 wolf pelts")
-        requiredValue:
-          type: string
-          nullable: true
-          description: Required value (e.g., "100 gold", "5 wolf pelts")
-    AcceptQuestErrorCode:
-      type: string
-      enum:
-      - PREREQUISITES_NOT_MET
-      - ALREADY_ACTIVE
-      - ON_COOLDOWN
-      - MAX_QUESTS_REACHED
-      - DEFINITION_NOT_FOUND
-      - DEFINITION_DEPRECATED
-      description: Specific error codes for quest acceptance failures
-    AcceptQuestErrorResponse:
-      type: object
-      description: Error response when quest acceptance fails
-      additionalProperties: false
-      required:
-      - errorCode
-      - message
-      properties:
-        errorCode:
-          $ref: '#/components/schemas/AcceptQuestErrorCode'
-          description: Specific error code indicating failure type
-        message:
-          type: string
-          description: Human-readable error message
-        failedPrerequisites:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/FailedPrerequisite'
-          description: List of prerequisites that were not met (only for PREREQUISITES_NOT_MET)
     QuestDefinitionResponse:
       type: object
       description: Complete quest definition including objectives, prerequisites, and rewards
@@ -2433,10 +2440,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListQuestDefinitionsResponse:
       type: object
@@ -2583,10 +2593,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListQuestsResponse:
       type: object
@@ -2847,6 +2860,7 @@ components:
           description: Objective code
         incrementBy:
           type: integer
+          minimum: 1
           description: Amount to increment progress
         trackedEntityId:
           type: string

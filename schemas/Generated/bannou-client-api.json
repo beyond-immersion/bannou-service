@@ -4182,6 +4182,80 @@
         }
       }
     },
+    "/chat/room/participant/unmute": {
+      "post": {
+        "operationId": "UnmuteParticipant",
+        "summary": "Unmute a participant",
+        "description": "Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {
+              "chat": "in_room"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnmuteParticipantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Participant unmuted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRoomResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/room/participant/change-role": {
+      "post": {
+        "operationId": "ChangeParticipantRole",
+        "summary": "Change a participant's role",
+        "description": "Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).\n",
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {
+              "chat": "in_room"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeParticipantRoleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatRoomResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chat/message/send": {
       "post": {
         "operationId": "SendMessage",
@@ -28393,6 +28467,32 @@
           }
         }
       },
+      "ChangeParticipantRoleRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to change a participant's role in a chat room",
+        "required": [
+          "roomId",
+          "targetSessionId",
+          "newRole"
+        ],
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Room containing the participant"
+          },
+          "targetSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Session ID of participant whose role will change"
+          },
+          "newRole": {
+            "$ref": "#/components/schemas/ChatParticipantRole",
+            "description": "New role to assign to the participant"
+          }
+        }
+      },
       "CharacterArchive": {
         "description": "Compressed archive of a dead character.\nContains text summaries instead of structured data for long-term storage.\nSelf-contained with no external references (suitable for cleanup).\n",
         "type": "object",
@@ -34467,15 +34567,21 @@
         "required": [
           "code",
           "name",
-          "objectives"
+          "objectives",
+          "gameServiceId",
+          "category",
+          "difficulty"
         ],
         "properties": {
           "code": {
             "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Z][A-Z0-9_]*$",
             "description": "Unique quest code (uppercase, underscores)"
           },
           "name": {
             "type": "string",
+            "minLength": 1,
             "description": "Display name of the quest"
           },
           "description": {
@@ -34504,20 +34610,24 @@
           "cooldownSeconds": {
             "type": "integer",
             "nullable": true,
+            "minimum": 0,
             "description": "Cooldown in seconds for repeatable quests"
           },
           "deadlineSeconds": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Time limit in seconds (null for no deadline)"
           },
           "maxQuestors": {
             "type": "integer",
             "default": 1,
+            "minimum": 1,
             "description": "Maximum party members (1 for solo)"
           },
           "objectives": {
             "type": "array",
+            "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/ObjectiveDefinition"
             },
@@ -49127,11 +49237,14 @@
           "limit": {
             "type": "integer",
             "default": 50,
-            "description": "Max results"
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Max results per page"
           },
           "offset": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Pagination offset"
           }
         }
@@ -49182,11 +49295,14 @@
           "limit": {
             "type": "integer",
             "default": 50,
-            "description": "Max results"
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Max results per page"
           },
           "offset": {
             "type": "integer",
             "default": 0,
+            "minimum": 0,
             "description": "Pagination offset"
           }
         }
@@ -52866,10 +52982,12 @@
         "properties": {
           "code": {
             "type": "string",
+            "minLength": 1,
             "description": "Unique objective code within quest"
           },
           "name": {
             "type": "string",
+            "minLength": 1,
             "description": "Display name of the objective"
           },
           "description": {
@@ -52883,6 +53001,7 @@
           },
           "requiredCount": {
             "type": "integer",
+            "minimum": 1,
             "description": "Count needed to complete"
           },
           "targetEntityType": {
@@ -52907,8 +53026,13 @@
             "description": "Whether objective is hidden initially"
           },
           "revealBehavior": {
-            "description": "When a hidden objective is revealed in the quest log",
-            "$ref": "#/components/schemas/ObjectiveRevealBehavior"
+            "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ObjectiveRevealBehavior"
+              }
+            ]
           },
           "optional": {
             "type": "boolean",
@@ -54404,6 +54528,7 @@
           "minLevel": {
             "type": "integer",
             "nullable": true,
+            "minimum": 0,
             "description": "Minimum level for CHARACTER_LEVEL type"
           },
           "factionCode": {
@@ -54429,6 +54554,7 @@
           "minAmount": {
             "type": "integer",
             "nullable": true,
+            "minimum": 0,
             "description": "Minimum amount for CURRENCY_AMOUNT type"
           }
         }
@@ -58400,6 +58526,7 @@
           },
           "incrementBy": {
             "type": "integer",
+            "minimum": 1,
             "description": "Amount to increment progress"
           },
           "trackedEntityId": {
@@ -59122,14 +59249,8 @@
         ],
         "properties": {
           "type": {
-            "type": "string",
-            "enum": [
-              "CURRENCY",
-              "ITEM",
-              "EXPERIENCE",
-              "REPUTATION"
-            ],
-            "description": "Type of reward"
+            "description": "Type of reward",
+            "$ref": "#/components/schemas/RewardType"
           },
           "currencyCode": {
             "type": "string",
@@ -59139,6 +59260,7 @@
           "amount": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Amount for CURRENCY/EXPERIENCE rewards"
           },
           "itemCode": {
@@ -59149,6 +59271,7 @@
           "quantity": {
             "type": "integer",
             "nullable": true,
+            "minimum": 1,
             "description": "Quantity for ITEM rewards"
           },
           "factionCode": {
@@ -59157,6 +59280,16 @@
             "description": "Faction code for REPUTATION rewards"
           }
         }
+      },
+      "RewardType": {
+        "type": "string",
+        "enum": [
+          "CURRENCY",
+          "ITEM",
+          "EXPERIENCE",
+          "REPUTATION"
+        ],
+        "description": "Type of reward granted on quest completion"
       },
       "RoomTypeResponse": {
         "type": "object",
@@ -65081,6 +65214,27 @@
                 "$ref": "#/components/schemas/EntryMetadata"
               }
             ]
+          }
+        }
+      },
+      "UnmuteParticipantRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to unmute a participant in a chat room",
+        "required": [
+          "roomId",
+          "targetSessionId"
+        ],
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Room containing the muted participant"
+          },
+          "targetSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Session ID of participant to unmute"
           }
         }
       },

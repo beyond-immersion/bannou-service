@@ -36,9 +36,10 @@ export class RelationshipProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipResponse']>> {
-    return this.client.invokeAsync<Schemas['GetRelationshipRequest'], Schemas['RelationshipResponse']>(
-      '/relationship/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetRelationshipRequest'],
+      Schemas['RelationshipResponse']
+    >('/relationship/get', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class RelationshipProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipListResponse']>> {
-    return this.client.invokeAsync<Schemas['ListRelationshipsByEntityRequest'], Schemas['RelationshipListResponse']>(
-      '/relationship/list-by-entity', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListRelationshipsByEntityRequest'],
+      Schemas['RelationshipListResponse']
+    >('/relationship/list-by-entity', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class RelationshipProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipListResponse']>> {
-    return this.client.invokeAsync<Schemas['GetRelationshipsBetweenRequest'], Schemas['RelationshipListResponse']>(
-      '/relationship/get-between', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetRelationshipsBetweenRequest'],
+      Schemas['RelationshipListResponse']
+    >('/relationship/get-between', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class RelationshipProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RelationshipListResponse']>> {
-    return this.client.invokeAsync<Schemas['ListRelationshipsByTypeRequest'], Schemas['RelationshipListResponse']>(
-      '/relationship/list-by-type', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListRelationshipsByTypeRequest'],
+      Schemas['RelationshipListResponse']
+    >('/relationship/list-by-type', request, channel, timeout);
   }
 
   /**
@@ -104,8 +108,9 @@ export class RelationshipProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupByEntityResponse']>> {
-    return this.client.invokeAsync<Schemas['CleanupByEntityRequest'], Schemas['CleanupByEntityResponse']>(
-      '/relationship/cleanup-by-entity', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CleanupByEntityRequest'],
+      Schemas['CleanupByEntityResponse']
+    >('/relationship/cleanup-by-entity', request, channel, timeout);
   }
 }

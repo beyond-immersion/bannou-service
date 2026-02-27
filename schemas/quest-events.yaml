@@ -56,6 +56,7 @@ components:
         - definitionId
         - questCode
         - questorCharacterIds
+        - gameServiceId
       properties:
         eventId:
           type: string
@@ -78,6 +79,7 @@ components:
           description: Quest code
         questorCharacterIds:
           type: array
+          minItems: 1
           items:
             type: string
             format: uuid
@@ -98,9 +100,11 @@ components:
         - eventId
         - timestamp
         - questInstanceId
+        - questCode
         - objectiveCode
         - currentCount
         - requiredCount
+        - isComplete
       properties:
         eventId:
           type: string
@@ -122,9 +126,11 @@ components:
           description: Objective code
         currentCount:
           type: integer
+          minimum: 0
           description: Current progress
         requiredCount:
           type: integer
+          minimum: 1
           description: Required for completion
         isComplete:
           type: boolean
@@ -138,8 +144,10 @@ components:
         - eventId
         - timestamp
         - questInstanceId
+        - definitionId
         - questCode
         - questorCharacterIds
+        - gameServiceId
       properties:
         eventId:
           type: string
@@ -162,6 +170,7 @@ components:
           description: Quest code
         questorCharacterIds:
           type: array
+          minItems: 1
           items:
             type: string
             format: uuid
@@ -180,6 +189,7 @@ components:
         - timestamp
         - questInstanceId
         - questCode
+        - questorCharacterIds
         - reason
       properties:
         eventId:
@@ -199,12 +209,14 @@ components:
           description: Quest code
         questorCharacterIds:
           type: array
+          minItems: 1
           items:
             type: string
             format: uuid
           description: Characters who failed
         reason:
           type: string
+          minLength: 1
           description: Failure reason
 
     QuestAbandonedEvent:

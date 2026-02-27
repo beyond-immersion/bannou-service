@@ -36,9 +36,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['CreateStatusTemplateRequest'], Schemas['StatusTemplateResponse']>(
-      '/status/template/create', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['CreateStatusTemplateRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/create', request, channel, timeout);
   }
 
   /**
@@ -53,9 +54,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['GetStatusTemplateRequest'], Schemas['StatusTemplateResponse']>(
-      '/status/template/get', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetStatusTemplateRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/get', request, channel, timeout);
   }
 
   /**
@@ -70,9 +72,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['GetStatusTemplateByCodeRequest'], Schemas['StatusTemplateResponse']>(
-      '/status/template/get-by-code', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetStatusTemplateByCodeRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/get-by-code', request, channel, timeout);
   }
 
   /**
@@ -87,9 +90,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListStatusTemplatesResponse']>> {
-    return this.client.invokeAsync<Schemas['ListStatusTemplatesRequest'], Schemas['ListStatusTemplatesResponse']>(
-      '/status/template/list', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['ListStatusTemplatesRequest'],
+      Schemas['ListStatusTemplatesResponse']
+    >('/status/template/list', request, channel, timeout);
   }
 
   /**
@@ -104,9 +108,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusTemplateResponse']>> {
-    return this.client.invokeAsync<Schemas['UpdateStatusTemplateRequest'], Schemas['StatusTemplateResponse']>(
-      '/status/template/update', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['UpdateStatusTemplateRequest'],
+      Schemas['StatusTemplateResponse']
+    >('/status/template/update', request, channel, timeout);
   }
 
   /**
@@ -121,9 +126,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedStatusTemplatesResponse']>> {
-    return this.client.invokeAsync<Schemas['SeedStatusTemplatesRequest'], Schemas['SeedStatusTemplatesResponse']>(
-      '/status/template/seed', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['SeedStatusTemplatesRequest'],
+      Schemas['SeedStatusTemplatesResponse']
+    >('/status/template/seed', request, channel, timeout);
   }
 
   /**
@@ -139,7 +145,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GrantStatusResponse']>> {
     return this.client.invokeAsync<Schemas['GrantStatusRequest'], Schemas['GrantStatusResponse']>(
-      '/status/grant', request, channel, timeout
+      '/status/grant',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -155,9 +164,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusInstanceResponse']>> {
-    return this.client.invokeAsync<Schemas['RemoveStatusRequest'], Schemas['StatusInstanceResponse']>(
-      '/status/remove', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['RemoveStatusRequest'],
+      Schemas['StatusInstanceResponse']
+    >('/status/remove', request, channel, timeout);
   }
 
   /**
@@ -172,9 +182,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RemoveStatusesResponse']>> {
-    return this.client.invokeAsync<Schemas['RemoveBySourceRequest'], Schemas['RemoveStatusesResponse']>(
-      '/status/remove-by-source', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['RemoveBySourceRequest'],
+      Schemas['RemoveStatusesResponse']
+    >('/status/remove-by-source', request, channel, timeout);
   }
 
   /**
@@ -189,9 +200,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['RemoveStatusesResponse']>> {
-    return this.client.invokeAsync<Schemas['RemoveByCategoryRequest'], Schemas['RemoveStatusesResponse']>(
-      '/status/remove-by-category', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['RemoveByCategoryRequest'],
+      Schemas['RemoveStatusesResponse']
+    >('/status/remove-by-category', request, channel, timeout);
   }
 
   /**
@@ -207,7 +219,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['HasStatusResponse']>> {
     return this.client.invokeAsync<Schemas['HasStatusRequest'], Schemas['HasStatusResponse']>(
-      '/status/has', request, channel, timeout
+      '/status/has',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -224,7 +239,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['ListStatusesResponse']>> {
     return this.client.invokeAsync<Schemas['ListStatusesRequest'], Schemas['ListStatusesResponse']>(
-      '/status/list', request, channel, timeout
+      '/status/list',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -241,7 +259,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusInstanceResponse']>> {
     return this.client.invokeAsync<Schemas['GetStatusRequest'], Schemas['StatusInstanceResponse']>(
-      '/status/get', request, channel, timeout
+      '/status/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -258,7 +279,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['GetEffectsResponse']>> {
     return this.client.invokeAsync<Schemas['GetEffectsRequest'], Schemas['GetEffectsResponse']>(
-      '/status/effects/get', request, channel, timeout
+      '/status/effects/get',
+      request,
+      channel,
+      timeout
     );
   }
 
@@ -274,9 +298,10 @@ export class StatusProxy {
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SeedEffectsResponse']>> {
-    return this.client.invokeAsync<Schemas['GetSeedEffectsRequest'], Schemas['SeedEffectsResponse']>(
-      '/status/effects/get-seed', request, channel, timeout
-    );
+    return this.client.invokeAsync<
+      Schemas['GetSeedEffectsRequest'],
+      Schemas['SeedEffectsResponse']
+    >('/status/effects/get-seed', request, channel, timeout);
   }
 
   /**
@@ -292,7 +317,10 @@ export class StatusProxy {
     timeout?: number
   ): Promise<ApiResponse<Schemas['CleanupResponse']>> {
     return this.client.invokeAsync<Schemas['CleanupByOwnerRequest'], Schemas['CleanupResponse']>(
-      '/status/cleanup-by-owner', request, channel, timeout
+      '/status/cleanup-by-owner',
+      request,
+      channel,
+      timeout
     );
   }
 }
