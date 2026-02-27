@@ -29,15 +29,21 @@ public partial class QuestController
             "required": [
                 "code",
                 "name",
-                "objectives"
+                "objectives",
+                "gameServiceId",
+                "category",
+                "difficulty"
             ],
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
                     "description": "Unique quest code (uppercase, underscores)"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the quest"
                 },
                 "description": {
@@ -66,20 +72,24 @@ public partial class QuestController
                 "cooldownSeconds": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Cooldown in seconds for repeatable quests"
                 },
                 "deadlineSeconds": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Time limit in seconds (null for no deadline)"
                 },
                 "maxQuestors": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Maximum party members (1 for solo)"
                 },
                 "objectives": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "$ref": "#/$defs/ObjectiveDefinition"
                     },
@@ -160,10 +170,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -177,6 +189,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -201,8 +214,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -257,6 +275,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -282,6 +301,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -306,14 +326,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -323,6 +337,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -333,6 +348,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -341,6 +357,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -521,10 +547,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -538,6 +566,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -562,8 +591,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -618,6 +652,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -643,6 +678,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -667,14 +703,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -684,6 +714,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -694,6 +725,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -702,6 +734,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -965,10 +1007,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -982,6 +1026,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -1006,8 +1051,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -1062,6 +1112,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -1087,6 +1138,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -1111,14 +1163,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -1128,6 +1174,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -1138,6 +1185,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -1146,6 +1194,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -1257,11 +1315,14 @@ public partial class QuestController
                 "limit": {
                     "type": "integer",
                     "default": 50,
-                    "description": "Max results"
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results per page"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Pagination offset"
                 }
             }
@@ -1492,10 +1553,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -1509,6 +1572,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -1533,8 +1597,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -1589,6 +1658,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -1614,6 +1684,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -1638,14 +1709,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -1655,6 +1720,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -1665,6 +1731,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -1673,6 +1740,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -1994,10 +2071,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -2011,6 +2090,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -2035,8 +2115,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -2091,6 +2176,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -2116,6 +2202,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -2140,14 +2227,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -2157,6 +2238,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -2167,6 +2249,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -2175,6 +2258,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -2441,10 +2534,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -2458,6 +2553,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -2482,8 +2578,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -2538,6 +2639,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -2563,6 +2665,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -2587,14 +2690,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -2604,6 +2701,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -2614,6 +2712,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -2622,6 +2721,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -3520,11 +3629,14 @@ public partial class QuestController
                 "limit": {
                     "type": "integer",
                     "default": 50,
-                    "description": "Max results"
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Max results per page"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Pagination offset"
                 }
             }
@@ -4029,10 +4141,12 @@ public partial class QuestController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique objective code within quest"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Display name of the objective"
                 },
                 "description": {
@@ -4046,6 +4160,7 @@ public partial class QuestController
                 },
                 "requiredCount": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Count needed to complete"
                 },
                 "targetEntityType": {
@@ -4070,8 +4185,13 @@ public partial class QuestController
                     "description": "Whether objective is hidden initially"
                 },
                 "revealBehavior": {
-                    "description": "When a hidden objective is revealed in the quest log",
-                    "$ref": "#/$defs/ObjectiveRevealBehavior"
+                    "description": "When a hidden objective is revealed in the quest log (null defaults to ALWAYS)",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/ObjectiveRevealBehavior"
+                        }
+                    ]
                 },
                 "optional": {
                     "type": "boolean",
@@ -4126,6 +4246,7 @@ public partial class QuestController
                 "minLevel": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum level for CHARACTER_LEVEL type"
                 },
                 "factionCode": {
@@ -4151,6 +4272,7 @@ public partial class QuestController
                 "minAmount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Minimum amount for CURRENCY_AMOUNT type"
                 }
             }
@@ -4175,14 +4297,8 @@ public partial class QuestController
             ],
             "properties": {
                 "type": {
-                    "type": "string",
-                    "enum": [
-                        "CURRENCY",
-                        "ITEM",
-                        "EXPERIENCE",
-                        "REPUTATION"
-                    ],
-                    "description": "Type of reward"
+                    "description": "Type of reward",
+                    "$ref": "#/$defs/RewardType"
                 },
                 "currencyCode": {
                     "type": "string",
@@ -4192,6 +4308,7 @@ public partial class QuestController
                 "amount": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Amount for CURRENCY/EXPERIENCE rewards"
                 },
                 "itemCode": {
@@ -4202,6 +4319,7 @@ public partial class QuestController
                 "quantity": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Quantity for ITEM rewards"
                 },
                 "factionCode": {
@@ -4210,6 +4328,16 @@ public partial class QuestController
                     "description": "Faction code for REPUTATION rewards"
                 }
             }
+        },
+        "RewardType": {
+            "type": "string",
+            "enum": [
+                "CURRENCY",
+                "ITEM",
+                "EXPERIENCE",
+                "REPUTATION"
+            ],
+            "description": "Type of reward granted on quest completion"
         }
     }
 }
@@ -4574,6 +4702,7 @@ public partial class QuestController
                 },
                 "incrementBy": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Amount to increment progress"
                 },
                 "trackedEntityId": {

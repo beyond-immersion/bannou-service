@@ -20,7 +20,6 @@ public class QuestServicePlugin : BaseBannouPlugin
     public override string PluginName => "quest";
     public override string DisplayName => "Quest Service";
 
-    private IQuestService? _service;
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
@@ -40,7 +39,7 @@ public class QuestServicePlugin : BaseBannouPlugin
         services.AddSingleton<IQuestDataCache, QuestDataCache>();
 
         // Register variable provider factory for Actor to discover via DI
-        // Enables dependency inversion: Actor (L2) consumes providers without knowing about Quest (L4)
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about Quest (L2)
         services.AddSingleton<IVariableProviderFactory, QuestProviderFactory>();
 
         Logger?.LogDebug("Service dependencies configured");
@@ -70,19 +69,14 @@ public class QuestServicePlugin : BaseBannouPlugin
 
         try
         {
-            // Get service instance from DI container with proper scope handling
-            // Note: CreateScope() is required for Scoped services to avoid "Cannot resolve scoped service from root provider" error
-            using var scope = _serviceProvider?.CreateScope();
-            _service = scope?.ServiceProvider.GetService<IQuestService>();
-
-            if (_service == null)
-            {
-                Logger?.LogError("Failed to resolve IQuestService from DI container");
-                return false;
-            }
+            // Resolve scoped service within a scope — do NOT store the reference beyond scope lifetime.
+            // IQuestService is Scoped; storing it in a field causes use-after-dispose.
+            var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+            using var scope = serviceProvider.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IQuestService>();
 
             // Call existing IBannouService.OnStartAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnStartAsync for Quest service");
                 await bannouService.OnStartAsync(CancellationToken.None);
@@ -103,14 +97,18 @@ public class QuestServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnRunningAsync()
     {
-        if (_service == null) return;
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         Logger?.LogDebug("Quest service running");
 
         try
         {
+            // Resolve scoped service within a scope for the running phase lifecycle call
+            using var runningScope = serviceProvider.CreateScope();
+            var service = runningScope.ServiceProvider.GetRequiredService<IQuestService>();
+
             // Call existing IBannouService.OnRunningAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnRunningAsync for Quest service");
                 await bannouService.OnRunningAsync(CancellationToken.None);
@@ -182,14 +180,18 @@ public class QuestServicePlugin : BaseBannouPlugin
     /// </summary>
     protected override async Task OnShutdownAsync()
     {
-        if (_service == null) return;
+        var serviceProvider = _serviceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnShutdownAsync");
 
         Logger?.LogInformation("Shutting down Quest service");
 
         try
         {
+            // Resolve scoped service within a scope for the shutdown phase lifecycle call
+            using var shutdownScope = serviceProvider.CreateScope();
+            var service = shutdownScope.ServiceProvider.GetRequiredService<IQuestService>();
+
             // Call existing IBannouService.OnShutdownAsync if the service implements it
-            if (_service is IBannouService bannouService)
+            if (service is IBannouService bannouService)
             {
                 Logger?.LogDebug("Calling IBannouService.OnShutdownAsync for Quest service");
                 await bannouService.OnShutdownAsync();

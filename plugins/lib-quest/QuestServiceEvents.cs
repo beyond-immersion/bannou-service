@@ -59,7 +59,7 @@ public partial class QuestService
     /// </summary>
     /// <param name="evt">The event data.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task HandleContractMilestoneCompletedAsync(ContractMilestoneCompletedEvent evt)
+    internal async Task HandleContractMilestoneCompletedAsync(ContractMilestoneCompletedEvent evt)
     {
         _logger.LogDebug(
             "Handling contract.milestone.completed: ContractId={ContractId}, MilestoneCode={MilestoneCode}",
@@ -85,19 +85,36 @@ public partial class QuestService
             // This event handler ensures consistency if the contract milestone was completed
             // through other means (e.g., direct Contract API calls, prebound APIs).
             var progressKey = BuildProgressKey(instance.QuestInstanceId, evt.MilestoneCode);
-            var progress = await ProgressStore.GetAsync(progressKey, CancellationToken.None);
 
-            if (progress != null && !progress.IsComplete)
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
             {
+                var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, CancellationToken.None);
+
+                if (progress == null || progress.IsComplete)
+                {
+                    // Nothing to update — either no progress record or already complete
+                    break;
+                }
+
                 // Mark objective as complete if contract says the milestone is done
                 progress.CurrentCount = progress.RequiredCount;
                 progress.IsComplete = true;
 
-                await ProgressStore.SaveAsync(
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
+                var saveResult = await ProgressStore.TrySaveAsync(
                     progressKey,
                     progress,
-                    new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
-                    CancellationToken.None);
+                    etag ?? string.Empty,
+                    cancellationToken: CancellationToken.None);
+
+                if (saveResult == null)
+                {
+                    _logger.LogDebug(
+                        "Concurrent modification updating objective {ObjectiveCode} for quest {QuestInstanceId}, retrying (attempt {Attempt})",
+                        evt.MilestoneCode, instance.QuestInstanceId, attempt + 1);
+                    continue;
+                }
 
                 _logger.LogInformation(
                     "Objective {ObjectiveCode} marked complete via contract milestone event for quest {QuestInstanceId}",
@@ -120,6 +137,8 @@ public partial class QuestService
                     QuestTopics.QuestObjectiveProgressed,
                     progressEvent,
                     cancellationToken: CancellationToken.None);
+
+                break;
             }
         }
         catch (Exception ex)
@@ -147,7 +166,7 @@ public partial class QuestService
     /// </summary>
     /// <param name="evt">The event data.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
+    internal async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
         _logger.LogDebug("Handling contract.fulfilled: ContractId={ContractId}", evt.ContractId);
 
@@ -199,7 +218,7 @@ public partial class QuestService
     /// </summary>
     /// <param name="evt">The event data.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
+    internal async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
         _logger.LogDebug(
             "Handling contract.terminated: ContractId={ContractId}, Reason={Reason}",
@@ -263,6 +282,7 @@ public partial class QuestService
         string reason,
         DateTimeOffset timestamp)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.FailOrAbandonQuestAsync");
         var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -293,19 +313,13 @@ public partial class QuestService
                 continue;
             }
 
-            // Update character indexes - remove from active quests
+            // Update character indexes - remove from active quests with ETag concurrency per IMPLEMENTATION TENETS
             foreach (var characterId in current.QuestorCharacterIds)
             {
-                var characterIndexKey = BuildCharacterIndexKey(characterId);
-                var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, CancellationToken.None);
-                if (characterIndex?.ActiveQuestIds != null)
+                await UpdateCharacterIndexAsync(characterId, idx =>
                 {
-                    characterIndex.ActiveQuestIds.Remove(instance.QuestInstanceId);
-                    await CharacterIndex.SaveAsync(
-                        characterIndexKey,
-                        characterIndex,
-                        cancellationToken: CancellationToken.None);
-                }
+                    idx.ActiveQuestIds?.Remove(instance.QuestInstanceId);
+                }, CancellationToken.None);
             }
 
             // Publish appropriate event
@@ -370,6 +384,7 @@ public partial class QuestService
     /// </summary>
     private async Task HandleQuestAcceptedForCacheAsync(QuestAcceptedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.HandleQuestAcceptedForCacheAsync");
         _logger.LogDebug("Invalidating quest cache for accepted quest {QuestCode}", evt.QuestCode);
         foreach (var characterId in evt.QuestorCharacterIds)
         {
@@ -383,6 +398,7 @@ public partial class QuestService
     /// </summary>
     private async Task HandleQuestCompletedForCacheAsync(QuestCompletedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.HandleQuestCompletedForCacheAsync");
         _logger.LogDebug("Invalidating quest cache for completed quest {QuestCode}", evt.QuestCode);
         foreach (var characterId in evt.QuestorCharacterIds)
         {
@@ -396,6 +412,7 @@ public partial class QuestService
     /// </summary>
     private async Task HandleQuestFailedForCacheAsync(QuestFailedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.HandleQuestFailedForCacheAsync");
         _logger.LogDebug("Invalidating quest cache for failed quest {QuestCode}", evt.QuestCode);
         if (evt.QuestorCharacterIds != null)
         {
@@ -412,6 +429,7 @@ public partial class QuestService
     /// </summary>
     private async Task HandleQuestAbandonedForCacheAsync(QuestAbandonedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.HandleQuestAbandonedForCacheAsync");
         _logger.LogDebug("Invalidating quest cache for abandoned quest {QuestCode}", evt.QuestCode);
         _questDataCache.Invalidate(evt.AbandoningCharacterId);
         await Task.Yield();

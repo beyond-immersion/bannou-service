@@ -14,10 +14,6 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("lib-quest.tests")]
-
 namespace BeyondImmersion.BannouService.Quest;
 
 /// <summary>
@@ -72,6 +68,7 @@ public partial class QuestService : IQuestService
     private readonly IServiceProvider _serviceProvider;
     private readonly IQuestDataCache _questDataCache;
     private readonly IEnumerable<IPrerequisiteProviderFactory> _prerequisiteProviders;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Accessors
 
@@ -100,10 +97,6 @@ public partial class QuestService : IQuestService
     private IStateStore<CooldownEntry> CooldownStore =>
         _cooldownStore ??= _stateStoreFactory.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown);
 
-    private IStateStore<IdempotencyRecord>? _idempotencyStore;
-    private IStateStore<IdempotencyRecord> IdempotencyStore =>
-        _idempotencyStore ??= _stateStoreFactory.GetStore<IdempotencyRecord>(StateStoreDefinitions.QuestIdempotency);
-
     #endregion
 
     #region Key Building
@@ -114,7 +107,6 @@ public partial class QuestService : IQuestService
     private static string BuildProgressKey(Guid instanceId, string objectiveCode) => $"prog:{instanceId}:{objectiveCode}";
     private static string BuildCharacterIndexKey(Guid characterId) => $"char:{characterId}";
     private static string BuildCooldownKey(Guid characterId, string questCode) => $"cd:{characterId}:{questCode}";
-    private static string BuildIdempotencyKey(string idempotencyKey) => $"idem:{idempotencyKey}";
     private static string BuildLockKey(string resource) => $"quest:lock:{resource}";
 
     #endregion
@@ -136,6 +128,7 @@ public partial class QuestService : IQuestService
     /// <param name="serviceProvider">Service provider for L4 soft dependencies.</param>
     /// <param name="questDataCache">Quest data cache for actor variable provider.</param>
     /// <param name="prerequisiteProviders">Prerequisite provider factories for L4 dynamic prerequisites.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public QuestService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -150,7 +143,8 @@ public partial class QuestService : IQuestService
         IEventConsumer eventConsumer,
         IServiceProvider serviceProvider,
         IQuestDataCache questDataCache,
-        IEnumerable<IPrerequisiteProviderFactory> prerequisiteProviders)
+        IEnumerable<IPrerequisiteProviderFactory> prerequisiteProviders,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -165,6 +159,7 @@ public partial class QuestService : IQuestService
         _serviceProvider = serviceProvider;
         _questDataCache = questDataCache;
         _prerequisiteProviders = prerequisiteProviders;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (QuestServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -514,7 +509,7 @@ public partial class QuestService : IQuestService
         // Acquire distributed lock for character's quest operations
         var lockKey = BuildLockKey($"char:{body.QuestorCharacterId}");
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.QuestIdempotency,
+            StateStoreDefinitions.QuestInstance,
             lockKey,
             Guid.NewGuid().ToString(),
             _configuration.LockExpirySeconds,
@@ -578,9 +573,7 @@ public partial class QuestService : IQuestService
             _logger.LogInformation(
                 "Character {CharacterId} failed {Count} prerequisites for quest {QuestCode}",
                 body.QuestorCharacterId, failedPrerequisites.Count, definition.Code);
-            // Return BadRequest - caller should check the error response for details
-            // Note: The current API design returns null for errors. A future enhancement
-            // could return AcceptQuestErrorResponse with the failedPrerequisites list.
+            // Per IMPLEMENTATION TENETS: errors return null payload, status code communicates result
             return (StatusCodes.BadRequest, null);
         }
 
@@ -599,12 +592,12 @@ public partial class QuestService : IQuestService
             };
 
         // Add quest giver as a party (can be a specific NPC or system placeholder)
-        var questGiverId = body.QuestGiverCharacterId ?? definition.QuestGiverCharacterId ?? Guid.Empty;
-        if (questGiverId != Guid.Empty)
+        var questGiverId = body.QuestGiverCharacterId ?? definition.QuestGiverCharacterId;
+        if (questGiverId.HasValue)
         {
             parties.Add(new ContractPartyInput
             {
-                EntityId = questGiverId,
+                EntityId = questGiverId.Value,
                 EntityType = EntityType.Character,
                 Role = "quest_giver"
             });
@@ -745,17 +738,12 @@ public partial class QuestService : IQuestService
             }
         }
 
-        // Update character index
-        characterIndex ??= new CharacterQuestIndex
+        // Update character index with ETag concurrency per IMPLEMENTATION TENETS
+        await UpdateCharacterIndexAsync(body.QuestorCharacterId, idx =>
         {
-            CharacterId = body.QuestorCharacterId,
-            ActiveQuestIds = new List<Guid>(),
-            CompletedQuestCodes = new List<string>()
-        };
-        characterIndex.ActiveQuestIds ??= new List<Guid>();
-        characterIndex.ActiveQuestIds.Add(questInstanceId);
-
-        await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+            idx.ActiveQuestIds ??= new List<Guid>();
+            idx.ActiveQuestIds.Add(questInstanceId);
+        }, cancellationToken);
 
         // Publish quest accepted event
         var acceptedEvent = new QuestAcceptedEvent
@@ -840,14 +828,11 @@ public partial class QuestService : IQuestService
                     body.QuestInstanceId);
             }
 
-            // Update character index
-            var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
-            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-            if (characterIndex?.ActiveQuestIds != null)
+            // Update character index with ETag concurrency per IMPLEMENTATION TENETS
+            await UpdateCharacterIndexAsync(body.QuestorCharacterId, idx =>
             {
-                characterIndex.ActiveQuestIds.Remove(body.QuestInstanceId);
-                await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
-            }
+                idx.ActiveQuestIds?.Remove(body.QuestInstanceId);
+            }, cancellationToken);
 
             // Publish abandoned event
             var abandonedEvent = new QuestAbandonedEvent
@@ -1239,58 +1224,76 @@ public partial class QuestService : IQuestService
         }
 
         var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
-        var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
 
-        if (progress == null)
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            return (StatusCodes.NotFound, null);
-        }
+            var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
 
-        if (progress.IsComplete)
-        {
+            if (progress == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (progress.IsComplete)
+            {
+                return (StatusCodes.OK, new ObjectiveProgressResponse
+                {
+                    QuestInstanceId = body.QuestInstanceId,
+                    Objective = MapToObjectiveProgress(progress),
+                    MilestoneCompleted = false
+                });
+            }
+
+            progress.CurrentCount = progress.RequiredCount;
+            progress.IsComplete = true;
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var saveResult = await ProgressStore.TrySaveAsync(
+                progressKey,
+                progress,
+                etag ?? string.Empty,
+                cancellationToken: cancellationToken);
+
+            if (saveResult == null)
+            {
+                _logger.LogDebug(
+                    "Concurrent modification force-completing objective {ObjectiveCode} for quest {QuestInstanceId}, retrying (attempt {Attempt})",
+                    body.ObjectiveCode, body.QuestInstanceId, attempt + 1);
+                continue;
+            }
+
+            // Notify Contract service
+            var milestoneRequest = new CompleteMilestoneRequest
+            {
+                ContractId = instance.ContractInstanceId,
+                MilestoneCode = body.ObjectiveCode
+            };
+            try
+            {
+                await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
+                    body.ObjectiveCode, instance.ContractInstanceId);
+                // Continue - milestone completion is eventually consistent via events
+            }
+
+            _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
+                body.QuestInstanceId, body.ObjectiveCode);
+
             return (StatusCodes.OK, new ObjectiveProgressResponse
             {
                 QuestInstanceId = body.QuestInstanceId,
                 Objective = MapToObjectiveProgress(progress),
-                MilestoneCompleted = false
+                MilestoneCompleted = true
             });
         }
 
-        progress.CurrentCount = progress.RequiredCount;
-        progress.IsComplete = true;
-
-        await ProgressStore.SaveAsync(
-            progressKey,
-            progress,
-            new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
-            cancellationToken);
-
-        // Notify Contract service
-        var milestoneRequest = new CompleteMilestoneRequest
-        {
-            ContractId = instance.ContractInstanceId,
-            MilestoneCode = body.ObjectiveCode
-        };
-        try
-        {
-            await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
-                body.ObjectiveCode, instance.ContractInstanceId);
-            // Continue - milestone completion is eventually consistent via events
-        }
-
-        _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
-            body.QuestInstanceId, body.ObjectiveCode);
-
-        return (StatusCodes.OK, new ObjectiveProgressResponse
-        {
-            QuestInstanceId = body.QuestInstanceId,
-            Objective = MapToObjectiveProgress(progress),
-            MilestoneCompleted = true
-        });
+        _logger.LogWarning("Failed to force complete objective {ObjectiveCode} for quest {QuestInstanceId} after {MaxRetries} attempts",
+            body.ObjectiveCode, body.QuestInstanceId, _configuration.MaxConcurrencyRetries);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <inheritdoc/>
@@ -1380,6 +1383,7 @@ public partial class QuestService : IQuestService
 
     private async Task<QuestDefinitionModel?> GetDefinitionModelAsync(Guid definitionId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.GetDefinitionModelAsync");
         var cacheKey = BuildDefinitionKey(definitionId);
         var definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
         if (definition != null) return definition;
@@ -1410,23 +1414,24 @@ public partial class QuestService : IQuestService
     /// <param name="completedCodes">List of quest codes the character has completed.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of failed prerequisites (empty if all met).</returns>
-    private async Task<List<FailedPrerequisite>> CheckPrerequisitesAsync(
+    private async Task<List<PrerequisiteFailure>> CheckPrerequisitesAsync(
         QuestDefinitionModel definition,
         Guid characterId,
         List<string> completedCodes,
         CancellationToken cancellationToken)
     {
-        var failures = new List<FailedPrerequisite>();
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.CheckPrerequisitesAsync");
+        var failures = new List<PrerequisiteFailure>();
 
         // No prerequisites = always available
         if (definition.Prerequisites == null || definition.Prerequisites.Count == 0)
             return failures;
 
-        var failFast = string.Equals(_configuration.PrerequisiteValidationMode, "FAIL_FAST", StringComparison.OrdinalIgnoreCase);
+        var failFast = _configuration.PrerequisiteValidationMode == PrerequisiteValidationMode.FAIL_FAST;
 
         foreach (var prereq in definition.Prerequisites)
         {
-            FailedPrerequisite? failure = null;
+            PrerequisiteFailure? failure = null;
 
             switch (prereq.Type)
             {
@@ -1474,7 +1479,7 @@ public partial class QuestService : IQuestService
     /// <summary>
     /// Checks the QUEST_COMPLETED prerequisite type.
     /// </summary>
-    private FailedPrerequisite? CheckQuestCompletedPrerequisite(
+    private PrerequisiteFailure? CheckQuestCompletedPrerequisite(
         PrerequisiteDefinitionModel prereq,
         List<string> completedCodes,
         string questCode,
@@ -1491,7 +1496,7 @@ public partial class QuestService : IQuestService
             "Character {CharacterId} has not completed prerequisite quest {PrereqQuestCode} for quest {DefinitionCode}",
             characterId, prereq.QuestCode, questCode);
 
-        return new FailedPrerequisite
+        return new PrerequisiteFailure
         {
             Type = PrerequisiteType.QUEST_COMPLETED,
             Code = prereq.QuestCode,
@@ -1504,11 +1509,12 @@ public partial class QuestService : IQuestService
     /// <summary>
     /// Checks the CURRENCY_AMOUNT prerequisite type via ICurrencyClient.
     /// </summary>
-    private async Task<FailedPrerequisite?> CheckCurrencyPrerequisiteAsync(
+    private async Task<PrerequisiteFailure?> CheckCurrencyPrerequisiteAsync(
         PrerequisiteDefinitionModel prereq,
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.CheckCurrencyPrerequisiteAsync");
         if (string.IsNullOrWhiteSpace(prereq.CurrencyCode) || !prereq.MinAmount.HasValue)
         {
             _logger.LogWarning("CURRENCY_AMOUNT prerequisite missing currencyCode or minAmount");
@@ -1527,7 +1533,7 @@ public partial class QuestService : IQuestService
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CURRENCY_AMOUNT,
                     Code = prereq.CurrencyCode,
@@ -1549,7 +1555,7 @@ public partial class QuestService : IQuestService
             }
             catch (ApiException)
             {
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CURRENCY_AMOUNT,
                     Code = prereq.CurrencyCode,
@@ -1561,7 +1567,7 @@ public partial class QuestService : IQuestService
 
             if (walletResponse?.Wallet == null)
             {
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CURRENCY_AMOUNT,
                     Code = prereq.CurrencyCode,
@@ -1586,7 +1592,7 @@ public partial class QuestService : IQuestService
             catch (ApiException)
             {
                 // No balance means 0
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.CURRENCY_AMOUNT,
                     Code = prereq.CurrencyCode,
@@ -1600,7 +1606,7 @@ public partial class QuestService : IQuestService
             if (currentAmount >= prereq.MinAmount.Value)
                 return null;
 
-            return new FailedPrerequisite
+            return new PrerequisiteFailure
             {
                 Type = PrerequisiteType.CURRENCY_AMOUNT,
                 Code = prereq.CurrencyCode,
@@ -1612,7 +1618,19 @@ public partial class QuestService : IQuestService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking currency prerequisite {CurrencyCode}", prereq.CurrencyCode);
-            return new FailedPrerequisite
+
+            await _messageBus.TryPublishErrorAsync(
+                "quest",
+                "CheckCurrencyPrerequisite",
+                "prerequisite_check_failed",
+                ex.Message,
+                dependency: "currency",
+                endpoint: "get-balance",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+
+            return new PrerequisiteFailure
             {
                 Type = PrerequisiteType.CURRENCY_AMOUNT,
                 Code = prereq.CurrencyCode,
@@ -1624,11 +1642,12 @@ public partial class QuestService : IQuestService
     /// <summary>
     /// Checks the ITEM_OWNED prerequisite type via IInventoryClient and IItemClient.
     /// </summary>
-    private async Task<FailedPrerequisite?> CheckItemPrerequisiteAsync(
+    private async Task<PrerequisiteFailure?> CheckItemPrerequisiteAsync(
         PrerequisiteDefinitionModel prereq,
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.CheckItemPrerequisiteAsync");
         if (string.IsNullOrWhiteSpace(prereq.ItemCode))
         {
             _logger.LogWarning("ITEM_OWNED prerequisite missing itemCode");
@@ -1649,7 +1668,7 @@ public partial class QuestService : IQuestService
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.ITEM_OWNED,
                     Code = prereq.ItemCode,
@@ -1676,7 +1695,7 @@ public partial class QuestService : IQuestService
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 // Character has no containers or items
-                return new FailedPrerequisite
+                return new PrerequisiteFailure
                 {
                     Type = PrerequisiteType.ITEM_OWNED,
                     Code = prereq.ItemCode,
@@ -1690,7 +1709,7 @@ public partial class QuestService : IQuestService
                 return null;
 
             var currentQuantity = hasResponse.Results?.FirstOrDefault()?.Available ?? 0;
-            return new FailedPrerequisite
+            return new PrerequisiteFailure
             {
                 Type = PrerequisiteType.ITEM_OWNED,
                 Code = prereq.ItemCode,
@@ -1702,7 +1721,19 @@ public partial class QuestService : IQuestService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking item prerequisite {ItemCode}", prereq.ItemCode);
-            return new FailedPrerequisite
+
+            await _messageBus.TryPublishErrorAsync(
+                "quest",
+                "CheckItemPrerequisite",
+                "prerequisite_check_failed",
+                ex.Message,
+                dependency: "item",
+                endpoint: "has-items",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+
+            return new PrerequisiteFailure
             {
                 Type = PrerequisiteType.ITEM_OWNED,
                 Code = prereq.ItemCode,
@@ -1715,12 +1746,13 @@ public partial class QuestService : IQuestService
     /// Checks dynamic prerequisites via IPrerequisiteProviderFactory implementations.
     /// This handles L4 service-provided prerequisite types like skills, achievements, etc.
     /// </summary>
-    private async Task<FailedPrerequisite?> CheckDynamicPrerequisiteAsync(
+    private async Task<PrerequisiteFailure?> CheckDynamicPrerequisiteAsync(
         string providerName,
         PrerequisiteDefinitionModel prereq,
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.CheckDynamicPrerequisiteAsync");
         var provider = _prerequisiteProviders.FirstOrDefault(p =>
             string.Equals(p.ProviderName, providerName, StringComparison.OrdinalIgnoreCase));
 
@@ -1750,7 +1782,7 @@ public partial class QuestService : IQuestService
             if (result.Satisfied)
                 return null;
 
-            return new FailedPrerequisite
+            return new PrerequisiteFailure
             {
                 Type = prereq.Type,
                 Code = code,
@@ -1762,7 +1794,19 @@ public partial class QuestService : IQuestService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error checking dynamic prerequisite {ProviderName}", providerName);
-            return new FailedPrerequisite
+
+            await _messageBus.TryPublishErrorAsync(
+                "quest",
+                "CheckDynamicPrerequisite",
+                "prerequisite_check_failed",
+                ex.Message,
+                dependency: providerName,
+                endpoint: "check-prerequisite",
+                details: null,
+                stack: ex.StackTrace,
+                cancellationToken: cancellationToken);
+
+            return new PrerequisiteFailure
             {
                 Type = prereq.Type,
                 Code = code,
@@ -1776,6 +1820,7 @@ public partial class QuestService : IQuestService
         QuestDefinitionModel? definition,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.GetObjectiveProgressListAsync");
         var objectives = new List<ObjectiveProgress>();
 
         if (definition?.Objectives == null) return objectives;
@@ -1795,6 +1840,7 @@ public partial class QuestService : IQuestService
 
     private async Task CompleteQuestAsync(QuestInstanceModel instance, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.CompleteQuestAsync");
         var instanceKey = BuildInstanceKey(instance.QuestInstanceId);
 
         for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
@@ -1814,18 +1860,16 @@ public partial class QuestService : IQuestService
             // Update character indexes
             foreach (var characterId in current.QuestorCharacterIds)
             {
-                var characterIndexKey = BuildCharacterIndexKey(characterId);
-                var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-                if (characterIndex != null)
+                // Update character index with ETag concurrency per IMPLEMENTATION TENETS
+                await UpdateCharacterIndexAsync(characterId, idx =>
                 {
-                    characterIndex.ActiveQuestIds?.Remove(instance.QuestInstanceId);
-                    characterIndex.CompletedQuestCodes ??= new List<string>();
-                    if (!characterIndex.CompletedQuestCodes.Contains(current.Code))
+                    idx.ActiveQuestIds?.Remove(instance.QuestInstanceId);
+                    idx.CompletedQuestCodes ??= new List<string>();
+                    if (!idx.CompletedQuestCodes.Contains(current.Code))
                     {
-                        characterIndex.CompletedQuestCodes.Add(current.Code);
+                        idx.CompletedQuestCodes.Add(current.Code);
                     }
-                    await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
-                }
+                }, cancellationToken);
 
                 // Set cooldown if repeatable
                 var definition = await GetDefinitionModelAsync(current.DefinitionId, cancellationToken);
@@ -1942,7 +1986,7 @@ public partial class QuestService : IQuestService
         {
             switch (reward.Type)
             {
-                case RewardDefinitionType.CURRENCY:
+                case RewardType.CURRENCY:
                     if (!string.IsNullOrEmpty(reward.CurrencyCode) && reward.Amount.HasValue)
                     {
                         // Use template variable for wallet ID - resolved at quest acceptance
@@ -1963,7 +2007,7 @@ public partial class QuestService : IQuestService
                     }
                     break;
 
-                case RewardDefinitionType.ITEM:
+                case RewardType.ITEM:
                     if (!string.IsNullOrEmpty(reward.ItemCode) && reward.Quantity.HasValue)
                     {
                         // Use template variable for container ID - resolved at quest acceptance
@@ -1983,14 +2027,14 @@ public partial class QuestService : IQuestService
                     }
                     break;
 
-                case RewardDefinitionType.EXPERIENCE:
+                case RewardType.EXPERIENCE:
                     // Stub: Experience system not implemented
                     _logger.LogWarning(
                         "EXPERIENCE reward for quest {QuestCode} skipped: experience system not implemented",
                         questCode);
                     break;
 
-                case RewardDefinitionType.REPUTATION:
+                case RewardType.REPUTATION:
                     // Stub: Reputation system not implemented
                     _logger.LogWarning(
                         "REPUTATION reward for quest {QuestCode} skipped: reputation system not implemented",
@@ -2015,11 +2059,12 @@ public partial class QuestService : IQuestService
         QuestDefinitionModel definition,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.ResolveTemplateValuesAsync");
         var values = new Dictionary<string, string>();
 
         // Check if we have any currency or item rewards that need wallet/container IDs
-        var hasCurrencyRewards = definition.Rewards?.Any(r => r.Type == RewardDefinitionType.CURRENCY) ?? false;
-        var hasItemRewards = definition.Rewards?.Any(r => r.Type == RewardDefinitionType.ITEM) ?? false;
+        var hasCurrencyRewards = definition.Rewards?.Any(r => r.Type == RewardType.CURRENCY) ?? false;
+        var hasItemRewards = definition.Rewards?.Any(r => r.Type == RewardType.ITEM) ?? false;
 
         if (hasCurrencyRewards)
         {
@@ -2047,6 +2092,17 @@ public partial class QuestService : IQuestService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resolving wallet for character {CharacterId}", characterId);
+
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "ResolveTemplateValues",
+                    "wallet_resolution_failed",
+                    ex.Message,
+                    dependency: "currency",
+                    endpoint: "get-or-create-wallet",
+                    details: null,
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -2061,7 +2117,7 @@ public partial class QuestService : IQuestService
                         OwnerType = ContainerOwnerType.Character,
                         ContainerType = "inventory",
                         ConstraintModel = ContainerConstraintModel.SlotOnly,
-                        MaxSlots = 100 // Default, games should configure this appropriately
+                        MaxSlots = _configuration.DefaultRewardContainerMaxSlots
                     },
                     cancellationToken);
 
@@ -2079,6 +2135,17 @@ public partial class QuestService : IQuestService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resolving container for character {CharacterId}", characterId);
+
+                await _messageBus.TryPublishErrorAsync(
+                    "quest",
+                    "ResolveTemplateValues",
+                    "container_resolution_failed",
+                    ex.Message,
+                    dependency: "inventory",
+                    endpoint: "get-or-create-container",
+                    details: null,
+                    stack: ex.StackTrace,
+                    cancellationToken: cancellationToken);
             }
         }
 
@@ -2100,7 +2167,7 @@ public partial class QuestService : IQuestService
             TargetEntitySubtype = o.TargetEntitySubtype,
             TargetLocationId = o.TargetLocationId,
             Hidden = o.Hidden,
-            RevealBehavior = o.RevealBehavior,
+            RevealBehavior = o.RevealBehavior ?? ObjectiveRevealBehavior.ALWAYS,
             Optional = o.Optional
         }).ToList();
     }
@@ -2201,6 +2268,7 @@ public partial class QuestService : IQuestService
         QuestDefinitionModel? definition,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.MapToInstanceResponseAsync");
         var objectives = await GetObjectiveProgressListAsync(instance.QuestInstanceId, definition, cancellationToken);
 
         return new QuestInstanceResponse
@@ -2347,6 +2415,54 @@ public partial class QuestService : IQuestService
 
             return (StatusCodes.OK, archive);
         }
+    }
+
+    #endregion
+
+    #region Character Index Helpers
+
+    /// <summary>
+    /// Updates the character quest index with ETag-based optimistic concurrency.
+    /// Retries on concurrency conflicts per IMPLEMENTATION TENETS.
+    /// </summary>
+    /// <param name="characterId">The character whose index to update.</param>
+    /// <param name="mutate">Action that modifies the index. Called on each retry with fresh data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task UpdateCharacterIndexAsync(
+        Guid characterId,
+        Action<CharacterQuestIndex> mutate,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.quest", "QuestService.UpdateCharacterIndexAsync");
+        var key = BuildCharacterIndexKey(characterId);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        {
+            var (current, etag) = await CharacterIndex.GetWithETagAsync(key, cancellationToken);
+            current ??= new CharacterQuestIndex
+            {
+                CharacterId = characterId,
+                ActiveQuestIds = new List<Guid>(),
+                CompletedQuestCodes = new List<string>()
+            };
+
+            mutate(current);
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute for existing records,
+            // and for new records empty string signals a create)
+            var saveResult = await CharacterIndex.TrySaveAsync(key, current, etag ?? string.Empty, cancellationToken: cancellationToken);
+            if (saveResult != null)
+                return;
+
+            _logger.LogDebug(
+                "Concurrent modification on character index {CharacterId}, retrying (attempt {Attempt})",
+                characterId, attempt + 1);
+        }
+
+        _logger.LogWarning(
+            "Failed to update character index for {CharacterId} after {MaxRetries} attempts",
+            characterId, _configuration.MaxConcurrencyRetries);
     }
 
     #endregion
