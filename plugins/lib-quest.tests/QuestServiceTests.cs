@@ -33,7 +33,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IStateStore<ObjectiveProgressModel>> _mockProgressStore;
     private readonly Mock<ICacheableStateStore<CharacterQuestIndex>> _mockCharacterIndex;
     private readonly Mock<IStateStore<CooldownEntry>> _mockCooldownStore;
-    private readonly Mock<IStateStore<IdempotencyRecord>> _mockIdempotencyStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
@@ -45,6 +44,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IQuestDataCache> _mockQuestDataCache;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly List<IPrerequisiteProviderFactory> _prerequisiteProviders;
 
     public QuestServiceTests()
@@ -56,7 +56,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockProgressStore = new Mock<IStateStore<ObjectiveProgressModel>>();
         _mockCharacterIndex = new Mock<ICacheableStateStore<CharacterQuestIndex>>();
         _mockCooldownStore = new Mock<IStateStore<CooldownEntry>>();
-        _mockIdempotencyStore = new Mock<IStateStore<IdempotencyRecord>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockContractClient = new Mock<IContractClient>();
         _mockCharacterClient = new Mock<ICharacterClient>();
@@ -68,6 +67,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockQuestDataCache = new Mock<IQuestDataCache>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _prerequisiteProviders = new List<IPrerequisiteProviderFactory>();
 
         // Setup factory to return typed stores
@@ -89,9 +89,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         _mockStateStoreFactory
             .Setup(f => f.GetStore<CooldownEntry>(StateStoreDefinitions.QuestCooldown))
             .Returns(_mockCooldownStore.Object);
-        _mockStateStoreFactory
-            .Setup(f => f.GetStore<IdempotencyRecord>(StateStoreDefinitions.QuestIdempotency))
-            .Returns(_mockIdempotencyStore.Object);
 
         // Default message bus setup
         _mockMessageBus
@@ -127,7 +124,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             _mockEventConsumer.Object,
             _mockServiceProvider.Object,
             _mockQuestDataCache.Object,
-            _prerequisiteProviders);
+            _prerequisiteProviders,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Validation
@@ -426,12 +424,6 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var existingModel = CreateTestDefinitionModel(definitionId);
 
         _mockDefinitionStore
-            .Setup(s => s.QueryAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QuestDefinitionModel> { existingModel });
-
-        _mockDefinitionStore
             .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((existingModel, "etag123"));
 
@@ -467,10 +459,8 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
         var definitionId = Guid.NewGuid();
 
         _mockDefinitionStore
-            .Setup(s => s.QueryAsync(
-                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<QuestDefinitionModel>());
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((QuestDefinitionModel?)null, (string?)null));
 
         var request = new UpdateQuestDefinitionRequest
         {
@@ -661,14 +651,17 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag");
 
-        // Setup: character index saves
+        // Setup: character index ETag-based write (UpdateCharacterIndexAsync uses GetWithETagAsync + TrySaveAsync)
         _mockCharacterIndex
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(((CharacterQuestIndex?)null, (string?)null));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .ReturnsAsync("new-etag");
 
         // Setup: progress store saves
         _mockProgressStore
@@ -874,22 +867,22 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ContractInstanceResponse { ContractId = instance.ContractInstanceId });
 
-        // Setup: character index for cleanup
+        // Setup: character index ETag-based write (UpdateCharacterIndexAsync uses GetWithETagAsync + TrySaveAsync)
         var characterIndex = new CharacterQuestIndex
         {
             CharacterId = characterId,
             ActiveQuestIds = new List<Guid> { instanceId }
         };
         _mockCharacterIndex
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(characterIndex);
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .ReturnsAsync("new-etag");
 
         // Setup: definition lookup for response mapping (GetDefinitionModelAsync checks cache then store)
         var definition = CreateTestDefinitionModel(instance.DefinitionId);
@@ -1523,7 +1516,7 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<QuestDefinitionModel> { definition });
 
-        // Setup: character index
+        // Setup: character index ETag-based write (UpdateCharacterIndexAsync uses GetWithETagAsync + TrySaveAsync)
         var characterIndex = new CharacterQuestIndex
         {
             CharacterId = characterId,
@@ -1531,15 +1524,15 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
             CompletedQuestCodes = new List<string>()
         };
         _mockCharacterIndex
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(characterIndex);
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
         _mockCharacterIndex
-            .Setup(s => s.SaveAsync(
+            .Setup(s => s.TrySaveAsync(
                 It.IsAny<string>(),
                 It.IsAny<CharacterQuestIndex>(),
-                It.IsAny<StateOptions?>(),
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync("etag");
+            .ReturnsAsync("new-etag");
 
         var callback = new QuestCompletedCallback
         {
@@ -1551,6 +1544,293 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task HandleContractTerminatedAsync_AbandonedReason_PublishesAbandonedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.ContractInstanceId = contractId;
+        instance.Status = QuestStatus.ACTIVE;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { instance });
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Setup: character index for UpdateCharacterIndexAsync
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { instanceId }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterQuestIndex>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var evt = new ContractTerminatedEvent
+        {
+            ContractId = contractId,
+            Reason = "Quest abandoned by player"
+        };
+
+        // Act
+        await service.HandleContractTerminatedAsync(evt);
+
+        // Assert - should publish abandoned event (reason contains "abandoned" and "player")
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            QuestTopics.QuestAbandoned,
+            It.IsAny<QuestAbandonedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleContractTerminatedAsync_FailureReason_PublishesFailedEvent()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.ContractInstanceId = contractId;
+        instance.Status = QuestStatus.ACTIVE;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { instance });
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Setup: character index for UpdateCharacterIndexAsync
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { instanceId }
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterQuestIndex>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var evt = new ContractTerminatedEvent
+        {
+            ContractId = contractId,
+            Reason = "Contract breached due to timeout"
+        };
+
+        // Act
+        await service.HandleContractTerminatedAsync(evt);
+
+        // Assert - should publish failed event (reason does not contain "abandoned" or "player")
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            QuestTopics.QuestFailed,
+            It.IsAny<QuestFailedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleContractTerminatedAsync_NoQuestInstance_NoEventPublished()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var evt = new ContractTerminatedEvent
+        {
+            ContractId = contractId,
+            Reason = "Contract terminated"
+        };
+
+        // Act
+        await service.HandleContractTerminatedAsync(evt);
+
+        // Assert - no events published for non-quest contracts
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<QuestAbandonedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            It.IsAny<string>(),
+            It.IsAny<QuestFailedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleContractFulfilledAsync_ActiveQuest_CompletesQuest()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.ContractInstanceId = contractId;
+        instance.Status = QuestStatus.ACTIVE;
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { instance });
+
+        _mockInstanceStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((instance, "etag123"));
+
+        _mockInstanceStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<QuestInstanceModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        // Setup: definition for reward processing
+        var definition = CreateTestDefinitionModel(instance.DefinitionId);
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestDefinitionModel> { definition });
+
+        // Setup: character index for UpdateCharacterIndexAsync
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { instanceId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((characterIndex, "etag123"));
+        _mockCharacterIndex
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<CharacterQuestIndex>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var evt = new ContractFulfilledEvent
+        {
+            ContractId = contractId
+        };
+
+        // Act
+        await service.HandleContractFulfilledAsync(evt);
+
+        // Assert - should publish completed event
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            QuestTopics.QuestCompleted,
+            It.IsAny<QuestCompletedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleContractMilestoneCompletedAsync_IncompleteProgress_MarksComplete()
+    {
+        // Arrange
+        var service = CreateService();
+        var contractId = Guid.NewGuid();
+        var instanceId = Guid.NewGuid();
+        var characterId = Guid.NewGuid();
+        var instance = CreateTestInstanceModel(instanceId, characterId);
+        instance.ContractInstanceId = contractId;
+
+        var progress = new ObjectiveProgressModel
+        {
+            QuestInstanceId = instanceId,
+            ObjectiveCode = "KILL_WOLVES",
+            Name = "Kill Wolves",
+            ObjectiveType = ObjectiveType.KILL,
+            CurrentCount = 7,
+            RequiredCount = 10,
+            IsComplete = false,
+            TrackedEntityIds = new HashSet<Guid>()
+        };
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel> { instance });
+
+        _mockProgressStore
+            .Setup(s => s.GetWithETagAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((progress, "etag123"));
+
+        _mockProgressStore
+            .Setup(s => s.TrySaveAsync(
+                It.IsAny<string>(),
+                It.IsAny<ObjectiveProgressModel>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync("new-etag");
+
+        var evt = new ContractMilestoneCompletedEvent
+        {
+            ContractId = contractId,
+            MilestoneCode = "KILL_WOLVES"
+        };
+
+        // Act
+        await service.HandleContractMilestoneCompletedAsync(evt);
+
+        // Assert - progress updated and event published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            QuestTopics.QuestObjectiveProgressed,
+            It.IsAny<QuestObjectiveProgressedEvent>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
