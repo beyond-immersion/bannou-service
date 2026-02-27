@@ -1,10 +1,11 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
 namespace LibOrchestrator;
 
@@ -22,6 +23,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IControlPlaneServiceProvider _controlPlaneProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Cache of current service routings to detect changes
     private readonly ConcurrentDictionary<string, ServiceRouting> _currentRoutings = new();
@@ -47,7 +49,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         IOrchestratorStateManager stateManager,
         IOrchestratorEventManager eventManager,
         IControlPlaneServiceProvider controlPlaneProvider,
-        IMeshInstanceIdentifier instanceIdentifier)
+        IMeshInstanceIdentifier instanceIdentifier,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
@@ -56,6 +59,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         _eventManager = eventManager;
         _controlPlaneProvider = controlPlaneProvider;
         _instanceId = instanceIdentifier.InstanceId;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Subscribe to real-time heartbeat events from RabbitMQ
         _eventManager.HeartbeatReceived += OnHeartbeatReceived;
@@ -111,6 +116,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     private async Task WriteHeartbeatAndUpdateRoutingAsync(ServiceHeartbeatEvent heartbeat)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.WriteHeartbeatAndUpdateRoutingAsync");
         try
         {
             // Write instance heartbeat to state store
@@ -232,6 +238,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task SetServiceRoutingAsync(string serviceName, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.SetServiceRoutingAsync");
         var routing = new ServiceRouting
         {
             AppId = appId,
@@ -254,6 +261,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task RestoreServiceRoutingToDefaultAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.RestoreServiceRoutingToDefaultAsync");
         var defaultAppId = _appConfiguration.EffectiveAppId;
 
         // Set the routing to the default app-id instead of removing it
@@ -285,6 +293,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task ResetAllMappingsToDefaultAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.ResetAllMappingsToDefaultAsync");
         try
         {
             // Use the orchestrator's effective app-id (from configuration, not hardcoded constant)
@@ -339,6 +348,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     private async Task PublishFullMappingsIfNeededAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.PublishFullMappingsIfNeededAsync");
         bool shouldPublish;
         lock (_routingChangeLock)
         {
@@ -366,6 +376,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task PublishFullMappingsAsync(string reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.PublishFullMappingsAsync");
         try
         {
             // Get all current routings from Redis (source of truth)
@@ -441,6 +452,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <returns>Health report with services filtered by the specified source</returns>
     public async Task<ServiceHealthReport> GetServiceHealthReportAsync(ServiceHealthSource source, string? serviceFilter = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthReportAsync");
         var now = DateTimeOffset.UtcNow;
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
         var controlPlaneAppId = _controlPlaneProvider.ControlPlaneAppId;
@@ -535,6 +547,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task<RestartRecommendation> ShouldRestartServiceAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.ShouldRestartServiceAsync");
         // Get all heartbeats for this service (may be multiple app-ids)
         var allHeartbeats = await _stateManager.GetServiceHeartbeatsAsync();
         var serviceHeartbeats = allHeartbeats
@@ -646,6 +659,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// </summary>
     public async Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthStatusAsync");
         return await _stateManager.GetServiceHeartbeatAsync(serviceId, appId);
     }
 

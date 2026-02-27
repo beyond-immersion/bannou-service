@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -15,18 +17,22 @@ public class SmartRestartManager : ISmartRestartManager
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly IServiceHealthMonitor _healthMonitor;
     private readonly IOrchestratorEventManager _eventManager;
+    private readonly ITelemetryProvider _telemetryProvider;
     private DockerClient? _dockerClient;
 
     public SmartRestartManager(
         ILogger<SmartRestartManager> logger,
         OrchestratorServiceConfiguration configuration,
         IServiceHealthMonitor healthMonitor,
-        IOrchestratorEventManager eventManager)
+        IOrchestratorEventManager eventManager,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _healthMonitor = healthMonitor;
         _eventManager = eventManager;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -34,6 +40,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// </summary>
     public async Task InitializeAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.InitializeAsync");
         try
         {
             var dockerHost = _configuration.DockerHost;
@@ -58,6 +65,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// </summary>
     public async Task<ServiceRestartResult> RestartServiceAsync(ServiceRestartRequest request)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.RestartServiceAsync");
         var startTime = DateTime.UtcNow;
 
         try
@@ -167,6 +175,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// </summary>
     private async Task<ContainerListResponse?> FindContainerByServiceNameAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.FindContainerByServiceNameAsync");
         if (_dockerClient == null)
         {
             throw new InvalidOperationException("Docker client not initialized");
@@ -192,6 +201,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// </summary>
     private async Task<bool> WaitForServiceHealthAsync(string serviceName, TimeSpan timeout)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.WaitForServiceHealthAsync");
         var startTime = DateTime.UtcNow;
         var endTime = startTime + timeout;
 
@@ -231,6 +241,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// </summary>
     private async Task<string> GetCurrentServiceStatusAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.GetCurrentServiceStatusAsync");
         var recommendation = await _healthMonitor.ShouldRestartServiceAsync(serviceName);
         return recommendation.CurrentStatus;
     }

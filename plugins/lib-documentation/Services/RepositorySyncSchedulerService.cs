@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Documentation.Models;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
@@ -16,6 +17,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<RepositorySyncSchedulerService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
     private const string BINDING_KEY_PREFIX = "repo-binding:";
@@ -26,11 +28,14 @@ public class RepositorySyncSchedulerService : BackgroundService
     public RepositorySyncSchedulerService(
         IServiceProvider serviceProvider,
         ILogger<RepositorySyncSchedulerService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -40,6 +45,7 @@ public class RepositorySyncSchedulerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.ExecuteAsync");
         // Check if scheduler is enabled
         if (!_configuration.SyncSchedulerEnabled)
         {
@@ -107,6 +113,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task ProcessScheduledSyncsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.ProcessScheduledSyncsAsync");
         _logger.LogDebug("Checking for bindings that need sync");
 
         using var scope = _serviceProvider.CreateScope();
@@ -228,6 +235,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task CleanupStaleRepositoriesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.CleanupStaleRepositoriesAsync");
         var storagePath = _configuration.GitStoragePath;
         if (!Directory.Exists(storagePath))
         {
@@ -291,6 +299,7 @@ public class RepositorySyncSchedulerService : BackgroundService
     /// </summary>
     private async Task TryPublishErrorAsync(Exception ex, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RepositorySyncSchedulerService.TryPublishErrorAsync");
         try
         {
             using var errorScope = _serviceProvider.CreateScope();

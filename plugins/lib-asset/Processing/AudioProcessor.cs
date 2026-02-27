@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ public sealed class AudioProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;
     private readonly IFFmpegService _ffmpegService;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<AudioProcessor> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -47,11 +49,14 @@ public sealed class AudioProcessor : IAssetProcessor
     public AudioProcessor(
         IAssetStorageProvider storageProvider,
         IFFmpegService ffmpegService,
+        ITelemetryProvider telemetryProvider,
         ILogger<AudioProcessor> logger,
         AssetServiceConfiguration configuration)
     {
         _storageProvider = storageProvider;
         _ffmpegService = ffmpegService;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -67,6 +72,7 @@ public sealed class AudioProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AudioProcessor.ValidateAsync");
         await Task.CompletedTask;
         var warnings = new List<string>();
 
@@ -112,6 +118,7 @@ public sealed class AudioProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AudioProcessor.ProcessAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try

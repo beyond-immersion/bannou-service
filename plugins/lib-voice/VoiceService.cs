@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -61,6 +62,7 @@ public partial class VoiceService : IVoiceService
     private readonly IScaledTierCoordinator _scaledTierCoordinator;
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IPermissionClient _permissionClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string ROOM_KEY_PREFIX = "voice:room:";
     private const string SESSION_ROOM_KEY_PREFIX = "voice:session-room:";
@@ -78,6 +80,7 @@ public partial class VoiceService : IVoiceService
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
     /// <param name="permissionClient">Permission client for managing voice permission states.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -88,7 +91,8 @@ public partial class VoiceService : IVoiceService
         IScaledTierCoordinator scaledTierCoordinator,
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
-        IPermissionClient permissionClient)
+        IPermissionClient permissionClient,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -99,6 +103,8 @@ public partial class VoiceService : IVoiceService
         _scaledTierCoordinator = scaledTierCoordinator;
         _clientEventPublisher = clientEventPublisher;
         _permissionClient = permissionClient;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -960,6 +966,7 @@ public partial class VoiceService : IVoiceService
         VoiceBroadcastStoppedReason reason,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.StopBroadcastInternalAsync");
         var previousState = roomData.BroadcastState;
         roomData.BroadcastState = BroadcastConsentState.Inactive;
         roomData.BroadcastConsentedSessions.Clear();
@@ -998,6 +1005,7 @@ public partial class VoiceService : IVoiceService
     /// </summary>
     private async Task ClearConsentPendingStatesAsync(IEnumerable<Guid> sessionIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.ClearConsentPendingStatesAsync");
         foreach (var sessionId in sessionIds)
         {
             try
@@ -1028,6 +1036,7 @@ public partial class VoiceService : IVoiceService
         string? declinedByDisplayName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.PublishBroadcastConsentUpdateAsync");
         var updateEvent = new VoiceBroadcastConsentUpdateEvent
         {
             EventId = Guid.NewGuid(),
@@ -1061,6 +1070,7 @@ public partial class VoiceService : IVoiceService
         int currentCount,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.NotifyPeerJoinedAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var otherParticipants = participants
             .Where(p => p.SessionId != newPeerSessionId)
@@ -1121,6 +1131,7 @@ public partial class VoiceService : IVoiceService
         int remainingCount,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.NotifyPeerLeftAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
         if (participants.Count == 0)
@@ -1152,6 +1163,7 @@ public partial class VoiceService : IVoiceService
         VoiceRoomDeletedReason reason,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.NotifyRoomClosedAsync");
         if (participants.Count == 0)
         {
             return;
@@ -1179,6 +1191,7 @@ public partial class VoiceService : IVoiceService
         string rtpServerUri,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.NotifyTierUpgradeAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
         if (participants.Count == 0)
@@ -1233,6 +1246,7 @@ public partial class VoiceService : IVoiceService
         VoiceRoomData roomData,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.TryUpgradeToScaledTierAsync");
         if (!_configuration.ScaledTierEnabled)
         {
             _logger.LogWarning("Scaled tier not enabled, cannot upgrade room {RoomId}", roomId);

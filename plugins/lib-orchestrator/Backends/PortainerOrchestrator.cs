@@ -1,7 +1,9 @@
-using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using BeyondImmersion.BannouService.Services;
+using Microsoft.Extensions.Logging;
 // Type aliases for Orchestrator types
 using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
 using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
@@ -31,6 +33,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly HttpClient _httpClient;
     private readonly int _endpointId;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Label used to identify app-id on containers.
@@ -48,10 +51,13 @@ public class PortainerOrchestrator : IContainerOrchestrator
     public PortainerOrchestrator(
         ILogger<PortainerOrchestrator> logger,
         OrchestratorServiceConfiguration configuration,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         var portainerUrl = configuration.PortainerUrl
             ?? throw new InvalidOperationException("PORTAINER_URL not configured");
@@ -78,6 +84,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.CheckAvailabilityAsync");
         try
         {
             // GET /api/status - see ORCHESTRATOR-SDK-REFERENCE.md
@@ -99,6 +106,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.GetContainerStatusAsync");
         _logger.LogDebug("Getting Portainer container status for app: {AppName}", appName);
 
         try
@@ -136,6 +144,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         ContainerRestartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.RestartContainerAsync");
         _logger.LogInformation(
             "Restarting Portainer container for app: {AppName}, Priority: {Priority}, Reason: {Reason}",
             appName,
@@ -208,6 +217,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ListContainersAsync");
         _logger.LogDebug("Listing all Portainer containers");
 
         try
@@ -247,6 +257,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         DateTimeOffset? since = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.GetContainerLogsAsync");
         _logger.LogDebug("Getting Portainer container logs for app: {AppName}, tail: {Tail}", appName, tail);
 
         try
@@ -289,6 +300,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.FindContainerByAppNameAsync");
         // Get all containers and filter by label
         // Portainer's Docker proxy supports filters but the format is complex
         var url = $"/api/endpoints/{_endpointId}/docker/containers/json?all=true";
@@ -356,6 +368,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         Dictionary<string, string>? environment = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.DeployServiceAsync");
         _logger.LogInformation(
             "Deploying Portainer container: {ServiceName} with app-id: {AppId}",
             serviceName, appId);
@@ -460,6 +473,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         bool removeVolumes = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.TeardownServiceAsync");
         _logger.LogInformation(
             "Tearing down Portainer container: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
@@ -526,6 +540,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ScaleServiceAsync");
         await Task.CompletedTask;
         _logger.LogWarning(
             "Scale operation not supported in Portainer standalone mode for {AppName}. Use Swarm or Kubernetes for scaling.",
@@ -546,6 +561,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.ListInfrastructureServicesAsync");
         _logger.LogDebug("Listing infrastructure services (Portainer mode)");
 
         try
@@ -583,6 +599,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneNetworksAsync");
         _logger.LogInformation("Pruning unused networks via Portainer");
 
         try
@@ -635,6 +652,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneVolumesAsync");
         _logger.LogInformation("Pruning unused volumes via Portainer");
 
         try
@@ -689,6 +707,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PortainerOrchestrator.PruneImagesAsync");
         _logger.LogInformation("Pruning dangling images via Portainer");
 
         try

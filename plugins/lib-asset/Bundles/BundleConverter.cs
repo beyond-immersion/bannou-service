@@ -1,5 +1,7 @@
 using BeyondImmersion.Bannou.Bundle.Format;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.IO.Compression;
 
 namespace BeyondImmersion.BannouService.Asset.Bundles;
@@ -11,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Bundles;
 public sealed class BundleConverter : IBundleConverter
 {
     private readonly ILogger<BundleConverter> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly string _cacheDirectory;
     private readonly TimeSpan _cacheTtl;
 
@@ -18,14 +21,18 @@ public sealed class BundleConverter : IBundleConverter
     /// Creates a new bundle converter.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="cacheDirectory">Directory for ZIP cache files.</param>
     /// <param name="cacheTtl">Time-to-live for cached ZIP files.</param>
     public BundleConverter(
         ILogger<BundleConverter> logger,
+        ITelemetryProvider telemetryProvider,
         string? cacheDirectory = null,
         TimeSpan? cacheTtl = null)
     {
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _cacheDirectory = cacheDirectory ?? Path.Combine(Path.GetTempPath(), "bannou-zip-cache");
         _cacheTtl = cacheTtl ?? TimeSpan.FromHours(24);
 
@@ -56,6 +63,7 @@ public sealed class BundleConverter : IBundleConverter
         IReadOnlyDictionary<string, string>? tags = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "BundleConverter.ConvertZipToBundleAsync");
         using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read, leaveOpen: true);
         using var writer = new BannouBundleWriter(outputStream, _logger as ILogger<BannouBundleWriter>);
 
@@ -119,6 +127,7 @@ public sealed class BundleConverter : IBundleConverter
         string bundleId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "BundleConverter.ConvertBundleToZipAsync");
         // Check cache first
         var cacheFile = GetCacheFilePath(bundleId);
         if (File.Exists(cacheFile))

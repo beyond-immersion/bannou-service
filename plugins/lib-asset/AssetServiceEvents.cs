@@ -36,6 +36,7 @@ public partial class AssetService
     /// <param name="evt">The job queued event.</param>
     internal async Task HandleMetabundleJobQueuedAsync(MetabundleJobQueuedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.HandleMetabundleJobQueuedAsync");
         var stopwatch = Stopwatch.StartNew();
         var cancellationToken = CancellationToken.None;
 
@@ -131,6 +132,7 @@ public partial class AssetService
     /// </summary>
     private async Task<MetabundleJobResult> ProcessMetabundleJobAsync(MetabundleJob job, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.ProcessMetabundleJobAsync");
         if (job.Request == null)
         {
             throw new InvalidOperationException($"Job {job.JobId} has null Request - data corruption detected");
@@ -209,6 +211,7 @@ public partial class AssetService
             await using var writer = new StreamingBundleWriter(
                 uploadSession,
                 _storageProvider,
+                _telemetryProvider,
                 streamingOptions,
                 _logger);
 
@@ -414,6 +417,7 @@ public partial class AssetService
         int progress,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.UpdateJobProgressAsync");
         job.Progress = progress;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         await jobStore.SaveAsync(jobKey, job,
@@ -426,6 +430,7 @@ public partial class AssetService
     /// </summary>
     private async Task EmitJobCompletionEventAsync(MetabundleJob job, string? sessionId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.EmitJobCompletionEventAsync");
         if (string.IsNullOrEmpty(sessionId))
         {
             _logger.LogDebug("No session ID for job completion event: JobId={JobId}", job.JobId);

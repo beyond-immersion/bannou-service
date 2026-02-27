@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
@@ -25,16 +27,19 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     private readonly ILogger<DockerSwarmOrchestrator> _logger;
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly DockerClient _client;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Label used to identify app-id on services.
     /// </summary>
     private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
-    public DockerSwarmOrchestrator(OrchestratorServiceConfiguration configuration, ILogger<DockerSwarmOrchestrator> logger)
+    public DockerSwarmOrchestrator(OrchestratorServiceConfiguration configuration, ILogger<DockerSwarmOrchestrator> logger, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         using var config = new DockerClientConfiguration();
         _client = config.CreateClient();
     }
@@ -45,6 +50,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.CheckAvailabilityAsync");
         try
         {
             // GetSystemInfoAsync - see ORCHESTRATOR-SDK-REFERENCE.md
@@ -74,6 +80,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.GetContainerStatusAsync");
         _logger.LogDebug("Getting Swarm service status for app: {AppName}", appName);
 
         try
@@ -111,6 +118,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         ContainerRestartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.RestartContainerAsync");
         _logger.LogInformation(
             "Restarting Swarm service for app: {AppName}, Priority: {Priority}, Reason: {Reason}",
             appName,
@@ -197,6 +205,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.ListContainersAsync");
         _logger.LogDebug("Listing all Swarm services");
 
         try
@@ -236,6 +245,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         DateTimeOffset? since = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.GetContainerLogsAsync");
         _logger.LogDebug("Getting Swarm service logs for app: {AppName}, tail: {Tail}", appName, tail);
 
         try
@@ -276,6 +286,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.FindServiceByAppNameAsync");
         var services = await _client.Swarm.ListServicesAsync(
             new ServicesListParameters
             {
@@ -310,6 +321,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.MapServiceToStatusAsync");
         // Get service tasks to determine actual running state
         var tasks = await GetServiceTasksAsync(service.ID, cancellationToken);
 
@@ -341,6 +353,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         string serviceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.GetServiceTasksAsync");
         await Task.CompletedTask;
         try
         {
@@ -364,6 +377,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         Dictionary<string, string>? environment = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.DeployServiceAsync");
         _logger.LogInformation(
             "Deploying Swarm service: {ServiceName} with app-id: {AppId}",
             serviceName, appId);
@@ -457,6 +471,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         bool removeVolumes = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.TeardownServiceAsync");
         _logger.LogInformation(
             "Tearing down Swarm service: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
@@ -517,6 +532,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.ScaleServiceAsync");
         _logger.LogInformation(
             "Scaling Swarm service: {AppName} to {Replicas} replicas",
             appName, replicas);
@@ -593,6 +609,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.ListInfrastructureServicesAsync");
         _logger.LogInformation("Listing infrastructure services (Docker Swarm mode)");
 
         try
@@ -630,6 +647,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.PruneNetworksAsync");
         _logger.LogInformation("Pruning unused networks (Docker Swarm)");
 
         try
@@ -670,6 +688,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.PruneVolumesAsync");
         _logger.LogInformation("Pruning unused volumes (Docker Swarm)");
 
         try
@@ -711,6 +730,7 @@ public class DockerSwarmOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "DockerSwarmOrchestrator.PruneImagesAsync");
         _logger.LogInformation("Pruning dangling images (Docker Swarm)");
 
         try

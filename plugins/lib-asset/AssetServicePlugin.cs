@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -126,9 +127,11 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddSingleton<IBundleConverter>(sp =>
         {
             var bundleLogger = sp.GetRequiredService<ILogger<BundleConverter>>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
             var assetConf = sp.GetRequiredService<AssetServiceConfiguration>();
             return new BundleConverter(
                 bundleLogger,
+                telemetryProvider,
                 cacheDirectory: null,
                 cacheTtl: TimeSpan.FromHours(assetConf.ZipCacheTtlHours));
         });

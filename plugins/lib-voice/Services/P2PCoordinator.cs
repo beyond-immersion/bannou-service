@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
@@ -11,6 +13,7 @@ public class P2PCoordinator : IP2PCoordinator
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly ILogger<P2PCoordinator> _logger;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the P2PCoordinator.
@@ -18,14 +21,18 @@ public class P2PCoordinator : IP2PCoordinator
     /// <param name="endpointRegistry">SIP endpoint registry for participant lookups.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Voice service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public P2PCoordinator(
         ISipEndpointRegistry endpointRegistry,
         ILogger<P2PCoordinator> logger,
-        VoiceServiceConfiguration configuration)
+        VoiceServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _endpointRegistry = endpointRegistry;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -34,6 +41,7 @@ public class P2PCoordinator : IP2PCoordinator
         Guid joiningSessionId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "P2PCoordinator.GetMeshPeersForNewJoinAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
 
         // Convert participants to VoicePeer, excluding the joining participant
@@ -60,6 +68,7 @@ public class P2PCoordinator : IP2PCoordinator
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "P2PCoordinator.ShouldUpgradeToScaledAsync");
         await Task.CompletedTask;
         var maxP2P = GetP2PMaxParticipants();
         // Upgrade when EXCEEDING capacity (>), not when AT capacity (>=)
@@ -82,6 +91,7 @@ public class P2PCoordinator : IP2PCoordinator
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "P2PCoordinator.CanAcceptNewParticipantAsync");
         await Task.CompletedTask;
         // Check if room is at P2P capacity
         var maxP2P = GetP2PMaxParticipants();
@@ -114,6 +124,7 @@ public class P2PCoordinator : IP2PCoordinator
         bool tierUpgradePending = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "P2PCoordinator.BuildP2PConnectionInfoAsync");
         await Task.CompletedTask;
         var response = new JoinVoiceRoomResponse
         {

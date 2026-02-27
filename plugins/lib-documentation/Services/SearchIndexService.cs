@@ -1,7 +1,8 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -15,6 +16,7 @@ public partial class SearchIndexService : ISearchIndexService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<SearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Thread-safe index storage per namespace.
@@ -28,19 +30,24 @@ public partial class SearchIndexService : ISearchIndexService
     /// <param name="stateStoreFactory">The state store factory for state operations.</param>
     /// <param name="logger">The logger instance.</param>
     /// <param name="configuration">The service configuration.</param>
+    /// <param name="telemetryProvider">The telemetry provider for span instrumentation.</param>
     public SearchIndexService(
         IStateStoreFactory stateStoreFactory,
         ILogger<SearchIndexService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
     public async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.EnsureIndexExistsAsync");
         // In-memory index is created on first use, no pre-creation needed
         _indices.GetOrAdd(namespaceId, _ => new NamespaceIndex());
         await Task.CompletedTask;
@@ -49,6 +56,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<int> RebuildIndexAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.RebuildIndexAsync");
         _logger.LogInformation("Rebuilding search index for namespace {Namespace}", namespaceId);
 
         // Get or create the namespace index
@@ -116,6 +124,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.SearchAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;
@@ -129,6 +138,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.QueryAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;
@@ -145,6 +155,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.GetRelatedSuggestionsAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;
@@ -158,6 +169,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.ListDocumentIdsAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;
@@ -171,6 +183,7 @@ public partial class SearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.GetNamespaceStatsAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;

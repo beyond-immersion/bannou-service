@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using LibGit2Sharp;
 using Microsoft.Extensions.FileSystemGlobbing;
@@ -15,6 +16,7 @@ public class GitSyncService : IGitSyncService
     private readonly ILogger<GitSyncService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new instance of the GitSyncService.
@@ -22,11 +24,14 @@ public class GitSyncService : IGitSyncService
     public GitSyncService(
         ILogger<GitSyncService> logger,
         DocumentationServiceConfiguration configuration,
-        IMessageBus messageBus)
+        IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -36,6 +41,7 @@ public class GitSyncService : IGitSyncService
         string localPath,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.SyncRepositoryAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(repositoryUrl);
         ArgumentException.ThrowIfNullOrWhiteSpace(branch);
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
@@ -107,6 +113,7 @@ public class GitSyncService : IGitSyncService
         string toCommit,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.GetChangedFilesAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(toCommit);
 
@@ -192,6 +199,7 @@ public class GitSyncService : IGitSyncService
         IEnumerable<string> excludePatterns,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.GetMatchingFilesAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
 
         return await Task.Run(async () =>
@@ -279,6 +287,7 @@ public class GitSyncService : IGitSyncService
         string filePath,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.ReadFileContentAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(localPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
@@ -312,6 +321,7 @@ public class GitSyncService : IGitSyncService
     /// <inheritdoc />
     public async Task CleanupRepositoryAsync(string localPath, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.CleanupRepositoryAsync");
         if (string.IsNullOrWhiteSpace(localPath) || !Directory.Exists(localPath))
         {
             return;

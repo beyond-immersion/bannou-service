@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
@@ -33,6 +34,7 @@ public class ParticipantEvictionWorker : BackgroundService
     private readonly ISipEndpointRegistry _endpointRegistry;
     private readonly ILogger<ParticipantEvictionWorker> _logger;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between eviction cycles, from configuration.
@@ -50,12 +52,15 @@ public class ParticipantEvictionWorker : BackgroundService
         IServiceProvider serviceProvider,
         ISipEndpointRegistry endpointRegistry,
         ILogger<ParticipantEvictionWorker> logger,
-        VoiceServiceConfiguration configuration)
+        VoiceServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _endpointRegistry = endpointRegistry;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -65,6 +70,7 @@ public class ParticipantEvictionWorker : BackgroundService
     /// <param name="stoppingToken">Cancellation token for graceful shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.ExecuteAsync");
         _logger.LogInformation(
             "Participant eviction worker starting, interval: {Interval}s, heartbeat timeout: {Timeout}s, grace period: {Grace}s, consent timeout: {Consent}s",
             _configuration.ParticipantEvictionCheckIntervalSeconds,
@@ -131,6 +137,7 @@ public class ParticipantEvictionWorker : BackgroundService
     /// </summary>
     internal async Task ProcessEvictionCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.ProcessEvictionCycleAsync");
         var trackedRoomIds = _endpointRegistry.GetAllTrackedRoomIds();
 
         if (trackedRoomIds.Count == 0)
@@ -224,6 +231,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.EvictStaleParticipantsAsync");
         var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
         var staleParticipants = participants
             .Where(p => now - p.LastHeartbeat > heartbeatTimeout)
@@ -331,6 +339,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStoreFactory stateStoreFactory,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.DeleteEmptyRoomAsync");
         _logger.LogInformation("Auto-deleting empty room {RoomId} after grace period", roomId);
 
         // Stop any in-progress broadcast
@@ -376,6 +385,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.AutoDeclineConsentAsync");
         _logger.LogInformation("Auto-declining broadcast consent for room {RoomId} due to timeout", roomId);
 
         roomData.BroadcastState = BroadcastConsentState.Inactive;
@@ -448,6 +458,7 @@ public class ParticipantEvictionWorker : BackgroundService
         IStateStore<VoiceRoomData> roomStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ParticipantEvictionWorker.StopBroadcastFromWorkerAsync");
         var previousState = roomData.BroadcastState;
         roomData.BroadcastState = BroadcastConsentState.Inactive;
         roomData.BroadcastConsentedSessions.Clear();

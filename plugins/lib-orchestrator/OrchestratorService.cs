@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
@@ -33,6 +34,7 @@ public partial class OrchestratorService : IOrchestratorService
     private readonly PresetLoader _presetLoader;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
@@ -97,6 +99,7 @@ public partial class OrchestratorService : IOrchestratorService
         IBackendDetector backendDetector,
         IDistributedLockProvider lockProvider,
         IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
@@ -111,10 +114,12 @@ public partial class OrchestratorService : IOrchestratorService
         _backendDetector = backendDetector;
         _lockProvider = lockProvider;
         _httpClientFactory = httpClientFactory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Create preset loader with configured presets directory
         var presetsPath = configuration.PresetsHostPath;
-        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath);
+        _presetLoader = new PresetLoader(_loggerFactory.CreateLogger<PresetLoader>(), presetsPath, _telemetryProvider);
 
         // Register event handlers via partial class (OrchestratorServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);
@@ -126,6 +131,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task EnsureLastDeploymentLoadedAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.EnsureLastDeploymentLoadedAsync");
         // Skip if already loaded
         if (_lastKnownDeployment != null)
         {
@@ -162,6 +168,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task<IContainerOrchestrator> GetOrchestratorAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetOrchestratorAsync");
         if (_orchestrator != null)
         {
             // Check if TTL has expired (0 = caching disabled)
@@ -1230,6 +1237,7 @@ public partial class OrchestratorService : IOrchestratorService
         string teardownId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ExecuteActualTeardownAsync");
         var stoppedContainers = new List<string>();
         var removedVolumes = new List<string>();
         var failedTeardowns = new List<string>();
@@ -2202,6 +2210,7 @@ public partial class OrchestratorService : IOrchestratorService
         string? dependency = null,
         object? details = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.PublishErrorEventAsync");
         await _messageBus.TryPublishErrorAsync(
             serviceName: "orchestrator",
             operation: operation,
@@ -2243,6 +2252,7 @@ public partial class OrchestratorService : IOrchestratorService
         string deploymentId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ResetToDefaultTopologyAsync");
         var tornDownServices = new List<string>();
 
         try
@@ -2900,6 +2910,7 @@ public partial class OrchestratorService : IOrchestratorService
         List<PresetProcessingPool> processingPools,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.InitializePoolConfigurationsAsync");
         foreach (var pool in processingPools)
         {
             if (string.IsNullOrEmpty(pool.PoolType))
@@ -2961,6 +2972,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// <param name="cancellationToken">Cancellation token.</param>
     private async Task RegisterPoolTypeAsync(string poolType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RegisterPoolTypeAsync");
         var knownPoolsKey = "orchestrator:pools:known";
         var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey) ?? new List<string>();
 
@@ -2976,6 +2988,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task<List<string>> GetKnownPoolTypesAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetKnownPoolTypesAsync");
         var knownPoolsKey = "orchestrator:pools:known";
         var knownPools = await _stateManager.GetListAsync<string>(knownPoolsKey);
         return knownPools ?? new List<string>();
@@ -2990,6 +3003,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// <param name="leasesKey">Redis key for the leases hash.</param>
     private async Task ReclaimExpiredLeasesAsync(string poolType, string availableKey, string leasesKey)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.ReclaimExpiredLeasesAsync");
         var leases = await _stateManager.GetHashAsync<ProcessorLease>(leasesKey);
         if (leases == null || leases.Count == 0)
         {
@@ -3045,6 +3059,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task UpdatePoolMetricsAsync(string poolType, bool success)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.UpdatePoolMetricsAsync");
         var metricsKey = string.Format(POOL_METRICS_KEY, poolType);
         var metrics = await _stateManager.GetValueAsync<PoolMetricsData>(metricsKey) ?? new PoolMetricsData();
 
@@ -3075,6 +3090,7 @@ public partial class OrchestratorService : IOrchestratorService
     /// </summary>
     private async Task InvalidateOpenRestyRoutingCacheAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.InvalidateOpenRestyRoutingCacheAsync");
         try
         {
             // OpenResty exposes an internal cache invalidation endpoint

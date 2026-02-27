@@ -15,6 +15,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using StorageModels = BeyondImmersion.BannouService.Storage;
@@ -37,6 +38,7 @@ public partial class AssetService : IAssetService
     private readonly IOrchestratorClient _orchestratorClient;
     private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Marker used to identify standalone assets (not from any bundle) in conflict reports.
@@ -59,6 +61,7 @@ public partial class AssetService : IAssetService
     /// <param name="orchestratorClient">Orchestrator client for processor pool management.</param>
     /// <param name="processorPoolManager">Pool manager for tracking processor node state.</param>
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub event handling.</param>
     public AssetService(
         IStateStoreFactory stateStoreFactory,
@@ -70,6 +73,7 @@ public partial class AssetService : IAssetService
         IOrchestratorClient orchestratorClient,
         IAssetProcessorPoolManager processorPoolManager,
         IBundleConverter bundleConverter,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -81,6 +85,7 @@ public partial class AssetService : IAssetService
         _orchestratorClient = orchestratorClient;
         _processorPoolManager = processorPoolManager;
         _bundleConverter = bundleConverter;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class
         RegisterEventConsumers(eventConsumer);
@@ -716,6 +721,7 @@ public partial class AssetService : IAssetService
         AssetSearchRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.SearchAssetsIndexFallbackAsync");
         var matchingAssets = new List<AssetMetadata>();
 
         // Search by asset type index
@@ -2194,6 +2200,7 @@ public partial class AssetService : IAssetService
 
     private async Task IndexAssetAsync(AssetMetadata asset, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.IndexAssetAsync");
         // Index by asset type
         var typeIndexKey = $"{_configuration.AssetIndexKeyPrefix}type:{asset.AssetType.ToString().ToLowerInvariant()}";
         await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
@@ -2222,6 +2229,7 @@ public partial class AssetService : IAssetService
         string assetId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.AddToIndexWithOptimisticConcurrencyAsync");
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Asset);
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
@@ -2273,6 +2281,7 @@ public partial class AssetService : IAssetService
     /// </summary>
     private async Task IndexBundleAssetsAsync(BundleMetadata bundle, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.IndexBundleAssetsAsync");
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
         var realmPrefix = bundle.Realm.ToString().ToLowerInvariant();
 
@@ -2295,6 +2304,7 @@ public partial class AssetService : IAssetService
         string bundleId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.AddBundleToAssetIndexAsync");
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
@@ -2406,6 +2416,7 @@ public partial class AssetService : IAssetService
         string poolType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.EnsureProcessorAvailableAsync");
         try
         {
             // Check if any processors are available in the pool
@@ -2484,6 +2495,7 @@ public partial class AssetService : IAssetService
         string storageKey,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.DelegateToProcessingPoolAsync");
         var poolType = GetProcessorPoolType(metadata.ContentType);
         var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
 
@@ -3181,6 +3193,7 @@ public partial class AssetService : IAssetService
     /// </summary>
     private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.RemoveFromBundleIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
 
         foreach (var assetId in assetIds)
@@ -3257,6 +3270,7 @@ public partial class AssetService : IAssetService
         long totalSizeBytes,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.CreateMetabundleJobAsync");
         var jobId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 

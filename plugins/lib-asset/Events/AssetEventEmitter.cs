@@ -1,6 +1,8 @@
 using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Asset.Events;
 
@@ -11,18 +13,23 @@ namespace BeyondImmersion.BannouService.Asset.Events;
 public class AssetEventEmitter : IAssetEventEmitter
 {
     private readonly IClientEventPublisher _publisher;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<AssetEventEmitter> _logger;
 
     /// <summary>
     /// Creates a new AssetEventEmitter.
     /// </summary>
     /// <param name="publisher">Client event publisher.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="logger">Logger.</param>
     public AssetEventEmitter(
         IClientEventPublisher publisher,
+        ITelemetryProvider telemetryProvider,
         ILogger<AssetEventEmitter> logger)
     {
         _publisher = publisher;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -38,6 +45,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         string? errorMessage = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitUploadCompleteAsync");
         var eventData = new AssetUploadCompleteEvent
         {
             EventId = Guid.NewGuid(),
@@ -69,6 +77,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         string? errorMessage = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitProcessingCompleteAsync");
         var eventData = new AssetProcessingCompleteEvent
         {
             EventId = Guid.NewGuid(),
@@ -98,6 +107,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         int? retryAfterMs = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitProcessingFailedAsync");
         var eventData = new AssetProcessingFailedEvent
         {
             EventId = Guid.NewGuid(),
@@ -127,6 +137,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         ICollection<ValidationWarning>? warnings = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleValidationCompleteAsync");
         var eventData = new BundleValidationCompleteEvent
         {
             EventId = Guid.NewGuid(),
@@ -153,6 +164,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         ICollection<ValidationError> errors,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleValidationFailedAsync");
         var eventData = new BundleValidationFailedEvent
         {
             EventId = Guid.NewGuid(),
@@ -180,6 +192,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         string? errorMessage = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleCreationCompleteAsync");
         var eventData = new BundleCreationCompleteEvent
         {
             EventId = Guid.NewGuid(),
@@ -211,6 +224,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         object? metadata = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitAssetReadyAsync");
         var eventData = new AssetReadyEvent
         {
             EventId = Guid.NewGuid(),
@@ -246,6 +260,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         string? errorMessage = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitMetabundleCreationCompleteAsync");
         var eventData = new MetabundleCreationCompleteEvent
         {
             EventId = Guid.NewGuid(),

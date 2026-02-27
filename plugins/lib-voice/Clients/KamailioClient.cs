@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Voice.Clients;
@@ -10,6 +12,7 @@ public class KamailioClient : IKamailioClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<KamailioClient> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly string _healthEndpoint;
     private readonly TimeSpan _requestTimeout;
 
@@ -21,15 +24,19 @@ public class KamailioClient : IKamailioClient
     /// <param name="port">Kamailio JSONRPC port (default 5080).</param>
     /// <param name="requestTimeout">Timeout for Kamailio HTTP requests.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public KamailioClient(
         HttpClient httpClient,
         string host,
         int port,
         TimeSpan requestTimeout,
-        ILogger<KamailioClient> logger)
+        ILogger<KamailioClient> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _httpClient = httpClient;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _healthEndpoint = $"http://{host}:{port}/health";
         _requestTimeout = requestTimeout;
     }
@@ -37,6 +44,7 @@ public class KamailioClient : IKamailioClient
     /// <inheritdoc />
     public async Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "KamailioClient.IsHealthyAsync");
         try
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using BeyondImmersion.BannouService.Services;
 using k8s;
 using k8s.Models;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly Kubernetes _client;
     private readonly string _namespace;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Label used to identify app-id on pods/deployments.
@@ -39,10 +42,13 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
     public KubernetesOrchestrator(
         ILogger<KubernetesOrchestrator> logger,
-        OrchestratorServiceConfiguration configuration)
+        OrchestratorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Initialize Kubernetes client
         // See ORCHESTRATOR-SDK-REFERENCE.md for configuration patterns
@@ -77,6 +83,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<(bool Available, string Message)> CheckAvailabilityAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.CheckAvailabilityAsync");
         try
         {
             // GetCodeAsync returns version info
@@ -93,6 +100,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<ContainerStatus> GetContainerStatusAsync(string appName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.GetContainerStatusAsync");
         _logger.LogDebug("Getting Kubernetes deployment status for app: {AppName}", appName);
 
         try
@@ -137,6 +145,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         ContainerRestartRequest request,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.RestartContainerAsync");
         _logger.LogInformation(
             "Restarting Kubernetes deployment for app: {AppName}, Priority: {Priority}, Reason: {Reason}",
             appName,
@@ -226,6 +235,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<ContainerStatus>> ListContainersAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.ListContainersAsync");
         _logger.LogDebug("Listing all Kubernetes deployments in namespace {Namespace}", _namespace);
 
         try
@@ -254,6 +264,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         DateTimeOffset? since = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.GetContainerLogsAsync");
         _logger.LogDebug("Getting Kubernetes pod logs for app: {AppName}, tail: {Tail}", appName, tail);
 
         try
@@ -294,6 +305,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.FindDeploymentByAppNameAsync");
         var deployments = await _client.AppsV1.ListNamespacedDeploymentAsync(
             _namespace,
             labelSelector: $"{BANNOU_APP_ID_LABEL}={appName}",
@@ -309,6 +321,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         string appName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.FindPodByAppNameAsync");
         // ListNamespacedPodAsync - see ORCHESTRATOR-SDK-REFERENCE.md
         var pods = await _client.CoreV1.ListNamespacedPodAsync(
             _namespace,
@@ -398,6 +411,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         Dictionary<string, string>? environment = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.DeployServiceAsync");
         _logger.LogInformation(
             "Deploying Kubernetes deployment: {ServiceName} with app-id: {AppId}",
             serviceName, appId);
@@ -525,6 +539,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         bool removeVolumes = false,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.TeardownServiceAsync");
         _logger.LogInformation(
             "Tearing down Kubernetes deployment: {AppName}, removeVolumes: {RemoveVolumes}",
             appName, removeVolumes);
@@ -588,6 +603,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         int replicas,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.ScaleServiceAsync");
         _logger.LogInformation(
             "Scaling Kubernetes deployment: {AppName} to {Replicas} replicas",
             appName, replicas);
@@ -656,6 +672,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     /// <inheritdoc />
     public async Task<IReadOnlyList<string>> ListInfrastructureServicesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.ListInfrastructureServicesAsync");
         _logger.LogInformation("Listing infrastructure services (Kubernetes mode)");
 
         try
@@ -692,39 +709,45 @@ public class KubernetesOrchestrator : IContainerOrchestrator
     }
 
     /// <inheritdoc />
-    public Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
+    public async Task<PruneResult> PruneNetworksAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.PruneNetworksAsync");
         // Kubernetes network policies and services are managed differently than Docker
         _logger.LogDebug("Network pruning not applicable to Kubernetes - networks are managed by CNI");
-        return Task.FromResult(new PruneResult
+        await Task.CompletedTask;
+        return new PruneResult
         {
             Success = true,
             Message = "Network pruning not applicable to Kubernetes (CNI-managed)"
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
+    public async Task<PruneResult> PruneVolumesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.PruneVolumesAsync");
         // Kubernetes PersistentVolumeClaims require explicit deletion
         _logger.LogWarning("Volume pruning in Kubernetes requires explicit PVC management - not supported via orchestrator");
-        return Task.FromResult(new PruneResult
+        await Task.CompletedTask;
+        return new PruneResult
         {
             Success = false,
             Message = "Volume pruning not supported in Kubernetes mode - manage PVCs directly"
-        });
+        };
     }
 
     /// <inheritdoc />
-    public Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
+    public async Task<PruneResult> PruneImagesAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "KubernetesOrchestrator.PruneImagesAsync");
         // Image pruning in Kubernetes happens at the node level via kubelet garbage collection
         _logger.LogDebug("Image pruning in Kubernetes is handled by kubelet garbage collection");
-        return Task.FromResult(new PruneResult
+        await Task.CompletedTask;
+        return new PruneResult
         {
             Success = true,
             Message = "Image pruning handled automatically by kubelet garbage collection"
-        });
+        };
     }
 
     public void Dispose()

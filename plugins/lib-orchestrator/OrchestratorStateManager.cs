@@ -19,6 +19,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private readonly ILogger<OrchestratorStateManager> _logger;
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly OrchestratorServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string HEARTBEATS_STORE = StateStoreDefinitions.OrchestratorHeartbeats;
     private const string ROUTINGS_STORE = StateStoreDefinitions.OrchestratorRoutings;
@@ -49,11 +50,14 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     public OrchestratorStateManager(
         IStateStoreFactory stateStoreFactory,
         ILogger<OrchestratorStateManager> logger,
-        OrchestratorServiceConfiguration configuration)
+        OrchestratorServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -61,6 +65,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.InitializeAsync");
         try
         {
             // Prevent re-initialization
@@ -110,6 +115,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.CheckHealthAsync");
         if (_versionStore == null)
         {
             return (false, "State stores not initialized", null);
@@ -140,6 +146,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task WriteServiceHeartbeatAsync(ServiceHeartbeatEvent heartbeat)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.WriteServiceHeartbeatAsync");
         if (_heartbeatStore == null || _heartbeatIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot write heartbeat.");
@@ -187,6 +194,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     private async Task UpdateHeartbeatIndexAsync(string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.UpdateHeartbeatIndexAsync");
         if (_heartbeatIndexStore == null) return;
 
         const int maxRetries = 3;
@@ -239,6 +247,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<List<ServiceHealthStatus>> GetServiceHeartbeatsAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceHeartbeatsAsync");
         if (_heartbeatStore == null || _heartbeatIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot retrieve heartbeats.");
@@ -309,6 +318,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     private async Task CleanupHeartbeatIndexAsync(List<string> expiredAppIds)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.CleanupHeartbeatIndexAsync");
         if (_heartbeatIndexStore == null) return;
 
         try
@@ -336,6 +346,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<ServiceHealthStatus?> GetServiceHeartbeatAsync(string serviceId, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceHeartbeatAsync");
         if (_heartbeatStore == null)
         {
             _logger.LogWarning("State stores not initialized");
@@ -379,6 +390,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task WriteServiceRoutingAsync(string serviceName, ServiceRouting routing)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.WriteServiceRoutingAsync");
         if (_routingStore == null || _routingIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot write routing.");
@@ -411,6 +423,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<ServiceRouting?> GetServiceRoutingAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceRoutingAsync");
         if (_routingStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get routing.");
@@ -433,6 +446,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     private async Task UpdateRoutingIndexAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.UpdateRoutingIndexAsync");
         if (_routingIndexStore == null) return;
 
         const int maxRetries = 3;
@@ -485,6 +499,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<Dictionary<string, ServiceRouting>> GetServiceRoutingsAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceRoutingsAsync");
         var routings = new Dictionary<string, ServiceRouting>();
 
         if (_routingStore == null || _routingIndexStore == null)
@@ -542,6 +557,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     private async Task CleanupRoutingIndexAsync(List<string> expiredServiceNames)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.CleanupRoutingIndexAsync");
         if (_routingIndexStore == null) return;
 
         try
@@ -569,6 +585,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task RemoveServiceRoutingAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.RemoveServiceRoutingAsync");
         if (_routingStore == null || _routingIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot remove routing.");
@@ -594,6 +611,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     private async Task RemoveFromRoutingIndexAsync(string serviceName)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.RemoveFromRoutingIndexAsync");
         if (_routingIndexStore == null) return;
 
         try
@@ -617,6 +635,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task ClearAllServiceRoutingsAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.ClearAllServiceRoutingsAsync");
         if (_routingStore == null || _routingIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot clear routings.");
@@ -655,6 +674,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<List<string>> SetAllServiceRoutingsToDefaultAsync(string defaultAppId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetAllServiceRoutingsToDefaultAsync");
         var updatedServices = new List<string>();
 
         if (_routingStore == null || _routingIndexStore == null)
@@ -726,6 +746,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<int> GetConfigVersionAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetConfigVersionAsync");
         if (_versionStore == null)
         {
             _logger.LogWarning("State stores not initialized. Returning version 0.");
@@ -749,6 +770,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<int> SaveConfigurationVersionAsync(DeploymentConfiguration configuration)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SaveConfigurationVersionAsync");
         if (_configStore == null || _versionStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot save configuration.");
@@ -793,6 +815,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<DeploymentConfiguration?> GetConfigurationVersionAsync(int version)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetConfigurationVersionAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get configuration.");
@@ -823,6 +846,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<DeploymentConfiguration?> GetCurrentConfigurationAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetCurrentConfigurationAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get current configuration.");
@@ -852,6 +876,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<bool> RestoreConfigurationVersionAsync(int version)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.RestoreConfigurationVersionAsync");
         if (_configStore == null || _versionStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot restore configuration.");
@@ -906,6 +931,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<int> ClearCurrentConfigurationAsync()
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.ClearCurrentConfigurationAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot clear configuration.");
@@ -948,6 +974,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<List<T>?> GetListAsync<T>(string key) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetListAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get list.");
@@ -972,6 +999,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task SetListAsync<T>(string key, List<T> items) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetListAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot set list.");
@@ -995,6 +1023,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<Dictionary<string, T>?> GetHashAsync<T>(string key) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetHashAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get hash.");
@@ -1018,6 +1047,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task SetHashAsync<T>(string key, Dictionary<string, T> hash) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetHashAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot set hash.");
@@ -1041,6 +1071,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task<T?> GetValueAsync<T>(string key) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetValueAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get value.");
@@ -1064,6 +1095,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// </summary>
     public async Task SetValueAsync<T>(string key, T value, TimeSpan? ttl = null) where T : class
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.SetValueAsync");
         if (_configStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot set value.");

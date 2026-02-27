@@ -1,8 +1,9 @@
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Voice.Clients;
 using Microsoft.Extensions.Logging;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -16,6 +17,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     private readonly ILogger<ScaledTierCoordinator> _logger;
     private readonly IMessageBus _messageBus;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the ScaledTierCoordinator.
@@ -24,16 +26,20 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <param name="logger">Logger instance.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
     /// <param name="configuration">Voice service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ScaledTierCoordinator(
         IRtpEngineClient rtpEngineClient,
         ILogger<ScaledTierCoordinator> logger,
         IMessageBus messageBus,
-        VoiceServiceConfiguration configuration)
+        VoiceServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _rtpEngineClient = rtpEngineClient;
         _logger = logger;
         _messageBus = messageBus;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -42,6 +48,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         int currentParticipantCount,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ScaledTierCoordinator.CanAcceptNewParticipantAsync");
         await Task.CompletedTask;
         var maxParticipants = GetScaledMaxParticipants();
         var canAccept = currentParticipantCount < maxParticipants;
@@ -109,6 +116,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         VoiceCodec codec,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ScaledTierCoordinator.BuildScaledConnectionInfoAsync");
         await Task.CompletedTask;
         var credentials = GenerateSipCredentials(sessionId, roomId);
 
@@ -137,6 +145,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         Guid roomId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ScaledTierCoordinator.AllocateRtpServerAsync");
         // For now, we use a single RTPEngine instance
         // In production, this would select from a pool based on load
         var rtpHost = _configuration.RtpEngineHost;
@@ -168,6 +177,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
         Guid roomId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "ScaledTierCoordinator.ReleaseRtpServerAsync");
         // Query for any active streams for this room and clean them up
         // Fail-fast: RTP cleanup failures should propagate to caller for proper error handling
         var callId = $"room-{roomId}";

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class ModelProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ModelProcessor> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -43,10 +45,13 @@ public sealed class ModelProcessor : IAssetProcessor
     /// </summary>
     public ModelProcessor(
         IAssetStorageProvider storageProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<ModelProcessor> logger,
         AssetServiceConfiguration configuration)
     {
         _storageProvider = storageProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -71,6 +76,7 @@ public sealed class ModelProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "ModelProcessor.ValidateAsync");
         await Task.CompletedTask;
         var warnings = new List<string>();
 
@@ -125,6 +131,7 @@ public sealed class ModelProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "ModelProcessor.ProcessAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try

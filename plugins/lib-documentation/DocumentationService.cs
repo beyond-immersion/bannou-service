@@ -10,6 +10,7 @@ using Markdig;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Threading;
@@ -34,6 +35,7 @@ public partial class DocumentationService : IDocumentationService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Event topics following QUALITY TENETS: {entity}.{action} pattern
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
@@ -75,7 +77,8 @@ public partial class DocumentationService : IDocumentationService
         IContentTransformService contentTransformService,
         IDistributedLockProvider lockProvider,
         IAssetClient assetClient,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -87,6 +90,8 @@ public partial class DocumentationService : IDocumentationService
         _lockProvider = lockProvider;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
         RegisterEventConsumers(eventConsumer);
@@ -103,6 +108,7 @@ public partial class DocumentationService : IDocumentationService
     /// <returns>Tuple of status code and HTML string content.</returns>
     public async Task<(StatusCodes, string?)> ViewDocumentBySlugAsync(string slug, string? ns = "bannou", CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.ViewDocumentBySlugAsync");
         var namespaceId = ns ?? "bannou";
         _logger.LogDebug("ViewDocumentBySlug: slug={Slug}, namespace={Namespace}", slug, namespaceId);
         // Look up document ID from slug index
@@ -1586,6 +1592,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.AddDocumentToNamespaceIndexAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
@@ -1639,6 +1646,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromNamespaceIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RemoveDocumentFromNamespaceIndexAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var indexKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
 
@@ -1671,6 +1679,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task AddDocumentToTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.AddDocumentToTrashcanIndexAsync");
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
 
@@ -1704,6 +1713,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task RemoveDocumentFromTrashcanIndexAsync(string namespaceId, Guid documentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RemoveDocumentFromTrashcanIndexAsync");
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var trashListKey = $"ns-trash:{namespaceId}";
 
@@ -1841,6 +1851,7 @@ public partial class DocumentationService : IDocumentationService
         RelatedDepth depth,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetRelatedDocumentSummariesAsync");
         var summaries = new List<DocumentSummary>();
         var maxRelated = depth == RelatedDepth.Extended
             ? _configuration.MaxRelatedDocumentsExtended
@@ -1879,6 +1890,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentCreatedEventAsync(StoredDocument doc, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentCreatedEventAsync");
         try
         {
             var eventModel = new DocumentCreatedEvent
@@ -1910,6 +1922,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentUpdatedEventAsync(StoredDocument doc, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentUpdatedEventAsync");
         try
         {
             var eventModel = new DocumentUpdatedEvent
@@ -1942,6 +1955,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task PublishDocumentDeletedEventAsync(StoredDocument doc, string? reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishDocumentDeletedEventAsync");
         try
         {
             var eventModel = new DocumentDeletedEvent
@@ -1980,6 +1994,7 @@ public partial class DocumentationService : IDocumentationService
         Guid? topResultId,
         double? relevanceScore)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishQueryAnalyticsEventAsync");
         try
         {
             var eventModel = new DocumentationQueriedEvent
@@ -2013,6 +2028,7 @@ public partial class DocumentationService : IDocumentationService
         Guid? sessionId,
         int resultCount)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishSearchAnalyticsEventAsync");
         try
         {
             var eventModel = new DocumentationSearchedEvent
@@ -2528,6 +2544,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     internal async Task<Models.RepositoryBinding?> GetBindingForNamespaceAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetBindingForNamespaceAsync");
         var bindingKey = $"{BINDING_KEY_PREFIX}{namespaceId}";
         var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         return await bindingStore.GetAsync(bindingKey, cancellationToken);
@@ -2538,6 +2555,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task SaveBindingAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.SaveBindingAsync");
         var bindingKey = $"{BINDING_KEY_PREFIX}{binding.Namespace}";
         var bindingStore = _stateStoreFactory.GetStore<Models.RepositoryBinding>(StateStoreDefinitions.Documentation);
         await bindingStore.SaveAsync(bindingKey, binding, cancellationToken: cancellationToken);
@@ -2564,6 +2582,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> DeleteAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteAllNamespaceDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -2609,6 +2628,7 @@ public partial class DocumentationService : IDocumentationService
         SyncTrigger trigger,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.ExecuteSyncAsync");
         var syncId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;
         var lockResourceId = $"{SYNC_LOCK_PREFIX}{binding.Namespace}";
@@ -2795,6 +2815,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<Guid?> GetDocumentIdBySlugAsync(string namespaceId, string slug, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetDocumentIdBySlugAsync");
         var slugKey = $"{SLUG_INDEX_PREFIX}{namespaceId}:{slug}";
         var slugStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
         var docIdStr = await slugStore.GetAsync(slugKey, cancellationToken);
@@ -2815,6 +2836,7 @@ public partial class DocumentationService : IDocumentationService
         TransformedDocument transformed,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.CreateDocumentFromTransformAsync");
         var documentId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -2872,6 +2894,7 @@ public partial class DocumentationService : IDocumentationService
         TransformedDocument transformed,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.UpdateDocumentFromTransformAsync");
         var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{documentId}";
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
         var existingDoc = await docStore.GetAsync(docKey, cancellationToken);
@@ -2908,6 +2931,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> GetNamespaceDocumentCountAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetNamespaceDocumentCountAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -2923,6 +2947,7 @@ public partial class DocumentationService : IDocumentationService
         HashSet<string> processedSlugs,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteOrphanDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -3059,6 +3084,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishBindingCreatedEventAsync(Models.RepositoryBinding binding, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishBindingCreatedEventAsync");
         try
         {
             var eventModel = new DocumentationBindingCreatedEvent
@@ -3083,6 +3109,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishBindingRemovedEventAsync(Models.RepositoryBinding binding, int documentsDeleted, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishBindingRemovedEventAsync");
         try
         {
             var eventModel = new DocumentationBindingRemovedEvent
@@ -3106,6 +3133,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishSyncStartedEventAsync(Models.RepositoryBinding binding, Guid syncId, SyncTrigger trigger, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishSyncStartedEventAsync");
         try
         {
             var triggeredBy = trigger switch
@@ -3136,6 +3164,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishSyncCompletedEventAsync(Models.RepositoryBinding binding, Guid syncId, Models.SyncResult result, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishSyncCompletedEventAsync");
         try
         {
             var status = result.Status switch
@@ -3177,6 +3206,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<List<StoredDocument>> GetAllNamespaceDocumentsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetAllNamespaceDocumentsAsync");
         var docsKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docsStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var docIds = await docsStore.GetAsync(docsKey, cancellationToken);
@@ -3207,6 +3237,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<byte[]> CreateArchiveBundleAsync(string namespaceId, List<StoredDocument> documents, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.CreateArchiveBundleAsync");
         // Filter out documents with null/empty Content - this is a data integrity issue
         var validDocuments = new List<StoredDocument>();
         foreach (var doc in documents)
@@ -3267,6 +3298,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<string?> GetCurrentCommitHashForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetCurrentCommitHashForNamespaceAsync");
         var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
         return binding?.LastCommitHash;
     }
@@ -3276,6 +3308,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task SaveArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.SaveArchiveAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.SaveAsync(archiveKey, archive, cancellationToken: cancellationToken);
@@ -3316,6 +3349,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<List<Models.DocumentationArchive>> GetArchivesForNamespaceAsync(string namespaceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetArchivesForNamespaceAsync");
         var listKey = $"{ARCHIVE_KEY_PREFIX}list:{namespaceId}";
         var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
         var archiveIds = await listStore.GetAsync(listKey, cancellationToken);
@@ -3346,6 +3380,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<Models.DocumentationArchive?> GetArchiveByIdAsync(Guid archiveId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.GetArchiveByIdAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         return await archiveStore.GetAsync(archiveKey, cancellationToken);
@@ -3356,6 +3391,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task<int> RestoreFromBundleAsync(string namespaceId, byte[] bundleData, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.RestoreFromBundleAsync");
         // Decompress and deserialize the bundle
         using var input = new MemoryStream(bundleData);
         using var gzip = new GZipStream(input, CompressionMode.Decompress);
@@ -3426,6 +3462,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task DeleteArchiveAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.DeleteArchiveAsync");
         var archiveKey = $"{ARCHIVE_KEY_PREFIX}{archive.ArchiveId}";
         var archiveStore = _stateStoreFactory.GetStore<Models.DocumentationArchive>(StateStoreDefinitions.Documentation);
         await archiveStore.DeleteAsync(archiveKey, cancellationToken);
@@ -3446,6 +3483,7 @@ public partial class DocumentationService : IDocumentationService
     /// </summary>
     private async Task TryPublishArchiveCreatedEventAsync(Models.DocumentationArchive archive, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.TryPublishArchiveCreatedEventAsync");
         try
         {
             var eventModel = new DocumentationArchiveCreatedEvent

@@ -1,6 +1,7 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Voice.Services;
 
@@ -15,6 +16,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     private readonly IStateStore<List<ParticipantRegistration>> _stateStore;
     private readonly ILogger<SipEndpointRegistry> _logger;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string ROOM_PARTICIPANTS_PREFIX = "voice:room:participants:";
 
@@ -30,14 +32,18 @@ public class SipEndpointRegistry : ISipEndpointRegistry
     /// <param name="stateStoreFactory">State store factory for state operations.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Voice service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public SipEndpointRegistry(
         IStateStoreFactory stateStoreFactory,
         ILogger<SipEndpointRegistry> logger,
-        VoiceServiceConfiguration configuration)
+        VoiceServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStore = stateStoreFactory.GetStore<List<ParticipantRegistration>>(StateStoreDefinitions.Voice);
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -48,6 +54,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         string? displayName = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.RegisterAsync");
         var now = DateTimeOffset.UtcNow;
         var participant = new ParticipantRegistration
         {
@@ -93,6 +100,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid sessionId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.UnregisterAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             // Try loading from state store
@@ -122,6 +130,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid roomId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.GetRoomParticipantsAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             // Try loading from state store
@@ -141,6 +150,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid sessionId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.GetParticipantAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -160,6 +170,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid sessionId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.UpdateHeartbeatAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -198,6 +209,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         SipEndpoint newEndpoint,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.UpdateEndpointAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -235,6 +247,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid roomId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.GetParticipantCountAsync");
         if (!_localCache.TryGetValue(roomId, out var roomParticipants))
         {
             roomParticipants = await LoadRoomParticipantsAsync(roomId, cancellationToken);
@@ -252,6 +265,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid roomId,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.ClearRoomAsync");
         List<ParticipantRegistration> removed = new();
 
         if (_localCache.TryRemove(roomId, out var roomParticipants))
@@ -281,6 +295,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         ConcurrentDictionary<Guid, ParticipantRegistration> participants,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.PersistRoomParticipantsAsync");
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
         var participantList = participants.Values.ToList();
 
@@ -294,6 +309,7 @@ public class SipEndpointRegistry : ISipEndpointRegistry
         Guid roomId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.voice", "SipEndpointRegistry.LoadRoomParticipantsAsync");
         var stateKey = $"{ROOM_PARTICIPANTS_PREFIX}{roomId}";
         var participantList = await _stateStore.GetAsync(stateKey, cancellationToken);
 

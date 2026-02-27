@@ -21,16 +21,20 @@ public partial class WebsiteService : IWebsiteService
     private readonly ILogger<WebsiteService> _logger;
     private readonly WebsiteServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     public WebsiteService(
         ILogger<WebsiteService> logger,
         WebsiteServiceConfiguration configuration,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (WebsiteServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);

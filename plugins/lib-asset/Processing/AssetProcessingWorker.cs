@@ -15,6 +15,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Asset.Processing;
 
@@ -45,6 +46,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     private readonly IMessageBus _messageBus;
     private readonly AssetServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ILogger<AssetProcessingWorker> _logger;
 
@@ -64,6 +66,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         IMessageBus messageBus,
         AssetServiceConfiguration configuration,
         AppConfiguration appConfiguration,
+        ITelemetryProvider telemetryProvider,
         IHostApplicationLifetime applicationLifetime,
         ILogger<AssetProcessingWorker> logger)
     {
@@ -75,6 +78,8 @@ public sealed class AssetProcessingWorker : BackgroundService
         _messageBus = messageBus;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _applicationLifetime = applicationLifetime;
         _logger = logger;
     }
@@ -95,6 +100,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.ExecuteAsync");
         // Check processing mode from configuration - exit early if "api" mode (HTTP only)
         if (_configuration.ProcessingMode == ProcessingMode.Api)
         {
@@ -158,6 +164,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     private async Task KeepAliveAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.KeepAliveAsync");
         var checkInterval = TimeSpan.FromSeconds(_configuration.ProcessingQueueCheckIntervalSeconds);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -185,6 +192,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         string appId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.RegisterWithPoolAsync");
         try
         {
             var capacity = _configuration.ProcessorMaxConcurrentJobs;
@@ -218,6 +226,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     private async Task RunHeartbeatLoopAsync(string nodeId, CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.RunHeartbeatLoopAsync");
         var heartbeatInterval = TimeSpan.FromSeconds(_configuration.ProcessorHeartbeatIntervalSeconds);
         var idleTimeoutSeconds = _configuration.ProcessorIdleTimeoutSeconds;
 
@@ -307,6 +316,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// </summary>
     private async Task ShutdownAsync(string nodeId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.ShutdownAsync");
         _logger.LogInformation("Starting graceful shutdown for processor node {NodeId}", nodeId);
 
         try
@@ -395,6 +405,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingJobEvent job,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.HandleProcessingJobAsync");
         var processor = _processorRegistry.GetProcessorByPoolType(job.PoolType);
         if (processor == null)
         {
@@ -484,6 +495,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.UpdateAssetMetadataAsync");
         var stateKey = $"{_configuration.AssetKeyPrefix}{assetId}";
 
         try
@@ -523,6 +535,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         bool success,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.ReleaseProcessorLeaseAsync");
         try
         {
             await _orchestratorClient.ReleaseProcessorAsync(
@@ -552,6 +565,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.EmitProcessingResultEventAsync");
         try
         {
             // Publish service-level event via message bus (not client event)
@@ -604,6 +618,7 @@ public sealed class AssetProcessingWorker : BackgroundService
         string errorMessage,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.EmitProcessingFailedEventAsync");
         try
         {
             // Publish service-level event via message bus (not client event)

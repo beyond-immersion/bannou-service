@@ -1,6 +1,7 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -14,6 +15,7 @@ public class RedisSearchIndexService : ISearchIndexService
     private readonly ILogger<RedisSearchIndexService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string INDEX_PREFIX = "doc-idx:";
 
@@ -49,17 +51,21 @@ public class RedisSearchIndexService : ISearchIndexService
         IStateStoreFactory stateStoreFactory,
         ILogger<RedisSearchIndexService> logger,
         DocumentationServiceConfiguration configuration,
-        IMessageBus messageBus)
+        IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
     public async Task EnsureIndexExistsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.EnsureIndexExistsAsync");
         // Fast path: already initialized (cache check, not authoritative)
         if (_initializedNamespaces.ContainsKey(namespaceId))
         {
@@ -128,6 +134,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<int> RebuildIndexAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.RebuildIndexAsync");
         _logger.LogInformation("Rebuilding Redis Search index for namespace '{Namespace}'", namespaceId);
 
         try
@@ -209,6 +216,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.SearchAsync");
         try
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
@@ -284,6 +292,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.QueryAsync");
         var results = await SearchAsync(namespaceId, query, category, maxResults * 2, cancellationToken);
         return results.Where(r => r.RelevanceScore >= minRelevanceScore).Take(maxResults).ToList();
     }
@@ -291,6 +300,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<Guid>> GetRelatedSuggestionsAsync(string namespaceId, string sourceValue, int maxSuggestions = 5, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.GetRelatedSuggestionsAsync");
         try
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
@@ -315,6 +325,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.ListDocumentIdsAsync");
         try
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);
@@ -365,6 +376,7 @@ public class RedisSearchIndexService : ISearchIndexService
     /// <inheritdoc />
     public async Task<NamespaceStats> GetNamespaceStatsAsync(string namespaceId, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.GetNamespaceStatsAsync");
         try
         {
             await EnsureIndexExistsAsync(namespaceId, cancellationToken);

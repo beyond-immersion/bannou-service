@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Asset.Models;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,6 +17,7 @@ public class MinioWebhookHandler
 {
     private readonly IStateStore<UploadSession> _stateStore;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<MinioWebhookHandler> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -24,12 +26,15 @@ public class MinioWebhookHandler
     public MinioWebhookHandler(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         ILogger<MinioWebhookHandler> logger,
         AssetServiceConfiguration configuration)
     {
         _configuration = configuration;
         _stateStore = stateStoreFactory.GetStore<UploadSession>(StateStoreDefinitions.Asset);
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -69,6 +74,7 @@ public class MinioWebhookHandler
     /// <returns>True if the event was processed successfully</returns>
     public async Task<bool> HandleWebhookAsync(string payload)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioWebhookHandler.HandleWebhookAsync");
         try
         {
             var notification = BannouJson.Deserialize<MinioNotification>(payload);
@@ -99,6 +105,7 @@ public class MinioWebhookHandler
 
     private async Task ProcessRecordAsync(MinioEventRecord record)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioWebhookHandler.ProcessRecordAsync");
         var eventName = record.EventName;
         var bucket = record.S3?.Bucket?.Name;
         var key = record.S3?.Object?.Key;

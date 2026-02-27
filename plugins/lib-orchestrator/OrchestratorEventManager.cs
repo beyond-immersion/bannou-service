@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
@@ -12,6 +13,7 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 {
     private readonly ILogger<OrchestratorEventManager> _logger;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     public event Action<ServiceHeartbeatEvent>? HeartbeatReceived;
 
@@ -22,10 +24,13 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public OrchestratorEventManager(
         ILogger<OrchestratorEventManager> logger,
-        IMessageBus messageBus)
+        IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _messageBus = messageBus;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     public void ReceiveHeartbeat(ServiceHeartbeatEvent heartbeat)
@@ -42,18 +47,21 @@ public class OrchestratorEventManager : IOrchestratorEventManager
 
     public async Task PublishServiceRestartEventAsync(ServiceRestartEvent restartEvent)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishServiceRestartEventAsync");
         await _messageBus.TryPublishAsync(RESTART_TOPIC, restartEvent);
         _logger.LogInformation("Published service restart event for {Service}", restartEvent.ServiceName);
     }
 
     public async Task PublishDeploymentEventAsync(DeploymentEvent deploymentEvent)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishDeploymentEventAsync");
         await _messageBus.TryPublishAsync(DEPLOYMENT_TOPIC, deploymentEvent);
         _logger.LogInformation("Published deployment event: {Action} ({DeploymentId})", deploymentEvent.Action, deploymentEvent.DeploymentId);
     }
 
     public async Task PublishFullMappingsAsync(FullServiceMappingsEvent mappingsEvent)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorEventManager.PublishFullMappingsAsync");
         await _messageBus.TryPublishAsync(FULL_MAPPINGS_TOPIC, mappingsEvent);
         _logger.LogInformation(
             "Published full service mappings v{Version} with {Count} services",

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Orchestrator;
+using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +17,7 @@ public class BackendDetector : IBackendDetector
     private readonly OrchestratorServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Backend priority order (lower = higher priority).
@@ -31,12 +34,15 @@ public class BackendDetector : IBackendDetector
         ILogger<BackendDetector> logger,
         OrchestratorServiceConfiguration configuration,
         AppConfiguration appConfiguration,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _httpClientFactory = httpClientFactory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -44,6 +50,7 @@ public class BackendDetector : IBackendDetector
     /// </summary>
     public async Task<BackendsResponse> DetectBackendsAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "BackendDetector.DetectBackendsAsync");
         _logger.LogDebug("Detecting available container orchestration backends...");
 
         var backends = new List<BackendInfo>();
@@ -118,12 +125,14 @@ public class BackendDetector : IBackendDetector
     /// </summary>
     public async Task<IContainerOrchestrator> CreateBestOrchestratorAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "BackendDetector.CreateBestOrchestratorAsync");
         var detection = await DetectBackendsAsync(cancellationToken);
         return CreateOrchestrator(detection.Recommended);
     }
 
     private async Task<BackendInfo> DetectKubernetesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "BackendDetector.DetectKubernetesAsync");
         await Task.CompletedTask;
         var info = new BackendInfo
         {
@@ -171,6 +180,7 @@ public class BackendDetector : IBackendDetector
 
     private async Task<BackendInfo> DetectPortainerAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "BackendDetector.DetectPortainerAsync");
         var info = new BackendInfo
         {
             Type = BackendType.Portainer,
@@ -231,6 +241,7 @@ public class BackendDetector : IBackendDetector
 
     private async Task<BackendInfo> DetectDockerAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "BackendDetector.DetectDockerAsync");
         var composeInfo = new BackendInfo
         {
             Type = BackendType.Compose,
@@ -308,7 +319,8 @@ public class BackendDetector : IBackendDetector
         // Kubernetes implementation uses KubernetesClient SDK
         return new KubernetesOrchestrator(
             _logger.GetType().Assembly.CreateLogger<KubernetesOrchestrator>(),
-            _configuration);
+            _configuration,
+            _telemetryProvider);
     }
 
     private IContainerOrchestrator CreatePortainerOrchestrator()
@@ -316,14 +328,16 @@ public class BackendDetector : IBackendDetector
         return new PortainerOrchestrator(
             _logger.GetType().Assembly.CreateLogger<PortainerOrchestrator>(),
             _configuration,
-            _httpClientFactory);
+            _httpClientFactory,
+            _telemetryProvider);
     }
 
     private IContainerOrchestrator CreateSwarmOrchestrator()
     {
         return new DockerSwarmOrchestrator(
             _configuration,
-            _logger.GetType().Assembly.CreateLogger<DockerSwarmOrchestrator>());
+            _logger.GetType().Assembly.CreateLogger<DockerSwarmOrchestrator>(),
+            _telemetryProvider);
     }
 
     private IContainerOrchestrator CreateComposeOrchestrator()
@@ -331,7 +345,8 @@ public class BackendDetector : IBackendDetector
         return new DockerComposeOrchestrator(
             _configuration,
             _appConfiguration,
-            _logger.GetType().Assembly.CreateLogger<DockerComposeOrchestrator>());
+            _logger.GetType().Assembly.CreateLogger<DockerComposeOrchestrator>(),
+            _telemetryProvider);
     }
 }
 
