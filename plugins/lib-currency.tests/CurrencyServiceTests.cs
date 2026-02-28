@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -305,6 +306,7 @@ public class CurrencyConversionConcurrencyTests
     private readonly CurrencyServiceConfiguration _configuration;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     // Typed stores
     private readonly Mock<IStateStore<WalletModel>> _mockWalletStore;
@@ -334,6 +336,7 @@ public class CurrencyConversionConcurrencyTests
         _configuration = new CurrencyServiceConfiguration();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Initialize stores
         _mockWalletStore = new Mock<IStateStore<WalletModel>>();
@@ -412,7 +415,8 @@ public class CurrencyConversionConcurrencyTests
             _mockLogger.Object,
             _configuration,
             _mockLockProvider.Object,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     private WalletModel CreateTestWallet()

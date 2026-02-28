@@ -1,14 +1,17 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Xml;
 using static BeyondImmersion.BannouService.Currency.CurrencyKeys;
+using CurrencyClientEvents = BeyondImmersion.Bannou.Currency.ClientEvents;
 
 namespace BeyondImmersion.BannouService.Currency;
 
@@ -26,6 +29,7 @@ public partial class CurrencyService : ICurrencyService
     private readonly CurrencyServiceConfiguration _configuration;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
 
     /// <summary>
     /// Initializes a new instance of the CurrencyService.
@@ -36,7 +40,8 @@ public partial class CurrencyService : ICurrencyService
         ILogger<CurrencyService> logger,
         CurrencyServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IEntitySessionRegistry entitySessionRegistry)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -44,6 +49,7 @@ public partial class CurrencyService : ICurrencyService
         _configuration = configuration;
         _lockProvider = lockProvider;
         _telemetryProvider = telemetryProvider;
+        _entitySessionRegistry = entitySessionRegistry;
     }
 
     #region Currency Definition Operations
@@ -428,6 +434,15 @@ public partial class CurrencyService : ICurrencyService
             Reason = body.Reason
         }, cancellationToken);
 
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
+            new CurrencyClientEvents.CurrencyWalletFrozenEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                WalletId = body.WalletId,
+                Reason = body.Reason
+            }, cancellationToken);
+
         return (StatusCodes.OK, MapWalletToResponse(wallet));
     }
 
@@ -463,6 +478,14 @@ public partial class CurrencyService : ICurrencyService
             WalletId = body.WalletId,
             OwnerId = wallet.OwnerId
         }, cancellationToken);
+
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
+            new CurrencyClientEvents.CurrencyWalletUnfrozenEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                WalletId = body.WalletId
+            }, cancellationToken);
 
         return (StatusCodes.OK, MapWalletToResponse(wallet));
     }
@@ -759,6 +782,18 @@ public partial class CurrencyService : ICurrencyService
             WalletCapApplied = walletCapApplied
         }, cancellationToken);
 
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = body.WalletId,
+            CurrencyDefinitionId = body.CurrencyDefinitionId,
+            CurrencyCode = definition.Code,
+            Amount = creditAmount,
+            NewBalance = balance.Amount,
+            TransactionType = body.TransactionType
+        }, cancellationToken);
+
         return (StatusCodes.OK, new CreditCurrencyResponse
         {
             Transaction = MapTransactionToRecord(transaction),
@@ -838,6 +873,18 @@ public partial class CurrencyService : ICurrencyService
             NewBalance = balance.Amount,
             ReferenceType = body.ReferenceType,
             ReferenceId = body.ReferenceId
+        }, cancellationToken);
+
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = body.WalletId,
+            CurrencyDefinitionId = body.CurrencyDefinitionId,
+            CurrencyCode = definition.Code,
+            Amount = -body.Amount,
+            NewBalance = balance.Amount,
+            TransactionType = body.TransactionType
         }, cancellationToken);
 
         return (StatusCodes.OK, new DebitCurrencyResponse
@@ -956,6 +1003,32 @@ public partial class CurrencyService : ICurrencyService
             CurrencyDefinitionId = body.CurrencyDefinitionId,
             CurrencyCode = definition.Code,
             Amount = body.Amount,
+            TransactionType = body.TransactionType
+        }, cancellationToken);
+
+        // Source wallet owner sees debit
+        await PublishClientEventToWalletOwnerAsync(sourceWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = body.SourceWalletId,
+            CurrencyDefinitionId = body.CurrencyDefinitionId,
+            CurrencyCode = definition.Code,
+            Amount = -body.Amount,
+            NewBalance = sourceBalance.Amount,
+            TransactionType = body.TransactionType
+        }, cancellationToken);
+
+        // Target wallet owner sees credit (may be less than body.Amount if cap applied)
+        await PublishClientEventToWalletOwnerAsync(targetWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            WalletId = body.TargetWalletId,
+            CurrencyDefinitionId = body.CurrencyDefinitionId,
+            CurrencyCode = definition.Code,
+            Amount = creditAmount,
+            NewBalance = targetBalance.Amount,
             TransactionType = body.TransactionType
         }, cancellationToken);
 
@@ -2122,6 +2195,18 @@ public partial class CurrencyService : ICurrencyService
             PeriodsTo = balance.LastAutogainAt.Value
         }, ct);
 
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            WalletId = balance.WalletId,
+            CurrencyDefinitionId = balance.CurrencyDefinitionId,
+            CurrencyCode = definition.Code,
+            Amount = gain,
+            NewBalance = balance.Amount,
+            TransactionType = TransactionType.Autogain
+        }, ct);
+
         return balance;
     }
 
@@ -2663,6 +2748,35 @@ public partial class CurrencyService : ICurrencyService
         {
             // Cache write failure is non-fatal
             _logger.LogWarning(ex, "Failed to update hold cache for {Key}", key);
+        }
+    }
+
+    #endregion
+
+    #region Client Event Publishing
+
+    /// <summary>
+    /// Publishes a client event to all sessions registered for the given wallet owner.
+    /// Uses the Entity Session Registry with entity type "currency" to resolve sessions.
+    /// </summary>
+    private async Task PublishClientEventToWalletOwnerAsync<TEvent>(
+        Guid ownerId, TEvent clientEvent, CancellationToken ct = default)
+        where TEvent : BaseClientEvent
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.currency", "CurrencyService.PublishClientEventToWalletOwner");
+        try
+        {
+            var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "currency", ownerId, clientEvent, ct);
+            _logger.LogDebug("Published {EventName} to {SessionCount} sessions for owner {OwnerId}",
+                clientEvent.EventName, count, ownerId);
+        }
+        catch (Exception ex)
+        {
+            // Client event delivery failure is non-fatal; the API operation already succeeded
+            _logger.LogWarning(ex, "Failed to publish {EventName} to owner {OwnerId} sessions",
+                clientEvent.EventName, ownerId);
         }
     }
 

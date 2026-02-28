@@ -45,6 +45,9 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CollectionMilestoneReachedClientEvent` | `collection.milestone_reached` | Sent to the collection owner when a completion milestone is ... |
 | `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
 | `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
+| `CurrencyBalanceChangedEvent` | `currency.balance_changed` | Sent to the wallet owner when any balance mutation occurs: c... |
+| `CurrencyWalletFrozenEvent` | `currency.wallet_frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
+| `CurrencyWalletUnfrozenEvent` | `currency.wallet_unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
 | `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
 | `SessionChatReceivedEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
 | `PlayerJoinedEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
@@ -53,6 +56,9 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `SessionCancelledEvent` | `game_session.session_cancelled` | Sent to players who claimed their reservation when a matchma... |
 | `SessionStateChangedEvent` | `game_session.state_changed` | Sent to all session participants when the session state chan... |
 | `GameStateUpdatedEvent` | `game_session.state_updated` | Sent when game state changes that all players should see. |
+| `InventoryContainerFullClientEvent` | `inventory.container_full` | Sent to sessions observing a container owner when one of the... |
+| `InventoryItemChangedClientEvent` | `inventory.item_changed` | Sent to sessions observing a container owner when an item is... |
+| `InventoryItemTransferredClientEvent` | `inventory.item_transferred` | Sent to sessions observing either the source or target conta... |
 | `MatchmakingCancelledEvent` | `matchmaking.cancelled` | Sent when matchmaking is cancelled for any reason. |
 | `MatchConfirmedEvent` | `matchmaking.match_confirmed` | Sent to all match participants when all players have accepte... |
 | `MatchDeclinedEvent` | `matchmaking.match_declined` | Sent to all match participants when someone declines. |
@@ -703,6 +709,54 @@ Generic notification event for system-level messages.
 
 ---
 
+## Currency Client Events API
+
+Server-to-client push events for the Currency service. These events notify clients of real-time wallet balance changes and wallet lifecycle state transitions delivered via WebSocket.
+
+### `CurrencyBalanceChangedEvent`
+
+**Event Name**: `currency.balance_changed`
+
+Sent to the wallet owner when any balance mutation occurs: credits, debits,
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `amount` | Signed balance delta (positive for gains, negative |
+| `currencyCode` | Human-readable currency code (e.g., "gold", "gems" |
+| `currencyDefinitionId` | Currency definition that changed |
+| `newBalance` | Wallet balance after the change |
+| `transactionType` | Semantic classification of the balance change sour |
+| `walletId` | The wallet whose balance changed |
+
+### `CurrencyWalletFrozenEvent`
+
+**Event Name**: `currency.wallet_frozen`
+
+Sent to the wallet owner when their wallet is frozen (escrow dispute,
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `reason` | Human-readable reason for the freeze |
+| `walletId` | The wallet that was frozen |
+
+### `CurrencyWalletUnfrozenEvent`
+
+**Event Name**: `currency.wallet_unfrozen`
+
+Sent to the wallet owner when their wallet is unfrozen and usable again.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `walletId` | The wallet that was unfrozen |
+
+---
+
 ## Game Session Client Events API
 
 Server-to-client push events for the Game Session service. These events notify clients of game session state changes, player actions, chat messages, and game state updates delivered via WebSocket.
@@ -834,6 +888,64 @@ Sent when game state changes that all players should see.
 | `stateDelta` | Partial game state changes. No Bannou plugin reads |
 | `triggeredBy` | Account ID that triggered the state change |
 | `updateType` | Type of update (game-specific, e.g., "turn_changed |
+
+---
+
+## Inventory Client Events API
+
+Server-to-client push events for the Inventory service. These events notify clients of real-time container content changes delivered via WebSocket through the Entity Session Registry.
+
+### `InventoryContainerFullClientEvent`
+
+**Event Name**: `inventory.container_full`
+
+Sent to sessions observing a container owner when one of their containers
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `constraintType` | Which capacity constraint was reached (slots, weig |
+| `containerId` | Container that reached capacity |
+| `containerType` | Game-defined container type for client-side contex |
+
+### `InventoryItemChangedClientEvent`
+
+**Event Name**: `inventory.item_changed`
+
+Sent to sessions observing a container owner when an item is placed,
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changeType` | Type of change that occurred |
+| `containerId` | Container where the change occurred |
+| `containerType` | Game-defined container type for client-side filter |
+| `instanceId` | Item instance that was affected |
+| `quantity` | Current quantity after the change (for stacking an |
+| `slotIndex` | Slot position after the change (for slot-based con |
+| `slotX` | Grid X position after the change (for grid contain |
+| `slotY` | Grid Y position after the change (for grid contain |
+| `templateId` | Item template ID for icon and name lookup |
+
+### `InventoryItemTransferredClientEvent`
+
+**Event Name**: `inventory.item_transferred`
+
+Sent to sessions observing either the source or target container owner
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `instanceId` | Item instance that was transferred |
+| `quantityTransferred` | Quantity of items transferred |
+| `sourceContainerId` | Container the item was transferred from |
+| `sourceContainerType` | Source container type |
+| `targetContainerId` | Container the item was transferred to |
+| `targetContainerType` | Target container type |
+| `templateId` | Item template ID for icon and name lookup |
 
 ---
 
@@ -1122,8 +1234,8 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 62
-- **Services with events**: 9
+- **Total event types**: 68
+- **Services with events**: 11
 
 ---
 

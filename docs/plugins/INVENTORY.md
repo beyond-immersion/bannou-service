@@ -22,6 +22,7 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 | lib-state (`IDistributedLockProvider`) | Container-level locks for concurrent modification safety |
 | lib-messaging (`IMessageBus`) | Publishing inventory lifecycle events; error event publishing |
 | lib-item (`IItemClient`) | Item template lookups, instance CRUD, container contents listing |
+| lib-connect (`IEntitySessionRegistry`) | Publishing client events to sessions observing container owners |
 
 ---
 
@@ -91,6 +92,18 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 ### Consumed Events
 
 This plugin does not consume external events.
+
+### Client Events (WebSocket Push)
+
+Client events are pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsync` using entity type `"inventory"` with the container owner's ID as the entity ID. Higher-layer services (e.g., Gardener) register `inventory → session` bindings so that connected clients receive real-time updates.
+
+| Event Name | Event Type | Trigger |
+|-----------|-----------|---------|
+| `inventory.item_changed` | `InventoryItemChangedClientEvent` | Item placed, removed, moved, stacked, or split (uses `InventoryItemChangeType` discriminator) |
+| `inventory.container_full` | `InventoryContainerFullClientEvent` | Container reached capacity limit |
+| `inventory.item_transferred` | `InventoryItemTransferredClientEvent` | Item transferred between owners (both source and target owner sessions notified) |
+
+**Composite operation suppression**: Cross-container moves (Remove+Add) and transfers (Split+Move) suppress intermediate client events from sub-operations and publish a single consolidated event. This prevents clients from receiving 3-6 intermediate updates for a single logical operation.
 
 ---
 
@@ -307,7 +320,7 @@ Stack Operations
 
 7. **Mail as remote inventory**: Implement a mailbox system using inventory containers with COD (cash-on-delivery) escrow integration. See [#283](https://github.com/beyond-immersion/bannou-service/issues/283).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/283 -->
-8. **Client events for real-time container updates** ([#495](https://github.com/beyond-immersion/bannou-service/issues/495)): Push `InventoryItemChanged` (consolidated with changeType discriminator for placed/removed/moved/stacked/split), `InventoryContainerFull`, and `InventoryItemTransferred` (targets both source and target owner sessions) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `inventory → session` bindings.
+8. ~~**Client events for real-time container updates**~~: **IMPLEMENTED** (2026-02-27) - Three client events (`inventory.item_changed`, `inventory.container_full`, `inventory.item_transferred`) pushed via `IEntitySessionRegistry.PublishToEntitySessionsAsync` with composite operation suppression. See [#495](https://github.com/beyond-immersion/bannou-service/issues/495).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/495 -->
 
 ---
@@ -387,6 +400,7 @@ Stack Operations
 - **[#485](https://github.com/beyond-immersion/bannou-service/issues/485)**: N+1 query pattern — batch item listing across containers
 
 ### Completed
+- **2026-02-27**: Issue #495 - Added 3 client events (`inventory.item_changed`, `inventory.container_full`, `inventory.item_transferred`) via `IEntitySessionRegistry.PublishToEntitySessionsAsync` with composite operation suppression for cross-container moves and transfers
 - **2026-02-25**: Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion; fixed DestroyReason string-to-enum for T25 compliance
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
 - **2026-02-25**: Fixed MoveItem same-container bug — now persists slot position via ModifyItemInstanceAsync, acquires distributed lock, and publishes inventory-item.moved event with previous/new slot data

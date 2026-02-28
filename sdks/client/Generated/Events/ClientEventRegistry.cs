@@ -10,7 +10,9 @@ using BeyondImmersion.Bannou.Asset.ClientEvents;
 using BeyondImmersion.Bannou.Auth.ClientEvents;
 using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.Bannou.Collection.ClientEvents;
+using BeyondImmersion.Bannou.Currency.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
+using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.Bannou.Worldstate.ClientEvents;
@@ -60,9 +62,15 @@ public static class ClientEventRegistry
         { typeof(CollectionDiscoveryAdvancedClientEvent), "collection.discovery_advanced" },
         { typeof(CollectionEntryUnlockedClientEvent), "collection.entry_unlocked" },
         { typeof(CollectionMilestoneReachedClientEvent), "collection.milestone_reached" },
+        { typeof(CurrencyBalanceChangedEvent), "currency.balance_changed" },
+        { typeof(CurrencyWalletFrozenEvent), "currency.wallet_frozen" },
+        { typeof(CurrencyWalletUnfrozenEvent), "currency.wallet_unfrozen" },
         { typeof(DisconnectNotificationEvent), "connect.disconnect_notification" },
         { typeof(GameActionResultEvent), "game_session.action_result" },
         { typeof(GameStateUpdatedEvent), "game_session.state_updated" },
+        { typeof(InventoryContainerFullClientEvent), "inventory.container_full" },
+        { typeof(InventoryItemChangedClientEvent), "inventory.item_changed" },
+        { typeof(InventoryItemTransferredClientEvent), "inventory.item_transferred" },
         { typeof(MatchConfirmedEvent), "matchmaking.match_confirmed" },
         { typeof(MatchDeclinedEvent), "matchmaking.match_declined" },
         { typeof(MatchFoundEvent), "matchmaking.match_found" },
@@ -128,6 +136,9 @@ public static class ClientEventRegistry
         { "collection.milestone_reached", typeof(CollectionMilestoneReachedClientEvent) },
         { "connect.capability_manifest", typeof(CapabilityManifestEvent) },
         { "connect.disconnect_notification", typeof(DisconnectNotificationEvent) },
+        { "currency.balance_changed", typeof(CurrencyBalanceChangedEvent) },
+        { "currency.wallet_frozen", typeof(CurrencyWalletFrozenEvent) },
+        { "currency.wallet_unfrozen", typeof(CurrencyWalletUnfrozenEvent) },
         { "game_session.action_result", typeof(GameActionResultEvent) },
         { "game_session.chat_received", typeof(SessionChatReceivedEvent) },
         { "game_session.player_joined", typeof(PlayerJoinedEvent) },
@@ -136,6 +147,9 @@ public static class ClientEventRegistry
         { "game_session.session_cancelled", typeof(SessionCancelledEvent) },
         { "game_session.state_changed", typeof(SessionStateChangedEvent) },
         { "game_session.state_updated", typeof(GameStateUpdatedEvent) },
+        { "inventory.container_full", typeof(InventoryContainerFullClientEvent) },
+        { "inventory.item_changed", typeof(InventoryItemChangedClientEvent) },
+        { "inventory.item_transferred", typeof(InventoryItemTransferredClientEvent) },
         { "matchmaking.cancelled", typeof(MatchmakingCancelledEvent) },
         { "matchmaking.match_confirmed", typeof(MatchConfirmedEvent) },
         { "matchmaking.match_declined", typeof(MatchDeclinedEvent) },

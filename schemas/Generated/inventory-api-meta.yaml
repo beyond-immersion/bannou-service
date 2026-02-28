@@ -1492,6 +1492,15 @@ components:
       - destroy
       - transfer
       - error
+    InventoryItemChangeType:
+      type: string
+      description: Type of item change within an inventory container, used as discriminator for client events
+      enum:
+      - placed
+      - removed
+      - moved
+      - stacked
+      - split
     CreateContainerRequest:
       type: object
       description: Request to create a new container

@@ -1,0 +1,140 @@
+openapi: 3.0.4
+info:
+  title: Currency Client Events API
+  description: |
+    Server-to-client push events for the Currency service.
+    These events notify clients of real-time wallet balance changes and
+    wallet lifecycle state transitions delivered via WebSocket.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "currency.{event_type}" naming convention.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Balance Changed Client Event
+    # ============================================
+
+    CurrencyBalanceChangedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the wallet owner when any balance mutation occurs: credits, debits,
+        transfers, autogain, escrow operations, conversions, and wallet close transfers.
+        A single consolidated event with a signed delta and TransactionType discriminator.
+        The client's wallet HUD uses this for real-time balance display updates.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - walletId
+        - currencyDefinitionId
+        - currencyCode
+        - amount
+        - newBalance
+        - transactionType
+      properties:
+        eventName:
+          type: string
+          default: "currency.balance_changed"
+          description: Fixed event type identifier
+        walletId:
+          type: string
+          format: uuid
+          description: The wallet whose balance changed
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency definition that changed
+        currencyCode:
+          type: string
+          description: Human-readable currency code (e.g., "gold", "gems")
+        amount:
+          type: number
+          format: double
+          description: Signed balance delta (positive for gains, negative for losses)
+        newBalance:
+          type: number
+          format: double
+          description: Wallet balance after the change
+        transactionType:
+          $ref: 'currency-api.yaml#/components/schemas/TransactionType'
+          description: Semantic classification of the balance change source
+
+    # ============================================
+    # Wallet Frozen Client Event
+    # ============================================
+
+    CurrencyWalletFrozenEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the wallet owner when their wallet is frozen (escrow dispute,
+        admin action, etc.). The client should display a "wallet frozen" indicator
+        and disable balance-mutating actions.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - walletId
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "currency.wallet_frozen"
+          description: Fixed event type identifier
+        walletId:
+          type: string
+          format: uuid
+          description: The wallet that was frozen
+        reason:
+          type: string
+          description: Human-readable reason for the freeze
+
+    # ============================================
+    # Wallet Unfrozen Client Event
+    # ============================================
+
+    CurrencyWalletUnfrozenEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to the wallet owner when their wallet is unfrozen and usable again.
+        The client should remove the "wallet frozen" indicator and re-enable
+        balance-mutating actions.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - walletId
+      properties:
+        eventName:
+          type: string
+          default: "currency.wallet_unfrozen"
+          description: Fixed event type identifier
+        walletId:
+          type: string
+          format: uuid
+          description: The wallet that was unfrozen

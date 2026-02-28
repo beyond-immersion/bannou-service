@@ -1,0 +1,191 @@
+openapi: 3.0.4
+info:
+  title: Inventory Client Events API
+  description: |
+    Server-to-client push events for the Inventory service.
+    These events notify clients of real-time container content changes
+    delivered via WebSocket through the Entity Session Registry.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "inventory.{event_type}" naming convention.
+
+    Entity routing uses entityType "inventory" with the container owner's ID
+    as the entity ID, so all container changes for a given owner are routed
+    to sessions observing that owner's inventory.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Item Changed Client Event
+    # ============================================
+
+    InventoryItemChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing a container owner when an item is placed,
+        removed, moved between slots, stacked, or split within their containers.
+        Uses a changeType discriminator to indicate the nature of the change.
+        Composite operations (cross-container move, transfer) suppress intermediate
+        events and publish a single consolidated event.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - changeType
+        - containerId
+        - instanceId
+        - templateId
+      properties:
+        eventName:
+          type: string
+          default: "inventory.item_changed"
+          description: Fixed event type identifier
+        changeType:
+          $ref: 'inventory-api.yaml#/components/schemas/InventoryItemChangeType'
+          description: Type of change that occurred
+        containerId:
+          type: string
+          format: uuid
+          description: Container where the change occurred
+        containerType:
+          type: string
+          nullable: true
+          description: Game-defined container type for client-side filtering
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance that was affected
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID for icon and name lookup
+        quantity:
+          type: number
+          format: double
+          nullable: true
+          description: Current quantity after the change (for stacking and splitting)
+        slotIndex:
+          type: integer
+          nullable: true
+          description: Slot position after the change (for slot-based containers)
+        slotX:
+          type: integer
+          nullable: true
+          description: Grid X position after the change (for grid containers)
+        slotY:
+          type: integer
+          nullable: true
+          description: Grid Y position after the change (for grid containers)
+
+    # ============================================
+    # Container Full Client Event
+    # ============================================
+
+    InventoryContainerFullClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing a container owner when one of their containers
+        reaches its capacity limit. Includes which constraint type was reached
+        so the client can display the appropriate UI feedback.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - containerId
+        - constraintType
+      properties:
+        eventName:
+          type: string
+          default: "inventory.container_full"
+          description: Fixed event type identifier
+        containerId:
+          type: string
+          format: uuid
+          description: Container that reached capacity
+        containerType:
+          type: string
+          nullable: true
+          description: Game-defined container type for client-side context
+        constraintType:
+          $ref: 'inventory-api.yaml#/components/schemas/ConstraintLimitType'
+          description: Which capacity constraint was reached (slots, weight, volume, grid)
+
+    # ============================================
+    # Item Transferred Client Event
+    # ============================================
+
+    InventoryItemTransferredClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing either the source or target container owner
+        when an item is transferred between owners. Both source and target owner
+        sessions receive this event so their UIs can update accordingly.
+        Suppresses intermediate item changed events from sub-operations
+        (split, move) and publishes this single consolidated event.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - instanceId
+        - templateId
+        - sourceContainerId
+        - targetContainerId
+        - quantityTransferred
+      properties:
+        eventName:
+          type: string
+          default: "inventory.item_transferred"
+          description: Fixed event type identifier
+        instanceId:
+          type: string
+          format: uuid
+          description: Item instance that was transferred
+        templateId:
+          type: string
+          format: uuid
+          description: Item template ID for icon and name lookup
+        sourceContainerId:
+          type: string
+          format: uuid
+          description: Container the item was transferred from
+        targetContainerId:
+          type: string
+          format: uuid
+          description: Container the item was transferred to
+        sourceContainerType:
+          type: string
+          nullable: true
+          description: Source container type
+        targetContainerType:
+          type: string
+          nullable: true
+          description: Target container type
+        quantityTransferred:
+          type: number
+          format: double
+          description: Quantity of items transferred

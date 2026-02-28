@@ -18,7 +18,9 @@ public sealed class BannouClientEvents
     private AuthEventSubscriptions? _auth;
     private ChatEventSubscriptions? _chat;
     private CollectionEventSubscriptions? _collection;
+    private CurrencyEventSubscriptions? _currency;
     private GameSessionEventSubscriptions? _gamesession;
+    private InventoryEventSubscriptions? _inventory;
     private MatchmakingEventSubscriptions? _matchmaking;
     private SystemEventSubscriptions? _system;
     private VoiceEventSubscriptions? _voice;
@@ -54,10 +56,22 @@ public sealed class BannouClientEvents
         _collection ??= new CollectionEventSubscriptions(_client);
 
     /// <summary>
+    /// Event subscriptions for Currency service.
+    /// </summary>
+    public CurrencyEventSubscriptions Currency =>
+        _currency ??= new CurrencyEventSubscriptions(_client);
+
+    /// <summary>
     /// Event subscriptions for GameSession service.
     /// </summary>
     public GameSessionEventSubscriptions GameSession =>
         _gamesession ??= new GameSessionEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Inventory service.
+    /// </summary>
+    public InventoryEventSubscriptions Inventory =>
+        _inventory ??= new InventoryEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Matchmaking service.

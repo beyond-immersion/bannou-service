@@ -278,6 +278,14 @@ This document lists all events defined in Bannou's event schemas.
 | `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Event published when a wallet is frozen |
 | `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Event published when a wallet is unfrozen |
 
+### Currency (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CurrencyBalanceChangedEvent` | Custom | `currency-balance-changed` | Sent to the wallet owner when any balance mutation... |
+| `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Sent to the wallet owner when their wallet is froz... |
+| `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Sent to the wallet owner when their wallet is unfr... |
+
 ### Divine
 
 | Event | Type | Likely Topic | Description |
@@ -387,6 +395,14 @@ This document lists all events defined in Bannou's event schemas.
 | `InventoryItemSplitEvent` | Custom | `inventory-item-split` | Event when a stack is split |
 | `InventoryItemStackedEvent` | Custom | `inventory-item-stacked` | Event when items are stacked together |
 | `InventoryItemTransferredEvent` | Custom | `inventory-item-transferred` | Event when item ownership transfers |
+
+### Inventory (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `InventoryContainerFullClientEvent` | Custom | `inventory-container-full-client` | Sent to sessions observing a container owner when ... |
+| `InventoryItemChangedClientEvent` | Custom | `inventory-item-changed-client` | Sent to sessions observing a container owner when ... |
+| `InventoryItemTransferredClientEvent` | Custom | `inventory-item-transferred-client` | Sent to sessions observing either the source or ta... |
 
 ### Item
 

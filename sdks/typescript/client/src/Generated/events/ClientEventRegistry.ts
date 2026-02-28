@@ -264,6 +264,30 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'currency.balance_changed',
+    {
+      eventName: 'currency.balance_changed',
+      typeName: 'CurrencyBalanceChangedEvent',
+      service: 'currency',
+    },
+  ],
+  [
+    'currency.wallet_frozen',
+    {
+      eventName: 'currency.wallet_frozen',
+      typeName: 'CurrencyWalletFrozenEvent',
+      service: 'currency',
+    },
+  ],
+  [
+    'currency.wallet_unfrozen',
+    {
+      eventName: 'currency.wallet_unfrozen',
+      typeName: 'CurrencyWalletUnfrozenEvent',
+      service: 'currency',
+    },
+  ],
+  [
     'game_session.action_result',
     {
       eventName: 'game_session.action_result',
@@ -321,6 +345,30 @@ export const eventRegistry = new Map<string, EventMetadata>([
       eventName: 'game_session.state_updated',
       typeName: 'GameStateUpdatedEvent',
       service: 'game-session',
+    },
+  ],
+  [
+    'inventory.container_full',
+    {
+      eventName: 'inventory.container_full',
+      typeName: 'InventoryContainerFullClientEvent',
+      service: 'inventory',
+    },
+  ],
+  [
+    'inventory.item_changed',
+    {
+      eventName: 'inventory.item_changed',
+      typeName: 'InventoryItemChangedClientEvent',
+      service: 'inventory',
+    },
+  ],
+  [
+    'inventory.item_transferred',
+    {
+      eventName: 'inventory.item_transferred',
+      typeName: 'InventoryItemTransferredClientEvent',
+      service: 'inventory',
     },
   ],
   [

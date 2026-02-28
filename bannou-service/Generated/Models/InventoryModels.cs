@@ -158,6 +158,32 @@ public enum ItemHandling
 #pragma warning restore CS1591
 
 /// <summary>
+/// Type of item change within an inventory container, used as discriminator for client events
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum InventoryItemChangeType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"placed")]
+    Placed = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"removed")]
+    Removed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"moved")]
+    Moved = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stacked")]
+    Stacked = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"split")]
+    Split = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Request to create a new container
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

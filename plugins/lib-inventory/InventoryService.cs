@@ -1,9 +1,11 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +27,16 @@ public partial class InventoryService : IInventoryService
     private readonly ILogger<InventoryService> _logger;
     private readonly InventoryServiceConfiguration _configuration;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly WeightContribution _defaultWeightContribution;
+
+    /// <summary>
+    /// Suppresses client event publishing during composite operations (e.g., cross-container
+    /// move calls Remove+Add internally). The composite operation publishes a single
+    /// consolidated client event instead. Safe as instance field because InventoryService
+    /// is Scoped (one instance per request) per IMPLEMENTATION TENETS.
+    /// </summary>
+    private bool _suppressClientEvents;
 
     // Container store key prefixes
     private const string CONT_PREFIX = "cont:";
@@ -42,7 +53,8 @@ public partial class InventoryService : IInventoryService
         IDistributedLockProvider lockProvider,
         ILogger<InventoryService> logger,
         InventoryServiceConfiguration configuration,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IEntitySessionRegistry entitySessionRegistry)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         _itemClient = itemClient ?? throw new ArgumentNullException(nameof(itemClient));
@@ -51,6 +63,7 @@ public partial class InventoryService : IInventoryService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _telemetryProvider = telemetryProvider ?? throw new ArgumentNullException(nameof(telemetryProvider));
+        _entitySessionRegistry = entitySessionRegistry ?? throw new ArgumentNullException(nameof(entitySessionRegistry));
 
         // Configuration already provides typed enum (T25 compliant)
         _defaultWeightContribution = _configuration.DefaultWeightContribution;
@@ -732,6 +745,19 @@ public partial class InventoryService : IInventoryService
             SlotY = body.SlotY
         }, cancellationToken);
 
+        await PublishContainerClientEventAsync(container.OwnerId, new InventoryItemChangedClientEvent
+        {
+            ChangeType = InventoryItemChangeType.Placed,
+            ContainerId = body.ContainerId,
+            ContainerType = container.ContainerType,
+            InstanceId = body.InstanceId,
+            TemplateId = item.TemplateId,
+            Quantity = item.Quantity,
+            SlotIndex = body.SlotIndex,
+            SlotX = body.SlotX,
+            SlotY = body.SlotY
+        }, cancellationToken);
+
         return (StatusCodes.OK, new AddItemResponse
         {
             SlotIndex = body.SlotIndex,
@@ -839,6 +865,15 @@ public partial class InventoryService : IInventoryService
             OwnerType = container.OwnerType
         }, cancellationToken);
 
+        await PublishContainerClientEventAsync(container.OwnerId, new InventoryItemChangedClientEvent
+        {
+            ChangeType = InventoryItemChangeType.Removed,
+            ContainerId = item.ContainerId,
+            ContainerType = container.ContainerType,
+            InstanceId = body.InstanceId,
+            TemplateId = item.TemplateId
+        }, cancellationToken);
+
         return (StatusCodes.OK, new RemoveItemResponse
         {
             PreviousContainerId = item.ContainerId
@@ -921,6 +956,24 @@ public partial class InventoryService : IInventoryService
                 NewSlotY = body.TargetSlotY
             }, cancellationToken);
 
+            // Load container for owner routing (cache read-through avoids redundant Redis calls)
+            var sameContainer = await GetContainerWithCacheAsync(sourceContainerId, cancellationToken);
+            if (sameContainer is not null)
+            {
+                await PublishContainerClientEventAsync(sameContainer.OwnerId, new InventoryItemChangedClientEvent
+                {
+                    ChangeType = InventoryItemChangeType.Moved,
+                    ContainerId = sourceContainerId,
+                    ContainerType = sameContainer.ContainerType,
+                    InstanceId = body.InstanceId,
+                    TemplateId = item.TemplateId,
+                    Quantity = item.Quantity,
+                    SlotIndex = body.TargetSlotIndex,
+                    SlotX = body.TargetSlotX,
+                    SlotY = body.TargetSlotY
+                }, cancellationToken);
+            }
+
             return (StatusCodes.OK, new MoveItemResponse
             {
                 SourceContainerId = sourceContainerId,
@@ -961,12 +1014,17 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Suppress client events from sub-operations (Remove+Add each publish their own);
+        // this composite operation publishes a single consolidated "moved" client event.
+        _suppressClientEvents = true;
+
         // Remove from source — check return status to avoid partial moves
         var (removeStatus, _) = await RemoveItemFromContainerAsync(
             new RemoveItemRequest { InstanceId = body.InstanceId }, cancellationToken);
 
         if (removeStatus != StatusCodes.OK)
         {
+            _suppressClientEvents = false;
             _logger.LogWarning("Failed to remove item {InstanceId} from source container during move: {Status}",
                 body.InstanceId, removeStatus);
             return (removeStatus, null);
@@ -982,6 +1040,8 @@ public partial class InventoryService : IInventoryService
             SlotY = body.TargetSlotY,
             Rotated = body.Rotated
         }, cancellationToken);
+
+        _suppressClientEvents = false;
 
         if (addStatus != StatusCodes.OK)
         {
@@ -1005,6 +1065,24 @@ public partial class InventoryService : IInventoryService
             NewSlotX = body.TargetSlotX,
             NewSlotY = body.TargetSlotY
         }, cancellationToken);
+
+        // Publish consolidated client event for cross-container move (source owner sees the change)
+        var sourceContainerModel = await GetContainerWithCacheAsync(sourceContainerId, cancellationToken);
+        if (sourceContainerModel is not null)
+        {
+            await PublishContainerClientEventAsync(sourceContainerModel.OwnerId, new InventoryItemChangedClientEvent
+            {
+                ChangeType = InventoryItemChangeType.Moved,
+                ContainerId = body.TargetContainerId,
+                ContainerType = targetContainer.ContainerType,
+                InstanceId = body.InstanceId,
+                TemplateId = item.TemplateId,
+                Quantity = item.Quantity,
+                SlotIndex = body.TargetSlotIndex,
+                SlotX = body.TargetSlotX,
+                SlotY = body.TargetSlotY
+            }, cancellationToken);
+        }
 
         return (StatusCodes.OK, new MoveItemResponse
         {
@@ -1097,6 +1175,10 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.NotFound, null);
         }
 
+        // Suppress client events from sub-operations (Split+Move each publish their own);
+        // this composite operation publishes a single consolidated "transferred" client event.
+        _suppressClientEvents = true;
+
         // Determine which item to move - if partial transfer, split first
         var instanceIdToMove = body.InstanceId;
         if (body.Quantity.HasValue && body.Quantity.Value < item.Quantity)
@@ -1110,6 +1192,7 @@ public partial class InventoryService : IInventoryService
 
             if (splitStatus != StatusCodes.OK || splitResponse is null)
             {
+                _suppressClientEvents = false;
                 _logger.LogWarning("Failed to split stack for partial transfer: {Status}", splitStatus);
                 return (splitStatus, null);
             }
@@ -1124,6 +1207,8 @@ public partial class InventoryService : IInventoryService
             InstanceId = instanceIdToMove,
             TargetContainerId = body.TargetContainerId
         }, cancellationToken);
+
+        _suppressClientEvents = false;
 
         if (moveStatus != StatusCodes.OK)
         {
@@ -1146,6 +1231,26 @@ public partial class InventoryService : IInventoryService
             TargetOwnerType = targetContainer.OwnerType,
             QuantityTransferred = quantityToTransfer
         }, cancellationToken);
+
+        // Publish consolidated client event to both source and target owner sessions
+        var transferClientEvent = new InventoryItemTransferredClientEvent
+        {
+            InstanceId = instanceIdToMove,
+            TemplateId = item.TemplateId,
+            SourceContainerId = sourceContainerId,
+            TargetContainerId = body.TargetContainerId,
+            SourceContainerType = sourceContainer.ContainerType,
+            TargetContainerType = targetContainer.ContainerType,
+            QuantityTransferred = quantityToTransfer
+        };
+
+        await PublishContainerClientEventAsync(sourceContainer.OwnerId, transferClientEvent, cancellationToken);
+
+        // If target owner is different from source, notify target owner too
+        if (targetContainer.OwnerId != sourceContainer.OwnerId)
+        {
+            await PublishContainerClientEventAsync(targetContainer.OwnerId, transferClientEvent, cancellationToken);
+        }
 
         return (StatusCodes.OK, new TransferItemResponse
         {
@@ -1292,6 +1397,22 @@ public partial class InventoryService : IInventoryService
             QuantitySplit = body.Quantity,
             OriginalRemaining = originalRemaining
         }, cancellationToken);
+
+        if (container is not null)
+        {
+            await PublishContainerClientEventAsync(container.OwnerId, new InventoryItemChangedClientEvent
+            {
+                ChangeType = InventoryItemChangeType.Split,
+                ContainerId = item.ContainerId,
+                ContainerType = container.ContainerType,
+                InstanceId = newItem.InstanceId,
+                TemplateId = item.TemplateId,
+                Quantity = body.Quantity,
+                SlotIndex = body.TargetSlotIndex,
+                SlotX = body.TargetSlotX,
+                SlotY = body.TargetSlotY
+            }, cancellationToken);
+        }
 
         return (StatusCodes.OK, new SplitStackResponse
         {
@@ -1502,6 +1623,21 @@ public partial class InventoryService : IInventoryService
                 QuantityAdded = quantityToAdd,
                 NewTotalQuantity = combinedQuantity
             }, cancellationToken);
+
+            // Load container for owner routing (cache read-through)
+            var mergeContainer = await GetContainerWithCacheAsync(target.ContainerId, cancellationToken);
+            if (mergeContainer is not null)
+            {
+                await PublishContainerClientEventAsync(mergeContainer.OwnerId, new InventoryItemChangedClientEvent
+                {
+                    ChangeType = InventoryItemChangeType.Stacked,
+                    ContainerId = target.ContainerId,
+                    ContainerType = mergeContainer.ContainerType,
+                    InstanceId = body.TargetInstanceId,
+                    TemplateId = source.TemplateId,
+                    Quantity = combinedQuantity
+                }, cancellationToken);
+            }
 
             return (StatusCodes.OK, new MergeStacksResponse
             {
@@ -1948,6 +2084,21 @@ public partial class InventoryService : IInventoryService
     }
 
     /// <summary>
+    /// Publishes a client event to all sessions observing the container owner's inventory.
+    /// Skipped when <see cref="_suppressClientEvents"/> is true (during composite operations).
+    /// </summary>
+    private async Task PublishContainerClientEventAsync<TEvent>(
+        Guid ownerId,
+        TEvent clientEvent,
+        CancellationToken ct)
+        where TEvent : BaseClientEvent
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.inventory", "InventoryService.PublishContainerClientEventAsync");
+        if (_suppressClientEvents) return;
+        await _entitySessionRegistry.PublishToEntitySessionsAsync("inventory", ownerId, clientEvent, ct);
+    }
+
+    /// <summary>
     /// Emits a container full event if the container has reached its capacity.
     /// </summary>
     private async Task EmitContainerFullEventIfNeededAsync(
@@ -1998,6 +2149,13 @@ public partial class InventoryService : IInventoryService
                 ContainerId = container.ContainerId,
                 OwnerId = container.OwnerId,
                 OwnerType = container.OwnerType,
+                ContainerType = container.ContainerType,
+                ConstraintType = constraintType.Value
+            }, cancellationToken);
+
+            await PublishContainerClientEventAsync(container.OwnerId, new InventoryContainerFullClientEvent
+            {
+                ContainerId = container.ContainerId,
                 ContainerType = container.ContainerType,
                 ConstraintType = constraintType.Value
             }, cancellationToken);

@@ -117,6 +117,20 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 
 This plugin does not consume external events.
 
+### Published Client Events
+
+| Event Name | Event Type | Trigger |
+|------------|-----------|---------|
+| `currency.balance_changed` | `CurrencyBalanceChangedEvent` | Balance mutation via credit, debit, transfer (both wallets), or autogain; includes signed delta, new balance, and transaction type discriminator |
+| `currency.wallet_frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen (escrow dispute, admin action); client should display frozen indicator and disable balance-mutating actions |
+| `currency.wallet_unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen; client should remove frozen indicator and re-enable balance-mutating actions |
+
+Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsAsync` using the wallet's `ownerId` with entity type `"currency"` for entity-session resolution. If zero sessions are registered for the owner, zero events are delivered (graceful degradation). Schema: `schemas/currency-client-events.yaml`.
+
+**Coverage via delegation**: Batch credit/debit, escrow deposit/release/refund, currency conversion, wallet close transfers, and hold capture all delegate to `CreditCurrencyAsync`/`DebitCurrencyAsync`, so client events are automatically published for all these operations without separate publish points.
+
+**Transfer produces two events**: `TransferCurrencyAsync` publishes a negative-delta event to the source wallet owner and a positive-delta event to the target wallet owner. The target's `amount` may be less than the source's absolute `amount` if a wallet cap truncated the credit.
+
 ---
 
 ## Configuration
@@ -153,6 +167,7 @@ This plugin does not consume external events.
 | `IDistributedLockProvider` | Singleton | Balance locks (`currency-balance`), hold locks (`currency-hold`), wallet locks (`currency-wallet`), index locks (`currency-index`), autogain locks (`currency-autogain`) |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation for all async helper methods |
 | `IMessageBus` | Scoped | Event publishing and error events |
+| `IEntitySessionRegistry` | Singleton | Client event publishing to wallet owner WebSocket sessions |
 | `CurrencyAutogainTaskService` | Hosted (Singleton) | Background worker for proactive autogain |
 
 Service lifetime is **Scoped** (per-request). Background service is a hosted singleton.
@@ -459,8 +474,7 @@ Escrow Integration Flow
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
 8. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/478 -->
-9. **Client events for real-time wallet updates** ([#494](https://github.com/beyond-immersion/bannou-service/issues/494)): Push `CurrencyBalanceChanged`, `CurrencyWalletFrozen`, and `CurrencyWalletUnfrozen` client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `currency → session` bindings. A consolidated `BalanceChanged` event with transaction type discriminator covers credits, debits, transfers, and autogain for real-time wallet HUD updates.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/494 -->
+9. ~~**Client events for real-time wallet updates**~~: **IMPLEMENTED** (2026-02-27) - Three client events (`currency.balance_changed`, `currency.wallet_frozen`, `currency.wallet_unfrozen`) published via `IEntitySessionRegistry` at all balance mutation and wallet lifecycle points. See Published Client Events section above.
 
 ---
 
@@ -511,4 +525,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-*(All previous completed items processed and removed during 2026-02-24 maintenance.)*
+- **2026-02-27**: Issue [#494](https://github.com/beyond-immersion/bannou-service/issues/494) - Client events for real-time wallet updates. Three client events published via IEntitySessionRegistry at all balance mutation and wallet lifecycle points.
