@@ -252,6 +252,7 @@ components:
         stubName:
           type: string
           nullable: true
+          minLength: 1
           description: Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this
             service.
 
@@ -296,6 +297,7 @@ components:
         durationDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Alternative to expirationDate - number of days from startDate
 
     UpdateSubscriptionRequest:
@@ -349,6 +351,8 @@ components:
           description: ID of the subscription to renew
         extensionDays:
           type: integer
+          nullable: true
+          minimum: 1
           description: Number of days to extend the subscription
         newExpirationDate:
           type: string
@@ -366,6 +370,7 @@ components:
       - accountId
       - serviceId
       - stubName
+      - displayName
       - startDate
       - isActive
       - createdAt
@@ -384,6 +389,7 @@ components:
           description: ID of the subscribed service (game)
         stubName:
           type: string
+          minLength: 1
           description: Stub name of the service (denormalized for efficiency)
         displayName:
           type: string
@@ -419,6 +425,12 @@ components:
           nullable: true
           description: When the subscription was last updated
 
+    # Enums
+    SubscriptionAction:
+      type: string
+      enum: [created, updated, cancelled, expired, renewed]
+      description: The type of action that triggered a subscription state change
+
     # NOTE: CurrentSubscriptionsResponse removed - superseded by QuerySubscriptionsResponse
 
     QuerySubscriptionsResponse:
@@ -429,16 +441,13 @@ components:
         Returns subscriptions matching the query criteria (by account, by stub, or both).
       required:
       - subscriptions
-      - totalCount
+      - accountIds
       properties:
         subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionInfo'
           description: List of active subscriptions matching the query
-        totalCount:
-          type: integer
-          description: Total number of subscriptions returned
         accountIds:
           type: array
           items:
@@ -452,14 +461,10 @@ components:
       description: Response containing list of subscriptions
       required:
       - subscriptions
-      - totalCount
       properties:
         subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionInfo'
           description: List of subscriptions matching the filter criteria
-        totalCount:
-          type: integer
-          description: Total number of subscriptions matching the filter
 

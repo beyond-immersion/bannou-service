@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Species;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Species;
 
@@ -127,6 +142,12 @@ public partial class ListSpeciesByRealmRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("isPlayable")]
     public bool? IsPlayable { get; set; } = default!;
+
+    /// <summary>
+    /// Whether to include deprecated species in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
 
     /// <summary>
     /// Page number for pagination (1-based)
@@ -327,11 +348,11 @@ public partial class DeprecateSpeciesRequest
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deprecation (for audit purposes)
+    /// Audit reason for deprecation, explaining why this species is being phased out
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Reason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
 }
 
@@ -464,31 +485,36 @@ public partial class SeedSpecies
 {
 
     /// <summary>
-    /// Unique code for the species
+    /// Unique code for the species (e.g., "HUMAN", "ELF")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
-    /// Display name
+    /// Display name for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Description of the species (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -665,18 +691,6 @@ public partial class SpeciesListResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    /// <summary>
-    /// Current page number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    public int Page { get; set; } = default!;
-
-    /// <summary>
-    /// Number of items per page
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
-    public int PageSize { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -722,32 +736,22 @@ public partial class MergeSpeciesResponse
 {
 
     /// <summary>
-    /// ID of the deprecated species that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceSpeciesId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the species that characters were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetSpeciesId { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters updated to use the target species
+    /// Number of characters successfully migrated to the target species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
     public int CharactersMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Whether the source species was hard-deleted after merge
+    /// Whether the source species was hard-deleted after merge (skipped on partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
     public bool SourceDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs that failed migration, null if no failures occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedEntityIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? FailedEntityIds { get; set; } = default!;
 
 }
 

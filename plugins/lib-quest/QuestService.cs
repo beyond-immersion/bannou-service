@@ -1455,10 +1455,8 @@ public partial class QuestService : IQuestService
                     break;
 
                 case PrerequisiteType.CHARACTER_LEVEL:
-                    // Stub: Character service doesn't track level yet
-                    _logger.LogDebug(
-                        "Skipping CHARACTER_LEVEL prerequisite for quest {DefinitionCode}: level tracking not implemented",
-                        definition.Code);
+                    // Dynamic: Check via IPrerequisiteProviderFactory (no built-in L2 level tracking)
+                    failure = await CheckDynamicPrerequisiteAsync("character_level", prereq, characterId, cancellationToken);
                     break;
 
                 case PrerequisiteType.REPUTATION:

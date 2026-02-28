@@ -25,10 +25,11 @@ public class SubscriptionServiceTests
     private readonly Mock<IStateStore<SubscriptionDataModel>> _mockSubscriptionStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<SubscriptionService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
     private readonly Mock<IGameServiceClient> _mockServiceClient;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private const string STATE_STORE = "subscription-statestore";
 
     public SubscriptionServiceTests()
@@ -37,10 +38,14 @@ public class SubscriptionServiceTests
         _mockSubscriptionStore = new Mock<IStateStore<SubscriptionDataModel>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<SubscriptionService>>();
-        _configuration = new SubscriptionServiceConfiguration();
+        _configuration = new SubscriptionServiceConfiguration
+        {
+            LockTimeoutSeconds = 10
+        };
         _mockServiceClient = new Mock<IGameServiceClient>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
@@ -57,6 +62,13 @@ public class SubscriptionServiceTests
         // Setup default behavior for message bus
         _mockMessageBus.Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
+
+        // Setup default behavior for distributed lock provider - always acquire successfully
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        mockLockResponse.Setup(l => l.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _mockLockProvider.Setup(l => l.LockAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
     }
 
     private SubscriptionService CreateService()
@@ -64,10 +76,11 @@ public class SubscriptionServiceTests
         return new SubscriptionService(
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _configuration,
-            _mockServiceClient.Object,
-            _mockEventConsumer.Object);
+            _mockServiceClient.Object);
     }
 
     #region Constructor Tests
@@ -130,7 +143,7 @@ public class SubscriptionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(1, response.TotalCount);
+
         Assert.Single(response.Subscriptions);
     }
 
@@ -191,7 +204,7 @@ public class SubscriptionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(1, response.TotalCount);
+
         Assert.Equal("test-game", response.Subscriptions.First().StubName);
     }
 
@@ -254,7 +267,7 @@ public class SubscriptionServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.Equal(1, response.TotalCount);
+
         Assert.Equal("test-game", response.Subscriptions.First().StubName);
     }
 
@@ -278,7 +291,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Empty(response.Subscriptions);
-        Assert.Equal(0, response.TotalCount);
+
     }
 
     #endregion
@@ -324,7 +337,7 @@ public class SubscriptionServiceTests
         Assert.NotNull(response);
         Assert.Single(response.Subscriptions);
         Assert.Equal("test-game", response.Subscriptions.First().StubName);
-        Assert.Equal(1, response.TotalCount);
+
     }
 
     [Fact]
@@ -365,7 +378,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Empty(response.Subscriptions);
-        Assert.Equal(0, response.TotalCount);
+
     }
 
     [Fact]
@@ -405,7 +418,7 @@ public class SubscriptionServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Empty(response.Subscriptions);
-        Assert.Equal(0, response.TotalCount);
+
     }
 
     [Fact]
@@ -661,7 +674,7 @@ public class SubscriptionServiceTests
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.AccountId == accountId &&
-                e.Action == SubscriptionUpdatedEventAction.Created),
+                e.Action == SubscriptionAction.Created),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -845,7 +858,7 @@ public class SubscriptionServiceTests
             "subscription.updated",
             It.Is<SubscriptionUpdatedEvent>(e =>
                 e.SubscriptionId == subscriptionId &&
-                e.Action == SubscriptionUpdatedEventAction.Cancelled),
+                e.Action == SubscriptionAction.Cancelled),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -1051,7 +1064,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync("etag");
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId.ToString(), CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
 
         // Assert
         Assert.True(result);
@@ -1072,7 +1085,7 @@ public class SubscriptionServiceTests
             .ReturnsAsync((SubscriptionDataModel?)null);
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId.ToString(), CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
 
         // Assert
         Assert.False(result);
@@ -1102,7 +1115,7 @@ public class SubscriptionServiceTests
             });
 
         // Act
-        var result = await service.ExpireSubscriptionAsync(subscriptionId.ToString(), CancellationToken.None);
+        var result = await service.ExpireSubscriptionAsync(subscriptionId, CancellationToken.None);
 
         // Assert
         Assert.False(result);

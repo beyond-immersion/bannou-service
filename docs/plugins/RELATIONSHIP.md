@@ -366,13 +366,17 @@ State Store Layout
 
 14. **Seed multi-pass iteration limit is `2*N`**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. This limit is provably unreachable: each iteration processes at least one type (or the loop breaks early with unresolvable parent errors), so N types require at most N iterations. The `2*N` limit exists as an infinite loop guard but cannot be hit in practice.
 
+15. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This is doubly-safe: the merge itself skips deletion when `failedCount > 0`, AND `DeleteRelationshipTypeAsync` independently rejects deletion when any relationships still reference the type. The response includes `SourceDeleted = false`, exact failure counts, and per-relationship error details. Recovery path: retry the merge (idempotent for already-migrated relationships), manually end problematic relationships via `/relationship/end`, then delete the source type.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/509 -->
 
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/510 -->
 
-3. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
+3. ~~**Delete-after-merge skipped on partial failure**~~: **FIXED** (2026-02-28) - Moved to Intentional Quirks #15. Behavior is correct and intentional — doubly-safe (merge skips delete on failure AND DeleteRelationshipTypeAsync independently rejects deletion when relationships still exist). Recovery path: retry merge, manually end remaining relationships, then delete source type.
 
 ---
 
@@ -387,3 +391,5 @@ State Store Layout
 - [#504](https://github.com/beyond-immersion/bannou-service/issues/504): Relationship strength/weight field design — field naming, data type/range, interaction with extensions #2 and #4 (Potential Extension #1)
 - [#505](https://github.com/beyond-immersion/bannou-service/issues/505): Bidirectional asymmetric metadata design — per-entity metadata perspectives, replace vs augment unified field, migration (Potential Extension #2)
 - [#507](https://github.com/beyond-immersion/bannou-service/issues/507): Category-based permissions design — data-conditional permission enforcement approach, category→role mapping, manifest implications (Potential Extension #5)
+- [#509](https://github.com/beyond-immersion/bannou-service/issues/509): In-memory filtering before pagination — list operations load full indexes into memory before paginating, need to evaluate IQueryableStateStore migration (Design Consideration #1)
+- [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2)

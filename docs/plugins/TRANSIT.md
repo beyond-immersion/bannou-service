@@ -3,7 +3,7 @@
 > **Plugin**: lib-transit (not yet created)
 > **Schema**: `schemas/transit-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
-> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis) — all planned
+> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis) — all planned
 > **Layer**: GameFoundation
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
@@ -235,7 +235,9 @@ TransitMode:
   # Scope
   realmRestrictions: [uuid]         # Empty = available in all realms. If set, only these realms.
 
-  # Deprecation (standard triple-field model per QUALITY TENETS)
+  # Deprecation (Category A per IMPLEMENTATION TENETS — connections and journeys
+  # store mode codes, so persistent data in OTHER entities references this entity's ID.
+  # Category A requires: deprecate, undeprecate, and deprecate-before-delete.)
   isDeprecated: boolean             # Whether this mode is deprecated
   deprecatedAt: timestamp?          # When deprecation occurred (null if not deprecated)
   deprecationReason: string?        # Why this mode was deprecated (null if not deprecated)
@@ -442,8 +444,7 @@ TransitRouteOption:
   seasonalWarnings: [string]        # Any legs that may close soon
 
   # Comparison helpers
-  rank: integer                     # 1 = best option by sort criteria
-  sortCriteria: string              # What criteria was used to rank ("fastest", "safest", "shortest")
+  rank: integer                     # 1 = best option by sort criteria (caller knows what they requested)
 ```
 
 ---
@@ -490,7 +491,7 @@ TransitRouteOption:
 | connection `status` | C (System State) | Service-specific enum (`open`, `closed`, `dangerous`, `blocked`, `seasonal_closed`) | Finite set of system-owned connection operational states; supports optimistic concurrency transitions |
 | journey `status` | C (System State) | Service-specific enum (`preparing`, `in_transit`, `at_waypoint`, `arrived`, `interrupted`, `abandoned`) | Finite journey lifecycle state machine; system-owned transitions |
 | journey leg `status` | C (System State) | Service-specific enum (`pending`, `in_progress`, `completed`, `skipped`) | Finite leg lifecycle state machine; system-owned transitions |
-| mode `isDeprecated` / `deprecatedAt` / `deprecationReason` | C (System State) | Standard triple-field deprecation model (`boolean`, `timestamp?`, `string?`) | Standard deprecation lifecycle per QUALITY TENETS; replaces enum status |
+| mode `isDeprecated` / `deprecatedAt` / `deprecationReason` | C (System State) | Standard triple-field deprecation model (`boolean`, `timestamp?`, `string?`) | Category A per IMPLEMENTATION TENETS: connections store `compatibleModes` and journeys store `primaryModeCode`/`legModes` referencing mode codes → deprecate/undeprecate/delete required |
 
 ---
 
@@ -501,88 +502,47 @@ TransitRouteOption:
 
 transit-modes:
   backend: mysql
-  description: "Transit mode definitions (durable registry)"
-  key_format: "transit:mode:{code}"
+  service: Transit
+  purpose: Transit mode definitions (durable registry)
 
 transit-connections:
   backend: mysql
-  description: "Transit connections between locations (durable graph edges)"
-  key_format: "transit:conn:{connectionId}"
-  indexes:
-    - fromLocationId
-    - toLocationId
-    - fromRealmId
-    - toRealmId
-    - crossRealm
-    - status
+  service: Transit
+  purpose: Transit connections between locations (durable graph edges)
 
 transit-journeys:
   backend: redis
-  description: "Active transit journeys (hot state with TTL)"
-  key_format: "transit:journey:{journeyId}"
-  ttl_source: config.JourneyArchiveAfterGameHours
-  notes: |
-    Active and recently-completed journeys live in Redis for fast access.
-    Background worker archives completed/abandoned journeys to MySQL after TTL.
+  prefix: "transit:journey"
+  service: Transit
+  purpose: Active transit journeys (hot state, archived to MySQL by background worker)
 
 transit-journeys-archive:
   backend: mysql
-  description: "Archived transit journeys (historical record)"
-  key_format: "transit:journey:archive:{journeyId}"
-  indexes:
-    - entityId
-    - entityType
-    - originRealmId
-    - destinationRealmId
-    - status
-    - originLocationId
-    - destinationLocationId
+  service: Transit
+  purpose: Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)
 
 transit-connection-graph:
   backend: redis
-  description: "Cached connection graph for route calculation (per-realm)"
-  key_format: "transit:graph:{realmId}"
-  ttl_source: config.ConnectionGraphCacheSeconds
-  notes: |
-    Serialized adjacency list for Dijkstra's algorithm. One graph per realm.
-    Each realm's graph includes ALL connections touching that realm -- both
-    intra-realm connections and cross-realm connections where fromRealmId or
-    toRealmId matches this realm. Cross-realm connections therefore appear in
-    both realms' cached graphs.
-
-    Rebuilt from MySQL on cache miss.
-    Invalidated when connections are created/deleted/status-changed.
-
-    Cross-realm route calculation merges the graphs for the origin and
-    destination realms. Since cross-realm connections appear in both graphs,
-    the merge naturally discovers realm-spanning paths without a separate
-    cross-realm index.
+  prefix: "transit:graph"
+  service: Transit
+  purpose: Cached per-realm connection adjacency lists for Dijkstra route calculation
 
 transit-discovery:
   backend: mysql
-  description: "Per-entity connection discovery tracking (durable)"
-  key_format: "transit:discovery:{entityId}:{connectionId}"
-  indexes:
-    - entityId
-    - connectionId
-  notes: |
-    MySQL-backed durable store of which entities have discovered which
-    connections. Each record is an (entityId, connectionId, source, discoveredAt)
-    tuple. Durability is critical: discovery represents permanent world knowledge
-    that must survive Redis restarts and redeployments.
-    Cleaned up via Resource CASCADE when the entity is deleted.
+  service: Transit
+  purpose: Per-entity connection discovery tracking (permanent world knowledge)
 
 transit-discovery-cache:
   backend: redis
-  description: "Per-entity discovery cache for fast route calculation lookups"
-  key_format: "transit:discovery:cache:{entityId}"
-  ttl_source: config.DiscoveryCacheTtlSeconds
-  notes: |
-    Redis set per entity containing connection IDs they have discovered.
-    Populated on cache miss from MySQL (transit-discovery store).
-    Checked during route calculation when entityId is provided to filter
-    discoverable connections. Invalidated on new discovery reveal.
-    This is a read-through cache -- MySQL is the source of truth.
+  prefix: "transit:discovery"
+  service: Transit
+  purpose: Per-entity discovery set cache for fast route calculation filtering
+
+transit-lock:
+  backend: redis
+  prefix: "transit:lock"
+  service: Transit
+  purpose: Distributed locks for journey state transitions and connection status updates
 ```
 
 ---
@@ -593,14 +553,14 @@ transit-discovery-cache:
 # Published via lib-messaging (IMessageBus)
 
 # Connection events
-transit.connection.status-changed:
+transit-connection.status-changed:
   description: "A connection's operational status changed"
   payload:
     connectionId: uuid
     fromLocationId: uuid
     toLocationId: uuid
-    previousStatus: string
-    newStatus: string
+    previousStatus: ConnectionStatus  # enum: open | closed | dangerous | blocked | seasonal_closed
+    newStatus: ConnectionStatus        # enum: open | closed | dangerous | blocked | seasonal_closed
     reason: string
     forceUpdated: boolean         # Whether this was a forceUpdate override
     fromRealmId: uuid
@@ -750,16 +710,14 @@ transit.discovery.revealed:
 ```yaml
 # Custom events -- modes use register/update semantics, not standard CRUD lifecycle.
 # These are NOT x-lifecycle generated.
-transit.mode.registered:
+transit-mode.registered:
   description: "A new transit mode was registered"
-  payload:
-    code: string
-    name: string
+  payload: TransitMode              # Full entity data per FOUNDATION TENETS event pattern
 
-transit.mode.updated:
-  description: "A transit mode was updated (covers property changes and deprecation via changedFields)"
+transit-mode.updated:
+  description: "A transit mode was updated (covers property changes, deprecation, and deletion via changedFields)"
   payload:
-    code: string
+    mode: TransitMode               # Full entity data per FOUNDATION TENETS event pattern
     changedFields: [string]         # List of fields that changed. Deprecation includes
                                     # "isDeprecated", "deprecatedAt", "deprecationReason".
 ```
@@ -800,6 +758,52 @@ Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup 
 |----------------|-------------|-----------|----------------|
 | location | transit | CASCADE | Close all connections referencing the deleted location, interrupt active journeys passing through it |
 | character | transit | CASCADE | Clear discovery data for the deleted entity, abandon any active journeys |
+
+### Client Events (via IClientEventPublisher)
+
+Per IMPLEMENTATION TENETS (T17), server→client push events use `IClientEventPublisher`, not `IMessageBus`. These target session bindings via the Entity Session Registry ([#426](https://github.com/beyond-immersion/bannou-service/issues/426)).
+
+```yaml
+# schemas/transit-client-events.yaml
+
+TransitJourneyUpdated:
+  description: "Journey state changed — pushed to the traveling entity's bound session"
+  target: "character → session"     # Via Gardener's character-session binding
+  discriminator: JourneyStatus      # enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    status: JourneyStatus
+    currentLocationId: uuid
+    destinationLocationId: uuid
+    estimatedArrivalGameTime: decimal
+    currentLegIndex: integer
+    remainingLegs: integer
+    primaryModeCode: string
+
+TransitDiscoveryRevealed:
+  description: "A discoverable connection was revealed — pushed to the discovering entity's session"
+  target: "character → session"
+  payload:
+    connectionId: uuid
+    fromLocationId: uuid
+    toLocationId: uuid
+    source: string
+    connectionName: string          # Human-readable name for UI display
+
+TransitConnectionStatusChanged:
+  description: "A connection's operational status changed — pushed to sessions in the affected realm"
+  target: "realm → session"         # Via Agency's realm-session binding (already registered for Worldstate time sync)
+  payload:
+    connectionId: uuid
+    fromLocationId: uuid
+    toLocationId: uuid
+    previousStatus: ConnectionStatus
+    newStatus: ConnectionStatus
+    reason: string
+```
+
+Design reference: [#501](https://github.com/beyond-immersion/bannou-service/issues/501)
 
 ---
 
@@ -890,7 +894,8 @@ TransitServiceConfiguration:
 |---------|------|
 | `ILogger<TransitService>` | Structured logging |
 | `TransitServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 7 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache) |
+| `ITelemetryProvider` | Distributed tracing spans for all async methods per IMPLEMENTATION TENETS |
+| `IStateStoreFactory` | State store access (creates 8 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache, transit-lock) |
 | `IMessageBus` | Event publishing (journey lifecycle, connection status, discovery, mode status, connection lifecycle) |
 | `IEventConsumer` | Subscribes to `worldstate.season-changed` for seasonal connection status updates |
 | `ILocationClient` | Location existence validation, entity position reporting via `AutoUpdateLocationOnTransition` (L2 hard dependency) |
@@ -899,6 +904,7 @@ TransitServiceConfiguration:
 | `ISpeciesClient` | Species property lookup for mode restrictions (L2 hard dependency) |
 | `IInventoryClient` | Item tag checks for mode requirements (L2 hard dependency) |
 | `IResourceClient` | Cleanup callback registration for location/character deletion (L1 hard dependency) |
+| `IDistributedLockProvider` | Distributed locks for journey state transitions and connection status updates (via transit-lock store) |
 | `IEnumerable<ITransitCostModifierProvider>` | DI collection of L4 cost enrichment providers (graceful degradation if none registered) |
 | `TransitVariableProviderFactory` | Implements `IVariableProviderFactory` to provide `${transit.*}` variables to Actor (L2) |
 | `ITransitRouteCalculator` / `TransitRouteCalculator` | Internal helper for Dijkstra-based route calculation over cached connection graphs |
@@ -980,7 +986,7 @@ TransitServiceConfiguration:
 
 /transit/mode/deprecate:
   access: developer
-  description: "Deprecate a transit mode (existing journeys continue, new journeys cannot use it). Sets the triple-field deprecation model: isDeprecated=true, deprecatedAt=now, deprecationReason=reason. Idempotent: returns OK if already deprecated (caller's intent is satisfied)."
+  description: "Deprecate a transit mode (existing journeys continue, new journeys cannot use it). Sets the triple-field deprecation model: isDeprecated=true, deprecatedAt=now, deprecationReason=reason. Idempotent: returns OK if already deprecated (caller's intent is satisfied). Category A per IMPLEMENTATION TENETS: connections store compatibleModes referencing mode codes, and journeys store primaryModeCode/legModes — persistent data in other entities stores this entity's ID."
   request:
     code: string
     reason: string
@@ -988,6 +994,29 @@ TransitServiceConfiguration:
   emits: transit.mode.updated       # changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
   errors:
     - MODE_NOT_FOUND
+
+/transit/mode/undeprecate:
+  access: developer
+  description: "Reverse deprecation of a transit mode (Category A — undeprecate is required). Clears isDeprecated, deprecatedAt, deprecationReason. Idempotent: returns OK if not currently deprecated."
+  request:
+    code: string
+  response: { mode: TransitMode }
+  emits: transit.mode.updated       # changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
+  errors:
+    - MODE_NOT_FOUND
+
+/transit/mode/delete:
+  access: developer
+  description: "Delete a deprecated transit mode (Category A — must be deprecated before deletion). Rejects if active journeys use this mode. Archived journeys retain the mode code as historical data."
+  request:
+    code: string
+  response: { }                     # 200 OK confirms deletion
+  emits: transit.mode.updated       # changedFields includes deletion marker
+  errors:
+    - MODE_NOT_FOUND
+    - NOT_DEPRECATED                # Must deprecate before deleting (Category A)
+    - ACTIVE_JOURNEYS_EXIST         # Cannot delete while active journeys use this mode
+    - CONNECTIONS_REFERENCE_MODE    # Cannot delete while connections list this in compatibleModes
 ```
 
 ### Connection Management
@@ -1055,7 +1084,7 @@ TransitServiceConfiguration:
     crossRealm: boolean             # Optional - filter to only cross-realm (true) or intra-realm (false)
     terrainType: string             # Optional - filter by terrain
     modeCode: string                # Optional - filter by mode compatibility
-    status: string                  # Optional - filter by status
+    status: ConnectionStatus        # Optional - filter by status (enum: open | closed | dangerous | blocked | seasonal_closed)
     tags: [string]                  # Optional - filter by tags
     includeSeasonalClosed: boolean  # Default true
     page: integer
@@ -1093,7 +1122,7 @@ TransitServiceConfiguration:
     forceUpdate: boolean            # Default false. When true, currentStatus is ignored (nullable).
                                     # Use for administrative overrides.
   response: { connection: TransitConnection }
-  emits: transit.connection.status-changed
+  emits: transit-connection.status-changed
   errors:
     - CONNECTION_NOT_FOUND
     - STATUS_MISMATCH               # currentStatus doesn't match actual. Response includes actual
@@ -1116,7 +1145,7 @@ TransitServiceConfiguration:
   description: "Delete a connection between locations"
   request:
     connectionId: uuid
-  response: { deleted: boolean }
+  response: { }                    # 200 OK confirms deletion; no filler properties per IMPLEMENTATION TENETS
   errors:
     - CONNECTION_NOT_FOUND
     - ACTIVE_JOURNEYS_EXIST         # Cannot delete while journeys are using this connection
@@ -1265,9 +1294,9 @@ TransitServiceConfiguration:
     results: [
       {
         journeyId: uuid
-        success: boolean
         error: string              # null on success. Error code on failure.
-        journey: TransitJourney    # Updated journey (null on failure)
+        journey: TransitJourney    # Updated journey on success. Null on failure
+                                   # (null/non-null journey indicates success per IMPLEMENTATION TENETS).
       }
     ]
   emits: transit.journey.waypoint-reached   # Per journey, if more legs remain
@@ -1349,7 +1378,8 @@ TransitServiceConfiguration:
   description: "List active journeys currently traversing a specific connection"
   request:
     connectionId: uuid
-    status: string                  # Optional - filter by status (default: in_transit)
+    status: JourneyStatus           # Optional - filter by status (default: in_transit)
+                                    # enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned
     page: integer
     pageSize: integer
   response: { journeys: [TransitJourney], totalCount: integer }
@@ -1370,7 +1400,7 @@ TransitServiceConfiguration:
     entityType: string              # Optional - filter by entity type
     realmId: uuid                   # Optional - journeys touching this realm (origin OR destination)
     crossRealm: boolean             # Optional - filter to cross-realm journeys only
-    status: string                  # Optional - filter by status
+    status: JourneyStatus           # Optional - filter by status (enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned)
     activeOnly: boolean             # Default true (excludes arrived, abandoned)
     page: integer
     pageSize: integer
@@ -1387,7 +1417,7 @@ TransitServiceConfiguration:
     originLocationId: uuid          # Optional
     destinationLocationId: uuid     # Optional
     modeCode: string                # Optional
-    status: string                  # Optional (typically "arrived" or "abandoned")
+    status: JourneyStatus           # Optional (typically arrived or abandoned)
     fromGameTime: decimal           # Optional - journey departed after this game-time
     toGameTime: decimal             # Optional - journey departed before this game-time
     page: integer
@@ -1415,7 +1445,7 @@ TransitServiceConfiguration:
                                     # this entity has discovered. When null, discoverable
                                     # connections are excluded entirely (conservative).
     maxLegs: integer                # Optional - maximum legs to consider (default from config)
-    sortBy: string                  # "fastest" (default), "safest", "shortest"
+    sortBy: enum                    # fastest (default) | safest | shortest
     maxOptions: integer             # How many options to return (default from config)
     includeSeasonalClosed: boolean  # Default false - exclude currently closed routes
   response: { options: [TransitRouteOption] }
@@ -1495,7 +1525,16 @@ TransitServiceConfiguration:
     entityId: uuid
     connectionId: uuid
     source: string                  # How discovered: "travel", "guide", "hearsay", "map", "quest_reward"
-  response: { discovered: boolean, alreadyKnown: boolean }
+  response:
+    discovery:                        # Discovery record (per IMPLEMENTATION TENETS — no filler booleans)
+      entityId: uuid
+      connectionId: uuid
+      source: string
+      discoveredAt: timestamp         # When discovery occurred (now for new, original time if already known)
+      isNew: boolean                  # Whether this was a new discovery (true) or already known (false).
+                                      # NOT a filler property -- stored entity state distinguishing
+                                      # first discovery from re-revelation, needed by Collection
+                                      # (only new discoveries trigger unlock events).
   errors:
     - CONNECTION_NOT_FOUND
     - NOT_DISCOVERABLE              # Connection is not marked as discoverable (already public)
@@ -1529,7 +1568,7 @@ TransitServiceConfiguration:
     ]
 ```
 
-**Total endpoints: 30**
+**Total endpoints: 32**
 
 ---
 
@@ -1599,8 +1638,7 @@ This service is entirely aspirational -- no schema, code, or tests exist. Implem
 
 5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
 
-6. **Client events for journey tracking and route discovery** ([#501](https://github.com/beyond-immersion/bannou-service/issues/501)): Push `TransitJourneyUpdated` (consolidated with status discriminator for in_transit/at_waypoint/arrived/interrupted/abandoned), `TransitDiscoveryRevealed`, and `TransitConnectionStatusChanged` client events via `IClientEventPublisher` using the Entity Session Registry (#426). Journey events target `character → session` bindings (Gardener). Connection status events target `realm → session` bindings (Agency, already registered for Worldstate time sync). Should be included in Transit's initial implementation, not retrofitted.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/501 -->
+6. ~~**Client events for journey tracking and route discovery**~~ — **Promoted to core spec.** See Client Events section above. ([#501](https://github.com/beyond-immersion/bannou-service/issues/501))
 
 ---
 

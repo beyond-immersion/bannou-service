@@ -26,6 +26,21 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Seed;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Events;
 
@@ -66,7 +81,7 @@ public partial class SeedGrowthUpdatedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -74,7 +89,7 @@ public partial class SeedGrowthUpdatedEvent
     /// The domain that changed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Domain { get; set; } = default!;
 
@@ -139,7 +154,7 @@ public partial class SeedPhaseChangedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -147,7 +162,7 @@ public partial class SeedPhaseChangedEvent
     /// Phase code before transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousPhase { get; set; } = default!;
 
@@ -155,7 +170,7 @@ public partial class SeedPhaseChangedEvent
     /// Phase code after transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newPhase")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewPhase { get; set; } = default!;
 
@@ -211,7 +226,7 @@ public partial class SeedCapabilityUpdatedEvent
     /// Seed type code for consumer filtering
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -219,12 +234,14 @@ public partial class SeedCapabilityUpdatedEvent
     /// New manifest version number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Version { get; set; } = default!;
 
     /// <summary>
     /// Number of unlocked capabilities in the new manifest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilityCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CapabilityCount { get; set; } = default!;
 
 }
@@ -281,7 +298,7 @@ public partial class SeedActivatedEvent
     /// Seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -345,7 +362,7 @@ public partial class SeedArchivedEvent
     /// Seed type code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -386,7 +403,7 @@ public partial class SeedBondFormedEvent
     /// Seed type the bond connects
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedTypeCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string SeedTypeCode { get; set; } = default!;
 
@@ -396,6 +413,7 @@ public partial class SeedBondFormedEvent
     [System.Text.Json.Serialization.JsonPropertyName("participantSeedIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(2)]
     public System.Collections.Generic.ICollection<System.Guid> ParticipantSeedIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }

@@ -57,4 +57,10 @@ public class SpeciesServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     public int MergePageSize { get; set; } = 100;
 
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition on species mutations
+    /// Environment variable: SPECIES_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    public int LockTimeoutSeconds { get; set; } = 30;
+
 }

@@ -418,6 +418,8 @@ public static class StateStoreDefinitions
     public const string SeedTypeDefinitions = "seed-type-definitions-statestore";
 
     // Species Service
+    /// <summary>Distributed locks for species mutations and merge operations</summary>
+    public const string SpeciesLock = "species-lock";
     /// <summary>Species definitions</summary>
     public const string Species = "species-statestore";
 
@@ -460,6 +462,8 @@ public static class StateStoreDefinitions
     public const string StorylineScenarioIdempotency = "storyline-scenario-idempotency";
 
     // Subscription Service
+    /// <summary>Distributed locks for subscription mutations and index operations</summary>
+    public const string SubscriptionLock = "subscription-lock";
     /// <summary>User subscriptions to game services</summary>
     public const string Subscription = "subscription-statestore";
 
@@ -640,6 +644,7 @@ public static class StateStoreDefinitions
             [SeedLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "seed:lock" },
             [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
             [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
+            [SpeciesLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "species:lock" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
             [StatusActiveCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:active" },
             [StatusContainers] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_containers" },
@@ -656,6 +661,7 @@ public static class StateStoreDefinitions
             [StorylineScenarioDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_definitions" },
             [StorylineScenarioExecutions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "storyline_scenario_executions" },
             [StorylineScenarioIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:idemp" },
+            [SubscriptionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "subscription:lock" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
@@ -828,6 +834,7 @@ public static class StateStoreDefinitions
             [SeedLock] = new StoreMetadata("Seed", "Distributed locks for seed modifications", "redis"),
             [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql"),
             [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql"),
+            [SpeciesLock] = new StoreMetadata("Species", "Distributed locks for species mutations and merge operations", "redis"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
             [StatusActiveCache] = new StoreMetadata("Status", "Active status cache per entity (fast lookup, rebuilt from instances on miss)", "redis"),
             [StatusContainers] = new StoreMetadata("Status", "Status container records mapping entities to inventory containers (durable)", "mysql"),
@@ -844,6 +851,7 @@ public static class StateStoreDefinitions
             [StorylineScenarioDefinitions] = new StoreMetadata("Storyline", "Durable scenario template definitions with conditions and mutations", "mysql"),
             [StorylineScenarioExecutions] = new StoreMetadata("Storyline", "Scenario execution history with outcome tracking", "mysql"),
             [StorylineScenarioIdempotency] = new StoreMetadata("Storyline", "Scenario trigger idempotency keys for deduplication", "redis"),
+            [SubscriptionLock] = new StoreMetadata("Subscription", "Distributed locks for subscription mutations and index operations", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),

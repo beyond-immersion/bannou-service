@@ -316,6 +316,7 @@ Manifest version is monotonically incremented from the previous cached version.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
 
 - **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed.
+<!-- AUDIT:BLOCKED:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/434 -->
 
 ---
 

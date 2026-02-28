@@ -271,7 +271,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 | `difficulty` | C (System State) | `QuestDifficulty` enum | Finite difficulty tiers: `TRIVIAL`, `EASY`, `NORMAL`, `HARD`, `HEROIC`, `LEGENDARY`. |
 | `objectiveType` | C (System State) | `ObjectiveType` enum | Finite objective tracking modes: `KILL`, `COLLECT`, `DELIVER`, `TRAVEL`, `DISCOVER`, `TALK`, `CRAFT`, `ESCORT`, `DEFEND`, `CUSTOM`. |
 | `revealBehavior` (on objectives) | C (System State) | `ObjectiveRevealBehavior` enum | Finite visibility modes for hidden objectives: `ALWAYS`, `ON_PROGRESS`, `ON_COMPLETE`, `NEVER`. |
-| `prerequisiteType` | C (System State) | `PrerequisiteType` enum | Finite built-in prerequisite types: `QUEST_COMPLETED`, `CHARACTER_LEVEL`, `REPUTATION`, `ITEM_OWNED`, `CURRENCY_AMOUNT`. Dynamic L4 prerequisite types extend this via `IPrerequisiteProviderFactory` DI pattern. |
+| `prerequisiteType` | C (System State) | `PrerequisiteType` enum | Finite prerequisite types: `QUEST_COMPLETED`, `CHARACTER_LEVEL`, `REPUTATION`, `ITEM_OWNED`, `CURRENCY_AMOUNT`. Built-in (L2): QUEST_COMPLETED, CURRENCY_AMOUNT, ITEM_OWNED use direct service client calls. Dynamic: CHARACTER_LEVEL, REPUTATION, and unknown types route through `IPrerequisiteProviderFactory` DI pattern for L4 extensibility. |
 | `reward.type` | C (System State) | `RewardType` enum | Finite reward categories: `CURRENCY`, `ITEM`, `EXPERIENCE`, `REPUTATION`. Determines which reward fields are relevant. |
 | `validationMode` | C (System State) | `PrerequisiteValidationMode` enum | Finite validation strategies: `FAIL_FAST`, `CHECK_ALL`. |
 
@@ -282,7 +282,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 1. ~~**Prerequisite validation for non-QUEST_COMPLETED types**~~: **IMPLEMENTED** (2026-02-07) in #320 - Full prerequisite validation now implemented:
    - **Built-in (L2)**: QUEST_COMPLETED (direct check), CURRENCY_AMOUNT (via ICurrencyClient), ITEM_OWNED (via IInventoryClient/IItemClient)
    - **Dynamic (L4)**: REPUTATION and unknown types (via IPrerequisiteProviderFactory DI collection)
-   - **Stub**: CHARACTER_LEVEL logs and skips until Character service tracks levels
+   - ~~**Stub**: CHARACTER_LEVEL logs and skips~~: **FIXED** (2026-02-28) - CHARACTER_LEVEL now routed through `CheckDynamicPrerequisiteAsync("character_level", ...)` like REPUTATION. Graceful degradation when no provider registered (skip with debug log); automatically activates when an L4 service registers `IPrerequisiteProviderFactory` with `ProviderName = "character_level"`.
    - Configurable validation mode: `CHECK_ALL` (rich error info) or `FAIL_FAST` (early exit)
 
 2. ~~**Reward distribution via prebound APIs**~~: **IMPLEMENTED** (2026-02-07) in #320 - Rewards now execute via Contract prebound APIs:
@@ -338,8 +338,8 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 ### Design Considerations (Resolved)
 
 1. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
-   - **Built-in (L2)**: `quest_completed`, `currency`, `item`, `character_level`, `relationship` - Quest calls L2 service clients directly with hard dependencies
-   - **Dynamic (L4)**: `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
+   - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
+   - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
    - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
 
 2. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
@@ -375,3 +375,4 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
   - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
 - **2026-02-28**: Audit doc cleanup - Struck through "Quest chains" potential extension (already implemented via `QUEST_COMPLETED` prerequisite type since #320)
 - **2026-02-28**: Quest log category filter - Added optional `category` field to `GetQuestLogRequest` schema, filtering logic in `GetQuestLogAsync`, and 2 unit tests (48 total, all passing)
+- **2026-02-28**: CHARACTER_LEVEL prerequisite stub → dynamic provider - Replaced hardcoded stub with `CheckDynamicPrerequisiteAsync("character_level", ...)` routing, consistent with REPUTATION pattern. Graceful degradation when no provider registered; auto-activates when provider is added.

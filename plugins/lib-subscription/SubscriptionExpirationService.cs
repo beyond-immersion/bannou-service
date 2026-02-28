@@ -8,8 +8,8 @@ namespace BeyondImmersion.BannouService.Subscription;
 
 /// <summary>
 /// Background service that periodically checks for expired subscriptions
-/// and publishes subscription.updated events for them, enabling immediate
-/// capability revocation for connected clients.
+/// and delegates expiration to SubscriptionService.ExpireSubscriptionAsync,
+/// enabling immediate capability revocation for connected clients.
 /// </summary>
 public class SubscriptionExpirationService : BackgroundService
 {
@@ -17,7 +17,6 @@ public class SubscriptionExpirationService : BackgroundService
     private readonly ILogger<SubscriptionExpirationService> _logger;
     private readonly SubscriptionServiceConfiguration _configuration;
 
-    private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
     private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
     /// <summary>
@@ -35,6 +34,9 @@ public class SubscriptionExpirationService : BackgroundService
     /// </summary>
     private TimeSpan StartupDelay => TimeSpan.FromSeconds(_configuration.StartupDelaySeconds);
 
+    /// <summary>
+    /// Creates a new instance of the SubscriptionExpirationService.
+    /// </summary>
     public SubscriptionExpirationService(
         IServiceProvider serviceProvider,
         ILogger<SubscriptionExpirationService> logger,
@@ -45,6 +47,7 @@ public class SubscriptionExpirationService : BackgroundService
         _configuration = configuration;
     }
 
+    /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Subscription expiration service starting, check interval: {Interval}", CheckInterval);
@@ -83,7 +86,7 @@ public class SubscriptionExpirationService : BackgroundService
                         "ExpirationCheck",
                         ex.GetType().Name,
                         ex.Message,
-                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
+                        severity: ServiceErrorEventSeverity.Error);
                 }
                 catch (Exception pubEx)
                 {
@@ -106,8 +109,8 @@ public class SubscriptionExpirationService : BackgroundService
     }
 
     /// <summary>
-    /// Checks for expired subscriptions and publishes events for them.
-    /// Removes fully-processed expired subscriptions from the global index to prevent unbounded growth.
+    /// Checks for expired subscriptions and delegates expiration to the main SubscriptionService.
+    /// Removes fully-processed entries from the global index to prevent unbounded growth.
     /// </summary>
     private async Task CheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
     {
@@ -115,7 +118,7 @@ public class SubscriptionExpirationService : BackgroundService
 
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
-        var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+        var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
 
         // Get the subscription index to find all subscription IDs
         var indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
@@ -131,7 +134,6 @@ public class SubscriptionExpirationService : BackgroundService
         var expiredCount = 0;
         var idsToRemoveFromIndex = new List<Guid>();
 
-        // Use the shared SubscriptionDataModel from SubscriptionService (same assembly, internal access)
         var subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         foreach (var subscriptionId in subscriptionIndex)
         {
@@ -162,59 +164,20 @@ public class SubscriptionExpirationService : BackgroundService
                     continue;
                 }
 
-                // StubName is required - it's the service identifier. Skip corrupted subscriptions.
-                if (string.IsNullOrEmpty(subscription.StubName))
-                {
-                    _logger.LogError("Subscription {SubscriptionId} has null/empty StubName - data integrity issue",
-                        subscription.SubscriptionId);
-                    await messageBus.TryPublishErrorAsync(
-                        serviceName: "subscription",
-                        operation: "ExpirationCheck",
-                        errorType: "DataIntegrityError",
-                        message: "Subscription has null/empty StubName - cannot process expiration",
-                        details: new { SubscriptionId = subscription.SubscriptionId, AccountId = subscription.AccountId },
-                        severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error);
-                    continue;
-                }
-
                 // Check if subscription has expired (with grace period)
                 if (subscription.ExpirationDateUnix.Value <= nowUnix - (long)ExpirationGracePeriod.TotalSeconds)
                 {
-                    _logger.LogInformation("Subscription {SubscriptionId} for account {AccountId} has expired",
-                        subscription.SubscriptionId, subscription.AccountId);
+                    // Delegate actual expiration to the service (which handles locking and event publishing)
+                    var expired = await subscriptionService.ExpireSubscriptionAsync(subscriptionId, cancellationToken);
 
-                    // Mark as inactive and record update timestamp
-                    subscription.IsActive = false;
-                    subscription.UpdatedAtUnix = nowUnix;
-                    await subscriptionStore.SaveAsync(
-                        $"subscription:{subscriptionId}",
-                        subscription,
-                        cancellationToken: cancellationToken);
-
-                    // Publish expiration event
-                    var expirationEvent = new SubscriptionUpdatedEvent
+                    if (expired)
                     {
-                        EventId = Guid.NewGuid(),
-                        Timestamp = DateTimeOffset.UtcNow,
-                        SubscriptionId = subscription.SubscriptionId,
-                        AccountId = subscription.AccountId,
-                        ServiceId = subscription.ServiceId,
-                        StubName = subscription.StubName,
-                        DisplayName = subscription.DisplayName,
-                        Action = SubscriptionUpdatedEventAction.Expired,
-                        IsActive = false,
-                        ExpirationDate = DateTimeOffset.FromUnixTimeSeconds(subscription.ExpirationDateUnix.Value)
-                    };
-
-                    await messageBus.TryPublishAsync(
-                        SUBSCRIPTION_UPDATED_TOPIC,
-                        expirationEvent);
-
-                    _logger.LogInformation("Published expiration event for subscription {SubscriptionId}",
-                        subscription.SubscriptionId);
+                        _logger.LogInformation("Expired subscription {SubscriptionId} for account {AccountId}",
+                            subscription.SubscriptionId, subscription.AccountId);
+                        expiredCount++;
+                    }
 
                     idsToRemoveFromIndex.Add(subscriptionId);
-                    expiredCount++;
                 }
             }
             catch (Exception ex)

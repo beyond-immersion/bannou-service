@@ -163,6 +163,7 @@ This document lists all state store components used in Bannou.
 | `seed-lock` | Redis | Seed | Distributed locks for seed modifications |
 | `seed-statestore` | MySQL | Seed | Seed entity records (durable, queryable by owner/type) |
 | `seed-type-definitions-statestore` | MySQL | Seed | Registered seed type definitions (durable, admin-managed) |
+| `species-lock` | Redis | Species | Distributed locks for species mutations and merge operations |
 | `species-statestore` | MySQL | Species | Species definitions |
 | `status-active-cache` | Redis | Status | Active status cache per entity (fast lookup, rebuilt from instances on miss) |
 | `status-containers` | MySQL | Status | Status container records mapping entities to inventory containers (durable) |
@@ -179,6 +180,7 @@ This document lists all state store components used in Bannou.
 | `storyline-scenario-definitions` | MySQL | Storyline | Durable scenario template definitions with conditions and mutations |
 | `storyline-scenario-executions` | MySQL | Storyline | Scenario execution history with outcome tracking |
 | `storyline-scenario-idempotency` | Redis | Storyline | Scenario trigger idempotency keys for deduplication |
+| `subscription-lock` | Redis | Subscription | Distributed locks for subscription mutations and index operations |
 | `subscription-statestore` | MySQL | Subscription | User subscriptions to game services |
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
@@ -186,7 +188,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 176 stores (109 Redis, 67 MySQL)
+**Total**: 178 stores (111 Redis, 67 MySQL)
 
 ## Naming Conventions
 

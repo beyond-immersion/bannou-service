@@ -481,10 +481,22 @@ x-state-stores:
     service: Species
     purpose: Species definitions
 
+  species-lock:
+    backend: redis
+    prefix: "species:lock"
+    service: Species
+    purpose: Distributed locks for species mutations and merge operations
+
   subscription-statestore:
     backend: mysql
     service: Subscription
     purpose: User subscriptions to game services
+
+  subscription-lock:
+    backend: redis
+    prefix: "subscription:lock"
+    service: Subscription
+    purpose: Distributed locks for subscription mutations and index operations
 
   scene-statestore:
     backend: mysql

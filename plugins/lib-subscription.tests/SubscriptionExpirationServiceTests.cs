@@ -25,6 +25,7 @@ public class SubscriptionExpirationServiceTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<List<Guid>>> _mockIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ISubscriptionService> _mockSubscriptionService;
     private readonly Mock<ILogger<SubscriptionExpirationService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
 
@@ -37,6 +38,7 @@ public class SubscriptionExpirationServiceTests
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockIndexStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockSubscriptionService = new Mock<ISubscriptionService>();
         _mockLogger = new Mock<ILogger<SubscriptionExpirationService>>();
         _configuration = new SubscriptionServiceConfiguration();
 
@@ -55,6 +57,9 @@ public class SubscriptionExpirationServiceTests
 
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IMessageBus)))
             .Returns(_mockMessageBus.Object);
+
+        _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(ISubscriptionService)))
+            .Returns(_mockSubscriptionService.Object);
 
         // Setup state store factory
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE))
@@ -139,11 +144,27 @@ public class SubscriptionExpirationServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenMessageBusNotAvailable_ShouldThrow()
+    public async Task ExecuteAsync_WhenSubscriptionServiceNotAvailable_ShouldThrow()
     {
         // Arrange
-        _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IMessageBus)))
+        _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(ISubscriptionService)))
             .Returns((object?)null);
+
+        // Setup index to return data so the worker tries to resolve ISubscriptionService
+        _mockIndexStore.Setup(s => s.GetAsync("subscription-index", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Guid> { Guid.NewGuid() });
+
+        var mockSubscriptionStore = new Mock<IStateStore<SubscriptionDataModel>>();
+        mockSubscriptionStore.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SubscriptionDataModel
+            {
+                SubscriptionId = Guid.NewGuid(),
+                IsActive = true,
+                ExpirationDateUnix = DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeSeconds(),
+                StubName = "test"
+            });
+        _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
+            .Returns(mockSubscriptionStore.Object);
 
         using var service = new TestableSubscriptionExpirationService(
             _mockServiceProvider.Object,

@@ -64,17 +64,21 @@ components:
           description: "Explanation for why the species was deprecated"
         baseLifespan: &id010
           type: integer
+          nullable: true
           description: "Average lifespan in years for this species"
         maturityAge: &id011
           type: integer
+          nullable: true
           description: "Age at which members of this species reach maturity"
         traitModifiers: &id012
           type: object
           additionalProperties: true
+          nullable: true
           description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds: &id013
           type: array
           items: {type: string, format: uuid}
+          nullable: true
           description: "IDs of realms where this species can exist"
         metadata: &id014
           type: object

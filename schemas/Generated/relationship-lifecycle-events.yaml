@@ -73,7 +73,8 @@ components:
         updatedAt: &id011
           type: string
           format: date-time
-          description: "Timestamp when the relationship record was last updated"
+          nullable: true
+          description: "Timestamp when the relationship record was last updated, null if never updated"
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent

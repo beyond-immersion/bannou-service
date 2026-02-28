@@ -43,6 +43,7 @@ components:
           description: "Owner entity type discriminator"
         seedTypeCode: &id004
           type: string
+          minLength: 1
           description: "Registered seed type code"
         gameServiceId: &id005
           type: string
@@ -51,6 +52,7 @@ components:
           description: "Game service this seed is scoped to. Null for cross-game seed types."
         growthPhase: &id006
           type: string
+          minLength: 1
           description: "Current computed growth phase code"
         totalGrowth: &id007
           type: number
@@ -58,6 +60,7 @@ components:
           description: "Aggregate growth across all domains"
         displayName: &id008
           type: string
+          minLength: 1
           description: "Human-readable seed name"
         status: &id009
           $ref: ../seed-api.yaml#/components/schemas/SeedStatus
@@ -168,6 +171,7 @@ components:
           description: 'Event type identifier: seed-type.created'
         seedTypeCode: &id011
           type: string
+          minLength: 1
           description: "Unique seed type code"
         gameServiceId: &id012
           type: string
@@ -176,9 +180,11 @@ components:
           description: "Game service this type is scoped to. Null for cross-game seed types."
         displayName: &id013
           type: string
+          minLength: 1
           description: "Human-readable name"
         description: &id014
           type: string
+          minLength: 1
           description: "Description of what this seed type represents"
         maxPerOwner: &id015
           type: integer
