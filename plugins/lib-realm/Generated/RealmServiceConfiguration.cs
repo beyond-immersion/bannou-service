@@ -58,4 +58,18 @@ public class RealmServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MergePageSize { get; set; } = 50;
 
+    /// <summary>
+    /// Number of retry attempts for ETag-based optimistic concurrency operations
+    /// Environment variable: REALM_OPTIMISTIC_RETRY_ATTEMPTS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
+    public int OptimisticRetryAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Timeout in seconds for distributed lock during realm merge operations
+    /// Environment variable: REALM_MERGE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int MergeLockTimeoutSeconds { get; set; } = 120;
+
 }

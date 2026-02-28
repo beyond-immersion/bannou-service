@@ -21,3 +21,17 @@ x-service-configuration:
       minimum: 1
       maximum: 100
       description: Page size for paginated entity migration during realm merge operations
+    OptimisticRetryAttempts:
+      type: integer
+      env: REALM_OPTIMISTIC_RETRY_ATTEMPTS
+      default: 3
+      minimum: 1
+      maximum: 10
+      description: Number of retry attempts for ETag-based optimistic concurrency operations
+    MergeLockTimeoutSeconds:
+      type: integer
+      env: REALM_MERGE_LOCK_TIMEOUT_SECONDS
+      default: 120
+      minimum: 10
+      maximum: 600
+      description: Timeout in seconds for distributed lock during realm merge operations

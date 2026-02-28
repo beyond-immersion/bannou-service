@@ -63,7 +63,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Item](#item-status) | L2 | 92% | 0 | Production-hardened (T7/T8/T25/T29/T30 compliant, 70 tests). Dual-model + Itemize Anything. Decay system pending (#407). |
 | [Location](#location-status) | L2 | 97% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking, ${location.*} variable provider. Hardened to L3. |
 | [Quest](#quest-status) | L2 | 95% | 0 | Production-hardened (T9/T25/T26/T30 compliant, 46 tests). Orchestration over Contract. Prerequisites, rewards, caching done. Extensions only. |
-| [Realm](#realm-status) | L2 | 95% | 0 | Fully feature-complete. Complex merge, deprecation, resource integration. No remaining gaps. |
+| [Realm](#realm-status) | L2 | 100% | 0 | Production-hardened (T5/T6/T7/T8/T9/T21/T30/T31 compliant). ETag concurrency, distributed merge lock, telemetry spans, event coverage. |
 | [Relationship](#relationship-status) | L2 | 90% | 0 | All 21 endpoints done. Bidirectional enforcement, type taxonomy, soft-delete. Index scaling gaps. |
 | [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
@@ -807,9 +807,9 @@ gh issue list --search "Quest:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [REALM.md](plugins/REALM.md)
 
-### Production Readiness: 95%
+### Production Readiness: 100%
 
-Fully feature-complete with no stubs, no bugs, and no outstanding design considerations. All 12 endpoints are implemented including the complex three-phase merge operation (species, locations root-first, characters) with configurable page size, continue-on-failure policy, and optional post-merge deletion. Safe deletion via lib-resource integration is complete. Deprecation lifecycle with undeprecate reversal path works. Ten intentional quirks are well-documented. All prior potential extensions and design considerations have been resolved and closed.
+Production-hardened with comprehensive tenet compliance. All 12 endpoints implemented including complex three-phase merge with distributed locking. ETag-based optimistic concurrency on Update/Deprecate/Undeprecate. Distributed lock on Merge with deterministic key ordering. Full telemetry span coverage (10 async methods). Seed updates now publish events with changedFields tracking. T31 deprecation lifecycle fully compliant (BadRequest for non-deprecated delete, mandatory reason, idempotent operations). Redundant error handling removed per T7. Three typed state stores resolved in constructor per T6. Two new configuration properties (OptimisticRetryAttempts, MergeLockTimeoutSeconds) replace hardcoded values per T21. No stubs, no bugs, no outstanding design considerations.
 
 ### Bug Count: 0
 

@@ -438,6 +438,12 @@ x-state-stores:
     service: Realm
     purpose: Realm definitions and configuration
 
+  realm-lock:
+    backend: redis
+    prefix: "realm:lock"
+    service: Realm
+    purpose: Distributed locks for realm merge operations
+
   realm-history-statestore:
     backend: mysql
     service: RealmHistory

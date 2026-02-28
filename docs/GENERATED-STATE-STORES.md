@@ -139,6 +139,7 @@ This document lists all state store components used in Bannou.
 | `quest-instance-statestore` | MySQL | Quest | Quest instances with status and party information |
 | `quest-objective-progress` | Redis | Quest | Real-time objective progress tracking |
 | `realm-history-statestore` | MySQL | RealmHistory | Realm historical events and lore |
+| `realm-lock` | Redis | Realm | Distributed locks for realm merge operations |
 | `realm-statestore` | MySQL | Realm | Realm definitions and configuration |
 | `relationship-lock` | Redis | Relationship | Distributed locks for composite uniqueness and index modifications |
 | `relationship-statestore` | MySQL | Relationship | Entity relationships |
@@ -185,7 +186,7 @@ This document lists all state store components used in Bannou.
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 175 stores (108 Redis, 67 MySQL)
+**Total**: 176 stores (109 Redis, 67 MySQL)
 
 ## Naming Conventions
 

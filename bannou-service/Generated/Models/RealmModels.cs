@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Realm;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Realm;
 
@@ -152,7 +167,7 @@ public partial class CreateRealmRequest
     /// Category for grouping (e.g., "MAIN", "SPECIAL")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.StringLength(50)]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -214,7 +229,7 @@ public partial class UpdateRealmRequest
     /// Category for grouping
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.StringLength(50)]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -270,11 +285,13 @@ public partial class DeprecateRealmRequest
     public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deprecation (for audit purposes)
+    /// Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION TENETS)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Reason { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(500, MinimumLength = 1)]
+    public string Reason { get; set; } = default!;
 
 }
 
@@ -389,13 +406,17 @@ public partial class RealmsExistBatchResponse
     /// List of realm IDs that do not exist (empty if all exist)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("invalidRealmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> InvalidRealmIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> InvalidRealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// List of realm IDs that exist but are deprecated (empty if none deprecated)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecatedRealmIds")]
-    public System.Collections.Generic.ICollection<System.Guid> DeprecatedRealmIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> DeprecatedRealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
 
@@ -430,19 +451,22 @@ public partial class SeedRealm
 {
 
     /// <summary>
-    /// Unique code for the realm
+    /// Unique code for the realm (e.g., "REALM_1", "REALM_2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Display name for the realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
@@ -457,12 +481,14 @@ public partial class SeedRealm
     /// Detailed description of the realm and its characteristics
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(2000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -709,22 +735,6 @@ public partial class MergeRealmsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class MergeRealmsResponse
 {
-
-    /// <summary>
-    /// ID of the source realm that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceRealmId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the target realm that entities were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetRealmId { get; set; } = default!;
 
     /// <summary>
     /// Number of species successfully added to target realm and removed from source

@@ -354,6 +354,8 @@ public static class StateStoreDefinitions
     public const string QuestObjectiveProgress = "quest-objective-progress";
 
     // Realm Service
+    /// <summary>Distributed locks for realm merge operations</summary>
+    public const string RealmLock = "realm-lock";
     /// <summary>Realm definitions and configuration</summary>
     public const string Realm = "realm-statestore";
 
@@ -614,6 +616,7 @@ public static class StateStoreDefinitions
             [QuestInstance] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "quest_instance_statestore" },
             [QuestObjectiveProgress] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "quest:prog" },
             [RealmHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_history_statestore" },
+            [RealmLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "realm:lock" },
             [Realm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "realm_statestore" },
             [RelationshipLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "relationship:lock" },
             [Relationship] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "relationship_statestore" },
@@ -801,6 +804,7 @@ public static class StateStoreDefinitions
             [QuestInstance] = new StoreMetadata("Quest", "Quest instances with status and party information", "mysql"),
             [QuestObjectiveProgress] = new StoreMetadata("Quest", "Real-time objective progress tracking", "redis"),
             [RealmHistory] = new StoreMetadata("RealmHistory", "Realm historical events and lore", "mysql"),
+            [RealmLock] = new StoreMetadata("Realm", "Distributed locks for realm merge operations", "redis"),
             [Realm] = new StoreMetadata("Realm", "Realm definitions and configuration", "mysql"),
             [RelationshipLock] = new StoreMetadata("Relationship", "Distributed locks for composite uniqueness and index modifications", "redis"),
             [Relationship] = new StoreMetadata("Relationship", "Entity relationships", "mysql"),

@@ -31,6 +31,9 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 x-service-layer: GameFoundation
+x-resource-lifecycle:
+  resourceType: realm
+  cleanupPolicy: BEST_EFFORT
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -225,8 +228,6 @@ paths:
                 $ref: '#/components/schemas/RealmResponse'
         '404':
           description: Realm not found
-        '409':
-          description: Realm is already deprecated
 
   /realm/undeprecate:
     post:
@@ -255,8 +256,6 @@ paths:
                 $ref: '#/components/schemas/RealmResponse'
         '404':
           description: Realm not found
-        '400':
-          description: Realm is not deprecated
 
   /realm/merge:
     post:
@@ -465,6 +464,7 @@ components:
           description: Description of the realm
         category:
           type: string
+          minLength: 1
           maxLength: 50
           nullable: true
           description: Category for grouping (e.g., "MAIN", "SPECIAL")
@@ -511,6 +511,7 @@ components:
           description: Description of the realm
         category:
           type: string
+          minLength: 1
           maxLength: 50
           nullable: true
           description: Category for grouping
@@ -546,6 +547,7 @@ components:
       additionalProperties: false
       required:
       - realmId
+      - reason
       properties:
         realmId:
           type: string
@@ -553,9 +555,9 @@ components:
           description: ID of the realm to deprecate
         reason:
           type: string
+          minLength: 1
           maxLength: 500
-          nullable: true
-          description: Optional reason for deprecation (for audit purposes)
+          description: Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION TENETS)
 
     UndeprecateRealmRequest:
       description: Request to restore a deprecated realm to active status
@@ -625,6 +627,8 @@ components:
       - results
       - allExist
       - allActive
+      - invalidRealmIds
+      - deprecatedRealmIds
       properties:
         results:
           type: array
@@ -678,9 +682,14 @@ components:
       properties:
         code:
           type: string
-          description: Unique code for the realm
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Display name for the realm
         gameServiceId:
           type: string
@@ -688,10 +697,13 @@ components:
           description: ID of the game service this realm belongs to
         description:
           type: string
+          maxLength: 2000
           nullable: true
           description: Detailed description of the realm and its characteristics
         category:
           type: string
+          minLength: 1
+          maxLength: 50
           nullable: true
           description: Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
         isActive:
@@ -786,6 +798,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         realms:
           type: array
@@ -859,8 +873,6 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sourceRealmId
-      - targetRealmId
       - speciesMigrated
       - speciesFailed
       - locationsMigrated
@@ -869,14 +881,6 @@ components:
       - charactersFailed
       - sourceDeleted
       properties:
-        sourceRealmId:
-          type: string
-          format: uuid
-          description: ID of the source realm that was merged from
-        targetRealmId:
-          type: string
-          format: uuid
-          description: ID of the target realm that entities were merged into
         speciesMigrated:
           type: integer
           description: Number of species successfully added to target realm and removed from source
