@@ -19,12 +19,20 @@ namespace BeyondImmersion.BannouService.Relationship;
 [BannouService("relationship", typeof(IRelationshipService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class RelationshipService : IRelationshipService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RelationshipService> _logger;
     private readonly RelationshipServiceConfiguration _configuration;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly IResourceClient _resourceClient;
+
+    // Cached state store references (per IMPLEMENTATION TENETS - constructor-cached pattern)
+    private readonly IStateStore<RelationshipModel> _relationshipModelStore;
+    private readonly IStateStore<List<Guid>> _relationshipIndexStore;
+    private readonly IStateStore<string> _relationshipStringStore;
+    private readonly IStateStore<RelationshipTypeModel> _typeModelStore;
+    private readonly IStateStore<List<Guid>> _typeIndexStore;
+    private readonly IStateStore<string> _typeStringStore;
 
     // Relationship instance key prefixes (relationship-statestore)
     private const string RELATIONSHIP_KEY_PREFIX = "rel:";
@@ -47,6 +55,7 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="lockProvider">Distributed lock provider for index and uniqueness protection.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
@@ -55,14 +64,23 @@ public partial class RelationshipService : IRelationshipService
         RelationshipServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider,
         IResourceClient resourceClient)
     {
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
         _resourceClient = resourceClient;
+
+        // Cache state store references (per IMPLEMENTATION TENETS)
+        _relationshipModelStore = stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
+        _relationshipIndexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        _relationshipStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship);
+        _typeModelStore = stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        _typeIndexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        _typeStringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -87,8 +105,7 @@ public partial class RelationshipService : IRelationshipService
         _logger.LogDebug("Getting relationship by ID: {RelationshipId}", body.RelationshipId);
 
         var relationshipKey = BuildRelationshipKey(body.RelationshipId);
-        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-            .GetAsync(relationshipKey, cancellationToken);
+        var model = await _relationshipModelStore.GetAsync(relationshipKey, cancellationToken);
 
         if (model == null)
         {
@@ -115,7 +132,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Get all relationship IDs for this entity from the entity index
         var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
-        var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+        var relationshipIds = await _relationshipIndexStore
             .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (relationshipIds.Count == 0)
@@ -125,7 +142,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Bulk load all relationships
         var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        var bulkResults = await _relationshipModelStore
             .GetBulkAsync(keys, cancellationToken);
 
         var relationships = new List<RelationshipModel>();
@@ -204,7 +221,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Get relationships from entity1's index
         var entity1IndexKey = BuildEntityIndexKey(body.Entity1Type, body.Entity1Id);
-        var entity1RelationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+        var entity1RelationshipIds = await _relationshipIndexStore
             .GetAsync(entity1IndexKey, cancellationToken) ?? new List<Guid>();
 
         if (entity1RelationshipIds.Count == 0)
@@ -214,7 +231,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Bulk load all relationships from entity1
         var keys = entity1RelationshipIds.Select(BuildRelationshipKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        var bulkResults = await _relationshipModelStore
             .GetBulkAsync(keys, cancellationToken);
 
         var relationships = new List<RelationshipModel>();
@@ -289,7 +306,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Get all relationship IDs for this type from the type index
         var typeIndexKey = BuildTypeIndexKey(body.RelationshipTypeId);
-        var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+        var relationshipIds = await _relationshipIndexStore
             .GetAsync(typeIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (relationshipIds.Count == 0)
@@ -299,7 +316,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Bulk load all relationships
         var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        var bulkResults = await _relationshipModelStore
             .GetBulkAsync(keys, cancellationToken);
 
         var relationships = new List<RelationshipModel>();
@@ -385,6 +402,22 @@ public partial class RelationshipService : IRelationshipService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Validate relationship type exists and is not deprecated (per IMPLEMENTATION TENETS - deprecation lifecycle)
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var relationshipType = await _typeModelStore.GetAsync(typeKey, cancellationToken);
+
+        if (relationshipType == null)
+        {
+            _logger.LogDebug("Relationship type not found: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (relationshipType.IsDeprecated)
+        {
+            _logger.LogDebug("Cannot create relationship with deprecated type: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Build composite key for uniqueness check - normalize entity order for consistent key
         var compositeKey = BuildCompositeKey(
             body.Entity1Id, body.Entity1Type,
@@ -406,7 +439,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         // Check composite uniqueness under lock
-        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+        var existingId = await _relationshipStringStore
             .GetAsync(compositeKey, cancellationToken);
 
         if (!string.IsNullOrEmpty(existingId))
@@ -434,11 +467,11 @@ public partial class RelationshipService : IRelationshipService
 
         // Save the relationship
         var relationshipKey = BuildRelationshipKey(relationshipId);
-        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        await _relationshipModelStore
             .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
         // Update composite uniqueness index
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+        await _relationshipStringStore
             .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
 
         // Update entity indices (both entities)
@@ -447,6 +480,17 @@ public partial class RelationshipService : IRelationshipService
 
         // Update type index
         await AddToTypeIndexAsync(body.RelationshipTypeId, relationshipId, cancellationToken);
+
+        // Register resource references for character and realm entities (per x-references)
+        if (body.Entity1Type == EntityType.Character)
+            await RegisterCharacterReferenceAsync(relationshipId.ToString(), body.Entity1Id, cancellationToken);
+        else if (body.Entity1Type == EntityType.Realm)
+            await RegisterRealmReferenceAsync(relationshipId.ToString(), body.Entity1Id, cancellationToken);
+
+        if (body.Entity2Type == EntityType.Character)
+            await RegisterCharacterReferenceAsync(relationshipId.ToString(), body.Entity2Id, cancellationToken);
+        else if (body.Entity2Type == EntityType.Realm)
+            await RegisterRealmReferenceAsync(relationshipId.ToString(), body.Entity2Id, cancellationToken);
 
         // Publish relationship created event
         await PublishRelationshipCreatedEventAsync(model, cancellationToken);
@@ -482,7 +526,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var relationshipKey = BuildRelationshipKey(body.RelationshipId);
-        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        var model = await _relationshipModelStore
             .GetAsync(relationshipKey, cancellationToken);
 
         if (model == null)
@@ -526,7 +570,7 @@ public partial class RelationshipService : IRelationshipService
         if (needsSave)
         {
             model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            await _relationshipModelStore
                 .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
             // Publish relationship updated event
@@ -572,7 +616,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var relationshipKey = BuildRelationshipKey(body.RelationshipId);
-        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        var model = await _relationshipModelStore
             .GetAsync(relationshipKey, cancellationToken);
 
         if (model == null)
@@ -588,11 +632,11 @@ public partial class RelationshipService : IRelationshipService
             return StatusCodes.Conflict;
         }
 
-        // Set ended timestamp (use current time if not specified or default)
-        model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
+        // Set ended timestamp (use current time if not specified)
+        model.EndedAt = body.EndedAt ?? DateTimeOffset.UtcNow;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+        await _relationshipModelStore
             .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
 
         // Clear composite uniqueness key to allow new relationships
@@ -600,8 +644,19 @@ public partial class RelationshipService : IRelationshipService
             model.Entity1Id, model.Entity1Type,
             model.Entity2Id, model.Entity2Type,
             model.RelationshipTypeId);
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+        await _relationshipStringStore
             .DeleteAsync(compositeKey, cancellationToken);
+
+        // Unregister resource references for character and realm entities (per x-references)
+        if (model.Entity1Type == EntityType.Character)
+            await UnregisterCharacterReferenceAsync(body.RelationshipId.ToString(), model.Entity1Id, cancellationToken);
+        else if (model.Entity1Type == EntityType.Realm)
+            await UnregisterRealmReferenceAsync(body.RelationshipId.ToString(), model.Entity1Id, cancellationToken);
+
+        if (model.Entity2Type == EntityType.Character)
+            await UnregisterCharacterReferenceAsync(body.RelationshipId.ToString(), model.Entity2Id, cancellationToken);
+        else if (model.Entity2Type == EntityType.Realm)
+            await UnregisterRealmReferenceAsync(body.RelationshipId.ToString(), model.Entity2Id, cancellationToken);
 
         // Publish relationship deleted/ended event
         await PublishRelationshipDeletedEventAsync(model, body.Reason ?? "Relationship ended", cancellationToken);
@@ -631,8 +686,8 @@ public partial class RelationshipService : IRelationshipService
             body.EntityId, body.EntityType);
 
         var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
-        var store = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
-        var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+        var store = _relationshipModelStore;
+        var relationshipIds = await _relationshipIndexStore
             .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (relationshipIds.Count == 0)
@@ -641,8 +696,7 @@ public partial class RelationshipService : IRelationshipService
             return (StatusCodes.OK, new CleanupByEntityResponse
             {
                 RelationshipsEnded = 0,
-                AlreadyEnded = 0,
-                Success = true
+                AlreadyEnded = 0
             });
         }
 
@@ -704,8 +758,19 @@ public partial class RelationshipService : IRelationshipService
                 latestModel.Entity1Id, latestModel.Entity1Type,
                 latestModel.Entity2Id, latestModel.Entity2Type,
                 latestModel.RelationshipTypeId);
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+            await _relationshipStringStore
                 .DeleteAsync(compositeKey, cancellationToken);
+
+            // Unregister resource references for character and realm entities (per x-references)
+            if (latestModel.Entity1Type == EntityType.Character)
+                await UnregisterCharacterReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity1Id, cancellationToken);
+            else if (latestModel.Entity1Type == EntityType.Realm)
+                await UnregisterRealmReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity1Id, cancellationToken);
+
+            if (latestModel.Entity2Type == EntityType.Character)
+                await UnregisterCharacterReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity2Id, cancellationToken);
+            else if (latestModel.Entity2Type == EntityType.Realm)
+                await UnregisterRealmReferenceAsync(latestModel.RelationshipId.ToString(), latestModel.Entity2Id, cancellationToken);
 
             // Publish deletion event for each ended relationship
             await PublishRelationshipDeletedEventAsync(latestModel, "Entity deleted (cascade cleanup)", cancellationToken);
@@ -720,8 +785,7 @@ public partial class RelationshipService : IRelationshipService
         return (StatusCodes.OK, new CleanupByEntityResponse
         {
             RelationshipsEnded = endedCount,
-            AlreadyEnded = alreadyEndedCount,
-            Success = true
+            AlreadyEnded = alreadyEndedCount
         });
     }
 
@@ -743,7 +807,7 @@ public partial class RelationshipService : IRelationshipService
         _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
 
         var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-        var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+        var model = await _typeModelStore
             .GetAsync(typeKey, cancellationToken);
 
         if (model == null)
@@ -766,7 +830,7 @@ public partial class RelationshipService : IRelationshipService
         _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
 
         var codeIndexKey = BuildRtCodeIndexKey(body.Code.ToUpperInvariant());
-        var typeIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+        var typeIdStr = await _typeStringStore
             .GetAsync(codeIndexKey, cancellationToken);
 
         if (string.IsNullOrEmpty(typeIdStr) || !Guid.TryParse(typeIdStr, out var typeId))
@@ -776,7 +840,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var typeKey = BuildRtTypeKey(typeId);
-        var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+        var model = await _typeModelStore
             .GetAsync(typeKey, cancellationToken);
 
         if (model == null)
@@ -798,7 +862,7 @@ public partial class RelationshipService : IRelationshipService
     {
         _logger.LogDebug("Listing relationship types");
 
-        var allTypeIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
+        var allTypeIds = await _typeIndexStore
             .GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
         if (allTypeIds.Count == 0)
@@ -812,7 +876,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Bulk load all types
         var keys = allTypeIds.Select(BuildRtTypeKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+        var bulkResults = await _typeModelStore
             .GetBulkAsync(keys, cancellationToken);
 
         var types = new List<RelationshipTypeModel>();
@@ -862,7 +926,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Verify parent exists
         var parentKey = BuildRtTypeKey(body.ParentTypeId);
-        var parent = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+        var parent = await _typeModelStore
             .GetAsync(parentKey, cancellationToken);
 
         if (parent == null)
@@ -883,7 +947,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Bulk load children
         var keys = childIds.Select(BuildRtTypeKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+        var bulkResults = await _typeModelStore
             .GetBulkAsync(keys, cancellationToken);
 
         var responses = new List<RelationshipTypeResponse>();
@@ -924,7 +988,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Get the type and traverse up the hierarchy
         var typeKey = BuildRtTypeKey(body.TypeId);
-        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var store = _typeModelStore;
         var currentType = await store.GetAsync(typeKey, cancellationToken);
 
         if (currentType == null)
@@ -965,7 +1029,7 @@ public partial class RelationshipService : IRelationshipService
         return (StatusCodes.OK, new MatchesHierarchyResponse
         {
             Matches = false,
-            Depth = -1
+            Depth = null
         });
     }
 
@@ -979,7 +1043,7 @@ public partial class RelationshipService : IRelationshipService
         _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
 
         var typeKey = BuildRtTypeKey(body.TypeId);
-        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var store = _typeModelStore;
         var currentType = await store.GetAsync(typeKey, cancellationToken);
 
         if (currentType == null)
@@ -1041,7 +1105,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         // Check if code already exists under lock
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
+        var stringStore = _typeStringStore;
         var existingIdStr = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
         if (!string.IsNullOrEmpty(existingIdStr))
@@ -1053,7 +1117,7 @@ public partial class RelationshipService : IRelationshipService
         // Validate parent if specified
         string? parentTypeCode = null;
         var depth = 0;
-        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var modelStore = _typeModelStore;
         if (body.ParentTypeId.HasValue)
         {
             var parentKey = BuildRtTypeKey(body.ParentTypeId.Value);
@@ -1147,7 +1211,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var modelStore = _typeModelStore;
         var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
         if (existing == null)
@@ -1237,7 +1301,7 @@ public partial class RelationshipService : IRelationshipService
             else
             {
                 var inverseIndexKey = BuildRtCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                var inverseIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+                var inverseIdStr = await _typeStringStore
                     .GetAsync(inverseIndexKey, cancellationToken);
                 existing.InverseTypeId = Guid.TryParse(inverseIdStr, out var inverseId) ? inverseId : null;
                 existing.InverseTypeCode = body.InverseTypeCode;
@@ -1280,7 +1344,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var modelStore = _typeModelStore;
         var existing = await modelStore.GetAsync(typeKey, cancellationToken);
 
         if (existing == null)
@@ -1292,7 +1356,7 @@ public partial class RelationshipService : IRelationshipService
         if (!existing.IsDeprecated)
         {
             _logger.LogDebug("Cannot delete non-deprecated type: {TypeId}", body.RelationshipTypeId);
-            return StatusCodes.Conflict;
+            return StatusCodes.BadRequest;
         }
 
         // Check for relationship references internally (includes ended relationships)
@@ -1325,7 +1389,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Remove from code index
         var codeIndexKey = BuildRtCodeIndexKey(existing.Code);
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+        await _typeStringStore
             .DeleteAsync(codeIndexKey, cancellationToken);
 
         // Remove from parent's children index
@@ -1358,7 +1422,7 @@ public partial class RelationshipService : IRelationshipService
 
         // First pass: create types without parent references
         var codeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
+        var stringStore = _typeStringStore;
 
         // Load existing code-to-id mappings
         foreach (var seedType in body.Types)
@@ -1477,6 +1541,17 @@ public partial class RelationshipService : IRelationshipService
                 catch (Exception typeEx)
                 {
                     errors.Add($"Error processing '{code}': {typeEx.Message}");
+
+                    await _messageBus.TryPublishErrorAsync(
+                        "relationship",
+                        "SeedRelationshipTypes",
+                        "seed_type_processing_failure",
+                        $"Failed to process seed type '{code}': {typeEx.Message}",
+                        dependency: null,
+                        endpoint: "post:/relationship-type/seed",
+                        details: new { Code = code },
+                        stack: typeEx.StackTrace,
+                        cancellationToken: cancellationToken);
                 }
             }
         }
@@ -1518,7 +1593,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var store = _typeModelStore;
         var model = await store.GetAsync(typeKey, cancellationToken);
 
         if (model == null)
@@ -1572,7 +1647,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var store = _typeModelStore;
         var model = await store.GetAsync(typeKey, cancellationToken);
 
         if (model == null)
@@ -1615,7 +1690,7 @@ public partial class RelationshipService : IRelationshipService
 
         // Verify source exists and is deprecated
         var sourceKey = BuildRtTypeKey(body.SourceTypeId);
-        var typeStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var typeStore = _typeModelStore;
         var sourceModel = await typeStore.GetAsync(sourceKey, cancellationToken);
 
         if (sourceModel == null)
@@ -1678,7 +1753,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         // Read both type indexes directly from state store (bypasses ListRelationshipsByTypeAsync)
-        var indexStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        var indexStore = _relationshipIndexStore;
         var sourceRelationshipIds = await indexStore.GetAsync(sourceIndexKey, cancellationToken) ?? new List<Guid>();
         var targetRelationshipIds = await indexStore.GetAsync(targetIndexKey, cancellationToken) ?? new List<Guid>();
 
@@ -1701,8 +1776,6 @@ public partial class RelationshipService : IRelationshipService
 
             return (StatusCodes.OK, new MergeRelationshipTypeResponse
             {
-                SourceTypeId = body.SourceTypeId,
-                TargetTypeId = body.TargetTypeId,
                 RelationshipsMigrated = 0,
                 RelationshipsFailed = 0,
                 MigrationErrors = new List<MigrationError>(),
@@ -1711,8 +1784,8 @@ public partial class RelationshipService : IRelationshipService
         }
 
         // Bulk-load all source relationship models
-        var relationshipStore = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
-        var compositeStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship);
+        var relationshipStore = _relationshipModelStore;
+        var compositeStore = _relationshipStringStore;
         var keys = sourceRelationshipIds.Select(BuildRelationshipKey).ToList();
         var bulkResults = await relationshipStore.GetBulkAsync(keys, cancellationToken);
 
@@ -1936,8 +2009,6 @@ public partial class RelationshipService : IRelationshipService
 
         return (StatusCodes.OK, new MergeRelationshipTypeResponse
         {
-            SourceTypeId = body.SourceTypeId,
-            TargetTypeId = body.TargetTypeId,
             RelationshipsMigrated = migratedCount,
             RelationshipsFailed = failedCount,
             MigrationErrors = migrationErrors,
@@ -1953,26 +2024,20 @@ public partial class RelationshipService : IRelationshipService
         int migratedCount, int failedCount, bool sourceDeleted,
         CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishMergedEventAsync");
+        var eventModel = new RelationshipTypeMergedEvent
         {
-            var eventModel = new RelationshipTypeMergedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SourceTypeId = sourceTypeId,
-                TargetTypeId = targetTypeId,
-                MigratedCount = migratedCount,
-                FailedCount = failedCount,
-                SourceDeleted = sourceDeleted
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SourceTypeId = sourceTypeId,
+            TargetTypeId = targetTypeId,
+            MigratedCount = migratedCount,
+            FailedCount = failedCount,
+            SourceDeleted = sourceDeleted
+        };
 
-            await _messageBus.TryPublishAsync("relationship-type.merged", eventModel);
-            _logger.LogDebug("Published relationship-type.merged event for source {SourceId} into target {TargetId}", sourceTypeId, targetTypeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship-type.merged event for source {SourceId}", sourceTypeId);
-        }
+        await _messageBus.TryPublishAsync("relationship-type.merged", eventModel);
+        _logger.LogDebug("Published relationship-type.merged event for source {SourceId} into target {TargetId}", sourceTypeId, targetTypeId);
     }
 
     #endregion
@@ -2018,6 +2083,7 @@ public partial class RelationshipService : IRelationshipService
         EntityType entityType, Guid entityId, Guid relationshipId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.AddToEntityIndexAsync");
         var indexKey = BuildEntityIndexKey(entityType, entityId);
 
         // Acquire distributed lock for entity index modification (per IMPLEMENTATION TENETS)
@@ -2030,11 +2096,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for entity index {IndexKey}", indexKey);
-            return;
+            _logger.LogError("Could not acquire lock for entity index {IndexKey}, index update failed", indexKey);
+            throw new InvalidOperationException($"Could not acquire distributed lock for entity index '{indexKey}'");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        var store = _relationshipIndexStore;
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (!relationshipIds.Contains(relationshipId))
@@ -2048,6 +2114,7 @@ public partial class RelationshipService : IRelationshipService
         Guid relationshipTypeId, Guid relationshipId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.AddToTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
 
         // Acquire distributed lock for type index modification (per IMPLEMENTATION TENETS)
@@ -2060,11 +2127,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for type index {IndexKey}", indexKey);
-            return;
+            _logger.LogError("Could not acquire lock for type index {IndexKey}, index update failed", indexKey);
+            throw new InvalidOperationException($"Could not acquire distributed lock for type index '{indexKey}'");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        var store = _relationshipIndexStore;
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (!relationshipIds.Contains(relationshipId))
@@ -2078,6 +2145,7 @@ public partial class RelationshipService : IRelationshipService
         Guid relationshipTypeId, Guid relationshipId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.RemoveFromTypeIndexAsync");
         var indexKey = BuildTypeIndexKey(relationshipTypeId);
 
         // Acquire distributed lock for type index modification (per IMPLEMENTATION TENETS)
@@ -2090,11 +2158,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for type index {IndexKey}", indexKey);
-            return;
+            _logger.LogError("Could not acquire lock for type index {IndexKey}, index update failed", indexKey);
+            throw new InvalidOperationException($"Could not acquire distributed lock for type index '{indexKey}'");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        var store = _relationshipIndexStore;
         var relationshipIds = await store.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
 
         if (relationshipIds.Remove(relationshipId))
@@ -2144,8 +2212,9 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task<List<Guid>> GetChildTypeIdsAsync(Guid parentId, bool recursive, CancellationToken cancellationToken, int currentDepth = 0)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.GetChildTypeIdsAsync");
         var parentIndexKey = BuildRtParentIndexKey(parentId);
-        var directChildren = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
+        var directChildren = await _typeIndexStore
             .GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (!recursive || directChildren.Count == 0 || currentDepth >= _configuration.MaxHierarchyDepth)
@@ -2165,6 +2234,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task AddToRtParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.AddToRtParentIndexAsync");
         var parentIndexKey = BuildRtParentIndexKey(parentId);
 
         // Acquire distributed lock for parent index modification (per IMPLEMENTATION TENETS)
@@ -2177,11 +2247,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
-            return;
+            _logger.LogError("Could not acquire lock for parent index {ParentIndexKey}, index update failed", parentIndexKey);
+            throw new InvalidOperationException($"Could not acquire distributed lock for parent index '{parentIndexKey}'");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var store = _typeIndexStore;
         var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (!children.Contains(childId))
@@ -2193,6 +2263,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task RemoveFromRtParentIndexAsync(Guid parentId, Guid childId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.RemoveFromRtParentIndexAsync");
         var parentIndexKey = BuildRtParentIndexKey(parentId);
 
         // Acquire distributed lock for parent index modification (per IMPLEMENTATION TENETS)
@@ -2205,11 +2276,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for parent index {ParentIndexKey}", parentIndexKey);
-            return;
+            _logger.LogError("Could not acquire lock for parent index {ParentIndexKey}, index update failed", parentIndexKey);
+            throw new InvalidOperationException($"Could not acquire distributed lock for parent index '{parentIndexKey}'");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var store = _typeIndexStore;
         var children = await store.GetAsync(parentIndexKey, cancellationToken) ?? new List<Guid>();
 
         if (children.Remove(childId))
@@ -2220,6 +2291,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task AddToRtAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.AddToRtAllTypesListAsync");
         // Acquire distributed lock for all-types list modification (per IMPLEMENTATION TENETS)
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.RelationshipLock,
@@ -2230,11 +2302,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for all-types list");
-            return;
+            _logger.LogError("Could not acquire lock for all-types list, index update failed");
+            throw new InvalidOperationException("Could not acquire distributed lock for all-types list");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var store = _typeIndexStore;
         var allTypes = await store.GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
         if (!allTypes.Contains(typeId))
@@ -2246,6 +2318,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task RemoveFromRtAllTypesListAsync(Guid typeId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.RemoveFromRtAllTypesListAsync");
         // Acquire distributed lock for all-types list modification (per IMPLEMENTATION TENETS)
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.RelationshipLock,
@@ -2256,11 +2329,11 @@ public partial class RelationshipService : IRelationshipService
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Could not acquire lock for all-types list");
-            return;
+            _logger.LogError("Could not acquire lock for all-types list, index update failed");
+            throw new InvalidOperationException("Could not acquire distributed lock for all-types list");
         }
 
-        var store = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType);
+        var store = _typeIndexStore;
         var allTypes = await store.GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
 
         if (allTypes.Remove(typeId))
@@ -2276,6 +2349,7 @@ public partial class RelationshipService : IRelationshipService
     /// </summary>
     private async Task<bool> WouldCreateCycleAsync(Guid typeId, Guid proposedParentId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.WouldCreateCycleAsync");
         // Self-reference is an obvious cycle
         if (typeId == proposedParentId)
         {
@@ -2283,7 +2357,7 @@ public partial class RelationshipService : IRelationshipService
         }
 
         // Walk up the ancestor chain from proposedParentId
-        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var store = _typeModelStore;
         var currentParentId = proposedParentId;
         var iterations = 0;
 
@@ -2344,6 +2418,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipCreatedEventAsync(RelationshipModel model, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipCreatedEventAsync");
         var eventModel = new RelationshipCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2368,6 +2443,7 @@ public partial class RelationshipService : IRelationshipService
         IEnumerable<string> changedFields,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipUpdatedEventAsync");
         var eventModel = new RelationshipUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2392,6 +2468,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipDeletedEventAsync(RelationshipModel model, string? deletedReason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipDeletedEventAsync");
         var eventModel = new RelationshipDeletedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2420,82 +2497,64 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task PublishRelationshipTypeCreatedEventAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipTypeCreatedEventAsync");
+        var eventModel = new RelationshipTypeCreatedEvent
         {
-            var eventModel = new RelationshipTypeCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = model.RelationshipTypeId,
-                Code = model.Code,
-                Name = model.Name,
-                Category = model.Category,
-                ParentTypeId = model.ParentTypeId
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipTypeId = model.RelationshipTypeId,
+            Code = model.Code,
+            Name = model.Name,
+            Category = model.Category,
+            ParentTypeId = model.ParentTypeId
+        };
 
-            await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
-            _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship-type.created event for {TypeId}", model.RelationshipTypeId);
-        }
+        await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
+        _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
     }
 
     private async Task PublishRelationshipTypeUpdatedEventAsync(RelationshipTypeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipTypeUpdatedEventAsync");
+        var eventModel = new RelationshipTypeUpdatedEvent
         {
-            var eventModel = new RelationshipTypeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = model.RelationshipTypeId,
-                Code = model.Code,
-                Name = model.Name,
-                Description = model.Description,
-                Category = model.Category,
-                ParentTypeId = model.ParentTypeId,
-                InverseTypeId = model.InverseTypeId,
-                IsBidirectional = model.IsBidirectional,
-                Depth = model.Depth,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipTypeId = model.RelationshipTypeId,
+            Code = model.Code,
+            Name = model.Name,
+            Description = model.Description,
+            Category = model.Category,
+            ParentTypeId = model.ParentTypeId,
+            InverseTypeId = model.InverseTypeId,
+            IsBidirectional = model.IsBidirectional,
+            Depth = model.Depth,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.TryPublishAsync("relationship-type.updated", eventModel);
-            _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
-                model.RelationshipTypeId, string.Join(", ", changedFields));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship-type.updated event for {TypeId}", model.RelationshipTypeId);
-        }
+        await _messageBus.TryPublishAsync("relationship-type.updated", eventModel);
+        _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
+            model.RelationshipTypeId, string.Join(", ", changedFields));
     }
 
     private async Task PublishRelationshipTypeDeletedEventAsync(RelationshipTypeModel model, CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.PublishRelationshipTypeDeletedEventAsync");
+        var eventModel = new RelationshipTypeDeletedEvent
         {
-            var eventModel = new RelationshipTypeDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RelationshipTypeId = model.RelationshipTypeId,
-                Code = model.Code
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RelationshipTypeId = model.RelationshipTypeId,
+            Code = model.Code
+        };
 
-            await _messageBus.TryPublishAsync("relationship-type.deleted", eventModel);
-            _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
-        }
+        await _messageBus.TryPublishAsync("relationship-type.deleted", eventModel);
+        _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
     }
 
     #endregion
@@ -2506,21 +2565,9 @@ public partial class RelationshipService : IRelationshipService
 
     #region Error Handling
 
-    private async Task EmitErrorAsync(string operation, string endpoint, Exception ex)
-    {
-        await _messageBus.TryPublishErrorAsync(
-            "relationship",
-            operation,
-            "unexpected_exception",
-            ex.Message,
-            dependency: null,
-            endpoint: endpoint,
-            details: null,
-            stack: ex.StackTrace);
-    }
-
     private async Task EmitDataInconsistencyErrorAsync(string operation, string orphanedKey, Guid indexEntityId, EntityType indexEntityType)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.EmitDataInconsistencyErrorAsync");
         await _messageBus.TryPublishErrorAsync(
             "relationship",
             operation,
@@ -2534,6 +2581,7 @@ public partial class RelationshipService : IRelationshipService
 
     private async Task EmitDataInconsistencyErrorAsync(string operation, string orphanedKey, Guid relationshipTypeId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.relationship", "RelationshipService.EmitDataInconsistencyErrorAsync");
         await _messageBus.TryPublishErrorAsync(
             "relationship",
             operation,

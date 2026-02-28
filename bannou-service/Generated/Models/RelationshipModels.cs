@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Relationship;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Relationship;
 
@@ -336,10 +351,10 @@ public partial class EndRelationshipRequest
     public System.Guid RelationshipId { get; set; } = default!;
 
     /// <summary>
-    /// In-game timestamp when relationship ended (defaults to now)
+    /// In-game timestamp when relationship ended (null defaults to now)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endedAt")]
-    public System.DateTimeOffset EndedAt { get; set; } = default!;
+    public System.DateTimeOffset? EndedAt { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for ending the relationship
@@ -377,7 +392,7 @@ public partial class CleanupByEntityRequest
 }
 
 /// <summary>
-/// Response summarizing the results of a cascading relationship cleanup operation
+/// Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupByEntityResponse
@@ -394,12 +409,6 @@ public partial class CleanupByEntityResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alreadyEnded")]
     public int AlreadyEnded { get; set; } = default!;
-
-    /// <summary>
-    /// Whether the cleanup completed without errors
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
 
 }
 
@@ -924,40 +933,47 @@ public partial class SeedRelationshipType
     /// Unique code for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
     /// Display name for the relationship type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Human-readable description of the relationship type (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping relationship types (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
     /// Code of the parent type (resolved during seeding) (null for root types)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? ParentTypeCode { get; set; } = default!;
 
     /// <summary>
     /// Code of the inverse relationship (null if not applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("inverseTypeCode")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? InverseTypeCode { get; set; } = default!;
 
     /// <summary>
@@ -1132,10 +1148,10 @@ public partial class MatchesHierarchyResponse
     public bool Matches { get; set; } = default!;
 
     /// <summary>
-    /// Number of levels between the types (0 if same, -1 if no match)
+    /// Number of levels between the types (0 if same type, null if no match)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("depth")]
-    public int Depth { get; set; } = default!;
+    public int? Depth { get; set; } = default!;
 
 }
 
@@ -1182,22 +1198,6 @@ public partial class MergeRelationshipTypeResponse
 {
 
     /// <summary>
-    /// ID of the deprecated type that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceTypeId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the type that relationships were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetTypeId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetTypeId { get; set; } = default!;
-
-    /// <summary>
     /// Number of relationships successfully updated to use the target type
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("relationshipsMigrated")]
@@ -1216,10 +1216,10 @@ public partial class MergeRelationshipTypeResponse
     public bool SourceDeleted { get; set; } = default!;
 
     /// <summary>
-    /// Details of individual migration failures (limited to first 100)
+    /// Details of individual migration failures (limited to first 100), null when no failures
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("migrationErrors")]
-    public System.Collections.Generic.ICollection<MigrationError> MigrationErrors { get; set; } = default!;
+    public System.Collections.Generic.ICollection<MigrationError>? MigrationErrors { get; set; } = default!;
 
 }
 

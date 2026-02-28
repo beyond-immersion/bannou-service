@@ -297,7 +297,7 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ## Potential Extensions
 
-1. **Quest chains**: Support for sequential quest chains where completing one quest unlocks the next. Currently would require manual prerequisite management.
+1. ~~**Quest chains**~~: **FIXED** (2026-02-28) - Already fully supported via `QUEST_COMPLETED` prerequisite type (implemented in #320). Creating Quest B with `prerequisites: [{type: QUEST_COMPLETED, questCode: QUEST_A}]` creates a chain. `ListAvailableQuestsAsync` hides Quest B until Quest A is completed, and `AcceptQuestAsync` rejects acceptance. Chains of arbitrary length are supported by chaining prerequisites across definitions.
 
 2. **Dynamic objectives**: Objectives that change based on game state or player choices. Current model has static objective definitions.
 
@@ -370,3 +370,4 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
   - **Code (T21)**: Replaced hardcoded `MaxSlots = 100` with `_configuration.DefaultRewardContainerMaxSlots`
   - **Code (T2)**: Fixed incorrect L4 layer comments to L2 in QuestServicePlugin and QuestProvider
   - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
+- **2026-02-28**: Audit doc cleanup - Struck through "Quest chains" potential extension (already implemented via `QUEST_COMPLETED` prerequisite type since #320)

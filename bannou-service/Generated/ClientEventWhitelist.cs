@@ -84,6 +84,7 @@ public static class ClientEventWhitelist
         "permission.session_capabilities",
         "session.shortcut_published",
         "session.shortcut_revoked",
+        "status.effect_changed",
         "system.error",
         "system.notification",
         "voice.broadcast_consent_request",

@@ -54,6 +54,8 @@ Status uses opaque entity types (`entityType` as string, not enum) because effec
 | lib-resource (`IResourceClient`) | Cleanup callback registration for character deletion (L1 hard dependency -- resolved in `StatusServicePlugin.OnRunningAsync`, not constructor) |
 | lib-contract (`IContractClient`) | Contract lifecycle for statuses with `contractTemplateId` (L1 hard dependency -- constructor-injected) |
 | lib-seed (`ISeedClient`) | Seed capability queries for unified effects layer (L2 **soft** dependency -- resolved at runtime via `IServiceProvider`; gated by `SeedEffectsEnabled`) |
+| lib-connect (`IEntitySessionRegistry`) | Entity-to-session resolution for pushing client events to WebSocket sessions observing affected entities (L1 hard dependency) |
+| lib-telemetry (`ITelemetryProvider`) | Span instrumentation for async methods per IMPLEMENTATION TENETS (L0 hard dependency) |
 | `ISeedEvolutionListener` (DI listener) | `StatusSeedEvolutionListener` registered as singleton; receives seed capability change notifications for cache invalidation |
 
 ---
@@ -149,6 +151,29 @@ Status uses opaque entity types (`entityType` as string, not enum) because effec
 |-------|-----------|---------|-------|
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | `HandleSeedCapabilityUpdated` | Invalidate seed effects cache for affected entity |
 | `item.expired` | `ItemExpiredEvent` | `HandleItemExpired` | **Blocked on #407** -- commented out in schema. When implemented: clean up status instance record, invalidate cache, publish `status.expired` |
+
+---
+
+## Client Events
+
+Server-to-client push events delivered via WebSocket through the Entity Session Registry (L1).
+
+| Event | Schema | Trigger |
+|-------|--------|---------|
+| `status.effect_changed` | `StatusEffectChangedClientEvent` | Any status mutation: grant, remove, expire, stack, or cleanse |
+
+**Schema**: `schemas/status-client-events.yaml`
+
+**Routing**: Uses the entity's own type (e.g., `"character"`) with the entity's ID, so sessions already watching a character for inventory/collection changes also receive status effect updates. This is the same entity routing key used by Inventory and Collection.
+
+**Change types** (via `StatusChangeType` discriminator):
+- `granted` — New status effect applied to entity
+- `removed` — Status explicitly removed (by source, admin, or cancellation)
+- `expired` — Status TTL elapsed (lazy expiration during cache rebuild)
+- `stacked` — Stack count increased or duration refreshed on existing status
+- `cleansed` — Status removed by category cleanse mechanic
+
+**Batch operations**: `RemoveBySourceAsync` and `RemoveByCategoryAsync` publish one client event per removed instance (each goes through `RemoveInstanceInternalAsync` which publishes individually).
 
 ---
 
@@ -377,8 +402,7 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 - **IStatusEffectProvider DI interface**: If L2 services ever need status data (e.g., Character needs "is dead?" checks), add `IStatusEffectProvider` in `bannou-service/Providers/` with DI inversion. Status implements it; Character discovers via `IEnumerable<IStatusEffectProvider>`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/425 -->
 
-- **Client events**: `status-client-events.yaml` for pushing status change notifications to connected clients (buff applied, buff expired, death state entered).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/426 -->
+- ~~**Client events**: `status-client-events.yaml` for pushing status change notifications to connected clients~~: **IMPLEMENTED** (2026-02-27) - `StatusEffectChangedClientEvent` with `StatusChangeType` discriminator. See [Client Events](#client-events) section.
 
 - **Variable provider factory**: `IStatusVariableProviderFactory` for ABML behavior expressions (`${status.has_buff}`, `${status.is_dead}`, `${status.poison_stacks}`).
 
@@ -466,6 +490,7 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Completed
 
+- [#426](https://github.com/beyond-immersion/bannou-service/issues/426) - Client events via Entity Session Registry -- implemented (2026-02-27)
 - [#375](https://github.com/beyond-immersion/bannou-service/issues/375) - Pipeline architecture (Collection -> Seed -> Status) -- implemented
 - [#280](https://github.com/beyond-immersion/bannou-service/issues/280) - Itemize anything pattern -- implemented
 - **Account cleanup callback registration** (2026-02-12) - Fixed missing account cleanup callback in `StatusServicePlugin.OnRunningAsync`

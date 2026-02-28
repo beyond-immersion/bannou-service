@@ -1262,6 +1262,7 @@ public partial class RealmService : IRealmService
                         Description = seedRealm.Description,
                         Category = seedRealm.Category,
                         IsActive = seedRealm.IsActive,
+                        IsSystemType = seedRealm.IsSystemType,
                         Metadata = seedRealm.Metadata
                     };
 

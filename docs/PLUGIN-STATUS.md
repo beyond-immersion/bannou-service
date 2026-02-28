@@ -64,7 +64,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Location](#location-status) | L2 | 97% | 0 | All 24 endpoints done. Hierarchical management, spatial queries, presence tracking, ${location.*} variable provider. Hardened to L3. |
 | [Quest](#quest-status) | L2 | 95% | 0 | Production-hardened (T9/T25/T26/T30 compliant, 46 tests). Orchestration over Contract. Prerequisites, rewards, caching done. Extensions only. |
 | [Realm](#realm-status) | L2 | 100% | 0 | Production-hardened (T5/T6/T7/T8/T9/T21/T30/T31 compliant). ETag concurrency, distributed merge lock, telemetry spans, event coverage. |
-| [Relationship](#relationship-status) | L2 | 90% | 0 | All 21 endpoints done. Bidirectional enforcement, type taxonomy, soft-delete. Index scaling gaps. |
+| [Relationship](#relationship-status) | L2 | 95% | 0 | All 21 endpoints done. Hardened: telemetry, constructor caching, deprecation lifecycle, sentinel elimination. Variable Provider Factory pending (#147). |
 | [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
 | [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
@@ -839,9 +839,9 @@ gh issue list --search "Realm:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [RELATIONSHIP.md](plugins/RELATIONSHIP.md)
 
-### Production Readiness: 90%
+### Production Readiness: 95%
 
-Feature-complete with no stubs, no bugs, and all 21 endpoints fully implemented. Bidirectional uniqueness enforcement, hierarchical type taxonomy with merge and seed operations, soft-deletion with recreation, and lib-resource cleanup integration. The only gaps are potential extensions (relationship strength/weight, type constraints) and design considerations around in-memory filtering scalability and index cleanup, none of which block production use.
+Feature-complete with no stubs, no bugs, and all 21 endpoints fully implemented. Bidirectional uniqueness enforcement, hierarchical type taxonomy with merge and seed operations, soft-deletion with recreation, and lib-resource cleanup integration. Hardened: telemetry spans on all async helpers, constructor-cached state store references, deprecation lifecycle compliance (BadRequest for non-deprecated delete, creation guard against deprecated types), sentinel value elimination (nullable Depth/EndedAt), filler property removal from responses, and error event publishing in seed loop. Remaining work: Variable Provider Factory for ABML `${relationship.*}` expressions (#147) and optional type constraint enforcement (#338).
 
 ### Bug Count: 0
 
@@ -855,9 +855,8 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **In-memory filtering before pagination** | All list operations load the full index and bulk-fetch all models before filtering and paginating in memory. For entities with thousands of relationships, this loads everything into memory. | [#341](https://github.com/beyond-immersion/bannou-service/issues/341) |
-| 2 | **No index cleanup** | Entity and type indexes accumulate relationship IDs indefinitely (both active and ended), growing large over time and requiring filtering on every query. | [#342](https://github.com/beyond-immersion/bannou-service/issues/342) |
-| 3 | **Relationship strength/weight** | Numeric field for weighted relationship graphs -- important for NPC behavior systems that need weighted social networks for the living world vision. | [#335](https://github.com/beyond-immersion/bannou-service/issues/335) |
+| 1 | **Variable Provider Factory** | Implement `RelationshipProviderFactory` (`IVariableProviderFactory`) for ABML `${relationship.*}` variable namespace -- enables NPC behavior system access to relationship data. | [#147](https://github.com/beyond-immersion/bannou-service/issues/147) |
+| 2 | **Type constraints** | Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds). | [#338](https://github.com/beyond-immersion/bannou-service/issues/338) |
 
 ### GH Issues
 

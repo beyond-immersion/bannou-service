@@ -318,15 +318,11 @@ State Store Layout
 ## Potential Extensions
 
 1. **Relationship strength/weight**: Numeric field for weighted relationship graphs (e.g., closeness scores).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
 3. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
 4. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/339 -->
 5. **Category-based permissions**: Allow different roles to create relationships of different categories.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/340 -->
 
 ---
 
@@ -369,13 +365,10 @@ State Store Layout
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/341 -->
 
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/342 -->
 
 3. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/345 -->
 
 ---
 
@@ -385,4 +378,5 @@ State Store Layout
 
 ### Pending Issues
 
-- [#345](https://github.com/beyond-immersion/bannou-service/issues/345): Design question on merge behavior during partial migration failure (Design Consideration #3)
+- [#147](https://github.com/beyond-immersion/bannou-service/issues/147): Implement RelationshipProviderFactory (`IVariableProviderFactory`) for ABML `${relationship.*}` variable namespace — cache, factory, and provider classes
+- [#338](https://github.com/beyond-immersion/bannou-service/issues/338): Type constraints — define which entity types can participate in each relationship type (Potential Extension #3)

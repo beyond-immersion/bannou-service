@@ -8,8 +8,10 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.Bannou.Status.ClientEvents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -49,6 +51,8 @@ public partial class StatusService : IStatusService
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Accessors
 
@@ -114,7 +118,9 @@ public partial class StatusService : IStatusService
         IContractClient contractClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -126,6 +132,8 @@ public partial class StatusService : IStatusService
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
         _serviceProvider = serviceProvider;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
 
@@ -1124,6 +1132,23 @@ public partial class StatusService : IStatusService
                     },
                     cancellationToken: cancellationToken);
 
+                // Push client event for duration refresh
+                await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect_changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ChangeType = StatusChangeType.Stacked,
+                        EntityId = body.EntityId,
+                        EntityType = body.EntityType,
+                        StatusTemplateCode = body.StatusTemplateCode,
+                        StatusInstanceId = existing.StatusInstanceId,
+                        Category = template.Category,
+                        StackCount = existing.StackCount,
+                        ExpiresAt = existing.ExpiresAt
+                    }, cancellationToken);
+
                 return (StatusCodes.OK, new GrantStatusResponse
                 {
                     StatusInstanceId = existing.StatusInstanceId,
@@ -1169,6 +1194,23 @@ public partial class StatusService : IStatusService
                         NewStackCount = existing.StackCount
                     },
                     cancellationToken: cancellationToken);
+
+                // Push client event for stack increase
+                await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect_changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        ChangeType = StatusChangeType.Stacked,
+                        EntityId = body.EntityId,
+                        EntityType = body.EntityType,
+                        StatusTemplateCode = body.StatusTemplateCode,
+                        StatusInstanceId = existing.StatusInstanceId,
+                        Category = template.Category,
+                        StackCount = existing.StackCount,
+                        ExpiresAt = existing.ExpiresAt
+                    }, cancellationToken);
 
                 return (StatusCodes.OK, new GrantStatusResponse
                 {
@@ -1334,6 +1376,24 @@ public partial class StatusService : IStatusService
             },
             cancellationToken: cancellationToken);
 
+        // Push client event to sessions observing this entity
+        await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
+            new StatusEffectChangedClientEvent
+            {
+                EventName = "status.effect_changed",
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                ChangeType = StatusChangeType.Granted,
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                StatusTemplateCode = body.StatusTemplateCode,
+                StatusInstanceId = instanceId,
+                Category = template.Category,
+                StackCount = 1,
+                ExpiresAt = expiresAt,
+                SourceId = body.SourceId
+            }, cancellationToken);
+
         _logger.LogInformation(
             "Granted status {Code} to {EntityType} {EntityId} (instance {InstanceId})",
             body.StatusTemplateCode, body.EntityType, body.EntityId, instanceId);
@@ -1470,6 +1530,23 @@ public partial class StatusService : IStatusService
                 Reason = reason
             },
             cancellationToken: cancellationToken);
+
+        // Push client event to sessions observing this entity
+        await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
+            new StatusEffectChangedClientEvent
+            {
+                EventName = "status.effect_changed",
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ChangeType = reason == StatusRemoveReason.Cleansed
+                    ? StatusChangeType.Cleansed
+                    : StatusChangeType.Removed,
+                EntityId = instance.EntityId,
+                EntityType = instance.EntityType,
+                StatusTemplateCode = instance.StatusTemplateCode,
+                StatusInstanceId = instance.StatusInstanceId,
+                Category = instance.Category
+            }, cancellationToken);
     }
 
     /// <summary>
@@ -1495,6 +1572,23 @@ public partial class StatusService : IStatusService
 
         // No explicit duration and no contract: use config default
         return DateTimeOffset.UtcNow.AddSeconds(_configuration.DefaultStatusDurationSeconds);
+    }
+
+    /// <summary>
+    /// Publishes a status client event to all sessions observing the affected entity.
+    /// Uses the entity's own type for routing so sessions watching a character
+    /// receive status updates alongside inventory/collection changes.
+    /// </summary>
+    private async Task PublishStatusClientEventAsync(
+        EntityType entityType,
+        Guid entityId,
+        StatusEffectChangedClientEvent clientEvent,
+        CancellationToken ct)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.status", "StatusService.PublishStatusClientEventAsync");
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            entityType.ToString().ToLowerInvariant(), entityId, clientEvent, ct);
     }
 
     /// <summary>
@@ -1543,6 +1637,21 @@ public partial class StatusService : IStatusService
                         StatusInstanceId = instance.StatusInstanceId
                     },
                     cancellationToken: cancellationToken);
+
+                // Push client event for expiration
+                await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
+                    new StatusEffectChangedClientEvent
+                    {
+                        EventName = "status.effect_changed",
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        ChangeType = StatusChangeType.Expired,
+                        EntityId = instance.EntityId,
+                        EntityType = instance.EntityType,
+                        StatusTemplateCode = instance.StatusTemplateCode,
+                        StatusInstanceId = instance.StatusInstanceId,
+                        Category = instance.Category
+                    }, cancellationToken);
 
                 // Remove expired instance (fire-and-forget the item deletion)
                 await InstanceStore.DeleteAsync(
