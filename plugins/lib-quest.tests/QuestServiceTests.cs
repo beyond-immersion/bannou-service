@@ -1029,6 +1029,162 @@ public class QuestServiceTests : ServiceTestBase<QuestServiceConfiguration>
 
     #endregion
 
+    #region GetQuestLog Tests
+
+    [Fact]
+    public async Task GetQuestLogAsync_WithCategoryFilter_ReturnsOnlyMatchingCategory()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var mainQuestId = Guid.NewGuid();
+        var sideQuestId = Guid.NewGuid();
+
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { mainQuestId, sideQuestId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Main quest instance
+        var mainInstance = CreateTestInstanceModel(mainQuestId, characterId);
+        mainInstance.Code = "MAIN_QUEST";
+        var mainDefId = mainInstance.DefinitionId;
+        var mainDef = CreateTestDefinitionModel(mainDefId, "MAIN_QUEST");
+        mainDef.Category = QuestCategory.MAIN;
+
+        // Side quest instance
+        var sideInstance = CreateTestInstanceModel(sideQuestId, characterId);
+        sideInstance.Code = "SIDE_QUEST";
+        var sideDefId = sideInstance.DefinitionId;
+        var sideDef = CreateTestDefinitionModel(sideDefId, "SIDE_QUEST");
+        sideDef.Category = QuestCategory.SIDE;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{mainQuestId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mainInstance);
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{sideQuestId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sideInstance);
+
+        // Definition cache misses, MySQL QueryAsync fallback
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((QuestDefinitionModel?)null);
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>> predicate, CancellationToken _) =>
+            {
+                var allDefs = new List<QuestDefinitionModel> { mainDef, sideDef };
+                return allDefs.Where(predicate.Compile()).ToList();
+            });
+
+        // Empty failed quest query
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var request = new GetQuestLogRequest
+        {
+            CharacterId = characterId,
+            Category = QuestCategory.MAIN
+        };
+
+        // Act
+        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.ActiveQuests);
+        var entry = response.ActiveQuests.First();
+        Assert.Equal("MAIN_QUEST", entry.Code);
+        Assert.Equal(QuestCategory.MAIN, entry.Category);
+    }
+
+    [Fact]
+    public async Task GetQuestLogAsync_NoCategoryFilter_ReturnsAllQuests()
+    {
+        // Arrange
+        var service = CreateService();
+        var characterId = Guid.NewGuid();
+        var mainQuestId = Guid.NewGuid();
+        var sideQuestId = Guid.NewGuid();
+
+        var characterIndex = new CharacterQuestIndex
+        {
+            CharacterId = characterId,
+            ActiveQuestIds = new List<Guid> { mainQuestId, sideQuestId },
+            CompletedQuestCodes = new List<string>()
+        };
+        _mockCharacterIndex
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(characterIndex);
+
+        // Main quest instance
+        var mainInstance = CreateTestInstanceModel(mainQuestId, characterId);
+        var mainDefId = mainInstance.DefinitionId;
+        var mainDef = CreateTestDefinitionModel(mainDefId, "MAIN_QUEST");
+        mainDef.Category = QuestCategory.MAIN;
+
+        // Side quest instance
+        var sideInstance = CreateTestInstanceModel(sideQuestId, characterId);
+        var sideDefId = sideInstance.DefinitionId;
+        var sideDef = CreateTestDefinitionModel(sideDefId, "SIDE_QUEST");
+        sideDef.Category = QuestCategory.SIDE;
+
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{mainQuestId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mainInstance);
+        _mockInstanceStore
+            .Setup(s => s.GetAsync($"inst:{sideQuestId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sideInstance);
+
+        // Definition cache misses, MySQL QueryAsync fallback
+        _mockDefinitionCache
+            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((QuestDefinitionModel?)null);
+        _mockDefinitionStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((System.Linq.Expressions.Expression<Func<QuestDefinitionModel, bool>> predicate, CancellationToken _) =>
+            {
+                var allDefs = new List<QuestDefinitionModel> { mainDef, sideDef };
+                return allDefs.Where(predicate.Compile()).ToList();
+            });
+
+        _mockInstanceStore
+            .Setup(s => s.QueryAsync(
+                It.IsAny<System.Linq.Expressions.Expression<Func<QuestInstanceModel, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<QuestInstanceModel>());
+
+        var request = new GetQuestLogRequest
+        {
+            CharacterId = characterId
+            // No category filter
+        };
+
+        // Act
+        var (status, response) = await service.GetQuestLogAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ActiveQuests.Count);
+    }
+
+    #endregion
+
     #region ReportObjectiveProgress Tests
 
     [Fact]

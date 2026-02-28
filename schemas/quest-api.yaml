@@ -1044,6 +1044,11 @@ components:
           type: string
           format: uuid
           description: Character to get log for
+        category:
+          description: Filter active quests by category
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestCategory'
 
     QuestInstanceResponse:
       type: object

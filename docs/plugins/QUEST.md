@@ -305,9 +305,10 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 3. **Party quest acceptance flow** ([#506](https://github.com/beyond-immersion/bannou-service/issues/506)): The data model supports multi-character instances (`QuestorCharacterIds` list, configurable `MaxQuestors`) and progress is already per-instance (shared), but no API exists to add additional characters to an existing quest instance — `AcceptQuestAsync` always creates a new instance with a single questor. Requires designing party formation model, contract party management, per-objective-type progress semantics, and reward distribution.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/506 -->
 
-4. **Quest log categories**: The quest log returns all active quests. Could add category-based filtering (main story, side, daily, etc.) for UI organization.
+4. ~~**Quest log categories**~~: **FIXED** (2026-02-28) - Added optional `category` filter to `GetQuestLogRequest` in schema. `GetQuestLogAsync` now filters active quests by category when provided, returning all quests when omitted (backward-compatible).
 
 5. **Localization support**: Quest names and descriptions are single-language. Could add localization key support for multi-language games.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/508 -->
 
 6. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
@@ -373,3 +374,4 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
   - **Code (T2)**: Fixed incorrect L4 layer comments to L2 in QuestServicePlugin and QuestProvider
   - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
 - **2026-02-28**: Audit doc cleanup - Struck through "Quest chains" potential extension (already implemented via `QUEST_COMPLETED` prerequisite type since #320)
+- **2026-02-28**: Quest log category filter - Added optional `category` field to `GetQuestLogRequest` schema, filtering logic in `GetQuestLogAsync`, and 2 unit tests (48 total, all passing)

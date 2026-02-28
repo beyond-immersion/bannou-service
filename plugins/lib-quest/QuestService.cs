@@ -1001,6 +1001,13 @@ public partial class QuestService : IQuestService
 
                 var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
 
+                // Apply category filter if specified
+                var questCategory = definition?.Category ?? QuestCategory.SIDE;
+                if (body.Category.HasValue && questCategory != body.Category.Value)
+                {
+                    continue;
+                }
+
                 // Load internal progress models for visibility filtering
                 var internalProgressList = new List<ObjectiveProgressModel>();
                 if (definition?.Objectives != null)
@@ -1040,7 +1047,7 @@ public partial class QuestService : IQuestService
                     QuestInstanceId = instance.QuestInstanceId,
                     Code = instance.Code,
                     Name = instance.Name,
-                    Category = definition?.Category ?? QuestCategory.SIDE,
+                    Category = questCategory,
                     Status = instance.Status,
                     OverallProgress = overallProgress,
                     VisibleObjectives = visibleObjectives,

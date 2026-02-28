@@ -324,7 +324,9 @@ State Store Layout
 3. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
 4. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/504 -->
 5. **Category-based permissions**: Allow different roles to create relationships of different categories.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/507 -->
 
 ---
 
@@ -384,3 +386,4 @@ State Store Layout
 - [#338](https://github.com/beyond-immersion/bannou-service/issues/338): Type constraints — define which entity types can participate in each relationship type (Potential Extension #3)
 - [#504](https://github.com/beyond-immersion/bannou-service/issues/504): Relationship strength/weight field design — field naming, data type/range, interaction with extensions #2 and #4 (Potential Extension #1)
 - [#505](https://github.com/beyond-immersion/bannou-service/issues/505): Bidirectional asymmetric metadata design — per-entity metadata perspectives, replace vs augment unified field, migration (Potential Extension #2)
+- [#507](https://github.com/beyond-immersion/bannou-service/issues/507): Category-based permissions design — data-conditional permission enforcement approach, category→role mapping, manifest implications (Potential Extension #5)
