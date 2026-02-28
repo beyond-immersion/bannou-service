@@ -6,9 +6,11 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Seed.Caching;
 
@@ -20,6 +22,7 @@ namespace BeyondImmersion.BannouService.Seed.Caching;
 public sealed class SeedDataCache : ISeedDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<SeedDataCache> _logger;
     private readonly ConcurrentDictionary<Guid, CachedEntry> _cache = new();
     private readonly TimeSpan _cacheTtl;
@@ -27,12 +30,18 @@ public sealed class SeedDataCache : ISeedDataCache
     /// <summary>
     /// Creates a new seed data cache.
     /// </summary>
+    /// <param name="scopeFactory">Scope factory for creating scopes to access scoped services.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="logger">Logger for structured logging.</param>
+    /// <param name="configuration">Service configuration with cache TTL settings.</param>
     public SeedDataCache(
         IServiceScopeFactory scopeFactory,
+        ITelemetryProvider telemetryProvider,
         ILogger<SeedDataCache> logger,
         SeedServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _cacheTtl = TimeSpan.FromSeconds(configuration.SeedDataCacheTtlSeconds);
     }
@@ -40,6 +49,9 @@ public sealed class SeedDataCache : ISeedDataCache
     /// <inheritdoc/>
     public async Task<CachedSeedData> GetSeedDataOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedDataCache.GetSeedDataOrLoad");
+
         // Check cache first
         if (_cache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {

@@ -300,8 +300,10 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 1. ~~**Quest chains**~~: **FIXED** (2026-02-28) - Already fully supported via `QUEST_COMPLETED` prerequisite type (implemented in #320). Creating Quest B with `prerequisites: [{type: QUEST_COMPLETED, questCode: QUEST_A}]` creates a chain. `ListAvailableQuestsAsync` hides Quest B until Quest A is completed, and `AcceptQuestAsync` rejects acceptance. Chains of arbitrary length are supported by chaining prerequisites across definitions.
 
 2. **Dynamic objectives**: Objectives that change based on game state or player choices. Current model has static objective definitions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/503 -->
 
-3. **Shared party progress**: Currently each character in a party quest has individual objective progress. Could add shared progress tracking for cooperative objectives.
+3. **Party quest acceptance flow** ([#506](https://github.com/beyond-immersion/bannou-service/issues/506)): The data model supports multi-character instances (`QuestorCharacterIds` list, configurable `MaxQuestors`) and progress is already per-instance (shared), but no API exists to add additional characters to an existing quest instance — `AcceptQuestAsync` always creates a new instance with a single questor. Requires designing party formation model, contract party management, per-objective-type progress semantics, and reward distribution.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/506 -->
 
 4. **Quest log categories**: The quest log returns all active quests. Could add category-based filtering (main story, side, daily, etc.) for UI organization.
 

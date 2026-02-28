@@ -93,7 +93,7 @@ public class SeedDecayWorkerServiceTests
             .Returns(mockScopeFactory.Object);
 
         return new SeedDecayWorkerService(
-            mockServiceProvider.Object, _mockLogger.Object, _configuration,
+            mockServiceProvider.Object, new NullTelemetryProvider(), _mockLogger.Object, _configuration,
             Enumerable.Empty<ISeedEvolutionListener>());
     }
 

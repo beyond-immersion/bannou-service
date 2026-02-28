@@ -102,6 +102,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         _mockStateStoreFactory.Object,
         _mockLockProvider.Object,
         _mockLogger.Object,
+        new NullTelemetryProvider(),
         Configuration,
         _mockEventConsumer.Object,
         _mockGameServiceClient.Object,

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Seed.Caching;
 using BeyondImmersion.BannouService.Seed.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Seed.Tests.Providers;
 
@@ -13,7 +14,7 @@ public class SeedProviderFactoryTests
     public void ProviderName_ReturnsSeed()
     {
         var mockCache = new Mock<ISeedDataCache>();
-        var factory = new SeedProviderFactory(mockCache.Object);
+        var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
         Assert.Equal("seed", factory.ProviderName);
     }
 
@@ -21,7 +22,7 @@ public class SeedProviderFactoryTests
     public async Task CreateAsync_NullEntityId_ReturnsEmptyProvider()
     {
         var mockCache = new Mock<ISeedDataCache>();
-        var factory = new SeedProviderFactory(mockCache.Object);
+        var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
         var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, CancellationToken.None);
 
@@ -37,7 +38,7 @@ public class SeedProviderFactoryTests
         mockCache.Setup(c => c.GetSeedDataOrLoadAsync(characterId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CachedSeedData.Empty);
 
-        var factory = new SeedProviderFactory(mockCache.Object);
+        var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
         var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
 
@@ -54,7 +55,7 @@ public class SeedProviderFactoryTests
         mockCache.Setup(c => c.GetSeedDataOrLoadAsync(characterId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(CachedSeedData.Empty);
 
-        var factory = new SeedProviderFactory(mockCache.Object);
+        var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
         var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
         var activeCount = provider.GetValue(new[] { "active_count" }.AsSpan());
@@ -91,7 +92,7 @@ public class SeedProviderFactoryTests
         mockCache.Setup(c => c.GetSeedDataOrLoadAsync(characterId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(data);
 
-        var factory = new SeedProviderFactory(mockCache.Object);
+        var factory = new SeedProviderFactory(mockCache.Object, new NullTelemetryProvider());
 
         var provider = await factory.CreateAsync(characterId, Guid.NewGuid(), null, CancellationToken.None);
         var activeCount = provider.GetValue(new[] { "active_count" }.AsSpan());

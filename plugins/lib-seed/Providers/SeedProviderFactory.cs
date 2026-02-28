@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed.Caching;
 using BeyondImmersion.BannouService.Services;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Seed.Providers;
 
@@ -18,13 +19,17 @@ namespace BeyondImmersion.BannouService.Seed.Providers;
 public sealed class SeedProviderFactory : IVariableProviderFactory
 {
     private readonly ISeedDataCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new seed provider factory.
     /// </summary>
-    public SeedProviderFactory(ISeedDataCache cache)
+    /// <param name="cache">Seed data cache for character seed lookups.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public SeedProviderFactory(ISeedDataCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -33,6 +38,9 @@ public sealed class SeedProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedProviderFactory.Create");
+
         if (!characterId.HasValue)
         {
             return SeedProvider.Empty;

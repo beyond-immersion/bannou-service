@@ -65,7 +65,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Quest](#quest-status) | L2 | 95% | 0 | Production-hardened (T9/T25/T26/T30 compliant, 46 tests). Orchestration over Contract. Prerequisites, rewards, caching done. Extensions only. |
 | [Realm](#realm-status) | L2 | 100% | 0 | Production-hardened (T5/T6/T7/T8/T9/T21/T30/T31 compliant). ETag concurrency, distributed merge lock, telemetry spans, event coverage. |
 | [Relationship](#relationship-status) | L2 | 95% | 0 | All 21 endpoints done. Hardened: telemetry, constructor caching, deprecation lifecycle, sentinel elimination. Variable Provider Factory pending (#147). |
-| [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
+| [Seed](#seed-status) | L2 | 95% | 0 | Production-hardened (T6/T26/T30 compliant). Constructor caching, telemetry spans, sentinel elimination, schema validation. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
 | [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
 | [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Geographic connectivity graph, transit modes, and declarative journey tracking spec. No schema, no code. |
@@ -870,9 +870,9 @@ gh issue list --search "Relationship:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [SEED.md](plugins/SEED.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Thoroughly implemented foundational primitive with no stubs and no bugs. All 24 endpoints are functional: seed CRUD with exclusive activation, growth recording with bond multipliers and cross-pollination, capability manifests with three fidelity formulas and debounced caching, typed definitions with deprecation lifecycle, bonds with ordered distributed locks and confirmation flow, and a background decay worker with per-type override support. The Collection-to-Seed growth pipeline works via ICollectionUnlockListener DI pattern, and Actor integration is complete via SeedProviderFactory. Remaining work is confined to extensions and design considerations.
+Production-hardened foundational primitive with no stubs and no bugs. All 24 endpoints are functional: seed CRUD with exclusive activation, growth recording with bond multipliers and cross-pollination, capability manifests with three fidelity formulas and debounced caching, typed definitions with deprecation lifecycle, bonds with ordered distributed locks and confirmation flow, and a background decay worker with per-type override support. The Collection-to-Seed growth pipeline works via ICollectionUnlockListener DI pattern (rewritten to use ISeedClient mesh call), and Actor integration is complete via SeedProviderFactory. Hardened: constructor-cached state stores (T6), telemetry spans on all async methods (T30), Guid.Empty sentinel eliminated for cross-game types (T26), schema validation (additionalProperties, minLength, minimum/maximum, minItems, nullable $ref wrappers, required deprecation reason). Remaining work is confined to extensions and design considerations.
 
 ### Bug Count: 0
 
@@ -888,7 +888,7 @@ No known bugs.
 |---|-------------|-------------|-------|
 | 1 | **No cleanup of associated data on archive** | Archived seeds retain growth data, capability cache, and bond data indefinitely. Needs cleanup strategy -- immediate deletion, background retention worker, or lib-resource compression integration. | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) |
 | 2 | **Bond dissolution endpoint** | No endpoint exists to dissolve or break a bond, despite the `BondPermanent` flag implying some bonds should be dissolvable. Needed for pair system (twin spirits). | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) |
-| 3 | **Bond shared growth applied regardless of partner activity** | BondSharedGrowthMultiplier is applied even when the partner seed is dormant or archived, which may produce unintended growth acceleration. | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) |
+| 3 | **Client events for guardian spirit progression** | Push seed phase/capability/growth/bond/activation events to connected clients via IClientEventPublisher using Entity Session Registry. | [#497](https://github.com/beyond-immersion/bannou-service/issues/497) |
 
 ### GH Issues
 

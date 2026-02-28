@@ -426,8 +426,6 @@ paths:
                 $ref: '#/components/schemas/SeedTypeResponse'
         '404':
           description: Seed type not found
-        '409':
-          description: Seed type already deprecated
 
   /seed/type/undeprecate:
     post:
@@ -453,8 +451,6 @@ paths:
                 $ref: '#/components/schemas/SeedTypeResponse'
         '404':
           description: Seed type not found
-        '409':
-          description: Seed type is not deprecated
 
   /seed/type/delete:
     post:
@@ -617,37 +613,46 @@ components:
 
     GrowthPhaseDefinition:
       type: object
+      additionalProperties: false
       description: Defines a growth phase with its threshold.
       required: [phaseCode, displayName, minTotalGrowth]
       properties:
         phaseCode:
           type: string
+          minLength: 1
           description: Machine-readable phase identifier (e.g., "nascent", "awakening").
         displayName:
           type: string
+          minLength: 1
           description: Human-readable phase label.
         minTotalGrowth:
           type: number
           format: float
+          minimum: 0
           description: Minimum total growth to enter this phase.
 
     CapabilityRule:
       type: object
+      additionalProperties: false
       description: Maps a growth domain to a capability with unlock threshold and fidelity formula.
       required: [capabilityCode, domain, unlockThreshold, fidelityFormula]
       properties:
         capabilityCode:
           type: string
+          minLength: 1
           description: Unique capability identifier (e.g., "combat.stance").
         domain:
           type: string
+          minLength: 1
           description: Which growth domain this capability maps to.
         unlockThreshold:
           type: number
           format: float
+          minimum: 0
           description: Minimum domain depth to unlock this capability.
         fidelityFormula:
           type: string
+          minLength: 1
           description: >
             How domain depth maps to fidelity (0.0-1.0). Values: "linear",
             "logarithmic", "step". Consumers may define additional formulas.
@@ -656,6 +661,7 @@ components:
 
     CollectionGrowthMapping:
       type: object
+      additionalProperties: false
       description: >
         Maps a collection type to growth domain mappings. When a collection entry
         is unlocked, Seed uses these mappings to determine which growth domains
@@ -664,6 +670,7 @@ components:
       properties:
         collectionType:
           type: string
+          minLength: 1
           description: Collection type code to match against (e.g., "bestiary", "music_library").
         domainMappings:
           type: array
@@ -674,6 +681,7 @@ components:
 
     CollectionDomainMapping:
       type: object
+      additionalProperties: false
       description: >
         Maps a tag prefix on a collection entry to a growth domain and amount.
         When an entry is unlocked, its tags are matched against tagPrefix. Matching
@@ -683,6 +691,7 @@ components:
       properties:
         tagPrefix:
           type: string
+          minLength: 1
           description: >
             Tag prefix to match against entry tags. An entry tag "combat.melee.sword"
             matches prefix "combat" and "combat.melee". The full matching tag becomes
@@ -690,6 +699,7 @@ components:
         baseAmount:
           type: number
           format: float
+          minimum: 0
           description: Base growth amount to record when a tag matches this prefix.
         discoveryBonusPerLevel:
           type: number
@@ -704,6 +714,7 @@ components:
 
     CreateSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to create a new seed.
       required: [ownerId, ownerType, seedTypeCode]
       properties:
@@ -716,6 +727,7 @@ components:
           description: Owner entity type discriminator.
         seedTypeCode:
           type: string
+          minLength: 1
           description: Registered seed type code (e.g., "guardian", "dungeon_core").
         gameServiceId:
           type: string
@@ -738,6 +750,7 @@ components:
 
     GetSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to get a seed by ID.
       required: [seedId]
       properties:
@@ -748,6 +761,7 @@ components:
 
     GetSeedsByOwnerRequest:
       type: object
+      additionalProperties: false
       description: Request to get seeds by owner.
       required: [ownerId, ownerType]
       properties:
@@ -769,6 +783,7 @@ components:
 
     ListSeedsRequest:
       type: object
+      additionalProperties: false
       description: Request to list seeds with optional filters.
       properties:
         seedTypeCode:
@@ -790,20 +805,25 @@ components:
           nullable: true
           description: Filter by current growth phase code.
         status:
-          $ref: '#/components/schemas/SeedStatus'
+          allOf:
+          - $ref: '#/components/schemas/SeedStatus'
           nullable: true
           description: Filter by seed status.
         page:
           type: integer
+          minimum: 1
           description: Page number (1-based).
           default: 1
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 100
           description: Number of results per page.
           default: 50
 
     UpdateSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to update a seed's mutable fields.
       required: [seedId]
       properties:
@@ -825,6 +845,7 @@ components:
 
     ActivateSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to activate a seed.
       required: [seedId]
       properties:
@@ -835,6 +856,7 @@ components:
 
     ArchiveSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to archive a seed.
       required: [seedId]
       properties:
@@ -845,6 +867,7 @@ components:
 
     GetGrowthRequest:
       type: object
+      additionalProperties: false
       description: Request to get growth data for a seed.
       required: [seedId]
       properties:
@@ -855,6 +878,7 @@ components:
 
     RecordGrowthRequest:
       type: object
+      additionalProperties: false
       description: Request to record growth in a specific domain.
       required: [seedId, domain, amount, source]
       properties:
@@ -864,15 +888,19 @@ components:
           description: The seed to record growth for.
         domain:
           type: string
+          minLength: 1
           description: >
             Dot-separated domain path (e.g., "combat.melee.sword").
             New domains are created automatically on first contribution.
         amount:
           type: number
           format: float
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount of growth to add.
         source:
           type: string
+          minLength: 1
           description: Identifier of the contributing service (e.g., "character-encounter").
         sourceEventId:
           type: string
@@ -882,6 +910,7 @@ components:
 
     RecordGrowthBatchRequest:
       type: object
+      additionalProperties: false
       description: Request to record growth across multiple domains atomically.
       required: [seedId, entries, source]
       properties:
@@ -893,26 +922,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GrowthEntry'
+          minItems: 1
           description: Domain-amount pairs to record.
         source:
           type: string
+          minLength: 1
           description: Identifier of the contributing service.
 
     GrowthEntry:
       type: object
+      additionalProperties: false
       description: A single domain-amount pair for batch growth recording.
       required: [domain, amount]
       properties:
         domain:
           type: string
+          minLength: 1
           description: Dot-separated domain path.
         amount:
           type: number
           format: float
+          minimum: 0
+          exclusiveMinimum: true
           description: Growth amount to add.
 
     GetGrowthPhaseRequest:
       type: object
+      additionalProperties: false
       description: Request to get the current growth phase.
       required: [seedId]
       properties:
@@ -923,6 +959,7 @@ components:
 
     GetCapabilityManifestRequest:
       type: object
+      additionalProperties: false
       description: Request to get the capability manifest.
       required: [seedId]
       properties:
@@ -933,12 +970,14 @@ components:
 
     RegisterSeedTypeRequest:
       type: object
+      additionalProperties: false
       description: Request to register a new seed type definition.
       required: [seedTypeCode, displayName, description, maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, 
           bondPermanent]
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: Unique code for this seed type (e.g., "guardian", "dungeon_core").
         gameServiceId:
           type: string
@@ -949,25 +988,31 @@ components:
             that are not scoped to any single game service.
         displayName:
           type: string
+          minLength: 1
           description: Human-readable name.
         description:
           type: string
+          minLength: 1
           description: Description of what this seed type represents.
         maxPerOwner:
           type: integer
+          minimum: 0
           description: Maximum seeds of this type per owner entity.
         allowedOwnerTypes:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
+          minItems: 1
           description: Entity types that can own seeds of this type.
         growthPhases:
           type: array
           items:
             $ref: '#/components/schemas/GrowthPhaseDefinition'
+          minItems: 1
           description: Ordered growth phase definitions with thresholds.
         bondCardinality:
           type: integer
+          minimum: 0
           description: >
             Max bond participants. 0 = no bonding, 1 = pair bonds,
             N = group bonds of up to N+1 participants.
@@ -1015,11 +1060,13 @@ components:
 
     GetSeedTypeRequest:
       type: object
+      additionalProperties: false
       description: Request to get a seed type definition.
       required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type code.
         gameServiceId:
           type: string
@@ -1030,6 +1077,7 @@ components:
 
     ListSeedTypesRequest:
       type: object
+      additionalProperties: false
       description: Request to list seed types, optionally filtered by game service.
       properties:
         gameServiceId:
@@ -1045,11 +1093,13 @@ components:
 
     UpdateSeedTypeRequest:
       type: object
+      additionalProperties: false
       description: Request to update a seed type definition.
       required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type to update.
         gameServiceId:
           type: string
@@ -1111,10 +1161,11 @@ components:
       type: object
       description: Request to deprecate a seed type, preventing new seed creation.
       additionalProperties: false
-      required: [seedTypeCode]
+      required: [seedTypeCode, reason]
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type to deprecate.
         gameServiceId:
           type: string
@@ -1124,8 +1175,8 @@ components:
             The game service scope. Null for cross-game seed types.
         reason:
           type: string
+          minLength: 1
           maxLength: 500
-          nullable: true
           description: Optional reason for deprecation (for audit purposes).
 
     UndeprecateSeedTypeRequest:
@@ -1136,6 +1187,7 @@ components:
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type to restore.
         gameServiceId:
           type: string
@@ -1152,6 +1204,7 @@ components:
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type to delete.
         gameServiceId:
           type: string
@@ -1162,6 +1215,7 @@ components:
 
     InitiateBondRequest:
       type: object
+      additionalProperties: false
       description: Request to initiate a bond between seeds.
       required: [initiatorSeedId, targetSeedId]
       properties:
@@ -1176,6 +1230,7 @@ components:
 
     ConfirmBondRequest:
       type: object
+      additionalProperties: false
       description: Request to confirm a pending bond.
       required: [bondId, confirmingSeedId]
       properties:
@@ -1190,6 +1245,7 @@ components:
 
     GetBondRequest:
       type: object
+      additionalProperties: false
       description: Request to get a bond by ID.
       required: [bondId]
       properties:
@@ -1200,6 +1256,7 @@ components:
 
     GetBondForSeedRequest:
       type: object
+      additionalProperties: false
       description: Request to get the bond for a specific seed.
       required: [seedId]
       properties:
@@ -1210,6 +1267,7 @@ components:
 
     GetBondPartnersRequest:
       type: object
+      additionalProperties: false
       description: Request to get partner seed information.
       required: [seedId]
       properties:
@@ -1222,6 +1280,7 @@ components:
 
     SeedResponse:
       type: object
+      additionalProperties: false
       description: Full seed entity response.
       required: [seedId, ownerId, ownerType, seedTypeCode, createdAt, growthPhase, totalGrowth, displayName, status]
       properties:
@@ -1238,6 +1297,7 @@ components:
           description: Owner entity type discriminator.
         seedTypeCode:
           type: string
+          minLength: 1
           description: Registered seed type code.
         gameServiceId:
           type: string
@@ -1251,6 +1311,7 @@ components:
           description: When the seed was created.
         growthPhase:
           type: string
+          minLength: 1
           description: Current computed growth phase code.
         totalGrowth:
           type: number
@@ -1263,6 +1324,7 @@ components:
           description: Bond ID if this seed is bonded, null otherwise.
         displayName:
           type: string
+          minLength: 1
           description: Human-readable name.
         status:
           $ref: '#/components/schemas/SeedStatus'
@@ -1270,6 +1332,7 @@ components:
 
     ListSeedsResponse:
       type: object
+      additionalProperties: false
       description: Paginated list of seeds.
       required: [seeds, totalCount]
       properties:
@@ -1280,10 +1343,12 @@ components:
           description: Seeds matching the query.
         totalCount:
           type: integer
+          minimum: 0
           description: Total matching seeds across all pages.
 
     GrowthResponse:
       type: object
+      additionalProperties: false
       description: Growth domain data for a seed.
       required: [seedId, totalGrowth, domains]
       properties:
@@ -1306,6 +1371,7 @@ components:
 
     GrowthPhaseResponse:
       type: object
+      additionalProperties: false
       description: Current growth phase information for a seed.
       required: [seedId, phaseCode, displayName, totalGrowth]
       properties:
@@ -1315,9 +1381,11 @@ components:
           description: The seed.
         phaseCode:
           type: string
+          minLength: 1
           description: Current phase code.
         displayName:
           type: string
+          minLength: 1
           description: Current phase display name.
         totalGrowth:
           type: number
@@ -1335,6 +1403,7 @@ components:
 
     CapabilityManifestResponse:
       type: object
+      additionalProperties: false
       description: Computed capability manifest for a seed.
       required: [seedId, seedTypeCode, computedAt, version, capabilities]
       properties:
@@ -1344,6 +1413,7 @@ components:
           description: The seed this manifest belongs to.
         seedTypeCode:
           type: string
+          minLength: 1
           description: The seed type for consumer interpretation.
         computedAt:
           type: string
@@ -1351,6 +1421,7 @@ components:
           description: When this manifest was last computed.
         version:
           type: integer
+          minimum: 0
           description: Monotonically increasing version number.
         capabilities:
           type: array
@@ -1360,20 +1431,25 @@ components:
 
     Capability:
       type: object
+      additionalProperties: false
       description: A single capability entry in the manifest.
       required: [capabilityCode, domain, fidelity, unlocked]
       properties:
         capabilityCode:
           type: string
+          minLength: 1
           description: >
             Unique capability identifier. Consumer-interpreted
             (e.g., UX module ID, spawning permission, faction action).
         domain:
           type: string
+          minLength: 1
           description: Growth domain this capability maps to.
         fidelity:
           type: number
           format: float
+          minimum: 0
+          maximum: 1
           description: >
             Capability fidelity from 0.0 to 1.0. Higher values mean the
             seed has more developed capability in this area.
@@ -1383,12 +1459,14 @@ components:
 
     SeedTypeResponse:
       type: object
+      additionalProperties: false
       description: Full seed type definition response.
       required: [seedTypeCode, displayName, description, maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, 
           bondPermanent, isDeprecated]
       properties:
         seedTypeCode:
           type: string
+          minLength: 1
           description: Unique type code.
         gameServiceId:
           type: string
@@ -1398,9 +1476,11 @@ components:
             Game service scope. Null for cross-game seed types.
         displayName:
           type: string
+          minLength: 1
           description: Human-readable name.
         description:
           type: string
+          minLength: 1
           description: Type description.
         maxPerOwner:
           type: integer
@@ -1462,6 +1542,7 @@ components:
 
     ListSeedTypesResponse:
       type: object
+      additionalProperties: false
       description: List of registered seed types.
       required: [seedTypes]
       properties:
@@ -1473,6 +1554,7 @@ components:
 
     BondResponse:
       type: object
+      additionalProperties: false
       description: Full bond record response.
       required: [bondId, seedTypeCode, participants, createdAt, status, bondStrength, sharedGrowth]
       properties:
@@ -1482,11 +1564,13 @@ components:
           description: Unique bond identifier.
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type this bond connects.
         participants:
           type: array
           items:
             $ref: '#/components/schemas/BondParticipant'
+          minItems: 2
           description: Seeds participating in this bond.
         createdAt:
           type: string
@@ -1498,14 +1582,17 @@ components:
         bondStrength:
           type: number
           format: float
+          minimum: 0
           description: Grows with shared growth. Consumer-interpreted.
         sharedGrowth:
           type: number
           format: float
+          minimum: 0
           description: Total accumulated shared growth.
 
     BondParticipant:
       type: object
+      additionalProperties: false
       description: A participant in a seed bond.
       required: [seedId, joinedAt]
       properties:
@@ -1524,6 +1611,7 @@ components:
 
     BondPartnersResponse:
       type: object
+      additionalProperties: false
       description: Partner seed summaries for a bond.
       required: [bondId, partners]
       properties:
@@ -1539,6 +1627,7 @@ components:
 
     PartnerSummary:
       type: object
+      additionalProperties: false
       description: Public summary of a bond partner's seed.
       required: [seedId, ownerId, ownerType, growthPhase, status]
       properties:
@@ -1555,6 +1644,7 @@ components:
           description: Partner's owner entity type.
         growthPhase:
           type: string
+          minLength: 1
           description: Partner's current growth phase.
         status:
           $ref: '#/components/schemas/SeedStatus'
