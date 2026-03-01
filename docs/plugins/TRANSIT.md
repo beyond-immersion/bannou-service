@@ -612,11 +612,7 @@ None currently known.
 
 3. **Journey archival is lazy, not event-driven**: Completed journeys are moved from Redis to MySQL by the `JourneyArchivalWorker` on a periodic timer (`JourneyArchivalWorkerIntervalSeconds`, default 300s). This means recently completed journeys remain in Redis for up to 5 minutes before archival. Queries for historical journeys should check both active (`journey/get`) and archived (`journey/query-archive`) stores.
 
-### Design Considerations
-
-1. **No autonomous journey progression**: Transit never auto-advances journeys. The game client or Actor behavior must call `journey/advance` and `journey/arrive`. This is a deliberate design choice (see Resolved Design Decisions #2) — Transit records and calculates but doesn't simulate. If an NPC's Actor crashes mid-journey, the journey stays at its last waypoint until resumed.
-
-2. **Discovery is per-entity, not per-account**: Connection discovery (`transit-discovery` store) is tracked per entity, meaning each character on an account discovers connections independently. There is no account-level discovery sharing. This is consistent with Transit being a game-primitive — account-level features would be an L4 concern.
+4. **Discovery is per-entity, not per-account**: Connection discovery (`transit-discovery` store) is tracked per entity, meaning each character on an account discovers connections independently. There is no account-level discovery sharing. This is consistent with Transit being a game-primitive — account-level features would be an L4 concern.
 
 ---
 
@@ -920,3 +916,4 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ### Completed
 - **2026-03-01**: Potential Extension #3 (Weather-reactive connections) — confirmed Transit side is complete; marked as FIXED. Remaining work is Environment (L4) consumer implementation.
+- **2026-03-01**: Design Considerations cleanup — removed "No autonomous journey progression" (duplicate of Resolved Design Decision #2). Moved "Discovery is per-entity, not per-account" to Intentional Quirks #4 (intentional behavior, not an open design question).

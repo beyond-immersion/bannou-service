@@ -602,6 +602,56 @@ public class SearchIndexServiceTests
         Assert.Equal(2, afterStats.TotalTags); // shared-tag (still used), unique-tag-2
     }
 
+    [Fact]
+    public async Task IndexDocument_WhenUpdated_ShouldNotRetainStaleTerms()
+    {
+        // Arrange - index a document with specific content
+        var docId = Guid.NewGuid();
+        _service.IndexDocument(TEST_NAMESPACE, docId, "Alpha Beta", "alpha-beta",
+            "Original content about alpha and beta", DocumentCategory.Tutorials, new[] { "old-tag" });
+
+        // Verify original terms are searchable
+        var alphaResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10);
+        Assert.Single(alphaResults);
+
+        // Act - re-index the same document with completely different content
+        _service.IndexDocument(TEST_NAMESPACE, docId, "Gamma Delta", "gamma-delta",
+            "Updated content about gamma and delta", DocumentCategory.Tutorials, new[] { "new-tag" });
+
+        // Assert - old terms should NOT match this document anymore
+        var staleResults = await _service.SearchAsync(TEST_NAMESPACE, "alpha", maxResults: 10);
+        Assert.Empty(staleResults);
+
+        // New terms should match
+        var freshResults = await _service.SearchAsync(TEST_NAMESPACE, "gamma", maxResults: 10);
+        Assert.Single(freshResults);
+        Assert.Equal(docId, freshResults[0].DocumentId);
+
+        // Document count should still be 1 (update, not duplicate)
+        var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
+        Assert.Equal(1, stats.TotalDocuments);
+    }
+
+    [Fact]
+    public async Task RemoveDocument_ShouldCleanUpInvertedIndex()
+    {
+        // Arrange
+        var docId = Guid.NewGuid();
+        _service.IndexDocument(TEST_NAMESPACE, docId, "Unique Searchable Title", "unique-title",
+            "Content with unique words", DocumentCategory.Other, null);
+
+        // Verify it's findable
+        var beforeResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10);
+        Assert.Single(beforeResults);
+
+        // Act
+        _service.RemoveDocument(TEST_NAMESPACE, docId);
+
+        // Assert - terms from removed document should no longer match
+        var afterResults = await _service.SearchAsync(TEST_NAMESPACE, "unique searchable", maxResults: 10);
+        Assert.Empty(afterResults);
+    }
+
     #endregion
 
     #region Namespace Isolation Tests

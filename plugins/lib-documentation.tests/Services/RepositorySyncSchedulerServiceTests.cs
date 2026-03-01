@@ -34,7 +34,7 @@ public class RepositorySyncSchedulerServiceTests
         {
             SyncSchedulerEnabled = true,
             SyncSchedulerCheckIntervalMinutes = 1,
-            MaxConcurrentSyncs = 3
+            MaxSyncsPerCycle = 3
         };
 
         // Setup service scope factory
@@ -330,12 +330,12 @@ public class RepositorySyncSchedulerServiceTests
     }
 
     [Fact]
-    public void MaxConcurrentSyncs_ShouldLimitParallelSyncs()
+    public void MaxSyncsPerCycle_ShouldLimitSyncsPerSchedulerCycle()
     {
         // Arrange
         var config = new DocumentationServiceConfiguration
         {
-            MaxConcurrentSyncs = 1 // Only allow 1 concurrent sync
+            MaxSyncsPerCycle = 1 // Only allow 1 sync per scheduler cycle
         };
 
         using var service = new RepositorySyncSchedulerService(
@@ -344,7 +344,7 @@ public class RepositorySyncSchedulerServiceTests
             config,
             _mockTelemetryProvider.Object);
 
-        // Assert - Service should respect max concurrent limit
+        // Assert - Service should respect max syncs per cycle limit
         Assert.NotNull(service);
     }
 

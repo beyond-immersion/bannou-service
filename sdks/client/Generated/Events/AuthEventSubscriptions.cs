@@ -29,7 +29,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthDeviceLoginClient(Action<AuthDeviceLoginClientEvent> handler)
+    public IEventSubscription OnAuthDeviceLogin(Action<AuthDeviceLoginClientEvent> handler)
     {
         return _client.OnEvent<AuthDeviceLoginClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthExternalAccountLinkedClient(Action<AuthExternalAccountLinkedClientEvent> handler)
+    public IEventSubscription OnAuthExternalAccountLinked(Action<AuthExternalAccountLinkedClientEvent> handler)
     {
         return _client.OnEvent<AuthExternalAccountLinkedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthMfaDisabledClient(Action<AuthMfaDisabledClientEvent> handler)
+    public IEventSubscription OnAuthMfaDisabled(Action<AuthMfaDisabledClientEvent> handler)
     {
         return _client.OnEvent<AuthMfaDisabledClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthMfaEnabledClient(Action<AuthMfaEnabledClientEvent> handler)
+    public IEventSubscription OnAuthMfaEnabled(Action<AuthMfaEnabledClientEvent> handler)
     {
         return _client.OnEvent<AuthMfaEnabledClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthPasswordChangedClient(Action<AuthPasswordChangedClientEvent> handler)
+    public IEventSubscription OnAuthPasswordChanged(Action<AuthPasswordChangedClientEvent> handler)
     {
         return _client.OnEvent<AuthPasswordChangedClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthSessionTerminatedClient(Action<AuthSessionTerminatedClientEvent> handler)
+    public IEventSubscription OnAuthSessionTerminated(Action<AuthSessionTerminatedClientEvent> handler)
     {
         return _client.OnEvent<AuthSessionTerminatedClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class AuthEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAuthSuspiciousLoginClient(Action<AuthSuspiciousLoginClientEvent> handler)
+    public IEventSubscription OnAuthSuspiciousLogin(Action<AuthSuspiciousLoginClientEvent> handler)
     {
         return _client.OnEvent<AuthSuspiciousLoginClientEvent>(handler);
     }

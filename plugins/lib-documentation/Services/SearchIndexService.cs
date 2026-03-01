@@ -213,12 +213,14 @@ public partial class SearchIndexService : ISearchIndexService
     /// <summary>
     /// Thread-safe index for a single namespace.
     /// Uses ConcurrentDictionary for all mutable state.
+    /// ConcurrentDictionary&lt;Guid, byte&gt; is used as a concurrent hash set
+    /// (ConcurrentBag has no Remove, preventing stale term cleanup on updates).
     /// </summary>
     private sealed partial class NamespaceIndex
     {
         private readonly ConcurrentDictionary<Guid, IndexedDocument> _documents = new();
-        private readonly ConcurrentDictionary<string, ConcurrentBag<Guid>> _invertedIndex = new();
-        private readonly ConcurrentDictionary<string, ConcurrentBag<Guid>> _categoryIndex = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, byte>> _invertedIndex = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, byte>> _categoryIndex = new();
         private readonly ConcurrentDictionary<string, int> _tagCounts = new();
         private readonly object _statsLock = new();
 
@@ -232,6 +234,10 @@ public partial class SearchIndexService : ISearchIndexService
 
         public void AddDocument(Guid id, string title, string slug, string? content, DocumentCategory category, IEnumerable<string>? tags)
         {
+            // Remove old index entries first if updating an existing document,
+            // so stale terms from the previous version are cleaned up
+            RemoveDocument(id);
+
             var doc = new IndexedDocument(id, title, slug, category, tags?.ToList() ?? new List<string>());
             _documents[id] = doc;
 
@@ -239,20 +245,14 @@ public partial class SearchIndexService : ISearchIndexService
             var terms = ExtractTerms(title, slug, content);
             foreach (var term in terms)
             {
-                var bag = _invertedIndex.GetOrAdd(term.ToLowerInvariant(), _ => new ConcurrentBag<Guid>());
-                if (!bag.Contains(id))
-                {
-                    bag.Add(id);
-                }
+                var termSet = _invertedIndex.GetOrAdd(term.ToLowerInvariant(), _ => new ConcurrentDictionary<Guid, byte>());
+                termSet.TryAdd(id, 0);
             }
 
             // Index by category
             var categoryKey = category.ToString().ToLowerInvariant();
-            var catBag = _categoryIndex.GetOrAdd(categoryKey, _ => new ConcurrentBag<Guid>());
-            if (!catBag.Contains(id))
-            {
-                catBag.Add(id);
-            }
+            var catSet = _categoryIndex.GetOrAdd(categoryKey, _ => new ConcurrentDictionary<Guid, byte>());
+            catSet.TryAdd(id, 0);
 
             // Track tags
             if (tags != null)
@@ -268,8 +268,22 @@ public partial class SearchIndexService : ISearchIndexService
         {
             if (_documents.TryRemove(id, out var doc))
             {
-                // Note: ConcurrentBag doesn't support removal, so we accept some stale references
-                // They'll be filtered out during search. For full cleanup, rebuild the index.
+                // Remove from inverted index: extract the same terms and remove this doc ID
+                var terms = ExtractTerms(doc.Title, doc.Slug, null);
+                foreach (var term in terms)
+                {
+                    if (_invertedIndex.TryGetValue(term.ToLowerInvariant(), out var termSet))
+                    {
+                        termSet.TryRemove(id, out _);
+                    }
+                }
+
+                // Remove from category index
+                var categoryKey = doc.Category.ToString().ToLowerInvariant();
+                if (_categoryIndex.TryGetValue(categoryKey, out var catSet))
+                {
+                    catSet.TryRemove(id, out _);
+                }
 
                 // Decrement tag counts
                 foreach (var tag in doc.Tags)
@@ -292,7 +306,7 @@ public partial class SearchIndexService : ISearchIndexService
                 // Exact match
                 if (_invertedIndex.TryGetValue(lowerTerm, out var exactMatches))
                 {
-                    foreach (var docId in exactMatches)
+                    foreach (var docId in exactMatches.Keys)
                     {
                         matchScores.AddOrUpdate(docId, 1.0, (_, score) => score + 1.0);
                     }
@@ -303,7 +317,7 @@ public partial class SearchIndexService : ISearchIndexService
                 {
                     if (kvp.Key.StartsWith(lowerTerm) && kvp.Key != lowerTerm)
                     {
-                        foreach (var docId in kvp.Value)
+                        foreach (var docId in kvp.Value.Keys)
                         {
                             matchScores.AddOrUpdate(docId, 0.5, (_, score) => score + 0.5);
                         }

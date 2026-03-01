@@ -785,23 +785,31 @@ public partial class InventoryService : IInventoryService
             return (MapHttpStatusCode(ex.StatusCode), null);
         }
 
+        if (!item.ContainerId.HasValue)
+        {
+            _logger.LogDebug("Item {InstanceId} is not in a container", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var containerId = item.ContainerId.Value;
+
         // Acquire distributed lock for container modification (per IMPLEMENTATION TENETS)
         var lockOwner = $"remove-item-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.InventoryLock,
-            item.ContainerId.ToString(),
+            containerId.ToString(),
             lockOwner,
             _configuration.LockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Failed to acquire lock for container {ContainerId}", item.ContainerId);
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId}", containerId);
             return (StatusCodes.Conflict, null);
         }
 
         // Use cache read-through (per IMPLEMENTATION TENETS - use defined cache stores)
-        var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
+        var container = await GetContainerWithCacheAsync(containerId, cancellationToken);
 
         if (container is null)
         {
@@ -846,7 +854,7 @@ public partial class InventoryService : IInventoryService
                 new ModifyItemInstanceRequest
                 {
                     InstanceId = body.InstanceId,
-                    NewContainerId = null
+                    ClearContainerId = true
                 }, cancellationToken);
         }
         catch (ApiException ex)
@@ -860,7 +868,7 @@ public partial class InventoryService : IInventoryService
             Timestamp = now,
             InstanceId = body.InstanceId,
             TemplateId = item.TemplateId,
-            ContainerId = item.ContainerId,
+            ContainerId = containerId,
             OwnerId = container.OwnerId,
             OwnerType = container.OwnerType
         }, cancellationToken);
@@ -868,7 +876,7 @@ public partial class InventoryService : IInventoryService
         await PublishContainerClientEventAsync(container.OwnerId, new InventoryItemChangedClientEvent
         {
             ChangeType = InventoryItemChangeType.Removed,
-            ContainerId = item.ContainerId,
+            ContainerId = containerId,
             ContainerType = container.ContainerType,
             InstanceId = body.InstanceId,
             TemplateId = item.TemplateId
@@ -876,7 +884,7 @@ public partial class InventoryService : IInventoryService
 
         return (StatusCodes.OK, new RemoveItemResponse
         {
-            PreviousContainerId = item.ContainerId
+            PreviousContainerId = containerId
         });
     }
 
@@ -899,7 +907,13 @@ public partial class InventoryService : IInventoryService
             return (MapHttpStatusCode(ex.StatusCode), null);
         }
 
-        var sourceContainerId = item.ContainerId;
+        if (!item.ContainerId.HasValue)
+        {
+            _logger.LogDebug("Item {InstanceId} is not in a container", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var sourceContainerId = item.ContainerId.Value;
 
         // If moving to same container, update slot position only (no counter changes needed)
         if (sourceContainerId == body.TargetContainerId)
@@ -1138,22 +1152,17 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.BadRequest, null);
         }
 
-        var sourceContainerId = item.ContainerId;
-
-        // Acquire distributed lock on source container for transfer safety
-        var lockOwner = $"transfer-item-{Guid.NewGuid():N}";
-        await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.InventoryLock,
-            sourceContainerId.ToString(),
-            lockOwner,
-            _configuration.LockTimeoutSeconds,
-            cancellationToken);
-
-        if (!lockResponse.Success)
+        if (!item.ContainerId.HasValue)
         {
-            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during transfer", sourceContainerId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Item {InstanceId} is not in a container", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        var sourceContainerId = item.ContainerId.Value;
+
+        // Sub-operations (RemoveItemFromContainerAsync, AddItemToContainerAsync) each acquire
+        // their own distributed locks. A parent lock here with a different owner would conflict
+        // with the child locks on the same container key.
 
         var quantityToTransfer = body.Quantity ?? item.Quantity;
 
@@ -1279,6 +1288,14 @@ public partial class InventoryService : IInventoryService
             return (MapHttpStatusCode(ex.StatusCode), null);
         }
 
+        if (!item.ContainerId.HasValue)
+        {
+            _logger.LogDebug("Item {InstanceId} is not in a container", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var splitContainerId = item.ContainerId.Value;
+
         if (item.Quantity <= body.Quantity)
         {
             _logger.LogDebug("Cannot split {Quantity} from stack of {Total}",
@@ -1310,14 +1327,14 @@ public partial class InventoryService : IInventoryService
         var lockOwner = $"split-stack-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.InventoryLock,
-            item.ContainerId.ToString(),
+            splitContainerId.ToString(),
             lockOwner,
             _configuration.LockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResponse.Success)
         {
-            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during split", item.ContainerId);
+            _logger.LogWarning("Failed to acquire lock for container {ContainerId} during split", splitContainerId);
             return (StatusCodes.Conflict, null);
         }
 
@@ -1348,7 +1365,7 @@ public partial class InventoryService : IInventoryService
                 new CreateItemInstanceRequest
                 {
                     TemplateId = item.TemplateId,
-                    ContainerId = item.ContainerId,
+                    ContainerId = splitContainerId,
                     RealmId = item.RealmId,
                     Quantity = body.Quantity,
                     SlotIndex = body.TargetSlotIndex,
@@ -1378,7 +1395,7 @@ public partial class InventoryService : IInventoryService
         }
 
         // Update container UsedSlots for the new item instance
-        var container = await GetContainerWithCacheAsync(item.ContainerId, cancellationToken);
+        var container = await GetContainerWithCacheAsync(splitContainerId, cancellationToken);
         if (container != null)
         {
             container.UsedSlots = (container.UsedSlots ?? 0) + 1;
@@ -1393,7 +1410,7 @@ public partial class InventoryService : IInventoryService
             OriginalInstanceId = body.InstanceId,
             NewInstanceId = newItem.InstanceId,
             TemplateId = item.TemplateId,
-            ContainerId = item.ContainerId,
+            ContainerId = splitContainerId,
             QuantitySplit = body.Quantity,
             OriginalRemaining = originalRemaining
         }, cancellationToken);
@@ -1403,7 +1420,7 @@ public partial class InventoryService : IInventoryService
             await PublishContainerClientEventAsync(container.OwnerId, new InventoryItemChangedClientEvent
             {
                 ChangeType = InventoryItemChangeType.Split,
-                ContainerId = item.ContainerId,
+                ContainerId = splitContainerId,
                 ContainerType = container.ContainerType,
                 InstanceId = newItem.InstanceId,
                 TemplateId = item.TemplateId,
@@ -1460,6 +1477,15 @@ public partial class InventoryService : IInventoryService
             return (StatusCodes.BadRequest, null);
         }
 
+        if (!source.ContainerId.HasValue || !target.ContainerId.HasValue)
+        {
+            _logger.LogDebug("Cannot merge items that are not in containers");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var sourceContainerIdForMerge = source.ContainerId.Value;
+        var targetContainerIdForMerge = target.ContainerId.Value;
+
         // Get template for max stack
         ItemTemplateResponse template;
         try
@@ -1490,27 +1516,27 @@ public partial class InventoryService : IInventoryService
         // concurrent operations (e.g., DeleteContainer on target while we modify target item)
         // Use deterministic ordering (smaller GUID first) to prevent deadlocks
         var lockOwner = $"merge-stack-{Guid.NewGuid():N}";
-        var sameContainer = source.ContainerId == target.ContainerId;
+        var sameContainer = sourceContainerIdForMerge == targetContainerIdForMerge;
 
         Guid firstLockId;
         Guid? secondLockId;
         if (sameContainer)
         {
-            firstLockId = source.ContainerId;
+            firstLockId = sourceContainerIdForMerge;
             secondLockId = null; // Single container - only one lock needed
         }
         else
         {
             // Deterministic ordering: lock smaller GUID first to prevent deadlocks
-            if (source.ContainerId.CompareTo(target.ContainerId) < 0)
+            if (sourceContainerIdForMerge.CompareTo(targetContainerIdForMerge) < 0)
             {
-                firstLockId = source.ContainerId;
-                secondLockId = target.ContainerId;
+                firstLockId = sourceContainerIdForMerge;
+                secondLockId = targetContainerIdForMerge;
             }
             else
             {
-                firstLockId = target.ContainerId;
-                secondLockId = source.ContainerId;
+                firstLockId = targetContainerIdForMerge;
+                secondLockId = sourceContainerIdForMerge;
             }
         }
 
@@ -1603,7 +1629,7 @@ public partial class InventoryService : IInventoryService
                 }
 
                 // Update container slot count since source is gone (lock already held)
-                var container = await GetContainerWithCacheAsync(source.ContainerId, cancellationToken);
+                var container = await GetContainerWithCacheAsync(sourceContainerIdForMerge, cancellationToken);
                 if (container is not null)
                 {
                     container.UsedSlots = Math.Max(0, (container.UsedSlots ?? 0) - 1);
@@ -1619,19 +1645,19 @@ public partial class InventoryService : IInventoryService
                 SourceInstanceId = body.SourceInstanceId,
                 TargetInstanceId = body.TargetInstanceId,
                 TemplateId = source.TemplateId,
-                ContainerId = target.ContainerId,
+                ContainerId = targetContainerIdForMerge,
                 QuantityAdded = quantityToAdd,
                 NewTotalQuantity = combinedQuantity
             }, cancellationToken);
 
             // Load container for owner routing (cache read-through)
-            var mergeContainer = await GetContainerWithCacheAsync(target.ContainerId, cancellationToken);
+            var mergeContainer = await GetContainerWithCacheAsync(targetContainerIdForMerge, cancellationToken);
             if (mergeContainer is not null)
             {
                 await PublishContainerClientEventAsync(mergeContainer.OwnerId, new InventoryItemChangedClientEvent
                 {
                     ChangeType = InventoryItemChangeType.Stacked,
-                    ContainerId = target.ContainerId,
+                    ContainerId = targetContainerIdForMerge,
                     ContainerType = mergeContainer.ContainerType,
                     InstanceId = body.TargetInstanceId,
                     TemplateId = source.TemplateId,

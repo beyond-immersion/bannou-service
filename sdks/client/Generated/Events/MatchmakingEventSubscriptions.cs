@@ -29,7 +29,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchConfirmedClient(Action<MatchConfirmedClientEvent> handler)
+    public IEventSubscription OnMatchConfirmed(Action<MatchConfirmedClientEvent> handler)
     {
         return _client.OnEvent<MatchConfirmedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchDeclinedClient(Action<MatchDeclinedClientEvent> handler)
+    public IEventSubscription OnMatchDeclined(Action<MatchDeclinedClientEvent> handler)
     {
         return _client.OnEvent<MatchDeclinedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchFoundClient(Action<MatchFoundClientEvent> handler)
+    public IEventSubscription OnMatchFound(Action<MatchFoundClientEvent> handler)
     {
         return _client.OnEvent<MatchFoundClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchPlayerAcceptedClient(Action<MatchPlayerAcceptedClientEvent> handler)
+    public IEventSubscription OnMatchPlayerAccepted(Action<MatchPlayerAcceptedClientEvent> handler)
     {
         return _client.OnEvent<MatchPlayerAcceptedClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchmakingCancelledClient(Action<MatchmakingCancelledClientEvent> handler)
+    public IEventSubscription OnMatchmakingCancelled(Action<MatchmakingCancelledClientEvent> handler)
     {
         return _client.OnEvent<MatchmakingCancelledClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMatchmakingStatusUpdateClient(Action<MatchmakingStatusUpdateClientEvent> handler)
+    public IEventSubscription OnMatchmakingStatusUpdate(Action<MatchmakingStatusUpdateClientEvent> handler)
     {
         return _client.OnEvent<MatchmakingStatusUpdateClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class MatchmakingEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnQueueJoinedClient(Action<QueueJoinedClientEvent> handler)
+    public IEventSubscription OnQueueJoined(Action<QueueJoinedClientEvent> handler)
     {
         return _client.OnEvent<QueueJoinedClientEvent>(handler);
     }

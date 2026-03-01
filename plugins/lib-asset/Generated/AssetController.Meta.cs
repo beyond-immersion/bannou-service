@@ -527,9 +527,9 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "minLength": 64,
-                    "maxLength": 64,
-                    "description": "Asset identifier (SHA-256 hex string)"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19)"
                 },
                 "version": {
                     "type": "string",
@@ -783,9 +783,9 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "minLength": 64,
-                    "maxLength": 64,
-                    "description": "Asset identifier to delete (SHA-256 hex string)"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)"
                 },
                 "versionId": {
                     "type": "string",
@@ -892,9 +892,9 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "minLength": 64,
-                    "maxLength": 64,
-                    "description": "Asset identifier to list versions for (SHA-256 hex string)"
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format)"
                 },
                 "limit": {
                     "type": "integer",

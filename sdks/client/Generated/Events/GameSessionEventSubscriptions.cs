@@ -29,7 +29,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnGameActionResultClient(Action<GameActionResultClientEvent> handler)
+    public IEventSubscription OnGameActionResult(Action<GameActionResultClientEvent> handler)
     {
         return _client.OnEvent<GameActionResultClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnGameStateUpdatedClient(Action<GameStateUpdatedClientEvent> handler)
+    public IEventSubscription OnGameStateUpdated(Action<GameStateUpdatedClientEvent> handler)
     {
         return _client.OnEvent<GameStateUpdatedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerJoinedClient(Action<PlayerJoinedClientEvent> handler)
+    public IEventSubscription OnPlayerJoined(Action<PlayerJoinedClientEvent> handler)
     {
         return _client.OnEvent<PlayerJoinedClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerKickedClient(Action<PlayerKickedClientEvent> handler)
+    public IEventSubscription OnPlayerKicked(Action<PlayerKickedClientEvent> handler)
     {
         return _client.OnEvent<PlayerKickedClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerLeftClient(Action<PlayerLeftClientEvent> handler)
+    public IEventSubscription OnPlayerLeft(Action<PlayerLeftClientEvent> handler)
     {
         return _client.OnEvent<PlayerLeftClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionCancelledClient(Action<SessionCancelledClientEvent> handler)
+    public IEventSubscription OnSessionCancelled(Action<SessionCancelledClientEvent> handler)
     {
         return _client.OnEvent<SessionCancelledClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionChatReceivedClient(Action<SessionChatReceivedClientEvent> handler)
+    public IEventSubscription OnSessionChatReceived(Action<SessionChatReceivedClientEvent> handler)
     {
         return _client.OnEvent<SessionChatReceivedClientEvent>(handler);
     }
@@ -106,7 +106,7 @@ public sealed class GameSessionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionStateChangedClient(Action<SessionStateChangedClientEvent> handler)
+    public IEventSubscription OnSessionStateChanged(Action<SessionStateChangedClientEvent> handler)
     {
         return _client.OnEvent<SessionStateChangedClientEvent>(handler);
     }

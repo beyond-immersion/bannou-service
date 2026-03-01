@@ -236,7 +236,7 @@ public class RealmTestHandler : BaseHttpTestHandler
                 Name = "Undeprecate Test Realm"
             });
 
-            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId });
+            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId, Reason = "Testing undeprecation" });
 
             var response = await realmClient.UndeprecateRealmAsync(new UndeprecateRealmRequest { RealmId = realm.RealmId });
 
@@ -411,7 +411,7 @@ public class RealmTestHandler : BaseHttpTestHandler
 
             // Step 8: Deprecate again for deletion
             Console.WriteLine("  Step 8: Deprecating again for deletion...");
-            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId });
+            await realmClient.DeprecateRealmAsync(new DeprecateRealmRequest { RealmId = realm.RealmId, Reason = "Testing deletion" });
 
             // Step 9: Delete realm
             Console.WriteLine("  Step 9: Deleting realm...");

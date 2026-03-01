@@ -22658,7 +22658,7 @@ export interface components {
     };
     /** @description Request to retrieve asset metadata and download URL */
     GetAssetRequest: {
-      /** @description Asset identifier (SHA-256 hex string) */
+      /** @description Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19) */
       assetId: string;
       /** @description Version ID to retrieve (null for latest version) */
       version?: string | null;
@@ -25245,9 +25245,9 @@ export interface components {
       templateId: string;
       /**
        * Format: uuid
-       * @description Container holding this item
+       * @description Container holding this item. Null when item has been removed from all containers.
        */
-      containerId: string;
+      containerId?: string | null;
       /**
        * Format: uuid
        * @description Realm this instance exists in
@@ -27676,7 +27676,7 @@ export interface components {
     };
     /** @description Request to list all versions of an asset with pagination */
     ListVersionsRequest: {
-      /** @description Asset identifier to list versions for (SHA-256 hex string) */
+      /** @description Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format) */
       assetId: string;
       /**
        * @description Maximum number of versions to return
@@ -28555,6 +28555,8 @@ export interface components {
        * @description Move item to a different container. Used by inventory service for item movement.
        */
       newContainerId?: string | null;
+      /** @description When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId. */
+      clearContainerId?: boolean | null;
       /** @description New slot index within the container */
       newSlotIndex?: number | null;
       /** @description New X position for grid-based containers */

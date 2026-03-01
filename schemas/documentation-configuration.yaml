@@ -131,10 +131,10 @@ x-service-configuration:
       default: 5
       minimum: 1
       maximum: 1440
-    MaxConcurrentSyncs:
+    MaxSyncsPerCycle:
       type: integer
-      description: Maximum concurrent sync operations
-      env: DOCUMENTATION_MAX_CONCURRENT_SYNCS
+      description: Maximum sync operations per scheduler cycle (processed sequentially)
+      env: DOCUMENTATION_MAX_SYNCS_PER_CYCLE
       default: 3
       minimum: 1
       maximum: 20
@@ -196,13 +196,6 @@ x-service-configuration:
       default: 1000
       minimum: 1
       maximum: 100000
-    StatsSampleSize:
-      type: integer
-      description: Number of documents to sample for namespace statistics
-      env: DOCUMENTATION_STATS_SAMPLE_SIZE
-      default: 10
-      minimum: 1
-      maximum: 1000
     EstimatedBytesPerDocument:
       type: integer
       description: Estimated average document content size in bytes for stats calculations

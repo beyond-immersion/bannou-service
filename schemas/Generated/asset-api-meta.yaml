@@ -259,11 +259,11 @@ paths:
         ,\n    \"$defs\": {\n        \"GetAssetRequest\": {\n            \"description\": \"Request to retrieve asset metadata
         and download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"\
-        assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 64,\n                \
-        \    \"maxLength\": 64,\n                    \"description\": \"Asset identifier (SHA-256 hex string)\"\n        \
-        \        },\n                \"version\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Version ID to retrieve (null for latest version)\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+        assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                 \
+        \   \"maxLength\": 256,\n                    \"description\": \"Asset identifier ({content-type-prefix}-{hash-prefix}
+        format, e.g. application-f7a0c71edb19)\"\n                },\n                \"version\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Version ID
+        to retrieve (null for latest version)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata with optional
         pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
@@ -359,11 +359,11 @@ paths:
         ,\n    \"$defs\": {\n        \"DeleteAssetRequest\": {\n            \"description\": \"Request to delete an asset
         from storage\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
-        \                    \"type\": \"string\",\n                    \"minLength\": 64,\n                    \"maxLength\"\
-        : 64,\n                    \"description\": \"Asset identifier to delete (SHA-256 hex string)\"\n                },\n\
-        \                \"versionId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Specific version to delete. If omitted, all versions are deleted.\\n\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 256,\n                    \"description\": \"Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)\"\
+        \n                },\n                \"versionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Specific version to delete. If omitted, all versions
+        are deleted.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAssetResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteAssetResponse\": {\n            \"description\": \"Response confirming asset
         deletion\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -405,14 +405,14 @@ paths:
         ,\n    \"$defs\": {\n        \"ListVersionsRequest\": {\n            \"description\": \"Request to list all versions
         of an asset with pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n       \
-        \         \"assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 64,\n    \
-        \                \"maxLength\": 64,\n                    \"description\": \"Asset identifier to list versions for
-        (SHA-256 hex string)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"description\"\
-        : \"Maximum number of versions to return\"\n                },\n                \"offset\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"minimum\": 0,\n            \
-        \        \"description\": \"Number of versions to skip for pagination\"\n                }\n            }\n      \
-        \  }\n    }\n}"
+        \         \"assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n     \
+        \               \"maxLength\": 256,\n                    \"description\": \"Asset identifier to list versions for
+        ({content-type-prefix}-{hash-prefix} format)\"\n                },\n                \"limit\": {\n               \
+        \     \"type\": \"integer\",\n                    \"default\": 50,\n                    \"minimum\": 1,\n        \
+        \            \"description\": \"Maximum number of versions to return\"\n                },\n                \"offset\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Number of versions to skip for pagination\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetVersionList\"\
         ,\n    \"$defs\": {\n        \"AssetVersionList\": {\n            \"description\": \"Paginated list of asset versions\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -2275,9 +2275,9 @@ components:
       properties:
         assetId:
           type: string
-          minLength: 64
-          maxLength: 64
-          description: Asset identifier (SHA-256 hex string)
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19)
         version:
           type: string
           nullable: true
@@ -2332,9 +2332,9 @@ components:
       properties:
         assetId:
           type: string
-          minLength: 64
-          maxLength: 64
-          description: Asset identifier to delete (SHA-256 hex string)
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)
         versionId:
           type: string
           nullable: true
@@ -2359,9 +2359,9 @@ components:
       properties:
         assetId:
           type: string
-          minLength: 64
-          maxLength: 64
-          description: Asset identifier to list versions for (SHA-256 hex string)
+          minLength: 1
+          maxLength: 256
+          description: Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format)
         limit:
           type: integer
           default: 50

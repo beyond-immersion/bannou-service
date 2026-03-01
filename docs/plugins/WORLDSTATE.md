@@ -491,12 +491,16 @@ All 18 endpoints are fully implemented. No stubs remain.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/534 -->
 
 3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/538 -->
 
 4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles with their own variable namespace (`${world.moon.phase}`).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/540 -->
 
 5. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation. Pure calendar math, no state required.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/542 -->
 
 6. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/543 -->
 
 ---
 
@@ -645,10 +649,13 @@ flows:
 ### Design Considerations (Requires Planning)
 
 1. **Game-time in existing schemas**: Encounter's `inGameTime` and Relationship's `inGameTimestamp` fields are currently caller-provided. Should these services auto-populate from worldstate? Auto-population requires those L2 services to depend on worldstate (same layer -- allowed). The migration path needs consideration.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/544 -->
 
 2. **Currency/Seed migration to game-time**: Adding optional game-time support requires a configuration flag per service and careful handling of the transition (existing data uses real-time timestamps; switching mid-stream requires conversion).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/545 -->
 
 3. **Background worker scalability**: With many realms (100+), a single worker iteration may not complete within the tick interval. The current implementation processes realms sequentially. Options: (a) parallel realm advancement with configurable concurrency, (b) partitioning realms across nodes via `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/546 -->
 
 ---
 

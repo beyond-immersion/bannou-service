@@ -29,7 +29,7 @@ public sealed class WorldstateEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnWorldstateTimeSyncClient(Action<WorldstateTimeSyncClientEvent> handler)
+    public IEventSubscription OnWorldstateTimeSync(Action<WorldstateTimeSyncClientEvent> handler)
     {
         return _client.OnEvent<WorldstateTimeSyncClientEvent>(handler);
     }

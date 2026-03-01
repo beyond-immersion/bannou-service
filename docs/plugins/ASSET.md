@@ -402,10 +402,13 @@ Client                    Asset Service                     MinIO Storage
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/536 -->
 
 3. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/537 -->
 
 4. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/539 -->
 
 5. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/541 -->
 
 ---
 

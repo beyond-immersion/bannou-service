@@ -41,7 +41,7 @@ components:
         eventName:
           type: string
           description: |
-            Unique event type identifier (e.g., "connect.capability_manifest").
+            Unique event type identifier (e.g., "connect.capability-manifest").
             Must be in the generated ClientEventWhitelist or will be rejected.
             Convention: {service}.{event_name}
         eventId:

@@ -29,7 +29,7 @@ public sealed class CurrencyEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyBalanceChangedClient(Action<CurrencyBalanceChangedClientEvent> handler)
+    public IEventSubscription OnCurrencyBalanceChanged(Action<CurrencyBalanceChangedClientEvent> handler)
     {
         return _client.OnEvent<CurrencyBalanceChangedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class CurrencyEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyWalletFrozenClient(Action<CurrencyWalletFrozenClientEvent> handler)
+    public IEventSubscription OnCurrencyWalletFrozen(Action<CurrencyWalletFrozenClientEvent> handler)
     {
         return _client.OnEvent<CurrencyWalletFrozenClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class CurrencyEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyWalletUnfrozenClient(Action<CurrencyWalletUnfrozenClientEvent> handler)
+    public IEventSubscription OnCurrencyWalletUnfrozen(Action<CurrencyWalletUnfrozenClientEvent> handler)
     {
         return _client.OnEvent<CurrencyWalletUnfrozenClientEvent>(handler);
     }

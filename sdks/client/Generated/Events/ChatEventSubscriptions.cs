@@ -29,7 +29,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessageDeletedClient(Action<ChatMessageDeletedClientEvent> handler)
+    public IEventSubscription OnChatMessageDeleted(Action<ChatMessageDeletedClientEvent> handler)
     {
         return _client.OnEvent<ChatMessageDeletedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessagePinnedClient(Action<ChatMessagePinnedClientEvent> handler)
+    public IEventSubscription OnChatMessagePinned(Action<ChatMessagePinnedClientEvent> handler)
     {
         return _client.OnEvent<ChatMessagePinnedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessageReceivedClient(Action<ChatMessageReceivedClientEvent> handler)
+    public IEventSubscription OnChatMessageReceived(Action<ChatMessageReceivedClientEvent> handler)
     {
         return _client.OnEvent<ChatMessageReceivedClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantBannedClient(Action<ChatParticipantBannedClientEvent> handler)
+    public IEventSubscription OnChatParticipantBanned(Action<ChatParticipantBannedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantBannedClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantJoinedClient(Action<ChatParticipantJoinedClientEvent> handler)
+    public IEventSubscription OnChatParticipantJoined(Action<ChatParticipantJoinedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantJoinedClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantKickedClient(Action<ChatParticipantKickedClientEvent> handler)
+    public IEventSubscription OnChatParticipantKicked(Action<ChatParticipantKickedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantKickedClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantLeftClient(Action<ChatParticipantLeftClientEvent> handler)
+    public IEventSubscription OnChatParticipantLeft(Action<ChatParticipantLeftClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantLeftClientEvent>(handler);
     }
@@ -106,7 +106,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantMutedClient(Action<ChatParticipantMutedClientEvent> handler)
+    public IEventSubscription OnChatParticipantMuted(Action<ChatParticipantMutedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantMutedClientEvent>(handler);
     }
@@ -117,7 +117,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantRoleChangedClient(Action<ChatParticipantRoleChangedClientEvent> handler)
+    public IEventSubscription OnChatParticipantRoleChanged(Action<ChatParticipantRoleChangedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantRoleChangedClientEvent>(handler);
     }
@@ -128,7 +128,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantUnbannedClient(Action<ChatParticipantUnbannedClientEvent> handler)
+    public IEventSubscription OnChatParticipantUnbanned(Action<ChatParticipantUnbannedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantUnbannedClientEvent>(handler);
     }
@@ -139,7 +139,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatParticipantUnmutedClient(Action<ChatParticipantUnmutedClientEvent> handler)
+    public IEventSubscription OnChatParticipantUnmuted(Action<ChatParticipantUnmutedClientEvent> handler)
     {
         return _client.OnEvent<ChatParticipantUnmutedClientEvent>(handler);
     }
@@ -150,7 +150,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatRoomDeletedClient(Action<ChatRoomDeletedClientEvent> handler)
+    public IEventSubscription OnChatRoomDeleted(Action<ChatRoomDeletedClientEvent> handler)
     {
         return _client.OnEvent<ChatRoomDeletedClientEvent>(handler);
     }
@@ -161,7 +161,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatRoomLockedClient(Action<ChatRoomLockedClientEvent> handler)
+    public IEventSubscription OnChatRoomLocked(Action<ChatRoomLockedClientEvent> handler)
     {
         return _client.OnEvent<ChatRoomLockedClientEvent>(handler);
     }
@@ -172,7 +172,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatRoomUpdatedClient(Action<ChatRoomUpdatedClientEvent> handler)
+    public IEventSubscription OnChatRoomUpdated(Action<ChatRoomUpdatedClientEvent> handler)
     {
         return _client.OnEvent<ChatRoomUpdatedClientEvent>(handler);
     }
@@ -183,7 +183,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatTypingStartedClient(Action<ChatTypingStartedClientEvent> handler)
+    public IEventSubscription OnChatTypingStarted(Action<ChatTypingStartedClientEvent> handler)
     {
         return _client.OnEvent<ChatTypingStartedClientEvent>(handler);
     }
@@ -194,7 +194,7 @@ public sealed class ChatEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatTypingStoppedClient(Action<ChatTypingStoppedClientEvent> handler)
+    public IEventSubscription OnChatTypingStopped(Action<ChatTypingStoppedClientEvent> handler)
     {
         return _client.OnEvent<ChatTypingStoppedClientEvent>(handler);
     }

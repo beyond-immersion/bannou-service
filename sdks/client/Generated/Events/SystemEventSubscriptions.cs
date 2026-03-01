@@ -29,7 +29,7 @@ public sealed class SystemEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCapabilityManifestClient(Action<CapabilityManifestClientEvent> handler)
+    public IEventSubscription OnCapabilityManifest(Action<CapabilityManifestClientEvent> handler)
     {
         return _client.OnEvent<CapabilityManifestClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class SystemEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnDisconnectNotificationClient(Action<DisconnectNotificationClientEvent> handler)
+    public IEventSubscription OnDisconnectNotification(Action<DisconnectNotificationClientEvent> handler)
     {
         return _client.OnEvent<DisconnectNotificationClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class SystemEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSystemErrorClient(Action<SystemErrorClientEvent> handler)
+    public IEventSubscription OnSystemError(Action<SystemErrorClientEvent> handler)
     {
         return _client.OnEvent<SystemErrorClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class SystemEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSystemNotificationClient(Action<SystemNotificationClientEvent> handler)
+    public IEventSubscription OnSystemNotification(Action<SystemNotificationClientEvent> handler)
     {
         return _client.OnEvent<SystemNotificationClientEvent>(handler);
     }

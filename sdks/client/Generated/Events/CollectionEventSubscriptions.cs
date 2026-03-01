@@ -29,7 +29,7 @@ public sealed class CollectionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCollectionDiscoveryAdvancedClient(Action<CollectionDiscoveryAdvancedClientEvent> handler)
+    public IEventSubscription OnCollectionDiscoveryAdvanced(Action<CollectionDiscoveryAdvancedClientEvent> handler)
     {
         return _client.OnEvent<CollectionDiscoveryAdvancedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class CollectionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCollectionEntryUnlockedClient(Action<CollectionEntryUnlockedClientEvent> handler)
+    public IEventSubscription OnCollectionEntryUnlocked(Action<CollectionEntryUnlockedClientEvent> handler)
     {
         return _client.OnEvent<CollectionEntryUnlockedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class CollectionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCollectionMilestoneReachedClient(Action<CollectionMilestoneReachedClientEvent> handler)
+    public IEventSubscription OnCollectionMilestoneReached(Action<CollectionMilestoneReachedClientEvent> handler)
     {
         return _client.OnEvent<CollectionMilestoneReachedClientEvent>(handler);
     }

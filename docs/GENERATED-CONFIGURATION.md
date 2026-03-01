@@ -518,7 +518,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
 | `DOCUMENTATION_GIT_STORAGE_PATH` | string | `/tmp/bannou-git-repos` | Local path for cloned git repositories |
-| `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | int | `3` | Maximum concurrent sync operations |
 | `DOCUMENTATION_MAX_CONTENT_SIZE_BYTES` | int | `524288` | Maximum document content size in bytes (500KB default) |
 | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | int | `1000` | Maximum documents per sync operation |
 | `DOCUMENTATION_MAX_FETCH_LIMIT` | int | `1000` | Maximum documents to fetch when filtering/sorting in memory |
@@ -526,6 +525,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_MAX_RELATED_DOCUMENTS` | int | `5` | Maximum related documents to return for standard depth |
 | `DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED` | int | `10` | Maximum related documents to return for extended depth |
 | `DOCUMENTATION_MAX_SEARCH_RESULTS` | int | `20` | Maximum search results to return |
+| `DOCUMENTATION_MAX_SYNCS_PER_CYCLE` | int | `3` | Maximum sync operations per scheduler cycle (processed seque... |
 | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | double | `0.3` | Default minimum relevance score for search results |
 | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds between repository sync opportunity chec... |
 | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | int | `300` | TTL for search result caching |

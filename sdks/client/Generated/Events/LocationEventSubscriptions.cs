@@ -29,7 +29,7 @@ public sealed class LocationEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnLocationPresenceChangedClient(Action<LocationPresenceChangedClientEvent> handler)
+    public IEventSubscription OnLocationPresenceChanged(Action<LocationPresenceChangedClientEvent> handler)
     {
         return _client.OnEvent<LocationPresenceChangedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class LocationEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnLocationUpdatedClient(Action<LocationUpdatedClientEvent> handler)
+    public IEventSubscription OnLocationUpdated(Action<LocationUpdatedClientEvent> handler)
     {
         return _client.OnEvent<LocationUpdatedClientEvent>(handler);
     }

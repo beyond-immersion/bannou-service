@@ -561,7 +561,7 @@ public partial class ItemService : IItemService
         CancellationToken cancellationToken = default)
     {
         // Container changes require a lock to prevent race conditions on index updates
-        if (body.NewContainerId.HasValue)
+        if (body.NewContainerId.HasValue || body.ClearContainerId == true)
         {
             return await ModifyItemInstanceWithLockAsync(body, cancellationToken);
         }
@@ -615,6 +615,7 @@ public partial class ItemService : IItemService
 
         // Capture old container ID for index updates (must be captured before modification)
         var oldContainerId = model.ContainerId;
+        var containerCleared = body.ClearContainerId == true && oldContainerId.HasValue;
         var containerChanged = body.NewContainerId.HasValue && body.NewContainerId.Value != oldContainerId;
 
         // Apply modifications
@@ -638,7 +639,14 @@ public partial class ItemService : IItemService
         {
             model.InstanceMetadata = BannouJson.Serialize(body.InstanceMetadata);
         }
-        if (body.NewContainerId.HasValue)
+        if (body.ClearContainerId == true)
+        {
+            model.ContainerId = null;
+            model.SlotIndex = null;
+            model.SlotX = null;
+            model.SlotY = null;
+        }
+        else if (body.NewContainerId.HasValue)
         {
             model.ContainerId = body.NewContainerId.Value;
         }
@@ -659,12 +667,19 @@ public partial class ItemService : IItemService
         // Save the model first, then update indexes
         await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
 
-        // Update container indexes if container changed (after successful save)
-        if (containerChanged)
+        // Update container indexes if container changed or cleared (after successful save)
+        if (containerCleared && oldContainerId.HasValue)
+        {
+            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+        }
+        else if (containerChanged)
         {
             var newContainerId = body.NewContainerId
                 ?? throw new InvalidOperationException("NewContainerId is null when containerChanged is true");
-            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId}", body.InstanceId.ToString(), cancellationToken);
+            if (oldContainerId.HasValue)
+            {
+                await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{oldContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+            }
             await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{newContainerId}", body.InstanceId.ToString(), cancellationToken);
         }
 
@@ -834,7 +849,10 @@ public partial class ItemService : IItemService
         var now = DateTimeOffset.UtcNow;
 
         // Remove from indexes
-        await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{model.ContainerId}", body.InstanceId.ToString(), cancellationToken);
+        if (model.ContainerId.HasValue)
+        {
+            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{model.ContainerId.Value}", body.InstanceId.ToString(), cancellationToken);
+        }
         await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{model.TemplateId}", body.InstanceId.ToString(), cancellationToken);
 
         // Delete instance
@@ -1732,11 +1750,14 @@ public partial class ItemService : IItemService
         if (instance.Quantity <= 1)
         {
             // Last item - destroy the instance
-            await RemoveFromListAsync(
-                StateStoreDefinitions.ItemInstanceStore,
-                $"{INST_CONTAINER_INDEX}{instance.ContainerId}",
-                instanceId.ToString(),
-                cancellationToken);
+            if (instance.ContainerId.HasValue)
+            {
+                await RemoveFromListAsync(
+                    StateStoreDefinitions.ItemInstanceStore,
+                    $"{INST_CONTAINER_INDEX}{instance.ContainerId.Value}",
+                    instanceId.ToString(),
+                    cancellationToken);
+            }
             await RemoveFromListAsync(
                 StateStoreDefinitions.ItemInstanceStore,
                 $"{INST_TEMPLATE_INDEX}{instance.TemplateId}",

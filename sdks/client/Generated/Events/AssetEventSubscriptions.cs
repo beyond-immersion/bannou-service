@@ -29,7 +29,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetProcessingCompleteClient(Action<AssetProcessingCompleteClientEvent> handler)
+    public IEventSubscription OnAssetProcessingComplete(Action<AssetProcessingCompleteClientEvent> handler)
     {
         return _client.OnEvent<AssetProcessingCompleteClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetProcessingFailedClient(Action<AssetProcessingFailedClientEvent> handler)
+    public IEventSubscription OnAssetProcessingFailed(Action<AssetProcessingFailedClientEvent> handler)
     {
         return _client.OnEvent<AssetProcessingFailedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetReadyClient(Action<AssetReadyClientEvent> handler)
+    public IEventSubscription OnAssetReady(Action<AssetReadyClientEvent> handler)
     {
         return _client.OnEvent<AssetReadyClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetUploadCompleteClient(Action<AssetUploadCompleteClientEvent> handler)
+    public IEventSubscription OnAssetUploadComplete(Action<AssetUploadCompleteClientEvent> handler)
     {
         return _client.OnEvent<AssetUploadCompleteClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleCreationCompleteClient(Action<BundleCreationCompleteClientEvent> handler)
+    public IEventSubscription OnBundleCreationComplete(Action<BundleCreationCompleteClientEvent> handler)
     {
         return _client.OnEvent<BundleCreationCompleteClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleValidationCompleteClient(Action<BundleValidationCompleteClientEvent> handler)
+    public IEventSubscription OnBundleValidationComplete(Action<BundleValidationCompleteClientEvent> handler)
     {
         return _client.OnEvent<BundleValidationCompleteClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleValidationFailedClient(Action<BundleValidationFailedClientEvent> handler)
+    public IEventSubscription OnBundleValidationFailed(Action<BundleValidationFailedClientEvent> handler)
     {
         return _client.OnEvent<BundleValidationFailedClientEvent>(handler);
     }
@@ -106,7 +106,7 @@ public sealed class AssetEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMetabundleCreationCompleteClient(Action<MetabundleCreationCompleteClientEvent> handler)
+    public IEventSubscription OnMetabundleCreationComplete(Action<MetabundleCreationCompleteClientEvent> handler)
     {
         return _client.OnEvent<MetabundleCreationCompleteClientEvent>(handler);
     }

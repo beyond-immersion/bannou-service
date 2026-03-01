@@ -29,7 +29,7 @@ public sealed class InventoryEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnInventoryContainerFullClient(Action<InventoryContainerFullClientEvent> handler)
+    public IEventSubscription OnInventoryContainerFull(Action<InventoryContainerFullClientEvent> handler)
     {
         return _client.OnEvent<InventoryContainerFullClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class InventoryEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnInventoryItemChangedClient(Action<InventoryItemChangedClientEvent> handler)
+    public IEventSubscription OnInventoryItemChanged(Action<InventoryItemChangedClientEvent> handler)
     {
         return _client.OnEvent<InventoryItemChangedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class InventoryEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnInventoryItemTransferredClient(Action<InventoryItemTransferredClientEvent> handler)
+    public IEventSubscription OnInventoryItemTransferred(Action<InventoryItemTransferredClientEvent> handler)
     {
         return _client.OnEvent<InventoryItemTransferredClientEvent>(handler);
     }

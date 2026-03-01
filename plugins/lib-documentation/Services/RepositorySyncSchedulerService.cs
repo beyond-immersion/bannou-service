@@ -137,13 +137,13 @@ public class RepositorySyncSchedulerService : BackgroundService
         var bindingStore = stateStoreFactory.GetStore<RepositoryBinding>(StateStoreDefinitions.Documentation);
         var now = DateTimeOffset.UtcNow;
         var syncCount = 0;
-        var maxConcurrent = _configuration.MaxConcurrentSyncs;
+        var maxSyncsPerCycle = _configuration.MaxSyncsPerCycle;
 
         foreach (var namespaceId in bindingNamespaces)
         {
-            if (syncCount >= maxConcurrent)
+            if (syncCount >= maxSyncsPerCycle)
             {
-                _logger.LogDebug("Max concurrent syncs ({Max}) reached, remaining bindings will be processed next cycle", maxConcurrent);
+                _logger.LogDebug("Max syncs per cycle ({Max}) reached, remaining bindings will be processed next cycle", maxSyncsPerCycle);
                 break;
             }
 

@@ -71,12 +71,10 @@ public partial class ItemInstanceModifiedEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item
+    /// Container holding this item. Null when item has been removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -157,12 +155,10 @@ public partial class ItemInstanceDestroyedEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container that held this item
+    /// Container that held this item. Null if item was not in a container at destruction.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance existed in

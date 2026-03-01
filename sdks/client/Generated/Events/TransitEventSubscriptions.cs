@@ -29,7 +29,7 @@ public sealed class TransitEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitConnectionStatusChangedClient(Action<TransitConnectionStatusChangedClientEvent> handler)
+    public IEventSubscription OnTransitConnectionStatusChanged(Action<TransitConnectionStatusChangedClientEvent> handler)
     {
         return _client.OnEvent<TransitConnectionStatusChangedClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class TransitEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitDiscoveryRevealedClient(Action<TransitDiscoveryRevealedClientEvent> handler)
+    public IEventSubscription OnTransitDiscoveryRevealed(Action<TransitDiscoveryRevealedClientEvent> handler)
     {
         return _client.OnEvent<TransitDiscoveryRevealedClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class TransitEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitJourneyUpdatedClient(Action<TransitJourneyUpdatedClientEvent> handler)
+    public IEventSubscription OnTransitJourneyUpdated(Action<TransitJourneyUpdatedClientEvent> handler)
     {
         return _client.OnEvent<TransitJourneyUpdatedClientEvent>(handler);
     }

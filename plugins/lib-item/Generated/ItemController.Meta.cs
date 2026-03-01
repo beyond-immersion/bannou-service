@@ -2832,7 +2832,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -2852,7 +2851,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3068,7 +3068,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3088,7 +3087,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3319,6 +3319,11 @@ public partial class ItemController
                     "nullable": true,
                     "description": "Move item to a different container. Used by inventory service for item movement."
                 },
+                "clearContainerId": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId."
+                },
                 "newSlotIndex": {
                     "type": "integer",
                     "nullable": true,
@@ -3352,7 +3357,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3372,7 +3376,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3609,7 +3614,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3629,7 +3633,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3859,7 +3864,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3879,7 +3883,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -4563,7 +4568,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -4583,7 +4587,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -4846,7 +4851,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -4866,7 +4870,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -5113,7 +5118,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -5133,7 +5137,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",

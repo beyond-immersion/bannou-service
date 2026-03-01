@@ -29,7 +29,7 @@ public sealed class CharacterEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCharacterRealmTransferredClient(Action<CharacterRealmTransferredClientEvent> handler)
+    public IEventSubscription OnCharacterRealmTransferred(Action<CharacterRealmTransferredClientEvent> handler)
     {
         return _client.OnEvent<CharacterRealmTransferredClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class CharacterEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCharacterUpdatedClient(Action<CharacterUpdatedClientEvent> handler)
+    public IEventSubscription OnCharacterUpdated(Action<CharacterUpdatedClientEvent> handler)
     {
         return _client.OnEvent<CharacterUpdatedClientEvent>(handler);
     }

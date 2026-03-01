@@ -54,6 +54,7 @@ Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, Op
 | `all-namespaces` | `HashSet<string>` | Global registry of all namespaces (for search rebuild) |
 | `archive:{archiveId}` | `DocumentationArchive` | Archive metadata record |
 | `archive:list:{namespaceId}` | `List<Guid>` | Archive IDs for a namespace (ARCHIVE_KEY_PREFIX + "list:" + namespace) |
+| `ns-last-updated:{namespaceId}` | `string` (ISO 8601) | Most recent document mutation timestamp per namespace (for O(1) stats reads) |
 | `repo-sync:{namespaceId}` | Distributed Lock | Prevents concurrent sync operations on same namespace |
 
 ---
@@ -101,7 +102,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `GitCloneTimeoutSeconds` | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | `300` | Git clone/pull timeout |
 | `SyncSchedulerEnabled` | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | `true` | Enable background sync scheduler |
 | `SyncSchedulerCheckIntervalMinutes` | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | `5` | How often scheduler checks for due syncs |
-| `MaxConcurrentSyncs` | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | `3` | Max sync operations per scheduler cycle (sequential despite name — see Design #7) |
+| `MaxSyncsPerCycle` | `DOCUMENTATION_MAX_SYNCS_PER_CYCLE` | `3` | Max sync operations per scheduler cycle (processed sequentially) |
 | `MaxDocumentsPerSync` | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | `1000` | Max documents processed per sync |
 | `RepositorySyncCheckIntervalSeconds` | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | `30` | Initial delay before first scheduler check |
 | `BulkOperationBatchSize` | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | `10` | Documents per batch before yielding in bulk ops |
@@ -109,7 +110,6 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `MaxRelatedDocumentsExtended` | `DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED` | `10` | Maximum related documents to return for extended depth |
 | `SyncLockTtlSeconds` | `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | `1800` | TTL in seconds for repository sync distributed lock (30 min) |
 | `MaxFetchLimit` | `DOCUMENTATION_MAX_FETCH_LIMIT` | `1000` | Maximum documents to fetch when filtering/sorting in memory |
-| `StatsSampleSize` | `DOCUMENTATION_STATS_SAMPLE_SIZE` | `10` | Number of documents to sample for namespace statistics |
 | `EstimatedBytesPerDocument` | `DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT` | `10000` | Estimated average document content size for stats calculations |
 | `SearchSnippetLength` | `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | `200` | Length in characters for search result snippets |
 
@@ -120,7 +120,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 28 configuration properties (27 service-specific + ForceServiceId) |
+| `DocumentationServiceConfiguration` | Singleton | All 27 configuration properties (26 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -175,7 +175,7 @@ Service lifetime is **Scoped** (per-request). Three hosted background services r
 
 - **PurgeTrashcan** (`POST /documentation/purge`): Permanently deletes trashcan items. Supports targeted purge (specific documentIds) or full purge (all items). Uses optimistic concurrency (ETag) on trashcan index to handle concurrent modifications. Returns 409 Conflict on concurrent modification. Access: admin.
 
-- **GetNamespaceStats** (`POST /documentation/stats`): Returns namespace statistics. Gets document count and category breakdown from search index. Gets trashcan count from index. Estimates content size using `EstimatedBytesPerDocument` config (default 10KB). Samples `StatsSampleSize` recent documents to determine lastUpdated. Access: admin.
+- **GetNamespaceStats** (`POST /documentation/stats`): Returns namespace statistics. Gets document count and category breakdown from search index. Gets trashcan count from index. Estimates content size using `EstimatedBytesPerDocument` config (default 10KB). Reads `lastUpdated` from dedicated `ns-last-updated:{namespaceId}` key maintained by all document mutation paths. Access: admin.
 
 ### Browser (2 endpoints)
 
@@ -280,7 +280,7 @@ Repository Binding & Sync
        |    - Read "repo-bindings"        - Scan GitStoragePath
        |    - For each: check NextSyncAt  - Find GUID dirs not in registry
        |    - If due: trigger sync        - Delete if older than CleanupHours
-       |    - Respect MaxConcurrentSyncs
+       |    - Respect MaxSyncsPerCycle
        |          |
        |          v
   SyncRepository / ExecuteSyncAsync(binding, force, trigger)
@@ -406,7 +406,7 @@ Archive System
 
 5. ~~**Trashcan auto-purge background service**~~: **FIXED** (2026-03-01) - Added `TrashcanPurgeService` background service that periodically iterates all namespaces and purges expired trashcan entries. Configurable via `TrashcanPurgeEnabled` (default true) and `TrashcanPurgeCheckIntervalMinutes` (default 60). Uses optimistic concurrency on trashcan index with graceful retry on conflict. Lazy cleanup in `ListTrashcan` still works as a secondary path.
 
-6. **Incremental sync optimization**: Currently sync processes all matching files on each run. A file-hash index could skip unchanged files, reducing processing for large repositories with few changes.
+6. ~~**Incremental sync optimization**~~: **FIXED** (2026-03-01) - Added SHA256 content hashing to `StoredDocument` via a `ContentHash` field. During sync, `UpdateDocumentFromTransformAsync` compares the hash plus title, category, summary, voice summary, and tags before writing — unchanged documents skip the Redis write and search re-index entirely. Documents created before this change have null hash and are always updated on first sync (natural migration). The sync completion log now reports unchanged document count.
 
 ---
 
@@ -420,33 +420,37 @@ Archive System
 
 1. **Orphan deletion skipped on truncated sync**: When `MaxDocumentsPerSync` limits the processed file list, orphan deletion (removing documents whose slugs were not seen) is intentionally skipped to avoid incorrectly deleting unprocessed documents.
 
-2. **ConcurrentBag stale references on removal**: The in-memory `SearchIndexService` uses `ConcurrentBag` for inverted index entries. Since ConcurrentBag does not support element removal, deleted documents leave stale references that are filtered out during search. Full cleanup requires index rebuild.
+2. **Archive deletion does not remove Asset Service bundle**: `DeleteDocumentationArchive` only removes the archive metadata. The actual bundle data in the Asset Service is not deleted, relying on Asset Service retention policies for cleanup.
 
-3. **Archive deletion does not remove Asset Service bundle**: `DeleteDocumentationArchive` only removes the archive metadata. The actual bundle data in the Asset Service is not deleted, relying on Asset Service retention policies for cleanup.
+3. **Trashcan expiry has two paths**: The `TrashcanPurgeService` background service periodically purges expired entries (default every 60 minutes). Additionally, lazy cleanup during `ListTrashcan` and `RecoverDocument` catches any entries that expire between purge cycles.
 
-4. **Trashcan expiry has two paths**: The `TrashcanPurgeService` background service periodically purges expired entries (default every 60 minutes). Additionally, lazy cleanup during `ListTrashcan` and `RecoverDocument` catches any entries that expire between purge cycles.
+4. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore` with key-prefix partitioning (e.g., `slug-idx:`, `ns-docs:`, `trash:`, `repo-binding:`, `archive:`). This is the standard Bannou pattern — most services use a single state store per `schemas/state-stores.yaml`. Redis handles millions of keys efficiently via its hash-based key space. No TTL is set on document keys because documents are persistent content intended to survive until explicitly deleted (the trashcan handles TTL-based soft-delete expiry).
+
+5. **Per-instance git repository clones**: `GitSyncService` clones repositories to `GitStoragePath` (default `/tmp/bannou-git-repos`) on each container's local filesystem. In multi-instance deployments, each instance maintains its own clone. This is intentional for container-local storage — the distributed lock (`repo-sync:{namespace}` via `IDistributedLockProvider`) ensures only one instance syncs a given namespace at a time, preventing race conditions in shared state (Redis). Local clones are ephemeral workspace for reading file content during sync; once documents are written to Redis, the clone is just a pull cache. `CleanupStaleRepositoriesAsync` in `RepositorySyncSchedulerService` handles orphaned directories based on `GitStorageCleanupHours` (default 24h). Operators should ensure `DOCUMENTATION_GIT_STORAGE_PATH` has adequate disk capacity and tune `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` for their pod lifecycle.
+
+6. **Anonymous read access on search/query endpoints**: The search, query, get, list, and suggest endpoints are all explicitly declared `x-permissions: [{ role: anonymous, states: {} }]` in the schema. This is intentional — the Documentation service is designed for AI agent consumption (SignalWire SWAIG, OpenAI function calling, Claude tool use), where requiring authentication on every query would be impractical. Write endpoints (create, update, delete) correctly require `admin` role. Any client can query any namespace without authentication by design.
+
+7. **Slug index is eventually consistent**: `CreateDocumentAsync` performs three sequential non-atomic Redis writes: (1) save document, (2) save slug index, (3) add to namespace document list. If a crash occurs mid-sequence, the document may exist without its slug index or namespace index entry. The search index rebuild (`SearchIndexRebuildService`) reads from the `ns-docs:{ns}` namespace list, so it cannot recover documents missing from that list. Self-healing: **repo-bound namespaces** naturally repair on next sync (sync re-creates documents from git); **manual namespaces** have no automatic repair — an admin would need to re-create the document. The failure window is microseconds (sequential Redis writes), making this extremely unlikely in practice. The sequential write pattern is consistent with other Bannou services.
+
+8. **Import onConflict=update overwrites all fields**: When importing with `Update` conflict policy, all document fields are overwritten including tags and metadata — no merge-with-existing-tags behavior. This is intentional: the `Update` policy means "the import source is authoritative, replace the existing document." If merge behavior were desired, it would require a new `Merge` conflict policy (a potential extension). The three existing policies (`Skip`, `Fail`, `Update`) cover the standard import conflict resolution patterns.
+
+9. **Sequential binding processing in sync scheduler**: `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` iterates bindings sequentially — each `SyncRepositoryAsync()` call must complete before the next starts. This is intentional: each sync involves heavy I/O (git clone/pull to local disk, file parsing, Redis writes for document CRUD + search indexing), and concurrent syncs would multiply disk/network/memory pressure without proportional benefit. `MaxSyncsPerCycle` (default 3) rate-limits how many syncs occur per cycle, and any bindings that don't get processed are picked up in the next cycle. The distributed lock (`repo-sync:{namespace}`) prevents concurrent syncs of the same namespace across instances.
+
+10. **TotalContentSizeBytes is an estimate**: `GetNamespaceStats` calculates content size as `documents * EstimatedBytesPerDocument` (configurable via `DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT`, defaults to 10KB). This is a deliberate tradeoff: accurate sizing would require either iterating all documents per stats call (N+1 Redis queries, expensive for large namespaces) or maintaining a running counter across every CRUD path (8+ methods, risk of drift from crashes/concurrent writes). The estimate is sufficient for admin diagnostics — operators can tune `EstimatedBytesPerDocument` to match their actual average document size. The response field is named `TotalContentSizeBytes`, not `EstimatedContentSizeBytes`, because the schema treats it as a stats metric (all stats are point-in-time approximations).
 
 ### Design Considerations
 
-1. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
+1. ~~**Import onConflict=update overwrites all fields**~~: **FIXED** (2026-03-01) - Moved to Intentional Quirks. Full overwrite is correct behavior for the `Update` conflict policy — the import source is authoritative. A merge policy would be a separate feature extension.
 
-2. **Git operations on local filesystem**: `GitSyncService` clones repositories to `GitStoragePath` on the container's filesystem. In multi-instance deployments, each instance clones independently. The distributed lock prevents concurrent syncs of the same namespace, but disk usage is per-instance.
+2. ~~**RepositorySyncSchedulerService processes bindings sequentially**~~: **FIXED** (2026-03-01) - Moved to Intentional Quirks. Sequential processing is a deliberate design choice: each sync involves heavy I/O (git clone/pull + file parsing + Redis writes), and concurrent syncs would multiply resource pressure without proportional benefit. `MaxSyncsPerCycle` rate-limits throughput per cycle, and the distributed lock prevents concurrent syncs of the same namespace.
 
-3. **No authentication on search/query endpoints**: The search, query, get, list, and suggest endpoints are all marked `anonymous` access. Any client can query any namespace without authentication.
+3. ~~**MaxConcurrentSyncs naming is misleading**~~: **FIXED** (2026-03-01) - Renamed `MaxConcurrentSyncs` to `MaxSyncsPerCycle` (env var `DOCUMENTATION_MAX_SYNCS_PER_CYCLE`) to accurately reflect that syncs are processed sequentially as a per-cycle rate limit, not concurrently. Updated schema description, service code, and tests.
 
-4. **Slug index is eventually consistent**: If a crash occurs between saving a document and saving its slug index entry, the document exists but is unreachable by slug. The search index (rebuilt on startup) would still find it by content.
+4. ~~**TotalContentSizeBytes is always an estimate**~~: **FIXED** (2026-03-01) - Moved to Intentional Quirks. The estimate via `EstimatedBytesPerDocument` is a deliberate configurable tradeoff: accurate sizing requires N+1 queries or a running counter across 8+ CRUD paths, both adding complexity for marginal benefit on an admin diagnostics endpoint.
 
-5. **Import onConflict=update overwrites all fields**: When importing with update policy, all document fields are overwritten including tags and metadata. There is no merge-with-existing-tags behavior - the import fully replaces.
+5. ~~**LastUpdated sampling is incomplete**~~: **FIXED** (2026-03-01) - Replaced sampling-based `lastUpdated` with a dedicated `ns-last-updated:{namespaceId}` Redis key maintained by all document mutation paths (create, update, recover, bulk update, import, sync, bundle restore). `GetNamespaceStatsAsync` now reads a single key for exact results instead of sampling N documents from an unordered `HashSet<Guid>`. Removed dead `StatsSampleSize` config property (T21 compliance).
 
-6. **RepositorySyncSchedulerService processes bindings sequentially**: Bindings are checked one at a time within each cycle. A slow sync operation blocks subsequent bindings until it completes or the scheduler moves to the next cycle after the interval.
-
-7. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.
-
-8. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * EstimatedBytesPerDocument` (configurable, defaults to 10KB). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
-
-9. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
-
-10. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.
+6. ~~**Search index retains stale terms on document update**~~: **FIXED** (2026-03-01) - Replaced `ConcurrentBag<Guid>` with `ConcurrentDictionary<Guid, byte>` as a concurrent hash set with removal support. `AddDocument` now calls `RemoveDocument` first on updates to clean up stale inverted index and category index entries. `RemoveDocument` now properly removes document IDs from all term and category index entries.
 
 ---
 
@@ -458,3 +462,14 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 - **Archive bundle upload reliability** (2026-03-01): Fixed T26 sentinel value violation in `CreateArchiveResponse.bundleAssetId` (non-nullable Guid → nullable) and populated field in response.
 - **Trashcan auto-purge background service** (2026-03-01): Added `TrashcanPurgeService` that periodically purges expired trashcan entries. Config: `TrashcanPurgeEnabled`, `TrashcanPurgeCheckIntervalMinutes`. Uses optimistic concurrency on trashcan indexes.
+- **Incremental sync optimization** (2026-03-01): Added SHA256 `ContentHash` field to `StoredDocument`. `UpdateDocumentFromTransformAsync` now compares hash + metadata before writing, skipping unchanged documents. Natural migration for pre-existing documents (null hash = always update on first sync).
+- **Single Redis store for all data** (2026-03-01): Moved from Design Considerations to Intentional Quirks. Single store with key-prefix partitioning is the standard Bannou pattern. No TTL on documents is correct — they are persistent content. Redis handles the key-space efficiently.
+- **Per-instance git repository clones** (2026-03-01): Moved from Design Considerations to Intentional Quirks. Per-instance disk usage is inherent to container-local storage. Distributed lock prevents concurrent syncs of shared state. Stale cleanup handles orphaned directories. Added operational guidance for disk capacity and cleanup tuning.
+- **No authentication on search/query endpoints** (2026-03-01): Moved from Design Considerations to Intentional Quirks. All five read endpoints explicitly declare `x-permissions: [{ role: anonymous }]` in the schema — intentional for AI agent consumption. Write endpoints correctly require admin role.
+- **MaxConcurrentSyncs naming is misleading** (2026-03-01): Renamed config property from `MaxConcurrentSyncs` to `MaxSyncsPerCycle` (env var `DOCUMENTATION_MAX_SYNCS_PER_CYCLE`). Updated schema description, `RepositorySyncSchedulerService`, and tests to use accurate naming.
+- **Slug index is eventually consistent** (2026-03-01): Moved from Design Considerations to Intentional Quirks. Corrected inaccurate claim that search index rebuild would find orphaned documents — rebuild reads from `ns-docs:{ns}` namespace list, not by scanning content. Added accurate self-healing description: repo-bound namespaces repair on next sync; manual namespaces have no automatic repair. Sequential Redis write pattern is consistent with other Bannou services.
+- **Import onConflict=update overwrites all fields** (2026-03-01): Moved from Design Considerations to Intentional Quirks. Full overwrite is correct `Update` policy behavior — the import source is authoritative. Merge behavior would require a new conflict policy (potential extension).
+- **Sequential binding processing in sync scheduler** (2026-03-01): Moved from Design Considerations to Intentional Quirks. Sequential processing is deliberate: each sync involves heavy I/O (git clone/pull + file parsing + Redis writes), concurrent syncs would multiply resource pressure. `MaxSyncsPerCycle` rate-limits throughput.
+- **TotalContentSizeBytes is always an estimate** (2026-03-01): Moved from Design Considerations to Intentional Quirks. The `EstimatedBytesPerDocument` config property is a deliberate tunable for admin diagnostics. Accurate sizing would require N+1 queries or a running counter across 8+ CRUD paths — complexity without proportional benefit.
+- **LastUpdated sampling is incomplete** (2026-03-01): Replaced sampling-based `lastUpdated` with dedicated `ns-last-updated:{namespaceId}` Redis key maintained by all mutation paths. Removed dead `StatsSampleSize` config property.
+- **Search index retains stale terms on document update** (2026-03-01): Replaced `ConcurrentBag<Guid>` with `ConcurrentDictionary<Guid, byte>` as concurrent hash set with removal support. `AddDocument` now calls `RemoveDocument` first on updates. `RemoveDocument` now properly cleans up inverted index and category index entries. Removed Intentional Quirk #2 (ConcurrentBag stale references). Added 2 regression tests.

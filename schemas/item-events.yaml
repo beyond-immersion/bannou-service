@@ -102,7 +102,7 @@ x-lifecycle:
     model:
       instanceId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for this item instance" }
       templateId: { type: string, format: uuid, required: true, description: "Reference to the item template" }
-      containerId: { type: string, format: uuid, required: true, description: "Container holding this item (ownership derived from container)" }
+      containerId: { type: string, format: uuid, nullable: true, description: "Container holding this item (ownership derived from container). Null when removed from all containers." }
       realmId: { type: string, format: uuid, required: true, description: "Realm this instance exists in" }
       quantity: { type: number, format: double, required: true, description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)" }
       slotIndex: { type: integer, nullable: true, description: "Slot position in slot-based containers" }
@@ -136,7 +136,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -161,7 +160,8 @@ components:
         containerId:
           type: string
           format: uuid
-          description: Container holding this item
+          nullable: true
+          description: Container holding this item. Null when item has been removed from all containers.
         realmId:
           type: string
           format: uuid
@@ -192,7 +192,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -217,7 +216,8 @@ components:
         containerId:
           type: string
           format: uuid
-          description: Container that held this item
+          nullable: true
+          description: Container that held this item. Null if item was not in a container at destruction.
         realmId:
           type: string
           format: uuid

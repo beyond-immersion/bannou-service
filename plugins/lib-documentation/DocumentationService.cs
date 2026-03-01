@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,6 +60,7 @@ public partial class DocumentationService : IDocumentationService
     private const string ARCHIVE_KEY_PREFIX = "archive:";
     private const string SYNC_LOCK_PREFIX = "repo-sync:";
     private const string ALL_NAMESPACES_KEY = "all-namespaces";
+    private const string NAMESPACE_LAST_UPDATED_PREFIX = "ns-last-updated:";
 
     // Static search result cache shared across scoped instances (performance optimization, not authoritative state)
     private static readonly SearchResultCache _searchCache = new();
@@ -725,6 +727,9 @@ public partial class DocumentationService : IDocumentationService
         // Add to namespace document list
         await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
+
         // Index for search
         _searchIndexService.IndexDocument(
             namespaceId,
@@ -854,6 +859,9 @@ public partial class DocumentationService : IDocumentationService
 
         // Save updated document
         await docStore.SaveAsync(docKey, storedDoc, cancellationToken: cancellationToken);
+
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
 
         // Update slug index if changed
         if (changedFields.Contains("slug"))
@@ -1053,6 +1061,9 @@ public partial class DocumentationService : IDocumentationService
         // Add back to namespace document list
         await AddDocumentToNamespaceIndexAsync(namespaceId, documentId, cancellationToken);
 
+        // Track namespace last-updated timestamp
+        await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
+
         // Re-index for search
         _searchIndexService.IndexDocument(
             namespaceId,
@@ -1163,6 +1174,12 @@ public partial class DocumentationService : IDocumentationService
                 batchCounter = 0;
                 await Task.Yield();
             }
+        }
+
+        // Track namespace last-updated timestamp once for the batch
+        if (succeeded.Count > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
         }
 
         _logger.LogInformation("BulkUpdate in namespace {Namespace}: {Succeeded} succeeded, {Failed} failed",
@@ -1374,6 +1391,12 @@ public partial class DocumentationService : IDocumentationService
             }
         }
 
+        // Track namespace last-updated timestamp once for the import batch
+        if (created > 0 || updated > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, now, cancellationToken);
+        }
+
         _logger.LogInformation("Import in namespace {Namespace}: {Created} created, {Updated} updated, {Skipped} skipped, {Failed} failed",
             namespaceId, created, updated, skipped, failed.Count);
 
@@ -1545,9 +1568,7 @@ public partial class DocumentationService : IDocumentationService
     {
         _logger.LogDebug("GetNamespaceStats: namespace={Namespace}", body.Namespace);
         var namespaceId = body.Namespace;
-        var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Documentation);
         var guidListStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Documentation);
-        var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Get stats from search index
         var searchStats = await _searchIndexService.GetNamespaceStatsAsync(namespaceId, cancellationToken);
@@ -1560,24 +1581,13 @@ public partial class DocumentationService : IDocumentationService
         // In production, this could be tracked more precisely
         var estimatedContentSize = searchStats.TotalDocuments * _configuration.EstimatedBytesPerDocument;
 
-        // Find last updated document
-        DateTimeOffset? lastUpdated = null;
-        var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
-        var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
-
-        if (docIds.Count > 0)
-        {
-            // Sample recent documents to find last updated (configurable sample size)
-            foreach (var docId in docIds.Take(_configuration.StatsSampleSize))
-            {
-                var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
-                var doc = await docStore.GetAsync(docKey, cancellationToken);
-                if (doc != null && (!lastUpdated.HasValue || doc.UpdatedAt > lastUpdated.Value))
-                {
-                    lastUpdated = doc.UpdatedAt;
-                }
-            }
-        }
+        // Read last updated timestamp from dedicated key (maintained by mutation paths)
+        var lastUpdatedStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var lastUpdatedKey = $"{NAMESPACE_LAST_UPDATED_PREFIX}{namespaceId}";
+        var lastUpdatedStr = await lastUpdatedStore.GetAsync(lastUpdatedKey, cancellationToken);
+        DateTimeOffset? lastUpdated = lastUpdatedStr != null && DateTimeOffset.TryParse(lastUpdatedStr, out var parsed)
+            ? parsed
+            : null;
 
         // Convert DocumentsByCategory to typed CategoryCount array
         var categoryCounts = searchStats.DocumentsByCategory
@@ -1599,6 +1609,19 @@ public partial class DocumentationService : IDocumentationService
     }
 
     #region Helper Methods
+
+    /// <summary>
+    /// Updates the namespace last-updated timestamp when a document is created, updated, or recovered.
+    /// Uses a dedicated key per namespace for O(1) reads instead of sampling document records.
+    /// Stores as ISO 8601 string since DateTimeOffset is a value type incompatible with IStateStoreFactory.
+    /// </summary>
+    private async Task UpdateNamespaceLastUpdatedAsync(string namespaceId, DateTimeOffset updatedAt, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.UpdateNamespaceLastUpdatedAsync");
+        var store = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Documentation);
+        var key = $"{NAMESPACE_LAST_UPDATED_PREFIX}{namespaceId}";
+        await store.SaveAsync(key, updatedAt.ToString("O"), cancellationToken: cancellationToken);
+    }
 
     /// <summary>
     /// Adds a document ID to the namespace document list for pagination support.
@@ -1811,6 +1834,21 @@ public partial class DocumentationService : IDocumentationService
             SuggestionSource.Category => $"In category '{doc.Category}'",
             _ => "Related content"
         };
+    }
+
+    /// <summary>
+    /// Computes a SHA256 hex digest of the given content for incremental sync comparison.
+    /// Returns null for null/empty content.
+    /// </summary>
+    private static string? ComputeContentHash(string? content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            return null;
+        }
+
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(content));
+        return Convert.ToHexString(hashBytes);
     }
 
     /// <summary>
@@ -2712,6 +2750,7 @@ public partial class DocumentationService : IDocumentationService
 
             var documentsCreated = 0;
             var documentsUpdated = 0;
+            var documentsSkipped = 0;
             var processedSlugs = new HashSet<string>();
 
             // Process each matching file
@@ -2747,9 +2786,16 @@ public partial class DocumentationService : IDocumentationService
 
                     if (existingDocId.HasValue)
                     {
-                        // Update existing document
-                        await UpdateDocumentFromTransformAsync(binding.Namespace, existingDocId.Value, transformed, cancellationToken);
-                        documentsUpdated++;
+                        // Update existing document (skips write if content unchanged)
+                        var wasUpdated = await UpdateDocumentFromTransformAsync(binding.Namespace, existingDocId.Value, transformed, cancellationToken);
+                        if (wasUpdated)
+                        {
+                            documentsUpdated++;
+                        }
+                        else
+                        {
+                            documentsSkipped++;
+                        }
                     }
                     else
                     {
@@ -2762,6 +2808,12 @@ public partial class DocumentationService : IDocumentationService
                 {
                     _logger.LogWarning(ex, "Failed to process file {FilePath}", filePath);
                 }
+            }
+
+            // Track namespace last-updated timestamp once for the sync batch
+            if (documentsCreated > 0 || documentsUpdated > 0)
+            {
+                await UpdateNamespaceLastUpdatedAsync(binding.Namespace, DateTimeOffset.UtcNow, cancellationToken);
             }
 
             // Delete orphan documents (documents not in processed slugs)
@@ -2791,8 +2843,8 @@ public partial class DocumentationService : IDocumentationService
 
             await TryPublishSyncCompletedEventAsync(binding, syncId, successResult, cancellationToken);
 
-            _logger.LogInformation("Sync completed for namespace {Namespace}: {Created} created, {Updated} updated, {Deleted} deleted",
-                binding.Namespace, documentsCreated, documentsUpdated, documentsDeleted);
+            _logger.LogInformation("Sync completed for namespace {Namespace}: {Created} created, {Updated} updated, {Deleted} deleted, {Skipped} unchanged",
+                binding.Namespace, documentsCreated, documentsUpdated, documentsDeleted, documentsSkipped);
 
             return successResult;
         }
@@ -2854,7 +2906,8 @@ public partial class DocumentationService : IDocumentationService
             RelatedDocuments = [],
             Metadata = transformed.Metadata,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
+            ContentHash = ComputeContentHash(transformed.Content)
         };
 
         // Store document
@@ -2886,9 +2939,10 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Updates a document from a transformed file.
+    /// Updates a document from a transformed file. Returns true if the document was
+    /// actually modified, false if content was unchanged and the update was skipped.
     /// </summary>
-    private async Task UpdateDocumentFromTransformAsync(
+    private async Task<bool> UpdateDocumentFromTransformAsync(
         string namespaceId,
         Guid documentId,
         TransformedDocument transformed,
@@ -2901,7 +2955,20 @@ public partial class DocumentationService : IDocumentationService
 
         if (existingDoc == null)
         {
-            return;
+            return false;
+        }
+
+        // Incremental sync: skip write if content is unchanged
+        var newHash = ComputeContentHash(transformed.Content);
+        if (existingDoc.ContentHash != null
+            && existingDoc.ContentHash == newHash
+            && existingDoc.Title == transformed.Title
+            && existingDoc.Category == transformed.Category
+            && existingDoc.Summary == transformed.Summary
+            && existingDoc.VoiceSummary == transformed.VoiceSummary
+            && TagsEqual(existingDoc.Tags, transformed.Tags))
+        {
+            return false;
         }
 
         existingDoc.Title = transformed.Title;
@@ -2912,6 +2979,7 @@ public partial class DocumentationService : IDocumentationService
         existingDoc.Tags = transformed.Tags;
         existingDoc.Metadata = transformed.Metadata;
         existingDoc.UpdatedAt = DateTimeOffset.UtcNow;
+        existingDoc.ContentHash = newHash;
 
         await docStore.SaveAsync(docKey, existingDoc, cancellationToken: cancellationToken);
 
@@ -2924,6 +2992,19 @@ public partial class DocumentationService : IDocumentationService
             existingDoc.Content,
             existingDoc.Category,
             existingDoc.Tags);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Compares two tag lists for equality (order-insensitive).
+    /// </summary>
+    private static bool TagsEqual(List<string>? a, List<string>? b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        if (a.Count != b.Count) return false;
+        return a.OrderBy(t => t, StringComparer.Ordinal).SequenceEqual(b.OrderBy(t => t, StringComparer.Ordinal));
     }
 
     /// <summary>
@@ -3454,6 +3535,12 @@ public partial class DocumentationService : IDocumentationService
 
         await docsStore.SaveAsync(docsKey, docIds, cancellationToken: cancellationToken);
 
+        // Track namespace last-updated timestamp once for the restore batch
+        if (bundle.Documents.Count > 0)
+        {
+            await UpdateNamespaceLastUpdatedAsync(namespaceId, DateTimeOffset.UtcNow, cancellationToken);
+        }
+
         return bundle.Documents.Count;
     }
 
@@ -3557,6 +3644,9 @@ public partial class DocumentationService : IDocumentationService
         public object? Metadata { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
+
+        /// <summary>SHA256 hex digest of Content for incremental sync optimization.</summary>
+        public string? ContentHash { get; set; }
     }
 
     /// <summary>

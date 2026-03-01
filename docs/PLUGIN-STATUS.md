@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-03-01
 > **Scope**: All Bannou service plugins
 
 ---
@@ -75,7 +75,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
 | [Voice](#voice-status) | L3 | 87% | 0 | P2P + SFU tiers work. WebRTC signaling, broadcast consent. Single RTP server limitation. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
-| [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Aspirational streaming platform integration spec. No schema, no code. |
+| [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 75% | 1 | Core CRUD + auto-unlock work. Xbox/PS stubs, rarity calc broken, dead code. |
 | [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
@@ -2198,7 +2198,7 @@ gh issue list --search "Arbitration:" --state open
 
 ### Production Readiness: 0%
 
-Entirely pre-implementation. The deep dive explicitly states "No schema, no code" and "Everything is unimplemented." A detailed architectural specification for the privacy boundary between external streaming platforms (Twitch, YouTube) and internal Bannou services, with 20 planned endpoints across 6 groups, 8 published events, 4 consumed events, 6 state stores, 30 configuration properties, 6 background workers, and a 5-phase implementation plan.
+Pre-implementation. Deep dive L3-audited (2026-03-01): ~20 design violations against current tenets and schema rules resolved in-document. Key fixes: `x-lifecycle` for all CRUD lifecycle events (platform-link, platform-session, broadcast-output), Redis-backed tracking ID mapping (T9 multi-instance safety), camera events replaced with API endpoints (T27 no orphaned events), empty-string config defaults changed to `nullable: true` (T26), codec configs changed to enums enforcing LGPL compliance (T25/T18), 8 background worker intervals promoted to config properties (T21), webhook endpoints documented as justified T15 exception with `x-permissions: []` and `x-controller-only: true`, `SentimentPulse.pulseId` renamed to `eventId`, `x-service-layer: AppFeatures` added to Phase 1 checklist, `x-references` block specified for lib-resource cleanup, `associate` endpoint clarified as opaque GUID storage (no L4 validation), `IBroadcastCoordinator` redesigned as non-authoritative local process cache with Redis as source of truth, `TokenRefreshWorker` distributed lock resolved, 2 missing consumed events added (`voice.participant.muted`, `session.disconnected`), 5 client events designed. 22 planned endpoints across 6 groups, 38 configuration properties, 7 state stores, 6 background workers, 5-phase implementation plan. No schema, no generated code, no service implementation exists.
 
 ### Bug Count: 0
 
@@ -2212,9 +2212,9 @@ No implementation exists to have bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Platform Session Management (Phase 3)** | Implement Twitch EventSub/YouTube webhook handlers, sentiment processor for converting raw chat to anonymous sentiment pulses, and tracked viewer management. | No issue |
-| 2 | **Broadcast Management (Phase 4)** | Implement FFmpeg-based RTMP broadcast coordination with fallback cascade, health monitoring, and voice room consent integration. | No issue |
-| 3 | **Sentiment Processing Sophistication** | Upgrade from keyword/emoji matching to lightweight NLP for more nuanced sentiment categorization via the swappable `ISentimentProcessor` interface. | No issue |
+| 1 | **Phase 1: Schema & Generation** | Create all schema files (api, events with x-lifecycle, configuration with 38 properties, client-events with 5 events), define AudioCodec/VideoCodec enums, add x-references, generate service code. Foundation for all subsequent phases. | No issue |
+| 2 | **Phase 3: Platform Session Management** | Implement Twitch EventSub/YouTube webhook handlers (x-controller-only, HMAC validation), sentiment processor (keyword/emoji matching via ISentimentProcessor), Redis-backed tracked viewer mapping, sentiment batch publisher. | No issue |
+| 3 | **Phase 4: Output Management** | Implement IBroadcastCoordinator as per-instance process supervisor with Redis-authoritative state, startup reconciliation, fallback cascade, camera announce/retire API, voice mute event handling, health monitor with stale record detection. | No issue |
 
 ### GH Issues
 

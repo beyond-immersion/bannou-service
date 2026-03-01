@@ -113,7 +113,7 @@ internal class ItemInstanceModel
 {
     public Guid InstanceId { get; set; }
     public Guid TemplateId { get; set; }
-    public Guid ContainerId { get; set; }
+    public Guid? ContainerId { get; set; }
     public Guid RealmId { get; set; }
     public double Quantity { get; set; }
     public int? SlotIndex { get; set; }

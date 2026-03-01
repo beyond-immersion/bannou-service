@@ -29,7 +29,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceBroadcastConsentRequestClient(Action<VoiceBroadcastConsentRequestClientEvent> handler)
+    public IEventSubscription OnVoiceBroadcastConsentRequest(Action<VoiceBroadcastConsentRequestClientEvent> handler)
     {
         return _client.OnEvent<VoiceBroadcastConsentRequestClientEvent>(handler);
     }
@@ -40,7 +40,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceBroadcastConsentUpdateClient(Action<VoiceBroadcastConsentUpdateClientEvent> handler)
+    public IEventSubscription OnVoiceBroadcastConsentUpdate(Action<VoiceBroadcastConsentUpdateClientEvent> handler)
     {
         return _client.OnEvent<VoiceBroadcastConsentUpdateClientEvent>(handler);
     }
@@ -51,7 +51,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerJoinedClient(Action<VoicePeerJoinedClientEvent> handler)
+    public IEventSubscription OnVoicePeerJoined(Action<VoicePeerJoinedClientEvent> handler)
     {
         return _client.OnEvent<VoicePeerJoinedClientEvent>(handler);
     }
@@ -62,7 +62,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerLeftClient(Action<VoicePeerLeftClientEvent> handler)
+    public IEventSubscription OnVoicePeerLeft(Action<VoicePeerLeftClientEvent> handler)
     {
         return _client.OnEvent<VoicePeerLeftClientEvent>(handler);
     }
@@ -73,7 +73,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoicePeerUpdatedClient(Action<VoicePeerUpdatedClientEvent> handler)
+    public IEventSubscription OnVoicePeerUpdated(Action<VoicePeerUpdatedClientEvent> handler)
     {
         return _client.OnEvent<VoicePeerUpdatedClientEvent>(handler);
     }
@@ -84,7 +84,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceRoomClosedClient(Action<VoiceRoomClosedClientEvent> handler)
+    public IEventSubscription OnVoiceRoomClosed(Action<VoiceRoomClosedClientEvent> handler)
     {
         return _client.OnEvent<VoiceRoomClosedClientEvent>(handler);
     }
@@ -95,7 +95,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceRoomStateClient(Action<VoiceRoomStateClientEvent> handler)
+    public IEventSubscription OnVoiceRoomState(Action<VoiceRoomStateClientEvent> handler)
     {
         return _client.OnEvent<VoiceRoomStateClientEvent>(handler);
     }
@@ -106,7 +106,7 @@ public sealed class VoiceEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnVoiceTierUpgradeClient(Action<VoiceTierUpgradeClientEvent> handler)
+    public IEventSubscription OnVoiceTierUpgrade(Action<VoiceTierUpgradeClientEvent> handler)
     {
         return _client.OnEvent<VoiceTierUpgradeClientEvent>(handler);
     }

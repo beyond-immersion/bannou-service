@@ -29,7 +29,7 @@ public sealed class SubscriptionEventSubscriptions
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSubscriptionStatusChangedClient(Action<SubscriptionStatusChangedClientEvent> handler)
+    public IEventSubscription OnSubscriptionStatusChanged(Action<SubscriptionStatusChangedClientEvent> handler)
     {
         return _client.OnEvent<SubscriptionStatusChangedClientEvent>(handler);
     }

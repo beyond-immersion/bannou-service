@@ -2125,8 +2125,20 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         // Arrange
         var service = CreateService();
         var sourceContainerId = Guid.NewGuid();
+        var targetContainerId = Guid.NewGuid();
         var instanceId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
+
+        // TransferItemAsync delegates locking to sub-operations (RemoveItemFromContainerAsync),
+        // so container mocks must be set up for the flow to reach the lock acquisition point.
+        var sourceContainer = CreateStoredContainerModel(sourceContainerId);
+        var targetContainer = CreateStoredContainerModel(targetContainerId);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{sourceContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sourceContainer);
+        _mockContainerStore
+            .Setup(s => s.GetAsync($"cont:{targetContainerId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(targetContainer);
 
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.IsAny<GetItemInstanceRequest>(), It.IsAny<CancellationToken>()))
@@ -2136,7 +2148,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
             .Setup(c => c.GetItemTemplateAsync(It.IsAny<GetItemTemplateRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestTemplate(templateId));
 
-        // Override lock to fail on the source container
+        // Override lock to fail on the source container (hit by RemoveItemFromContainerAsync)
         var failedLock = new Mock<ILockResponse>();
         failedLock.Setup(l => l.Success).Returns(false);
         _mockLockProvider
@@ -2151,7 +2163,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var request = new TransferItemRequest
         {
             InstanceId = instanceId,
-            TargetContainerId = Guid.NewGuid()
+            TargetContainerId = targetContainerId
         };
 
         // Act
@@ -2567,13 +2579,14 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var sourceId = Guid.NewGuid();
         var targetId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
 
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, Quantity = 15 });
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 15 });
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 18 });
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 18 });
 
         var template = CreateTestTemplate(templateId);
         template.MaxStackSize = 20;
@@ -2604,13 +2617,14 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
         var sourceId = Guid.NewGuid();
         var targetId = Guid.NewGuid();
         var templateId = Guid.NewGuid();
+        var containerId = Guid.NewGuid();
 
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == sourceId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, Quantity = 10 });
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = sourceId, TemplateId = templateId, ContainerId = containerId, Quantity = 10 });
         _mockItemClient
             .Setup(c => c.GetItemInstanceAsync(It.Is<GetItemInstanceRequest>(r => r.InstanceId == targetId), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, Quantity = 15 });
+            .ReturnsAsync(new ItemInstanceResponse { InstanceId = targetId, TemplateId = templateId, ContainerId = containerId, Quantity = 15 });
 
         var template = CreateTestTemplate(templateId);
         template.MaxStackSize = 20;

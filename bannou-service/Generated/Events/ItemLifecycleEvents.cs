@@ -599,12 +599,10 @@ public partial class ItemInstanceCreatedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -731,12 +729,10 @@ public partial class ItemInstanceUpdatedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -871,12 +867,10 @@ public partial class ItemInstanceDeletedEvent : BaseServiceEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item (ownership derived from container)
+    /// Container holding this item (ownership derived from container). Null when removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in

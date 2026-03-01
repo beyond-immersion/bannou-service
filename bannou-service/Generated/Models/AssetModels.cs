@@ -812,12 +812,12 @@ public partial class GetAssetRequest
 {
 
     /// <summary>
-    /// Asset identifier (SHA-256 hex string)
+    /// Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 64)]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -903,12 +903,12 @@ public partial class DeleteAssetRequest
 {
 
     /// <summary>
-    /// Asset identifier to delete (SHA-256 hex string)
+    /// Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 64)]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -943,12 +943,12 @@ public partial class ListVersionsRequest
 {
 
     /// <summary>
-    /// Asset identifier to list versions for (SHA-256 hex string)
+    /// Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 64)]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>

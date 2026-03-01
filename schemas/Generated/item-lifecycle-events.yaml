@@ -243,7 +243,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -264,7 +263,8 @@ components:
         containerId: &id025
           type: string
           format: uuid
-          description: "Container holding this item (ownership derived from container)"
+          nullable: true
+          description: "Container holding this item (ownership derived from container). Null when removed from all containers."
         realmId: &id026
           type: string
           format: uuid
@@ -336,7 +336,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -381,7 +380,6 @@ components:
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType

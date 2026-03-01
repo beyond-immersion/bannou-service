@@ -1428,6 +1428,12 @@ public partial class ModifyItemInstanceRequest
     public System.Guid? NewContainerId { get; set; } = default!;
 
     /// <summary>
+    /// When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clearContainerId")]
+    public bool? ClearContainerId { get; set; } = default!;
+
+    /// <summary>
     /// New slot index within the container
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("newSlotIndex")]
@@ -1557,12 +1563,10 @@ public partial class ItemInstanceResponse
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item
+    /// Container holding this item. Null when item has been removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in

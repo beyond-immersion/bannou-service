@@ -160,11 +160,11 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     public int SyncSchedulerCheckIntervalMinutes { get; set; } = 5;
 
     /// <summary>
-    /// Maximum concurrent sync operations
-    /// Environment variable: DOCUMENTATION_MAX_CONCURRENT_SYNCS
+    /// Maximum sync operations per scheduler cycle (processed sequentially)
+    /// Environment variable: DOCUMENTATION_MAX_SYNCS_PER_CYCLE
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 20)]
-    public int MaxConcurrentSyncs { get; set; } = 3;
+    public int MaxSyncsPerCycle { get; set; } = 3;
 
     /// <summary>
     /// Maximum documents per sync operation
@@ -214,13 +214,6 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 100000)]
     public int MaxFetchLimit { get; set; } = 1000;
-
-    /// <summary>
-    /// Number of documents to sample for namespace statistics
-    /// Environment variable: DOCUMENTATION_STATS_SAMPLE_SIZE
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 1000)]
-    public int StatsSampleSize { get; set; } = 10;
 
     /// <summary>
     /// Estimated average document content size in bytes for stats calculations
