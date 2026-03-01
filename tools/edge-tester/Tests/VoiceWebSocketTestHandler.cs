@@ -435,7 +435,7 @@ a=rtpmap:111 opus/48000/2";
 
                 client1.OnEvent<VoicePeerJoinedClientEvent>((evt) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice.peer-joined event");
+                    Console.WriteLine($"   Client 1 received voice.peer.joined event");
                     receivedPeerSessionId = evt.Peer.PeerSessionId;
                     Console.WriteLine($"   Received VoicePeerJoinedClientEvent for peer: {receivedPeerSessionId}");
                     peerJoinedReceived.TrySetResult(true);
@@ -590,14 +590,14 @@ a=rtpmap:111 opus/48000/2";
 
                 client1.OnEvent<VoicePeerUpdatedClientEvent>((evt) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice.peer-updated event");
+                    Console.WriteLine($"   Client 1 received voice.peer.updated event");
                     receivedSdpAnswer = evt.Peer.SdpOffer;
                     Console.WriteLine($"   Received VoicePeerUpdatedClientEvent with SDP");
                     peerUpdatedReceived.TrySetResult(true);
                 });
 
                 // Client 2 sends SDP answer to Client 1 using typed proxy
-                // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer-joined event
+                // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer.joined event
                 // due to race condition between Permission service capability push and Voice service event publish.
                 // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
                 Console.WriteLine("   Client 2 sending SDP answer to Client 1...");

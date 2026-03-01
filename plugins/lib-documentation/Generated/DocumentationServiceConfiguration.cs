@@ -79,6 +79,19 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     public int TrashcanTtlDays { get; set; } = 7;
 
     /// <summary>
+    /// Enable background trashcan purge service that periodically removes expired trashcan entries
+    /// Environment variable: DOCUMENTATION_TRASHCAN_PURGE_ENABLED
+    /// </summary>
+    public bool TrashcanPurgeEnabled { get; set; } = true;
+
+    /// <summary>
+    /// How often to check for expired trashcan entries (in minutes)
+    /// Environment variable: DOCUMENTATION_TRASHCAN_PURGE_CHECK_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1440)]
+    public int TrashcanPurgeCheckIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
     /// Maximum characters for voice summaries
     /// Environment variable: DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH
     /// </summary>

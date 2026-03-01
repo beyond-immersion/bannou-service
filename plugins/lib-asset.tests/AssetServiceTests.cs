@@ -355,6 +355,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             CreatedAt = DateTimeOffset.UtcNow.AddHours(-2),
             ExpiresAt = DateTimeOffset.UtcNow.AddHours(-1) // Already expired
@@ -390,6 +391,7 @@ public class AssetServiceTests
             Filename = "large.glb",
             Size = 100 * 1024 * 1024,
             ContentType = "model/gltf-binary",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/large.glb",
             IsMultipart = true,
             PartCount = 5, // Expects 5 parts
@@ -424,6 +426,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -462,6 +465,7 @@ public class AssetServiceTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             Metadata = new AssetMetadataInput
@@ -550,6 +554,7 @@ public class AssetServiceTests
             Filename = "model.glb",
             Size = 50 * 1024 * 1024,
             ContentType = "model/gltf-binary",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/model.glb",
             IsMultipart = true,
             PartCount = 2,
@@ -3030,6 +3035,7 @@ public class MinioWebhookHandlerTests
             Filename = "test.png",
             Size = 1024,
             ContentType = "image/png",
+            Owner = "test-account",
             StorageKey = $"temp/{uploadId:N}/test.png",
             IsMultipart = false,
             CreatedAt = DateTimeOffset.UtcNow,

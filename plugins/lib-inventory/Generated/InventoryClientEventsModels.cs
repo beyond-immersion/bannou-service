@@ -49,7 +49,7 @@ public partial class InventoryItemChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory.item_changed";
+    public override string EventName { get; set; } = "inventory.item.changed";
 
     /// <summary>
     /// Type of change that occurred
@@ -132,7 +132,7 @@ public partial class InventoryContainerFullClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory.container_full";
+    public override string EventName { get; set; } = "inventory.container.full";
 
     /// <summary>
     /// Container that reached capacity
@@ -177,7 +177,7 @@ public partial class InventoryItemTransferredClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory.item_transferred";
+    public override string EventName { get; set; } = "inventory.item.transferred";
 
     /// <summary>
     /// Item instance that was transferred

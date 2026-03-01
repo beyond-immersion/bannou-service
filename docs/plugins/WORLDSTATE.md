@@ -155,7 +155,7 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-realm (L2) | Realm optionally calls `IWorldstateClient.InitializeRealmClockAsync()` after creating a new realm, controlled by `AutoInitializeWorldstateClock` configuration (default: false). When enabled, Realm passes the new realmId and its configured `DefaultCalendarTemplateCode` to worldstate. If the call fails, Realm logs a warning but does not fail realm creation (the clock can be initialized manually later). This is the correct pattern per IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription. Requires adding `IWorldstateClient` as a hard dependency and two new config properties (`AutoInitializeWorldstateClock`, `DefaultCalendarTemplateCode`) to `realm-configuration.yaml`. |
+| lib-realm (L2) | Realm optionally calls `IWorldstateClient.InitializeRealmClockAsync()` after creating a new realm, controlled by `AutoInitializeWorldstateClock` configuration (default: false). When enabled, Realm passes the new realmId and its configured `DefaultCalendarTemplateCode` to worldstate. If the call fails, Realm logs a warning but does not fail realm creation (the clock can be initialized manually later). This is the correct pattern per IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription. `IWorldstateClient` is a hard dependency (constructor injection) with two config properties (`AutoInitializeWorldstateClock`, `DefaultCalendarTemplateCode`) in `realm-configuration.yaml`. |
 | lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime always provides `realmId` directly in the `CreateAsync` call (every actor belongs to a realm), so the factory simply reads the realm clock from `IRealmClockCache` -- no service calls required. |
 | lib-currency (L2, **required migration**) | Currency autogain worker MUST use `GetElapsedGameTime` for game-time-based passive income. Real-time autogain under-credits by the time ratio factor (24x at default). Requires `AutogainTimeSource` config property (default: `GameTime`). Both `Lazy` and `Task` autogain modes need this transition. The NPC-driven economy requires game-time parity. |
 | lib-seed (L2, **required migration**) | Seed decay worker MUST use `GetElapsedGameTime` for game-time-based growth decay. Real-time decay is 24x slower than intended per game-day. Requires `DecayTimeSource` config property (default: `GameTime`). Seeds representing guardian spirits, dungeon cores, and faction growth all evolve in simulated world time. |
@@ -476,16 +476,19 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). Called exclus
 All 18 endpoints are fully implemented. No stubs remain.
 
 1. **Ratio history compaction**: The `RatioHistoryRetentionDays` configuration property was planned but is not implemented. The configuration property does not exist in the generated config class. Ratio history segments accumulate indefinitely. For long-running servers, this could grow unbounded.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/529 -->
 
-2. **Cross-service integration with lib-realm**: The planned `AutoInitializeWorldstateClock` and `DefaultCalendarTemplateCode` config properties for lib-realm have not been added. Realm clock initialization is currently manual via the API.
+2. ~~**Cross-service integration with lib-realm**~~: **FIXED** (2026-03-01) - Added `AutoInitializeWorldstateClock` (default: false) and `DefaultCalendarTemplateCode` (nullable) config properties to `realm-configuration.yaml`. RealmService now injects `IWorldstateClient` and optionally calls `InitializeRealmClockAsync` after realm creation when enabled. Failure logs a warning but does not fail realm creation.
 
 ---
 
 ## Potential Extensions
 
 1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/532 -->
 
 2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/534 -->
 
 3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
 
@@ -654,4 +657,6 @@ flows:
 ### Completed
 - **2026-03-01**: Fixed event topic naming convention violation — renamed `realm-clock.initialized` to `worldstate.realm-clock.initialized` in schema and service code.
 
-*No active work items. All 18 endpoints are fully implemented. Remaining stubs are ratio history compaction and cross-service integration with lib-realm.*
+- **2026-03-01**: Implemented cross-service integration with lib-realm — added `AutoInitializeWorldstateClock` and `DefaultCalendarTemplateCode` config properties to realm-configuration.yaml, wired `IWorldstateClient` into RealmService constructor, added optional auto-initialization call in `CreateRealmAsync`.
+
+*Remaining stubs: ratio history compaction (issue #529).*

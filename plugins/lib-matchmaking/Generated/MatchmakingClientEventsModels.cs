@@ -46,7 +46,7 @@ public partial class QueueJoinedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.queue_joined";
+    public override string EventName { get; set; } = "matchmaking.queue.joined";
 
     /// <summary>
     /// Unique identifier for the matchmaking ticket
@@ -102,7 +102,7 @@ public partial class MatchFoundClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_found";
+    public override string EventName { get; set; } = "matchmaking.match-found";
 
     /// <summary>
     /// Unique identifier for this match
@@ -183,7 +183,7 @@ public partial class MatchPlayerAcceptedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.player_accepted";
+    public override string EventName { get; set; } = "matchmaking.player-accepted";
 
     /// <summary>
     /// Match identifier
@@ -228,7 +228,7 @@ public partial class MatchConfirmedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_confirmed";
+    public override string EventName { get; set; } = "matchmaking.match-confirmed";
 
     /// <summary>
     /// Match identifier
@@ -337,7 +337,7 @@ public partial class MatchDeclinedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_declined";
+    public override string EventName { get; set; } = "matchmaking.match-declined";
 
     /// <summary>
     /// Match that was declined
@@ -390,7 +390,7 @@ public partial class MatchmakingStatusUpdateClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.status_update";
+    public override string EventName { get; set; } = "matchmaking.status-update";
 
     /// <summary>
     /// Ticket identifier

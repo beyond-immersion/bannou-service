@@ -48,7 +48,7 @@ public partial class AuthDeviceLoginClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.device_login";
+    public override string EventName { get; set; } = "auth.device-login";
 
     /// <summary>
     /// Session ID of the new login that triggered this event
@@ -87,7 +87,7 @@ public partial class AuthPasswordChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.password_changed";
+    public override string EventName { get; set; } = "auth.password-changed";
 
 }
 
@@ -106,7 +106,7 @@ public partial class AuthMfaEnabledClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.mfa_enabled";
+    public override string EventName { get; set; } = "auth.mfa-enabled";
 
 }
 
@@ -125,7 +125,7 @@ public partial class AuthMfaDisabledClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.mfa_disabled";
+    public override string EventName { get; set; } = "auth.mfa-disabled";
 
     /// <summary>
     /// Who triggered the MFA disable (Self or Admin)
@@ -155,7 +155,7 @@ public partial class AuthSuspiciousLoginClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.suspicious_login";
+    public override string EventName { get; set; } = "auth.suspicious-login";
 
     /// <summary>
     /// IP address of the failed login attempt
@@ -192,7 +192,7 @@ public partial class AuthExternalAccountLinkedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.external_account_linked";
+    public override string EventName { get; set; } = "auth.external-account-linked";
 
     /// <summary>
     /// OAuth provider that was linked
@@ -221,7 +221,7 @@ public partial class AuthSessionTerminatedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "auth.session_terminated";
+    public override string EventName { get; set; } = "auth.session-terminated";
 
     /// <summary>
     /// ID of the specific session that was terminated (null for bulk invalidation)

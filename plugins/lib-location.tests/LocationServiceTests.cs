@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -35,6 +36,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     private const string STATE_STORE = "location-statestore";
     private const string CACHE_STORE = "location-cache";
@@ -58,6 +60,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Default lock provider behavior - always succeed with proper disposable
         var mockLockResponse = new Mock<ILockResponse>();
@@ -119,7 +122,8 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockRealmClient.Object,
             _mockLockProvider.Object,
             _mockResourceClient.Object,
-            _mockTelemetryProvider.Object);
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     /// <summary>

@@ -55,7 +55,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "inventory.item-changed"
+          default: "inventory.item.changed"
           description: Fixed event type identifier
         changeType:
           $ref: 'inventory-api.yaml#/components/schemas/InventoryItemChangeType'
@@ -117,7 +117,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "inventory.container-full"
+          default: "inventory.container.full"
           description: Fixed event type identifier
         containerId:
           type: string
@@ -159,7 +159,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "inventory.item-transferred"
+          default: "inventory.item.transferred"
           description: Fixed event type identifier
         instanceId:
           type: string

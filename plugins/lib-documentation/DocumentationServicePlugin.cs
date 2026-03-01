@@ -55,6 +55,9 @@ public class DocumentationServicePlugin : StandardServicePlugin<IDocumentationSe
         // Register search index rebuild service (runs once on startup)
         services.AddHostedService<SearchIndexRebuildService>();
 
+        // Register trashcan purge service (periodic expired entry cleanup)
+        services.AddHostedService<TrashcanPurgeService>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 }

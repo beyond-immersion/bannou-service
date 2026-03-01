@@ -45,6 +45,18 @@ x-service-configuration:
       default: 7
       minimum: 1
       maximum: 365
+    TrashcanPurgeEnabled:
+      type: boolean
+      description: Enable background trashcan purge service that periodically removes expired trashcan entries
+      env: DOCUMENTATION_TRASHCAN_PURGE_ENABLED
+      default: true
+    TrashcanPurgeCheckIntervalMinutes:
+      type: integer
+      description: How often to check for expired trashcan entries (in minutes)
+      env: DOCUMENTATION_TRASHCAN_PURGE_CHECK_INTERVAL_MINUTES
+      default: 60
+      minimum: 1
+      maximum: 1440
 
     # Voice Summary Configuration
     VoiceSummaryMaxLength:

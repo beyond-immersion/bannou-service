@@ -35,3 +35,13 @@ x-service-configuration:
       minimum: 10
       maximum: 600
       description: Timeout in seconds for distributed lock during realm merge operations
+    AutoInitializeWorldstateClock:
+      type: boolean
+      env: REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK
+      default: false
+      description: When true, automatically initializes a worldstate realm clock after creating a new realm. If initialization fails, realm creation still succeeds (warning logged). Env var REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK.
+    DefaultCalendarTemplateCode:
+      type: string
+      nullable: true
+      env: REALM_DEFAULT_CALENDAR_TEMPLATE_CODE
+      description: Default calendar template code passed to worldstate when auto-initializing realm clocks. Required when AutoInitializeWorldstateClock is true. Env var REALM_DEFAULT_CALENDAR_TEMPLATE_CODE.

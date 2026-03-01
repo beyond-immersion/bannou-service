@@ -536,6 +536,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | int | `1800` | TTL in seconds for repository sync distributed lock |
 | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
 | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
+| `DOCUMENTATION_TRASHCAN_PURGE_CHECK_INTERVAL_MINUTES` | int | `60` | How often to check for expired trashcan entries (in minutes) |
+| `DOCUMENTATION_TRASHCAN_PURGE_ENABLED` | bool | `true` | Enable background trashcan purge service that periodically r... |
 | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | int | `7` | Days before trashcan items are auto-purged |
 | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | int | `200` | Maximum characters for voice summaries |
 
@@ -958,6 +960,8 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK` | bool | `false` | When true, automatically initializes a worldstate realm cloc... |
+| `REALM_DEFAULT_CALENDAR_TEMPLATE_CODE` | string | **REQUIRED** | Default calendar template code passed to worldstate when aut... |
 | `REALM_MERGE_LOCK_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for distributed lock during realm merge o... |
 | `REALM_MERGE_PAGE_SIZE` | int | `50` | Page size for paginated entity migration during realm merge ... |
 | `REALM_OPTIMISTIC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for ETag-based optimistic concurren... |
@@ -1255,9 +1259,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 959
-- **Required (no default)**: 58
-- **Optional (has default)**: 901
+- **Total properties**: 963
+- **Required (no default)**: 59
+- **Optional (has default)**: 904
 
 ## Environment Variable Naming Convention
 

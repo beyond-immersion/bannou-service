@@ -111,9 +111,9 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 
 | Event Name | Event Type | Trigger |
 |------------|-----------|---------|
-| `collection.entry_unlocked` | `CollectionEntryUnlockedClientEvent` | Entry granted/unlocked; pushed to owner's WebSocket sessions with entry details and first-global status |
+| `collection.entry.unlocked` | `CollectionEntryUnlockedClientEvent` | Entry granted/unlocked; pushed to owner's WebSocket sessions with entry details and first-global status |
 | `collection.milestone_reached` | `CollectionMilestoneReachedClientEvent` | Completion milestone crossed (25%, 50%, 75%, 100%); pushed to owner's WebSocket sessions |
-| `collection.discovery_advanced` | `CollectionDiscoveryAdvancedClientEvent` | Discovery level advanced; pushed to owner's WebSocket sessions with revealed keys |
+| `collection.discovery.advanced` | `CollectionDiscoveryAdvancedClientEvent` | Discovery level advanced; pushed to owner's WebSocket sessions with revealed keys |
 
 Client events are published via `IEntitySessionRegistry.PublishToEntitySessionsAsync` using the collection's `ownerType`/`ownerId` for entity-session resolution. If zero sessions are registered for the owner, zero events are delivered (graceful degradation). Schema: `schemas/collection-client-events.yaml`.
 
@@ -242,7 +242,7 @@ Standard CRUD on entry templates with code-uniqueness enforcement per collection
 ## Potential Extensions
 
 1. ~~**Global first-unlock tracking**~~: **FIXED** (2026-02-24) - Implemented via Redis set operations in the `collection-cache` store. See Stubs section for details.
-2. ~~**Client events for real-time unlock notifications**~~: **FIXED** (2026-02-24) - Added `schemas/collection-client-events.yaml` with three client events (`collection.entry_unlocked`, `collection.milestone_reached`, `collection.discovery_advanced`). CollectionService now pushes real-time notifications to collection owner WebSocket sessions via `IEntitySessionRegistry` after each corresponding service event publish.
+2. ~~**Client events for real-time unlock notifications**~~: **FIXED** (2026-02-24) - Added `schemas/collection-client-events.yaml` with three client events (`collection.entry.unlocked`, `collection.milestone-reached`, `collection.discovery.advanced`). CollectionService now pushes real-time notifications to collection owner WebSocket sessions via `IEntitySessionRegistry` after each corresponding service event publish.
 3. **Expiring/seasonal collections**: Support time-limited collection types that expire or rotate on a schedule.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/475 -->
 4. **Collection sharing/trading**: Allow owners to share or trade unlocked entries between collections.

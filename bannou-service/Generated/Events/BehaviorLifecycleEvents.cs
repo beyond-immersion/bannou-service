@@ -288,19 +288,19 @@ public partial class BehaviorDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to behavior-bundle.created when a behaviorbundle is created
+/// Published to behavior.bundle.created when a behaviorbundle is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: behavior-bundle.created
+    /// Event type identifier: behavior.bundle.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "behavior-bundle.created";
+    public override string EventName { get; set; } = "behavior.bundle.created";
 
     /// <summary>
     /// Unique identifier for the behavior bundle
@@ -347,19 +347,19 @@ public partial class BehaviorBundleCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to behavior-bundle.updated when a behaviorbundle is updated
+/// Published to behavior.bundle.updated when a behaviorbundle is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: behavior-bundle.updated
+    /// Event type identifier: behavior.bundle.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "behavior-bundle.updated";
+    public override string EventName { get; set; } = "behavior.bundle.updated";
 
     /// <summary>
     /// Unique identifier for the behavior bundle
@@ -414,19 +414,19 @@ public partial class BehaviorBundleUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to behavior-bundle.deleted when a behaviorbundle is deleted
+/// Published to behavior.bundle.deleted when a behaviorbundle is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class BehaviorBundleDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: behavior-bundle.deleted
+    /// Event type identifier: behavior.bundle.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "behavior-bundle.deleted";
+    public override string EventName { get; set; } = "behavior.bundle.deleted";
 
     /// <summary>
     /// Unique identifier for the behavior bundle

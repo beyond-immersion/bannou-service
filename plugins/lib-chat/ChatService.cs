@@ -1586,7 +1586,7 @@ public partial class ChatService : IChatService
         // Broadcast to participants (includes full content for rendering)
         var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
         var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
-        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedClientEvent
         {
             RoomId = body.RoomId,
             MessageId = messageId,
@@ -1676,7 +1676,7 @@ public partial class ChatService : IChatService
                         new StateOptions { Ttl = ttlSeconds }, cancellationToken);
                 }
 
-                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedClientEvent
                 {
                     RoomId = body.RoomId,
                     MessageId = messageId,
@@ -1877,7 +1877,7 @@ public partial class ChatService : IChatService
         }
         var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
         var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
-        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
+        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedClientEvent
         {
             RoomId = body.RoomId,
             MessageId = body.MessageId,
@@ -1908,7 +1908,7 @@ public partial class ChatService : IChatService
         }
         var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
         var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
-        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
+        await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedClientEvent
         {
             RoomId = body.RoomId,
             MessageId = body.MessageId,

@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.queue-joined"
+          default: "matchmaking.queue.joined"
           description: Fixed event type identifier
         ticketId:
           type: string

@@ -362,6 +362,7 @@ Client                    Asset Service                     MinIO Storage
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/523 -->
 
 5. **Bundle diffing**: When updating bundles, only changed assets could be uploaded as a delta, reducing bandwidth for incremental content updates.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/526 -->
 
 ---
 
@@ -391,19 +392,20 @@ Client                    Asset Service                     MinIO Storage
 
 9. **MinIO connectivity check uses try/finally dispose pattern**: The `WaitForMinioConnectivityAsync` method creates a temporary `MinioClient` with explicit try/finally disposal instead of `using` because the fluent API returns `this` from `Build()`, making `using` semantics unclear. The pattern is correct but differs from the standard `using` approach.
 
+10. **Processor ValidateAsync uses `await Task.CompletedTask` (T23 compliant)**: `TextureProcessor.ValidateAsync`, `ModelProcessor.ValidateAsync`, `AudioProcessor.ValidateAsync`, and `MinioHealthCheck.CheckHealthAsync` use `await Task.CompletedTask` because they implement async interfaces with synchronous validation logic. This is the explicitly documented T23 pattern for synchronous implementations of async interfaces. No performance concern — `ValueTask` or separate sync/async interface paths would add complexity for zero benefit.
+
 ### Design Considerations (Requires Planning)
 
-1. **Interface async contract vs sync implementation** - `TextureProcessor`, `ModelProcessor`, and stub paths use `await Task.CompletedTask` to satisfy async interfaces. Consider `ValueTask` or separate sync/async interface paths if this becomes a performance concern.
+1. ~~**Model property initialization**~~: **FIXED** (2026-03-01) - `SourceBundleReferenceInternal` already used `required` (doc was outdated). Added `required` keyword to `UploadSession`'s four string properties (`Filename`, `ContentType`, `Owner`, `StorageKey`) for compile-time construction safety. Removed `= string.Empty` defaults since `required` enforces initialization. Fixed 6 test construction sites that were missing `Owner` initialization.
 
-2. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
+2. ~~**Silent index retry exhaustion**~~: **FIXED** (2026-03-01) - Upgraded `LogWarning` to `LogError` and added `TryPublishErrorAsync` error event emission in both `AddToIndexWithOptimisticConcurrencyAsync` and `AddBundleToAssetIndexAsync` when all optimistic concurrency retries exhaust. Failures are now observable via error events and error-level logs with asset/bundle IDs for correlation. The upload still succeeds (asset is stored), but monitoring systems are alerted that the asset won't appear in search results for the affected index. The remaining design question — whether indexing failure should cause the upload to fail, or whether a reconciliation mechanism should exist — is tracked separately.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/536 -->
 
-3. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
+3. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
 
-4. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+4. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
 
-5. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
-
-6. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+5. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
 
 ---
 
@@ -411,4 +413,8 @@ Client                    Asset Service                     MinIO Storage
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-*(No completed items pending cleanup.)*
+### Completed
+
+- **2026-03-01**: Fixed `UploadSession` model property initialization. Added `required` keyword to `Filename`, `ContentType`, `Owner`, `StorageKey` for compile-time construction safety. `SourceBundleReferenceInternal` already had `required` (doc was outdated). Fixed 6 test construction sites missing `Owner`.
+- **2026-03-01**: Moved "Interface async contract vs sync implementation" from Design Considerations to Intentional Quirks (#10). The `await Task.CompletedTask` pattern is the explicitly documented T23 pattern for synchronous implementations of async interfaces — not a gap.
+- **2026-03-01**: Fixed silent index retry exhaustion in `AddToIndexWithOptimisticConcurrencyAsync` and `AddBundleToAssetIndexAsync`. Upgraded `LogWarning` to `LogError` and added `TryPublishErrorAsync` error event emission. Remaining design question about caller notification tracked in [#536](https://github.com/beyond-immersion/bannou-service/issues/536).

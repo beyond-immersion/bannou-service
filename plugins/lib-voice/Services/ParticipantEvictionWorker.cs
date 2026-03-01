@@ -270,7 +270,7 @@ public class ParticipantEvictionWorker : BackgroundService
             var remainingParticipants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
             if (remainingParticipants.Count > 0)
             {
-                var peerLeftEvent = new VoicePeerLeftEvent
+                var peerLeftEvent = new VoicePeerLeftClientEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = now,
@@ -427,7 +427,7 @@ public class ParticipantEvictionWorker : BackgroundService
         // Publish client event
         if (participantSessionIds.Count > 0)
         {
-            var updateEvent = new VoiceBroadcastConsentUpdateEvent
+            var updateEvent = new VoiceBroadcastConsentUpdateClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -502,7 +502,7 @@ public class ParticipantEvictionWorker : BackgroundService
 
         if (participantSessionIds.Count > 0)
         {
-            var updateEvent = new VoiceBroadcastConsentUpdateEvent
+            var updateEvent = new VoiceBroadcastConsentUpdateClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

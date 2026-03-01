@@ -33,7 +33,7 @@ public class ClientEventRegistryTests
     {
         var eventName = ClientEventRegistry.GetEventName<VoicePeerJoinedClientEvent>();
 
-        Assert.Equal("voice.peer-joined", eventName);
+        Assert.Equal("voice.peer.joined", eventName);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class ClientEventRegistryTests
     {
         var eventName = ClientEventRegistry.GetEventName<VoiceRoomStateClientEvent>();
 
-        Assert.Equal("voice.room-state", eventName);
+        Assert.Equal("voice.room.state", eventName);
     }
 
     // =========================================================================
@@ -87,7 +87,7 @@ public class ClientEventRegistryTests
     [Fact]
     public void GetEventType_VoiceEventName_ReturnsCorrectType()
     {
-        var eventType = ClientEventRegistry.GetEventType("voice.room-closed");
+        var eventType = ClientEventRegistry.GetEventType("voice.room.closed");
 
         Assert.Equal(typeof(VoiceRoomClosedClientEvent), eventType);
     }
@@ -123,7 +123,7 @@ public class ClientEventRegistryTests
     [Fact]
     public void IsRegistered_String_RegisteredName_ReturnsTrue()
     {
-        var isRegistered = ClientEventRegistry.IsRegistered("voice.peer-updated");
+        var isRegistered = ClientEventRegistry.IsRegistered("voice.peer.updated");
 
         Assert.True(isRegistered);
     }
@@ -172,7 +172,7 @@ public class ClientEventRegistryTests
         var names = ClientEventRegistry.GetAllEventNames().ToList();
 
         Assert.Contains("game-session.chat-received", names);
-        Assert.Contains("voice.peer-joined", names);
+        Assert.Contains("voice.peer.joined", names);
         Assert.Contains("system.error", names);
     }
 

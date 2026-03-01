@@ -211,12 +211,12 @@ public sealed class VoiceRoomManager : IDisposable
         _scaledConnectionFactory = scaledConnectionFactory ?? CreateDefaultScaledConnection;
 
         // Subscribe to voice events
-        _client.OnEvent("voice.room-state", HandleRoomState);
-        _client.OnEvent("voice.peer-joined", HandlePeerJoined);
-        _client.OnEvent("voice.peer-left", HandlePeerLeft);
-        _client.OnEvent("voice.peer-updated", HandlePeerUpdated);
+        _client.OnEvent("voice.room.state", HandleRoomState);
+        _client.OnEvent("voice.peer.joined", HandlePeerJoined);
+        _client.OnEvent("voice.peer.left", HandlePeerLeft);
+        _client.OnEvent("voice.peer.updated", HandlePeerUpdated);
         _client.OnEvent("voice.tier-upgrade", HandleTierUpgrade);
-        _client.OnEvent("voice.room-closed", HandleRoomClosed);
+        _client.OnEvent("voice.room.closed", HandleRoomClosed);
     }
 
     private static IScaledVoiceConnection CreateDefaultScaledConnection(Guid roomId)
@@ -338,12 +338,12 @@ public sealed class VoiceRoomManager : IDisposable
                     _disposed = true;
 
                     // Unsubscribe from events
-                    _client.RemoveEventHandler("voice.room-state");
-                    _client.RemoveEventHandler("voice.peer-joined");
-                    _client.RemoveEventHandler("voice.peer-left");
-                    _client.RemoveEventHandler("voice.peer-updated");
+                    _client.RemoveEventHandler("voice.room.state");
+                    _client.RemoveEventHandler("voice.peer.joined");
+                    _client.RemoveEventHandler("voice.peer.left");
+                    _client.RemoveEventHandler("voice.peer.updated");
                     _client.RemoveEventHandler("voice.tier-upgrade");
-                    _client.RemoveEventHandler("voice.room-closed");
+                    _client.RemoveEventHandler("voice.room.closed");
 
                     // Close all P2P peers
                     foreach (var peer in _peers.Values)

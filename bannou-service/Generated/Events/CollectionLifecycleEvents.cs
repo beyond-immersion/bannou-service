@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to collection-entry-template.created when a collectionentrytemplate is created
+/// Published to collection.entry-template.created when a collectionentrytemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionEntryTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-entry-template.created
+    /// Event type identifier: collection.entry-template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-entry-template.created";
+    public override string EventName { get; set; } = "collection.entry-template.created";
 
     /// <summary>
     /// Unique entry template identifier
@@ -123,19 +123,19 @@ public partial class CollectionEntryTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection-entry-template.updated when a collectionentrytemplate is updated
+/// Published to collection.entry-template.updated when a collectionentrytemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionEntryTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-entry-template.updated
+    /// Event type identifier: collection.entry-template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-entry-template.updated";
+    public override string EventName { get; set; } = "collection.entry-template.updated";
 
     /// <summary>
     /// Unique entry template identifier
@@ -222,19 +222,19 @@ public partial class CollectionEntryTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection-entry-template.deleted when a collectionentrytemplate is deleted
+/// Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-entry-template.deleted
+    /// Event type identifier: collection.entry-template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-entry-template.deleted";
+    public override string EventName { get; set; } = "collection.entry-template.deleted";
 
     /// <summary>
     /// Unique entry template identifier
@@ -319,19 +319,19 @@ public partial class CollectionEntryTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection-area-content-config.created when a collectionareacontentconfig is created
+/// Published to collection.area-content-config.created when a collectionareacontentconfig is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionAreaContentConfigCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-area-content-config.created
+    /// Event type identifier: collection.area-content-config.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-area-content-config.created";
+    public override string EventName { get; set; } = "collection.area-content-config.created";
 
     /// <summary>
     /// Unique area content config identifier
@@ -390,19 +390,19 @@ public partial class CollectionAreaContentConfigCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection-area-content-config.updated when a collectionareacontentconfig is updated
+/// Published to collection.area-content-config.updated when a collectionareacontentconfig is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionAreaContentConfigUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-area-content-config.updated
+    /// Event type identifier: collection.area-content-config.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-area-content-config.updated";
+    public override string EventName { get; set; } = "collection.area-content-config.updated";
 
     /// <summary>
     /// Unique area content config identifier
@@ -469,19 +469,19 @@ public partial class CollectionAreaContentConfigUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to collection-area-content-config.deleted when a collectionareacontentconfig is deleted
+/// Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CollectionAreaContentConfigDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: collection-area-content-config.deleted
+    /// Event type identifier: collection.area-content-config.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection-area-content-config.deleted";
+    public override string EventName { get; set; } = "collection.area-content-config.deleted";
 
     /// <summary>
     /// Unique area content config identifier

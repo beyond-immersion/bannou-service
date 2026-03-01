@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Connect;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
@@ -1094,7 +1095,6 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(new BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse
             {
                 Subscriptions = new List<BeyondImmersion.BannouService.Subscription.SubscriptionInfo>(),
-                TotalCount = 0
             });
 
         // Act
@@ -1169,7 +1169,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Created, isActive: true);
 
         // Assert - shortcut published to the connected session
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1207,7 +1207,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Cancelled, isActive: false);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Cancelled, isActive: false);
 
         // Assert - shortcut revocation published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1227,7 +1227,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act - "other-game" is not in SupportedGameServices ("test-game")
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, "other-game", SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, "other-game", SubscriptionAction.Created, isActive: true);
 
         // Assert - no shortcut operations since IsOurService returns false
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
@@ -1252,7 +1252,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Created, isActive: true);
 
         // Assert - verify the shortcut publish was still attempted (even with 0 sessions)
         // The important thing is that IsOurService passed and GetSubscriberSessionsAsync was called
@@ -1299,7 +1299,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Created, isActive: true);
 
         // Assert - lobby was created (saved to both lobby key and session key)
         _mockGameSessionStore.Verify(s => s.SaveAsync(
@@ -1351,7 +1351,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Created, isActive: true);
 
         // Assert - no new lobby created (no save to lobby key)
         _mockGameSessionStore.Verify(s => s.SaveAsync(
@@ -1476,7 +1476,6 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
             .ReturnsAsync(new BeyondImmersion.BannouService.Subscription.QuerySubscriptionsResponse
             {
                 Subscriptions = new List<BeyondImmersion.BannouService.Subscription.SubscriptionInfo>(),
-                TotalCount = 0
             });
 
         // Act - No subscription, GenericLobbiesEnabled = false
@@ -1702,7 +1701,7 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
 
         // Act
         await service.HandleSubscriptionUpdatedInternalAsync(
-            accountId, TEST_STUB_NAME, SubscriptionUpdatedEventAction.Created, isActive: true);
+            accountId, TEST_STUB_NAME, SubscriptionAction.Created, isActive: true);
 
         // Assert - subscriber session was stored (for authorization tracking)
         _mockSubscriberSessionsStore.Verify(s => s.TrySaveAsync(
@@ -1867,7 +1866,6 @@ public class GameSessionEventHandlerTests : ServiceTestBase<GameSessionServiceCo
                         CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
                     }
                 },
-                TotalCount = 1
             });
 
         // Setup subscriber session store for StoreSubscriberSessionAsync

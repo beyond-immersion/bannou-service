@@ -46,7 +46,7 @@ public partial class VoiceRoomStateClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.room_state";
+    public override string EventName { get; set; } = "voice.room.state";
 
     /// <summary>
     /// Voice room ID
@@ -115,7 +115,7 @@ public partial class VoicePeerJoinedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_joined";
+    public override string EventName { get; set; } = "voice.peer.joined";
 
     /// <summary>
     /// Voice room ID
@@ -155,7 +155,7 @@ public partial class VoicePeerLeftClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_left";
+    public override string EventName { get; set; } = "voice.peer.left";
 
     /// <summary>
     /// Voice room ID
@@ -202,7 +202,7 @@ public partial class VoicePeerUpdatedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_updated";
+    public override string EventName { get; set; } = "voice.peer.updated";
 
     /// <summary>
     /// Voice room ID
@@ -238,7 +238,7 @@ public partial class VoiceTierUpgradeClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.tier_upgrade";
+    public override string EventName { get; set; } = "voice.tier-upgrade";
 
     /// <summary>
     /// Voice room ID
@@ -303,7 +303,7 @@ public partial class VoiceRoomClosedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.room_closed";
+    public override string EventName { get; set; } = "voice.room.closed";
 
     /// <summary>
     /// Voice room ID that was closed
@@ -338,7 +338,7 @@ public partial class VoiceBroadcastConsentRequestClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.broadcast_consent_request";
+    public override string EventName { get; set; } = "voice.broadcast.consent-request";
 
     /// <summary>
     /// Voice room ID
@@ -376,7 +376,7 @@ public partial class VoiceBroadcastConsentUpdateClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.broadcast_consent_update";
+    public override string EventName { get; set; } = "voice.broadcast.consent-update";
 
     /// <summary>
     /// Voice room ID

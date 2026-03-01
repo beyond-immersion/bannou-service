@@ -528,7 +528,7 @@ public partial class MatchmakingService : IMatchmakingService
         }, cancellationToken: cancellationToken);
 
         // Send client event
-        await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedEvent
+        await _clientEventPublisher.PublishToSessionAsync(sessionId.ToString(), new QueueJoinedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -673,7 +673,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Notify all players of acceptance progress
         foreach (var ticket in match.MatchedTickets)
         {
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchPlayerAcceptedClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -898,7 +898,7 @@ public partial class MatchmakingService : IMatchmakingService
         // Send match found events
         foreach (var ticket in tickets)
         {
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchFoundEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchFoundClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -983,7 +983,7 @@ public partial class MatchmakingService : IMatchmakingService
             {
                 var reservation = reservations.FirstOrDefault(r => r.AccountId == ticket.AccountId);
 
-                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchConfirmedEvent
+                await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchConfirmedClientEvent
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
@@ -1079,7 +1079,7 @@ public partial class MatchmakingService : IMatchmakingService
         foreach (var ticket in match.MatchedTickets)
         {
             // Send cancelled event
-            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchDeclinedEvent
+            await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchDeclinedClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1181,7 +1181,7 @@ public partial class MatchmakingService : IMatchmakingService
         _logger.LogInformation("Cancelling ticket {TicketId} with reason {Reason}", ticketId, reason);
 
         // Send client event
-        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchmakingCancelledEvent
+        await _clientEventPublisher.PublishToSessionAsync(ticket.WebSocketSessionId.ToString(), new MatchmakingCancelledClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

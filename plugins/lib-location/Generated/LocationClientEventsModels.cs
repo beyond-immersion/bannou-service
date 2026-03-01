@@ -48,7 +48,7 @@ public partial class LocationPresenceChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "location.presence_changed";
+    public override string EventName { get; set; } = "location.presence-changed";
 
     /// <summary>
     /// Location where the presence change occurred

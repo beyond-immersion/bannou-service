@@ -3535,7 +3535,7 @@ public partial class TransitService : ITransitService
 
         var remainingLegs = journey.Legs.Count - journey.CurrentLegIndex;
 
-        var clientEvent = new TransitClientEvents.TransitJourneyUpdatedEvent
+        var clientEvent = new TransitClientEvents.TransitJourneyUpdatedClientEvent
         {
             JourneyId = journey.Id,
             EntityId = journey.EntityId,
@@ -4404,7 +4404,7 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishConnectionStatusChangedClientEventAsync");
 
-        var clientEvent = new TransitClientEvents.TransitConnectionStatusChangedEvent
+        var clientEvent = new TransitClientEvents.TransitConnectionStatusChangedClientEvent
         {
             ConnectionId = model.Id,
             FromLocationId = model.FromLocationId,
@@ -4502,7 +4502,7 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishDiscoveryRevealedClientEventAsync");
 
-        var clientEvent = new TransitClientEvents.TransitDiscoveryRevealedEvent
+        var clientEvent = new TransitClientEvents.TransitDiscoveryRevealedClientEvent
         {
             ConnectionId = discovery.ConnectionId,
             FromLocationId = connection.FromLocationId,

@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +34,7 @@ public partial class RealmService : IRealmService
     private readonly ISpeciesClient _speciesClient;
     private readonly ILocationClient _locationClient;
     private readonly ICharacterClient _characterClient;
+    private readonly IWorldstateClient _worldstateClient;
 
     private const string REALM_KEY_PREFIX = "realm:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -49,7 +51,8 @@ public partial class RealmService : IRealmService
         IResourceClient resourceClient,
         ISpeciesClient speciesClient,
         ILocationClient locationClient,
-        ICharacterClient characterClient)
+        ICharacterClient characterClient,
+        IWorldstateClient worldstateClient)
     {
         _realmStore = stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm);
         _codeIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm);
@@ -63,6 +66,7 @@ public partial class RealmService : IRealmService
         _speciesClient = speciesClient;
         _locationClient = locationClient;
         _characterClient = characterClient;
+        _worldstateClient = worldstateClient;
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -353,6 +357,12 @@ public partial class RealmService : IRealmService
 
         // Publish realm created event
         await PublishRealmCreatedEventAsync(model, cancellationToken);
+
+        // Optionally auto-initialize worldstate clock for the new realm
+        if (_configuration.AutoInitializeWorldstateClock)
+        {
+            await TryInitializeWorldstateClockAsync(realmId, cancellationToken);
+        }
 
         _logger.LogInformation("Created realm: {RealmId} with code {Code}", realmId, code);
         return (StatusCodes.OK, MapToResponse(model));
@@ -1405,6 +1415,37 @@ public partial class RealmService : IRealmService
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
         };
+    }
+
+    /// <summary>
+    /// Attempts to initialize a worldstate clock for a newly created realm.
+    /// Logs a warning on failure but does not fail the realm creation -- the clock
+    /// can be initialized manually later via the worldstate API.
+    /// </summary>
+    private async Task TryInitializeWorldstateClockAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.TryInitializeWorldstateClock");
+
+        try
+        {
+            await _worldstateClient.InitializeRealmClockAsync(
+                new InitializeRealmClockRequest
+                {
+                    RealmId = realmId,
+                    CalendarTemplateCode = _configuration.DefaultCalendarTemplateCode
+                },
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Auto-initialized worldstate clock for realm {RealmId} with calendar template {CalendarTemplateCode}",
+                realmId, _configuration.DefaultCalendarTemplateCode);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to auto-initialize worldstate clock for realm {RealmId} (status {StatusCode}). Clock can be initialized manually via the worldstate API",
+                realmId, ex.StatusCode);
+        }
     }
 
     #endregion

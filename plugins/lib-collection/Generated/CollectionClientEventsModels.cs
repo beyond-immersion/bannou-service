@@ -45,7 +45,7 @@ public partial class CollectionEntryUnlockedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.entry_unlocked";
+    public override string EventName { get; set; } = "collection.entry.unlocked";
 
     /// <summary>
     /// Collection where the entry was unlocked
@@ -106,7 +106,7 @@ public partial class CollectionMilestoneReachedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.milestone_reached";
+    public override string EventName { get; set; } = "collection.milestone-reached";
 
     /// <summary>
     /// Collection that reached the milestone
@@ -155,7 +155,7 @@ public partial class CollectionDiscoveryAdvancedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "collection.discovery_advanced";
+    public override string EventName { get; set; } = "collection.discovery.advanced";
 
     /// <summary>
     /// Collection containing the entry

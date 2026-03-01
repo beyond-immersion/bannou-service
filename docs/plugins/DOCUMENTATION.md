@@ -10,7 +10,7 @@
 
 ## Overview
 
-Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Two background services handle index rebuilding and periodic repository sync.
+Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, OpenAI function calling, Claude tool use) with full-text search, natural language query, and voice-friendly summaries. Manages documentation within namespaces, supporting manual CRUD and automated git repository synchronization (git-bound namespaces reject mutations, enforcing git as single source of truth). Features browser-facing GET endpoints that render markdown to HTML (unusual exception to Bannou's POST-only pattern). Three background services handle index rebuilding, periodic repository sync, and trashcan purge.
 
 ---
 
@@ -89,6 +89,8 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `SearchIndexRebuildOnStartup` | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | `true` | Whether to rebuild search index on startup |
 | `MaxContentSizeBytes` | `DOCUMENTATION_MAX_CONTENT_SIZE_BYTES` | `524288` | Maximum document content size (500KB) |
 | `TrashcanTtlDays` | `DOCUMENTATION_TRASHCAN_TTL_DAYS` | `7` | Days before trashcan items auto-expire |
+| `TrashcanPurgeEnabled` | `DOCUMENTATION_TRASHCAN_PURGE_ENABLED` | `true` | Enable background trashcan purge service |
+| `TrashcanPurgeCheckIntervalMinutes` | `DOCUMENTATION_TRASHCAN_PURGE_CHECK_INTERVAL_MINUTES` | `60` | How often to check for expired trashcan entries |
 | `VoiceSummaryMaxLength` | `DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH` | `200` | Maximum characters for voice summaries |
 | `SearchCacheTtlSeconds` | `DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS` | `300` | TTL for in-memory search result cache |
 | `MinRelevanceScore` | `DOCUMENTATION_MIN_RELEVANCE_SCORE` | `0.3` | Default minimum relevance for query results |
@@ -118,7 +120,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 26 configuration properties (25 service-specific + ForceServiceId) |
+| `DocumentationServiceConfiguration` | Singleton | All 28 configuration properties (27 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
@@ -131,8 +133,9 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `IEventConsumer` | Scoped | Event consumer registration (minimal, no-op) |
 | `SearchIndexRebuildService` | Hosted (BackgroundService) | One-shot index rebuild on startup |
 | `RepositorySyncSchedulerService` | Hosted (BackgroundService) | Periodic sync scheduling and stale repo cleanup |
+| `TrashcanPurgeService` | Hosted (BackgroundService) | Periodic purge of expired trashcan entries |
 
-Service lifetime is **Scoped** (per-request). Two hosted background services run as singletons.
+Service lifetime is **Scoped** (per-request). Three hosted background services run as singletons.
 
 ---
 
@@ -390,14 +393,18 @@ Archive System
 ## Potential Extensions
 
 1. **Semantic search with embeddings**: Implement vector embeddings for document content. Store embeddings in Redis Vector Similarity Search (VSS) and use cosine similarity for natural language queries in `QueryAsync`. Blocker: requires choosing an embedding provider and adding the HTTP client dependency — no external AI service integration exists in Bannou yet. Configuration properties (`AiEnhancementsEnabled`, `AiEmbeddingsModel`) were previously defined but removed as a T21 violation (never wired); they would need to be re-added to the schema when implementation begins. Note: this is a **retrieval** optimization (matching queries to existing documents), not content generation — it does not conflict with the formal-theory-over-AI principle (see [WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md](../../faqs/WHY-DOESNT-BANNOU-USE-AI-FOR-CONTENT-GENERATION.md)).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/525 -->
 
 2. **Webhook-triggered sync**: Add webhook endpoint for git push notifications (GitHub/GitLab webhooks) to trigger immediate sync instead of waiting for the scheduler interval.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/528 -->
 
 3. **Document versioning**: Track content version history within each document, enabling diff views and rollback to specific versions without full archive restore.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/530 -->
 
 4. **Cross-namespace search**: Support querying across multiple namespaces in a single request, with namespace-scoped result grouping.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/531 -->
 
-5. **Trashcan auto-purge background service**: Currently expired items are only cleaned lazily during `ListTrashcan`. A background service could periodically purge expired trashcan entries without requiring user access.
+5. ~~**Trashcan auto-purge background service**~~: **FIXED** (2026-03-01) - Added `TrashcanPurgeService` background service that periodically iterates all namespaces and purges expired trashcan entries. Configurable via `TrashcanPurgeEnabled` (default true) and `TrashcanPurgeCheckIntervalMinutes` (default 60). Uses optimistic concurrency on trashcan index with graceful retry on conflict. Lazy cleanup in `ListTrashcan` still works as a secondary path.
 
 6. **Incremental sync optimization**: Currently sync processes all matching files on each run. A file-hash index could skip unchanged files, reducing processing for large repositories with few changes.
 
@@ -417,7 +424,7 @@ Archive System
 
 3. **Archive deletion does not remove Asset Service bundle**: `DeleteDocumentationArchive` only removes the archive metadata. The actual bundle data in the Asset Service is not deleted, relying on Asset Service retention policies for cleanup.
 
-4. **Trashcan expiry is lazy, not proactive**: Expired trashcan items are only detected and cleaned during `ListTrashcan` calls or `RecoverDocument` attempts. Between accesses, expired items remain in Redis.
+4. **Trashcan expiry has two paths**: The `TrashcanPurgeService` background service periodically purges expired entries (default every 60 minutes). Additionally, lazy cleanup during `ListTrashcan` and `RecoverDocument` catches any entries that expire between purge cycles.
 
 ### Design Considerations
 
@@ -450,3 +457,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **Archive bundle upload reliability** (2026-03-01): Fixed T26 sentinel value violation in `CreateArchiveResponse.bundleAssetId` (non-nullable Guid → nullable) and populated field in response.
+- **Trashcan auto-purge background service** (2026-03-01): Added `TrashcanPurgeService` that periodically purges expired trashcan entries. Config: `TrashcanPurgeEnabled`, `TrashcanPurgeCheckIntervalMinutes`. Uses optimistic concurrency on trashcan indexes.

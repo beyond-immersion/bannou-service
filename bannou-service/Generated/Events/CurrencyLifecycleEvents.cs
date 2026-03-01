@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to currency-definition.created when a currencydefinition is created
+/// Published to currency.definition.created when a currencydefinition is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-definition.created
+    /// Event type identifier: currency.definition.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-definition.created";
+    public override string EventName { get; set; } = "currency.definition.created";
 
     /// <summary>
     /// Unique identifier for the currency definition
@@ -111,19 +111,19 @@ public partial class CurrencyDefinitionCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to currency-definition.updated when a currencydefinition is updated
+/// Published to currency.definition.updated when a currencydefinition is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-definition.updated
+    /// Event type identifier: currency.definition.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-definition.updated";
+    public override string EventName { get; set; } = "currency.definition.updated";
 
     /// <summary>
     /// Unique identifier for the currency definition
@@ -198,19 +198,19 @@ public partial class CurrencyDefinitionUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to currency-definition.deleted when a currencydefinition is deleted
+/// Published to currency.definition.deleted when a currencydefinition is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-definition.deleted
+    /// Event type identifier: currency.definition.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-definition.deleted";
+    public override string EventName { get; set; } = "currency.definition.deleted";
 
     /// <summary>
     /// Unique identifier for the currency definition
@@ -283,19 +283,19 @@ public partial class CurrencyDefinitionDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to currency-wallet.created when a currencywallet is created
+/// Published to currency.wallet.created when a currencywallet is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-wallet.created
+    /// Event type identifier: currency.wallet.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-wallet.created";
+    public override string EventName { get; set; } = "currency.wallet.created";
 
     /// <summary>
     /// Unique wallet identifier
@@ -348,19 +348,19 @@ public partial class CurrencyWalletCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to currency-wallet.updated when a currencywallet is updated
+/// Published to currency.wallet.updated when a currencywallet is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-wallet.updated
+    /// Event type identifier: currency.wallet.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-wallet.updated";
+    public override string EventName { get; set; } = "currency.wallet.updated";
 
     /// <summary>
     /// Unique wallet identifier
@@ -421,19 +421,19 @@ public partial class CurrencyWalletUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to currency-wallet.deleted when a currencywallet is deleted
+/// Published to currency.wallet.deleted when a currencywallet is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CurrencyWalletDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: currency-wallet.deleted
+    /// Event type identifier: currency.wallet.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency-wallet.deleted";
+    public override string EventName { get; set; } = "currency.wallet.deleted";
 
     /// <summary>
     /// Unique wallet identifier

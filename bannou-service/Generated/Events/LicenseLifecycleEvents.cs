@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to license-board-template.created when a licenseboardtemplate is created
+/// Published to license.board-template.created when a licenseboardtemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board-template.created
+    /// Event type identifier: license.board-template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board-template.created";
+    public override string EventName { get; set; } = "license.board-template.created";
 
     /// <summary>
     /// Unique board template identifier
@@ -122,19 +122,19 @@ public partial class LicenseBoardTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license-board-template.updated when a licenseboardtemplate is updated
+/// Published to license.board-template.updated when a licenseboardtemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board-template.updated
+    /// Event type identifier: license.board-template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board-template.updated";
+    public override string EventName { get; set; } = "license.board-template.updated";
 
     /// <summary>
     /// Unique board template identifier
@@ -220,19 +220,19 @@ public partial class LicenseBoardTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license-board-template.deleted when a licenseboardtemplate is deleted
+/// Published to license.board-template.deleted when a licenseboardtemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board-template.deleted
+    /// Event type identifier: license.board-template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board-template.deleted";
+    public override string EventName { get; set; } = "license.board-template.deleted";
 
     /// <summary>
     /// Unique board template identifier
@@ -316,19 +316,19 @@ public partial class LicenseBoardTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license-board.created when a licenseboard is created
+/// Published to license.board.created when a licenseboard is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board.created
+    /// Event type identifier: license.board.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board.created";
+    public override string EventName { get; set; } = "license.board.created";
 
     /// <summary>
     /// Unique board instance identifier
@@ -396,19 +396,19 @@ public partial class LicenseBoardCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license-board.updated when a licenseboard is updated
+/// Published to license.board.updated when a licenseboard is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board.updated
+    /// Event type identifier: license.board.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board.updated";
+    public override string EventName { get; set; } = "license.board.updated";
 
     /// <summary>
     /// Unique board instance identifier
@@ -484,19 +484,19 @@ public partial class LicenseBoardUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to license-board.deleted when a licenseboard is deleted
+/// Published to license.board.deleted when a licenseboard is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class LicenseBoardDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: license-board.deleted
+    /// Event type identifier: license.board.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "license-board.deleted";
+    public override string EventName { get; set; } = "license.board.deleted";
 
     /// <summary>
     /// Unique board instance identifier

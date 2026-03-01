@@ -327,7 +327,7 @@ public class WorldstateClockWorkerService : BackgroundService
         var periodChanged = boundariesToPublish.Any(b => b.Type == BoundaryType.Period);
         if (periodChanged)
         {
-            var syncEvent = new WorldstateTimeSyncEvent
+            var syncEvent = new WorldstateTimeSyncClientEvent
             {
                 RealmId = config.RealmId,
                 Year = clock.Year,

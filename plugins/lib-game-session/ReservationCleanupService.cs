@@ -208,7 +208,7 @@ public class ReservationCleanupService : BackgroundService
                     {
                         await _clientEventPublisher.PublishToSessionAsync(
                             player.WebSocketSessionId.Value.ToString(),
-                            new SessionCancelledEvent
+                            new SessionCancelledClientEvent
                             {
                                 SessionId = session.SessionId,
                                 Reason = "Not enough players joined before reservation expiry"

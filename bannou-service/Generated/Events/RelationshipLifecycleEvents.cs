@@ -348,19 +348,19 @@ public partial class RelationshipDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to relationship-type.created when a relationshiptype is created
+/// Published to relationship.type.created when a relationshiptype is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: relationship-type.created
+    /// Event type identifier: relationship.type.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship-type.created";
+    public override string EventName { get; set; } = "relationship.type.created";
 
     /// <summary>
     /// Unique identifier for the relationship type
@@ -477,19 +477,19 @@ public partial class RelationshipTypeCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to relationship-type.updated when a relationshiptype is updated
+/// Published to relationship.type.updated when a relationshiptype is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: relationship-type.updated
+    /// Event type identifier: relationship.type.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship-type.updated";
+    public override string EventName { get; set; } = "relationship.type.updated";
 
     /// <summary>
     /// Unique identifier for the relationship type
@@ -614,19 +614,19 @@ public partial class RelationshipTypeUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to relationship-type.deleted when a relationshiptype is deleted
+/// Published to relationship.type.deleted when a relationshiptype is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class RelationshipTypeDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: relationship-type.deleted
+    /// Event type identifier: relationship.type.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship-type.deleted";
+    public override string EventName { get; set; } = "relationship.type.deleted";
 
     /// <summary>
     /// Unique identifier for the relationship type

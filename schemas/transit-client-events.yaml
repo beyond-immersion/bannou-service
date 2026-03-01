@@ -29,7 +29,7 @@ components:
       properties:
         eventName:
           type: string
-          default: transit.journey-updated
+          default: transit.journey.updated
           description: Fixed event type identifier
         journeyId:
           type: string
@@ -83,7 +83,7 @@ components:
       properties:
         eventName:
           type: string
-          default: transit.discovery-revealed
+          default: transit.discovery.revealed
           description: Fixed event type identifier
         connectionId:
           type: string
@@ -125,7 +125,7 @@ components:
       properties:
         eventName:
           type: string
-          default: transit.connection-status-changed
+          default: transit.connection.status-changed
           description: Fixed event type identifier
         connectionId:
           type: string

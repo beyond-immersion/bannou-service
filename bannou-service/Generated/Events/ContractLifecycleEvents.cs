@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to contract-template.created when a contracttemplate is created
+/// Published to contract.template.created when a contracttemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-template.created
+    /// Event type identifier: contract.template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-template.created";
+    public override string EventName { get; set; } = "contract.template.created";
 
     /// <summary>
     /// Unique identifier for the contract template
@@ -132,19 +132,19 @@ public partial class ContractTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract-template.updated when a contracttemplate is updated
+/// Published to contract.template.updated when a contracttemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-template.updated
+    /// Event type identifier: contract.template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-template.updated";
+    public override string EventName { get; set; } = "contract.template.updated";
 
     /// <summary>
     /// Unique identifier for the contract template
@@ -240,19 +240,19 @@ public partial class ContractTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract-template.deleted when a contracttemplate is deleted
+/// Published to contract.template.deleted when a contracttemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-template.deleted
+    /// Event type identifier: contract.template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-template.deleted";
+    public override string EventName { get; set; } = "contract.template.deleted";
 
     /// <summary>
     /// Unique identifier for the contract template
@@ -346,19 +346,19 @@ public partial class ContractTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract-instance.created when a contractinstance is created
+/// Published to contract.instance.created when a contractinstance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractInstanceCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-instance.created
+    /// Event type identifier: contract.instance.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-instance.created";
+    public override string EventName { get; set; } = "contract.instance.created";
 
     /// <summary>
     /// Unique identifier for the contract instance
@@ -440,19 +440,19 @@ public partial class ContractInstanceCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract-instance.updated when a contractinstance is updated
+/// Published to contract.instance.updated when a contractinstance is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-instance.updated
+    /// Event type identifier: contract.instance.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-instance.updated";
+    public override string EventName { get; set; } = "contract.instance.updated";
 
     /// <summary>
     /// Unique identifier for the contract instance
@@ -542,19 +542,19 @@ public partial class ContractInstanceUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to contract-instance.deleted when a contractinstance is deleted
+/// Published to contract.instance.deleted when a contractinstance is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ContractInstanceDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: contract-instance.deleted
+    /// Event type identifier: contract.instance.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "contract-instance.deleted";
+    public override string EventName { get; set; } = "contract.instance.deleted";
 
     /// <summary>
     /// Unique identifier for the contract instance

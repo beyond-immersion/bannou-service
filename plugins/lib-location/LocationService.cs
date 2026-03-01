@@ -2104,7 +2104,7 @@ public partial class LocationService : ILocationService
 
         await _entitySessionRegistry.PublishToEntitySessionsAsync(
             "location", locationId,
-            new LocationPresenceChangedEvent
+            new LocationPresenceChangedClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

@@ -2282,9 +2282,18 @@ public partial class AssetService : IAssetService
             await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.LogWarning(
-            "Failed to update index {IndexKey} after {MaxRetries} attempts due to concurrent modifications",
-            indexKey, maxRetries);
+        _logger.LogError(
+            "Failed to update index {IndexKey} for asset {AssetId} after {MaxRetries} attempts due to concurrent modifications — asset will not appear in search results for this index",
+            indexKey, assetId, maxRetries);
+
+        await _messageBus.TryPublishErrorAsync(
+            "asset",
+            "AddToIndexWithOptimisticConcurrency",
+            "IndexRetryExhausted",
+            $"Failed to update index {indexKey} for asset {assetId} after {maxRetries} attempts",
+            dependency: "state",
+            endpoint: $"redis:{indexKey}",
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -2348,9 +2357,18 @@ public partial class AssetService : IAssetService
             await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.LogWarning(
-            "Failed to update asset-bundle index {IndexKey} after {MaxRetries} attempts",
-            indexKey, maxRetries);
+        _logger.LogError(
+            "Failed to update asset-bundle index {IndexKey} for bundle {BundleId} after {MaxRetries} attempts — bundle will not appear in reverse lookup for this asset",
+            indexKey, bundleId, maxRetries);
+
+        await _messageBus.TryPublishErrorAsync(
+            "asset",
+            "AddBundleToAssetIndex",
+            "IndexRetryExhausted",
+            $"Failed to update asset-bundle index {indexKey} for bundle {bundleId} after {maxRetries} attempts",
+            dependency: "state",
+            endpoint: $"redis:{indexKey}",
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     #endregion

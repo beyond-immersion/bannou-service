@@ -585,12 +585,15 @@ No stubs remain. All 33 endpoints are fully implemented with no `NotImplemented`
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/524 -->
 
 2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/527 -->
 
-3. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
+3. ~~**Weather-reactive connections**~~: **FIXED** (2026-03-01) - No Transit work needed. Transit's `/transit/connection/update-status` endpoint is fully implemented with distributed locking, optimistic concurrency, graph cache invalidation, and event publishing. This is purely an Environment (L4) consumer pattern: Environment calls Transit's existing API to close/open connections based on weather events. The `ITransitCostModifierProvider` interface also already exists for Environment to provide speed/risk modifiers during cost calculations. Both integration points are Transit-complete; remaining work belongs in Environment's implementation plan (see `docs/plugins/ENVIRONMENT.md` Phase 5). Note: `ENVIRONMENT.md` references an "impassability flag" on `TransitCostModifier` that does not exist in the actual interface — route blocking should use `update-status` API calls, not the cost modifier pattern.
 
 4. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/533 -->
 
 5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/535 -->
 
 
 ---
@@ -915,4 +918,5 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ## Work Tracking
 
-No active work tracking items. All AUDIT markers have been processed.
+### Completed
+- **2026-03-01**: Potential Extension #3 (Weather-reactive connections) — confirmed Transit side is complete; marked as FIXED. Remaining work is Environment (L4) consumer implementation.

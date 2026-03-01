@@ -48,7 +48,7 @@ public partial class CurrencyBalanceChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.balance_changed";
+    public override string EventName { get; set; } = "currency.balance.changed";
 
     /// <summary>
     /// The wallet whose balance changed
@@ -113,7 +113,7 @@ public partial class CurrencyWalletFrozenClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.wallet_frozen";
+    public override string EventName { get; set; } = "currency.wallet.frozen";
 
     /// <summary>
     /// The wallet that was frozen
@@ -149,7 +149,7 @@ public partial class CurrencyWalletUnfrozenClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "currency.wallet_unfrozen";
+    public override string EventName { get; set; } = "currency.wallet.unfrozen";
 
     /// <summary>
     /// The wallet that was unfrozen

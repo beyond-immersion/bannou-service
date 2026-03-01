@@ -53,8 +53,9 @@ public class TransitServiceTests
     private readonly Mock<ITransitConnectionGraphCache> _mockGraphCache;
     private readonly Mock<ITransitRouteCalculator> _mockRouteCalculator;
 
-    // Client events, logging, telemetry, configuration, event consumer
+    // Client events, entity session registry, logging, telemetry, configuration, event consumer
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
     private readonly Mock<ILogger<TransitService>> _mockLogger;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly TransitServiceConfiguration _configuration;
@@ -121,8 +122,9 @@ public class TransitServiceTests
         _mockGraphCache = new Mock<ITransitConnectionGraphCache>();
         _mockRouteCalculator = new Mock<ITransitRouteCalculator>();
 
-        // Client events, logging, telemetry
+        // Client events, entity session registry, logging, telemetry
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
         _mockLogger = new Mock<ILogger<TransitService>>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
@@ -236,6 +238,7 @@ public class TransitServiceTests
             _mockRouteCalculator.Object,
             Enumerable.Empty<ITransitCostModifierProvider>(),
             _mockClientEventPublisher.Object,
+            _mockEntitySessionRegistry.Object,
             _mockLogger.Object,
             _mockTelemetryProvider.Object,
             _configuration,
@@ -419,7 +422,7 @@ public class TransitServiceTests
         var (statusCode, response) = await service.RegisterModeAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(capturedModel);
         Assert.Equal("horseback", capturedModel.Code);
@@ -543,7 +546,7 @@ public class TransitServiceTests
         var updatedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.updated");
         Assert.NotNull(updatedEvent.Event);
         var typedEvent = Assert.IsType<TransitModeUpdatedEvent>(updatedEvent.Event);
-        Assert.Equal("horseback", typedEvent.Code);
+        Assert.Equal("horseback", typedEvent.Mode.Code);
         Assert.Contains("isDeprecated", typedEvent.ChangedFields);
     }
 
@@ -768,7 +771,7 @@ public class TransitServiceTests
         var (statusCode, response) = await service.CreateConnectionAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(capturedConnection);
         Assert.Equal(TestLocationAId, capturedConnection.FromLocationId);
@@ -931,7 +934,7 @@ public class TransitServiceTests
         // Assert event published with captured data
         var statusEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.connection.status-changed");
         Assert.NotNull(statusEvent.Event);
-        var typedEvent = Assert.IsType<TransitConnectionStatusChangedClientEvent>(statusEvent.Event);
+        var typedEvent = Assert.IsType<TransitConnectionStatusChangedEvent>(statusEvent.Event);
         Assert.Equal(connectionId, typedEvent.ConnectionId);
     }
 
@@ -1063,7 +1066,7 @@ public class TransitServiceTests
         var (statusCode, response) = await service.CreateJourneyAsync(request, CancellationToken.None);
 
         // Assert
-        Assert.Equal(StatusCodes.Created, statusCode);
+        Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.NotNull(capturedJourney);
         Assert.Equal(JourneyStatus.Preparing, capturedJourney.Status);
@@ -1591,7 +1594,7 @@ public class TransitServiceTests
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
         var revealedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.discovery.revealed");
         Assert.NotNull(revealedEvent.Event);
-        var typedEvent = Assert.IsType<TransitDiscoveryRevealedClientEvent>(revealedEvent.Event);
+        var typedEvent = Assert.IsType<TransitDiscoveryRevealedEvent>(revealedEvent.Event);
         Assert.Equal(entityId, typedEvent.EntityId);
         Assert.Equal(connectionId, typedEvent.ConnectionId);
     }

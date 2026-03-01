@@ -381,7 +381,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Realm">
             <summary>
-            Target realm.
+            Target realm (null for realm-agnostic bundles).
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.AssetBundler.Bundles.BundleMetadataResult.Tags">

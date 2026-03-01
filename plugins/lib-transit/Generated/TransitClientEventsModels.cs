@@ -44,7 +44,7 @@ public partial class TransitJourneyUpdatedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "transit.journey_updated";
+    public override string EventName { get; set; } = "transit.journey.updated";
 
     /// <summary>
     /// The journey that changed state
@@ -128,7 +128,7 @@ public partial class TransitDiscoveryRevealedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "transit.discovery_revealed";
+    public override string EventName { get; set; } = "transit.discovery.revealed";
 
     /// <summary>
     /// The connection that was discovered
@@ -183,7 +183,7 @@ public partial class TransitConnectionStatusChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "transit.connection_status_changed";
+    public override string EventName { get; set; } = "transit.connection.status-changed";
 
     /// <summary>
     /// The connection whose status changed

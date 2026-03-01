@@ -143,7 +143,7 @@ public partial class MatchmakingService
                         // Calculate remaining time to accept
                         var remainingSeconds = Math.Max(0, (int)(match.AcceptDeadline - DateTimeOffset.UtcNow).TotalSeconds);
 
-                        await _clientEventPublisher.PublishToSessionAsync(evt.SessionId.ToString(), new MatchFoundEvent
+                        await _clientEventPublisher.PublishToSessionAsync(evt.SessionId.ToString(), new MatchFoundClientEvent
                         {
                             EventId = Guid.NewGuid(),
                             Timestamp = DateTimeOffset.UtcNow,

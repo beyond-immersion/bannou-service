@@ -1285,7 +1285,7 @@ public partial class GameSessionService : IGameSessionService
         var senderPlayer = model.Players.FirstOrDefault(p => p.AccountId == senderId);
 
         // Build typed client event (SessionId = lobby ID for game context)
-        var chatEvent = new SessionChatReceivedEvent
+        var chatEvent = new SessionChatReceivedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1319,7 +1319,7 @@ public partial class GameSessionService : IGameSessionService
             // Send to target with IsWhisperToMe = true
             if (targetPlayer != null)
             {
-                var targetEvent = new SessionChatReceivedEvent
+                var targetEvent = new SessionChatReceivedClientEvent
                 {
                     EventId = chatEvent.EventId,
                     Timestamp = chatEvent.Timestamp,
@@ -1484,7 +1484,7 @@ public partial class GameSessionService : IGameSessionService
     /// <param name="stubName">Stub name of the service (e.g., "my-game").</param>
     /// <param name="action">Action that triggered the event.</param>
     /// <param name="isActive">Whether the subscription is currently active.</param>
-    internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, SubscriptionUpdatedEventAction action, bool isActive)
+    internal async Task HandleSubscriptionUpdatedInternalAsync(Guid accountId, string stubName, SubscriptionAction action, bool isActive)
     {
         using var activity = _telemetryProvider.StartActivity(
             "bannou.game-session", "GameSessionService.HandleSubscriptionUpdatedInternal");
@@ -1493,7 +1493,7 @@ public partial class GameSessionService : IGameSessionService
             accountId, stubName, action, isActive);
 
         // Update the cache
-        if (isActive && (action == SubscriptionUpdatedEventAction.Created || action == SubscriptionUpdatedEventAction.Renewed || action == SubscriptionUpdatedEventAction.Updated))
+        if (isActive && (action == SubscriptionAction.Created || action == SubscriptionAction.Renewed || action == SubscriptionAction.Updated))
         {
             _accountSubscriptions.AddOrUpdate(
                 accountId,
@@ -1508,7 +1508,7 @@ public partial class GameSessionService : IGameSessionService
                 });
             _logger.LogDebug("Added {StubName} to subscription cache for account {AccountId}", stubName, accountId);
         }
-        else if (!isActive || action == SubscriptionUpdatedEventAction.Cancelled || action == SubscriptionUpdatedEventAction.Expired)
+        else if (!isActive || action == SubscriptionAction.Cancelled || action == SubscriptionAction.Expired)
         {
             if (_accountSubscriptions.TryGetValue(accountId, out var existingSet))
             {

@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to inventory-container.created when a inventorycontainer is created
+/// Published to inventory.container.created when a inventorycontainer is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.created
+    /// Event type identifier: inventory.container.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.created";
+    public override string EventName { get; set; } = "inventory.container.created";
 
     /// <summary>
     /// Container unique identifier
@@ -270,19 +270,19 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to inventory-container.updated when a inventorycontainer is updated
+/// Published to inventory.container.updated when a inventorycontainer is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.updated
+    /// Event type identifier: inventory.container.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.updated";
+    public override string EventName { get; set; } = "inventory.container.updated";
 
     /// <summary>
     /// Container unique identifier
@@ -516,19 +516,19 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to inventory-container.deleted when a inventorycontainer is deleted
+/// Published to inventory.container.deleted when a inventorycontainer is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.deleted
+    /// Event type identifier: inventory.container.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.deleted";
+    public override string EventName { get; set; } = "inventory.container.deleted";
 
     /// <summary>
     /// Container unique identifier

@@ -435,7 +435,7 @@ public partial class CurrencyService : ICurrencyService
         }, cancellationToken);
 
         await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
-            new CurrencyClientEvents.CurrencyWalletFrozenEvent
+            new CurrencyClientEvents.CurrencyWalletFrozenClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -480,7 +480,7 @@ public partial class CurrencyService : ICurrencyService
         }, cancellationToken);
 
         await PublishClientEventToWalletOwnerAsync(wallet.OwnerId,
-            new CurrencyClientEvents.CurrencyWalletUnfrozenEvent
+            new CurrencyClientEvents.CurrencyWalletUnfrozenClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -782,7 +782,7 @@ public partial class CurrencyService : ICurrencyService
             WalletCapApplied = walletCapApplied
         }, cancellationToken);
 
-        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -875,7 +875,7 @@ public partial class CurrencyService : ICurrencyService
             ReferenceId = body.ReferenceId
         }, cancellationToken);
 
-        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1007,7 +1007,7 @@ public partial class CurrencyService : ICurrencyService
         }, cancellationToken);
 
         // Source wallet owner sees debit
-        await PublishClientEventToWalletOwnerAsync(sourceWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        await PublishClientEventToWalletOwnerAsync(sourceWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1020,7 +1020,7 @@ public partial class CurrencyService : ICurrencyService
         }, cancellationToken);
 
         // Target wallet owner sees credit (may be less than body.Amount if cap applied)
-        await PublishClientEventToWalletOwnerAsync(targetWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        await PublishClientEventToWalletOwnerAsync(targetWallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2195,7 +2195,7 @@ public partial class CurrencyService : ICurrencyService
             PeriodsTo = balance.LastAutogainAt.Value
         }, ct);
 
-        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedEvent
+        await PublishClientEventToWalletOwnerAsync(wallet.OwnerId, new CurrencyClientEvents.CurrencyBalanceChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,

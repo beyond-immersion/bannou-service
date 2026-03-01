@@ -50,7 +50,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.message-received"
+          default: "chat.message.received"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -124,7 +124,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.message-deleted"
+          default: "chat.message.deleted"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -158,7 +158,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.message-pinned"
+          default: "chat.message.pinned"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -196,7 +196,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-joined"
+          default: "chat.participant.joined"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -244,7 +244,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-left"
+          default: "chat.participant.left"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -280,7 +280,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-kicked"
+          default: "chat.participant.kicked"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -317,7 +317,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-banned"
+          default: "chat.participant.banned"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -353,7 +353,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-muted"
+          default: "chat.participant.muted"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -390,7 +390,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-unmuted"
+          default: "chat.participant.unmuted"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -425,7 +425,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-role-changed"
+          default: "chat.participant.role-changed"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -472,7 +472,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.participant-unbanned"
+          default: "chat.participant.unbanned"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -515,7 +515,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.room-updated"
+          default: "chat.room.updated"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -568,7 +568,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.room-locked"
+          default: "chat.room.locked"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -595,7 +595,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "chat.room-deleted"
+          default: "chat.room.deleted"
           description: Fixed event type identifier
         roomId:
           type: string

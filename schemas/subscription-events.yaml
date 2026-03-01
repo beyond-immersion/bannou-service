@@ -59,6 +59,7 @@ components:
           description: Display name of the service
         action:
           $ref: 'subscription-api.yaml#/components/schemas/SubscriptionAction'
+          description: The action that triggered this subscription change
         isActive:
           type: boolean
           description: Whether the subscription is currently active

@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Worldstate;
 using BeyondImmersion.BannouService.Testing;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
     private readonly Mock<ISpeciesClient> _mockSpeciesClient;
     private readonly Mock<ILocationClient> _mockLocationClient;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IWorldstateClient> _mockWorldstateClient;
 
     private const string STATE_STORE = "realm-statestore";
     private const string PUBSUB_NAME = "bannou-pubsub";
@@ -57,6 +61,9 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         _mockSpeciesClient = new Mock<ISpeciesClient>();
         _mockLocationClient = new Mock<ILocationClient>();
         _mockCharacterClient = new Mock<ICharacterClient>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockWorldstateClient = new Mock<IWorldstateClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory
@@ -84,10 +91,13 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
             _mockLogger.Object,
             Configuration,
             _mockEventConsumer.Object,
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object,
             _mockResourceClient.Object,
             _mockSpeciesClient.Object,
             _mockLocationClient.Object,
-            _mockCharacterClient.Object);
+            _mockCharacterClient.Object,
+            _mockWorldstateClient.Object);
     }
 
     /// <summary>

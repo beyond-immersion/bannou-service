@@ -49,7 +49,7 @@ public partial class StatusEffectChangedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status.effect_changed";
+    public override string EventName { get; set; } = "status.effect-changed";
 
     /// <summary>
     /// Type of status change that occurred

@@ -44,7 +44,7 @@ public partial class WorldstateTimeSyncClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.time_sync";
+    public override string EventName { get; set; } = "worldstate.time-sync";
 
     /// <summary>
     /// Realm this sync applies to

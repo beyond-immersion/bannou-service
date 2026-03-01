@@ -112,7 +112,7 @@ public sealed class BundleClient
 
         return new UpdateResult
         {
-            BundleId = result.BundleId,
+            BundleId = bundleId,
             Version = result.Version,
             PreviousVersion = result.PreviousVersion,
             Changes = result.Changes.ToList(),
@@ -156,7 +156,7 @@ public sealed class BundleClient
 
         return new DeleteResult
         {
-            BundleId = result.BundleId,
+            BundleId = bundleId,
             Status = result.Status.ToString(),
             DeletedAt = result.DeletedAt,
             RetentionUntil = result.RetentionUntil
@@ -194,9 +194,9 @@ public sealed class BundleClient
 
         return new RestoreResult
         {
-            BundleId = result.BundleId,
-            Status = result.Status,
-            RestoredAt = result.RestoredAt,
+            BundleId = bundleId,
+            Status = result.Status.ToString(),
+            RestoredAt = DateTimeOffset.UtcNow,
             RestoredFromVersion = result.RestoredFromVersion
         };
     }
@@ -333,7 +333,7 @@ public sealed class BundleClient
             Name = info.Name,
             Description = info.Description,
             Owner = info.Owner,
-            Realm = info.Realm,
+            Realm = info.Realm?.ToString(),
             Tags = info.Tags,
             Status = info.Status.ToString(),
             AssetCount = info.AssetCount,
@@ -433,9 +433,9 @@ public sealed class BundleMetadataResult
     public string? Owner { get; init; }
 
     /// <summary>
-    /// Target realm.
+    /// Target realm (null for realm-agnostic bundles).
     /// </summary>
-    public required string Realm { get; init; }
+    public string? Realm { get; init; }
 
     /// <summary>
     /// Key-value tags.

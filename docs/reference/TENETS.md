@@ -338,6 +338,7 @@ Tenets are organized into categories based on when they're needed:
 | Wrong naming pattern (method, model, event, topic) | T16 | Follow category-specific pattern in T16 |
 | Service name embedded in event topic entity via hyphens (Pattern B) | T16 | Use dot-separated namespace: `transit-connection.created` → `transit.connection.created` (Pattern C) |
 | Underscores in event topic strings | T16 | Use kebab-case: `currency.exchange_rate.updated` → `currency.exchange-rate.updated` |
+| Client event `eventName` missing entity dot for multi-entity service | T16 | Use Pattern C: `chat.message-received` → `chat.message.received` (message is a real API entity) |
 | Client event model missing `ClientEvent` suffix | T16 | Use `{Entity}{Action}ClientEvent` to avoid collision with service event names |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
 | Missing env var in config XML doc | T19 | Document environment variable in summary |

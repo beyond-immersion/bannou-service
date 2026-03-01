@@ -72,4 +72,16 @@ public class RealmServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 10, Maximum = 600)]
     public int MergeLockTimeoutSeconds { get; set; } = 120;
 
+    /// <summary>
+    /// When true, automatically initializes a worldstate realm clock after creating a new realm. If initialization fails, realm creation still succeeds (warning logged). Env var REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK.
+    /// Environment variable: REALM_AUTO_INITIALIZE_WORLDSTATE_CLOCK
+    /// </summary>
+    public bool AutoInitializeWorldstateClock { get; set; } = false;
+
+    /// <summary>
+    /// Default calendar template code passed to worldstate when auto-initializing realm clocks. Required when AutoInitializeWorldstateClock is true. Env var REALM_DEFAULT_CALENDAR_TEMPLATE_CODE.
+    /// Environment variable: REALM_DEFAULT_CALENDAR_TEMPLATE_CODE
+    /// </summary>
+    public string? DefaultCalendarTemplateCode { get; set; }
+
 }

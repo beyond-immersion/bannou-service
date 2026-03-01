@@ -687,7 +687,7 @@ public partial class SubscriptionService : ISubscriptionService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.subscription", "SubscriptionService.PublishSubscriptionClientEvent");
 
-        var clientEvent = new SubscriptionStatusChangedEvent
+        var clientEvent = new SubscriptionStatusChangedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

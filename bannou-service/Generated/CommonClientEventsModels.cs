@@ -43,7 +43,7 @@ public partial class CapabilityManifestClientEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "connect.capability_manifest";
+    public override string EventName { get; set; } = "connect.capability-manifest";
 
     /// <summary>
     /// Session ID this manifest applies to
@@ -138,7 +138,7 @@ public partial class DisconnectNotificationClientEvent : BaseClientEvent
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "connect.disconnect_notification";
+    public override string EventName { get; set; } = "connect.disconnect-notification";
 
     /// <summary>
     /// Token for reconnecting to the same session (valid for 5 minutes)
@@ -232,7 +232,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "permission.session_capabilities";
+    public override string EventName { get; set; } = "permission.session-capabilities";
 
     /// <summary>
     /// Session ID these capabilities apply to
@@ -324,7 +324,7 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "session.shortcut_published";
+    public override string EventName { get; set; } = "session.shortcut-published";
 
     /// <summary>
     /// Target session for this shortcut.
@@ -367,7 +367,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "session.shortcut_revoked";
+    public override string EventName { get; set; } = "session.shortcut-revoked";
 
     /// <summary>
     /// Target session for revocation.
