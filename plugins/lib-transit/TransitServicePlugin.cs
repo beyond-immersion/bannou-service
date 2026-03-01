@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Transit.Providers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Transit;
@@ -31,7 +32,6 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
         services.AddHostedService<JourneyArchivalWorker>();
 
         // Variable provider for ${transit.*} ABML expressions
-        // TODO: Uncomment when TransitVariableProviderFactory is created (Phase 9)
-        // services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>();
+        services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>();
     }
 }

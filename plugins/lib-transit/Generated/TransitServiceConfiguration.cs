@@ -177,6 +177,20 @@ public class TransitServiceConfiguration : BaseServiceConfiguration
     public double MinimumEffectiveSpeedKmPerGameHour { get; set; } = 0.01;
 
     /// <summary>
+    /// Startup delay in seconds before the seasonal connection worker begins its first check. Allows other services to initialize.
+    /// Environment variable: TRANSIT_SEASONAL_WORKER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int SeasonalWorkerStartupDelaySeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Startup delay in seconds before the journey archival worker begins its first sweep. Allows other services to initialize.
+    /// Environment variable: TRANSIT_JOURNEY_ARCHIVAL_WORKER_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 300)]
+    public int JourneyArchivalWorkerStartupDelaySeconds { get; set; } = 10;
+
+    /// <summary>
     /// Default fallback mode code used when no compatible transit mode can be found for a connection during route calculation. This mode is used as a last resort when neither the requested mode, multi-modal selection, nor any registered mode matches.
     /// Environment variable: TRANSIT_DEFAULT_FALLBACK_MODE_CODE
     /// </summary>

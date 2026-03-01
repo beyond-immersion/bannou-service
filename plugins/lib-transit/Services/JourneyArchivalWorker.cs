@@ -66,10 +66,10 @@ public class JourneyArchivalWorker : BackgroundService
         _logger.LogInformation("Journey archival worker starting, check interval: {IntervalSeconds}s",
             _configuration.JourneyArchivalWorkerIntervalSeconds);
 
-        // Brief startup delay to allow other services to initialize
+        // Startup delay to allow other services to initialize (configurable per IMPLEMENTATION TENETS)
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.JourneyArchivalWorkerStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -140,6 +140,23 @@ public class JourneyArchivalWorker : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var worldstateClient = scope.ServiceProvider.GetRequiredService<Worldstate.IWorldstateClient>();
+        var lockProvider = scope.ServiceProvider.GetRequiredService<IDistributedLockProvider>();
+
+        // Distributed lock ensures only one node runs the archival sweep per cycle
+        // (per IMPLEMENTATION TENETS: multi-instance safety)
+        var lockOwner = $"journey-archival-{Guid.NewGuid():N}";
+        await using var lockResponse = await lockProvider.LockAsync(
+            StateStoreDefinitions.TransitLock,
+            "journey-archival-sweep",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Another node is running journey archival sweep, skipping this cycle");
+            return;
+        }
 
         var journeyStore = stateStoreFactory.GetStore<TransitJourneyModel>(
             StateStoreDefinitions.TransitJourneys);

@@ -550,7 +550,7 @@ public partial class TransitService : ITransitService
         // journeys, so this query currently returns 0 for in-progress journeys.
         // Phase 6 should add a helper that scans both stores or maintains a mode->journey index.
         var journeysUsingMode = await _journeyArchiveStore.QueryAsync(
-            j => j.PrimaryModeCode == body.Code && (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.In_transit || j.Status == JourneyStatus.At_waypoint || j.Status == JourneyStatus.Interrupted),
+            j => j.PrimaryModeCode == body.Code && (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit || j.Status == JourneyStatus.AtWaypoint || j.Status == JourneyStatus.Interrupted),
             cancellationToken);
 
         if (journeysUsingMode.Count > 0)
@@ -1081,7 +1081,7 @@ public partial class TransitService : ITransitService
     /// <summary>
     /// Builds the state store key for a connection by ID.
     /// </summary>
-    private static string BuildConnectionKey(Guid id) => $"{CONNECTION_KEY_PREFIX}{id}";
+    internal static string BuildConnectionKey(Guid id) => $"{CONNECTION_KEY_PREFIX}{id}";
 
     /// <summary>
     /// Builds the state store key for a connection by code.
@@ -1578,8 +1578,8 @@ public partial class TransitService : ITransitService
         // Phase 6 should add a helper that scans both stores or maintains a connection->journey index.
         var activeJourneys = await _journeyArchiveStore.QueryAsync(
             j => j.Legs.Any(l => l.ConnectionId == body.ConnectionId) &&
-                 (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.In_transit ||
-                  j.Status == JourneyStatus.At_waypoint || j.Status == JourneyStatus.Interrupted),
+                 (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit ||
+                  j.Status == JourneyStatus.AtWaypoint || j.Status == JourneyStatus.Interrupted),
             cancellationToken);
 
         if (activeJourneys.Count > 0)
@@ -2168,11 +2168,11 @@ public partial class TransitService : ITransitService
         }
 
         // Transition to in_transit
-        journey.Status = JourneyStatus.In_transit;
+        journey.Status = JourneyStatus.InTransit;
         journey.ActualDepartureGameTime = actualDepartureGameTime;
         if (journey.Legs.Count > 0)
         {
-            journey.Legs[0].Status = JourneyLegStatus.In_progress;
+            journey.Legs[0].Status = JourneyLegStatus.InProgress;
         }
         journey.ModifiedAt = DateTimeOffset.UtcNow;
 
@@ -2271,11 +2271,11 @@ public partial class TransitService : ITransitService
         }
 
         // Transition to in_transit
-        journey.Status = JourneyStatus.In_transit;
+        journey.Status = JourneyStatus.InTransit;
         journey.StatusReason = null;
         if (journey.CurrentLegIndex < journey.Legs.Count)
         {
-            journey.Legs[journey.CurrentLegIndex].Status = JourneyLegStatus.In_progress;
+            journey.Legs[journey.CurrentLegIndex].Status = JourneyLegStatus.InProgress;
         }
         journey.ModifiedAt = DateTimeOffset.UtcNow;
 
@@ -2334,7 +2334,7 @@ public partial class TransitService : ITransitService
         }
 
         // Validate status == in_transit or at_waypoint
-        if (journey.Status != JourneyStatus.In_transit && journey.Status != JourneyStatus.At_waypoint)
+        if (journey.Status != JourneyStatus.InTransit && journey.Status != JourneyStatus.AtWaypoint)
         {
             _logger.LogDebug("Cannot advance journey {JourneyId}: status is {Status}, expected InTransit or AtWaypoint",
                 body.JourneyId, journey.Status);
@@ -2342,9 +2342,9 @@ public partial class TransitService : ITransitService
         }
 
         // If at_waypoint, start the next leg before completing it
-        if (journey.Status == JourneyStatus.At_waypoint && journey.CurrentLegIndex < journey.Legs.Count)
+        if (journey.Status == JourneyStatus.AtWaypoint && journey.CurrentLegIndex < journey.Legs.Count)
         {
-            journey.Legs[journey.CurrentLegIndex].Status = JourneyLegStatus.In_progress;
+            journey.Legs[journey.CurrentLegIndex].Status = JourneyLegStatus.InProgress;
         }
 
         // Validate there is a current leg to complete
@@ -2414,7 +2414,7 @@ public partial class TransitService : ITransitService
         {
             // Advance to next leg, transition to at_waypoint
             journey.CurrentLegIndex++;
-            journey.Status = JourneyStatus.At_waypoint;
+            journey.Status = JourneyStatus.AtWaypoint;
             journey.ModifiedAt = DateTimeOffset.UtcNow;
 
             await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
@@ -2548,7 +2548,7 @@ public partial class TransitService : ITransitService
         }
 
         // Validate status == in_transit or at_waypoint
-        if (journey.Status != JourneyStatus.In_transit && journey.Status != JourneyStatus.At_waypoint)
+        if (journey.Status != JourneyStatus.InTransit && journey.Status != JourneyStatus.AtWaypoint)
         {
             _logger.LogDebug("Cannot force-arrive journey {JourneyId}: status is {Status}, expected InTransit or AtWaypoint",
                 body.JourneyId, journey.Status);
@@ -2558,7 +2558,7 @@ public partial class TransitService : ITransitService
         // Mark remaining legs as skipped (current in-progress leg is also skipped since we're force-arriving)
         for (var i = journey.CurrentLegIndex; i < journey.Legs.Count; i++)
         {
-            if (journey.Legs[i].Status == JourneyLegStatus.Pending || journey.Legs[i].Status == JourneyLegStatus.In_progress)
+            if (journey.Legs[i].Status == JourneyLegStatus.Pending || journey.Legs[i].Status == JourneyLegStatus.InProgress)
             {
                 journey.Legs[i].Status = JourneyLegStatus.Skipped;
             }
@@ -2630,7 +2630,7 @@ public partial class TransitService : ITransitService
         }
 
         // Validate status == in_transit
-        if (journey.Status != JourneyStatus.In_transit)
+        if (journey.Status != JourneyStatus.InTransit)
         {
             _logger.LogDebug("Cannot interrupt journey {JourneyId}: status is {Status}, expected InTransit",
                 body.JourneyId, journey.Status);
@@ -3912,42 +3912,6 @@ public partial class TransitService : ITransitService
         };
     }
 
-    /// <summary>
-    /// Implementation of CleanupByLocation operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> CleanupByLocationAsync(CleanupByLocationRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CleanupByLocation operation");
-
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method CleanupByLocation not yet implemented");
-
-        // Example: return StatusCodes.NoContent;
-    }
-
-    /// <summary>
-    /// Implementation of CleanupByCharacter operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<StatusCodes> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing CleanupByCharacter operation");
-
-        // TODO: Implement your business logic here
-        // Note: The generated controller wraps this method with try/catch for error handling.
-        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
-        // published as error events by the controller automatically.
-        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
-        throw new NotImplementedException("Method CleanupByCharacter not yet implemented");
-
-        // Example: return StatusCodes.NoContent;
-    }
-
     #endregion
 
     #region Connection Helpers
@@ -4488,7 +4452,7 @@ public partial class TransitService : ITransitService
     /// <summary>
     /// Cleans up all transit data referencing a deleted location. Called by lib-resource
     /// when a location is deleted (CASCADE policy). Closes all connections referencing
-    /// the deleted location and abandons active journeys passing through it.
+    /// the deleted location and interrupts active journeys passing through it.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -4515,16 +4479,28 @@ public partial class TransitService : ITransitService
         var deletedLocationId = body.LocationId;
         var affectedRealmIds = new HashSet<Guid>();
         var connectionsClosedCount = 0;
-        var journeysAbandonedCount = 0;
+        var journeysInterruptedCount = 0;
 
         // Step 1: Find all connections referencing the deleted location (from MySQL, queryable)
         var affectedConnections = await _connectionStore.QueryAsync(
             c => c.FromLocationId == deletedLocationId || c.ToLocationId == deletedLocationId,
             cancellationToken);
 
-        // Step 2: Close each affected connection with status "closed" and reason "location_deleted"
+        // Step 2: Close each affected connection with optimistic concurrency per IMPLEMENTATION TENETS (multi-instance safety)
         foreach (var connection in affectedConnections)
         {
+            // Skip connections that are already closed -- no redundant saves or events
+            if (connection.Status == ConnectionStatus.Closed)
+            {
+                // Still track realms for graph cache invalidation in case graph is stale
+                affectedRealmIds.Add(connection.FromRealmId);
+                if (connection.CrossRealm)
+                {
+                    affectedRealmIds.Add(connection.ToRealmId);
+                }
+                continue;
+            }
+
             var previousStatus = connection.Status;
 
             // Track affected realms for graph cache invalidation
@@ -4534,17 +4510,40 @@ public partial class TransitService : ITransitService
                 affectedRealmIds.Add(connection.ToRealmId);
             }
 
-            // Update connection status to closed
-            connection.Status = ConnectionStatus.Closed;
-            connection.StatusReason = "location_deleted";
-            connection.StatusChangedAt = DateTimeOffset.UtcNow;
-            connection.ModifiedAt = DateTimeOffset.UtcNow;
-
+            // Use optimistic concurrency for connection status mutation per IMPLEMENTATION TENETS
             var connKey = BuildConnectionKey(connection.Id);
-            await _connectionStore.SaveAsync(connKey, connection, cancellationToken: cancellationToken);
+            var (freshConnection, connEtag) = await _connectionStore.GetWithETagAsync(connKey, cancellationToken);
 
-            // Publish status-changed event for each closed connection
-            await PublishConnectionStatusChangedEventAsync(connection, previousStatus, forceUpdated: true, cancellationToken);
+            if (freshConnection == null)
+            {
+                _logger.LogDebug("Connection {ConnectionId} no longer exists during cleanup, skipping", connection.Id);
+                continue;
+            }
+
+            // Re-check after fresh read -- may have been closed concurrently
+            if (freshConnection.Status == ConnectionStatus.Closed)
+            {
+                _logger.LogDebug("Connection {ConnectionId} already closed by concurrent operation, skipping", connection.Id);
+                continue;
+            }
+
+            freshConnection.Status = ConnectionStatus.Closed;
+            freshConnection.StatusReason = "location_deleted";
+            freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
+            freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var savedEtag = await _connectionStore.TrySaveAsync(connKey, freshConnection, connEtag, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for connection {ConnectionId} during location cleanup, skipping", connection.Id);
+                continue;
+            }
+
+            // Publish service bus event for connection status change
+            await PublishConnectionStatusChangedEventAsync(freshConnection, previousStatus, forceUpdated: true, cancellationToken);
+
+            // Publish client event for connection status change (deferred until IEntitySessionRegistry is integrated)
+            await PublishConnectionStatusChangedClientEventAsync(freshConnection, previousStatus, "location_deleted", cancellationToken);
 
             connectionsClosedCount++;
 
@@ -4558,28 +4557,64 @@ public partial class TransitService : ITransitService
             await _graphCache.InvalidateAsync(affectedRealmIds, cancellationToken);
         }
 
-        // Step 4: Abandon active journeys in archive store that reference the deleted location
-        // as origin or destination. Active journeys in Redis are not queryable by location;
-        // they will fail on next advance when the location no longer exists.
+        // Step 4: Interrupt active journeys in archive store that reference the deleted location
+        // as origin or destination. Location deletion is external disruption (potentially resumable
+        // via rerouting), so use Interrupted rather than Abandoned per design spec.
+        // Active journeys in Redis are not queryable by location; they will fail on next advance
+        // when the location no longer exists.
         var affectedJourneys = await _journeyArchiveStore.QueryAsync(
             j => (j.OriginLocationId == deletedLocationId || j.DestinationLocationId == deletedLocationId) &&
-                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
+                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned && j.Status != JourneyStatus.Interrupted),
             cancellationToken);
 
         foreach (var archivedJourney in affectedJourneys)
         {
-            archivedJourney.Status = JourneyStatus.Abandoned;
-            archivedJourney.StatusReason = "location_deleted";
-            archivedJourney.ModifiedAt = DateTimeOffset.UtcNow;
-
+            // Use optimistic concurrency for journey status mutation per IMPLEMENTATION TENETS
             var archiveKey = BuildJourneyArchiveKey(archivedJourney.Id);
-            await _journeyArchiveStore.SaveAsync(archiveKey, archivedJourney, cancellationToken: cancellationToken);
+            var (freshJourney, journeyEtag) = await _journeyArchiveStore.GetWithETagAsync(archiveKey, cancellationToken);
 
-            journeysAbandonedCount++;
+            if (freshJourney == null)
+            {
+                _logger.LogDebug("Archived journey {JourneyId} no longer exists during cleanup, skipping", archivedJourney.Id);
+                continue;
+            }
+
+            // Skip if already in a terminal or interrupted state
+            if (freshJourney.Status == JourneyStatus.Arrived || freshJourney.Status == JourneyStatus.Abandoned || freshJourney.Status == JourneyStatus.Interrupted)
+            {
+                continue;
+            }
+
+            freshJourney.Status = JourneyStatus.Interrupted;
+            freshJourney.StatusReason = "location_deleted";
+            freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag, cancellationToken);
+            if (savedJourneyEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during location cleanup, skipping", archivedJourney.Id);
+                continue;
+            }
+
+            // Publish transit-journey.interrupted event per FOUNDATION TENETS (all state changes publish events)
+            await PublishJourneyInterruptedEventAsync(
+                new TransitJourneyModel
+                {
+                    Id = freshJourney.Id,
+                    EntityId = freshJourney.EntityId,
+                    EntityType = freshJourney.EntityType,
+                    CurrentLocationId = freshJourney.CurrentLocationId,
+                    CurrentLegIndex = freshJourney.CurrentLegIndex,
+                    StatusReason = freshJourney.StatusReason
+                },
+                freshJourney.RealmId,
+                cancellationToken);
+
+            journeysInterruptedCount++;
         }
 
-        _logger.LogInformation("Cleaned up transit data for deleted location {LocationId}: {ConnectionsClosed} connections closed, {JourneysAbandoned} archived journeys abandoned",
-            body.LocationId, connectionsClosedCount, journeysAbandonedCount);
+        _logger.LogInformation("Cleaned up transit data for deleted location {LocationId}: {ConnectionsClosed} connections closed, {JourneysInterrupted} archived journeys interrupted",
+            body.LocationId, connectionsClosedCount, journeysInterruptedCount);
 
         return StatusCodes.OK;
     }
@@ -4626,11 +4661,19 @@ public partial class TransitService : ITransitService
             discoveriesDeletedCount++;
         }
 
+        // Log discovery deletions at Information level since no discovery.deleted event schema exists
+        if (discoveriesDeletedCount > 0)
+        {
+            _logger.LogInformation("Deleted {DiscoveriesDeletedCount} discovery records for entity {EntityId} during character cleanup",
+                discoveriesDeletedCount, deletedCharacterId);
+        }
+
         // Step 2: Invalidate the Redis discovery cache for this entity
         var cacheKey = BuildDiscoveryCacheKey(deletedCharacterId);
         await _discoveryCacheStore.DeleteAsync(cacheKey, cancellationToken);
 
         // Step 3: Abandon active journeys in archive store for this entity.
+        // Character deletion permanently terminates journeys (Abandoned, not Interrupted).
         // Active journeys in Redis are not queryable by entity; they will remain
         // until the archival worker processes them.
         var entityJourneys = await _journeyArchiveStore.QueryAsync(
@@ -4640,12 +4683,53 @@ public partial class TransitService : ITransitService
 
         foreach (var archivedJourney in entityJourneys)
         {
-            archivedJourney.Status = JourneyStatus.Abandoned;
-            archivedJourney.StatusReason = "character_deleted";
-            archivedJourney.ModifiedAt = DateTimeOffset.UtcNow;
-
+            // Use optimistic concurrency for journey status mutation per IMPLEMENTATION TENETS
             var archiveKey = BuildJourneyArchiveKey(archivedJourney.Id);
-            await _journeyArchiveStore.SaveAsync(archiveKey, archivedJourney, cancellationToken: cancellationToken);
+            var (freshJourney, journeyEtag) = await _journeyArchiveStore.GetWithETagAsync(archiveKey, cancellationToken);
+
+            if (freshJourney == null)
+            {
+                _logger.LogDebug("Archived journey {JourneyId} no longer exists during cleanup, skipping", archivedJourney.Id);
+                continue;
+            }
+
+            // Skip if already in a terminal state
+            if (freshJourney.Status == JourneyStatus.Arrived || freshJourney.Status == JourneyStatus.Abandoned)
+            {
+                continue;
+            }
+
+            freshJourney.Status = JourneyStatus.Abandoned;
+            freshJourney.StatusReason = "character_deleted";
+            freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag, cancellationToken);
+            if (savedJourneyEtag == null)
+            {
+                _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during character cleanup, skipping", archivedJourney.Id);
+                continue;
+            }
+
+            // Publish transit-journey.abandoned event per FOUNDATION TENETS (all state changes publish events)
+            // Archive model has a single RealmId (origin realm); use it for all realm fields
+            await PublishJourneyAbandonedEventAsync(
+                new TransitJourneyModel
+                {
+                    Id = freshJourney.Id,
+                    EntityId = freshJourney.EntityId,
+                    EntityType = freshJourney.EntityType,
+                    OriginLocationId = freshJourney.OriginLocationId,
+                    DestinationLocationId = freshJourney.DestinationLocationId,
+                    CurrentLocationId = freshJourney.CurrentLocationId,
+                    CurrentLegIndex = freshJourney.CurrentLegIndex,
+                    Legs = freshJourney.Legs,
+                    PrimaryModeCode = freshJourney.PrimaryModeCode,
+                    StatusReason = freshJourney.StatusReason
+                },
+                freshJourney.RealmId,
+                freshJourney.RealmId,
+                freshJourney.RealmId,
+                cancellationToken);
 
             journeysAbandonedCount++;
         }

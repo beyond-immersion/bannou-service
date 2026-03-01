@@ -129,6 +129,22 @@ x-service-configuration:
       env: TRANSIT_MINIMUM_EFFECTIVE_SPEED_KM_PER_GAME_HOUR
       description: Minimum effective speed floor in km/game-hour applied after terrain and cargo modifiers. Prevents division-by-zero in travel time calculations. Speed is clamped to at least this value.
 
+    SeasonalWorkerStartupDelaySeconds:
+      type: integer
+      default: 5
+      minimum: 0
+      maximum: 300
+      env: TRANSIT_SEASONAL_WORKER_STARTUP_DELAY_SECONDS
+      description: Startup delay in seconds before the seasonal connection worker begins its first check. Allows other services to initialize.
+
+    JourneyArchivalWorkerStartupDelaySeconds:
+      type: integer
+      default: 10
+      minimum: 0
+      maximum: 300
+      env: TRANSIT_JOURNEY_ARCHIVAL_WORKER_STARTUP_DELAY_SECONDS
+      description: Startup delay in seconds before the journey archival worker begins its first sweep. Allows other services to initialize.
+
     DefaultFallbackModeCode:
       type: string
       default: walking

@@ -43,7 +43,7 @@ public partial class TransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.HandleSeasonChangedAsync");
 
-        _logger.LogInformation("Handling season change for realm {RealmId}: {PreviousSeason} -> {CurrentSeason}",
+        _logger.LogDebug("Handling season change for realm {RealmId}: {PreviousSeason} -> {CurrentSeason}",
             evt.RealmId, evt.PreviousSeason, evt.CurrentSeason);
 
         // Query connections in this realm that have seasonal availability restrictions
