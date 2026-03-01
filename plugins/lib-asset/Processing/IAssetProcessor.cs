@@ -120,9 +120,10 @@ public sealed class AssetProcessingContext
     /// <summary>
     /// Owner of this processing operation. NOT a session ID.
     /// Contains either an accountId (UUID format) for user-initiated processing
-    /// or a service name for service-initiated processing.
+    /// or a service name for service-initiated processing. Null when the dispatched
+    /// event does not include owner information.
     /// </summary>
-    public required string Owner { get; init; }
+    public string? Owner { get; init; }
 
     /// <summary>
     /// Optional realm-specific context for the asset.

@@ -170,10 +170,10 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         Logger?.LogInformation("Starting Asset service");
 
         // Wait for MinIO connectivity before resolving services that depend on it
-        var assetConfiguration = ServiceProvider?.GetService<AssetServiceConfiguration>();
+        var assetConfiguration = ServiceProvider!.GetRequiredService<AssetServiceConfiguration>();
         if (!await WaitForMinioConnectivityAsync(
-            maxRetries: assetConfiguration?.MinioStartupMaxRetries ?? 30,
-            retryDelayMs: assetConfiguration?.MinioStartupRetryDelayMs ?? 2000))
+            maxRetries: assetConfiguration.MinioStartupMaxRetries,
+            retryDelayMs: assetConfiguration.MinioStartupRetryDelayMs))
         {
             Logger?.LogError("MinIO connectivity check failed - Asset service cannot start");
             return false;
@@ -186,7 +186,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
     /// <summary>
     /// Wait for MinIO storage to be available before starting services that depend on it.
     /// </summary>
-    private async Task<bool> WaitForMinioConnectivityAsync(int maxRetries = 30, int retryDelayMs = 2000)
+    private async Task<bool> WaitForMinioConnectivityAsync(int maxRetries, int retryDelayMs)
     {
         if (ServiceProvider == null)
         {

@@ -434,7 +434,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
                 Filename = job.Filename ?? job.AssetId,
-                Owner = job.Owner ?? "unknown",
+                Owner = job.Owner,
                 RealmId = job.RealmId,
                 Tags = job.Tags as IReadOnlyDictionary<string, string>
                     ?? job.Tags?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),

@@ -4,7 +4,7 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// Pure synchronous calendar math helper for game time calculations.
 /// All methods are deterministic computations with no I/O or state store access.
 /// </summary>
-internal interface IWorldstateTimeCalculator
+public interface IWorldstateTimeCalculator
 {
     /// <summary>
     /// Advances a realm clock by the specified number of game-seconds, updating all
@@ -61,7 +61,7 @@ internal interface IWorldstateTimeCalculator
 /// Uses typed properties per IMPLEMENTATION TENETS: int values for numeric boundaries
 /// (hour, day, year) and string values for code-based boundaries (period, month, season).
 /// </summary>
-internal class BoundaryCrossing
+public class BoundaryCrossing
 {
     /// <summary>The type of boundary that was crossed.</summary>
     public BoundaryType Type { get; set; }
@@ -88,7 +88,7 @@ internal class BoundaryCrossing
 /// <summary>
 /// Types of temporal boundaries that can be crossed during game time advancement.
 /// </summary>
-internal enum BoundaryType
+public enum BoundaryType
 {
     /// <summary>An hour boundary was crossed.</summary>
     Hour,

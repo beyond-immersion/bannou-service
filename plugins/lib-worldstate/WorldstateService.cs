@@ -470,7 +470,7 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogInformation("Realm clock initialized for realm {RealmId} with template {TemplateCode}, ratio {TimeRatio}",
             body.RealmId, templateCode, initialRatio);
 
-        return (StatusCodes.Created, new InitializeRealmClockResponse
+        return (StatusCodes.OK, new InitializeRealmClockResponse
         {
             GameServiceId = realm.GameServiceId,
             CalendarTemplateCode = templateCode,
@@ -774,10 +774,10 @@ public partial class WorldstateService : IWorldstateService
         _realmClockCache.Invalidate(body.RealmId);
 
         // Publish clock-advanced service event for cross-node cache invalidation
-        await _messageBus.PublishAsync("worldstate.clock-advanced", new WorldstateClockAdvancedEvent
+        await _messageBus.TryPublishAsync("worldstate.clock-advanced", new WorldstateClockAdvancedEvent
         {
             RealmId = body.RealmId
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
 
         // Publish time sync client event (populate PreviousPeriod from boundaries if available,
         // consistent with worker behavior)
@@ -946,7 +946,7 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogInformation("Created calendar template {TemplateCode} for game service {GameServiceId}",
             model.TemplateCode, model.GameServiceId);
 
-        return (StatusCodes.Created, MapToCalendarResponse(model));
+        return (StatusCodes.OK, MapToCalendarResponse(model));
     }
 
     /// <summary>

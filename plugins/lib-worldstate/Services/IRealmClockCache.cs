@@ -18,7 +18,7 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// on explicit mutations (ratio changes, admin advances) to force a fresh read.
 /// </para>
 /// </remarks>
-internal interface IRealmClockCache
+public interface IRealmClockCache
 {
     /// <summary>
     /// Gets the cached clock state for a realm, loading from Redis if not cached

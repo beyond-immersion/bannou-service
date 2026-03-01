@@ -1,5 +1,5 @@
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 
@@ -22,7 +22,7 @@ public partial class WorldstateService
 /// Stored in worldstate-realm-clock (Redis).
 /// Key pattern: realm:{realmId}
 /// </summary>
-internal class RealmClockModel
+public class RealmClockModel
 {
     /// <summary>Realm this clock belongs to.</summary>
     public Guid RealmId { get; set; }
@@ -93,7 +93,7 @@ internal class RealmClockModel
 /// Stored in worldstate-calendar (MySQL).
 /// Key pattern: calendar:{gameServiceId}:{templateCode}
 /// </summary>
-internal class CalendarTemplateModel
+public class CalendarTemplateModel
 {
     /// <summary>Unique template code within the game service.</summary>
     public string TemplateCode { get; set; } = string.Empty;
@@ -131,7 +131,7 @@ internal class CalendarTemplateModel
 /// Stored in worldstate-ratio-history (MySQL).
 /// Key pattern: ratio:{realmId}
 /// </summary>
-internal class TimeRatioHistoryModel
+public class TimeRatioHistoryModel
 {
     /// <summary>Realm this ratio history belongs to.</summary>
     public Guid RealmId { get; set; }
@@ -144,7 +144,7 @@ internal class TimeRatioHistoryModel
 /// A single time ratio segment in a realm's ratio history.
 /// Records when a ratio was active and why it was set.
 /// </summary>
-internal class TimeRatioSegmentEntry
+public class TimeRatioSegmentEntry
 {
     /// <summary>Real-world timestamp when this segment started.</summary>
     public DateTimeOffset SegmentStartRealTime { get; set; }
@@ -161,7 +161,7 @@ internal class TimeRatioSegmentEntry
 /// Stored in worldstate-calendar (MySQL).
 /// Key pattern: realm-config:{realmId}
 /// </summary>
-internal class RealmWorldstateConfigModel
+public class RealmWorldstateConfigModel
 {
     /// <summary>Realm this configuration belongs to.</summary>
     public Guid RealmId { get; set; }

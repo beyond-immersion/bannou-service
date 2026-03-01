@@ -21,7 +21,7 @@ namespace BeyondImmersion.BannouService.Worldstate;
 /// and call <see cref="Invalidate"/> to clear their local cache.
 /// </para>
 /// </remarks>
-internal interface ICalendarTemplateCache
+public interface ICalendarTemplateCache
 {
     /// <summary>
     /// Gets the cached calendar template, loading from MySQL if not cached
