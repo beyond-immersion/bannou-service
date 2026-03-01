@@ -106,12 +106,6 @@ public partial class LocationPresenceChangedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public PresenceChangeType ChangeType { get; set; } = default!;
 
-    /// <summary>
-    /// Display name of the entity for client-side rendering (avoids lookup round-trip)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("entityName")]
-    public string? EntityName { get; set; } = default!;
-
 }
 
 /// <summary>

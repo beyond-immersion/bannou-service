@@ -88,7 +88,7 @@ public sealed class ModelProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported model format: {context.ContentType} ({context.Filename})",
-                ProcessingErrorCode.UnsupportedFormat);
+                ProcessorError.UnsupportedFormat);
         }
 
         // Check file size limits
@@ -97,7 +97,7 @@ public sealed class ModelProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                ProcessingErrorCode.FileTooLarge);
+                ProcessorError.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
@@ -113,7 +113,7 @@ public sealed class ModelProcessor : IAssetProcessor
             {
                 return AssetValidationResult.Invalid(
                     "Binary file requires a supported model extension (.gltf, .glb, .obj, .fbx)",
-                    ProcessingErrorCode.MissingExtension);
+                    ProcessorError.MissingExtension);
             }
             warnings.Add("Content type detected from extension rather than MIME type");
         }
@@ -207,7 +207,7 @@ public sealed class ModelProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                ProcessingErrorCode.ProcessingError,
+                ProcessorError.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

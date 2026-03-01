@@ -210,6 +210,13 @@ public class DocumentationServiceConfiguration : BaseServiceConfiguration
     public int StatsSampleSize { get; set; } = 10;
 
     /// <summary>
+    /// Estimated average document content size in bytes for stats calculations
+    /// Environment variable: DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT
+    /// </summary>
+    [ConfigRange(Minimum = 100, Maximum = 1000000)]
+    public int EstimatedBytesPerDocument { get; set; } = 10000;
+
+    /// <summary>
     /// Length in characters for search result snippets
     /// Environment variable: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
     /// </summary>

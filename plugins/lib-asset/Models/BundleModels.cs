@@ -273,32 +273,6 @@ public sealed class StoredSourceBundleReference
 }
 
 /// <summary>
-/// Bundle status enumeration.
-/// </summary>
-public enum BundleStatus
-{
-    /// <summary>
-    /// Bundle creation is pending/queued.
-    /// </summary>
-    Pending,
-
-    /// <summary>
-    /// Bundle is being processed.
-    /// </summary>
-    Processing,
-
-    /// <summary>
-    /// Bundle is ready for download.
-    /// </summary>
-    Ready,
-
-    /// <summary>
-    /// Bundle creation failed.
-    /// </summary>
-    Failed
-}
-
-/// <summary>
 /// Bundle creation job for processing pool.
 /// </summary>
 public sealed class BundleCreationJob

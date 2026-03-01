@@ -32,21 +32,21 @@ info:
       event: DocumentationSearchedEvent
       description: Published when documentation is searched
     # Repository binding events
-    - topic: documentation.binding.created
+    - topic: documentation-binding.created
       event: DocumentationBindingCreatedEvent
       description: Published when a repository binding is created
-    - topic: documentation.binding.removed
+    - topic: documentation-binding.removed
       event: DocumentationBindingRemovedEvent
       description: Published when a repository binding is removed
     # Sync events
-    - topic: documentation.sync.started
+    - topic: documentation-sync.started
       event: DocumentationSyncStartedEvent
       description: Published when a repository sync starts
-    - topic: documentation.sync.completed
+    - topic: documentation-sync.completed
       event: DocumentationSyncCompletedEvent
       description: Published when a repository sync completes
     # Archive events
-    - topic: documentation.archive.created
+    - topic: documentation-archive.created
       event: DocumentationArchiveCreatedEvent
       description: Published when a documentation archive is created
 

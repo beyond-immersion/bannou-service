@@ -57,6 +57,9 @@ public partial class GardenerService
     /// </summary>
     public async Task HandleSeedBondFormedAsync(SeedBondFormedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleSeedBondFormed");
+
         if (!_configuration.BondSharedGardenEnabled)
         {
             _logger.LogDebug("Bond shared garden disabled, ignoring bond formed event");
@@ -101,6 +104,9 @@ public partial class GardenerService
     /// </summary>
     public async Task HandleSeedActivatedAsync(SeedActivatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleSeedActivated");
+
         var garden = await GardenStore.GetAsync(GardenKey(evt.OwnerId), CancellationToken.None);
         if (garden == null) return;
 
@@ -122,6 +128,9 @@ public partial class GardenerService
     /// </summary>
     public async Task HandleGameSessionDeletedAsync(GameSessionDeletedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleGameSessionDeleted");
+
         if (evt.GameType != "gardener-scenario")
             return;
 

@@ -32,8 +32,8 @@ namespace BeyondImmersion.BannouService.Providers;
 /// <b>Aggregation Rules</b>:
 /// </para>
 /// <list type="bullet">
-///   <item><see cref="TransitCostModifier.PreferenceCostDelta"/>: summed across providers (clamped to [0.0, 2.0])</item>
-///   <item><see cref="TransitCostModifier.SpeedMultiplier"/>: multiplied across providers (clamped to [0.1, 3.0])</item>
+///   <item><see cref="TransitCostModifier.PreferenceCostDelta"/>: summed across providers (clamped to [MinPreferenceCost, MaxPreferenceCost] from config, defaults [0.0, 2.0])</item>
+///   <item><see cref="TransitCostModifier.SpeedMultiplier"/>: multiplied across providers (clamped to [MinSpeedMultiplier, MaxSpeedMultiplier] from config, defaults [0.1, 3.0])</item>
 ///   <item><see cref="TransitCostModifier.RiskDelta"/>: summed across providers (clamped to [0.0, 1.0] total risk)</item>
 ///   <item>Graceful degradation: if a provider throws, Transit logs a warning and skips it</item>
 /// </list>
@@ -111,11 +111,11 @@ public interface ITransitCostModifierProvider
 /// </summary>
 /// <param name="PreferenceCostDelta">
 /// Additive preference cost (0.0 = no effect, positive = aversion, negative = affinity).
-/// Aggregated by summing across providers, then clamped to [0.0, 2.0].
+/// Aggregated by summing across providers, then clamped to [MinPreferenceCost, MaxPreferenceCost] from config (defaults [0.0, 2.0]).
 /// </param>
 /// <param name="SpeedMultiplier">
 /// Speed multiplier (1.0 = no effect, 0.5 = half speed, 1.5 = 50% faster).
-/// Aggregated by multiplying across providers, then clamped to [0.1, 3.0].
+/// Aggregated by multiplying across providers, then clamped to [MinSpeedMultiplier, MaxSpeedMultiplier] from config (defaults [0.1, 3.0]).
 /// </param>
 /// <param name="RiskDelta">
 /// Risk additive (0.0 = no effect, positive = more dangerous).

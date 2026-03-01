@@ -951,7 +951,7 @@ public partial class AssetService : IAssetService
             Bucket = bucket,
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = body.Owner
         };
 
@@ -1021,7 +1021,7 @@ public partial class AssetService : IAssetService
         }
 
         // Check if bundle is ready
-        if (bundleMetadata.Status != Models.BundleStatus.Ready)
+        if (bundleMetadata.Status != BundleStatus.Ready)
         {
             _logger.LogWarning("GetBundle: Bundle not ready: {BundleId}, status={Status}",
                 body.BundleId, bundleMetadata.Status);
@@ -1303,7 +1303,7 @@ public partial class AssetService : IAssetService
                     return (StatusCodes.NotFound, null);
                 }
 
-                if (sourceBundle.Status != Models.BundleStatus.Ready)
+                if (sourceBundle.Status != BundleStatus.Ready)
                 {
                     _logger.LogWarning("CreateMetabundle: Source bundle {BundleId} not ready (status={Status})",
                         sourceBundleId, sourceBundle.Status);
@@ -1616,7 +1616,7 @@ public partial class AssetService : IAssetService
             Bucket = bucket,
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = body.Owner,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
@@ -1723,7 +1723,7 @@ public partial class AssetService : IAssetService
                 }
 
                 if (bundleMeta == null ||
-                    bundleMeta.Status != Models.BundleStatus.Ready ||
+                    bundleMeta.Status != BundleStatus.Ready ||
                     bundleMeta.LifecycleStatus != Models.BundleLifecycleStatus.Active)
                 {
                     continue;

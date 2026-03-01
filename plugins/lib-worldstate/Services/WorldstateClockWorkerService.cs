@@ -200,6 +200,9 @@ public class WorldstateClockWorkerService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.worldstate", "WorldstateClockWorkerService.ProcessRealmTick");
+
         // Acquire lock for this realm's clock
         var lockOwner = $"worldstate-worker-{Guid.NewGuid():N}";
         await using var lockResponse = await lockProvider.LockAsync(

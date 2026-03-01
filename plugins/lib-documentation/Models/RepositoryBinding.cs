@@ -37,7 +37,7 @@ internal sealed class RepositoryBinding
     public Dictionary<string, string> CategoryMapping { get; set; } = [];
 
     /// <summary>Gets or sets the default category.</summary>
-    public string DefaultCategory { get; set; } = "Other";
+    public DocumentCategory DefaultCategory { get; set; } = DocumentCategory.Other;
 
     /// <summary>Gets or sets whether archiving is enabled.</summary>
     public bool ArchiveEnabled { get; set; }
@@ -97,8 +97,8 @@ internal enum BindingStatusInternal
 /// </summary>
 internal sealed class SyncResult
 {
-    /// <summary>Gets or sets the sync operation ID.</summary>
-    public Guid SyncId { get; set; }
+    /// <summary>Gets or sets the sync operation ID (null for conflict results).</summary>
+    public Guid? SyncId { get; set; }
 
     /// <summary>Gets or sets the sync status.</summary>
     public SyncStatusInternal Status { get; set; }
@@ -197,7 +197,7 @@ internal sealed class SyncResult
     {
         return new SyncResult
         {
-            SyncId = Guid.Empty,
+            SyncId = null,
             Status = SyncStatusInternal.Failed,
             ErrorMessage = message,
             StartedAt = DateTimeOffset.UtcNow,

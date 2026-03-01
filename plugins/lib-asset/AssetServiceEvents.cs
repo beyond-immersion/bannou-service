@@ -356,7 +356,7 @@ public partial class AssetService
             Bucket = bucket,
             SizeBytes = bundleSize,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = request.Owner,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,

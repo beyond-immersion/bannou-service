@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -54,11 +55,16 @@ public class RedisSearchIndexService : ISearchIndexService
         IMessageBus messageBus,
         ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
     }
 

@@ -37,10 +37,14 @@ public partial class SearchIndexService : ISearchIndexService
         DocumentationServiceConfiguration configuration,
         ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
     }
 

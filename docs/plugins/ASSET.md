@@ -63,7 +63,7 @@ No external services subscribe to asset events; all event consumption is interna
 **Notes**:
 - Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
 - `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
-- `ProcessingErrorCode` enum exists in the service code (added to fix a T25 violation) but is an internal model enum, not an API/event schema type field.
+- `ProcessorError` enum exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization (7 values). The generated API `ProcessingErrorCode` enum (5 values: `PROCESSING_FAILED`, `INVALID_FORMAT`, etc.) is used in API responses. These are intentionally separate: internal processor granularity vs API-level error reporting.
 
 ---
 
@@ -163,6 +163,8 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `BundleCompressionDefault` | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | `lz4` | Default bundle compression (lz4/lzma/none) |
 | `ZipCacheTtlHours` | `ASSET_ZIP_CACHE_TTL_HOURS` | `24` | TTL for cached ZIP conversions |
 | `DeletedBundleRetentionDays` | `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | `30` | Soft-delete retention period |
+| `BundleCleanupIntervalMinutes` | `ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES` | `60` | Interval between bundle cleanup scans |
+| `ZipCacheCleanupIntervalMinutes` | `ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES` | `120` | Interval between ZIP cache cleanup scans |
 | `MinioWebhookSecret` | `ASSET_MINIO_WEBHOOK_SECRET` | *nullable* | Webhook validation secret (disabled if unset) |
 | `TempUploadPathPrefix` | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | `temp` | Bucket path for upload staging |
 | `FinalAssetPathPrefix` | `ASSET_FINAL_ASSET_PATH_PREFIX` | `assets` | Bucket path for finalized assets |
@@ -229,6 +231,8 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `ModelProcessor` | Singleton | 3D model processing (validation, optimization) |
 | `AudioProcessor` | Singleton | Audio transcoding (WAV/FLAC → MP3/Opus/AAC via FFmpeg) |
 | `AssetProcessingWorker` | HostedService | Background job consumer with heartbeat, graceful drain |
+| `BundleCleanupWorker` | HostedService | Background purge of soft-deleted bundles past retention period |
+| `ZipCacheCleanupWorker` | HostedService | Background purge of expired ZIP cache entries from storage |
 | `AssetMetrics` | Singleton | OpenTelemetry counters/histograms (meter: `BeyondImmersion.Bannou.Asset`) |
 | `ContentTypeRegistry` | — | MIME type management with config-extensible allow/block lists |
 | `MinioWebhookHandler` | — | S3 event notification handler for upload completion |
@@ -320,12 +324,11 @@ Client                    Asset Service                     MinIO Storage
 2. **Filesystem/Azure/R2 storage providers**: `StorageProvider` config accepts `minio`, `s3`, `r2`, `azure`, `filesystem` but only MinIO/S3-compatible backends have an implementation (`MinioStorageProvider`). Other backends would require new `IAssetStorageProvider` implementations.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/239 -->
 
-3. **Deleted bundle cleanup**: `DeletedBundleRetentionDays` is configurable but there is no background task that purges bundles past their retention window. Soft-deleted bundles accumulate indefinitely until manually cleaned.
+3. ~~**Deleted bundle cleanup**~~: **FIXED** (2026-03-01) - `BundleCleanupWorker` implemented. Background service scans for soft-deleted bundles past `DeletedBundleRetentionDays`, permanently purges metadata, version records, storage objects, and per-asset reverse indexes. Configurable via `BundleCleanupIntervalMinutes`.
 
-4. **Bundle ZIP cache cleanup**: `ZipCacheTtlHours` is set but no scheduled task removes expired ZIP cache entries from the `bundles/zip-cache` storage path.
+4. ~~**Bundle ZIP cache cleanup**~~: **FIXED** (2026-03-01) - `ZipCacheCleanupWorker` implemented. Background service scans `bundles/zip-cache/` storage prefix and removes objects older than `ZipCacheTtlHours`. Configurable via `ZipCacheCleanupIntervalMinutes`.
 
-5. **Schema-defined events not implemented**: The `asset-events.yaml` schema declares `asset.processing.queued` and `asset.ready` events that have no corresponding `TryPublishAsync` calls in the service code. These event types exist in generated models but are never emitted.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/227 -->
+5. ~~**Schema-defined events not implemented**~~: **FIXED** (2026-03-01) - `asset.processing.queued` published in `CompleteUploadAsync` when processing is dispatched. `asset.ready` published in `HandleProcessingCompletedAsync` when processing succeeds.
 
 ---
 
@@ -349,7 +352,7 @@ Client                    Asset Service                     MinIO Storage
 
 1. ~~**T25 (String constants instead of enum)**~~: **FIXED** (2026-02-01) - Added `ProcessingErrorCode` enum with 7 values (UnsupportedContentType, UnsupportedFormat, FileTooLarge, MissingExtension, SourceNotFound, TranscodingFailed, ProcessingError). Changed `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` to use `ProcessingErrorCode?` type. All processors (TextureProcessor, ModelProcessor, AudioProcessor) now use strongly-typed enum values.
 
-2. **Schema-code event mismatch**: The events schema (`asset-events.yaml`) declares `asset.processing.queued` and `asset.ready` events that are not actually published anywhere in the service code. These should either be implemented or removed from the schema to prevent downstream consumers from expecting events that never fire.
+2. ~~**Schema-code event mismatch**~~: **FIXED** (2026-03-01) - Both `asset.processing.queued` and `asset.ready` events are now published. All 10 schema-declared events have corresponding code emissions.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -369,7 +372,7 @@ Client                    Asset Service                     MinIO Storage
 
 8. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
 
-9. **CA2000 pragma suppression**: The MinIO connectivity check in `AssetServicePlugin` suppresses CA2000 (dispose warning) because the MinIO client's fluent builder API returns `this` from `Build()`, making the same object both builder and built client. The `using` on `Build()` result correctly disposes it.
+9. ~~**CA2000 pragma suppression**~~: **FIXED** (2026-03-01) - MinIO connectivity check refactored to use proper try/finally dispose pattern without pragma suppression.
 
 ### Design Considerations (Requires Planning)
 
@@ -377,7 +380,7 @@ Client                    Asset Service                     MinIO Storage
 
 2. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
 
-3. **No orphaned index cleanup**: If a bundle is deleted but the per-asset reverse indexes (`{realm}:asset-bundles:{assetId}`) are not updated (e.g., due to crash mid-operation), stale bundle IDs will persist in those indexes. `ResolveBundles` will attempt to include deleted bundles in resolution results until it encounters a 404 on the bundle metadata lookup. A background reconciliation task or transactional index updates would address this.
+3. ~~**No orphaned index cleanup**~~: **FIXED** (2026-03-01) - Transactional index updates implemented: soft-delete removes bundle from per-asset reverse indexes, restore re-adds them. `ResolveBundlesAsync` also defensively checks `LifecycleStatus == Active` to filter out any stale entries. Key format mismatch between creation and removal was fixed (both now use `{realmPrefix}:asset-bundles:{assetId}`).
 
 4. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
 
@@ -396,3 +399,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Completed
 
 - **2026-02-01**: Fixed T25 violation - Added `ProcessingErrorCode` enum to replace string constants in `AssetProcessingResult` and `AssetValidationResult`. Modified 4 files: `IAssetProcessor.cs`, `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`. Updated tests in `AudioProcessorTests.cs`.
+
+- **2026-03-01**: L3 production hardening audit. Schema: converted all 10 events to flat structure, consolidated 8 inline enums (`InternalJobStatus`, `GetJobStatusResponseStatus`, `CancelJobResponseStatus`, `CreateBundleResponseStatus`, `MetabundleJobStatus` → `BundleStatus`; `ProcessingErrorCode`, `ValidationErrorCode`, `MetabundleErrorCode` consolidated), fixed NRT violations and added validation keywords, removed T8 filler from 5 response schemas, fixed credential defaults and version sentinel. Code: T26 sentinel elimination (realm made nullable, removed Guid.Empty), extracted 2 hardcoded tunables to configuration (`BundleCleanupIntervalMinutes`, `ZipCacheCleanupIntervalMinutes`), implemented `asset.processing.queued` and `asset.ready` event publications, implemented `BundleCleanupWorker` (soft-deleted bundle permanent purge), implemented `ZipCacheCleanupWorker` (expired ZIP cache cleanup), implemented transactional index updates for bundle deletion/restore, fixed key format mismatch bug in `RemoveFromBundleIndexAsync`, added defensive `LifecycleStatus` check in `ResolveBundlesAsync`, cleaned up duplicate enums (internal `ProcessingErrorCode` → `ProcessorError`, deleted internal `BundleStatus`). Added `IAssetStorageProvider.ListObjectsByPrefixAsync` and `ObjectSummary` record for storage listing. 117 tests passing, 0 warnings.

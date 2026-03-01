@@ -75,10 +75,6 @@ components:
         changeType:
           $ref: 'location-api.yaml#/components/schemas/PresenceChangeType'
           description: Whether the entity arrived or departed
-        entityName:
-          type: string
-          nullable: true
-          description: Display name of the entity for client-side rendering (avoids lookup round-trip)
 
     # ============================================
     # Location Updated Client Event

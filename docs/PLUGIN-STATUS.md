@@ -71,8 +71,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Deep dive audited to L3. 32 endpoints, 13 events, 3 client events, 8 state stores, 1 variable provider, 1 DI enrichment interface. No schema, no code. |
 | [Worldstate](#worldstate-status) | L2 | 5% | 0 | Stub. Schemas complete, code generated, all 18 endpoints throw NotImplementedException. 3 schema issues (T8 success booleans, missing lock store). Deep dive audited to L3. |
 | [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
-| [Asset](#asset-status) | L3 | 82% | 1 | Upload/download pipeline works. 2/3 processors stubbed, cleanup tasks missing. |
-| [Documentation](#documentation-status) | L3 | 85% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Semantic search pending. |
+| [Asset](#asset-status) | L3 | 92% | 0 | L3-hardened. Schema/enum consolidation, background workers (bundle cleanup, ZIP cache), transactional indexes, all events published. 117 tests. |
+| [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
 | [Voice](#voice-status) | L3 | 87% | 0 | P2P + SFU tiers work. WebRTC signaling, broadcast consent. Single RTP server limitation. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Aspirational streaming platform integration spec. No schema, no code. |
@@ -1066,27 +1066,25 @@ gh issue list --search "Orchestrator:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [ASSET.md](plugins/ASSET.md)
 
-### Production Readiness: 82%
+### Production Readiness: 92%
 
-Comprehensive and fully functional upload/download pipeline with pre-signed URL generation, bundle management (creation, versioning, soft-delete, resolution), streaming metabundle assembly, and a working audio processor (FFmpeg). However, two of three content processors (texture and model) are minimal stubs, two cleanup background tasks are missing (deleted bundle purge, ZIP cache cleanup), and two schema-defined events are never emitted. Core asset storage and bundle workflow is production-ready.
+L3-hardened. Full upload/download pipeline with pre-signed URL generation, bundle management (creation, versioning, soft-delete, resolution, transactional index updates), streaming metabundle assembly, working audio processor (FFmpeg), and all 10 schema-declared events now emitted. Two background cleanup workers implemented (BundleCleanupWorker for expired soft-deleted bundles, ZipCacheCleanupWorker for expired ZIP cache entries). Schema hardened: enum consolidation (8 inline enums → 3 consolidated), NRT compliance, T8 filler removal, validation keywords. Code hardened: T26 sentinel elimination, T21 config extraction, defensive bundle resolution, key format consistency. 117 tests passing, 0 warnings. Remaining: texture/model processors are validation-only stubs, no CDN integration.
 
-### Bug Count: 1
+### Bug Count: 0
+
+No known bugs.
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **Schema-code event mismatch** | `asset.processing.queued` and `asset.ready` events declared in `asset-events.yaml` are never published anywhere in service code, misleading downstream consumers. | [#227](https://github.com/beyond-immersion/bannou-service/issues/227) |
-| 2 | *(No further bugs)* | | |
-| 3 | | | |
+*(None)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
 | 1 | **Texture and Model Processors** | Both registered processors contain only validation logic with no actual format conversion or optimization. The AudioProcessor is the only fully functional processor. | [#227](https://github.com/beyond-immersion/bannou-service/issues/227) |
-| 2 | **Deleted bundle cleanup background task** | `DeletedBundleRetentionDays` is configurable but no background task purges soft-deleted bundles past retention, causing indefinite accumulation. | No issue |
-| 3 | **CDN integration** | Extend `StoragePublicEndpoint` rewriting to support CDN-fronted download URLs with cache invalidation, reducing direct MinIO load for frequently accessed assets. | No issue |
+| 2 | **CDN integration** | Extend `StoragePublicEndpoint` rewriting to support CDN-fronted download URLs with cache invalidation, reducing direct MinIO load for frequently accessed assets. | No issue |
+| 3 | **Content-addressable deduplication** | Asset IDs are SHA-256 derived. Could detect duplicate uploads and deduplicate storage while maintaining separate metadata records. | No issue |
 
 ### GH Issues
 
@@ -1100,9 +1098,9 @@ gh issue list --search "Asset:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [DOCUMENTATION.md](plugins/DOCUMENTATION.md)
 
-### Production Readiness: 85%
+### Production Readiness: 92%
 
-All 27 endpoints are implemented with working full-text search (Redis Search enabled), CRUD operations, repository binding with git sync, archive create/restore, trashcan with TTL, and two background services (index rebuild, sync scheduler). Functionally complete for its core knowledge base use case. Minor gaps remain: voice summary generation is simple text extraction rather than NLG, search index retains stale terms on document update, and the archive system has a reliability gap when the Asset Service is unavailable.
+All 27 endpoints are implemented with working full-text search (Redis Search enabled), CRUD operations, repository binding with git sync, archive create/restore, trashcan with TTL, and two background services (index rebuild, sync scheduler). Functionally complete for its core knowledge base use case. Full TENET compliance audit completed (2026-03-01): schemas consolidated (5 inline enums, 2 duplicated event enums, 7 T8 filler properties removed, NRT compliance, validation keywords), code hardened (T25 type safety for DocumentCategory enum, T26 nullable sentinels, T21 config extraction, T16 event topic naming, T4/T2 soft dependency for IAssetClient, T6 null guards, T10 fire-and-forget safety). Minor gaps remain: voice summary generation is simple text extraction rather than NLG, search index retains stale terms on document update, and the archive system has a reliability gap when the Asset Service is unavailable.
 
 ### Bug Count: 0
 

@@ -86,6 +86,17 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | `location.entity-arrived` | `LocationEntityArrivedEvent` | Entity presence reported at a new location (not on TTL refresh) |
 | `location.entity-departed` | `LocationEntityDepartedEvent` | Entity presence cleared or moved to a different location |
 
+### Client Events (WebSocket Push)
+
+**Routing**: Uses `IEntitySessionRegistry.PublishToEntitySessionsAsync("location", locationId, event, ct)` to push to all WebSocket sessions observing a location. The `"location"` entity type is registered by Gardener when a player's character enters a location (via `location.entity-arrived` / `location.entity-departed` event subscriptions).
+
+| Client Event | Trigger | Key Fields |
+|-------------|---------|------------|
+| `LocationPresenceChangedEvent` | Entity arrived/departed | `locationId`, `realmId`, `entityType`, `entityId`, `changeType` (Arrived/Departed) |
+| `LocationUpdatedClientEvent` | Location properties changed | `locationId`, `realmId`, `name`, `locationType`, `changedFields[]`, `description?`, `isDeprecated?` |
+
+Schema: `schemas/location-client-events.yaml`
+
 ### Consumed Events
 
 This plugin does not consume external events.
@@ -122,6 +133,7 @@ This plugin does not consume external events.
 | `IRealmClient` | Scoped | Realm validation |
 | `IResourceClient` | Scoped | Reference tracking checks before deletion |
 | `ITelemetryProvider` | Singleton | Distributed tracing spans for async helpers |
+| `IEntitySessionRegistry` | Singleton | Entity-to-session resolution for client event delivery |
 | `ILocationDataCache` | Singleton | ConcurrentDictionary cache for location context provider data |
 
 Service lifetime is **Scoped** (per-request).
@@ -269,8 +281,7 @@ None. All endpoints and the `${location.*}` variable provider are fully implemen
 
 ## Potential Extensions
 
-1. **Client events for entity presence changes** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)): Push `LocationPresenceChanged` (entity arrived/departed with changeType discriminator) client event via `IClientEventPublisher` using the Entity Session Registry (#426). Requires new `location → session` registration in Gardener — added when a player's character enters a location, enabling all players at a location to receive presence updates ("who's in the room"). Optional stretch: `LocationUpdated` for dynamic world state changes (war damage, seasonal changes).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
+1. ~~**Client events for entity presence changes**~~: **IMPLEMENTED** (2026-03-01) - Two client events added via Entity Session Registry: `LocationPresenceChangedEvent` (entity arrived/departed with `PresenceChangeType` discriminator) and `LocationUpdatedClientEvent` (location property changes with `changedFields` list). Published alongside existing service events. Gardener subscribes to `location.entity-arrived` / `location.entity-departed` to register/unregister session→location bindings. See [#499](https://github.com/beyond-immersion/bannou-service/issues/499).
 
 ---
 
@@ -314,6 +325,7 @@ None currently identified.
 
 ## Work Tracking
 
+- **2026-03-01**: Issue [#499](https://github.com/beyond-immersion/bannou-service/issues/499) - Added client events for entity presence changes. Created `schemas/location-client-events.yaml` with `LocationPresenceChangedEvent` and `LocationUpdatedClientEvent`. Added `PresenceChangeType` enum to location API schema. Integrated `IEntitySessionRegistry` into `LocationService` for client event publishing alongside existing service events. Added Gardener event subscriptions for `location.entity-arrived` / `location.entity-departed` to manage location→session entity registry bindings.
 - **2026-02-26**: Audit fix — T31 deprecation lifecycle compliance. Three changes: (1) `DeprecateLocationAsync` now returns OK when already deprecated (idempotent), (2) `UndeprecateLocationAsync` now returns OK when not deprecated (idempotent), (3) `DeleteLocationAsync` now requires deprecation before deletion (Category A). Previously: deprecation returned Conflict, undeprecation returned BadRequest, and delete had no deprecation guard.
 - **2026-02-25**: Audit fix — `SeedLocationsAsync` now publishes `location.updated` events and updates Redis cache when updating existing locations with `updateExisting=true`. Previously used direct `SaveAsync` bypassing both event publishing and cache population (FOUNDATION TENETS violation).
 - **2026-02-12**: Issue [#145](https://github.com/beyond-immersion/bannou-service/issues/145) - Implemented `LocationContextProviderFactory` (`IVariableProviderFactory`) providing `${location.*}` namespace to Actor behavior system. Includes `LocationDataCache` (ConcurrentDictionary with configurable TTL) and `LocationContextProvider` resolving zone, name, region, type, depth, realm, nearby POIs, and entity count.

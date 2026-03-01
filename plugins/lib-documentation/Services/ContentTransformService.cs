@@ -32,6 +32,7 @@ public partial class ContentTransformService : IContentTransformService
     /// </summary>
     public ContentTransformService(ILogger<ContentTransformService> logger)
     {
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
         _logger = logger;
 
         _yamlDeserializer = new DeserializerBuilder()

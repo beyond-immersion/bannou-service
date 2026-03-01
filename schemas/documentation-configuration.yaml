@@ -191,6 +191,13 @@ x-service-configuration:
       default: 10
       minimum: 1
       maximum: 1000
+    EstimatedBytesPerDocument:
+      type: integer
+      description: Estimated average document content size in bytes for stats calculations
+      env: DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT
+      default: 10000
+      minimum: 100
+      maximum: 1000000
     SearchSnippetLength:
       type: integer
       description: Length in characters for search result snippets

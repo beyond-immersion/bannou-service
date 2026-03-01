@@ -31,10 +31,14 @@ public class RepositorySyncSchedulerService : BackgroundService
         DocumentationServiceConfiguration configuration,
         ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
     }
 

@@ -33,7 +33,7 @@ public partial class DocumentationService : IDocumentationService
     private readonly IGitSyncService _gitSyncService;
     private readonly IContentTransformService _contentTransformService;
     private readonly IDistributedLockProvider _lockProvider;
-    private readonly IAssetClient _assetClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ITelemetryProvider _telemetryProvider;
 
@@ -41,11 +41,11 @@ public partial class DocumentationService : IDocumentationService
     private const string DOCUMENT_CREATED_TOPIC = "document.created";
     private const string DOCUMENT_UPDATED_TOPIC = "document.updated";
     private const string DOCUMENT_DELETED_TOPIC = "document.deleted";
-    private const string BINDING_CREATED_TOPIC = "documentation.binding.created";
-    private const string BINDING_REMOVED_TOPIC = "documentation.binding.removed";
-    private const string SYNC_STARTED_TOPIC = "documentation.sync.started";
-    private const string SYNC_COMPLETED_TOPIC = "documentation.sync.completed";
-    private const string ARCHIVE_CREATED_TOPIC = "documentation.archive.created";
+    private const string BINDING_CREATED_TOPIC = "documentation-binding.created";
+    private const string BINDING_REMOVED_TOPIC = "documentation-binding.removed";
+    private const string SYNC_STARTED_TOPIC = "documentation-sync.started";
+    private const string SYNC_COMPLETED_TOPIC = "documentation-sync.completed";
+    private const string ARCHIVE_CREATED_TOPIC = "documentation-archive.created";
 
     // State store key prefixes per plan specification
     // NOTE: DOC_KEY_PREFIX is empty because the store already prefixes with "doc:" via KeyPrefix
@@ -76,10 +76,23 @@ public partial class DocumentationService : IDocumentationService
         IGitSyncService gitSyncService,
         IContentTransformService contentTransformService,
         IDistributedLockProvider lockProvider,
-        IAssetClient assetClient,
+        IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
+        ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(eventConsumer, nameof(eventConsumer));
+        ArgumentNullException.ThrowIfNull(searchIndexService, nameof(searchIndexService));
+        ArgumentNullException.ThrowIfNull(gitSyncService, nameof(gitSyncService));
+        ArgumentNullException.ThrowIfNull(contentTransformService, nameof(contentTransformService));
+        ArgumentNullException.ThrowIfNull(lockProvider, nameof(lockProvider));
+        ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(httpClientFactory, nameof(httpClientFactory));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
@@ -88,9 +101,8 @@ public partial class DocumentationService : IDocumentationService
         _gitSyncService = gitSyncService;
         _contentTransformService = contentTransformService;
         _lockProvider = lockProvider;
-        _assetClient = assetClient;
+        _serviceProvider = serviceProvider;
         _httpClientFactory = httpClientFactory;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (minimal event subscriptions per schema)
@@ -262,7 +274,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        if (!body.DocumentId.HasValue && string.IsNullOrWhiteSpace(body.Slug))
         {
             _logger.LogWarning("GetDocument failed: Either DocumentId or Slug is required");
             return (StatusCodes.BadRequest, null);
@@ -274,7 +286,7 @@ public partial class DocumentationService : IDocumentationService
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Resolve document ID from slug if provided
-        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        if (body.DocumentId.HasValue)
         {
             documentId = body.DocumentId.Value;
         }
@@ -382,7 +394,7 @@ public partial class DocumentationService : IDocumentationService
         var categoryFilter = body.Category;
 
         // Check search cache
-        var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
+        var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter?.ToString(), maxResults);
         if (_configuration.SearchCacheTtlSeconds > 0 &&
             _searchCache.TryGet(cacheKey, out var cachedResponse))
         {
@@ -790,7 +802,7 @@ public partial class DocumentationService : IDocumentationService
             changedFields.Add("title");
         }
 
-        if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
+        if (body.Category.HasValue && body.Category.Value != storedDoc.Category)
         {
             storedDoc.Category = body.Category.Value;
             changedFields.Add("category");
@@ -891,7 +903,7 @@ public partial class DocumentationService : IDocumentationService
             return (StatusCodes.BadRequest, null);
         }
 
-        if ((!body.DocumentId.HasValue || body.DocumentId.Value == Guid.Empty) && string.IsNullOrWhiteSpace(body.Slug))
+        if (!body.DocumentId.HasValue && string.IsNullOrWhiteSpace(body.Slug))
         {
             _logger.LogWarning("DeleteDocument failed: Either DocumentId or Slug is required");
             return (StatusCodes.BadRequest, null);
@@ -912,7 +924,7 @@ public partial class DocumentationService : IDocumentationService
         var trashStore = _stateStoreFactory.GetStore<TrashedDocument>(StateStoreDefinitions.Documentation);
 
         // Resolve document ID from slug if provided
-        if (body.DocumentId.HasValue && body.DocumentId.Value != Guid.Empty)
+        if (body.DocumentId.HasValue)
         {
             documentId = body.DocumentId.Value;
         }
@@ -1542,10 +1554,10 @@ public partial class DocumentationService : IDocumentationService
 
         // Calculate total content size (approximate from document count)
         // In production, this could be tracked more precisely
-        var estimatedContentSize = searchStats.TotalDocuments * 10000; // ~10KB average per document
+        var estimatedContentSize = searchStats.TotalDocuments * _configuration.EstimatedBytesPerDocument;
 
         // Find last updated document
-        var lastUpdated = DateTimeOffset.MinValue;
+        DateTimeOffset? lastUpdated = null;
         var docListKey = $"{NAMESPACE_DOCS_PREFIX}{namespaceId}";
         var docIds = await guidSetStore.GetAsync(docListKey, cancellationToken) ?? [];
 
@@ -1556,16 +1568,16 @@ public partial class DocumentationService : IDocumentationService
             {
                 var docKey = $"{DOC_KEY_PREFIX}{namespaceId}:{docId}";
                 var doc = await docStore.GetAsync(docKey, cancellationToken);
-                if (doc != null && doc.UpdatedAt > lastUpdated)
+                if (doc != null && (!lastUpdated.HasValue || doc.UpdatedAt > lastUpdated.Value))
                 {
                     lastUpdated = doc.UpdatedAt;
                 }
             }
         }
 
-        // Convert category counts from string keys to proper format
+        // Convert DocumentCategory enum keys to string for generated response model
         var categoryCounts = searchStats.DocumentsByCategory.ToDictionary(
-            kvp => kvp.Key,
+            kvp => kvp.Key.ToString(),
             kvp => kvp.Value);
 
         _logger.LogDebug("GetNamespaceStats for {Namespace}: {DocumentCount} documents, {TrashcanCount} in trashcan",
@@ -1578,7 +1590,7 @@ public partial class DocumentationService : IDocumentationService
             CategoryCounts = categoryCounts,
             TrashcanCount = trashedDocIds.Count,
             TotalContentSizeBytes = estimatedContentSize,
-            LastUpdated = lastUpdated == DateTimeOffset.MinValue ? DateTimeOffset.UtcNow : lastUpdated
+            LastUpdated = lastUpdated
         });
     }
 
@@ -1981,9 +1993,9 @@ public partial class DocumentationService : IDocumentationService
         Guid? topResultId,
         double? relevanceScore)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishQueryAnalyticsEventAsync");
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishQueryAnalyticsEventAsync");
             var eventModel = new DocumentationQueriedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2002,7 +2014,6 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish DocumentationQueriedEvent");
-            // Non-critical - don't propagate
         }
     }
 
@@ -2015,9 +2026,9 @@ public partial class DocumentationService : IDocumentationService
         Guid? sessionId,
         int resultCount)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishSearchAnalyticsEventAsync");
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.documentation", "DocumentationService.PublishSearchAnalyticsEventAsync");
             var eventModel = new DocumentationSearchedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -2034,7 +2045,6 @@ public partial class DocumentationService : IDocumentationService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish DocumentationSearchedEvent");
-            // Non-critical - don't propagate
         }
     }
 
@@ -2076,7 +2086,7 @@ public partial class DocumentationService : IDocumentationService
             FilePatterns = body.FilePatterns?.ToList() ?? ["**/*.md"],
             ExcludePatterns = body.ExcludePatterns?.ToList() ?? [".git/**", ".obsidian/**", "node_modules/**"],
             CategoryMapping = body.CategoryMapping?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value) ?? [],
-            DefaultCategory = body.DefaultCategory.ToString(),
+            DefaultCategory = body.DefaultCategory,
             ArchiveEnabled = body.ArchiveEnabled,
             ArchiveOnSync = body.ArchiveOnSync,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -2173,7 +2183,7 @@ public partial class DocumentationService : IDocumentationService
 
         return (StatusCodes.OK, new SyncRepositoryResponse
         {
-            SyncId = result.SyncId,
+            SyncId = result.SyncId ?? throw new InvalidOperationException("Sync result must have a SyncId"),
             Status = MapSyncStatus(result.Status),
             CommitHash = result.CommitHash,
             DocumentsCreated = result.DocumentsCreated,
@@ -2204,7 +2214,7 @@ public partial class DocumentationService : IDocumentationService
         {
             response.LastSync = new SyncInfo
             {
-                SyncId = Guid.Empty, // Not tracked per-sync currently
+                SyncId = null, // Not tracked per-sync currently
                 Status = binding.Status == Models.BindingStatusInternal.Error ? SyncStatus.Failed : SyncStatus.Success,
                 TriggeredBy = SyncTrigger.Scheduled,
                 StartedAt = binding.LastSyncAt.Value,
@@ -2289,7 +2299,7 @@ public partial class DocumentationService : IDocumentationService
 
         if (body.DefaultCategory != null)
         {
-            binding.DefaultCategory = body.DefaultCategory.Value.ToString();
+            binding.DefaultCategory = body.DefaultCategory.Value;
         }
 
         binding.ArchiveEnabled = body.ArchiveEnabled;
@@ -2341,10 +2351,15 @@ public partial class DocumentationService : IDocumentationService
             CommitHash = await GetCurrentCommitHashForNamespaceAsync(body.Namespace, cancellationToken)
         };
 
-        // Upload the bundle to Asset Service
-        try
+        // Upload the bundle to Asset Service (L3→L3 soft dependency, graceful degradation)
+        var assetClient = _serviceProvider.GetService<IAssetClient>();
+        if (assetClient == null)
         {
-            var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
+            _logger.LogDebug("Asset service not enabled, archive stored without bundle upload");
+        }
+        else try
+        {
+            var uploadResponse = await assetClient.RequestBundleUploadAsync(new BundleUploadRequest
             {
                 Owner = body.Owner,
                 Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
@@ -2459,9 +2474,17 @@ public partial class DocumentationService : IDocumentationService
         // Download and restore from bundle if we have one
         if (archive.BundleAssetId != Guid.Empty)
         {
+            // Asset service is L3→L3 soft dependency, graceful degradation required
+            var assetClient = _serviceProvider.GetService<IAssetClient>();
+            if (assetClient == null)
+            {
+                _logger.LogDebug("Asset service not enabled, cannot restore archive bundle");
+                return (StatusCodes.NotFound, null);
+            }
+
             try
             {
-                var bundleResponse = await _assetClient.GetBundleAsync(new GetBundleRequest
+                var bundleResponse = await assetClient.GetBundleAsync(new GetBundleRequest
                 {
                     BundleId = archive.BundleAssetId.ToString()
                 }, cancellationToken);

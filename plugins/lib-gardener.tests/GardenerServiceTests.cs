@@ -28,6 +28,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     private readonly Mock<ISeedClient> _mockSeedClient;
     private readonly Mock<IGameSessionClient> _mockGameSessionClient;
     private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // State stores
     private readonly Mock<IStateStore<GardenInstanceModel>> _mockGardenStore;
@@ -57,6 +59,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockSeedClient = new Mock<ISeedClient>();
         _mockGameSessionClient = new Mock<IGameSessionClient>();
         _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockGardenStore = new Mock<IStateStore<GardenInstanceModel>>();
         _mockPoiStore = new Mock<IStateStore<PoiModel>>();
@@ -146,7 +150,9 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockEventConsumer.Object,
         _mockSeedClient.Object,
         _mockGameSessionClient.Object,
-        _mockServiceProvider.Object);
+        _mockServiceProvider.Object,
+        _mockEntitySessionRegistry.Object,
+        _mockTelemetryProvider.Object);
 
     private SeedResponse CreateTestSeedResponse(
         SeedStatus status = SeedStatus.Active, string? growthPhase = null) => new()

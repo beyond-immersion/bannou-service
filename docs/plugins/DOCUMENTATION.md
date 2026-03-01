@@ -21,7 +21,7 @@ Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, Op
 | lib-state (`IStateStoreFactory`) | Redis persistence for documents, slug indexes, namespace lists, trashcan, bindings, archives |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for repository sync operations (30-minute TTL) |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events, analytics events, binding/sync events, error events |
-| lib-asset (`IAssetClient` via mesh) | Archive bundle upload (RequestBundleUpload) and download (GetBundle) for archive create/restore |
+| lib-asset (`IAssetClient` via `IServiceProvider`) | Archive bundle upload (RequestBundleUpload) and download (GetBundle) for archive create/restore. L3→L3 soft dependency with graceful degradation (runtime-resolved, not constructor-injected). |
 | `IHttpClientFactory` | HTTP PUT/GET to Asset Service pre-signed URLs for bundle data transfer |
 
 ---
@@ -69,11 +69,11 @@ Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, Op
 | `document.deleted` | `DocumentDeletedEvent` | Document soft-deleted to trashcan (includes `deletedReason`) |
 | `documentation.queried` | `DocumentationQueriedEvent` | Natural language query executed (analytics, fire-and-forget) |
 | `documentation.searched` | `DocumentationSearchedEvent` | Keyword search executed (analytics, fire-and-forget) |
-| `documentation.binding.created` | `DocumentationBindingCreatedEvent` | Repository binding created |
-| `documentation.binding.removed` | `DocumentationBindingRemovedEvent` | Repository binding removed (includes `documentsDeleted` count) |
-| `documentation.sync.started` | `DocumentationSyncStartedEvent` | Repository sync begins (includes `triggeredBy`: manual/scheduled) |
-| `documentation.sync.completed` | `DocumentationSyncCompletedEvent` | Repository sync ends (includes status, counts, duration) |
-| `documentation.archive.created` | `DocumentationArchiveCreatedEvent` | Archive created (includes `bundleAssetId`, `documentCount`) |
+| `documentation-binding.created` | `DocumentationBindingCreatedEvent` | Repository binding created |
+| `documentation-binding.removed` | `DocumentationBindingRemovedEvent` | Repository binding removed (includes `documentsDeleted` count) |
+| `documentation-sync.started` | `DocumentationSyncStartedEvent` | Repository sync begins (includes `triggeredBy`: manual/scheduled) |
+| `documentation-sync.completed` | `DocumentationSyncCompletedEvent` | Repository sync ends (includes status, counts, duration) |
+| `documentation-archive.created` | `DocumentationArchiveCreatedEvent` | Archive created (includes `bundleAssetId`, `documentCount`) |
 
 ### Consumed Events
 
@@ -108,6 +108,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `SyncLockTtlSeconds` | `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | `1800` | TTL in seconds for repository sync distributed lock (30 min) |
 | `MaxFetchLimit` | `DOCUMENTATION_MAX_FETCH_LIMIT` | `1000` | Maximum documents to fetch when filtering/sorting in memory |
 | `StatsSampleSize` | `DOCUMENTATION_STATS_SAMPLE_SIZE` | `10` | Number of documents to sample for namespace statistics |
+| `EstimatedBytesPerDocument` | `DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT` | `10000` | Estimated average document content size for stats calculations |
 | `SearchSnippetLength` | `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | `200` | Length in characters for search result snippets |
 
 ---
@@ -117,14 +118,14 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<DocumentationService>` | Scoped | Structured logging |
-| `DocumentationServiceConfiguration` | Singleton | All 25 configuration properties (24 service-specific + ForceServiceId) |
+| `DocumentationServiceConfiguration` | Singleton | All 26 configuration properties (25 service-specific + ForceServiceId) |
 | `IStateStoreFactory` | Singleton | Redis state store access for all data |
 | `IDistributedLockProvider` | Singleton | Sync operation locking |
 | `IMessageBus` | Scoped | Event publishing (lifecycle, analytics, errors) |
 | `ISearchIndexService` | Singleton | Full-text search (Redis Search or in-memory fallback) |
 | `IGitSyncService` | Singleton | Git clone/pull/file-list/read/cleanup operations |
 | `IContentTransformService` | Singleton | YAML frontmatter parsing, slug generation, markdown processing |
-| `IAssetClient` | Scoped (via mesh) | Archive bundle upload/download via Asset Service |
+| `IServiceProvider` | Scoped | Runtime resolution for L3 soft dependencies (IAssetClient) |
 | `IHttpClientFactory` | Singleton | HTTP client for pre-signed URL transfers |
 | `IEventConsumer` | Scoped | Event consumer registration (minimal, no-op) |
 | `SearchIndexRebuildService` | Hosted (BackgroundService) | One-shot index rebuild on startup |
@@ -170,7 +171,7 @@ Service lifetime is **Scoped** (per-request). Two hosted background services run
 
 - **PurgeTrashcan** (`POST /documentation/purge`): Permanently deletes trashcan items. Supports targeted purge (specific documentIds) or full purge (all items). Uses optimistic concurrency (ETag) on trashcan index to handle concurrent modifications. Returns 409 Conflict on concurrent modification. Access: admin.
 
-- **GetNamespaceStats** (`POST /documentation/stats`): Returns namespace statistics. Gets document count and category breakdown from search index. Gets trashcan count from index. Estimates content size (10KB per document average). Samples 10 recent documents to determine lastUpdated. Access: admin.
+- **GetNamespaceStats** (`POST /documentation/stats`): Returns namespace statistics. Gets document count and category breakdown from search index. Gets trashcan count from index. Estimates content size using `EstimatedBytesPerDocument` config (default 10KB). Samples `StatsSampleSize` recent documents to determine lastUpdated. Access: admin.
 
 ### Browser (2 endpoints)
 
@@ -386,7 +387,7 @@ Archive System
 
 4. **Archive bundle upload reliability**: If the Asset Service is unavailable during archive creation, the archive metadata is saved without a `BundleAssetId`. This means `RestoreDocumentationArchive` will return 404 for archives that were created without successful uploads.
 
-5. **Per-sync tracking**: `GetRepositoryStatus` returns `SyncId = Guid.Empty` for last sync info because individual sync results are not persisted. Only the binding's `LastSyncAt`, `LastCommitHash`, and `LastSyncError` are stored.
+5. ~~**Per-sync tracking**~~: **FIXED** (2026-03-01) - `GetRepositoryStatus` now returns `SyncId = null` (nullable Guid) instead of `Guid.Empty` sentinel. `SyncResult.SyncId` is `Guid?` with null for conflict results, proper GUID for completed syncs.
 
 ---
 
@@ -442,7 +443,7 @@ Archive System
 
 9. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.
 
-10. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * 10000` (10KB average). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
+10. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * EstimatedBytesPerDocument` (configurable, defaults to 10KB). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
 
 11. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
 
@@ -465,3 +466,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-01-31**: Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` from schema (T21 violation - never referenced in service code). Updated tests to remove assertions for removed properties. Semantic search remains a potential future extension.
 
 - **2026-02-01**: Enabled Redis Search for documentation by adding `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never activated because the store lacked the search configuration flag. With this fix, Redis Search (FT.*) will be used when the RediSearch module is available.
+
+- **2026-03-01**: Full TENET compliance audit. Schema changes: consolidated 5 inline enums to `$ref` definitions, fixed 2 duplicated enums in events schema to `$ref` API types, removed 7 T8 filler properties from responses, added NRT `nullable: true` to ~50+ optional properties, added validation keywords to all config properties, added validation to ImportDocument and ListTrashcan fields. Code changes: changed `StoredDocument.Category` and `RepositoryBinding.DefaultCategory` from string to `DocumentCategory` enum (T25), replaced `Guid.Empty` sentinels with nullable `Guid?` (T26), replaced `DateTimeOffset.MinValue` with nullable (T26), extracted hardcoded 10000 bytes/doc to `EstimatedBytesPerDocument` config (T21), fixed three-part event topics to hyphenated entity names (T16), changed `IAssetClient` from constructor injection to `IServiceProvider` runtime resolution with graceful degradation (T4/T2 L3→L3 soft dependency), added `ArgumentNullException.ThrowIfNull` to all constructor parameters across all services (T6), moved telemetry activity creation inside try/catch in fire-and-forget analytics methods (T10).

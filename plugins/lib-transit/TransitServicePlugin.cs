@@ -23,8 +23,7 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
     public override void ConfigureServices(IServiceCollection services)
     {
         // Helper services (singleton for shared state across scoped service instances)
-        // TODO: Uncomment when TransitConnectionGraphCache is created (Phase 3)
-        // services.AddSingleton<ITransitConnectionGraphCache, TransitConnectionGraphCache>();
+        services.AddSingleton<ITransitConnectionGraphCache, TransitConnectionGraphCache>();
         // TODO: Uncomment when TransitRouteCalculator is created (Phase 4)
         // services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
 

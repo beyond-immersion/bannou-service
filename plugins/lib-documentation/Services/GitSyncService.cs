@@ -27,10 +27,14 @@ public class GitSyncService : IGitSyncService
         IMessageBus messageBus,
         ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _logger = logger;
         _configuration = configuration;
         _messageBus = messageBus;
-        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
     }
 
