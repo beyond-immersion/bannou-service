@@ -871,7 +871,16 @@ public partial class AssetService : IAssetService
             await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
             // Publish job event for processing pool
-            await _messageBus.TryPublishAsync("asset.bundle.create", job);
+            await _messageBus.TryPublishAsync("asset.bundle.create", new BundleCreationJobQueuedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                JobId = jobId,
+                BundleId = body.BundleId,
+                Version = body.Version ?? "1.0.0",
+                AssetIds = body.AssetIds.ToList(),
+                Compression = body.Compression
+            });
 
             _logger.LogInformation(
                 "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
@@ -2526,8 +2535,10 @@ public partial class AssetService : IAssetService
                     poolType, assetId);
 
                 // Publish delayed retry event
-                var retryEvent = new AssetProcessingRetryEvent
+                await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
                 {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     AssetId = assetId,
                     StorageKey = storageKey,
                     ContentType = metadata.ContentType,
@@ -2535,9 +2546,7 @@ public partial class AssetService : IAssetService
                     RetryCount = 0,
                     MaxRetries = _configuration.ProcessingMaxRetries,
                     RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
-                };
-
-                await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+                }).ConfigureAwait(false);
                 return;
             }
 
@@ -2565,18 +2574,24 @@ public partial class AssetService : IAssetService
                 processorResponse.ProcessorId, poolType, assetId, processorResponse.ExpiresAt);
 
             // Publish processing job event for the processor to pick up
-            var processingJob = new AssetProcessingJobEvent
+            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", new AssetProcessingJobDispatchedEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
+                SizeBytes = metadata.Size,
+                Filename = metadata.Filename,
+                Owner = metadata.Owner,
+                RealmId = metadata.RealmId,
+                Tags = metadata.Tags,
+                PoolType = poolType,
                 ProcessorId = processorResponse.ProcessorId,
                 AppId = processorResponse.AppId,
                 LeaseId = processorResponse.LeaseId,
                 ExpiresAt = processorResponse.ExpiresAt
-            };
-
-            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
+            }).ConfigureAwait(false);
 
             // Publish asset.processing.queued event for service-level tracking
             await _messageBus.TryPublishAsync(
@@ -2598,8 +2613,10 @@ public partial class AssetService : IAssetService
                 poolType, assetId);
 
             // Publish delayed retry event
-            var retryEvent = new AssetProcessingRetryEvent
+            await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
@@ -2607,9 +2624,7 @@ public partial class AssetService : IAssetService
                 RetryCount = 0,
                 MaxRetries = _configuration.ProcessingMaxRetries,
                 RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
-            };
-
-            await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

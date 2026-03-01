@@ -751,12 +751,6 @@ public partial class DocumentationService : IDocumentationService
         var namespaceId = body.Namespace;
         var documentId = body.DocumentId;
 
-        if (documentId == Guid.Empty)
-        {
-            _logger.LogWarning("UpdateDocument requires documentId");
-            return (StatusCodes.BadRequest, null);
-        }
-
         // Check if namespace is bound to a repository (403 for manual modifications)
         var binding = await GetBindingForNamespaceAsync(namespaceId, cancellationToken);
         if (binding != null && binding.Status != Models.BindingStatusInternal.Disabled)
@@ -2445,12 +2439,6 @@ public partial class DocumentationService : IDocumentationService
     public async Task<(StatusCodes, RestoreArchiveResponse?)> RestoreDocumentationArchiveAsync(RestoreArchiveRequest body, CancellationToken cancellationToken = default)
     {
 
-        if (body.ArchiveId == Guid.Empty)
-        {
-            _logger.LogWarning("RestoreArchive failed: archiveId is required");
-            return (StatusCodes.BadRequest, null);
-        }
-
         // Get archive metadata
         var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);
         if (archive == null)
@@ -2472,7 +2460,7 @@ public partial class DocumentationService : IDocumentationService
         int documentsRestored = 0;
 
         // Download and restore from bundle if we have one
-        if (archive.BundleAssetId != Guid.Empty)
+        if (archive.BundleAssetId.HasValue)
         {
             // Asset service is L3→L3 soft dependency, graceful degradation required
             var assetClient = _serviceProvider.GetService<IAssetClient>();
@@ -2486,7 +2474,7 @@ public partial class DocumentationService : IDocumentationService
             {
                 var bundleResponse = await assetClient.GetBundleAsync(new GetBundleRequest
                 {
-                    BundleId = archive.BundleAssetId.ToString()
+                    BundleId = archive.BundleAssetId.Value.ToString()
                 }, cancellationToken);
 
                 if (bundleResponse.DownloadUrl != null)
@@ -2498,7 +2486,7 @@ public partial class DocumentationService : IDocumentationService
             }
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
-                _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId);
+                _logger.LogWarning("Archive bundle {BundleId} not found in Asset Service", archive.BundleAssetId.Value);
                 return (StatusCodes.NotFound, null);
             }
         }
@@ -2518,12 +2506,6 @@ public partial class DocumentationService : IDocumentationService
     /// <inheritdoc />
     public async Task<(StatusCodes, DeleteArchiveResponse?)> DeleteDocumentationArchiveAsync(DeleteArchiveRequest body, CancellationToken cancellationToken = default)
     {
-
-        if (body.ArchiveId == Guid.Empty)
-        {
-            _logger.LogWarning("DeleteArchive failed: archiveId is required");
-            return (StatusCodes.BadRequest, null);
-        }
 
         // Get archive metadata
         var archive = await GetArchiveByIdAsync(body.ArchiveId, cancellationToken);

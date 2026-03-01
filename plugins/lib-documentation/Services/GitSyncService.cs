@@ -251,8 +251,9 @@ public class GitSyncService : IGitSyncService
     }
 
     /// <inheritdoc />
-    public string? GetHeadCommit(string localPath)
+    public async Task<string?> GetHeadCommitAsync(string localPath)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "GitSyncService.GetHeadCommitAsync");
         if (string.IsNullOrWhiteSpace(localPath))
         {
             return null;
@@ -266,16 +267,15 @@ public class GitSyncService : IGitSyncService
             }
 
             using var repo = new Repository(localPath);
+            await Task.CompletedTask;
             return repo.Head.Tip?.Sha;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting HEAD commit for repository at {Path}", localPath);
-            // Fire-and-forget error publishing: this is a synchronous method and error is already logged;
-            // per IMPLEMENTATION TENETS, use discard to avoid blocking on async call
-            _ = _messageBus.TryPublishErrorAsync(
+            await _messageBus.TryPublishErrorAsync(
                 "documentation",
-                "GetHeadCommit",
+                "GetHeadCommitAsync",
                 ex.GetType().Name,
                 ex.Message,
                 dependency: "git",

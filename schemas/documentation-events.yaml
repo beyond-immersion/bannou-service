@@ -75,7 +75,7 @@ x-lifecycle:
         required: true
         description: Human-readable title of the document
       category:
-        type: string
+        $ref: 'documentation-api.yaml#/components/schemas/DocumentCategory'
         required: true
         description: Category classification for the document
       tags:

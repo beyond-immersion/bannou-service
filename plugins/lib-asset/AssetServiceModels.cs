@@ -34,46 +34,6 @@ public partial class AssetService
 }
 
 /// <summary>
-/// Event published when an asset processing job is assigned to a processor.
-/// </summary>
-public sealed class AssetProcessingJobEvent
-{
-    public Guid JobId { get; set; } = Guid.NewGuid();
-    public string AssetId { get; set; } = string.Empty;
-    public string StorageKey { get; set; } = string.Empty;
-    public string ContentType { get; set; } = string.Empty;
-    public long SizeBytes { get; set; }
-    public string Filename { get; set; } = string.Empty;
-    /// <summary>
-    /// Owner of this processing job. NOT a session ID.
-    /// Contains either an accountId or service name.
-    /// </summary>
-    public string Owner { get; set; } = string.Empty;
-    public Guid? RealmId { get; set; }
-    public Dictionary<string, string>? Tags { get; set; }
-    public Dictionary<string, object>? ProcessingOptions { get; set; }
-    public string PoolType { get; set; } = string.Empty;
-    public string ProcessorId { get; set; } = string.Empty;
-    public string AppId { get; set; } = string.Empty;
-    public Guid? LeaseId { get; set; }
-    public DateTimeOffset ExpiresAt { get; set; }
-}
-
-/// <summary>
-/// Event published when processing needs to be retried later.
-/// </summary>
-public sealed class AssetProcessingRetryEvent
-{
-    public string AssetId { get; set; } = string.Empty;
-    public string StorageKey { get; set; } = string.Empty;
-    public string ContentType { get; set; } = string.Empty;
-    public string PoolType { get; set; } = string.Empty;
-    public int RetryCount { get; set; }
-    public int MaxRetries { get; set; } = 5;
-    public int RetryDelaySeconds { get; set; } = 30;
-}
-
-/// <summary>
 /// Internal model for bundle download tokens stored in state.
 /// </summary>
 internal sealed class BundleDownloadToken
@@ -196,40 +156,3 @@ internal sealed class SourceBundleReferenceInternal
     public required string ContentHash { get; set; }
 }
 
-/// <summary>
-/// Event published when a metabundle job is queued for async processing.
-/// Consumed by background workers to process the metabundle creation.
-/// </summary>
-internal sealed class MetabundleJobQueuedEvent
-{
-    /// <summary>
-    /// Unique identifier for this job.
-    /// </summary>
-    public Guid JobId { get; set; }
-
-    /// <summary>
-    /// The metabundle ID being created (human-readable, e.g., "game-assets-v1").
-    /// </summary>
-    public required string MetabundleId { get; set; }
-
-    /// <summary>
-    /// Number of source bundles to merge.
-    /// </summary>
-    public int SourceBundleCount { get; set; }
-
-    /// <summary>
-    /// Total number of assets in the metabundle.
-    /// </summary>
-    public int AssetCount { get; set; }
-
-    /// <summary>
-    /// Estimated total size in bytes.
-    /// </summary>
-    public long EstimatedSizeBytes { get; set; }
-
-    /// <summary>
-    /// Session ID of the requester for completion notification.
-    /// Null if request did not originate from a WebSocket session.
-    /// </summary>
-    public string? RequesterSessionId { get; set; }
-}

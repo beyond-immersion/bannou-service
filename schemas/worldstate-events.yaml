@@ -17,6 +17,15 @@ info:
     - topic: worldstate.calendar-template.updated
       event: CalendarTemplateUpdatedEvent
       handler: HandleCalendarTemplateUpdated
+    - topic: worldstate.calendar-template.deleted
+      event: CalendarTemplateDeletedEvent
+      handler: HandleCalendarTemplateDeleted
+    - topic: worldstate.ratio-changed
+      event: WorldstateRatioChangedEvent
+      handler: HandleRatioChanged
+    - topic: worldstate.realm-config.deleted
+      event: RealmConfigDeletedEvent
+      handler: HandleRealmConfigDeleted
 
   x-event-publications:
     # Lifecycle events (auto-generated via x-lifecycle)

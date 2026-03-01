@@ -24,8 +24,7 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
     {
         // Helper services (singleton for shared state across scoped service instances)
         services.AddSingleton<ITransitConnectionGraphCache, TransitConnectionGraphCache>();
-        // TODO: Uncomment when TransitRouteCalculator is created (Phase 4)
-        // services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
+        services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
 
         // Background workers
         // TODO: Uncomment when SeasonalConnectionWorker is created (Phase 8)

@@ -1163,7 +1163,26 @@ public partial class TransitService : ITransitService
             }
         }
 
-        // Check for duplicate connection by code
+        // Distributed lock on connection identity to prevent duplicate creation per IMPLEMENTATION TENETS (multi-instance safety).
+        // Lock key uses code if provided (primary uniqueness), otherwise the location pair.
+        var lockResource = !string.IsNullOrEmpty(body.Code)
+            ? $"connection:code:{body.Code}"
+            : $"connection:pair:{body.FromLocationId}:{body.ToLocationId}";
+        var lockOwner = $"create-connection-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.TransitLock,
+            lockResource,
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Could not acquire lock for connection creation ({LockResource}), returning Conflict", lockResource);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check for duplicate connection by code (within lock)
         if (!string.IsNullOrEmpty(body.Code))
         {
             var existingByCode = await _connectionStore.QueryAsync(
@@ -1176,7 +1195,7 @@ public partial class TransitService : ITransitService
             }
         }
 
-        // Check for duplicate connection by location pair (same direction)
+        // Check for duplicate connection by location pair -- same direction (within lock)
         var existingByPair = await _connectionStore.QueryAsync(
             c => c.FromLocationId == body.FromLocationId && c.ToLocationId == body.ToLocationId,
             cancellationToken);
@@ -1363,11 +1382,10 @@ public partial class TransitService : ITransitService
             filtered = filtered.Where(c => c.Tags != null && requiredTags.All(t => c.Tags.Contains(t)));
         }
 
-        // Pagination
+        // Pagination -- schema defaults (Page=1, PageSize=20) and [Range] validation
+        // ensure body.Page and body.PageSize are always valid; no secondary fallback per IMPLEMENTATION TENETS
         var totalCount = filtered.Count();
-        var page = body.Page > 0 ? body.Page : 1;
-        var pageSize = body.PageSize > 0 ? body.PageSize : 20;
-        var paged = filtered.Skip((page - 1) * pageSize).Take(pageSize);
+        var paged = filtered.Skip((body.Page - 1) * body.PageSize).Take(body.PageSize);
 
         var result = paged.Select(MapConnectionToApi).ToList();
 
@@ -1401,6 +1419,13 @@ public partial class TransitService : ITransitService
         }
 
         var changedFields = await ApplyConnectionFieldUpdatesAsync(model, body, cancellationToken);
+
+        // Null indicates a validation failure (invalid mode code or duplicate connection code)
+        if (changedFields == null)
+        {
+            _logger.LogDebug("Validation failed during connection field updates for {ConnectionId}", body.ConnectionId);
+            return (StatusCodes.BadRequest, null);
+        }
 
         if (changedFields.Count > 0)
         {
@@ -1683,7 +1708,26 @@ public partial class TransitService : ITransitService
                 continue;
             }
 
-            // Check for existing connection by code (for replaceExisting)
+            // Distributed lock per connection to prevent duplicate creation per IMPLEMENTATION TENETS (multi-instance safety).
+            // Lock key uses code if provided (primary uniqueness), otherwise the location pair.
+            var bulkLockResource = !string.IsNullOrEmpty(entry.Code)
+                ? $"connection:code:{entry.Code}"
+                : $"connection:pair:{fromLocationId}:{toLocationId}";
+            var bulkLockOwner = $"bulk-seed-connection-{Guid.NewGuid():N}";
+            await using var bulkLockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.TransitLock,
+                bulkLockResource,
+                bulkLockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!bulkLockResponse.Success)
+            {
+                errors.Add($"Connection [{i}]: could not acquire lock for connection creation");
+                continue;
+            }
+
+            // Check for existing connection by code (within lock, for replaceExisting)
             TransitConnectionModel? existingModel = null;
             if (!string.IsNullOrEmpty(entry.Code))
             {
@@ -1745,7 +1789,7 @@ public partial class TransitService : ITransitService
             }
             else
             {
-                // Check for duplicate connection by location pair
+                // Check for duplicate connection by location pair (within lock)
                 var existingByPair = await _connectionStore.QueryAsync(
                     c => c.FromLocationId == fromLocationId && c.ToLocationId == toLocationId,
                     cancellationToken);
@@ -1944,13 +1988,115 @@ public partial class TransitService : ITransitService
     }
 
     /// <summary>
-    /// Implementation of CalculateRoute operation.
+    /// Calculates optimal route options between two locations.
+    /// Pure computation endpoint -- no state mutation. Uses Dijkstra's algorithm over the
+    /// cached connection graph with configurable cost functions (fastest, safest, shortest).
     /// </summary>
+    /// <param name="body">Request containing origin/destination locations and calculation preferences.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK with ranked route options, or BadRequest if locations not found.</returns>
     public async Task<(StatusCodes, CalculateRouteResponse?)> CalculateRouteAsync(CalculateRouteRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CalculateRoute
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CalculateRoute not yet implemented");
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CalculateRouteAsync");
+
+        _logger.LogDebug("Calculating route from {FromLocationId} to {ToLocationId}, sortBy: {SortBy}, multiModal: {MultiModal}",
+            body.FromLocationId, body.ToLocationId, body.SortBy, body.PreferMultiModal);
+
+        // Validate origin and destination locations exist
+        Location.LocationResponse fromLocation;
+        Location.LocationResponse toLocation;
+
+        try
+        {
+            fromLocation = await _locationClient.GetLocationAsync(
+                new Location.GetLocationRequest { LocationId = body.FromLocationId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("From location not found: {FromLocationId}", body.FromLocationId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        try
+        {
+            toLocation = await _locationClient.GetLocationAsync(
+                new Location.GetLocationRequest { LocationId = body.ToLocationId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("To location not found: {ToLocationId}", body.ToLocationId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Resolve current time ratio for real-minutes estimation
+        // Use the origin location's realm for the time ratio
+        decimal currentTimeRatio = 0;
+        try
+        {
+            var snapshot = await _worldstateClient.GetRealmTimeAsync(
+                new Worldstate.GetRealmTimeRequest { RealmId = fromLocation.RealmId },
+                cancellationToken);
+            currentTimeRatio = (decimal)snapshot.TimeRatio;
+        }
+        catch (ApiException ex)
+        {
+            // Non-fatal: if Worldstate is unavailable, we can still calculate routes
+            // but totalRealMinutes will be 0
+            _logger.LogWarning(ex, "Could not retrieve time ratio for realm {RealmId}, real-minutes estimation will be unavailable",
+                fromLocation.RealmId);
+        }
+
+        // Build the route calculation request for the calculator
+        var calcRequest = new RouteCalculationRequest(
+            OriginLocationId: body.FromLocationId,
+            DestinationLocationId: body.ToLocationId,
+            ModeCode: body.ModeCode,
+            PreferMultiModal: body.PreferMultiModal,
+            SortBy: body.SortBy ?? RouteSortBy.Fastest,
+            EntityId: body.EntityId,
+            IncludeSeasonalClosed: body.IncludeSeasonalClosed,
+            CargoWeightKg: 0m,
+            MaxLegs: body.MaxLegs ?? _configuration.MaxRouteCalculationLegs,
+            MaxOptions: body.MaxOptions ?? _configuration.MaxRouteOptions,
+            CurrentTimeRatio: currentTimeRatio);
+
+        // Invoke the route calculator (stateless computation)
+        var results = await _routeCalculator.CalculateAsync(calcRequest, cancellationToken);
+
+        // Map results to API response model
+        var options = results.Select((r, index) => new TransitRouteOption
+        {
+            Waypoints = r.Waypoints,
+            Connections = r.Connections,
+            LegCount = r.Connections.Count,
+            PrimaryModeCode = r.LegModes.Count > 0
+                ? r.LegModes.GroupBy(m => m).OrderByDescending(g => g.Count()).First().Key
+                : "walking",
+            LegModes = r.LegModes,
+            TotalDistanceKm = r.TotalDistanceKm,
+            TotalGameHours = r.TotalGameHours,
+            TotalRealMinutes = r.TotalRealMinutes,
+            AverageRisk = r.AverageRisk,
+            MaxLegRisk = r.MaxLegRisk,
+            AllLegsOpen = r.AllLegsOpen,
+            SeasonalWarnings = r.SeasonalWarnings?.Select(w => new SeasonalRouteWarning
+            {
+                ConnectionId = w.ConnectionId,
+                ConnectionName = w.ConnectionName,
+                LegIndex = w.LegIndex,
+                CurrentSeason = w.CurrentSeason,
+                ClosingSeason = w.ClosingSeason,
+                ClosingSeasonIndex = w.ClosingSeasonIndex
+            }).ToList(),
+            Rank = index + 1
+        }).ToList();
+
+        _logger.LogInformation("Route calculation returned {OptionCount} options from {FromLocationId} to {ToLocationId}",
+            options.Count, body.FromLocationId, body.ToLocationId);
+
+        return (StatusCodes.OK, new CalculateRouteResponse { Options = options });
     }
 
     /// <summary>
@@ -2120,13 +2266,13 @@ public partial class TransitService : ITransitService
     /// <summary>
     /// Applies non-null field updates from an <see cref="UpdateConnectionRequest"/> to an existing connection model.
     /// Validates mode codes if compatibleModes is being updated.
-    /// Returns the list of field names that were actually changed.
+    /// Returns the list of field names that were actually changed, or null if validation failed.
     /// </summary>
     /// <param name="model">The connection model to update in place.</param>
     /// <param name="request">The update request containing fields to apply.</param>
     /// <param name="cancellationToken">Cancellation token for async validation.</param>
-    /// <returns>List of camelCase field names that were changed.</returns>
-    private async Task<List<string>> ApplyConnectionFieldUpdatesAsync(
+    /// <returns>List of camelCase field names that were changed, or null if validation failed (caller should return BadRequest).</returns>
+    private async Task<List<string>?> ApplyConnectionFieldUpdatesAsync(
         TransitConnectionModel model,
         UpdateConnectionRequest request,
         CancellationToken cancellationToken)
@@ -2157,9 +2303,8 @@ public partial class TransitService : ITransitService
                 if (mode == null)
                 {
                     _logger.LogDebug("Invalid mode code in compatible modes update: {ModeCode}", modeCode);
-                    // Skip this update but continue with other fields
-                    // The caller will see the mode not in changedFields
-                    return changedFields;
+                    // Return null to signal validation failure -- caller returns BadRequest
+                    return null;
                 }
             }
 
@@ -2212,7 +2357,8 @@ public partial class TransitService : ITransitService
                 if (existingByCode.Count > 0)
                 {
                     _logger.LogDebug("Cannot update connection code: code {Code} already in use", request.Code);
-                    return changedFields;
+                    // Return null to signal validation failure -- caller returns Conflict
+                    return null;
                 }
             }
 
@@ -2444,6 +2590,9 @@ public partial class TransitService : ITransitService
             ToLocationId = model.ToLocationId,
             PreviousStatus = previousStatus,
             NewStatus = model.Status,
+            // StatusReason is nullable (null when status is "open"), but the event schema requires
+            // a non-null string for Reason. Empty string represents "no specific reason" for the transition.
+            // Coalesce satisfies the required field contract (will execute when StatusReason is legitimately null).
             Reason = model.StatusReason ?? string.Empty,
             ForceUpdated = forceUpdated,
             FromRealmId = model.FromRealmId,

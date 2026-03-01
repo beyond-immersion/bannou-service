@@ -2122,7 +2122,7 @@ components:
           type: object
           nullable: true
           additionalProperties:
-            type: string
+            $ref: '#/components/schemas/DocumentCategory'
           description: Map directory prefixes to categories (empty mapping if not provided)
         defaultCategory:
           $ref: '#/components/schemas/DocumentCategory'
@@ -2441,7 +2441,7 @@ components:
         categoryMapping:
           type: object
           additionalProperties:
-            type: string
+            $ref: '#/components/schemas/DocumentCategory'
           nullable: true
           description: New directory-to-category mapping (null to keep unchanged)
         defaultCategory:

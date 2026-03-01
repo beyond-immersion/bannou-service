@@ -233,8 +233,8 @@ internal sealed class DocumentationArchive
     /// <summary>Gets or sets the namespace this archive is for.</summary>
     public string Namespace { get; set; } = string.Empty;
 
-    /// <summary>Gets or sets the Asset Service bundle ID.</summary>
-    public Guid BundleAssetId { get; set; }
+    /// <summary>Gets or sets the Asset Service bundle ID (null if bundle upload failed or was skipped).</summary>
+    public Guid? BundleAssetId { get; set; }
 
     /// <summary>Gets or sets the number of documents in the archive.</summary>
     public int DocumentCount { get; set; }

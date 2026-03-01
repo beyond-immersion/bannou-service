@@ -13,9 +13,9 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    # MinIO webhook notifications (processed internally, not via pub/sub)
-    # No external subscriptions initially - Asset service is primarily a publisher
-    []
+    - topic: asset.metabundle.job.queued
+      event: MetabundleJobQueuedEvent
+      description: Self-consumed for async metabundle job processing
   x-event-publications:
     # Upload lifecycle events
     - topic: asset.upload.requested
@@ -52,6 +52,21 @@ info:
     - topic: asset.bundle.restored
       event: BundleRestoredEvent
       description: Published when a soft-deleted bundle is restored
+    # Processing pool dispatch events
+    - topic: "asset.processing.job.{poolType}"
+      event: AssetProcessingJobDispatchedEvent
+      description: Published when a processing job is dispatched to a pool-type-specific topic (e.g., asset.processing.job.audio)
+    - topic: asset.processing.retry
+      event: AssetProcessingRetryEvent
+      description: Published when processing needs to be retried after no processors are available
+    # Bundle creation job events
+    - topic: asset.bundle.create
+      event: BundleCreationJobQueuedEvent
+      description: Published when a bundle creation job is queued for processing pool
+    # Metabundle job events
+    - topic: asset.metabundle.job.queued
+      event: MetabundleJobQueuedEvent
+      description: Published when a metabundle creation job is queued for async processing
 
 paths: {}  # Events don't have HTTP paths
 
@@ -573,6 +588,233 @@ components:
             - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
           nullable: true
           description: Game realm of the bundle. Null for cross-realm bundles.
+
+    # ==========================================================================
+    # Processing Pool Events
+    # ==========================================================================
+
+    AssetProcessingJobDispatchedEvent:
+      type: object
+      additionalProperties: false
+      description: |
+        Event published when an asset processing job is dispatched to a processor
+        in a specific pool. Topic includes pool type suffix (e.g., asset.processing.job.audio).
+      required:
+        - eventId
+        - timestamp
+        - jobId
+        - assetId
+        - storageKey
+        - contentType
+        - sizeBytes
+        - poolType
+        - processorId
+        - appId
+        - expiresAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        jobId:
+          type: string
+          format: uuid
+          description: Unique processing job identifier
+        assetId:
+          type: string
+          description: Asset identifier (SHA-256 hex string)
+        storageKey:
+          type: string
+          description: Storage key for the asset file
+        contentType:
+          type: string
+          description: MIME content type of the asset
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Asset file size in bytes
+        filename:
+          type: string
+          nullable: true
+          description: Original filename
+        owner:
+          type: string
+          nullable: true
+          description: |
+            Owner of this processing job. NOT a session ID.
+            For user-initiated: the accountId (UUID format).
+            For service-initiated: the service name.
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm assets.
+        tags:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+          description: Key-value tags associated with the asset
+        processingOptions:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Content-type-specific processing options (opaque pass-through to processor)
+        poolType:
+          type: string
+          description: Processing pool type (e.g., "audio", "texture", "model")
+        processorId:
+          type: string
+          description: Assigned processor instance identifier
+        appId:
+          type: string
+          description: Assigned processor app-id for routing
+        leaseId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Processor lease identifier for tracking
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the processor lease expires
+
+    AssetProcessingRetryEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when asset processing needs to be retried after no processors are available
+      required:
+        - eventId
+        - timestamp
+        - assetId
+        - storageKey
+        - contentType
+        - poolType
+        - retryCount
+        - maxRetries
+        - retryDelaySeconds
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        assetId:
+          type: string
+          description: Asset identifier
+        storageKey:
+          type: string
+          description: Storage key for the asset file
+        contentType:
+          type: string
+          description: MIME content type of the asset
+        poolType:
+          type: string
+          description: Processing pool type that was unavailable
+        retryCount:
+          type: integer
+          description: Current retry attempt number
+        maxRetries:
+          type: integer
+          description: Maximum number of retry attempts
+        retryDelaySeconds:
+          type: integer
+          description: Delay in seconds before retry
+
+    # ==========================================================================
+    # Bundle Job Events
+    # ==========================================================================
+
+    BundleCreationJobQueuedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a bundle creation job is queued for the processing pool
+      required:
+        - eventId
+        - timestamp
+        - jobId
+        - bundleId
+        - version
+        - assetIds
+        - compression
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        jobId:
+          type: string
+          format: uuid
+          description: Unique job identifier
+        bundleId:
+          type: string
+          description: Target bundle identifier
+        version:
+          type: string
+          description: Bundle version string
+        assetIds:
+          type: array
+          items:
+            type: string
+          description: Asset IDs to include in the bundle
+        compression:
+          $ref: 'asset-api.yaml#/components/schemas/CompressionType'
+          description: Compression type to use
+
+    MetabundleJobQueuedEvent:
+      type: object
+      additionalProperties: false
+      description: Event published when a metabundle creation job is queued for async processing
+      required:
+        - eventId
+        - timestamp
+        - jobId
+        - metabundleId
+        - sourceBundleCount
+        - assetCount
+        - estimatedSizeBytes
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        jobId:
+          type: string
+          format: uuid
+          description: Unique job identifier
+        metabundleId:
+          type: string
+          description: The metabundle ID being created
+        sourceBundleCount:
+          type: integer
+          description: Number of source bundles to merge
+        assetCount:
+          type: integer
+          description: Total number of assets in the metabundle
+        estimatedSizeBytes:
+          type: integer
+          format: int64
+          description: Estimated total size in bytes
+        requesterSessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID of the requester for completion notification
 
     # ==========================================================================
     # Supporting Types

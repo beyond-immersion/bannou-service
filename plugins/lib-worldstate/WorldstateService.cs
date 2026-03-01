@@ -500,11 +500,14 @@ public partial class WorldstateService : IWorldstateService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Acquire distributed lock
+        // Acquire distributed lock — must use the same lock key as AdvanceClockAsync and
+        // the background worker (clock:{realmId}) because this method reads, mutates, and
+        // writes the same RealmClockModel in Redis. Using a different key (ratio:{realmId})
+        // would allow concurrent execution with clock operations, causing lost updates.
         var lockOwner = $"worldstate-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.WorldstateLock,
-            $"ratio:{body.RealmId}",
+            $"clock:{body.RealmId}",
             lockOwner,
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);

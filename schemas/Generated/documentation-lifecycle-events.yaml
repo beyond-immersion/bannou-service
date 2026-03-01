@@ -43,7 +43,7 @@ components:
           type: string
           description: Human-readable title of the document
         category: &id005
-          type: string
+          $ref: ../documentation-api.yaml#/components/schemas/DocumentCategory
           description: Category classification for the document
         tags: &id006
           type: array

@@ -835,6 +835,348 @@ public partial class BundleRestoredEvent
 
 }
 
+/// <summary>
+/// Event published when an asset processing job is dispatched to a processor
+/// <br/>in a specific pool. Topic includes pool type suffix (e.g., asset.processing.job.audio).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AssetProcessingJobDispatchedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique processing job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Asset identifier (SHA-256 hex string)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Storage key for the asset file
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storageKey")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StorageKey { get; set; } = default!;
+
+    /// <summary>
+    /// MIME content type of the asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Asset file size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sizeBytes")]
+    public long SizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Original filename
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("filename")]
+    public string? Filename { get; set; } = default!;
+
+    /// <summary>
+    /// Owner of this processing job. NOT a session ID.
+    /// <br/>For user-initiated: the accountId (UUID format).
+    /// <br/>For service-initiated: the service name.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("owner")]
+    public string? Owner { get; set; } = default!;
+
+    /// <summary>
+    /// Game realm the asset belongs to. Null for cross-realm assets.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    public System.Guid? RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Key-value tags associated with the asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.IDictionary<string, string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Content-type-specific processing options (opaque pass-through to processor)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("processingOptions")]
+    public object? ProcessingOptions { get; set; } = default!;
+
+    /// <summary>
+    /// Processing pool type (e.g., "audio", "texture", "model")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PoolType { get; set; } = default!;
+
+    /// <summary>
+    /// Assigned processor instance identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("processorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ProcessorId { get; set; } = default!;
+
+    /// <summary>
+    /// Assigned processor app-id for routing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("appId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AppId { get; set; } = default!;
+
+    /// <summary>
+    /// Processor lease identifier for tracking
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("leaseId")]
+    public System.Guid? LeaseId { get; set; } = default!;
+
+    /// <summary>
+    /// When the processor lease expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when asset processing needs to be retried after no processors are available
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class AssetProcessingRetryEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Asset identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Storage key for the asset file
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("storageKey")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string StorageKey { get; set; } = default!;
+
+    /// <summary>
+    /// MIME content type of the asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contentType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ContentType { get; set; } = default!;
+
+    /// <summary>
+    /// Processing pool type that was unavailable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string PoolType { get; set; } = default!;
+
+    /// <summary>
+    /// Current retry attempt number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retryCount")]
+    public int RetryCount { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum number of retry attempts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxRetries")]
+    public int MaxRetries { get; set; } = default!;
+
+    /// <summary>
+    /// Delay in seconds before retry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("retryDelaySeconds")]
+    public int RetryDelaySeconds { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a bundle creation job is queued for the processing pool
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BundleCreationJobQueuedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// Target bundle identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string BundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Bundle version string
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Version { get; set; } = default!;
+
+    /// <summary>
+    /// Asset IDs to include in the bundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+    /// <summary>
+    /// Compression type to use
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("compression")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CompressionType Compression { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Event published when a metabundle creation job is queued for async processing
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class MetabundleJobQueuedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Unique job identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("jobId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid JobId { get; set; } = default!;
+
+    /// <summary>
+    /// The metabundle ID being created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metabundleId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string MetabundleId { get; set; } = default!;
+
+    /// <summary>
+    /// Number of source bundles to merge
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceBundleCount")]
+    public int SourceBundleCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total number of assets in the metabundle
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetCount")]
+    public int AssetCount { get; set; } = default!;
+
+    /// <summary>
+    /// Estimated total size in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("estimatedSizeBytes")]
+    public long EstimatedSizeBytes { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of the requester for completion notification
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requesterSessionId")]
+    public System.Guid? RequesterSessionId { get; set; } = default!;
+
+}
+
 
 
 #pragma warning restore  108

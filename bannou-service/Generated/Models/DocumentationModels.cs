@@ -2063,7 +2063,7 @@ public partial class BindRepositoryRequest
     /// Map directory prefixes to categories (empty mapping if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
-    public System.Collections.Generic.IDictionary<string, string>? CategoryMapping { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, DocumentCategory>? CategoryMapping { get; set; } = default!;
 
     /// <summary>
     /// Default category for documents without mapping
@@ -2564,7 +2564,7 @@ public partial class UpdateRepositoryBindingRequest
     /// New directory-to-category mapping (null to keep unchanged)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryMapping")]
-    public System.Collections.Generic.IDictionary<string, string>? CategoryMapping { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, DocumentCategory>? CategoryMapping { get; set; } = default!;
 
     /// <summary>
     /// New default category for unmapped documents (null to keep unchanged)

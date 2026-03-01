@@ -83,6 +83,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
         EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
         EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+        EventSubscriptionRegistry.Register<LocationEntityArrivedEvent>("location.entity-arrived");
+        EventSubscriptionRegistry.Register<LocationEntityDepartedEvent>("location.entity-departed");
 
         // From leaderboard-events.yaml
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
@@ -133,5 +135,8 @@ public static class EventSubscriptionRegistration
 
         // From worldstate-events.yaml
         EventSubscriptionRegistry.Register<CalendarTemplateUpdatedEvent>("worldstate.calendar-template.updated");
+        EventSubscriptionRegistry.Register<CalendarTemplateDeletedEvent>("worldstate.calendar-template.deleted");
+        EventSubscriptionRegistry.Register<WorldstateRatioChangedEvent>("worldstate.ratio-changed");
+        EventSubscriptionRegistry.Register<RealmConfigDeletedEvent>("worldstate.realm-config.deleted");
     }
 }
