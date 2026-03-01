@@ -199,7 +199,7 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
         }
 
         // Exclude seasonal_closed unless explicitly included
-        if (!request.IncludeSeasonalClosed && edge.Status == ConnectionStatus.Seasonal_closed)
+        if (!request.IncludeSeasonalClosed && edge.Status == ConnectionStatus.SeasonalClosed)
         {
             return false;
         }

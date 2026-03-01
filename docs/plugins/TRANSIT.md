@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis)
 > **Layer**: GameFoundation
-> **Status**: Schemas created, code generated, service implementation in progress.
+> **Status**: Fully implemented.
 
 ---
 
@@ -389,6 +389,15 @@ Full schema in `schemas/transit-configuration.yaml`.
 | `JourneyArchiveRetentionDays` | int | 365 | `TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS` | MySQL archive retention in real days (0 = indefinite) |
 | `JourneyArchivalWorkerIntervalSeconds` | int | 300 | `TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS` | Archival sweep interval in real seconds |
 | `AutoUpdateLocationOnTransition` | bool | true | `TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION` | Auto-call Location's `/location/report-entity-position` on journey departure, waypoint arrival, and final arrival. Location's presence has 30s TTL so Transit must re-report on each transition. Both are L2 so direct API calls are used — not events. |
+| `MinPreferenceCost` | decimal | 0.0 | `TRANSIT_MIN_PREFERENCE_COST` | Floor for aggregated DI cost modifier preference cost (min 0) |
+| `MaxPreferenceCost` | decimal | 2.0 | `TRANSIT_MAX_PREFERENCE_COST` | Ceiling for aggregated DI cost modifier preference cost (min 0) |
+| `MinSpeedMultiplier` | decimal | 0.1 | `TRANSIT_MIN_SPEED_MULTIPLIER` | Floor for aggregated DI cost modifier speed multiplier (min 0.01) |
+| `MaxSpeedMultiplier` | decimal | 3.0 | `TRANSIT_MAX_SPEED_MULTIPLIER` | Ceiling for aggregated DI cost modifier speed multiplier (min 0.01) |
+| `LockTimeoutSeconds` | int | 10 | `TRANSIT_LOCK_TIMEOUT_SECONDS` | Distributed lock acquisition timeout for mode/connection/journey mutations (1-60) |
+| `MinimumEffectiveSpeedKmPerGameHour` | decimal | 0.01 | `TRANSIT_MINIMUM_EFFECTIVE_SPEED_KM_PER_GAME_HOUR` | Speed floor after terrain/cargo modifiers, prevents division-by-zero (min 0.001) |
+| `SeasonalWorkerStartupDelaySeconds` | int | 5 | `TRANSIT_SEASONAL_WORKER_STARTUP_DELAY_SECONDS` | Delay before seasonal connection worker starts first check (0-300) |
+| `JourneyArchivalWorkerStartupDelaySeconds` | int | 10 | `TRANSIT_JOURNEY_ARCHIVAL_WORKER_STARTUP_DELAY_SECONDS` | Delay before journey archival worker starts first sweep (0-300) |
+| `DefaultFallbackModeCode` | string | "walking" | `TRANSIT_DEFAULT_FALLBACK_MODE_CODE` | Fallback mode code when no compatible mode found during route calculation |
 
 **Cargo speed penalty formula**: `speed_reduction = (cargo - CargoSpeedPenaltyThresholdKg) / (mode.cargoCapacityKg - threshold) × rate` where `rate` = mode's `cargoSpeedPenaltyRate` ?? `DefaultCargoSpeedPenaltyRate`. Max penalty = `rate` (e.g., 0.3 = 30% speed reduction at full capacity).
 
@@ -401,9 +410,12 @@ Full schema in `schemas/transit-configuration.yaml`.
 | `ILogger<TransitService>` | Structured logging |
 | `TransitServiceConfiguration` | Typed configuration access |
 | `ITelemetryProvider` | Distributed tracing spans for all async methods per IMPLEMENTATION TENETS |
-| `IStateStoreFactory` | State store access (creates 8 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache, transit-lock) |
+| `IStateStoreFactory` | State store access (creates 8 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache; lock store via `IDistributedLockProvider`) |
 | `IMessageBus` | Event publishing (journey lifecycle, connection status, discovery, mode registered/updated/deleted, connection lifecycle) |
+| `IDistributedLockProvider` | Distributed locks for journey state transitions, connection status updates, and mode mutations (via transit-lock store) |
 | `IEventConsumer` | Subscribes to `worldstate.season-changed` for seasonal connection status updates |
+| `IClientEventPublisher` | Server-to-client WebSocket push events (journey updates, discovery reveals, connection status changes) |
+| `IEntitySessionRegistry` | Entity-to-session mapping for routing client events to entity-bound sessions (L1 hard, Connect-hosted) |
 | `ILocationClient` | Location existence validation, entity position reporting via `AutoUpdateLocationOnTransition` (L2 hard dependency) |
 | `IWorldstateClient` | Game-time calculations for journey ETAs, seasonal context for connection status (L2 hard dependency) |
 | `ICharacterClient` | Species code lookup for mode compatibility checks (L2 hard dependency) |
@@ -561,13 +573,9 @@ teleportation, fast-travel, or narrative skip.
 
 ---
 
-## Implementation Status
+## Stubs & Unimplemented Features
 
-Schemas created and code generated. Remaining implementation:
-1. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
-2. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
-3. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
-4. Write unit tests in `plugins/lib-transit.tests/`
+No stubs remain. All 33 endpoints are fully implemented with no `NotImplemented` returns or TODO markers. Background workers (Seasonal Connection Worker, Journey Archival Worker) are implemented. The `ITransitCostModifierProvider` interface exists in `bannou-service/Providers/`. Variable provider factory (`TransitVariableProviderFactory`) is implemented.
 
 ---
 
@@ -583,7 +591,28 @@ Schemas created and code generated. Remaining implementation:
 
 5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
 
-6. ~~**Client events for journey tracking and route discovery**~~ — **Promoted to core spec.** See Client Events section above. ([#501](https://github.com/beyond-immersion/bannou-service/issues/501))
+
+---
+
+## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+None currently known.
+
+### Intentional Quirks
+
+1. **Double-to-decimal casting throughout service**: Generated configuration properties are `double` (from OpenAPI `number` format), but all internal models and calculations use `decimal` for precision. This requires `(decimal)_configuration.PropertyName` casts at 11 call sites across 4 files (TransitService.cs, JourneyArchivalWorker.cs, TransitRouteCalculator.cs, TransitVariableProviderFactory.cs). The pattern is consistent and correct — `decimal` prevents floating-point rounding in distance/speed calculations.
+
+2. **Location presence TTL gap during transit**: When an entity departs on a journey, their location presence is updated to the departure location. The entity doesn't "exist" at intermediate locations during transit — they arrive at the destination when `journey/advance` is called. This means entities are effectively invisible to location-based queries while in transit. This is by design: Transit is a discrete graph system, not a continuous simulation.
+
+3. **Journey archival is lazy, not event-driven**: Completed journeys are moved from Redis to MySQL by the `JourneyArchivalWorker` on a periodic timer (`JourneyArchivalWorkerIntervalSeconds`, default 300s). This means recently completed journeys remain in Redis for up to 5 minutes before archival. Queries for historical journeys should check both active (`journey/get`) and archived (`journey/query-archive`) stores.
+
+### Design Considerations
+
+1. **No autonomous journey progression**: Transit never auto-advances journeys. The game client or Actor behavior must call `journey/advance` and `journey/arrive`. This is a deliberate design choice (see Resolved Design Decisions #2) — Transit records and calculates but doesn't simulate. If an NPC's Actor crashes mid-journey, the journey stays at its last waypoint until resumed.
+
+2. **Discovery is per-entity, not per-account**: Connection discovery (`transit-discovery` store) is tracked per entity, meaning each character on an account discovers connections independently. There is no account-level discovery sharing. This is consistent with Transit being a game-primitive — account-level features would be an L4 concern.
 
 ---
 
@@ -880,3 +909,9 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 6. **Transit and Mapping relationship**: Complementary, not overlapping. Mapping is continuous spatial data ("where exactly am I"), Transit is discrete connectivity ("how do I get from town A to town B"). No integration needed beyond both referencing Location entities.
 
 7. **Cross-realm connections**: Fully supported at the platform level. Connections store `fromRealmId` and `toRealmId` (derived from their endpoint locations), with a convenience `crossRealm` flag. Route calculation merges per-realm graphs when origin and destination are in different realms. Games control cross-realm travel by policy: Arcadia's realms are intentionally isolated (no cross-realm connections are ever created), but other games on the platform may freely connect locations across realms. The platform provides the primitive; game design decides whether to use it.
+
+---
+
+## Work Tracking
+
+No active work tracking items. All AUDIT markers have been processed.

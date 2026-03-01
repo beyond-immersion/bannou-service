@@ -81,7 +81,7 @@ info:
     - topic: worldstate.clock-advanced
       event: WorldstateClockAdvancedEvent
       description: Published when a realm clock is advanced, for cross-node cache invalidation
-    - topic: realm-clock.initialized
+    - topic: worldstate.realm-clock.initialized
       event: WorldstateRealmClockInitializedEvent
       description: Published when a realm clock is initialized for the first time
 

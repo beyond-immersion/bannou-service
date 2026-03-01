@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Transit;
@@ -80,8 +81,8 @@ internal sealed class TransitConnectionGraphCache : ITransitConnectionGraphCache
             await _connectionGraphStore.SaveAsync(
                 key,
                 graph,
-                ttlSeconds: _configuration.ConnectionGraphCacheSeconds,
-                cancellationToken: ct);
+                new StateOptions { Ttl = _configuration.ConnectionGraphCacheSeconds },
+                ct);
 
             _logger.LogDebug("Cached connection graph for realm {RealmId} with TTL {TtlSeconds}s, {EntryCount} entries",
                 realmId, _configuration.ConnectionGraphCacheSeconds, graph.Count);

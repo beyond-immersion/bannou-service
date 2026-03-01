@@ -14,6 +14,7 @@ using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TransitClientEvents = BeyondImmersion.Bannou.Transit.ClientEvents;
 
 namespace BeyondImmersion.BannouService.Transit;
 
@@ -31,7 +32,8 @@ namespace BeyondImmersion.BannouService.Transit;
 /// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
 ///   <item>Hard dependencies (constructor injection): ILocationClient (L2), IWorldstateClient (L2),
-///         ICharacterClient (L2), ISpeciesClient (L2), IInventoryClient (L2), IResourceClient (L1)</item>
+///         ICharacterClient (L2), ISpeciesClient (L2), IInventoryClient (L2), IResourceClient (L1),
+///         IEntitySessionRegistry (L1, Connect-hosted)</item>
 ///   <item>Soft dependencies (DI collection): IEnumerable&lt;ITransitCostModifierProvider&gt; (L4, graceful degradation)</item>
 /// </list>
 /// </para>
@@ -94,6 +96,7 @@ public partial class TransitService : ITransitService
 
     // Client events
     private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
 
     // Logging, telemetry, configuration
     private readonly ILogger<TransitService> _logger;
@@ -116,6 +119,7 @@ public partial class TransitService : ITransitService
     /// <param name="routeCalculator">Route calculator for Dijkstra path finding.</param>
     /// <param name="costModifierProviders">DI collection of L4 cost enrichment providers (empty if none registered).</param>
     /// <param name="clientEventPublisher">Publisher for server-to-client WebSocket events.</param>
+    /// <param name="entitySessionRegistry">Entity-to-session registry for routing client events to entity-bound sessions (L1 hard).</param>
     /// <param name="logger">Structured logger.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     /// <param name="configuration">Typed service configuration.</param>
@@ -134,6 +138,7 @@ public partial class TransitService : ITransitService
         ITransitRouteCalculator routeCalculator,
         IEnumerable<ITransitCostModifierProvider> costModifierProviders,
         IClientEventPublisher clientEventPublisher,
+        IEntitySessionRegistry entitySessionRegistry,
         ILogger<TransitService> logger,
         ITelemetryProvider telemetryProvider,
         TransitServiceConfiguration configuration,
@@ -169,6 +174,7 @@ public partial class TransitService : ITransitService
 
         // Client events
         _clientEventPublisher = clientEventPublisher;
+        _entitySessionRegistry = entitySessionRegistry;
 
         // Logging, telemetry, configuration
         _logger = logger;
@@ -265,7 +271,7 @@ public partial class TransitService : ITransitService
         await PublishModeRegisteredEventAsync(model, cancellationToken);
 
         _logger.LogInformation("Registered transit mode {ModeCode}", body.Code);
-        return (StatusCodes.Created, new ModeResponse { Mode = MapModeToApi(model) });
+        return (StatusCodes.OK, new ModeResponse { Mode = MapModeToApi(model) });
     }
 
     /// <summary>
@@ -371,7 +377,7 @@ public partial class TransitService : ITransitService
         if (changedFields.Count > 0)
         {
             model.ModifiedAt = DateTimeOffset.UtcNow;
-            var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+            var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogDebug("Concurrent modification detected for transit mode {ModeCode}", body.Code);
@@ -426,7 +432,7 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = body.Reason;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during deprecation of transit mode {ModeCode}", body.Code);
@@ -473,7 +479,7 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = null;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during undeprecation of transit mode {ModeCode}", body.Code);
@@ -543,20 +549,23 @@ public partial class TransitService : ITransitService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Check no active journeys use this mode.
-        // NOTE: Active journeys live in _journeyStore (Redis, not queryable via LINQ).
-        // When journey endpoints are implemented (Phase 6), this check must be revisited
-        // to scan active Redis journeys. The archive store only holds completed/abandoned
-        // journeys, so this query currently returns 0 for in-progress journeys.
-        // Phase 6 should add a helper that scans both stores or maintains a mode->journey index.
+        // Check no active journeys use this mode in the MySQL archive store
         var journeysUsingMode = await _journeyArchiveStore.QueryAsync(
             j => j.PrimaryModeCode == body.Code && (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit || j.Status == JourneyStatus.AtWaypoint || j.Status == JourneyStatus.Interrupted),
             cancellationToken);
 
         if (journeysUsingMode.Count > 0)
         {
-            _logger.LogDebug("Cannot delete transit mode {ModeCode}: {Count} active journeys use this mode",
+            _logger.LogDebug("Cannot delete transit mode {ModeCode}: {Count} active archived journeys use this mode",
                 body.Code, journeysUsingMode.Count);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Also scan Redis active journeys via the journey index
+        var modeConflictFound = await ScanRedisJourneysForModeConflictAsync(body.Code, cancellationToken);
+        if (modeConflictFound)
+        {
+            _logger.LogDebug("Cannot delete transit mode {ModeCode}: active Redis journeys use this mode", body.Code);
             return (StatusCodes.BadRequest, null);
         }
 
@@ -1257,7 +1266,7 @@ public partial class TransitService : ITransitService
         _logger.LogInformation("Created connection {ConnectionId} from {FromLocationId} to {ToLocationId} in realm {FromRealmId}",
             connectionId, body.FromLocationId, body.ToLocationId, fromRealmId);
 
-        return (StatusCodes.Created, new ConnectionResponse { Connection = MapConnectionToApi(model) });
+        return (StatusCodes.OK, new ConnectionResponse { Connection = MapConnectionToApi(model) });
     }
 
     /// <summary>
@@ -1375,7 +1384,7 @@ public partial class TransitService : ITransitService
         // Filter out seasonal_closed unless explicitly included
         if (!body.IncludeSeasonalClosed)
         {
-            filtered = filtered.Where(c => c.Status != ConnectionStatus.Seasonal_closed);
+            filtered = filtered.Where(c => c.Status != ConnectionStatus.SeasonalClosed);
         }
 
         // Filter by tags (all specified tags must be present)
@@ -1433,7 +1442,7 @@ public partial class TransitService : ITransitService
         if (changedFields.Count > 0)
         {
             model.ModifiedAt = DateTimeOffset.UtcNow;
-            var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag, cancellationToken);
+            var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogDebug("Concurrent modification detected for connection {ConnectionId}", body.ConnectionId);
@@ -1522,7 +1531,7 @@ public partial class TransitService : ITransitService
         model.StatusChangedAt = DateTimeOffset.UtcNow;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag, cancellationToken);
+        var savedEtag = await _connectionStore.TrySaveAsync(key, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
             _logger.LogDebug("Concurrent modification detected during status update of connection {ConnectionId}",
@@ -1539,7 +1548,7 @@ public partial class TransitService : ITransitService
         // Publish transit-connection.status-changed event
         await PublishConnectionStatusChangedEventAsync(model, previousStatus, body.ForceUpdate, cancellationToken);
 
-        // Client event via IClientEventPublisher: TransitConnectionStatusChanged
+        // Client event via IEntitySessionRegistry: TransitConnectionStatusChanged to realm sessions
         await PublishConnectionStatusChangedClientEventAsync(model, previousStatus, body.Reason, cancellationToken);
 
         _logger.LogInformation("Updated connection {ConnectionId} status from {PreviousStatus} to {NewStatus}: {Reason}",
@@ -1570,12 +1579,7 @@ public partial class TransitService : ITransitService
             return (StatusCodes.NotFound, null);
         }
 
-        // Check no active journeys reference this connection
-        // NOTE: Active journeys live in _journeyStore (Redis, not queryable via LINQ).
-        // When journey endpoints are implemented (Phase 6), this check must be revisited
-        // to scan active Redis journeys. The archive store only holds completed/abandoned
-        // journeys, so this query currently returns 0 for in-progress journeys.
-        // Phase 6 should add a helper that scans both stores or maintains a connection->journey index.
+        // Check no active journeys reference this connection in the MySQL archive store
         var activeJourneys = await _journeyArchiveStore.QueryAsync(
             j => j.Legs.Any(l => l.ConnectionId == body.ConnectionId) &&
                  (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit ||
@@ -1584,8 +1588,16 @@ public partial class TransitService : ITransitService
 
         if (activeJourneys.Count > 0)
         {
-            _logger.LogDebug("Cannot delete connection {ConnectionId}: {Count} active journeys reference this connection",
+            _logger.LogDebug("Cannot delete connection {ConnectionId}: {Count} active archived journeys reference this connection",
                 body.ConnectionId, activeJourneys.Count);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Also scan Redis active journeys via the journey index
+        var connectionConflictFound = await ScanRedisJourneysForConnectionConflictAsync(body.ConnectionId, cancellationToken);
+        if (connectionConflictFound)
+        {
+            _logger.LogDebug("Cannot delete connection {ConnectionId}: active Redis journeys reference this connection", body.ConnectionId);
             return (StatusCodes.BadRequest, null);
         }
 
@@ -1767,7 +1779,7 @@ public partial class TransitService : ITransitService
                     currentModel.CrossRealm = crossRealm;
                     currentModel.ModifiedAt = DateTimeOffset.UtcNow;
 
-                    var savedEtag = await _connectionStore.TrySaveAsync(key, currentModel, etag, cancellationToken);
+                    var savedEtag = await _connectionStore.TrySaveAsync(key, currentModel, etag ?? string.Empty, cancellationToken);
                     if (savedEtag != null)
                     {
                         updated++;
@@ -2004,6 +2016,21 @@ public partial class TransitService : ITransitService
 
         var bestRoute = routeResults[0];
 
+        // Pre-resolve distinct leg modes so multi-modal journeys use correct speed per leg
+        var legModeModels = new Dictionary<string, TransitModeModel> { { body.PrimaryModeCode, modeModel } };
+        foreach (var lm in bestRoute.LegModes)
+        {
+            if (!legModeModels.ContainsKey(lm))
+            {
+                var lmKey = BuildModeKey(lm);
+                var lmModel = await _modeStore.GetAsync(lmKey, cancellationToken: cancellationToken);
+                if (lmModel != null)
+                {
+                    legModeModels[lm] = lmModel;
+                }
+            }
+        }
+
         // Build journey legs from route result
         var legs = new List<TransitJourneyLegModel>();
         for (var i = 0; i < bestRoute.Connections.Count; i++)
@@ -2014,13 +2041,13 @@ public partial class TransitService : ITransitService
 
             // Determine leg mode: use per-leg mode from multi-modal route, or primary mode
             var legMode = i < bestRoute.LegModes.Count ? bestRoute.LegModes[i] : body.PrimaryModeCode;
+            var legModeModel = legModeModels.GetValueOrDefault(legMode, modeModel);
 
             // Compute leg duration using effective speed and terrain modifiers
             var legDuration = ComputeLegDurationGameHours(
                 conn?.DistanceKm ?? 0m,
                 conn?.TerrainType ?? string.Empty,
-                legMode,
-                modeModel,
+                legModeModel,
                 body.CargoWeightKg);
 
             legs.Add(new TransitJourneyLegModel
@@ -2084,7 +2111,7 @@ public partial class TransitService : ITransitService
         _logger.LogInformation("Created journey {JourneyId} for entity {EntityId} from {OriginLocationId} to {DestinationLocationId} with {LegCount} legs, ETA {ETA} game-hours",
             journeyId, body.EntityId, body.OriginLocationId, body.DestinationLocationId, legs.Count, totalGameHours);
 
-        return (StatusCodes.Created, new JourneyResponse { Journey = MapJourneyToApi(journey) });
+        return (StatusCodes.OK, new JourneyResponse { Journey = MapJourneyToApi(journey) });
     }
 
     /// <summary>
@@ -2643,7 +2670,7 @@ public partial class TransitService : ITransitService
             LegIndex = journey.CurrentLegIndex,
             GameTime = body.GameTime,
             Reason = body.Reason,
-            DurationGameHours = 0, // Duration unknown at interruption time; resolved on resume
+            DurationGameHours = null, // Duration unknown at interruption time; resolved on resume
             Resolved = false
         });
 
@@ -2979,7 +3006,8 @@ public partial class TransitService : ITransitService
                 LegIndex = i.LegIndex,
                 GameTime = i.GameTime,
                 Reason = i.Reason,
-                DurationGameHours = i.DurationGameHours,
+                // API schema uses non-nullable decimal (0 for unresolved); internal model uses null for unknown duration
+                DurationGameHours = i.DurationGameHours ?? 0,
                 Resolved = i.Resolved
             }).ToList(),
             PartySize = model.PartySize,
@@ -3029,7 +3057,8 @@ public partial class TransitService : ITransitService
                 LegIndex = i.LegIndex,
                 GameTime = i.GameTime,
                 Reason = i.Reason,
-                DurationGameHours = i.DurationGameHours,
+                // API schema uses non-nullable decimal (0 for unresolved); internal model uses null for unknown duration
+                DurationGameHours = i.DurationGameHours ?? 0,
                 Resolved = i.Resolved
             }).ToList(),
             PartySize = model.PartySize,
@@ -3081,18 +3110,15 @@ public partial class TransitService : ITransitService
     private decimal ComputeLegDurationGameHours(
         decimal distanceKm,
         string terrainType,
-        string legModeCode,
-        TransitModeModel primaryMode,
+        TransitModeModel legMode,
         decimal cargoWeightKg)
     {
-        // Use the primary mode for speed calculations (leg mode may differ for multi-modal)
-        // Look up mode if it differs from primary
-        var effectiveSpeed = ComputeEffectiveSpeed(primaryMode, cargoWeightKg);
+        var effectiveSpeed = ComputeEffectiveSpeed(legMode, cargoWeightKg);
 
         // Apply terrain speed modifier
-        if (primaryMode.TerrainSpeedModifiers != null && !string.IsNullOrEmpty(terrainType))
+        if (legMode.TerrainSpeedModifiers != null && !string.IsNullOrEmpty(terrainType))
         {
-            var terrainMod = primaryMode.TerrainSpeedModifiers
+            var terrainMod = legMode.TerrainSpeedModifiers
                 .FirstOrDefault(t => t.TerrainType == terrainType);
             if (terrainMod != null)
             {
@@ -3231,7 +3257,7 @@ public partial class TransitService : ITransitService
                 return;
             }
 
-            var result = await _journeyIndexStore.TrySaveAsync(JOURNEY_INDEX_KEY, updatedIndex, etag, cancellationToken);
+            var result = await _journeyIndexStore.TrySaveAsync(JOURNEY_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 return;
@@ -3258,11 +3284,6 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyDepartedEventAsync");
 
-        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
-        // (event consumers should treat Guid.Empty as "unknown realm")
-        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
-        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
-
         var eventModel = new TransitJourneyDepartedEvent
         {
             EventId = Guid.NewGuid(),
@@ -3275,8 +3296,8 @@ public partial class TransitService : ITransitService
             PrimaryModeCode = journey.PrimaryModeCode,
             EstimatedArrivalGameTime = journey.EstimatedArrivalGameTime,
             PartySize = journey.PartySize,
-            OriginRealmId = resolvedOriginRealmId,
-            DestinationRealmId = resolvedDestRealmId,
+            OriginRealmId = originRealmId,
+            DestinationRealmId = destinationRealmId,
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
@@ -3318,7 +3339,7 @@ public partial class TransitService : ITransitService
             LegIndex = completedLegIndex,
             RemainingLegs = journey.Legs.Count - journey.CurrentLegIndex,
             ConnectionId = connectionId,
-            RealmId = realmId ?? Guid.Empty,
+            RealmId = realmId,
             CrossedRealmBoundary = crossedRealmBoundary
         };
 
@@ -3349,10 +3370,6 @@ public partial class TransitService : ITransitService
             ? journey.ActualArrivalGameTime.Value - journey.ActualDepartureGameTime.Value
             : journey.Legs.Sum(l => l.EstimatedDurationGameHours);
 
-        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
-        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
-        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
-
         var eventModel = new TransitJourneyArrivedEvent
         {
             EventId = Guid.NewGuid(),
@@ -3367,8 +3384,8 @@ public partial class TransitService : ITransitService
             TotalDistanceKm = totalDistanceKm,
             InterruptionCount = journey.Interruptions.Count,
             LegsCompleted = journey.Legs.Count(l => l.Status == JourneyLegStatus.Completed),
-            OriginRealmId = resolvedOriginRealmId,
-            DestinationRealmId = resolvedDestRealmId,
+            OriginRealmId = originRealmId,
+            DestinationRealmId = destinationRealmId,
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
@@ -3402,8 +3419,8 @@ public partial class TransitService : ITransitService
             EntityType = journey.EntityType,
             CurrentLocationId = journey.CurrentLocationId,
             CurrentLegIndex = journey.CurrentLegIndex,
-            Reason = journey.StatusReason ?? "unknown",
-            RealmId = realmId ?? Guid.Empty
+            Reason = journey.StatusReason,
+            RealmId = realmId
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.interrupted", eventModel, cancellationToken: cancellationToken);
@@ -3443,7 +3460,7 @@ public partial class TransitService : ITransitService
             CurrentLegIndex = journey.CurrentLegIndex,
             RemainingLegs = journey.Legs.Count - journey.CurrentLegIndex,
             ModeCode = currentLegModeCode,
-            RealmId = realmId ?? Guid.Empty
+            RealmId = realmId
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.resumed", eventModel, cancellationToken: cancellationToken);
@@ -3469,11 +3486,6 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyAbandonedEventAsync");
 
-        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
-        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
-        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
-        var resolvedAbandonedAtRealmId = abandonedAtRealmId ?? Guid.Empty;
-
         var eventModel = new TransitJourneyAbandonedEvent
         {
             EventId = Guid.NewGuid(),
@@ -3484,12 +3496,12 @@ public partial class TransitService : ITransitService
             OriginLocationId = journey.OriginLocationId,
             DestinationLocationId = journey.DestinationLocationId,
             AbandonedAtLocationId = journey.CurrentLocationId,
-            Reason = journey.StatusReason ?? "unknown",
+            Reason = journey.StatusReason,
             CompletedLegs = journey.Legs.Count(l => l.Status == JourneyLegStatus.Completed),
             TotalLegs = journey.Legs.Count,
-            OriginRealmId = resolvedOriginRealmId,
-            DestinationRealmId = resolvedDestRealmId,
-            AbandonedAtRealmId = resolvedAbandonedAtRealmId,
+            OriginRealmId = originRealmId,
+            DestinationRealmId = destinationRealmId,
+            AbandonedAtRealmId = abandonedAtRealmId,
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
@@ -3505,27 +3517,42 @@ public partial class TransitService : ITransitService
     }
 
     /// <summary>
-    /// Publishes a TransitJourneyUpdated client event to the entity's WebSocket session.
+    /// Publishes a TransitJourneyUpdated client event to the traveling entity's WebSocket session(s)
+    /// via IEntitySessionRegistry.
     /// </summary>
     /// <remarks>
-    /// Client event publishing is deferred until IEntitySessionRegistry is integrated.
-    /// The service bus events provide guaranteed delivery to server-side consumers regardless.
+    /// Pushes journey state changes (departure, waypoint, arrival, interruption, abandonment)
+    /// to the entity's bound sessions for real-time UI updates.
     /// </remarks>
+    /// <param name="journey">The journey model after the state change.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     private async Task PublishJourneyUpdatedClientEventAsync(
         TransitJourneyModel journey,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyUpdatedClientEventAsync");
 
-        // TODO: Inject IEntitySessionRegistry in constructor to enable entity-based client event routing.
-        // Journey updates should push to the traveling entity's session.
-        // For now, the transit-journey.* service bus events provide guaranteed delivery
-        // to server-side consumers. Client-side delivery will be implemented when IEntitySessionRegistry
-        // is integrated (requires adding to constructor in future phase).
-        _logger.LogDebug("Client event publishing for journey update deferred -- IEntitySessionRegistry not yet integrated. Journey {JourneyId}: {Status}",
-            journey.Id, journey.Status);
+        var remainingLegs = journey.Legs.Count - journey.CurrentLegIndex;
 
-        await Task.CompletedTask;
+        var clientEvent = new TransitClientEvents.TransitJourneyUpdatedEvent
+        {
+            JourneyId = journey.Id,
+            EntityId = journey.EntityId,
+            Status = journey.Status,
+            CurrentLocationId = journey.CurrentLocationId,
+            DestinationLocationId = journey.DestinationLocationId,
+            EstimatedArrivalGameTime = journey.EstimatedArrivalGameTime,
+            CurrentLegIndex = journey.CurrentLegIndex,
+            RemainingLegs = remainingLegs,
+            PrimaryModeCode = journey.PrimaryModeCode
+        };
+
+        var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            journey.EntityType, journey.EntityId, clientEvent, cancellationToken);
+
+        _logger.LogDebug(
+            "Published transit.journey_updated to {SessionCount} sessions for entity {EntityId}, journey {JourneyId}: {Status}",
+            count, journey.EntityId, journey.Id, journey.Status);
     }
 
     #endregion
@@ -3748,6 +3775,12 @@ public partial class TransitService : ITransitService
 
         // Publish transit-discovery.revealed service bus event
         await PublishDiscoveryRevealedEventAsync(discoveryModel, connection, cancellationToken);
+
+        // Publish client event to the discovering entity's session(s).
+        // RevealDiscoveryRequest does not carry entityType; default to "character"
+        // (the primary discovery use case). Auto-reveal from journeys also routes
+        // through this method via TryAutoRevealDiscoveryAsync.
+        await PublishDiscoveryRevealedClientEventAsync(discoveryModel, connection, "character", cancellationToken);
 
         _logger.LogInformation("Entity {EntityId} discovered connection {ConnectionId} via {Source}",
             body.EntityId, body.ConnectionId, body.Source);
@@ -4337,10 +4370,7 @@ public partial class TransitService : ITransitService
             ToLocationId = model.ToLocationId,
             PreviousStatus = previousStatus,
             NewStatus = model.Status,
-            // StatusReason is nullable (null when status is "open"), but the event schema requires
-            // a non-null string for Reason. Empty string represents "no specific reason" for the transition.
-            // Coalesce satisfies the required field contract (will execute when StatusReason is legitimately null).
-            Reason = model.StatusReason ?? string.Empty,
+            Reason = model.StatusReason,
             ForceUpdated = forceUpdated,
             FromRealmId = model.FromRealmId,
             ToRealmId = model.ToRealmId,
@@ -4360,15 +4390,12 @@ public partial class TransitService : ITransitService
     }
 
     /// <summary>
-    /// Publishes a client event for connection status changes to WebSocket sessions
+    /// Publishes a TransitConnectionStatusChanged client event to WebSocket sessions
     /// in the affected realm(s) via IEntitySessionRegistry.
     /// </summary>
     /// <remarks>
-    /// Uses IEntitySessionRegistry to route client events to all sessions watching
-    /// the affected realm(s). Cross-realm connections publish to both realms.
-    /// If IEntitySessionRegistry is not available (not yet injected), this is a no-op
-    /// with a debug log -- the service bus event provides guaranteed delivery to server-side
-    /// consumers regardless.
+    /// Routes client events to all sessions registered for the affected realm entity.
+    /// Cross-realm connections publish to both the origin and destination realms.
     /// </remarks>
     /// <param name="model">The connection after status change.</param>
     /// <param name="previousStatus">The status before the change.</param>
@@ -4382,15 +4409,34 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishConnectionStatusChangedClientEventAsync");
 
-        // TODO: Inject IEntitySessionRegistry in constructor to enable realm-based client event routing.
-        // Connection status changes should broadcast to all sessions watching the affected realm(s).
-        // For now, the transit-connection.status-changed service bus event provides guaranteed delivery
-        // to server-side consumers. Client-side delivery will be implemented when IEntitySessionRegistry
-        // is integrated (requires adding to constructor in future phase).
-        _logger.LogDebug("Client event publishing for connection status change deferred -- IEntitySessionRegistry not yet integrated. Connection {ConnectionId}: {PreviousStatus} -> {NewStatus}",
-            model.Id, previousStatus, model.Status);
+        var clientEvent = new TransitClientEvents.TransitConnectionStatusChangedEvent
+        {
+            ConnectionId = model.Id,
+            FromLocationId = model.FromLocationId,
+            ToLocationId = model.ToLocationId,
+            PreviousStatus = previousStatus,
+            NewStatus = model.Status,
+            Reason = reason
+        };
 
-        await Task.CompletedTask;
+        // Publish to all sessions watching the origin realm
+        var fromCount = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "realm", model.FromRealmId, clientEvent, cancellationToken);
+
+        _logger.LogDebug(
+            "Published transit.connection_status_changed to {SessionCount} sessions for realm {RealmId}, connection {ConnectionId}: {PreviousStatus} -> {NewStatus}",
+            fromCount, model.FromRealmId, model.Id, previousStatus, model.Status);
+
+        // Cross-realm connections: also publish to the destination realm
+        if (model.CrossRealm)
+        {
+            var toCount = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                "realm", model.ToRealmId, clientEvent, cancellationToken);
+
+            _logger.LogDebug(
+                "Published transit.connection_status_changed to {SessionCount} sessions for destination realm {RealmId}, connection {ConnectionId}",
+                toCount, model.ToRealmId, model.Id);
+        }
     }
 
     #endregion
@@ -4439,11 +4485,44 @@ public partial class TransitService : ITransitService
         }
     }
 
-    // NOTE: Client event publishing for discovery reveals is deferred.
-    // TODO: When IEntitySessionRegistry is integrated, add PublishDiscoveryRevealedClientEventAsync
-    // to push TransitDiscoveryRevealed client events to the discovering entity's session.
-    // The transit-discovery.revealed service bus event provides guaranteed delivery to server-side
-    // consumers regardless.
+    /// <summary>
+    /// Publishes a TransitDiscoveryRevealed client event to the discovering entity's WebSocket
+    /// session(s) via IEntitySessionRegistry.
+    /// </summary>
+    /// <remarks>
+    /// Discovery reveals are entity-scoped: the client event is pushed to all sessions
+    /// registered for the discovering entity. The entity type is determined from the journey
+    /// context when auto-revealed during travel, or defaults to "character" for direct
+    /// API reveals (the primary discovery use case).
+    /// </remarks>
+    /// <param name="discovery">The discovery record containing entity and connection IDs.</param>
+    /// <param name="connection">The connection that was discovered (for location data and name).</param>
+    /// <param name="entityType">The entity type of the discovering entity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task PublishDiscoveryRevealedClientEventAsync(
+        TransitDiscoveryModel discovery,
+        TransitConnectionModel connection,
+        string entityType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishDiscoveryRevealedClientEventAsync");
+
+        var clientEvent = new TransitClientEvents.TransitDiscoveryRevealedEvent
+        {
+            ConnectionId = discovery.ConnectionId,
+            FromLocationId = connection.FromLocationId,
+            ToLocationId = connection.ToLocationId,
+            Source = discovery.Source,
+            ConnectionName = connection.Name
+        };
+
+        var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            entityType, discovery.EntityId, clientEvent, cancellationToken);
+
+        _logger.LogDebug(
+            "Published transit.discovery_revealed to {SessionCount} sessions for entity {EntityId}, connection {ConnectionId}",
+            count, discovery.EntityId, discovery.ConnectionId);
+    }
 
     #endregion
 
@@ -4459,12 +4538,6 @@ public partial class TransitService : ITransitService
     /// <b>FOUNDATION TENETS (Resource-Managed Cleanup):</b> Transit does NOT subscribe to
     /// <c>location.deleted</c> events for cleanup. This callback is registered via lib-resource's
     /// cleanup coordination pattern and invoked by the Resource service during deletion.
-    /// </para>
-    /// <para>
-    /// <b>Active journey limitation:</b> Active journeys live in Redis (<c>_journeyStore</c>),
-    /// which is not queryable by location ID. The archive store (MySQL) is queried for journeys
-    /// with matching origin or destination. Active Redis journeys referencing the deleted location
-    /// will naturally fail on their next advance attempt when the location no longer exists.
     /// </para>
     /// </remarks>
     /// <param name="body">Request containing the deleted location ID.</param>
@@ -4532,7 +4605,7 @@ public partial class TransitService : ITransitService
             freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
             freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedEtag = await _connectionStore.TrySaveAsync(connKey, freshConnection, connEtag, cancellationToken);
+            var savedEtag = await _connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
             if (savedEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for connection {ConnectionId} during location cleanup, skipping", connection.Id);
@@ -4542,7 +4615,7 @@ public partial class TransitService : ITransitService
             // Publish service bus event for connection status change
             await PublishConnectionStatusChangedEventAsync(freshConnection, previousStatus, forceUpdated: true, cancellationToken);
 
-            // Publish client event for connection status change (deferred until IEntitySessionRegistry is integrated)
+            // Publish client event for connection status change to affected realm sessions
             await PublishConnectionStatusChangedClientEventAsync(freshConnection, previousStatus, "location_deleted", cancellationToken);
 
             connectionsClosedCount++;
@@ -4560,8 +4633,6 @@ public partial class TransitService : ITransitService
         // Step 4: Interrupt active journeys in archive store that reference the deleted location
         // as origin or destination. Location deletion is external disruption (potentially resumable
         // via rerouting), so use Interrupted rather than Abandoned per design spec.
-        // Active journeys in Redis are not queryable by location; they will fail on next advance
-        // when the location no longer exists.
         var affectedJourneys = await _journeyArchiveStore.QueryAsync(
             j => (j.OriginLocationId == deletedLocationId || j.DestinationLocationId == deletedLocationId) &&
                  (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned && j.Status != JourneyStatus.Interrupted),
@@ -4589,7 +4660,7 @@ public partial class TransitService : ITransitService
             freshJourney.StatusReason = "location_deleted";
             freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag, cancellationToken);
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken);
             if (savedJourneyEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during location cleanup, skipping", archivedJourney.Id);
@@ -4613,7 +4684,14 @@ public partial class TransitService : ITransitService
             journeysInterruptedCount++;
         }
 
-        _logger.LogInformation("Cleaned up transit data for deleted location {LocationId}: {ConnectionsClosed} connections closed, {JourneysInterrupted} archived journeys interrupted",
+        // Step 5: Scan Redis active journeys for location references via connection lookup.
+        // Active journeys reference connections, not locations directly. We check each active
+        // journey's legs to see if any leg's connection references the deleted location.
+        var redisLocationInterrupted = await ScanRedisJourneysForLocationCleanupAsync(
+            deletedLocationId, affectedConnections, cancellationToken);
+        journeysInterruptedCount += redisLocationInterrupted;
+
+        _logger.LogInformation("Cleaned up transit data for deleted location {LocationId}: {ConnectionsClosed} connections closed, {JourneysInterrupted} journeys interrupted (archive + Redis)",
             body.LocationId, connectionsClosedCount, journeysInterruptedCount);
 
         return StatusCodes.OK;
@@ -4629,11 +4707,6 @@ public partial class TransitService : ITransitService
     /// <b>FOUNDATION TENETS (Resource-Managed Cleanup):</b> Transit does NOT subscribe to
     /// <c>character.deleted</c> events for cleanup. This callback is registered via lib-resource's
     /// cleanup coordination pattern and invoked by the Resource service during deletion.
-    /// </para>
-    /// <para>
-    /// <b>Active journey limitation:</b> Active journeys in Redis are not queryable by entity.
-    /// The archive store (MySQL) is queried for entity journeys. Active Redis journeys for the
-    /// deleted entity will remain until the archival worker moves them or they time out.
     /// </para>
     /// </remarks>
     /// <param name="body">Request containing the deleted character ID.</param>
@@ -4674,8 +4747,6 @@ public partial class TransitService : ITransitService
 
         // Step 3: Abandon active journeys in archive store for this entity.
         // Character deletion permanently terminates journeys (Abandoned, not Interrupted).
-        // Active journeys in Redis are not queryable by entity; they will remain
-        // until the archival worker processes them.
         var entityJourneys = await _journeyArchiveStore.QueryAsync(
             j => j.EntityId == deletedCharacterId &&
                  (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
@@ -4703,7 +4774,7 @@ public partial class TransitService : ITransitService
             freshJourney.StatusReason = "character_deleted";
             freshJourney.ModifiedAt = DateTimeOffset.UtcNow;
 
-            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag, cancellationToken);
+            var savedJourneyEtag = await _journeyArchiveStore.TrySaveAsync(archiveKey, freshJourney, journeyEtag ?? string.Empty, cancellationToken);
             if (savedJourneyEtag == null)
             {
                 _logger.LogWarning("Concurrent modification detected for archived journey {JourneyId} during character cleanup, skipping", archivedJourney.Id);
@@ -4734,10 +4805,217 @@ public partial class TransitService : ITransitService
             journeysAbandonedCount++;
         }
 
-        _logger.LogInformation("Cleaned up transit data for deleted character {CharacterId}: {DiscoveriesDeleted} discoveries deleted, {JourneysAbandoned} archived journeys abandoned",
+        // Step 4: Scan Redis active journeys for entity match and abandon them.
+        // Active journeys in Redis store entity ID and type directly on the journey model.
+        var redisCharacterAbandoned = await ScanRedisJourneysForCharacterCleanupAsync(
+            deletedCharacterId, "character", cancellationToken);
+        journeysAbandonedCount += redisCharacterAbandoned;
+
+        _logger.LogInformation("Cleaned up transit data for deleted character {CharacterId}: {DiscoveriesDeleted} discoveries deleted, {JourneysAbandoned} journeys abandoned (archive + Redis)",
             body.CharacterId, discoveriesDeletedCount, journeysAbandonedCount);
 
         return StatusCodes.OK;
+    }
+
+    #endregion
+
+    #region Redis Journey Scan Helpers
+
+    /// <summary>
+    /// Scans all active Redis journeys and checks if any use the given mode code.
+    /// Returns true if a conflict is found (an active journey uses the mode).
+    /// </summary>
+    /// <param name="modeCode">Mode code to check for active journey usage.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if an active journey references the mode; false otherwise.</returns>
+    private async Task<bool> ScanRedisJourneysForModeConflictAsync(string modeCode, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ScanRedisJourneysForModeConflictAsync");
+
+        var journeyIndex = await _journeyIndexStore.GetAsync(JOURNEY_INDEX_KEY, cancellationToken);
+        if (journeyIndex == null)
+        {
+            return false;
+        }
+
+        foreach (var journeyId in journeyIndex)
+        {
+            var journey = await _journeyStore.GetAsync(BuildJourneyKey(journeyId), cancellationToken: cancellationToken);
+            if (journey == null) continue;
+            if (journey.Status == JourneyStatus.Arrived || journey.Status == JourneyStatus.Abandoned) continue;
+
+            if (journey.PrimaryModeCode == modeCode)
+            {
+                _logger.LogDebug("Found active Redis journey {JourneyId} using mode {ModeCode}", journeyId, modeCode);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Scans all active Redis journeys and checks if any reference the given connection ID
+    /// in their legs. Returns true if a conflict is found.
+    /// </summary>
+    /// <param name="connectionId">Connection ID to check for active journey usage.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if an active journey references the connection; false otherwise.</returns>
+    private async Task<bool> ScanRedisJourneysForConnectionConflictAsync(Guid connectionId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ScanRedisJourneysForConnectionConflictAsync");
+
+        var journeyIndex = await _journeyIndexStore.GetAsync(JOURNEY_INDEX_KEY, cancellationToken);
+        if (journeyIndex == null)
+        {
+            return false;
+        }
+
+        foreach (var journeyId in journeyIndex)
+        {
+            var journey = await _journeyStore.GetAsync(BuildJourneyKey(journeyId), cancellationToken: cancellationToken);
+            if (journey == null) continue;
+            if (journey.Status == JourneyStatus.Arrived || journey.Status == JourneyStatus.Abandoned) continue;
+
+            if (journey.Legs.Any(l => l.ConnectionId == connectionId))
+            {
+                _logger.LogDebug("Found active Redis journey {JourneyId} referencing connection {ConnectionId}", journeyId, connectionId);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Scans Redis active journeys and interrupts any whose legs reference connections
+    /// that touch the deleted location. Uses the already-queried affected connections list
+    /// to build a set of connection IDs referencing the location.
+    /// </summary>
+    /// <param name="deletedLocationId">The deleted location ID.</param>
+    /// <param name="affectedConnections">Connections already identified as referencing the deleted location.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of Redis journeys interrupted.</returns>
+    private async Task<int> ScanRedisJourneysForLocationCleanupAsync(
+        Guid deletedLocationId,
+        IReadOnlyList<TransitConnectionModel> affectedConnections,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ScanRedisJourneysForLocationCleanupAsync");
+
+        var journeyIndex = await _journeyIndexStore.GetAsync(JOURNEY_INDEX_KEY, cancellationToken);
+        if (journeyIndex == null)
+        {
+            return 0;
+        }
+
+        // Build a set of connection IDs that reference the deleted location for efficient lookup
+        var affectedConnectionIds = new HashSet<Guid>(affectedConnections.Select(c => c.Id));
+
+        var interruptedCount = 0;
+
+        foreach (var journeyId in journeyIndex)
+        {
+            var journey = await _journeyStore.GetAsync(BuildJourneyKey(journeyId), cancellationToken: cancellationToken);
+            if (journey == null) continue;
+            if (journey.Status == JourneyStatus.Arrived || journey.Status == JourneyStatus.Abandoned || journey.Status == JourneyStatus.Interrupted) continue;
+
+            // Check if any leg references a connection touching the deleted location,
+            // or if the journey's origin/destination is the deleted location
+            var referencesLocation = journey.OriginLocationId == deletedLocationId ||
+                                     journey.DestinationLocationId == deletedLocationId ||
+                                     journey.Legs.Any(l => affectedConnectionIds.Contains(l.ConnectionId));
+
+            if (!referencesLocation) continue;
+
+            // Interrupt the journey in Redis
+            journey.Status = JourneyStatus.Interrupted;
+            journey.StatusReason = "location_deleted";
+            journey.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var key = BuildJourneyKey(journeyId);
+            await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
+
+            // Publish transit-journey.interrupted event per FOUNDATION TENETS
+            await PublishJourneyInterruptedEventAsync(journey, journey.RealmId, cancellationToken);
+
+            // Publish client event
+            await PublishJourneyUpdatedClientEventAsync(journey, cancellationToken);
+
+            interruptedCount++;
+
+            _logger.LogDebug("Interrupted active Redis journey {JourneyId} due to location {LocationId} deletion",
+                journeyId, deletedLocationId);
+        }
+
+        if (interruptedCount > 0)
+        {
+            _logger.LogInformation("Interrupted {Count} active Redis journeys during location {LocationId} cleanup",
+                interruptedCount, deletedLocationId);
+        }
+
+        return interruptedCount;
+    }
+
+    /// <summary>
+    /// Scans Redis active journeys and abandons any belonging to the deleted entity.
+    /// Character deletion permanently terminates journeys (Abandoned, not Interrupted).
+    /// </summary>
+    /// <param name="entityId">The deleted entity ID.</param>
+    /// <param name="entityType">The entity type (e.g., "character").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Number of Redis journeys abandoned.</returns>
+    private async Task<int> ScanRedisJourneysForCharacterCleanupAsync(
+        Guid entityId,
+        string entityType,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ScanRedisJourneysForCharacterCleanupAsync");
+
+        var journeyIndex = await _journeyIndexStore.GetAsync(JOURNEY_INDEX_KEY, cancellationToken);
+        if (journeyIndex == null)
+        {
+            return 0;
+        }
+
+        var abandonedCount = 0;
+
+        foreach (var journeyId in journeyIndex)
+        {
+            var journey = await _journeyStore.GetAsync(BuildJourneyKey(journeyId), cancellationToken: cancellationToken);
+            if (journey == null) continue;
+            if (journey.Status == JourneyStatus.Arrived || journey.Status == JourneyStatus.Abandoned) continue;
+
+            if (journey.EntityId != entityId || journey.EntityType != entityType) continue;
+
+            // Abandon the journey in Redis
+            journey.Status = JourneyStatus.Abandoned;
+            journey.StatusReason = "character_deleted";
+            journey.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var key = BuildJourneyKey(journeyId);
+            await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
+
+            // Publish transit-journey.abandoned event per FOUNDATION TENETS
+            await PublishJourneyAbandonedEventAsync(
+                journey, journey.RealmId, journey.RealmId, journey.RealmId, cancellationToken);
+
+            // Publish client event
+            await PublishJourneyUpdatedClientEventAsync(journey, cancellationToken);
+
+            abandonedCount++;
+
+            _logger.LogDebug("Abandoned active Redis journey {JourneyId} due to character {EntityId} deletion",
+                journeyId, entityId);
+        }
+
+        if (abandonedCount > 0)
+        {
+            _logger.LogInformation("Abandoned {Count} active Redis journeys during character {EntityId} cleanup",
+                abandonedCount, entityId);
+        }
+
+        return abandonedCount;
     }
 
     #endregion

@@ -364,8 +364,8 @@ internal class TransitInterruptionModel
     /// <summary>Reason for the interruption (e.g., "bandit_attack", "storm", "breakdown").</summary>
     public string Reason { get; set; } = string.Empty;
 
-    /// <summary>Duration of the interruption in game-hours (0 = resolved immediately).</summary>
-    public decimal DurationGameHours { get; set; }
+    /// <summary>Duration of the interruption in game-hours. Null if the interruption is unresolved and duration is still accumulating. Zero means resolved immediately.</summary>
+    public decimal? DurationGameHours { get; set; }
 
     /// <summary>Whether this interruption has been resolved.</summary>
     public bool Resolved { get; set; }

@@ -112,12 +112,10 @@ public partial class TransitConnectionStatusChangedEvent
     public ConnectionStatus NewStatus { get; set; } = default!;
 
     /// <summary>
-    /// Reason for the status change
+    /// Reason for the status change, or null if no specific reason applies
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
     /// <summary>
     /// Whether this was a forceUpdate override
@@ -233,20 +231,16 @@ public partial class TransitJourneyDepartedEvent
     public int PartySize { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the origin location
+    /// Realm of the origin location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OriginRealmId { get; set; } = default!;
+    public System.Guid? OriginRealmId { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the destination location
+    /// Realm of the destination location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("destinationRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DestinationRealmId { get; set; } = default!;
+    public System.Guid? DestinationRealmId { get; set; } = default!;
 
     /// <summary>
     /// Whether the journey crosses realm boundaries
@@ -340,12 +334,10 @@ public partial class TransitJourneyWaypointReachedEvent
     public System.Guid ConnectionId { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the waypoint location
+    /// Realm of the waypoint location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
     /// <summary>
     /// Whether the completed leg crossed a realm boundary
@@ -451,20 +443,16 @@ public partial class TransitJourneyArrivedEvent
     public int LegsCompleted { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the origin location
+    /// Realm of the origin location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OriginRealmId { get; set; } = default!;
+    public System.Guid? OriginRealmId { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the destination location
+    /// Realm of the destination location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("destinationRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DestinationRealmId { get; set; } = default!;
+    public System.Guid? DestinationRealmId { get; set; } = default!;
 
     /// <summary>
     /// Whether the journey crossed realm boundaries
@@ -536,20 +524,16 @@ public partial class TransitJourneyInterruptedEvent
     public int CurrentLegIndex { get; set; } = default!;
 
     /// <summary>
-    /// Reason for the interruption (e.g., bandit_attack, storm, breakdown)
+    /// Reason for the interruption (e.g., bandit_attack, storm, breakdown), or null if not specified
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the current location
+    /// Realm of the current location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
 }
 
@@ -637,12 +621,10 @@ public partial class TransitJourneyResumedEvent
     public string ModeCode { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the current location
+    /// Realm of the current location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
+    public System.Guid? RealmId { get; set; } = default!;
 
 }
 
@@ -718,12 +700,10 @@ public partial class TransitJourneyAbandonedEvent
     public System.Guid AbandonedAtLocationId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for abandoning the journey
+    /// Reason for abandoning the journey, or null if not specified
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    public string? Reason { get; set; } = default!;
 
     /// <summary>
     /// Number of legs completed before abandonment
@@ -738,28 +718,22 @@ public partial class TransitJourneyAbandonedEvent
     public int TotalLegs { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the origin location
+    /// Realm of the origin location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("originRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid OriginRealmId { get; set; } = default!;
+    public System.Guid? OriginRealmId { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the destination location
+    /// Realm of the destination location, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("destinationRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid DestinationRealmId { get; set; } = default!;
+    public System.Guid? DestinationRealmId { get; set; } = default!;
 
     /// <summary>
-    /// Realm of the location where the journey was abandoned
+    /// Realm of the location where the journey was abandoned, or null if realm resolution failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("abandonedAtRealmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid AbandonedAtRealmId { get; set; } = default!;
+    public System.Guid? AbandonedAtRealmId { get; set; } = default!;
 
     /// <summary>
     /// Whether the journey crossed realm boundaries

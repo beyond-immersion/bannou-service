@@ -122,7 +122,6 @@ components:
       - toLocationId
       - previousStatus
       - newStatus
-      - reason
       - forceUpdated
       - fromRealmId
       - toRealmId
@@ -158,7 +157,8 @@ components:
           description: Status after the change
         reason:
           type: string
-          description: Reason for the status change
+          nullable: true
+          description: Reason for the status change, or null if no specific reason applies
         forceUpdated:
           type: boolean
           description: Whether this was a forceUpdate override
@@ -191,8 +191,6 @@ components:
       - primaryModeCode
       - estimatedArrivalGameTime
       - partySize
-      - originRealmId
-      - destinationRealmId
       - crossRealm
       properties:
         eventId:
@@ -235,11 +233,13 @@ components:
         originRealmId:
           type: string
           format: uuid
-          description: Realm of the origin location
+          nullable: true
+          description: Realm of the origin location, or null if realm resolution failed
         destinationRealmId:
           type: string
           format: uuid
-          description: Realm of the destination location
+          nullable: true
+          description: Realm of the destination location, or null if realm resolution failed
         crossRealm:
           type: boolean
           description: Whether the journey crosses realm boundaries
@@ -259,7 +259,6 @@ components:
       - legIndex
       - remainingLegs
       - connectionId
-      - realmId
       - crossedRealmBoundary
       properties:
         eventId:
@@ -302,7 +301,8 @@ components:
         realmId:
           type: string
           format: uuid
-          description: Realm of the waypoint location
+          nullable: true
+          description: Realm of the waypoint location, or null if realm resolution failed
         crossedRealmBoundary:
           type: boolean
           description: Whether the completed leg crossed a realm boundary
@@ -324,8 +324,6 @@ components:
       - totalDistanceKm
       - interruptionCount
       - legsCompleted
-      - originRealmId
-      - destinationRealmId
       - crossRealm
       properties:
         eventId:
@@ -375,11 +373,13 @@ components:
         originRealmId:
           type: string
           format: uuid
-          description: Realm of the origin location
+          nullable: true
+          description: Realm of the origin location, or null if realm resolution failed
         destinationRealmId:
           type: string
           format: uuid
-          description: Realm of the destination location
+          nullable: true
+          description: Realm of the destination location, or null if realm resolution failed
         crossRealm:
           type: boolean
           description: Whether the journey crossed realm boundaries
@@ -396,8 +396,6 @@ components:
       - entityType
       - currentLocationId
       - currentLegIndex
-      - reason
-      - realmId
       properties:
         eventId:
           type: string
@@ -427,11 +425,13 @@ components:
           description: Index of the leg during which the interruption occurred (0-based)
         reason:
           type: string
-          description: Reason for the interruption (e.g., bandit_attack, storm, breakdown)
+          nullable: true
+          description: Reason for the interruption (e.g., bandit_attack, storm, breakdown), or null if not specified
         realmId:
           type: string
           format: uuid
-          description: Realm of the current location
+          nullable: true
+          description: Realm of the current location, or null if realm resolution failed
 
     TransitJourneyResumedEvent:
       type: object
@@ -448,7 +448,6 @@ components:
       - currentLegIndex
       - remainingLegs
       - modeCode
-      - realmId
       properties:
         eventId:
           type: string
@@ -489,7 +488,8 @@ components:
         realmId:
           type: string
           format: uuid
-          description: Realm of the current location
+          nullable: true
+          description: Realm of the current location, or null if realm resolution failed
 
     TransitJourneyAbandonedEvent:
       type: object
@@ -504,12 +504,8 @@ components:
       - originLocationId
       - destinationLocationId
       - abandonedAtLocationId
-      - reason
       - completedLegs
       - totalLegs
-      - originRealmId
-      - destinationRealmId
-      - abandonedAtRealmId
       - crossRealm
       properties:
         eventId:
@@ -545,7 +541,8 @@ components:
           description: Location where the journey was abandoned
         reason:
           type: string
-          description: Reason for abandoning the journey
+          nullable: true
+          description: Reason for abandoning the journey, or null if not specified
         completedLegs:
           type: integer
           description: Number of legs completed before abandonment
@@ -555,15 +552,18 @@ components:
         originRealmId:
           type: string
           format: uuid
-          description: Realm of the origin location
+          nullable: true
+          description: Realm of the origin location, or null if realm resolution failed
         destinationRealmId:
           type: string
           format: uuid
-          description: Realm of the destination location
+          nullable: true
+          description: Realm of the destination location, or null if realm resolution failed
         abandonedAtRealmId:
           type: string
           format: uuid
-          description: Realm of the location where the journey was abandoned
+          nullable: true
+          description: Realm of the location where the journey was abandoned, or null if realm resolution failed
         crossRealm:
           type: boolean
           description: Whether the journey crossed realm boundaries

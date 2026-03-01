@@ -70,7 +70,7 @@ public partial class TransitService
             if (seasonEntry == null)
             {
                 // No seasonal restriction for this season -- if currently seasonal_closed, reopen
-                if (connection.Status == ConnectionStatus.Seasonal_closed)
+                if (connection.Status == ConnectionStatus.SeasonalClosed)
                 {
                     var previousStatus = connection.Status;
                     connection.Status = ConnectionStatus.Open;
@@ -90,11 +90,11 @@ public partial class TransitService
                 continue;
             }
 
-            if (!seasonEntry.Available && connection.Status != ConnectionStatus.Seasonal_closed)
+            if (!seasonEntry.Available && connection.Status != ConnectionStatus.SeasonalClosed)
             {
                 // Connection should be closed for this season but isn't yet
                 var previousStatus = connection.Status;
-                connection.Status = ConnectionStatus.Seasonal_closed;
+                connection.Status = ConnectionStatus.SeasonalClosed;
                 connection.StatusReason = $"seasonal_closure:{evt.CurrentSeason}";
                 connection.StatusChangedAt = DateTimeOffset.UtcNow;
                 connection.ModifiedAt = DateTimeOffset.UtcNow;
@@ -108,7 +108,7 @@ public partial class TransitService
                 _logger.LogDebug("Closed connection {ConnectionId} for season {Season}",
                     connection.Id, evt.CurrentSeason);
             }
-            else if (seasonEntry.Available && connection.Status == ConnectionStatus.Seasonal_closed)
+            else if (seasonEntry.Available && connection.Status == ConnectionStatus.SeasonalClosed)
             {
                 // Connection should be open for this season but is currently seasonal_closed
                 var previousStatus = connection.Status;

@@ -25,6 +25,7 @@ The Asset service (L3 AppFeatures) provides storage, versioning, and distributio
 | `IAssetEventEmitter` (internal) | WebSocket session-targeted client notifications via `IClientEventPublisher` |
 | MinIO SDK (`IMinioClient`) | Bucket operations, object listing, webhook handling |
 | AWS SDK (`IAmazonS3`) | Pre-signed URL generation (workaround for MinIO SDK Content-Type signing bug) |
+| lib-telemetry (`ITelemetryProvider`) | Distributed tracing spans for async operations |
 | `IBundleConverter` | `.bannou` ↔ `.zip` format conversion with LZ4 compression |
 | `IAssetProcessorPoolManager` | Redis-based distributed processor node tracking |
 
@@ -63,7 +64,7 @@ No external services subscribe to asset events; all event consumption is interna
 **Notes**:
 - Asset service has no `EntityType` enum fields (Category A). Ownership is tracked via plain string `owner` fields rather than typed entity references.
 - `GameRealm` is a plain `type: string` in the schema (not an enum), matching the opaque string pattern for game-configurable content.
-- `ProcessorError` enum exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization (7 values). The generated API `ProcessingErrorCode` enum (5 values: `PROCESSING_FAILED`, `INVALID_FORMAT`, etc.) is used in API responses. These are intentionally separate: internal processor granularity vs API-level error reporting.
+- `ProcessorError` enum (7 values: `UnsupportedContentType`, `UnsupportedFormat`, `FileTooLarge`, `MissingExtension`, `SourceNotFound`, `TranscodingFailed`, `ProcessingError`) exists in the internal processor interface (`IAssetProcessor.cs`) for validation/processing error categorization. API-level error reporting uses the generated `ProcessingErrorCode` enum from the schema.
 
 ---
 
@@ -114,9 +115,11 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `asset.bundle.restored` | Soft-deleted bundle restored |
 | `asset.metabundle.created` | Metabundle assembly complete |
 | `asset.metabundle.job.queued` | Async metabundle job queued (self-consumed) |
+| `asset.processing.queued` | Processing dispatched to pool during upload completion |
 | `asset.processing.retry` | Processing retry scheduled after failure |
 | `asset.processing.job.{poolType}` | Processing job dispatched to specific pool |
 | `asset.processing.completed` | Processing worker finishes a job (success or failure) |
+| `asset.ready` | Asset processing succeeded and asset is ready for consumption |
 
 ### Consumed Events
 
@@ -139,6 +142,8 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `StorageRegion` | `ASSET_STORAGE_REGION` | `us-east-1` | Storage region |
 | `StorageForcePathStyle` | `ASSET_STORAGE_FORCE_PATH_STYLE` | `true` | Path-style URLs (required for MinIO) |
 | `StorageUseSsl` | `ASSET_STORAGE_USE_SSL` | `false` | TLS for storage connections |
+| `MinioStartupMaxRetries` | `ASSET_MINIO_STARTUP_MAX_RETRIES` | `30` | Max retries for MinIO startup connectivity check |
+| `MinioStartupRetryDelayMs` | `ASSET_MINIO_STARTUP_RETRY_DELAY_MS` | `2000` | Delay between MinIO startup retries (ms) |
 | `TokenTtlSeconds` | `ASSET_TOKEN_TTL_SECONDS` | `3600` | Pre-signed upload URL TTL |
 | `DownloadTokenTtlSeconds` | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | `900` | Pre-signed download URL TTL |
 | `MaxUploadSizeMb` | `ASSET_MAX_UPLOAD_SIZE_MB` | `500` | Max upload size |
@@ -155,16 +160,25 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `ProcessorHeartbeatIntervalSeconds` | `ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS` | `30` | Heartbeat emission interval |
 | `ProcessorMaxConcurrentJobs` | `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | `10` | Max concurrent jobs per node |
 | `ProcessorHeartbeatTimeoutSeconds` | `ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS` | `90` | Unhealthy threshold for missing heartbeats |
+| `ProcessorNodeTtlSeconds` | `ASSET_PROCESSOR_NODE_TTL_SECONDS` | `180` | TTL for processor node state entries (> heartbeat timeout) |
 | `FfmpegPath` | `ASSET_FFMPEG_PATH` | *nullable* | FFmpeg binary path (system PATH if unset) |
 | `FfmpegWorkingDirectory` | `ASSET_FFMPEG_WORKING_DIR` | `/tmp/bannou-ffmpeg` | FFmpeg temp file directory |
 | `AudioOutputFormat` | `ASSET_AUDIO_OUTPUT_FORMAT` | `mp3` | Default audio transcode format (mp3/opus/aac) |
 | `AudioBitrateKbps` | `ASSET_AUDIO_BITRATE_KBPS` | `192` | Default audio bitrate |
 | `AudioPreserveLossless` | `ASSET_AUDIO_PRESERVE_LOSSLESS` | `true` | Keep original alongside transcoded |
+| `TextureMaxDimension` | `ASSET_TEXTURE_MAX_DIMENSION` | `4096` | Max texture dimension in pixels |
+| `TextureDefaultOutputFormat` | `ASSET_TEXTURE_DEFAULT_OUTPUT_FORMAT` | `webp` | Default texture output format |
+| `ModelOptimizeMeshesDefault` | `ASSET_MODEL_OPTIMIZE_MESHES_DEFAULT` | `true` | Default mesh optimization for 3D models |
+| `ModelGenerateLodsDefault` | `ASSET_MODEL_GENERATE_LODS_DEFAULT` | `true` | Default LOD generation for 3D models |
+| `ModelLodLevels` | `ASSET_MODEL_LOD_LEVELS` | `3` | Default LOD level count |
 | `BundleCompressionDefault` | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | `lz4` | Default bundle compression (lz4/lzma/none) |
 | `ZipCacheTtlHours` | `ASSET_ZIP_CACHE_TTL_HOURS` | `24` | TTL for cached ZIP conversions |
+| `ZipCacheDirectory` | `ASSET_ZIP_CACHE_DIRECTORY` | *nullable* | ZIP cache directory (system temp if unset) |
 | `DeletedBundleRetentionDays` | `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | `30` | Soft-delete retention period |
 | `BundleCleanupIntervalMinutes` | `ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES` | `60` | Interval between bundle cleanup scans |
+| `BundleCleanupStartupDelaySeconds` | `ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS` | `30` | Startup delay before first bundle cleanup scan |
 | `ZipCacheCleanupIntervalMinutes` | `ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES` | `120` | Interval between ZIP cache cleanup scans |
+| `ZipCacheCleanupStartupDelaySeconds` | `ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS` | `60` | Startup delay before first ZIP cache cleanup scan |
 | `MinioWebhookSecret` | `ASSET_MINIO_WEBHOOK_SECRET` | *nullable* | Webhook validation secret (disabled if unset) |
 | `TempUploadPathPrefix` | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | `temp` | Bucket path for upload staging |
 | `FinalAssetPathPrefix` | `ASSET_FINAL_ASSET_PATH_PREFIX` | `assets` | Bucket path for finalized assets |
@@ -173,6 +187,7 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `BundleUploadPathPrefix` | `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | `bundles/uploads` | Bucket path for bundle upload staging |
 | `ProcessorAvailabilityMaxWaitSeconds` | `ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS` | `60` | Max wait for processor availability |
 | `ProcessorAvailabilityPollIntervalSeconds` | `ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS` | `2` | Poll interval while waiting for processor |
+| `ProcessorAcquisitionTimeoutSeconds` | `ASSET_PROCESSOR_ACQUISITION_TIMEOUT_SECONDS` | `600` | Max wait for processor pool acquisition |
 | `ProcessingMaxRetries` | `ASSET_PROCESSING_MAX_RETRIES` | `5` | Max processing retry attempts |
 | `ProcessingRetryDelaySeconds` | `ASSET_PROCESSING_RETRY_DELAY_SECONDS` | `30` | Delay between retries |
 | `UploadSessionKeyPrefix` | `ASSET_UPLOAD_SESSION_KEY_PREFIX` | `upload:` | State store key prefix for uploads |
@@ -205,6 +220,11 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | `ShutdownDrainTimeoutMinutes` | `ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES` | `2` | Max queue drain time on shutdown |
 | `ShutdownDrainIntervalSeconds` | `ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS` | `2` | Poll interval during drain |
 | `DefaultBundleCacheTtlHours` | `ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS` | `24` | Default bundle cache entry TTL |
+| `DefaultListLimit` | `ASSET_DEFAULT_LIST_LIMIT` | `50` | Default results per page |
+| `MaxQueryLimit` | `ASSET_MAX_QUERY_LIMIT` | `1000` | Max results per query/list request |
+| `AudioLargeFileWarningThresholdMb` | `ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB` | `100` | Audio file size warning threshold |
+| `TextureLargeFileWarningThresholdMb` | `ASSET_TEXTURE_LARGE_FILE_WARNING_THRESHOLD_MB` | `100` | Texture file size warning threshold |
+| `ModelLargeFileWarningThresholdMb` | `ASSET_MODEL_LARGE_FILE_WARNING_THRESHOLD_MB` | `50` | Model file size warning threshold |
 
 ---
 
@@ -213,10 +233,11 @@ Key prefixes are configurable via `AssetServiceConfiguration` (see Configuration
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<AssetService>` | Scoped | Structured logging |
-| `AssetServiceConfiguration` | Singleton | Typed configuration access (63 properties) |
+| `AssetServiceConfiguration` | Singleton | Typed configuration access |
 | `IStateStoreFactory` | Singleton | Access to asset-statestore and asset-processor-pool |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Self-subscription for async job processing |
+| `ITelemetryProvider` | Singleton | Distributed tracing spans (`StartActivity`) |
 | `IAssetEventEmitter` / `AssetEventEmitter` | Scoped | WebSocket session-targeted client notifications (8 event methods) |
 | `IAssetStorageProvider` / `MinioStorageProvider` | Singleton | Object storage abstraction (presigned URLs, streaming, multipart) |
 | `IOrchestratorClient` | Scoped | Processor pool scaling via orchestrator service |
@@ -324,19 +345,15 @@ Client                    Asset Service                     MinIO Storage
 2. **Filesystem/Azure/R2 storage providers**: `StorageProvider` config accepts `minio`, `s3`, `r2`, `azure`, `filesystem` but only MinIO/S3-compatible backends have an implementation (`MinioStorageProvider`). Other backends would require new `IAssetStorageProvider` implementations.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/239 -->
 
-3. ~~**Deleted bundle cleanup**~~: **FIXED** (2026-03-01) - `BundleCleanupWorker` implemented. Background service scans for soft-deleted bundles past `DeletedBundleRetentionDays`, permanently purges metadata, version records, storage objects, and per-asset reverse indexes. Configurable via `BundleCleanupIntervalMinutes`.
-
-4. ~~**Bundle ZIP cache cleanup**~~: **FIXED** (2026-03-01) - `ZipCacheCleanupWorker` implemented. Background service scans `bundles/zip-cache/` storage prefix and removes objects older than `ZipCacheTtlHours`. Configurable via `ZipCacheCleanupIntervalMinutes`.
-
-5. ~~**Schema-defined events not implemented**~~: **FIXED** (2026-03-01) - `asset.processing.queued` published in `CompleteUploadAsync` when processing is dispatched. `asset.ready` published in `HandleProcessingCompletedAsync` when processing succeeds.
-
 ---
 
 ## Potential Extensions
 
 1. **CDN integration**: The `StoragePublicEndpoint` rewriting could be extended to support CDN-fronted download URLs with cache invalidation on asset updates, reducing direct MinIO load for frequently accessed assets.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/519 -->
 
 2. **Content-addressable deduplication**: Asset IDs are already SHA-256 derived. The service could detect duplicate uploads (same hash, different filename/tags) and deduplicate storage while maintaining separate metadata records.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/521 -->
 
 3. **Webhook-based processing trigger**: Currently `CompleteUpload` synchronously decides whether to dispatch processing. A fully event-driven approach could have the webhook handler trigger processing, removing the need for the client to call `CompleteUpload` at all.
 
@@ -350,9 +367,7 @@ Client                    Asset Service                     MinIO Storage
 
 ### Bugs (Fix Immediately)
 
-1. ~~**T25 (String constants instead of enum)**~~: **FIXED** (2026-02-01) - Added `ProcessingErrorCode` enum with 7 values (UnsupportedContentType, UnsupportedFormat, FileTooLarge, MissingExtension, SourceNotFound, TranscodingFailed, ProcessingError). Changed `AssetProcessingResult.ErrorCode` and `AssetValidationResult.ErrorCode` to use `ProcessingErrorCode?` type. All processors (TextureProcessor, ModelProcessor, AudioProcessor) now use strongly-typed enum values.
-
-2. ~~**Schema-code event mismatch**~~: **FIXED** (2026-03-01) - Both `asset.processing.queued` and `asset.ready` events are now published. All 10 schema-declared events have corresponding code emissions.
+*(No bugs identified.)*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -370,9 +385,9 @@ Client                    Asset Service                     MinIO Storage
 
 7. **Webhook validation is optional**: If `MinioWebhookSecret` is not set, all webhook requests are accepted without authentication. This simplifies development but requires network-level isolation in production.
 
-8. **MinIO startup retry with exponential backoff cap**: The plugin waits up to 30 retries with delays capped at `5 × retryDelayMs` (10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start.
+8. **MinIO startup retry with exponential backoff cap**: The plugin waits up to `MinioStartupMaxRetries` (default 30) retries with delays capped at `5 × MinioStartupRetryDelayMs` (default 10 seconds max). If MinIO is unavailable after all retries, the entire Asset service fails to start. Both values are configurable.
 
-9. ~~**CA2000 pragma suppression**~~: **FIXED** (2026-03-01) - MinIO connectivity check refactored to use proper try/finally dispose pattern without pragma suppression.
+9. **MinIO connectivity check uses try/finally dispose pattern**: The `WaitForMinioConnectivityAsync` method creates a temporary `MinioClient` with explicit try/finally disposal instead of `using` because the fluent API returns `this` from `Build()`, making `using` semantics unclear. The pattern is correct but differs from the standard `using` approach.
 
 ### Design Considerations (Requires Planning)
 
@@ -380,15 +395,13 @@ Client                    Asset Service                     MinIO Storage
 
 2. **Model property initialization** - `UploadSession` and `SourceBundleReferenceInternal` use `= string.Empty` without `required` keyword. Consider adding `required` to ensure properties are set at construction.
 
-3. ~~**No orphaned index cleanup**~~: **FIXED** (2026-03-01) - Transactional index updates implemented: soft-delete removes bundle from per-asset reverse indexes, restore re-adds them. `ResolveBundlesAsync` also defensively checks `LifecycleStatus == Active` to filter out any stale entries. Key format mismatch between creation and removal was fixed (both now use `{realmPrefix}:asset-bundles:{assetId}`).
+3. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
 
-4. **Optimistic concurrency on shared indexes**: Type/realm/tag indexes use ETag-based optimistic retry with configurable attempts. Under high concurrent upload rates targeting the same index key, all retries could exhaust, silently dropping the asset from that index. The failure is logged but not surfaced to the caller (upload still succeeds).
+4. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
 
-5. **No back-pressure on processing queue**: The `AssetProcessingWorker` polls for jobs at fixed intervals with `ProcessorMaxConcurrentJobs` concurrency, but there's no mechanism to reject or defer job dispatch when all processors are saturated. The orchestrator pool scaling is reactive (poll-based), meaning bursts of large uploads could queue indefinitely.
+5. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
 
-6. **Streaming metabundle memory model**: `StreamingMaxMemoryMb` limits buffer allocation, but the actual peak memory includes decompressed source bundle data being read, LZ4 compression buffers, and the multipart upload parts in flight. True memory usage can exceed the configured limit by `StreamingPartSizeMb + StreamingCompressionBufferKb/1024` MB.
-
-7. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
+6. **Event emission without transactional guarantees**: Asset record creation and event publication are separate operations. If the service crashes between saving the record and publishing `asset.upload.completed`, no retry mechanism re-publishes the event. Dependent services relying on events would miss the asset until a manual reconciliation.
 
 ---
 
@@ -396,8 +409,4 @@ Client                    Asset Service                     MinIO Storage
 
 This section tracks active development work on items from the quirks/bugs lists above. Items here are managed by the `/audit-plugin` workflow and should not be manually edited except to add new tracking markers.
 
-### Completed
-
-- **2026-02-01**: Fixed T25 violation - Added `ProcessingErrorCode` enum to replace string constants in `AssetProcessingResult` and `AssetValidationResult`. Modified 4 files: `IAssetProcessor.cs`, `TextureProcessor.cs`, `ModelProcessor.cs`, `AudioProcessor.cs`. Updated tests in `AudioProcessorTests.cs`.
-
-- **2026-03-01**: L3 production hardening audit. Schema: converted all 10 events to flat structure, consolidated 8 inline enums (`InternalJobStatus`, `GetJobStatusResponseStatus`, `CancelJobResponseStatus`, `CreateBundleResponseStatus`, `MetabundleJobStatus` → `BundleStatus`; `ProcessingErrorCode`, `ValidationErrorCode`, `MetabundleErrorCode` consolidated), fixed NRT violations and added validation keywords, removed T8 filler from 5 response schemas, fixed credential defaults and version sentinel. Code: T26 sentinel elimination (realm made nullable, removed Guid.Empty), extracted 2 hardcoded tunables to configuration (`BundleCleanupIntervalMinutes`, `ZipCacheCleanupIntervalMinutes`), implemented `asset.processing.queued` and `asset.ready` event publications, implemented `BundleCleanupWorker` (soft-deleted bundle permanent purge), implemented `ZipCacheCleanupWorker` (expired ZIP cache cleanup), implemented transactional index updates for bundle deletion/restore, fixed key format mismatch bug in `RemoveFromBundleIndexAsync`, added defensive `LifecycleStatus` check in `ResolveBundlesAsync`, cleaned up duplicate enums (internal `ProcessingErrorCode` → `ProcessorError`, deleted internal `BundleStatus`). Added `IAssetStorageProvider.ListObjectsByPrefixAsync` and `ObjectSummary` record for storage listing. 117 tests passing, 0 warnings.
+*(No completed items pending cleanup.)*

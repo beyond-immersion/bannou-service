@@ -4,7 +4,7 @@
 > **Schema**: schemas/documentation-api.yaml
 > **Version**: 1.0.0
 > **Layer**: AppFeatures
-> **State Stores**: documentation-statestore (Redis)
+> **State Store**: documentation-statestore (Redis)
 
 ---
 
@@ -99,7 +99,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `GitCloneTimeoutSeconds` | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | `300` | Git clone/pull timeout |
 | `SyncSchedulerEnabled` | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | `true` | Enable background sync scheduler |
 | `SyncSchedulerCheckIntervalMinutes` | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | `5` | How often scheduler checks for due syncs |
-| `MaxConcurrentSyncs` | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | `3` | Max sync operations per scheduler cycle (sequential despite name — see Design #9) |
+| `MaxConcurrentSyncs` | `DOCUMENTATION_MAX_CONCURRENT_SYNCS` | `3` | Max sync operations per scheduler cycle (sequential despite name — see Design #7) |
 | `MaxDocumentsPerSync` | `DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC` | `1000` | Max documents processed per sync |
 | `RepositorySyncCheckIntervalSeconds` | `DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS` | `30` | Initial delay before first scheduler check |
 | `BulkOperationBatchSize` | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | `10` | Documents per batch before yielding in bulk ops |
@@ -127,6 +127,7 @@ This plugin does not consume external events. Per schema: `x-event-subscriptions
 | `IContentTransformService` | Singleton | YAML frontmatter parsing, slug generation, markdown processing |
 | `IServiceProvider` | Scoped | Runtime resolution for L3 soft dependencies (IAssetClient) |
 | `IHttpClientFactory` | Singleton | HTTP client for pre-signed URL transfers |
+| `ITelemetryProvider` | Singleton | Activity/span creation for telemetry instrumentation |
 | `IEventConsumer` | Scoped | Event consumer registration (minimal, no-op) |
 | `SearchIndexRebuildService` | Hosted (BackgroundService) | One-shot index rebuild on startup |
 | `RepositorySyncSchedulerService` | Hosted (BackgroundService) | Periodic sync scheduling and stale repo cleanup |
@@ -339,7 +340,7 @@ Namespace Organization
   |  |  ns-docs:arcadia-docs → [guid5, guid6, ...]           |  |
   |  |  arcadia-docs:guid5 → StoredDocument{...}              |  |
   |  |  slug-idx:arcadia-docs:guides/npc → "guid5"           |  |
-  |  |  ns-archives:arcadia-docs → [archId1]                  |  |
+  |  |  archive:list:arcadia-docs → [archId1]                 |  |
   |  |  archive:archId1 → DocumentationArchive{...}           |  |
   |  └────────────────────────────────────────────────────────┘  |
   └─────────────────────────────────────────────────────────────┘
@@ -379,15 +380,10 @@ Archive System
 
 ## Stubs & Unimplemented Features
 
-1. ~~**AI-powered semantic search stub config**~~: **FIXED** (2026-01-31) - Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` that were never referenced in service code (T21 violation). The query/search implementations both use inverted-index keyword matching. The `QueryAsync` method is identical to `SearchAsync` with an added relevance score filter. This is the correct current behavior; semantic search remains a potential future extension (see Potential Extensions below).
+1. **Voice summary generation**: `GenerateVoiceSummary()` strips markdown and truncates the first paragraph. No actual NLG, TTS-optimization, or prosody considerations are applied - it is a simple text extraction.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/520 -->
 
-2. ~~**RedisSearchIndexService configuration**~~: **FIXED** (2026-02-01) - Added `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never used because the store lacked the search flag. With this configuration, Redis Search (FT.*) will be used when available; the in-memory `SearchIndexService` fallback remains for environments without RediSearch module.
-
-3. **Voice summary generation**: `GenerateVoiceSummary()` strips markdown and truncates the first paragraph. No actual NLG, TTS-optimization, or prosody considerations are applied - it is a simple text extraction.
-
-4. **Archive bundle upload reliability**: If the Asset Service is unavailable during archive creation, the archive metadata is saved without a `BundleAssetId`. This means `RestoreDocumentationArchive` will return 404 for archives that were created without successful uploads.
-
-5. ~~**Per-sync tracking**~~: **FIXED** (2026-03-01) - `GetRepositoryStatus` now returns `SyncId = null` (nullable Guid) instead of `Guid.Empty` sentinel. `SyncResult.SyncId` is `Guid?` with null for conflict results, proper GUID for completed syncs.
+2. **Archive bundle upload reliability**: If the Asset Service is unavailable during archive creation, the archive metadata is saved without a `BundleAssetId`. This means `RestoreDocumentationArchive` will return 404 for archives that were created without successful uploads.
 
 ---
 
@@ -411,7 +407,7 @@ Archive System
 
 ### Bugs (Fix Immediately)
 
-1. ~~**Type mismatch for `ns-docs:{namespaceId}` key**~~: **FIXED** (2026-01-31) - Standardized on `HashSet<Guid>` for namespace document lists in both `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan (`ns-trash:`) intentionally uses `List<Guid>` for different semantics (order preservation).
+(none currently)
 
 ### Intentional Quirks
 
@@ -425,29 +421,25 @@ Archive System
 
 ### Design Considerations
 
-1. ~~**T16 (ViewDocumentBySlugAsync return type)**~~: **FIXED** (2026-01-31) - Changed return type from `(StatusCodes, object?)` to `(StatusCodes, string?)` for proper type safety. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in controller.
+1. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
 
-2. **Single Redis store for all data**: All document data, indexes, trashcan, bindings, and archives share one `documentation-statestore`. A very active namespace with many documents could create key-space pressure. No TTL is set on document keys themselves.
+2. **Git operations on local filesystem**: `GitSyncService` clones repositories to `GitStoragePath` on the container's filesystem. In multi-instance deployments, each instance clones independently. The distributed lock prevents concurrent syncs of the same namespace, but disk usage is per-instance.
 
-3. ~~**N+1 query pattern in ListDocuments and ListTrashcan**~~: **FIXED** (2026-01-31) - Both methods now use `GetBulkAsync` for single-call bulk retrieval. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items instead of individual deletes.
+3. **No authentication on search/query endpoints**: The search, query, get, list, and suggest endpoints are all marked `anonymous` access. Any client can query any namespace without authentication.
 
-4. **Git operations on local filesystem**: `GitSyncService` clones repositories to `GitStoragePath` on the container's filesystem. In multi-instance deployments, each instance clones independently. The distributed lock prevents concurrent syncs of the same namespace, but disk usage is per-instance.
+4. **Slug index is eventually consistent**: If a crash occurs between saving a document and saving its slug index entry, the document exists but is unreachable by slug. The search index (rebuilt on startup) would still find it by content.
 
-5. **No authentication on search/query endpoints**: The search, query, get, list, and suggest endpoints are all marked `anonymous` access. Any client can query any namespace without authentication.
+5. **Import onConflict=update overwrites all fields**: When importing with update policy, all document fields are overwritten including tags and metadata. There is no merge-with-existing-tags behavior - the import fully replaces.
 
-6. **Slug index is eventually consistent**: If a crash occurs between saving a document and saving its slug index entry, the document exists but is unreachable by slug. The search index (rebuilt on startup) would still find it by content.
+6. **RepositorySyncSchedulerService processes bindings sequentially**: Bindings are checked one at a time within each cycle. A slow sync operation blocks subsequent bindings until it completes or the scheduler moves to the next cycle after the interval.
 
-7. **Import onConflict=update overwrites all fields**: When importing with update policy, all document fields are overwritten including tags and metadata. There is no merge-with-existing-tags behavior - the import fully replaces.
+7. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.
 
-8. **RepositorySyncSchedulerService processes bindings sequentially**: Bindings are checked one at a time within each cycle. A slow sync operation blocks subsequent bindings until it completes or the scheduler moves to the next cycle after the interval.
+8. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * EstimatedBytesPerDocument` (configurable, defaults to 10KB). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
 
-9. **MaxConcurrentSyncs naming is misleading**: The configuration property `MaxConcurrentSyncs` and its env var `DOCUMENTATION_MAX_CONCURRENT_SYNCS` suggest parallel operation, but in `RepositorySyncSchedulerService.ProcessScheduledSyncsAsync()` (line 186), each sync is `await`-ed sequentially in a `foreach` loop. The value is actually "max syncs per scheduler cycle" — a rate limit, not a concurrency limit.
+9. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
 
-10. **TotalContentSizeBytes is always an estimate**: `GetNamespaceStats` calculates content size as `documents * EstimatedBytesPerDocument` (configurable, defaults to 10KB). Accurate sizing requires iterating all documents (N+1 queries). Consider tracking actual content size in namespace metadata during CRUD operations.
-
-11. **LastUpdated sampling is incomplete**: `GetNamespaceStats` only samples the first 10 document IDs from the namespace list to find `lastUpdated`. Newer documents further in the list are missed. Consider maintaining a `LastUpdatedAt` field on a namespace metadata record.
-
-12. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.
+10. **Search index retains stale terms on document update**: `NamespaceIndex.AddDocument()` replaces the document and adds new terms, but does NOT remove old terms no longer in the updated content. Searching for removed terms still returns the document. Fix requires maintaining a term-to-document reverse index or removing the old document's terms before re-indexing.
 
 ---
 
@@ -457,14 +449,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **2026-01-31**: Fixed type mismatch for `ns-docs:{namespaceId}` key. Standardized on `HashSet<Guid>` for namespace document lists in `DocumentationService.GetNamespaceStatsAsync` and `SearchIndexService.RebuildIndexAsync`. Trashcan keys (`ns-trash:`) intentionally continue using `List<Guid>`.
-
-- **2026-01-31**: Fixed N+1 query pattern in `ListDocumentsAsync` and `ListTrashcanAsync`. Both methods now use `GetBulkAsync` for bulk document retrieval instead of individual `GetAsync` calls in loops. `ListTrashcanAsync` also uses `DeleteBulkAsync` to batch-delete expired items.
-
-- **2026-01-31**: Fixed `ViewDocumentBySlugAsync` return type from `(StatusCodes, object?)` to `(StatusCodes, string?)`. The method always returns HTML string content, so the typed return accurately reflects this. Removed unnecessary cast in `DocumentationController.ViewDocumentBySlug`.
-
-- **2026-01-31**: Removed dead configuration properties `AiEnhancementsEnabled` and `AiEmbeddingsModel` from schema (T21 violation - never referenced in service code). Updated tests to remove assertions for removed properties. Semantic search remains a potential future extension.
-
-- **2026-02-01**: Enabled Redis Search for documentation by adding `enableSearch: true` to `documentation-statestore` in `state-stores.yaml`. The `RedisSearchIndexService` was fully implemented but never activated because the store lacked the search configuration flag. With this fix, Redis Search (FT.*) will be used when the RediSearch module is available.
-
-- **2026-03-01**: Full TENET compliance audit. Schema changes: consolidated 5 inline enums to `$ref` definitions, fixed 2 duplicated enums in events schema to `$ref` API types, removed 7 T8 filler properties from responses, added NRT `nullable: true` to ~50+ optional properties, added validation keywords to all config properties, added validation to ImportDocument and ListTrashcan fields. Code changes: changed `StoredDocument.Category` and `RepositoryBinding.DefaultCategory` from string to `DocumentCategory` enum (T25), replaced `Guid.Empty` sentinels with nullable `Guid?` (T26), replaced `DateTimeOffset.MinValue` with nullable (T26), extracted hardcoded 10000 bytes/doc to `EstimatedBytesPerDocument` config (T21), fixed three-part event topics to hyphenated entity names (T16), changed `IAssetClient` from constructor injection to `IServiceProvider` runtime resolution with graceful degradation (T4/T2 L3→L3 soft dependency), added `ArgumentNullException.ThrowIfNull` to all constructor parameters across all services (T6), moved telemetry activity creation inside try/catch in fire-and-forget analytics methods (T10).
+(none currently)

@@ -283,11 +283,11 @@ public class SeasonalConnectionWorker : BackgroundService
             if (seasonEntry == null)
             {
                 // No restriction for current season -- reopen if currently seasonal_closed
-                if (connection.Status == ConnectionStatus.Seasonal_closed)
+                if (connection.Status == ConnectionStatus.SeasonalClosed)
                 {
                     var connKey = TransitService.BuildConnectionKey(connection.Id);
                     var (freshConnection, connEtag) = await connectionStore.GetWithETagAsync(connKey, cancellationToken);
-                    if (freshConnection == null || freshConnection.Status != ConnectionStatus.Seasonal_closed)
+                    if (freshConnection == null || freshConnection.Status != ConnectionStatus.SeasonalClosed)
                     {
                         _logger.LogDebug("Connection {ConnectionId} was modified concurrently, skipping seasonal reopen", connection.Id);
                         continue;
@@ -299,7 +299,7 @@ public class SeasonalConnectionWorker : BackgroundService
                     freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                     freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                    var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag, cancellationToken);
+                    var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
                     if (savedEtag == null)
                     {
                         _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal reopen, skipping", connection.Id);
@@ -313,24 +313,24 @@ public class SeasonalConnectionWorker : BackgroundService
                 continue;
             }
 
-            if (!seasonEntry.Available && connection.Status != ConnectionStatus.Seasonal_closed)
+            if (!seasonEntry.Available && connection.Status != ConnectionStatus.SeasonalClosed)
             {
                 // Should be closed but isn't -- re-fetch with ETag for optimistic concurrency
                 var connKey = TransitService.BuildConnectionKey(connection.Id);
                 var (freshConnection, connEtag) = await connectionStore.GetWithETagAsync(connKey, cancellationToken);
-                if (freshConnection == null || freshConnection.Status == ConnectionStatus.Seasonal_closed)
+                if (freshConnection == null || freshConnection.Status == ConnectionStatus.SeasonalClosed)
                 {
                     _logger.LogDebug("Connection {ConnectionId} was modified concurrently, skipping seasonal close", connection.Id);
                     continue;
                 }
 
                 var previousStatus = freshConnection.Status;
-                freshConnection.Status = ConnectionStatus.Seasonal_closed;
+                freshConnection.Status = ConnectionStatus.SeasonalClosed;
                 freshConnection.StatusReason = $"seasonal_closure:{currentSeason}";
                 freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                 freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag, cancellationToken);
+                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
                 if (savedEtag == null)
                 {
                     _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal close, skipping", connection.Id);
@@ -341,12 +341,12 @@ public class SeasonalConnectionWorker : BackgroundService
                     freshConnection, previousStatus, messageBus, cancellationToken);
                 closedCount++;
             }
-            else if (seasonEntry.Available && connection.Status == ConnectionStatus.Seasonal_closed)
+            else if (seasonEntry.Available && connection.Status == ConnectionStatus.SeasonalClosed)
             {
                 // Should be open but is currently seasonal_closed -- re-fetch with ETag for optimistic concurrency
                 var connKey = TransitService.BuildConnectionKey(connection.Id);
                 var (freshConnection, connEtag) = await connectionStore.GetWithETagAsync(connKey, cancellationToken);
-                if (freshConnection == null || freshConnection.Status != ConnectionStatus.Seasonal_closed)
+                if (freshConnection == null || freshConnection.Status != ConnectionStatus.SeasonalClosed)
                 {
                     _logger.LogDebug("Connection {ConnectionId} was modified concurrently, skipping seasonal reopen", connection.Id);
                     continue;
@@ -358,7 +358,7 @@ public class SeasonalConnectionWorker : BackgroundService
                 freshConnection.StatusChangedAt = DateTimeOffset.UtcNow;
                 freshConnection.ModifiedAt = DateTimeOffset.UtcNow;
 
-                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag, cancellationToken);
+                var savedEtag = await connectionStore.TrySaveAsync(connKey, freshConnection, connEtag ?? string.Empty, cancellationToken);
                 if (savedEtag == null)
                 {
                     _logger.LogWarning("Concurrent modification on connection {ConnectionId} during seasonal reopen, skipping", connection.Id);

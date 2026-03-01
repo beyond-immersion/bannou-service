@@ -445,7 +445,7 @@ public partial class WorldstateService : IWorldstateService
         await RegisterRealmReferenceAsync($"clock:{body.RealmId}", body.RealmId, cancellationToken);
 
         // Publish initialization event
-        await _messageBus.TryPublishAsync("realm-clock.initialized", new WorldstateRealmClockInitializedEvent
+        await _messageBus.TryPublishAsync("worldstate.realm-clock.initialized", new WorldstateRealmClockInitializedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
