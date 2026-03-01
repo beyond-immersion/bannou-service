@@ -629,13 +629,15 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         Guid? gameServiceId = null;
         try
         {
-            // Use typed proxy to create game service
+            // Use typed proxy to create game service with auto-lobby enabled
+            // AutoLobbyEnabled = true is required for game-session to publish join shortcuts
             var createResponse = await adminClient.GameService.CreateServiceAsync(
                 new CreateServiceRequest
                 {
                     StubName = "test-game",
                     DisplayName = "Test Game (Split Routing)",
-                    Description = "Test game service for split routing shortcut validation"
+                    Description = "Test game service for split routing shortcut validation",
+                    AutoLobbyEnabled = true
                 },
                 timeout: TimeSpan.FromSeconds(10));
 
@@ -646,7 +648,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
             else if (createResponse.Error?.ResponseCode == 409)
             {
-                Console.WriteLine("   Game service 'test-game' already exists - fetching ID...");
+                Console.WriteLine("   Game service 'test-game' already exists - fetching and ensuring autoLobbyEnabled...");
                 // Fetch the existing service by stub name using typed proxy
                 var getResponse = await adminClient.GameService.GetServiceAsync(
                     new GetServiceRequest { StubName = "test-game" },
@@ -656,6 +658,20 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
                 {
                     gameServiceId = getResponse.Result.ServiceId;
                     Console.WriteLine($"   Found existing game service: {gameServiceId}");
+
+                    // Ensure autoLobbyEnabled is true (may have been created without it)
+                    if (!getResponse.Result.AutoLobbyEnabled)
+                    {
+                        Console.WriteLine("   Updating game service to enable auto-lobby...");
+                        await adminClient.GameService.UpdateServiceAsync(
+                            new UpdateServiceRequest
+                            {
+                                ServiceId = gameServiceId.Value,
+                                AutoLobbyEnabled = true
+                            },
+                            timeout: TimeSpan.FromSeconds(10));
+                        Console.WriteLine("   Auto-lobby enabled");
+                    }
                 }
             }
             else
@@ -1008,7 +1024,8 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
         var openrestyPort = Program.Configuration.OpenRestyPort ?? 80;
         var uniqueCode = Guid.NewGuid().ToString("N")[..8];
 
-        // Step 1: Get or create test-game service (should already exist from previous test)
+        // Step 1: Get or create test-game service with auto-lobby enabled
+        // AutoLobbyEnabled = true is required for game-session to publish join shortcuts
         Console.WriteLine("   Step 1: Getting test-game service...");
         Guid? gameServiceId = null;
 
@@ -1022,16 +1039,31 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             {
                 gameServiceId = getResponse.Result.ServiceId;
                 Console.WriteLine($"   Found game service: {gameServiceId}");
+
+                // Ensure autoLobbyEnabled is true (may have been created without it)
+                if (!getResponse.Result.AutoLobbyEnabled)
+                {
+                    Console.WriteLine("   Updating game service to enable auto-lobby...");
+                    await adminClient.GameService.UpdateServiceAsync(
+                        new UpdateServiceRequest
+                        {
+                            ServiceId = gameServiceId.Value,
+                            AutoLobbyEnabled = true
+                        },
+                        timeout: TimeSpan.FromSeconds(10));
+                    Console.WriteLine("   Auto-lobby enabled");
+                }
             }
             else
             {
-                // Create it if doesn't exist
+                // Create it if doesn't exist - with auto-lobby enabled
                 var createResponse = await adminClient.GameService.CreateServiceAsync(
                     new CreateServiceRequest
                     {
                         StubName = "test-game",
                         DisplayName = "Test Game (Capability Events)",
-                        Description = "Test game service for capability change events"
+                        Description = "Test game service for capability change events",
+                        AutoLobbyEnabled = true
                     },
                     timeout: TimeSpan.FromSeconds(10));
 
