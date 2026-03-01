@@ -1569,10 +1569,10 @@ public partial class DocumentationService : IDocumentationService
             }
         }
 
-        // Convert DocumentCategory enum keys to string for generated response model
-        var categoryCounts = searchStats.DocumentsByCategory.ToDictionary(
-            kvp => kvp.Key.ToString(),
-            kvp => kvp.Value);
+        // Convert DocumentsByCategory to typed CategoryCount array
+        var categoryCounts = searchStats.DocumentsByCategory
+            .Select(kvp => new CategoryCount { Category = kvp.Key, Count = kvp.Value })
+            .ToList();
 
         _logger.LogDebug("GetNamespaceStats for {Namespace}: {DocumentCount} documents, {TrashcanCount} in trashcan",
             namespaceId, searchStats.TotalDocuments, trashedDocIds.Count);

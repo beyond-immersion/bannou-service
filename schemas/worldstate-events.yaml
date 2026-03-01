@@ -190,8 +190,6 @@ components:
     # ==========================================================================
 
     WorldstateHourChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a game-hour boundary is crossed during clock advancement
@@ -200,7 +198,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -208,10 +205,14 @@ components:
         - currentHour
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.hour_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
@@ -229,8 +230,6 @@ components:
           description: Full game time snapshot at the time of the event
 
     WorldstatePeriodChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a day-period boundary is crossed (e.g., dawn to morning)
@@ -239,7 +238,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -247,27 +245,31 @@ components:
         - currentPeriod
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.period_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock crossed a period boundary
         previousPeriod:
           type: string
+          minLength: 1
           description: Day period code before the transition (e.g., "night")
         currentPeriod:
           type: string
+          minLength: 1
           description: Day period code after the transition (e.g., "dawn")
         currentGameTime:
           $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
           description: Full game time snapshot at the time of the event
 
     WorldstateDayChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a game-day boundary is crossed. During catch-up, daysCrossed may be greater than 1.
@@ -276,7 +278,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -286,10 +287,14 @@ components:
         - isCatchUp
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.day_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
@@ -314,8 +319,6 @@ components:
           description: Full game time snapshot at the time of the event
 
     WorldstateMonthChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a month boundary is crossed
@@ -324,7 +327,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -334,19 +336,25 @@ components:
         - isCatchUp
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.month_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock crossed a month boundary
         previousMonth:
           type: string
+          minLength: 1
           description: Month code before the transition (e.g., "frostmere")
         currentMonth:
           type: string
+          minLength: 1
           description: Month code after the transition (e.g., "greenleaf")
         monthsCrossed:
           type: integer
@@ -360,8 +368,6 @@ components:
           description: Full game time snapshot at the time of the event
 
     WorldstateSeasonChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a season boundary is crossed
@@ -370,7 +376,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -380,22 +385,29 @@ components:
         - isCatchUp
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.season_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock crossed a season boundary
         previousSeason:
           type: string
+          minLength: 1
           description: Season code before the transition (e.g., "winter")
         currentSeason:
           type: string
+          minLength: 1
           description: Season code after the transition (e.g., "spring")
         currentYear:
           type: integer
+          minimum: 0
           description: Current game year at the time of the season change
         isCatchUp:
           type: boolean
@@ -405,8 +417,6 @@ components:
           description: Full game time snapshot at the time of the event
 
     WorldstateYearChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a year boundary is crossed
@@ -415,7 +425,6 @@ components:
         resource_id_field: realmId
         source_type: worldstate
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -425,19 +434,25 @@ components:
         - isCatchUp
         - currentGameTime
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.year_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock crossed a year boundary
         previousYear:
           type: integer
+          minimum: 0
           description: Game year before the transition
         currentYear:
           type: integer
+          minimum: 0
           description: Game year after the transition
         yearsCrossed:
           type: integer
@@ -455,13 +470,10 @@ components:
     # ==========================================================================
 
     WorldstateRatioChangedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm's time ratio is changed via SetTimeRatio
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
@@ -469,10 +481,14 @@ components:
         - newRatio
         - reason
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.ratio_changed"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
@@ -490,50 +506,53 @@ components:
           description: Reason for the ratio change
 
     WorldstateClockAdvancedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm clock is advanced via AdvanceClock. Used for cross-node clock cache invalidation.
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.clock_advanced"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock was advanced
 
     WorldstateRealmClockInitializedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a realm clock is initialized for the first time via InitializeRealmClock
       required:
-        - eventName
         - eventId
         - timestamp
         - realmId
         - calendarTemplateCode
         - initialTimeRatio
       properties:
-        eventName:
+        eventId:
           type: string
-          default: "worldstate.realm_clock.initialized"
-          description: Fixed event type identifier
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         realmId:
           type: string
           format: uuid
           description: Realm whose clock was initialized
         calendarTemplateCode:
           type: string
+          minLength: 1
           description: Calendar template code assigned to this realm
         initialTimeRatio:
           type: number

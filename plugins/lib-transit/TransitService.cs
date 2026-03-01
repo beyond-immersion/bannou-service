@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
@@ -40,7 +41,7 @@ namespace BeyondImmersion.BannouService.Transit;
 ///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
 ///   <item><b>Configuration:</b> ALL config properties in TransitServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
 ///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
-///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
+///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching. Journey index uses a separate List&lt;Guid&gt; typed reference to the transit-journeys store.</item>
 ///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
 /// </list>
 /// </para>
@@ -66,10 +67,11 @@ public partial class TransitService : ITransitService
     private readonly IMessageBus _messageBus;
     private readonly IDistributedLockProvider _lockProvider;
 
-    // State stores (7 data stores; lock store accessed via _lockProvider with StateStoreDefinitions.TransitLock)
+    // State stores (7 data stores + 1 index store; lock store accessed via _lockProvider with StateStoreDefinitions.TransitLock)
     private readonly IQueryableStateStore<TransitModeModel> _modeStore;
     private readonly IQueryableStateStore<TransitConnectionModel> _connectionStore;
     private readonly IStateStore<TransitJourneyModel> _journeyStore;
+    private readonly IStateStore<List<Guid>> _journeyIndexStore;
     private readonly IQueryableStateStore<JourneyArchiveModel> _journeyArchiveStore;
     private readonly IStateStore<List<ConnectionGraphEntry>> _connectionGraphStore;
     private readonly IQueryableStateStore<TransitDiscoveryModel> _discoveryStore;
@@ -140,10 +142,11 @@ public partial class TransitService : ITransitService
         _messageBus = messageBus;
         _lockProvider = lockProvider;
 
-        // Create 7 data stores from StateStoreDefinitions constants (lock store used via _lockProvider)
+        // Create 7 data stores + 1 index store from StateStoreDefinitions constants (lock store used via _lockProvider)
         _modeStore = stateStoreFactory.GetQueryableStore<TransitModeModel>(StateStoreDefinitions.TransitModes);
         _connectionStore = stateStoreFactory.GetQueryableStore<TransitConnectionModel>(StateStoreDefinitions.TransitConnections);
         _journeyStore = stateStoreFactory.GetStore<TransitJourneyModel>(StateStoreDefinitions.TransitJourneys);
+        _journeyIndexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.TransitJourneys);
         _journeyArchiveStore = stateStoreFactory.GetQueryableStore<JourneyArchiveModel>(StateStoreDefinitions.TransitJourneysArchive);
         _connectionGraphStore = stateStoreFactory.GetStore<List<ConnectionGraphEntry>>(StateStoreDefinitions.TransitConnectionGraph);
         _discoveryStore = stateStoreFactory.GetQueryableStore<TransitDiscoveryModel>(StateStoreDefinitions.TransitDiscovery);
@@ -1872,14 +1875,21 @@ public partial class TransitService : ITransitService
     private const string JOURNEY_KEY_PREFIX = "journey:";
 
     /// <summary>
+    /// Key for the Redis list tracking all active journey IDs. Used by the
+    /// <see cref="JourneyArchivalWorker"/> to enumerate journeys without Redis SCAN.
+    /// Stored as a <c>List&lt;Guid&gt;</c> in the transit-journeys store.
+    /// </summary>
+    internal const string JOURNEY_INDEX_KEY = "journey-index";
+
+    /// <summary>
     /// Builds the state store key for a journey by ID.
     /// </summary>
-    private static string BuildJourneyKey(Guid id) => $"{JOURNEY_KEY_PREFIX}{id}";
+    internal static string BuildJourneyKey(Guid id) => $"{JOURNEY_KEY_PREFIX}{id}";
 
     /// <summary>
     /// Builds the archive store key for a journey by ID.
     /// </summary>
-    private static string BuildJourneyArchiveKey(Guid id) => $"archive:{id}";
+    internal static string BuildJourneyArchiveKey(Guid id) => $"archive:{id}";
 
     /// <summary>
     /// Plans a new journey from origin to destination. Validates locations, mode availability,
@@ -2060,12 +2070,16 @@ public partial class TransitService : ITransitService
             Interruptions = new List<TransitInterruptionModel>(),
             PartySize = body.PartySize,
             CargoWeightKg = body.CargoWeightKg,
+            RealmId = originLocation.RealmId,
             CreatedAt = now,
             ModifiedAt = now
         };
 
         var key = BuildJourneyKey(journeyId);
         await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
+
+        // Add to journey index for the archival worker to discover (optimistic concurrency)
+        await AddToJourneyIndexAsync(journeyId, cancellationToken);
 
         _logger.LogInformation("Created journey {JourneyId} for entity {EntityId} from {OriginLocationId} to {DestinationLocationId} with {LegCount} legs, ETA {ETA} game-hours",
             journeyId, body.EntityId, body.OriginLocationId, body.DestinationLocationId, legs.Count, totalGameHours);
@@ -2135,7 +2149,7 @@ public partial class TransitService : ITransitService
 
         // Get current game-time for actual departure
         decimal actualDepartureGameTime = journey.PlannedDepartureGameTime;
-        Guid originRealmId = Guid.Empty;
+        Guid? originRealmId = null;
         try
         {
             var originLocation = await _locationClient.GetLocationAsync(
@@ -2144,7 +2158,7 @@ public partial class TransitService : ITransitService
             originRealmId = originLocation.RealmId;
 
             var snapshot = await _worldstateClient.GetRealmTimeAsync(
-                new Worldstate.GetRealmTimeRequest { RealmId = originRealmId },
+                new Worldstate.GetRealmTimeRequest { RealmId = originLocation.RealmId },
                 cancellationToken);
             actualDepartureGameTime = snapshot.TotalGameSecondsSinceEpoch / 3600m;
         }
@@ -2167,8 +2181,8 @@ public partial class TransitService : ITransitService
         // Report location departure if configured
         await TryReportEntityPositionAsync(journey.EntityType, journey.EntityId, journey.OriginLocationId, null, cancellationToken);
 
-        // Resolve destination realm for event
-        Guid destinationRealmId = originRealmId;
+        // Resolve destination realm for event (nullable per IMPLEMENTATION TENETS -- no sentinel values)
+        Guid? destinationRealmId = null;
         try
         {
             var destLocation = await _locationClient.GetLocationAsync(
@@ -2178,7 +2192,7 @@ public partial class TransitService : ITransitService
         }
         catch (ApiException)
         {
-            // Non-fatal for event publishing
+            // Non-fatal for event publishing; null will be coalesced in event publisher
         }
 
         // Publish transit-journey.departed event
@@ -2267,7 +2281,7 @@ public partial class TransitService : ITransitService
 
         await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
 
-        // Resolve realm for event
+        // Resolve realm for event (nullable per IMPLEMENTATION TENETS -- no sentinel values)
         var realmId = await ResolveLocationRealmIdAsync(journey.CurrentLocationId, cancellationToken);
 
         // Publish transit-journey.resumed event
@@ -2480,7 +2494,7 @@ public partial class TransitService : ITransitService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Batch advance failed for journey {JourneyId}", entry.JourneyId);
+                _logger.LogError(ex, "Batch advance failed for journey {JourneyId}", entry.JourneyId);
                 results.Add(new BatchAdvanceResult
                 {
                     JourneyId = entry.JourneyId,
@@ -2785,21 +2799,18 @@ public partial class TransitService : ITransitService
             return (StatusCodes.NotFound, null);
         }
 
-        // Scan active journeys in Redis. Since Redis journey store is not queryable via LINQ,
-        // we need to retrieve active journeys and filter. For now, query the archive store for
-        // active status journeys and also check active Redis journeys via a key scan approach.
-        // NOTE: Redis IStateStore does not support QueryAsync. We use the archive store for
-        // journeys that might reference this connection, plus any pattern-based approach for active.
-        //
-        // In practice, active journeys should be in Redis. Since we cannot LINQ-query Redis,
-        // we return matches from the archive store that are still in active statuses.
-        // The archival worker moves completed/abandoned journeys, so active ones remain in Redis.
-        // This implementation uses archive as a supplementary source.
+        // Query archive store for journeys referencing this connection.
+        // NOTE: Active journeys live in Redis (not queryable via LINQ). The archive store
+        // provides supplementary queryable access. The archival worker moves completed/abandoned
+        // journeys from Redis to archive, so active journeys remain in Redis only.
+        // This endpoint returns archived journeys matching the connection; active journey lookup
+        // by connection requires the game server to track journey-connection associations.
+        var filterConnectionId = body.ConnectionId;
+        var filterStatus = body.Status;
+
         var archiveMatches = await _journeyArchiveStore.QueryAsync(
-            j => j.Legs.Any(l => l.ConnectionId == body.ConnectionId) &&
-                 (body.Status == null || j.Status == body.Status.Value) &&
-                 (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.In_transit ||
-                  j.Status == JourneyStatus.At_waypoint || j.Status == JourneyStatus.Interrupted),
+            j => j.Legs.Any(l => l.ConnectionId == filterConnectionId) &&
+                 (!filterStatus.HasValue || j.Status == filterStatus.Value),
             cancellationToken);
 
         var journeys = archiveMatches
@@ -2834,55 +2845,29 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Listing journeys - EntityId: {EntityId}, EntityType: {EntityType}, RealmId: {RealmId}, Status: {Status}, ActiveOnly: {ActiveOnly}",
             body.EntityId, body.EntityType, body.RealmId, body.Status, body.ActiveOnly);
 
-        // Query from archive store (which can be queried via LINQ)
+        // Query from archive store with composed LINQ filters (pushed to SQL via IQueryableStateStore).
         // Active journeys are primarily in Redis, but the archive store provides queryable access
         // for non-active journeys. For active journeys, the game server typically tracks them
         // by journey ID. This endpoint provides a secondary query path.
-        var allJourneys = await _journeyArchiveStore.QueryAsync(j => true, cancellationToken);
-        var filtered = allJourneys.AsEnumerable();
+        //
+        // Note: RealmId and CrossRealm filters are not yet supported because the archive model
+        // does not store realm IDs directly. This will be resolved when realm IDs are added
+        // to the archive model.
 
-        // Filter by entity
-        if (body.EntityId.HasValue)
-        {
-            var entityId = body.EntityId.Value;
-            filtered = filtered.Where(j => j.EntityId == entityId);
-        }
+        // Capture filter values outside the expression to avoid closure issues
+        var filterEntityId = body.EntityId;
+        var filterEntityType = body.EntityType;
+        var filterStatus = body.Status;
+        var filterActiveOnly = body.ActiveOnly;
 
-        if (!string.IsNullOrEmpty(body.EntityType))
-        {
-            var entityType = body.EntityType;
-            filtered = filtered.Where(j => j.EntityType == entityType);
-        }
+        var results = await _journeyArchiveStore.QueryAsync(j =>
+            (!filterEntityId.HasValue || j.EntityId == filterEntityId.Value) &&
+            (string.IsNullOrEmpty(filterEntityType) || j.EntityType == filterEntityType) &&
+            (!filterStatus.HasValue || j.Status == filterStatus.Value) &&
+            (!filterActiveOnly || (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned)),
+            cancellationToken);
 
-        // Filter by realm (origin OR destination touches this realm)
-        if (body.RealmId.HasValue)
-        {
-            // Since archive doesn't store realm IDs directly, we need to check via location.
-            // For now, we skip realm filtering on the archive query -- this is a limitation
-            // that will be resolved when realm IDs are added to the archive model.
-        }
-
-        // Filter by cross-realm
-        if (body.CrossRealm.HasValue)
-        {
-            // Similar limitation -- cross-realm requires realm ID comparison
-        }
-
-        // Filter by status
-        if (body.Status.HasValue)
-        {
-            var status = body.Status.Value;
-            filtered = filtered.Where(j => j.Status == status);
-        }
-
-        // Filter active only (exclude arrived and abandoned)
-        if (body.ActiveOnly)
-        {
-            filtered = filtered.Where(j =>
-                j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned);
-        }
-
-        var journeys = filtered.Select(MapArchivedJourneyToApi).ToList();
+        var journeys = results.Select(MapArchivedJourneyToApi).ToList();
 
         // Pagination
         var totalCount = journeys.Count;
@@ -2912,64 +2897,29 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Querying journey archive - EntityId: {EntityId}, ModeCode: {ModeCode}, FromGameTime: {From}, ToGameTime: {To}",
             body.EntityId, body.ModeCode, body.FromGameTime, body.ToGameTime);
 
-        var allArchived = await _journeyArchiveStore.QueryAsync(j => true, cancellationToken);
-        var filtered = allArchived.AsEnumerable();
+        // Capture filter values outside the expression to avoid closure issues
+        var filterEntityId = body.EntityId;
+        var filterEntityType = body.EntityType;
+        var filterOriginLocationId = body.OriginLocationId;
+        var filterDestLocationId = body.DestinationLocationId;
+        var filterModeCode = body.ModeCode;
+        var filterStatus = body.Status;
+        var filterFromGameTime = body.FromGameTime;
+        var filterToGameTime = body.ToGameTime;
 
-        // Filter by entity
-        if (body.EntityId.HasValue)
-        {
-            var entityId = body.EntityId.Value;
-            filtered = filtered.Where(j => j.EntityId == entityId);
-        }
+        // Compose all filters into a single LINQ expression (pushed to SQL via IQueryableStateStore)
+        var results = await _journeyArchiveStore.QueryAsync(j =>
+            (!filterEntityId.HasValue || j.EntityId == filterEntityId.Value) &&
+            (string.IsNullOrEmpty(filterEntityType) || j.EntityType == filterEntityType) &&
+            (!filterOriginLocationId.HasValue || j.OriginLocationId == filterOriginLocationId.Value) &&
+            (!filterDestLocationId.HasValue || j.DestinationLocationId == filterDestLocationId.Value) &&
+            (string.IsNullOrEmpty(filterModeCode) || j.PrimaryModeCode == filterModeCode) &&
+            (!filterStatus.HasValue || j.Status == filterStatus.Value) &&
+            (!filterFromGameTime.HasValue || j.PlannedDepartureGameTime >= filterFromGameTime.Value) &&
+            (!filterToGameTime.HasValue || j.PlannedDepartureGameTime <= filterToGameTime.Value),
+            cancellationToken);
 
-        if (!string.IsNullOrEmpty(body.EntityType))
-        {
-            var entityType = body.EntityType;
-            filtered = filtered.Where(j => j.EntityType == entityType);
-        }
-
-        // Filter by origin location
-        if (body.OriginLocationId.HasValue)
-        {
-            var originId = body.OriginLocationId.Value;
-            filtered = filtered.Where(j => j.OriginLocationId == originId);
-        }
-
-        // Filter by destination location
-        if (body.DestinationLocationId.HasValue)
-        {
-            var destId = body.DestinationLocationId.Value;
-            filtered = filtered.Where(j => j.DestinationLocationId == destId);
-        }
-
-        // Filter by mode code
-        if (!string.IsNullOrEmpty(body.ModeCode))
-        {
-            var modeCode = body.ModeCode;
-            filtered = filtered.Where(j => j.PrimaryModeCode == modeCode);
-        }
-
-        // Filter by status
-        if (body.Status.HasValue)
-        {
-            var status = body.Status.Value;
-            filtered = filtered.Where(j => j.Status == status);
-        }
-
-        // Filter by game-time range (using planned departure game time)
-        if (body.FromGameTime.HasValue)
-        {
-            var fromTime = body.FromGameTime.Value;
-            filtered = filtered.Where(j => j.PlannedDepartureGameTime >= fromTime);
-        }
-
-        if (body.ToGameTime.HasValue)
-        {
-            var toTime = body.ToGameTime.Value;
-            filtered = filtered.Where(j => j.PlannedDepartureGameTime <= toTime);
-        }
-
-        var journeys = filtered.Select(MapArchivedJourneyToApi).ToList();
+        var journeys = results.Select(MapArchivedJourneyToApi).ToList();
 
         // Pagination
         var totalCount = journeys.Count;
@@ -3235,10 +3185,10 @@ public partial class TransitService : ITransitService
     }
 
     /// <summary>
-    /// Resolves the realm ID for a location. Returns Guid.Empty if the location is not found.
+    /// Resolves the realm ID for a location. Returns null if the location is not found.
     /// Best-effort helper for event publishing -- does not fail the calling operation.
     /// </summary>
-    private async Task<Guid> ResolveLocationRealmIdAsync(Guid locationId, CancellationToken cancellationToken)
+    private async Task<Guid?> ResolveLocationRealmIdAsync(Guid locationId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ResolveLocationRealmIdAsync");
 
@@ -3252,8 +3202,45 @@ public partial class TransitService : ITransitService
         catch (ApiException)
         {
             _logger.LogDebug("Could not resolve realm for location {LocationId}", locationId);
-            return Guid.Empty;
+            return null;
         }
+    }
+
+    /// <summary>
+    /// Adds a journey ID to the journey index list in Redis. Used by the
+    /// <see cref="JourneyArchivalWorker"/> to discover journeys without Redis SCAN.
+    /// Uses optimistic concurrency to handle concurrent additions safely.
+    /// </summary>
+    /// <param name="journeyId">The journey ID to add to the index.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    internal async Task AddToJourneyIndexAsync(Guid journeyId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.AddToJourneyIndexAsync");
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var (currentIndex, etag) = await _journeyIndexStore.GetWithETagAsync(JOURNEY_INDEX_KEY, cancellationToken);
+
+            var updatedIndex = currentIndex ?? new List<Guid>();
+            updatedIndex.Add(journeyId);
+
+            if (etag == null)
+            {
+                // First entry -- no concurrency conflict possible
+                await _journeyIndexStore.SaveAsync(JOURNEY_INDEX_KEY, updatedIndex, cancellationToken: cancellationToken);
+                return;
+            }
+
+            var result = await _journeyIndexStore.TrySaveAsync(JOURNEY_INDEX_KEY, updatedIndex, etag, cancellationToken);
+            if (result != null)
+            {
+                return;
+            }
+
+            _logger.LogDebug("Concurrent modification on journey index during add, retrying (attempt {Attempt})", attempt + 1);
+        }
+
+        _logger.LogWarning("Failed to add journey {JourneyId} to index after retries - archival worker will miss this journey until it is re-indexed", journeyId);
     }
 
     #endregion
@@ -3265,11 +3252,16 @@ public partial class TransitService : ITransitService
     /// </summary>
     private async Task PublishJourneyDepartedEventAsync(
         TransitJourneyModel journey,
-        Guid originRealmId,
-        Guid destinationRealmId,
+        Guid? originRealmId,
+        Guid? destinationRealmId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyDepartedEventAsync");
+
+        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
+        // (event consumers should treat Guid.Empty as "unknown realm")
+        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
+        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
 
         var eventModel = new TransitJourneyDepartedEvent
         {
@@ -3283,9 +3275,9 @@ public partial class TransitService : ITransitService
             PrimaryModeCode = journey.PrimaryModeCode,
             EstimatedArrivalGameTime = journey.EstimatedArrivalGameTime,
             PartySize = journey.PartySize,
-            OriginRealmId = originRealmId,
-            DestinationRealmId = destinationRealmId,
-            CrossRealm = originRealmId != destinationRealmId
+            OriginRealmId = resolvedOriginRealmId,
+            DestinationRealmId = resolvedDestRealmId,
+            CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.departed", eventModel, cancellationToken: cancellationToken);
@@ -3308,7 +3300,7 @@ public partial class TransitService : ITransitService
         Guid nextLocationId,
         int completedLegIndex,
         Guid connectionId,
-        Guid realmId,
+        Guid? realmId,
         bool crossedRealmBoundary,
         CancellationToken cancellationToken)
     {
@@ -3326,7 +3318,7 @@ public partial class TransitService : ITransitService
             LegIndex = completedLegIndex,
             RemainingLegs = journey.Legs.Count - journey.CurrentLegIndex,
             ConnectionId = connectionId,
-            RealmId = realmId,
+            RealmId = realmId ?? Guid.Empty,
             CrossedRealmBoundary = crossedRealmBoundary
         };
 
@@ -3346,8 +3338,8 @@ public partial class TransitService : ITransitService
     /// </summary>
     private async Task PublishJourneyArrivedEventAsync(
         TransitJourneyModel journey,
-        Guid originRealmId,
-        Guid destinationRealmId,
+        Guid? originRealmId,
+        Guid? destinationRealmId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyArrivedEventAsync");
@@ -3356,6 +3348,10 @@ public partial class TransitService : ITransitService
         var totalGameHours = journey.ActualArrivalGameTime.HasValue && journey.ActualDepartureGameTime.HasValue
             ? journey.ActualArrivalGameTime.Value - journey.ActualDepartureGameTime.Value
             : journey.Legs.Sum(l => l.EstimatedDurationGameHours);
+
+        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
+        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
+        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
 
         var eventModel = new TransitJourneyArrivedEvent
         {
@@ -3371,9 +3367,9 @@ public partial class TransitService : ITransitService
             TotalDistanceKm = totalDistanceKm,
             InterruptionCount = journey.Interruptions.Count,
             LegsCompleted = journey.Legs.Count(l => l.Status == JourneyLegStatus.Completed),
-            OriginRealmId = originRealmId,
-            DestinationRealmId = destinationRealmId,
-            CrossRealm = originRealmId != destinationRealmId
+            OriginRealmId = resolvedOriginRealmId,
+            DestinationRealmId = resolvedDestRealmId,
+            CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.arrived", eventModel, cancellationToken: cancellationToken);
@@ -3392,7 +3388,7 @@ public partial class TransitService : ITransitService
     /// </summary>
     private async Task PublishJourneyInterruptedEventAsync(
         TransitJourneyModel journey,
-        Guid realmId,
+        Guid? realmId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyInterruptedEventAsync");
@@ -3407,7 +3403,7 @@ public partial class TransitService : ITransitService
             CurrentLocationId = journey.CurrentLocationId,
             CurrentLegIndex = journey.CurrentLegIndex,
             Reason = journey.StatusReason ?? "unknown",
-            RealmId = realmId
+            RealmId = realmId ?? Guid.Empty
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.interrupted", eventModel, cancellationToken: cancellationToken);
@@ -3426,7 +3422,7 @@ public partial class TransitService : ITransitService
     /// </summary>
     private async Task PublishJourneyResumedEventAsync(
         TransitJourneyModel journey,
-        Guid realmId,
+        Guid? realmId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyResumedEventAsync");
@@ -3447,7 +3443,7 @@ public partial class TransitService : ITransitService
             CurrentLegIndex = journey.CurrentLegIndex,
             RemainingLegs = journey.Legs.Count - journey.CurrentLegIndex,
             ModeCode = currentLegModeCode,
-            RealmId = realmId
+            RealmId = realmId ?? Guid.Empty
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.resumed", eventModel, cancellationToken: cancellationToken);
@@ -3466,12 +3462,17 @@ public partial class TransitService : ITransitService
     /// </summary>
     private async Task PublishJourneyAbandonedEventAsync(
         TransitJourneyModel journey,
-        Guid originRealmId,
-        Guid destinationRealmId,
-        Guid abandonedAtRealmId,
+        Guid? originRealmId,
+        Guid? destinationRealmId,
+        Guid? abandonedAtRealmId,
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishJourneyAbandonedEventAsync");
+
+        // Event schema requires non-nullable realm IDs; use Guid.Empty when realm resolution failed
+        var resolvedOriginRealmId = originRealmId ?? Guid.Empty;
+        var resolvedDestRealmId = destinationRealmId ?? Guid.Empty;
+        var resolvedAbandonedAtRealmId = abandonedAtRealmId ?? Guid.Empty;
 
         var eventModel = new TransitJourneyAbandonedEvent
         {
@@ -3486,10 +3487,10 @@ public partial class TransitService : ITransitService
             Reason = journey.StatusReason ?? "unknown",
             CompletedLegs = journey.Legs.Count(l => l.Status == JourneyLegStatus.Completed),
             TotalLegs = journey.Legs.Count,
-            OriginRealmId = originRealmId,
-            DestinationRealmId = destinationRealmId,
-            AbandonedAtRealmId = abandonedAtRealmId,
-            CrossRealm = originRealmId != destinationRealmId
+            OriginRealmId = resolvedOriginRealmId,
+            DestinationRealmId = resolvedDestRealmId,
+            AbandonedAtRealmId = resolvedAbandonedAtRealmId,
+            CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
         var published = await _messageBus.TryPublishAsync("transit-journey.abandoned", eventModel, cancellationToken: cancellationToken);
@@ -4479,6 +4480,181 @@ public partial class TransitService : ITransitService
     // to push TransitDiscoveryRevealed client events to the discovering entity's session.
     // The transit-discovery.revealed service bus event provides guaranteed delivery to server-side
     // consumers regardless.
+
+    #endregion
+
+    #region Resource Cleanup
+
+    /// <summary>
+    /// Cleans up all transit data referencing a deleted location. Called by lib-resource
+    /// when a location is deleted (CASCADE policy). Closes all connections referencing
+    /// the deleted location and abandons active journeys passing through it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>FOUNDATION TENETS (Resource-Managed Cleanup):</b> Transit does NOT subscribe to
+    /// <c>location.deleted</c> events for cleanup. This callback is registered via lib-resource's
+    /// cleanup coordination pattern and invoked by the Resource service during deletion.
+    /// </para>
+    /// <para>
+    /// <b>Active journey limitation:</b> Active journeys live in Redis (<c>_journeyStore</c>),
+    /// which is not queryable by location ID. The archive store (MySQL) is queried for journeys
+    /// with matching origin or destination. Active Redis journeys referencing the deleted location
+    /// will naturally fail on their next advance attempt when the location no longer exists.
+    /// </para>
+    /// </remarks>
+    /// <param name="body">Request containing the deleted location ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK after cleanup completes.</returns>
+    public async Task<StatusCodes> CleanupByLocationAsync(CleanupByLocationRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CleanupByLocationAsync");
+
+        _logger.LogDebug("Cleaning up transit data for deleted location {LocationId}", body.LocationId);
+
+        var deletedLocationId = body.LocationId;
+        var affectedRealmIds = new HashSet<Guid>();
+        var connectionsClosedCount = 0;
+        var journeysAbandonedCount = 0;
+
+        // Step 1: Find all connections referencing the deleted location (from MySQL, queryable)
+        var affectedConnections = await _connectionStore.QueryAsync(
+            c => c.FromLocationId == deletedLocationId || c.ToLocationId == deletedLocationId,
+            cancellationToken);
+
+        // Step 2: Close each affected connection with status "closed" and reason "location_deleted"
+        foreach (var connection in affectedConnections)
+        {
+            var previousStatus = connection.Status;
+
+            // Track affected realms for graph cache invalidation
+            affectedRealmIds.Add(connection.FromRealmId);
+            if (connection.CrossRealm)
+            {
+                affectedRealmIds.Add(connection.ToRealmId);
+            }
+
+            // Update connection status to closed
+            connection.Status = ConnectionStatus.Closed;
+            connection.StatusReason = "location_deleted";
+            connection.StatusChangedAt = DateTimeOffset.UtcNow;
+            connection.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var connKey = BuildConnectionKey(connection.Id);
+            await _connectionStore.SaveAsync(connKey, connection, cancellationToken: cancellationToken);
+
+            // Publish status-changed event for each closed connection
+            await PublishConnectionStatusChangedEventAsync(connection, previousStatus, forceUpdated: true, cancellationToken);
+
+            connectionsClosedCount++;
+
+            _logger.LogDebug("Closed connection {ConnectionId} due to location {LocationId} deletion",
+                connection.Id, deletedLocationId);
+        }
+
+        // Step 3: Invalidate graph cache for all affected realms
+        if (affectedRealmIds.Count > 0)
+        {
+            await _graphCache.InvalidateAsync(affectedRealmIds, cancellationToken);
+        }
+
+        // Step 4: Abandon active journeys in archive store that reference the deleted location
+        // as origin or destination. Active journeys in Redis are not queryable by location;
+        // they will fail on next advance when the location no longer exists.
+        var affectedJourneys = await _journeyArchiveStore.QueryAsync(
+            j => (j.OriginLocationId == deletedLocationId || j.DestinationLocationId == deletedLocationId) &&
+                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
+            cancellationToken);
+
+        foreach (var archivedJourney in affectedJourneys)
+        {
+            archivedJourney.Status = JourneyStatus.Abandoned;
+            archivedJourney.StatusReason = "location_deleted";
+            archivedJourney.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var archiveKey = BuildJourneyArchiveKey(archivedJourney.Id);
+            await _journeyArchiveStore.SaveAsync(archiveKey, archivedJourney, cancellationToken: cancellationToken);
+
+            journeysAbandonedCount++;
+        }
+
+        _logger.LogInformation("Cleaned up transit data for deleted location {LocationId}: {ConnectionsClosed} connections closed, {JourneysAbandoned} archived journeys abandoned",
+            body.LocationId, connectionsClosedCount, journeysAbandonedCount);
+
+        return StatusCodes.OK;
+    }
+
+    /// <summary>
+    /// Cleans up all transit data referencing a deleted character (entity). Called by lib-resource
+    /// when a character is deleted (CASCADE policy). Clears all discovery records for the entity
+    /// and abandons any active journeys belonging to the entity.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>FOUNDATION TENETS (Resource-Managed Cleanup):</b> Transit does NOT subscribe to
+    /// <c>character.deleted</c> events for cleanup. This callback is registered via lib-resource's
+    /// cleanup coordination pattern and invoked by the Resource service during deletion.
+    /// </para>
+    /// <para>
+    /// <b>Active journey limitation:</b> Active journeys in Redis are not queryable by entity.
+    /// The archive store (MySQL) is queried for entity journeys. Active Redis journeys for the
+    /// deleted entity will remain until the archival worker moves them or they time out.
+    /// </para>
+    /// </remarks>
+    /// <param name="body">Request containing the deleted character ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK after cleanup completes.</returns>
+    public async Task<StatusCodes> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CleanupByCharacterAsync");
+
+        _logger.LogDebug("Cleaning up transit data for deleted character {CharacterId}", body.CharacterId);
+
+        var deletedCharacterId = body.CharacterId;
+        var discoveriesDeletedCount = 0;
+        var journeysAbandonedCount = 0;
+
+        // Step 1: Delete all discovery records for this entity from MySQL
+        var discoveries = await _discoveryStore.QueryAsync(
+            d => d.EntityId == deletedCharacterId,
+            cancellationToken);
+
+        foreach (var discovery in discoveries)
+        {
+            var discoveryKey = BuildDiscoveryKey(discovery.EntityId, discovery.ConnectionId);
+            await _discoveryStore.DeleteAsync(discoveryKey, cancellationToken);
+            discoveriesDeletedCount++;
+        }
+
+        // Step 2: Invalidate the Redis discovery cache for this entity
+        var cacheKey = BuildDiscoveryCacheKey(deletedCharacterId);
+        await _discoveryCacheStore.DeleteAsync(cacheKey, cancellationToken);
+
+        // Step 3: Abandon active journeys in archive store for this entity.
+        // Active journeys in Redis are not queryable by entity; they will remain
+        // until the archival worker processes them.
+        var entityJourneys = await _journeyArchiveStore.QueryAsync(
+            j => j.EntityId == deletedCharacterId &&
+                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
+            cancellationToken);
+
+        foreach (var archivedJourney in entityJourneys)
+        {
+            archivedJourney.Status = JourneyStatus.Abandoned;
+            archivedJourney.StatusReason = "character_deleted";
+            archivedJourney.ModifiedAt = DateTimeOffset.UtcNow;
+
+            var archiveKey = BuildJourneyArchiveKey(archivedJourney.Id);
+            await _journeyArchiveStore.SaveAsync(archiveKey, archivedJourney, cancellationToken: cancellationToken);
+
+            journeysAbandonedCount++;
+        }
+
+        _logger.LogInformation("Cleaned up transit data for deleted character {CharacterId}: {DiscoveriesDeleted} discoveries deleted, {JourneysAbandoned} archived journeys abandoned",
+            body.CharacterId, discoveriesDeletedCount, journeysAbandonedCount);
+
+        return StatusCodes.OK;
+    }
 
     #endregion
 }

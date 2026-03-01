@@ -299,6 +299,9 @@ internal class TransitJourneyModel
     /// <summary>Total cargo weight in kilograms.</summary>
     public decimal CargoWeightKg { get; set; }
 
+    /// <summary>Realm ID for the journey's origin location (denormalized from Location service for efficient archival worker game-time lookups).</summary>
+    public Guid RealmId { get; set; }
+
     /// <summary>When this journey was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -523,6 +526,9 @@ internal class JourneyArchiveModel
 
     /// <summary>Cargo weight during the journey.</summary>
     public decimal CargoWeightKg { get; set; }
+
+    /// <summary>Realm ID for the journey's origin location (denormalized from the active journey model).</summary>
+    public Guid RealmId { get; set; }
 
     /// <summary>When this journey was originally created.</summary>
     public DateTimeOffset CreatedAt { get; set; }

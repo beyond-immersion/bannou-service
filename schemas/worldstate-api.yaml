@@ -1406,8 +1406,6 @@ components:
       required:
         - items
         - totalCount
-        - page
-        - pageSize
       properties:
         items:
           type: array
@@ -1418,15 +1416,6 @@ components:
           type: integer
           minimum: 0
           description: Total matching realm clocks
-        page:
-          type: integer
-          minimum: 0
-          description: Current page number
-        pageSize:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: Items per page
 
     RealmClockSummary:
       type: object
@@ -1504,11 +1493,5 @@ components:
     CleanupByGameServiceResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of game service worldstate cleanup
-      required:
-        - templatesRemoved
-      properties:
-        templatesRemoved:
-          type: integer
-          minimum: 0
-          description: Number of calendar templates removed
+      description: Empty response. HTTP 200 confirms the cleanup succeeded.
+      properties: {}

@@ -1,10 +1,13 @@
+using BeyondImmersion.Bannou.Character.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.Resource;
@@ -46,6 +49,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
     private readonly Mock<IContractClient> _mockContractClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "character-statestore";
@@ -71,6 +75,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         _mockContractClient = new Mock<IContractClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
@@ -137,6 +142,7 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             _mockContractClient.Object,
             _mockEventConsumer.Object,
             resourceClient ?? _mockResourceClient.Object,
+            _mockEntitySessionRegistry.Object,
             _mockTelemetryProvider.Object);
     }
 
@@ -339,6 +345,20 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
         Assert.Equal(realmId, capturedEvent.RealmId);
         Assert.NotEqual(Guid.Empty, capturedEvent.SpeciesId);
         Assert.Equal(CharacterStatus.Dead, capturedEvent.Status);
+
+        // Assert - Client event was published via Entity Session Registry
+        _mockEntitySessionRegistry.Verify(r => r.PublishToEntitySessionsAsync(
+            "character",
+            characterId,
+            It.Is<CharacterUpdatedClientEvent>(e =>
+                e.CharacterId == characterId &&
+                e.ChangedFields.Contains("name") &&
+                e.ChangedFields.Contains("status") &&
+                e.ChangedFields.Contains("deathDate") &&
+                e.Name == "Updated Name" &&
+                e.Status == CharacterStatus.Dead &&
+                e.DeathDate != null),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -457,6 +477,13 @@ public class CharacterServiceTests : ServiceTestBase<CharacterServiceConfigurati
             It.IsAny<CharacterUpdatedEvent>(),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+
+        // Verify NO client event published either (no changes)
+        _mockEntitySessionRegistry.Verify(r => r.PublishToEntitySessionsAsync(
+            It.IsAny<string>(),
+            It.IsAny<Guid>(),
+            It.IsAny<CharacterUpdatedClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
 

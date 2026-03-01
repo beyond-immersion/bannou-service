@@ -114,13 +114,6 @@ public class WorldstateServiceConfiguration : BaseServiceConfiguration
     public int MaxCalendarsPerGameService { get; set; } = 10;
 
     /// <summary>
-    /// Days of ratio history to retain. Older segments are compacted (merged into single segments using time-weighted averaging).
-    /// Environment variable: WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS
-    /// </summary>
-    [ConfigRange(Minimum = 7, Maximum = 365)]
-    public int RatioHistoryRetentionDays { get; set; } = 90;
-
-    /// <summary>
     /// Default calendar template code used as fallback when InitializeRealmClock is called without specifying a template. Null means no default and caller must specify.
     /// Environment variable: WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE
     /// </summary>

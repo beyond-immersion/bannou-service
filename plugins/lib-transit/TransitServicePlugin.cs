@@ -27,10 +27,8 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
         services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
 
         // Background workers
-        // TODO: Uncomment when SeasonalConnectionWorker is created (Phase 8)
-        // services.AddHostedService<SeasonalConnectionWorker>();
-        // TODO: Uncomment when JourneyArchivalWorker is created (Phase 8)
-        // services.AddHostedService<JourneyArchivalWorker>();
+        services.AddHostedService<SeasonalConnectionWorker>();
+        services.AddHostedService<JourneyArchivalWorker>();
 
         // Variable provider for ${transit.*} ABML expressions
         // TODO: Uncomment when TransitVariableProviderFactory is created (Phase 9)

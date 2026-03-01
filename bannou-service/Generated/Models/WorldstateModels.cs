@@ -1278,20 +1278,6 @@ public partial class ListRealmClocksResponse
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int TotalCount { get; set; } = default!;
 
-    /// <summary>
-    /// Current page number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int Page { get; set; } = default!;
-
-    /// <summary>
-    /// Items per page
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
-    [System.ComponentModel.DataAnnotations.Range(1, 1000)]
-    public int PageSize { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -1394,18 +1380,11 @@ public partial class CleanupByGameServiceRequest
 }
 
 /// <summary>
-/// Confirmation of game service worldstate cleanup
+/// Empty response. HTTP 200 confirms the cleanup succeeded.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupByGameServiceResponse
 {
-
-    /// <summary>
-    /// Number of calendar templates removed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templatesRemoved")]
-    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
-    public int TemplatesRemoved { get; set; } = default!;
 
 }
 

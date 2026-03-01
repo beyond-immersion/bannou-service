@@ -165,6 +165,7 @@ components:
       - currentTimeRatio
       - downtimePolicy
       - realmEpoch
+      - isActive
       properties:
         eventName:
           type: string
@@ -192,6 +193,9 @@ components:
           type: string
           format: date-time
           description: Real-world timestamp marking the start of this realm's game time
+        isActive: &id017
+          type: boolean
+          description: Whether the realm clock is initialized and active
     RealmConfigUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -208,6 +212,7 @@ components:
       - currentTimeRatio
       - downtimePolicy
       - realmEpoch
+      - isActive
       - changedFields
       properties:
         eventName:
@@ -220,6 +225,7 @@ components:
         currentTimeRatio: *id014
         downtimePolicy: *id015
         realmEpoch: *id016
+        isActive: *id017
         changedFields:
           type: array
           items:
@@ -241,6 +247,7 @@ components:
       - currentTimeRatio
       - downtimePolicy
       - realmEpoch
+      - isActive
       properties:
         eventName:
           type: string
@@ -252,6 +259,7 @@ components:
         currentTimeRatio: *id014
         downtimePolicy: *id015
         realmEpoch: *id016
+        isActive: *id017
         deletedReason:
           type: string
           nullable: true

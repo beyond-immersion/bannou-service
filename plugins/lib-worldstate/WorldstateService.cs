@@ -445,7 +445,7 @@ public partial class WorldstateService : IWorldstateService
         await RegisterRealmReferenceAsync($"clock:{body.RealmId}", body.RealmId, cancellationToken);
 
         // Publish initialization event
-        await _messageBus.TryPublishAsync("worldstate.realm-clock.initialized", new WorldstateRealmClockInitializedEvent
+        await _messageBus.TryPublishAsync("realm-clock.initialized", new WorldstateRealmClockInitializedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1437,9 +1437,7 @@ public partial class WorldstateService : IWorldstateService
         return (StatusCodes.OK, new ListRealmClocksResponse
         {
             Items = summaries,
-            TotalCount = (int)Math.Min(pagedResult.TotalCount, int.MaxValue),
-            Page = body.Page,
-            PageSize = body.PageSize
+            TotalCount = (int)Math.Min(pagedResult.TotalCount, int.MaxValue)
         });
     }
 
@@ -1563,10 +1561,7 @@ public partial class WorldstateService : IWorldstateService
         _logger.LogInformation("Cleaned up {Count} calendar template(s) for game service {GameServiceId}",
             calendars.Count, body.GameServiceId);
 
-        return (StatusCodes.OK, new CleanupByGameServiceResponse
-        {
-            TemplatesRemoved = calendars.Count
-        });
+        return (StatusCodes.OK, new CleanupByGameServiceResponse());
     }
 
     #region Private Helpers
