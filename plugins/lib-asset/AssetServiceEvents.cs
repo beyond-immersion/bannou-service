@@ -428,10 +428,10 @@ public partial class AssetService
     /// <summary>
     /// Emits the job completion event to the requester's session (if available).
     /// </summary>
-    private async Task EmitJobCompletionEventAsync(MetabundleJob job, string? sessionId, CancellationToken cancellationToken)
+    private async Task EmitJobCompletionEventAsync(MetabundleJob job, Guid? sessionId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.EmitJobCompletionEventAsync");
-        if (string.IsNullOrEmpty(sessionId))
+        if (sessionId == null)
         {
             _logger.LogDebug("No session ID for job completion event: JobId={JobId}", job.JobId);
             return;
@@ -459,7 +459,7 @@ public partial class AssetService
         }
 
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
-            sessionId,
+            sessionId.Value.ToString(),
             job.JobId,
             job.MetabundleId,
             success,

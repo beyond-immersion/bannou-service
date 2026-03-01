@@ -453,12 +453,20 @@ public partial class BatchGetRealmTimesResponse
 {
 
     /// <summary>
-    /// Game time snapshots for each requested realm (omits realms without initialized clocks)
+    /// Game time snapshots for each requested realm that has an initialized clock
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("snapshots")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<GameTimeSnapshot> Snapshots { get; set; } = new System.Collections.ObjectModel.Collection<GameTimeSnapshot>();
+
+    /// <summary>
+    /// Realm IDs from the request that had no initialized clock
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notFoundRealmIds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> NotFoundRealmIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
 

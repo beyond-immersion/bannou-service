@@ -2030,25 +2030,29 @@ public partial class TransitService : ITransitService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Resolve current time ratio for real-minutes estimation
+        // Resolve current time ratio and season for real-minutes estimation and seasonal warnings
         // Use the origin location's realm for the time ratio
         decimal currentTimeRatio = 0;
+        string? currentSeason = null;
         try
         {
             var snapshot = await _worldstateClient.GetRealmTimeAsync(
                 new Worldstate.GetRealmTimeRequest { RealmId = fromLocation.RealmId },
                 cancellationToken);
             currentTimeRatio = (decimal)snapshot.TimeRatio;
+            currentSeason = snapshot.Season;
         }
         catch (ApiException ex)
         {
             // Non-fatal: if Worldstate is unavailable, we can still calculate routes
-            // but totalRealMinutes will be 0
+            // but totalRealMinutes will be 0 and seasonal warnings will omit season data
             _logger.LogWarning(ex, "Could not retrieve time ratio for realm {RealmId}, real-minutes estimation will be unavailable",
                 fromLocation.RealmId);
         }
 
         // Build the route calculation request for the calculator
+        // CargoWeightKg is intentionally zeroed for the public API endpoint. Internal callers
+        // (journey planner, variable provider) will populate it with actual cargo weight.
         var calcRequest = new RouteCalculationRequest(
             OriginLocationId: body.FromLocationId,
             DestinationLocationId: body.ToLocationId,
@@ -2060,7 +2064,8 @@ public partial class TransitService : ITransitService
             CargoWeightKg: 0m,
             MaxLegs: body.MaxLegs ?? _configuration.MaxRouteCalculationLegs,
             MaxOptions: body.MaxOptions ?? _configuration.MaxRouteOptions,
-            CurrentTimeRatio: currentTimeRatio);
+            CurrentTimeRatio: currentTimeRatio,
+            CurrentSeason: currentSeason);
 
         // Invoke the route calculator (stateless computation)
         var results = await _routeCalculator.CalculateAsync(calcRequest, cancellationToken);
@@ -2071,9 +2076,7 @@ public partial class TransitService : ITransitService
             Waypoints = r.Waypoints,
             Connections = r.Connections,
             LegCount = r.Connections.Count,
-            PrimaryModeCode = r.LegModes.Count > 0
-                ? r.LegModes.GroupBy(m => m).OrderByDescending(g => g.Count()).First().Key
-                : "walking",
+            PrimaryModeCode = r.PrimaryModeCode,
             LegModes = r.LegModes,
             TotalDistanceKm = r.TotalDistanceKm,
             TotalGameHours = r.TotalGameHours,
@@ -2099,34 +2102,249 @@ public partial class TransitService : ITransitService
         return (StatusCodes.OK, new CalculateRouteResponse { Options = options });
     }
 
+    #endregion
+
+    #region Discovery
+
+    private const string DISCOVERY_KEY_PREFIX = "discovery:";
+
     /// <summary>
-    /// Implementation of RevealDiscovery operation.
+    /// Builds the state store key for a discovery record.
+    /// Composite key: discovery:{entityId}:{connectionId}
     /// </summary>
+    private static string BuildDiscoveryKey(Guid entityId, Guid connectionId) =>
+        $"{DISCOVERY_KEY_PREFIX}{entityId}:{connectionId}";
+
+    /// <summary>
+    /// Builds the cache key for an entity's discovered connections set.
+    /// Key: discovery-cache:{entityId}
+    /// </summary>
+    private static string BuildDiscoveryCacheKey(Guid entityId) =>
+        $"discovery-cache:{entityId}";
+
+    /// <summary>
+    /// Reveals a discoverable connection to an entity. If the connection has already been
+    /// discovered by this entity, returns the existing record with isNew=false.
+    /// New discoveries are saved to MySQL for durability and cached in Redis for fast
+    /// route calculation filtering. Publishes discovery event and client event on new discovery.
+    /// </summary>
+    /// <param name="body">Request containing entity ID, connection ID, and discovery source.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK with the discovery record, NotFound if connection does not exist, BadRequest if not discoverable.</returns>
     public async Task<(StatusCodes, RevealDiscoveryResponse?)> RevealDiscoveryAsync(RevealDiscoveryRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement RevealDiscovery
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method RevealDiscovery not yet implemented");
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.RevealDiscoveryAsync");
+
+        _logger.LogDebug("Revealing connection {ConnectionId} to entity {EntityId} via source {Source}",
+            body.ConnectionId, body.EntityId, body.Source);
+
+        // Validate connection exists
+        var connectionKey = BuildConnectionKey(body.ConnectionId);
+        var connection = await _connectionStore.GetAsync(connectionKey, cancellationToken: cancellationToken);
+
+        if (connection == null)
+        {
+            _logger.LogDebug("Connection not found for discovery reveal: {ConnectionId}", body.ConnectionId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check that the connection is discoverable
+        if (!connection.Discoverable)
+        {
+            _logger.LogDebug("Connection {ConnectionId} is not discoverable", body.ConnectionId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check if the entity has already discovered this connection
+        var discoveryKey = BuildDiscoveryKey(body.EntityId, body.ConnectionId);
+        var existingDiscovery = await _discoveryStore.GetAsync(discoveryKey, cancellationToken: cancellationToken);
+
+        if (existingDiscovery != null)
+        {
+            _logger.LogDebug("Entity {EntityId} has already discovered connection {ConnectionId}, returning existing record",
+                body.EntityId, body.ConnectionId);
+
+            return (StatusCodes.OK, new RevealDiscoveryResponse
+            {
+                Discovery = MapDiscoveryToApi(existingDiscovery, isNew: false)
+            });
+        }
+
+        // New discovery: create and save
+        var now = DateTimeOffset.UtcNow;
+        var discoveryModel = new TransitDiscoveryModel
+        {
+            EntityId = body.EntityId,
+            ConnectionId = body.ConnectionId,
+            Source = body.Source,
+            DiscoveredAt = now,
+            IsNew = true
+        };
+
+        await _discoveryStore.SaveAsync(discoveryKey, discoveryModel, cancellationToken: cancellationToken);
+
+        // Update Redis discovery cache for fast route calculation filtering
+        await UpdateDiscoveryCacheAsync(body.EntityId, body.ConnectionId, cancellationToken);
+
+        // Publish transit.discovery.revealed service bus event
+        await PublishDiscoveryRevealedEventAsync(discoveryModel, connection, cancellationToken);
+
+        // Publish client event for the discovering entity's session
+        await PublishDiscoveryRevealedClientEventAsync(discoveryModel, connection, cancellationToken);
+
+        _logger.LogInformation("Entity {EntityId} discovered connection {ConnectionId} via {Source}",
+            body.EntityId, body.ConnectionId, body.Source);
+
+        return (StatusCodes.OK, new RevealDiscoveryResponse
+        {
+            Discovery = MapDiscoveryToApi(discoveryModel, isNew: true)
+        });
     }
 
     /// <summary>
-    /// Implementation of ListDiscoveries operation.
+    /// Lists connection IDs that an entity has discovered, optionally filtered by realm.
+    /// Queries the MySQL discovery store for durable discovery records.
     /// </summary>
+    /// <param name="body">Request containing entity ID and optional realm filter.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK with the list of discovered connection IDs.</returns>
     public async Task<(StatusCodes, ListDiscoveriesResponse?)> ListDiscoveriesAsync(ListDiscoveriesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement ListDiscoveries
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method ListDiscoveries not yet implemented");
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.ListDiscoveriesAsync");
+
+        _logger.LogDebug("Listing discoveries for entity {EntityId} with realm filter {RealmId}",
+            body.EntityId, body.RealmId);
+
+        // Query all discoveries for this entity from MySQL
+        var discoveries = await _discoveryStore.QueryAsync(
+            d => d.EntityId == body.EntityId,
+            cancellationToken);
+
+        IEnumerable<Guid> connectionIds;
+
+        if (body.RealmId.HasValue)
+        {
+            // Filter by realm: need to check each connection's realm fields
+            var realmId = body.RealmId.Value;
+            var filteredConnectionIds = new List<Guid>();
+
+            foreach (var discovery in discoveries)
+            {
+                var connKey = BuildConnectionKey(discovery.ConnectionId);
+                var conn = await _connectionStore.GetAsync(connKey, cancellationToken: cancellationToken);
+
+                // Include if connection still exists and touches the specified realm
+                if (conn != null && (conn.FromRealmId == realmId || conn.ToRealmId == realmId))
+                {
+                    filteredConnectionIds.Add(discovery.ConnectionId);
+                }
+            }
+
+            connectionIds = filteredConnectionIds;
+        }
+        else
+        {
+            connectionIds = discoveries.Select(d => d.ConnectionId);
+        }
+
+        var result = connectionIds.ToList();
+
+        _logger.LogDebug("Found {Count} discoveries for entity {EntityId}", result.Count, body.EntityId);
+
+        return (StatusCodes.OK, new ListDiscoveriesResponse { ConnectionIds = result });
     }
 
     /// <summary>
-    /// Implementation of CheckDiscoveries operation.
+    /// Checks whether an entity has discovered specific connections.
+    /// Returns per-connection discovery status including when and how each was discovered.
     /// </summary>
+    /// <param name="body">Request containing entity ID and connection IDs to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>OK with per-connection discovery check results.</returns>
     public async Task<(StatusCodes, CheckDiscoveriesResponse?)> CheckDiscoveriesAsync(CheckDiscoveriesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CheckDiscoveries
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CheckDiscoveries not yet implemented");
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckDiscoveriesAsync");
+
+        _logger.LogDebug("Checking {Count} connection discoveries for entity {EntityId}",
+            body.ConnectionIds.Count, body.EntityId);
+
+        var results = new List<DiscoveryCheckResult>();
+
+        foreach (var connectionId in body.ConnectionIds)
+        {
+            var discoveryKey = BuildDiscoveryKey(body.EntityId, connectionId);
+            var discovery = await _discoveryStore.GetAsync(discoveryKey, cancellationToken: cancellationToken);
+
+            if (discovery != null)
+            {
+                results.Add(new DiscoveryCheckResult
+                {
+                    ConnectionId = connectionId,
+                    Discovered = true,
+                    DiscoveredAt = discovery.DiscoveredAt,
+                    Source = discovery.Source
+                });
+            }
+            else
+            {
+                results.Add(new DiscoveryCheckResult
+                {
+                    ConnectionId = connectionId,
+                    Discovered = false,
+                    DiscoveredAt = null,
+                    Source = null
+                });
+            }
+        }
+
+        return (StatusCodes.OK, new CheckDiscoveriesResponse { Results = results });
+    }
+
+    /// <summary>
+    /// Updates the Redis discovery cache for an entity after a new discovery.
+    /// Loads the existing set, adds the new connection ID, and saves with TTL.
+    /// </summary>
+    private async Task UpdateDiscoveryCacheAsync(Guid entityId, Guid connectionId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.UpdateDiscoveryCacheAsync");
+
+        var cacheKey = BuildDiscoveryCacheKey(entityId);
+        var cachedSet = await _discoveryCacheStore.GetAsync(cacheKey, cancellationToken: cancellationToken);
+
+        if (cachedSet == null)
+        {
+            cachedSet = new HashSet<Guid>();
+        }
+
+        cachedSet.Add(connectionId);
+
+        var ttlSeconds = _configuration.DiscoveryCacheTtlSeconds;
+        if (ttlSeconds > 0)
+        {
+            await _discoveryCacheStore.SaveAsync(cacheKey, cachedSet, ttl: TimeSpan.FromSeconds(ttlSeconds), cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await _discoveryCacheStore.SaveAsync(cacheKey, cachedSet, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Maps an internal <see cref="TransitDiscoveryModel"/> to the generated <see cref="DiscoveryRecord"/> API model.
+    /// </summary>
+    /// <param name="model">The internal discovery storage model.</param>
+    /// <param name="isNew">Whether this discovery is new (first time) or a re-revelation.</param>
+    /// <returns>The API-facing discovery record.</returns>
+    private static DiscoveryRecord MapDiscoveryToApi(TransitDiscoveryModel model, bool isNew)
+    {
+        return new DiscoveryRecord
+        {
+            EntityId = model.EntityId,
+            ConnectionId = model.ConnectionId,
+            Source = model.Source,
+            DiscoveredAt = model.DiscoveredAt,
+            IsNew = isNew
+        };
     }
 
     /// <summary>
@@ -2642,6 +2860,83 @@ public partial class TransitService : ITransitService
         // is integrated (requires adding to constructor in future phase).
         _logger.LogDebug("Client event publishing for connection status change deferred -- IEntitySessionRegistry not yet integrated. Connection {ConnectionId}: {PreviousStatus} -> {NewStatus}",
             model.Id, previousStatus, model.Status);
+
+        await Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region Discovery Event Publishing
+
+    /// <summary>
+    /// Publishes a transit.discovery.revealed service bus event when a connection
+    /// is revealed to an entity for the first time. Consumed by Collection (unlocks),
+    /// Quest (objectives), and Analytics (aggregation).
+    /// </summary>
+    /// <param name="discovery">The discovery record.</param>
+    /// <param name="connection">The connection that was discovered (for realm and location data).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task PublishDiscoveryRevealedEventAsync(
+        TransitDiscoveryModel discovery,
+        TransitConnectionModel connection,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishDiscoveryRevealedEventAsync");
+
+        var eventModel = new TransitDiscoveryRevealedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EntityId = discovery.EntityId,
+            ConnectionId = discovery.ConnectionId,
+            FromLocationId = connection.FromLocationId,
+            ToLocationId = connection.ToLocationId,
+            Source = discovery.Source,
+            FromRealmId = connection.FromRealmId,
+            ToRealmId = connection.ToRealmId,
+            CrossRealm = connection.CrossRealm
+        };
+
+        var published = await _messageBus.TryPublishAsync("transit.discovery.revealed", eventModel, cancellationToken: cancellationToken);
+        if (published)
+        {
+            _logger.LogDebug("Published transit.discovery.revealed event for entity {EntityId} connection {ConnectionId}",
+                discovery.EntityId, discovery.ConnectionId);
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish transit.discovery.revealed event for entity {EntityId} connection {ConnectionId}",
+                discovery.EntityId, discovery.ConnectionId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a client event for discovery reveals to the discovering entity's
+    /// WebSocket session via IClientEventPublisher.
+    /// </summary>
+    /// <remarks>
+    /// Uses IClientEventPublisher for server-to-client push per IMPLEMENTATION TENETS (T17).
+    /// If IEntitySessionRegistry is not available (not yet injected), this is a no-op
+    /// with a debug log -- the service bus event provides guaranteed delivery to server-side
+    /// consumers regardless.
+    /// </remarks>
+    /// <param name="discovery">The discovery record.</param>
+    /// <param name="connection">The connection that was discovered (for location and name data).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task PublishDiscoveryRevealedClientEventAsync(
+        TransitDiscoveryModel discovery,
+        TransitConnectionModel connection,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishDiscoveryRevealedClientEventAsync");
+
+        // TODO: Inject IEntitySessionRegistry in constructor to enable entity-based client event routing.
+        // Discovery reveals should be pushed to the discovering entity's session.
+        // For now, the transit.discovery.revealed service bus event provides guaranteed delivery
+        // to server-side consumers. Client-side delivery will be implemented when IEntitySessionRegistry
+        // is integrated (requires adding to constructor in future phase).
+        _logger.LogDebug("Client event publishing for discovery reveal deferred -- IEntitySessionRegistry not yet integrated. Entity {EntityId} discovered connection {ConnectionId}",
+            discovery.EntityId, discovery.ConnectionId);
 
         await Task.CompletedTask;
     }

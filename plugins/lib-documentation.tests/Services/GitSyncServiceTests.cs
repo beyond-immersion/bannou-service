@@ -208,33 +208,33 @@ public class GitSyncServiceTests
 
     #endregion
 
-    #region GetHeadCommit Tests
+    #region GetHeadCommitAsync Tests
 
     [Fact]
-    public void GetHeadCommit_WithEmptyPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithEmptyPath_ShouldReturnNull()
     {
         // Arrange, Act
-        var result = _service.GetHeadCommit("");
+        var result = await _service.GetHeadCommitAsync("");
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public void GetHeadCommit_WithNonExistentPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithNonExistentPath_ShouldReturnNull()
     {
         // Arrange
         var localPath = Path.Combine(_configuration.GitStoragePath, "nonexistent-" + Guid.NewGuid());
 
         // Act
-        var result = _service.GetHeadCommit(localPath);
+        var result = await _service.GetHeadCommitAsync(localPath);
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public void GetHeadCommit_WithNonRepoPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithNonRepoPath_ShouldReturnNull()
     {
         // Arrange
         var testDir = Path.Combine(_configuration.GitStoragePath, "not-a-repo-" + Guid.NewGuid());
@@ -243,7 +243,7 @@ public class GitSyncServiceTests
         try
         {
             // Act
-            var result = _service.GetHeadCommit(testDir);
+            var result = await _service.GetHeadCommitAsync(testDir);
 
             // Assert
             Assert.Null(result);

@@ -51,6 +51,7 @@ public interface ITransitRouteCalculator
 /// <param name="MaxLegs">Maximum legs to consider (from configuration).</param>
 /// <param name="MaxOptions">Maximum route options to return (from configuration).</param>
 /// <param name="CurrentTimeRatio">Current game-time to real-time ratio for real minutes estimation.</param>
+/// <param name="CurrentSeason">Current season name from Worldstate, or null if unavailable.</param>
 public record RouteCalculationRequest(
     Guid OriginLocationId,
     Guid DestinationLocationId,
@@ -62,7 +63,8 @@ public record RouteCalculationRequest(
     decimal CargoWeightKg,
     int MaxLegs,
     int MaxOptions,
-    decimal CurrentTimeRatio);
+    decimal CurrentTimeRatio,
+    string? CurrentSeason);
 
 /// <summary>
 /// Result of a single route option from the calculator.
@@ -70,6 +72,7 @@ public record RouteCalculationRequest(
 /// <param name="Waypoints">Ordered location IDs from origin to destination.</param>
 /// <param name="Connections">Ordered connection IDs for each leg.</param>
 /// <param name="LegModes">Per-leg mode codes (for multi-modal routes).</param>
+/// <param name="PrimaryModeCode">The mode code used for the most legs (plurality).</param>
 /// <param name="TotalDistanceKm">Total route distance in kilometers.</param>
 /// <param name="TotalGameHours">Total travel time in game-hours (includes waypoint transfer times).</param>
 /// <param name="TotalRealMinutes">Approximate real-time duration based on current time ratio.</param>
@@ -81,6 +84,7 @@ public record RouteCalculationResult(
     List<Guid> Waypoints,
     List<Guid> Connections,
     List<string> LegModes,
+    string PrimaryModeCode,
     decimal TotalDistanceKm,
     decimal TotalGameHours,
     decimal TotalRealMinutes,

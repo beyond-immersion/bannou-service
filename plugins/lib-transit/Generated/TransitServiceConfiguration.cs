@@ -169,4 +169,17 @@ public class TransitServiceConfiguration : BaseServiceConfiguration
     [ConfigRange(Minimum = 1, Maximum = 60)]
     public int LockTimeoutSeconds { get; set; } = 10;
 
+    /// <summary>
+    /// Minimum effective speed floor in km/game-hour applied after terrain and cargo modifiers. Prevents division-by-zero in travel time calculations. Speed is clamped to at least this value.
+    /// Environment variable: TRANSIT_MINIMUM_EFFECTIVE_SPEED_KM_PER_GAME_HOUR
+    /// </summary>
+    [ConfigRange(Minimum = 0.001)]
+    public double MinimumEffectiveSpeedKmPerGameHour { get; set; } = 0.01;
+
+    /// <summary>
+    /// Default fallback mode code used when no compatible transit mode can be found for a connection during route calculation. This mode is used as a last resort when neither the requested mode, multi-modal selection, nor any registered mode matches.
+    /// Environment variable: TRANSIT_DEFAULT_FALLBACK_MODE_CODE
+    /// </summary>
+    public string DefaultFallbackModeCode { get; set; } = "walking";
+
 }

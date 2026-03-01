@@ -34,7 +34,7 @@ public class DocumentationServiceTests
     private readonly Mock<IGitSyncService> _mockGitSyncService;
     private readonly Mock<IContentTransformService> _mockContentTransformService;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
-    private readonly Mock<BeyondImmersion.BannouService.Asset.IAssetClient> _mockAssetClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationService _service;
@@ -63,7 +63,7 @@ public class DocumentationServiceTests
         _mockGitSyncService = new Mock<IGitSyncService>();
         _mockContentTransformService = new Mock<IContentTransformService>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
-        _mockAssetClient = new Mock<BeyondImmersion.BannouService.Asset.IAssetClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
@@ -93,7 +93,7 @@ public class DocumentationServiceTests
             _mockGitSyncService.Object,
             _mockContentTransformService.Object,
             _mockLockProvider.Object,
-            _mockAssetClient.Object,
+            _mockServiceProvider.Object,
             _mockHttpClientFactory.Object,
             _mockTelemetryProvider.Object);
     }
@@ -988,7 +988,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SortBy = ListSortField.CreatedAt,
-            SortOrder = ListDocumentsRequestSortOrder.Asc
+            SortOrder = SortOrder.Asc
         };
 
         // Act
@@ -1009,7 +1009,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SortBy = ListSortField.Title,
-            SortOrder = ListDocumentsRequestSortOrder.Desc
+            SortOrder = SortOrder.Desc
         };
 
         // Act
@@ -1030,7 +1030,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             Tags = new List<string> { "tag1", "tag2" },
-            TagsMatch = ListDocumentsRequestTagsMatch.All
+            TagsMatch = TagMatchMode.All
         };
 
         // Act

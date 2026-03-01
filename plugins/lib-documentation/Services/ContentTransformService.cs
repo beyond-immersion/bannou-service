@@ -132,10 +132,10 @@ public partial class ContentTransformService : IContentTransformService
     public DocumentCategory DetermineCategory(
         string filePath,
         DocumentFrontmatter? frontmatter,
-        IDictionary<string, string>? categoryMapping,
+        IDictionary<string, DocumentCategory>? categoryMapping,
         DocumentCategory defaultCategory)
     {
-        // Priority 1: Frontmatter category (parse user-supplied string to enum)
+        // Priority 1: Frontmatter category (parse user-supplied string from git YAML to enum)
         if (!string.IsNullOrWhiteSpace(frontmatter?.Category)
             && Enum.TryParse<DocumentCategory>(frontmatter.Category.Replace("-", ""), ignoreCase: true, out var frontmatterCategory))
         {
@@ -153,10 +153,9 @@ public partial class ContentTransformService : IContentTransformService
                 .OrderByDescending(kvp => kvp.Key.Length)
                 .FirstOrDefault();
 
-            if (!string.IsNullOrEmpty(matchedCategory.Value)
-                && Enum.TryParse<DocumentCategory>(matchedCategory.Value.Replace("-", ""), ignoreCase: true, out var mappedCategory))
+            if (!string.IsNullOrEmpty(matchedCategory.Key))
             {
-                return mappedCategory;
+                return matchedCategory.Value;
             }
         }
 
@@ -183,7 +182,7 @@ public partial class ContentTransformService : IContentTransformService
     public TransformedDocument TransformFile(
         string filePath,
         string content,
-        IDictionary<string, string>? categoryMapping,
+        IDictionary<string, DocumentCategory>? categoryMapping,
         DocumentCategory defaultCategory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);

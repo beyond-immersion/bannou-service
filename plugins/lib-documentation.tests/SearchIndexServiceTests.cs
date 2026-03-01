@@ -64,7 +64,7 @@ public class SearchIndexServiceTests
         var title = "Getting Started Guide";
         var slug = "getting-started";
         var content = "This is a guide to help you get started with the platform.";
-        var category = "tutorials";
+        var category = DocumentCategory.Tutorials;
         var tags = new List<string> { "beginner", "guide" };
 
         // Act
@@ -87,7 +87,7 @@ public class SearchIndexServiceTests
         var slug = "empty-content";
 
         // Act
-        _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, null, "general", null);
+        _service.IndexDocument(TEST_NAMESPACE, docId, title, slug, null, DocumentCategory.Other, null);
 
         // Assert - verify by searching title
         var results = await _service.SearchAsync(TEST_NAMESPACE, "empty content", maxResults: 10);
@@ -102,7 +102,7 @@ public class SearchIndexServiceTests
         var docId = Guid.NewGuid();
 
         // Act
-        _service.IndexDocument(TEST_NAMESPACE, docId, "Test Doc", "test-doc", "content", "general", null);
+        _service.IndexDocument(TEST_NAMESPACE, docId, "Test Doc", "test-doc", "content", DocumentCategory.Other, null);
 
         // Assert
         var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
@@ -117,15 +117,15 @@ public class SearchIndexServiceTests
         var doc2Id = Guid.NewGuid();
         var doc3Id = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "First Document", "first", "Content one", "tutorials", new[] { "tag1" });
-        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Second Document", "second", "Content two", "guides", new[] { "tag2" });
-        _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Third Document", "third", "Content three", "tutorials", new[] { "tag1", "tag3" });
+        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "First Document", "first", "Content one", DocumentCategory.Tutorials, new[] { "tag1" });
+        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Second Document", "second", "Content two", DocumentCategory.GettingStarted, new[] { "tag2" });
+        _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Third Document", "third", "Content three", DocumentCategory.Tutorials, new[] { "tag1", "tag3" });
 
         // Assert
         var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(3, stats.TotalDocuments);
-        Assert.Equal(2, stats.DocumentsByCategory["tutorials"]);
-        Assert.Equal(1, stats.DocumentsByCategory["guides"]);
+        Assert.Equal(2, stats.DocumentsByCategory[DocumentCategory.Tutorials]);
+        Assert.Equal(1, stats.DocumentsByCategory[DocumentCategory.GettingStarted]);
     }
 
     #endregion
@@ -138,7 +138,7 @@ public class SearchIndexServiceTests
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "Authentication Guide", "auth-guide",
-            "Learn about authentication and authorization", "security", null);
+            "Learn about authentication and authorization", DocumentCategory.Other, null);
 
         // Act
         var results = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
@@ -155,7 +155,7 @@ public class SearchIndexServiceTests
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "Authentication Guide", "auth-guide",
-            "Learn about authentication", "security", null);
+            "Learn about authentication", DocumentCategory.Other, null);
 
         // Act - search with prefix
         var results = await _service.SearchAsync(TEST_NAMESPACE, "auth", maxResults: 10);
@@ -174,11 +174,11 @@ public class SearchIndexServiceTests
 
         // Doc1 has both "getting" and "started"
         _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Getting Started", "getting-started",
-            "Getting started with the platform", "tutorials", null);
+            "Getting started with the platform", DocumentCategory.Tutorials, null);
 
         // Doc2 only has "started"
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Advanced Topics", "advanced",
-            "Once you've started learning", "advanced", null);
+            "Once you've started learning", DocumentCategory.Architecture, null);
 
         // Act
         var results = await _service.SearchAsync(TEST_NAMESPACE, "getting started", maxResults: 10);
@@ -196,12 +196,12 @@ public class SearchIndexServiceTests
         var doc2Id = Guid.NewGuid();
 
         _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Tutorial One", "tutorial-one",
-            "Learning content", "tutorials", null);
+            "Learning content", DocumentCategory.Tutorials, null);
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Tutorial Two", "tutorial-two",
-            "More learning content", "guides", null);
+            "More learning content", DocumentCategory.GettingStarted, null);
 
         // Act
-        var results = await _service.SearchAsync(TEST_NAMESPACE, "tutorial", category: "tutorials", maxResults: 10);
+        var results = await _service.SearchAsync(TEST_NAMESPACE, "tutorial", category: DocumentCategory.Tutorials, maxResults: 10);
 
         // Assert
         Assert.Single(results);
@@ -215,7 +215,7 @@ public class SearchIndexServiceTests
         for (int i = 0; i < 5; i++)
         {
             _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), $"Document {i}", $"doc-{i}",
-                "Common search term content", "general", null);
+                "Common search term content", DocumentCategory.Other, null);
         }
 
         // Act
@@ -230,7 +230,7 @@ public class SearchIndexServiceTests
     {
         // Arrange
         _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Hello World", "hello",
-            "A simple document", "general", null);
+            "A simple document", DocumentCategory.Other, null);
 
         // Act
         var results = await _service.SearchAsync(TEST_NAMESPACE, "nonexistent term xyz", maxResults: 10);
@@ -255,7 +255,7 @@ public class SearchIndexServiceTests
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "Important Document", "important",
-            "This is an important document with content", "general", null);
+            "This is an important document with content", DocumentCategory.Other, null);
 
         // Act - search with stop words only should not match
         var stopWordResults = await _service.SearchAsync(TEST_NAMESPACE, "the is an", maxResults: 10);
@@ -272,7 +272,7 @@ public class SearchIndexServiceTests
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "Authentication Guide", "auth",
-            "Learn about AUTHENTICATION", "security", null);
+            "Learn about AUTHENTICATION", DocumentCategory.Other, null);
 
         // Act
         var lowerResults = await _service.SearchAsync(TEST_NAMESPACE, "authentication", maxResults: 10);
@@ -298,11 +298,11 @@ public class SearchIndexServiceTests
 
         // Doc1 has exact match
         _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Authentication Security", "auth-security",
-            "Authentication and security topics", "security", null);
+            "Authentication and security topics", DocumentCategory.Other, null);
 
         // Doc2 has only prefix match
         _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Author Biography", "author",
-            "About the author", "general", null);
+            "About the author", DocumentCategory.Other, null);
 
         // Act - high min score should filter out low-relevance results
         var highThreshold = await _service.QueryAsync(TEST_NAMESPACE, "auth", minRelevanceScore: 0.8, maxResults: 10);
@@ -335,9 +335,9 @@ public class SearchIndexServiceTests
         var doc3Id = Guid.NewGuid();
 
         // Same category documents
-        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Tutorial One", "tutorial-1", "Content", "tutorials", new[] { "beginner" });
-        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Tutorial Two", "tutorial-2", "Content", "tutorials", new[] { "beginner" });
-        _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Advanced Guide", "advanced", "Content", "advanced", new[] { "expert" });
+        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Tutorial One", "tutorial-1", "Content", DocumentCategory.Tutorials, new[] { "beginner" });
+        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Tutorial Two", "tutorial-2", "Content", DocumentCategory.Tutorials, new[] { "beginner" });
+        _service.IndexDocument(TEST_NAMESPACE, doc3Id, "Advanced Guide", "advanced", "Content", DocumentCategory.Architecture, new[] { "expert" });
 
         // Act
         var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, doc1Id.ToString(), maxSuggestions: 5);
@@ -353,8 +353,8 @@ public class SearchIndexServiceTests
         var doc1Id = Guid.NewGuid();
         var doc2Id = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Source Doc", "source-doc", "Content", "tutorials", new[] { "tag1" });
-        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Related Doc", "related-doc", "Content", "tutorials", new[] { "tag1" });
+        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Source Doc", "source-doc", "Content", DocumentCategory.Tutorials, new[] { "tag1" });
+        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Related Doc", "related-doc", "Content", DocumentCategory.Tutorials, new[] { "tag1" });
 
         // Act
         var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "source-doc", maxSuggestions: 5);
@@ -372,9 +372,9 @@ public class SearchIndexServiceTests
         var relatedId = Guid.NewGuid();
         var unrelatedId = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, sourceId, "Source", "source", "Content", "tutorials", new[] { "tag1", "tag2", "tag3" });
-        _service.IndexDocument(TEST_NAMESPACE, relatedId, "Related", "related", "Content", "tutorials", new[] { "tag1", "tag2", "tag3" }); // Same tags
-        _service.IndexDocument(TEST_NAMESPACE, unrelatedId, "Unrelated", "unrelated", "Content", "other", new[] { "different" }); // Different
+        _service.IndexDocument(TEST_NAMESPACE, sourceId, "Source", "source", "Content", DocumentCategory.Tutorials, new[] { "tag1", "tag2", "tag3" });
+        _service.IndexDocument(TEST_NAMESPACE, relatedId, "Related", "related", "Content", DocumentCategory.Tutorials, new[] { "tag1", "tag2", "tag3" }); // Same tags
+        _service.IndexDocument(TEST_NAMESPACE, unrelatedId, "Unrelated", "unrelated", "Content", DocumentCategory.Other, new[] { "different" }); // Different
 
         // Act
         var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, sourceId.ToString(), maxSuggestions: 5);
@@ -389,7 +389,7 @@ public class SearchIndexServiceTests
         // Arrange
         var docId = Guid.NewGuid();
         _service.IndexDocument(TEST_NAMESPACE, docId, "Python Tutorial", "python-tutorial",
-            "Learn Python programming", "tutorials", null);
+            "Learn Python programming", DocumentCategory.Tutorials, null);
 
         // Act - search term that doesn't match any doc ID/slug/title exactly
         var related = await _service.GetRelatedSuggestionsAsync(TEST_NAMESPACE, "python", maxSuggestions: 5);
@@ -419,8 +419,8 @@ public class SearchIndexServiceTests
         var doc1Id = Guid.NewGuid();
         var doc2Id = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc One", "doc-1", "Content", "general", null);
-        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc Two", "doc-2", "Content", "general", null);
+        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc One", "doc-1", "Content", DocumentCategory.Other, null);
+        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc Two", "doc-2", "Content", DocumentCategory.Other, null);
 
         // Act
         var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
@@ -438,11 +438,11 @@ public class SearchIndexServiceTests
         var tutorialId = Guid.NewGuid();
         var guideId = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, tutorialId, "Tutorial", "tutorial", "Content", "tutorials", null);
-        _service.IndexDocument(TEST_NAMESPACE, guideId, "Guide", "guide", "Content", "guides", null);
+        _service.IndexDocument(TEST_NAMESPACE, tutorialId, "Tutorial", "tutorial", "Content", DocumentCategory.Tutorials, null);
+        _service.IndexDocument(TEST_NAMESPACE, guideId, "Guide", "guide", "Content", DocumentCategory.GettingStarted, null);
 
         // Act
-        var tutorialIds = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, category: "tutorials");
+        var tutorialIds = await _service.ListDocumentIdsAsync(TEST_NAMESPACE, category: DocumentCategory.Tutorials);
 
         // Assert
         Assert.Single(tutorialIds);
@@ -458,7 +458,7 @@ public class SearchIndexServiceTests
         {
             var id = Guid.NewGuid();
             allIds.Add(id);
-            _service.IndexDocument(TEST_NAMESPACE, id, $"Document {i:D2}", $"doc-{i}", "Content", "general", null);
+            _service.IndexDocument(TEST_NAMESPACE, id, $"Document {i:D2}", $"doc-{i}", "Content", DocumentCategory.Other, null);
         }
 
         // Act
@@ -490,9 +490,9 @@ public class SearchIndexServiceTests
     public async Task ListDocumentIds_ShouldBeSortedByTitle()
     {
         // Arrange
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Zebra Document", "zebra", "Content", "general", null);
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Apple Document", "apple", "Content", "general", null);
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Mango Document", "mango", "Content", "general", null);
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Zebra Document", "zebra", "Content", DocumentCategory.Other, null);
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Apple Document", "apple", "Content", DocumentCategory.Other, null);
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Mango Document", "mango", "Content", DocumentCategory.Other, null);
 
         // Act
         var ids = await _service.ListDocumentIdsAsync(TEST_NAMESPACE);
@@ -509,17 +509,17 @@ public class SearchIndexServiceTests
     public async Task GetNamespaceStats_ShouldReturnCorrectCounts()
     {
         // Arrange
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 1", "doc-1", "Content", "tutorials", new[] { "tag1", "tag2" });
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 2", "doc-2", "Content", "tutorials", new[] { "tag1" });
-        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 3", "doc-3", "Content", "guides", new[] { "tag3" });
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 1", "doc-1", "Content", DocumentCategory.Tutorials, new[] { "tag1", "tag2" });
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 2", "doc-2", "Content", DocumentCategory.Tutorials, new[] { "tag1" });
+        _service.IndexDocument(TEST_NAMESPACE, Guid.NewGuid(), "Doc 3", "doc-3", "Content", DocumentCategory.GettingStarted, new[] { "tag3" });
 
         // Act
         var stats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
 
         // Assert
         Assert.Equal(3, stats.TotalDocuments);
-        Assert.Equal(2, stats.DocumentsByCategory["tutorials"]);
-        Assert.Equal(1, stats.DocumentsByCategory["guides"]);
+        Assert.Equal(2, stats.DocumentsByCategory[DocumentCategory.Tutorials]);
+        Assert.Equal(1, stats.DocumentsByCategory[DocumentCategory.GettingStarted]);
         Assert.Equal(3, stats.TotalTags); // tag1, tag2, tag3
     }
 
@@ -544,7 +544,7 @@ public class SearchIndexServiceTests
     {
         // Arrange
         var docId = Guid.NewGuid();
-        _service.IndexDocument(TEST_NAMESPACE, docId, "To Be Removed", "to-remove", "Content", "general", new[] { "tag1" });
+        _service.IndexDocument(TEST_NAMESPACE, docId, "To Be Removed", "to-remove", "Content", DocumentCategory.Other, new[] { "tag1" });
 
         // Verify it's indexed
         var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
@@ -588,8 +588,8 @@ public class SearchIndexServiceTests
         var doc1Id = Guid.NewGuid();
         var doc2Id = Guid.NewGuid();
 
-        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc 1", "doc-1", "Content", "general", new[] { "shared-tag", "unique-tag-1" });
-        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc 2", "doc-2", "Content", "general", new[] { "shared-tag", "unique-tag-2" });
+        _service.IndexDocument(TEST_NAMESPACE, doc1Id, "Doc 1", "doc-1", "Content", DocumentCategory.Other, new[] { "shared-tag", "unique-tag-1" });
+        _service.IndexDocument(TEST_NAMESPACE, doc2Id, "Doc 2", "doc-2", "Content", DocumentCategory.Other, new[] { "shared-tag", "unique-tag-2" });
 
         var beforeStats = await _service.GetNamespaceStatsAsync(TEST_NAMESPACE);
         Assert.Equal(3, beforeStats.TotalTags); // shared-tag, unique-tag-1, unique-tag-2
@@ -613,8 +613,8 @@ public class SearchIndexServiceTests
         var ns1DocId = Guid.NewGuid();
         var ns2DocId = Guid.NewGuid();
 
-        _service.IndexDocument("namespace-1", ns1DocId, "Namespace 1 Doc", "ns1-doc", "Content for NS1", "general", null);
-        _service.IndexDocument("namespace-2", ns2DocId, "Namespace 2 Doc", "ns2-doc", "Content for NS2", "general", null);
+        _service.IndexDocument("namespace-1", ns1DocId, "Namespace 1 Doc", "ns1-doc", "Content for NS1", DocumentCategory.Other, null);
+        _service.IndexDocument("namespace-2", ns2DocId, "Namespace 2 Doc", "ns2-doc", "Content for NS2", DocumentCategory.Other, null);
 
         // Act
         var ns1Results = await _service.SearchAsync("namespace-1", "namespace", maxResults: 10);
@@ -632,9 +632,9 @@ public class SearchIndexServiceTests
     public async Task NamespaceStats_ShouldBeIsolated()
     {
         // Arrange
-        _service.IndexDocument("namespace-a", Guid.NewGuid(), "Doc A1", "a1", "Content", "tutorials", null);
-        _service.IndexDocument("namespace-a", Guid.NewGuid(), "Doc A2", "a2", "Content", "tutorials", null);
-        _service.IndexDocument("namespace-b", Guid.NewGuid(), "Doc B1", "b1", "Content", "guides", null);
+        _service.IndexDocument("namespace-a", Guid.NewGuid(), "Doc A1", "a1", "Content", DocumentCategory.Tutorials, null);
+        _service.IndexDocument("namespace-a", Guid.NewGuid(), "Doc A2", "a2", "Content", DocumentCategory.Tutorials, null);
+        _service.IndexDocument("namespace-b", Guid.NewGuid(), "Doc B1", "b1", "Content", DocumentCategory.GettingStarted, null);
 
         // Act
         var statsA = await _service.GetNamespaceStatsAsync("namespace-a");

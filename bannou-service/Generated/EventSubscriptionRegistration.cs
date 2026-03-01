@@ -49,6 +49,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
         EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 
+        // From asset-events.yaml
+        EventSubscriptionRegistry.Register<MetabundleJobQueuedEvent>("asset.metabundle.job.queued");
+
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
@@ -138,5 +141,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<CalendarTemplateDeletedEvent>("worldstate.calendar-template.deleted");
         EventSubscriptionRegistry.Register<WorldstateRatioChangedEvent>("worldstate.ratio-changed");
         EventSubscriptionRegistry.Register<RealmConfigDeletedEvent>("worldstate.realm-config.deleted");
+        EventSubscriptionRegistry.Register<WorldstateClockAdvancedEvent>("worldstate.clock-advanced");
     }
 }

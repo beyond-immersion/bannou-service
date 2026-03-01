@@ -157,6 +157,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         var snapshots = new List<GameTimeSnapshot>();
+        var notFoundRealmIds = new List<Guid>();
 
         foreach (var realmId in body.RealmIds)
         {
@@ -169,12 +170,14 @@ public partial class WorldstateService : IWorldstateService
             else
             {
                 _logger.LogDebug("No clock initialized for realm {RealmId}, skipping in batch results", realmId);
+                notFoundRealmIds.Add(realmId);
             }
         }
 
         return (StatusCodes.OK, new BatchGetRealmTimesResponse
         {
-            Snapshots = snapshots
+            Snapshots = snapshots,
+            NotFoundRealmIds = notFoundRealmIds
         });
     }
 
@@ -769,6 +772,12 @@ public partial class WorldstateService : IWorldstateService
 
         // Invalidate clock cache so variable provider reads fresh data
         _realmClockCache.Invalidate(body.RealmId);
+
+        // Publish clock-advanced service event for cross-node cache invalidation
+        await _messageBus.PublishAsync("worldstate.clock-advanced", new WorldstateClockAdvancedEvent
+        {
+            RealmId = body.RealmId
+        }, cancellationToken);
 
         // Publish time sync client event (populate PreviousPeriod from boundaries if available,
         // consistent with worker behavior)

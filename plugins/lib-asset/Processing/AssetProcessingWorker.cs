@@ -402,7 +402,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// Called by the event controller.
     /// </summary>
     public async Task<bool> HandleProcessingJobAsync(
-        AssetProcessingJobEvent job,
+        AssetProcessingJobDispatchedEvent job,
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.HandleProcessingJobAsync");
@@ -426,18 +426,19 @@ public sealed class AssetProcessingWorker : BackgroundService
 
         try
         {
-            // Create processing context
+            // Create processing context from dispatched event
             var context = new AssetProcessingContext
             {
                 AssetId = job.AssetId,
                 StorageKey = job.StorageKey,
                 ContentType = job.ContentType,
                 SizeBytes = job.SizeBytes,
-                Filename = job.Filename,
-                Owner = job.Owner,
+                Filename = job.Filename ?? job.AssetId,
+                Owner = job.Owner ?? "unknown",
                 RealmId = job.RealmId,
-                Tags = job.Tags,
-                ProcessingOptions = job.ProcessingOptions
+                Tags = job.Tags as IReadOnlyDictionary<string, string>
+                    ?? job.Tags?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+                ProcessingOptions = job.ProcessingOptions as IReadOnlyDictionary<string, object>
             };
 
             // Process the asset
@@ -567,7 +568,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     }
 
     private async Task EmitProcessingResultEventAsync(
-        AssetProcessingJobEvent job,
+        AssetProcessingJobDispatchedEvent job,
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {
@@ -620,7 +621,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     }
 
     private async Task EmitProcessingFailedEventAsync(
-        AssetProcessingJobEvent job,
+        AssetProcessingJobDispatchedEvent job,
         string errorMessage,
         CancellationToken cancellationToken)
     {
@@ -653,7 +654,7 @@ public sealed class AssetProcessingWorker : BackgroundService
     /// Publishes an asset.ready event after successful processing.
     /// </summary>
     private async Task EmitAssetReadyEventAsync(
-        AssetProcessingJobEvent job,
+        AssetProcessingJobDispatchedEvent job,
         AssetProcessingResult result,
         CancellationToken cancellationToken)
     {

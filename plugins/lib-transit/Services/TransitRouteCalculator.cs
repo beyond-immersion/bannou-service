@@ -284,14 +284,12 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
         var foundPaths = YenKShortestPaths(adjacency, modes, request);
 
         var results = new List<RouteCalculationResult>();
-        var rank = 1;
         foreach (var path in foundPaths)
         {
-            var result = BuildRouteResult(path, modes, request, rank);
+            var result = BuildRouteResult(path, modes, request);
             if (result != null)
             {
                 results.Add(result);
-                rank++;
             }
         }
 
@@ -631,17 +629,19 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
             }
         }
 
-        // Fall back to "walking" if it exists, otherwise pick first available candidate
+        // Fall back to configured default mode if it exists, otherwise pick first available candidate
+        // (IMPLEMENTATION TENETS - Configuration-First)
         if (bestMode == null)
         {
-            if (modes.ContainsKey("walking"))
+            var fallback = _configuration.DefaultFallbackModeCode;
+            if (modes.ContainsKey(fallback))
             {
-                return "walking";
+                return fallback;
             }
             // Last resort: use the first compatible mode code
             return edge.CompatibleModes.Count > 0
                 ? edge.CompatibleModes[0]
-                : modes.Keys.FirstOrDefault() ?? "walking";
+                : modes.Keys.FirstOrDefault() ?? fallback;
         }
 
         return bestMode;
@@ -689,8 +689,8 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
             effectiveSpeed *= (1.0m - speedReduction);
         }
 
-        // Ensure speed never drops to zero
-        return Math.Max(effectiveSpeed, 0.01m);
+        // Ensure speed never drops to zero (IMPLEMENTATION TENETS - Configuration-First)
+        return Math.Max(effectiveSpeed, (decimal)_configuration.MinimumEffectiveSpeedKmPerGameHour);
     }
 
     /// <summary>
@@ -847,13 +847,11 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
     /// <param name="path">The path as a list of (edge, mode code) tuples.</param>
     /// <param name="modes">Available transit modes.</param>
     /// <param name="request">Route calculation parameters.</param>
-    /// <param name="rank">The rank (1 = best) of this route option.</param>
     /// <returns>A route calculation result, or null if the path is empty.</returns>
     private RouteCalculationResult? BuildRouteResult(
         List<(ConnectionGraphEntry Edge, string ModeCode)> path,
         Dictionary<string, TransitModeModel> modes,
-        RouteCalculationRequest request,
-        int rank)
+        RouteCalculationRequest request)
     {
         if (path.Count == 0)
         {
@@ -897,19 +895,39 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
             }
 
             // Build seasonal warnings for connections with seasonal closures
-            if (edge.SeasonalAvailability != null)
+            if (edge.SeasonalAvailability != null && request.CurrentSeason != null)
             {
+                // Build ordered season list from the seasonal availability data
+                // to compute how many season transitions until closure
+                var seasonOrder = edge.SeasonalAvailability
+                    .Select(s => s.Season)
+                    .ToList();
+                var currentSeasonIdx = seasonOrder.IndexOf(request.CurrentSeason);
+
                 foreach (var seasonal in edge.SeasonalAvailability)
                 {
                     if (!seasonal.Available)
                     {
+                        // Compute closing season index: how many season transitions until closure
+                        var closingIdx = seasonOrder.IndexOf(seasonal.Season);
+                        var closingSeasonIndex = 1; // default if we cannot compute
+                        if (currentSeasonIdx >= 0 && closingIdx >= 0 && seasonOrder.Count > 0)
+                        {
+                            closingSeasonIndex = (closingIdx - currentSeasonIdx + seasonOrder.Count)
+                                                 % seasonOrder.Count;
+                            if (closingSeasonIndex == 0)
+                            {
+                                closingSeasonIndex = seasonOrder.Count;
+                            }
+                        }
+
                         seasonalWarnings.Add(new SeasonalWarningResult(
                             ConnectionId: edge.ConnectionId,
                             ConnectionName: edge.Name,
                             LegIndex: legIndex,
-                            CurrentSeason: "current",
+                            CurrentSeason: request.CurrentSeason,
                             ClosingSeason: seasonal.Season,
-                            ClosingSeasonIndex: 1));
+                            ClosingSeasonIndex: closingSeasonIndex));
                     }
                 }
             }
@@ -926,7 +944,7 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
             : 0m;
 
         // Determine primary mode code: the mode used for the most legs (plurality)
-        var primaryMode = legModes
+        var primaryModeCode = legModes
             .GroupBy(m => m)
             .OrderByDescending(g => g.Count())
             .First()
@@ -936,6 +954,7 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
             Waypoints: waypoints,
             Connections: connections,
             LegModes: legModes,
+            PrimaryModeCode: primaryModeCode,
             TotalDistanceKm: Math.Round(totalDistanceKm, 2),
             TotalGameHours: Math.Round(totalGameHours, 2),
             TotalRealMinutes: Math.Round(totalRealMinutes, 2),

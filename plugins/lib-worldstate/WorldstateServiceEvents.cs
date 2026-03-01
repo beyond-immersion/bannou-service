@@ -31,6 +31,10 @@ public partial class WorldstateService
         eventConsumer.RegisterHandler<IWorldstateService, RealmConfigDeletedEvent>(
             "worldstate.realm-config.deleted",
             async (svc, evt) => await ((WorldstateService)svc).HandleRealmConfigDeletedAsync(evt));
+
+        eventConsumer.RegisterHandler<IWorldstateService, WorldstateClockAdvancedEvent>(
+            "worldstate.clock-advanced",
+            async (svc, evt) => await ((WorldstateService)svc).HandleClockAdvancedAsync(evt));
     }
 
     /// <summary>
@@ -102,6 +106,25 @@ public partial class WorldstateService
 
         _realmClockCache.Invalidate(evt.RealmId);
         _logger.LogDebug("Invalidated realm clock cache for realm {RealmId} due to realm config deletion",
+            evt.RealmId);
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
+    }
+
+    /// <summary>
+    /// Handles worldstate.clock-advanced events.
+    /// Invalidates local realm clock cache for cross-node consistency.
+    /// When Node A advances a realm's clock via AdvanceClock, Node B receives
+    /// this event via RabbitMQ and clears its stale clock cache entry so the next
+    /// read fetches fresh data from Redis.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleClockAdvancedAsync(WorldstateClockAdvancedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.worldstate", "WorldstateServiceEvents.HandleClockAdvanced");
+
+        _realmClockCache.Invalidate(evt.RealmId);
+        _logger.LogDebug("Invalidated realm clock cache for realm {RealmId} due to clock advancement",
             evt.RealmId);
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
     }

@@ -34,7 +34,7 @@ internal sealed class RepositoryBinding
     public List<string> ExcludePatterns { get; set; } = [".git/**", ".obsidian/**", "node_modules/**"];
 
     /// <summary>Gets or sets path-to-category mappings.</summary>
-    public Dictionary<string, string> CategoryMapping { get; set; } = [];
+    public Dictionary<string, DocumentCategory> CategoryMapping { get; set; } = [];
 
     /// <summary>Gets or sets the default category.</summary>
     public DocumentCategory DefaultCategory { get; set; } = DocumentCategory.Other;

@@ -2560,7 +2560,7 @@ public partial class AssetService : IAssetService
                 {
                     PoolType = poolType,
                     Priority = 0,
-                    TimeoutSeconds = 600, // 10 minutes for processing
+                    TimeoutSeconds = _configuration.ProcessorAcquisitionTimeoutSeconds,
                     Metadata = new { AssetId = assetId, StorageKey = storageKey }
                 },
                 cancellationToken).ConfigureAwait(false);
@@ -2583,9 +2583,6 @@ public partial class AssetService : IAssetService
                 ContentType = metadata.ContentType,
                 SizeBytes = metadata.Size,
                 Filename = metadata.Filename,
-                Owner = metadata.Owner,
-                RealmId = metadata.RealmId,
-                Tags = metadata.Tags,
                 PoolType = poolType,
                 ProcessorId = processorResponse.ProcessorId,
                 AppId = processorResponse.AppId,
@@ -3360,12 +3357,14 @@ public partial class AssetService : IAssetService
             "asset.metabundle.job.queued",
             new MetabundleJobQueuedEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 JobId = jobId,
                 MetabundleId = request.MetabundleId,
                 SourceBundleCount = sourceBundles.Count,
                 AssetCount = totalAssetCount,
                 EstimatedSizeBytes = totalSizeBytes,
-                RequesterSessionId = requesterSessionId
+                RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null
             }).ConfigureAwait(false);
 
         // Build provenance data for response

@@ -801,12 +801,19 @@ components:
       description: Game time snapshots for multiple realms
       required:
         - snapshots
+        - notFoundRealmIds
       properties:
         snapshots:
           type: array
           items:
             $ref: '#/components/schemas/GameTimeSnapshot'
-          description: Game time snapshots for each requested realm (omits realms without initialized clocks)
+          description: Game time snapshots for each requested realm that has an initialized clock
+        notFoundRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Realm IDs from the request that had no initialized clock
 
     GetElapsedGameTimeRequest:
       type: object

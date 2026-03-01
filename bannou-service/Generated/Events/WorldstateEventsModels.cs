@@ -430,6 +430,31 @@ public partial class WorldstateRatioChangedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when a realm clock is advanced via AdvanceClock. Used for cross-node clock cache invalidation.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class WorldstateClockAdvancedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "worldstate.clock_advanced";
+
+    /// <summary>
+    /// Realm whose clock was advanced
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when a realm clock is initialized for the first time via InitializeRealmClock
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]

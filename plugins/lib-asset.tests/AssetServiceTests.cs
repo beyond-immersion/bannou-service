@@ -3015,15 +3015,6 @@ public class MinioWebhookHandlerTests
         _mockUploadSessionStore.Verify(
             s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
-        // Verify no message was published
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync(
-                It.IsAny<string>(),
-                It.IsAny<AssetUploadNotification>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 
     [Fact]
@@ -3070,15 +3061,6 @@ public class MinioWebhookHandlerTests
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(session);
 
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                "asset.upload.completed",
-                It.IsAny<AssetUploadNotification>(),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         // Act
         var result = await handler.HandleWebhookAsync(payload);
 
@@ -3097,18 +3079,8 @@ public class MinioWebhookHandlerTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        // Verify event was published
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync(
-                "asset.upload.completed",
-                It.Is<AssetUploadNotification>(n =>
-                    n.UploadId == uploadId &&
-                    n.ETag == "abc123" &&
-                    n.Size == 1024),
-                It.IsAny<PublishOptions?>(),
-                It.IsAny<Guid?>(),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        // Webhook no longer publishes events directly; the main
+        // AssetService.CompleteUploadAsync publishes AssetUploadCompletedEvent
     }
 }
 

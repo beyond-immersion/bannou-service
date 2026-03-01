@@ -39,7 +39,7 @@ public interface IContentTransformService
     DocumentCategory DetermineCategory(
         string filePath,
         DocumentFrontmatter? frontmatter,
-        IDictionary<string, string>? categoryMapping,
+        IDictionary<string, DocumentCategory>? categoryMapping,
         DocumentCategory defaultCategory);
 
     /// <summary>
@@ -53,7 +53,7 @@ public interface IContentTransformService
     TransformedDocument TransformFile(
         string filePath,
         string content,
-        IDictionary<string, string>? categoryMapping,
+        IDictionary<string, DocumentCategory>? categoryMapping,
         DocumentCategory defaultCategory);
 
     /// <summary>

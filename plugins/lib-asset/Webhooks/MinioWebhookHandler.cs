@@ -185,21 +185,7 @@ public class MinioWebhookHandler
                 severity: BeyondImmersion.BannouService.Events.ServiceErrorEventSeverity.Error).ConfigureAwait(false);
         }
 
-        // Publish upload notification event for processing pipeline
-        var uploadNotification = new AssetUploadNotification
-        {
-            UploadId = uploadId,
-            Bucket = bucket,
-            Key = key,
-            ETag = etag?.Trim('"') ?? string.Empty, // Defensive: external service may omit ETag
-            Size = size,
-            ContentType = session.ContentType,
-            Timestamp = DateTimeOffset.UtcNow
-        };
-
-        await _messageBus.TryPublishAsync("asset.upload.completed", uploadNotification).ConfigureAwait(false);
-
-        _logger.LogDebug("MinIO webhook: Published upload completion event for {UploadId}", uploadId);
+        _logger.LogDebug("MinIO webhook: Upload completion processed for {UploadId}", uploadId);
     }
 }
 
@@ -312,17 +298,3 @@ public class MinioObjectInfo
     public string? Sequencer { get; set; }
 }
 
-/// <summary>
-/// Event published when an asset upload completes.
-/// Used to trigger the processing pipeline.
-/// </summary>
-public class AssetUploadNotification
-{
-    public Guid UploadId { get; set; }
-    public string Bucket { get; set; } = string.Empty;
-    public string Key { get; set; } = string.Empty;
-    public string ETag { get; set; } = string.Empty;
-    public long Size { get; set; }
-    public string ContentType { get; set; } = string.Empty;
-    public DateTimeOffset Timestamp { get; set; }
-}

@@ -72,6 +72,21 @@ x-service-configuration:
       env: ASSET_STORAGE_USE_SSL
       default: false
 
+    # MinIO Startup Probe Configuration
+    MinioStartupMaxRetries:
+      type: integer
+      minimum: 1
+      description: Maximum number of retries when waiting for MinIO connectivity during startup
+      env: ASSET_MINIO_STARTUP_MAX_RETRIES
+      default: 30
+
+    MinioStartupRetryDelayMs:
+      type: integer
+      minimum: 100
+      description: Delay in milliseconds between MinIO startup connectivity retries
+      env: ASSET_MINIO_STARTUP_RETRY_DELAY_MS
+      default: 2000
+
     # Pre-signed URL Configuration
     TokenTtlSeconds:
       type: integer
@@ -302,6 +317,13 @@ x-service-configuration:
       description: Polling interval in seconds when waiting for processor
       env: ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS
       default: 2
+
+    ProcessorAcquisitionTimeoutSeconds:
+      type: integer
+      minimum: 1
+      description: Maximum seconds to wait when acquiring a processor from the pool for asset processing
+      env: ASSET_PROCESSOR_ACQUISITION_TIMEOUT_SECONDS
+      default: 600
 
     ProcessingMaxRetries:
       type: integer

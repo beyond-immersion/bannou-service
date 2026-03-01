@@ -26,6 +26,9 @@ info:
     - topic: worldstate.realm-config.deleted
       event: RealmConfigDeletedEvent
       handler: HandleRealmConfigDeleted
+    - topic: worldstate.clock-advanced
+      event: WorldstateClockAdvancedEvent
+      handler: HandleClockAdvanced
 
   x-event-publications:
     # Lifecycle events (auto-generated via x-lifecycle)
@@ -72,6 +75,9 @@ info:
     - topic: worldstate.ratio-changed
       event: WorldstateRatioChangedEvent
       description: Published when a realm's time ratio is changed via SetTimeRatio
+    - topic: worldstate.clock-advanced
+      event: WorldstateClockAdvancedEvent
+      description: Published when a realm clock is advanced, for cross-node cache invalidation
     - topic: worldstate.realm-clock.initialized
       event: WorldstateRealmClockInitializedEvent
       description: Published when a realm clock is initialized for the first time
@@ -475,6 +481,27 @@ components:
         reason:
           $ref: 'worldstate-api.yaml#/components/schemas/TimeRatioChangeReason'
           description: Reason for the ratio change
+
+    WorldstateClockAdvancedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a realm clock is advanced via AdvanceClock. Used for cross-node clock cache invalidation.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.clock_advanced"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock was advanced
 
     WorldstateRealmClockInitializedEvent:
       allOf:

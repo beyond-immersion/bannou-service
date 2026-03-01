@@ -106,6 +106,20 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public bool StorageUseSsl { get; set; } = false;
 
     /// <summary>
+    /// Maximum number of retries when waiting for MinIO connectivity during startup
+    /// Environment variable: ASSET_MINIO_STARTUP_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int MinioStartupMaxRetries { get; set; } = 30;
+
+    /// <summary>
+    /// Delay in milliseconds between MinIO startup connectivity retries
+    /// Environment variable: ASSET_MINIO_STARTUP_RETRY_DELAY_MS
+    /// </summary>
+    [ConfigRange(Minimum = 100)]
+    public int MinioStartupRetryDelayMs { get; set; } = 2000;
+
+    /// <summary>
     /// TTL for pre-signed upload/download URLs in seconds
     /// Environment variable: ASSET_TOKEN_TTL_SECONDS
     /// </summary>
@@ -319,6 +333,13 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS
     /// </summary>
     public int ProcessorAvailabilityPollIntervalSeconds { get; set; } = 2;
+
+    /// <summary>
+    /// Maximum seconds to wait when acquiring a processor from the pool for asset processing
+    /// Environment variable: ASSET_PROCESSOR_ACQUISITION_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ProcessorAcquisitionTimeoutSeconds { get; set; } = 600;
 
     /// <summary>
     /// Maximum retry attempts for asset processing
