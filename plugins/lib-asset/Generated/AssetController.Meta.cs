@@ -35,24 +35,34 @@ public partial class AssetController
             "properties": {
                 "owner": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Owner of this asset operation. NOT a session ID.\nFor user-initiated uploads: the accountId (UUID format).\nFor service-initiated uploads: the service name (e.g., \"behavior\", \"orchestrator\").\n"
                 },
                 "filename": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Original filename with extension"
                 },
                 "size": {
                     "type": "integer",
                     "format": "int64",
+                    "minimum": 1,
                     "description": "File size in bytes"
                 },
                 "contentType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "MIME content type (e.g., image/png, model/gltf-binary)"
                 },
                 "metadata": {
-                    "$ref": "#/$defs/AssetMetadataInput",
-                    "description": "Optional metadata for asset categorization"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AssetMetadataInput"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional metadata for asset categorization (null to skip)"
                 }
             }
         },
@@ -62,19 +72,30 @@ public partial class AssetController
             "description": "User-provided metadata for asset categorization",
             "properties": {
                 "assetType": {
-                    "$ref": "#/$defs/AssetType",
-                    "description": "Type classification for the asset"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/AssetType"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Type classification for the asset (null to omit)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm the asset belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm the asset belongs to (null for unscoped)"
                 },
                 "tags": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Searchable tags for the asset"
+                    "nullable": true,
+                    "description": "Searchable tags for the asset (null to omit)"
                 }
             }
         },
@@ -93,7 +114,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -138,7 +160,8 @@ public partial class AssetController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Headers the client must include when uploading to the pre-signed URL"
+                    "nullable": true,
+                    "description": "Headers the client must include when uploading to the pre-signed URL (null if no special headers needed)"
                 }
             }
         },
@@ -146,6 +169,11 @@ public partial class AssetController
             "description": "Configuration for multipart uploads of large files",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "required",
+                "partSize",
+                "maxParts"
+            ],
             "properties": {
                 "required": {
                     "type": "boolean",
@@ -360,8 +388,13 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm the asset belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm the asset belongs to. Null for cross-realm assets."
                 },
                 "tags": {
                     "type": "array",
@@ -406,7 +439,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -493,12 +527,14 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "description": "Asset identifier"
+                    "minLength": 64,
+                    "maxLength": 64,
+                    "description": "Asset identifier (SHA-256 hex string)"
                 },
                 "version": {
                     "type": "string",
-                    "default": "latest",
-                    "description": "Version ID or 'latest'"
+                    "nullable": true,
+                    "description": "Version ID to retrieve (null for latest version)"
                 }
             }
         }
@@ -608,8 +644,13 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm the asset belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm the asset belongs to. Null for cross-realm assets."
                 },
                 "tags": {
                     "type": "array",
@@ -654,7 +695,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -741,7 +783,9 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "description": "Asset identifier to delete"
+                    "minLength": 64,
+                    "maxLength": 64,
+                    "description": "Asset identifier to delete (SHA-256 hex string)"
                 },
                 "versionId": {
                     "type": "string",
@@ -764,14 +808,9 @@ public partial class AssetController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "assetId",
                 "versionsDeleted"
             ],
             "properties": {
-                "assetId": {
-                    "type": "string",
-                    "description": "Deleted asset identifier"
-                },
                 "versionsDeleted": {
                     "type": "integer",
                     "description": "Number of versions deleted"
@@ -853,16 +892,20 @@ public partial class AssetController
             "properties": {
                 "assetId": {
                     "type": "string",
-                    "description": "Asset identifier to list versions for"
+                    "minLength": 64,
+                    "maxLength": 64,
+                    "description": "Asset identifier to list versions for (SHA-256 hex string)"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
                     "description": "Maximum number of versions to return"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of versions to skip for pagination"
                 }
             }
@@ -881,17 +924,12 @@ public partial class AssetController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "assetId",
                 "versions",
                 "total",
                 "limit",
                 "offset"
             ],
             "properties": {
-                "assetId": {
-                    "type": "string",
-                    "description": "Asset identifier"
-                },
                 "versions": {
                     "type": "array",
                     "items": {
@@ -918,7 +956,6 @@ public partial class AssetController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "versionId",
                 "createdAt",
                 "size",
                 "isArchived"
@@ -926,7 +963,8 @@ public partial class AssetController
             "properties": {
                 "versionId": {
                     "type": "string",
-                    "description": "Unique version identifier"
+                    "nullable": true,
+                    "description": "Unique version identifier. Null when object storage versioning is not enabled."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1042,11 +1080,13 @@ public partial class AssetController
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
                     "description": "Maximum number of results to return"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Number of results to skip for pagination"
                 }
             }
@@ -1066,7 +1106,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -1154,8 +1195,13 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm the asset belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm the asset belongs to. Null for cross-realm assets."
                 },
                 "tags": {
                     "type": "array",
@@ -1200,7 +1246,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\ nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",
@@ -1293,6 +1340,8 @@ public partial class AssetController
                 },
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "version": {
@@ -1307,10 +1356,11 @@ public partial class AssetController
                         }
                     ],
                     "nullable": true,
-                    "description": "Game realm this bundle belongs to.\nDefaults to 'shared' if not specified.\n"
+                    "description": "Game realm this bundle belongs to.\nNull for realm-agnostic bundles available across all realms.\n"
                 },
                 "assetIds": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "string"
                     },
@@ -1330,7 +1380,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "CompressionType": {
             "type": "string",
@@ -1365,13 +1416,7 @@ public partial class AssetController
                     "description": "Human-readable bundle identifier (e.g., \"synty/polygon-adventure\", \"my-bundle-v1\")"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "queued",
-                        "processing",
-                        "ready",
-                        "failed"
-                    ],
+                    "$ref": "#/$defs/BundleStatus",
                     "description": "Bundle creation status"
                 },
                 "estimatedSize": {
@@ -1380,6 +1425,17 @@ public partial class AssetController
                     "description": "Estimated bundle size in bytes"
                 }
             }
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "queued",
+                "processing",
+                "ready",
+                "failed",
+                "cancelled"
+            ],
+            "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         }
     }
 }
@@ -1456,6 +1512,8 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier to retrieve"
                 },
                 "format": {
@@ -1707,7 +1765,8 @@ public partial class AssetController
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Headers the client must include when uploading to the pre-signed URL"
+                    "nullable": true,
+                    "description": "Headers the client must include when uploading to the pre-signed URL (null if no special headers needed)"
                 }
             }
         },
@@ -1715,6 +1774,11 @@ public partial class AssetController
             "description": "Configuration for multipart uploads of large files",
             "type": "object",
             "additionalProperties": false,
+            "required": [
+                "required",
+                "partSize",
+                "maxParts"
+            ],
             "properties": {
                 "required": {
                     "type": "boolean",
@@ -1899,7 +1963,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\ nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -1932,14 +1997,8 @@ public partial class AssetController
                     "description": "Job ID for async processing. Only present when status is 'queued' or 'processing'.\nUse /bundles/job/status to poll for completion, or wait for\nMetabundleCreationCompleteEvent via WebSocket.\n"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "queued",
-                        "processing",
-                        "ready",
-                        "failed"
-                    ],
-                    "description": "Creation status.\n- queued: Job accepted for async processing (poll with jobId)\n- processing: Job is actively running\n- ready: Metabundle created and available for download\n- failed: Creation failed (see conflicts for details)\n"
+                    "$ref": "#/$defs/BundleStatus",
+                    "description": "Creation status.\ n- queued: Job accepted for async processing (poll with jobId)\n- processing: Job is actively running\n- ready: Metabundle created and available for download\n- failed: Creation failed (see conflicts for details)\n"
                 },
                 "downloadUrl": {
                     "type": "string",
@@ -1963,10 +2022,11 @@ public partial class AssetController
                 },
                 "sourceBundles": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/SourceBundleReference"
                     },
-                    "description": "Provenance data for the metabundle"
+                    "description": "Provenance data for the metabundle (null when status is not ready)"
                 },
                 "conflicts": {
                     "type": "array",
@@ -1977,6 +2037,17 @@ public partial class AssetController
                     "description": "Present if creation failed due to asset conflicts"
                 }
             }
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "queued",
+                "processing",
+                "ready",
+                "failed",
+                "cancelled"
+            ],
+            "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\ n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         },
         "SourceBundleReference": {
             "type": "object",
@@ -2160,15 +2231,8 @@ public partial class AssetController
                     "description": "Human-readable metabundle identifier being created"
                 },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "queued",
-                        "processing",
-                        "ready",
-                        "failed",
-                        "cancelled"
-                    ],
-                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\ n- cancelled: Job was cancelled\n"
+                    "$ref": "#/$defs/BundleStatus",
+                    "description": "Current job status.\n- queued: Waiting for processing resources\n- processing: Actively being processed\n- ready: Completed successfully\n- failed: Creation failed\n- cancelled: Job was cancelled\n"
                 },
                 "progress": {
                     "type": "integer",
@@ -2208,7 +2272,11 @@ public partial class AssetController
                     "description": "Provenance data (when ready)"
                 },
                 "errorCode": {
-                    "type": "string",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/MetabundleErrorCode"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Error code (when status is 'failed')"
                 },
@@ -2236,6 +2304,17 @@ public partial class AssetController
                     "description": "Total processing time in milliseconds (when complete)"
                 }
             }
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "queued",
+                "processing",
+                "ready",
+                "failed",
+                "cancelled"
+            ],
+            "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         },
         "SourceBundleReference": {
             "type": "object",
@@ -2268,6 +2347,22 @@ public partial class AssetController
                     "description": "Hash of source bundle at composition time (for integrity verification)"
                 }
             }
+        },
+        "MetabundleErrorCode": {
+            "type": "string",
+            "enum": [
+                "SOURCE_BUNDLE_NOT_FOUND",
+                "SOURCE_BUNDLE_NOT_READY",
+                "STANDALONE_ASSET_NOT_FOUND",
+                "STANDALONE_ASSET_NOT_READY",
+                "REALM_MISMATCH",
+                "ASSET_CONFLICT",
+                "STORAGE_ERROR",
+                "TIMEOUT",
+                "CANCELLED",
+                "INTERNAL_ERROR"
+            ],
+            "description": "Error codes for metabundle creation failures"
         }
     }
 }
@@ -2364,7 +2459,6 @@ public partial class AssetController
             "description": "Result of job cancellation attempt",
             "required": [
                 "jobId",
-                "cancelled",
                 "status"
             ],
             "properties": {
@@ -2373,27 +2467,22 @@ public partial class AssetController
                     "format": "uuid",
                     "description": "Job identifier"
                 },
-                "cancelled": {
-                    "type": "boolean",
-                    "description": "Whether the job was successfully cancelled"
-                },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "queued",
-                        "processing",
-                        "ready",
-                        "failed",
-                        "cancelled"
-                    ],
+                    "$ref": "#/$defs/BundleStatus",
                     "description": "Current job status after cancellation attempt"
-                },
-                "message": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Additional context about the cancellation result"
                 }
             }
+        },
+        "BundleStatus": {
+            "type": "string",
+            "enum": [
+                "queued",
+                "processing",
+                "ready",
+                "failed",
+                "cancelled"
+            ],
+            "description": "Bundle processing status:\n- queued: Bundle creation is queued for processing\n- processing: Bundle is being processed\ n- ready: Bundle is ready for download\n- failed: Bundle creation failed\n- cancelled: Bundle creation was cancelled\n"
         }
     }
 }
@@ -2471,6 +2560,7 @@ public partial class AssetController
             "properties": {
                 "assetIds": {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "string"
                     },
@@ -2499,7 +2589,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -2783,7 +2874,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -2791,7 +2883,7 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         }
     }
 }
@@ -2807,17 +2899,12 @@ public partial class AssetController
             "additionalProperties": false,
             "description": "Bundles containing the requested asset",
             "required": [
-                "assetId",
                 "bundles",
                 "total",
                 "limit",
                 "offset"
             ],
             "properties": {
-                "assetId": {
-                    "type": "string",
-                    "description": "The queried asset ID"
-                },
                 "bundles": {
                     "type": "array",
                     "items": {
@@ -2847,8 +2934,7 @@ public partial class AssetController
                 "bundleId",
                 "bundleType",
                 "version",
-                "assetCount",
-                "realm"
+                "assetCount"
             ],
             "properties": {
                 "bundleId": {
@@ -2874,8 +2960,13 @@ public partial class AssetController
                     "description": "Bundle file size"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm. Null for cross-realm bundles."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2895,7 +2986,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         }
     }
 }
@@ -2972,6 +3064,8 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier to update"
                 },
                 "name": {
@@ -3029,16 +3123,11 @@ public partial class AssetController
             "additionalProperties": false,
             "description": "Result of bundle update operation",
             "required": [
-                "bundleId",
                 "version",
                 "previousVersion",
                 "changes"
             ],
             "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "description": "Human-readable bundle identifier that was updated"
-                },
                 "version": {
                     "type": "integer",
                     "description": "New version number after update"
@@ -3136,6 +3225,8 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier to delete"
                 },
                 "permanent": {
@@ -3164,21 +3255,12 @@ public partial class AssetController
             "additionalProperties": false,
             "description": "Result of bundle deletion",
             "required": [
-                "bundleId",
                 "status",
                 "deletedAt"
             ],
             "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "description": "Human-readable bundle identifier that was deleted"
-                },
                 "status": {
-                    "type": "string",
-                    "enum": [
-                        "deleted",
-                        "permanently_deleted"
-                    ],
+                    "$ref": "#/$defs/DeletionStatus",
                     "description": "Deletion status"
                 },
                 "deletedAt": {
@@ -3193,6 +3275,14 @@ public partial class AssetController
                     "description": "When soft-deleted bundle will be permanently removed (null for permanent deletes)"
                 }
             }
+        },
+        "DeletionStatus": {
+            "type": "string",
+            "enum": [
+                "deleted",
+                "permanently_deleted"
+            ],
+            "description": "Result of a deletion operation:\n- deleted: Soft-deleted (within retention period, can be restored)\n- permanently_deleted: Permanently removed (unrecoverable)\n"
         }
     }
 }
@@ -3269,6 +3359,8 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier to restore"
                 },
                 "reason": {
@@ -3292,30 +3384,28 @@ public partial class AssetController
             "additionalProperties": false,
             "description": "Result of bundle restoration",
             "required": [
-                "bundleId",
                 "status",
-                "restoredAt",
                 "restoredFromVersion"
             ],
             "properties": {
-                "bundleId": {
-                    "type": "string",
-                    "description": "Human-readable bundle identifier that was restored"
-                },
                 "status": {
-                    "type": "string",
-                    "description": "Current bundle status (should be \"active\")"
-                },
-                "restoredAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "description": "When the bundle was restored"
+                    "$ref": "#/$defs/BundleLifecycle",
+                    "description": "Current bundle lifecycle status after restoration (should be \"active\")"
                 },
                 "restoredFromVersion": {
                     "type": "integer",
                     "description": "Version number the bundle was restored from"
                 }
             }
+        },
+        "BundleLifecycle": {
+            "type": "string",
+            "enum": [
+                "active",
+                "deleted",
+                "processing"
+            ],
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -3461,21 +3551,19 @@ public partial class AssetController
                     "description": "Filter by bundle type (source or metabundle)"
                 },
                 "sortField": {
-                    "type": "string",
-                    "enum": [
-                        "created_at",
-                        "updated_at",
-                        "name",
-                        "size"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BundleSortField"
+                        }
                     ],
                     "nullable": true,
                     "description": "Field to sort by (default created_at)"
                 },
                 "sortOrder": {
-                    "type": "string",
-                    "enum": [
-                        "asc",
-                        "desc"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SortOrder"
+                        }
                     ],
                     "nullable": true,
                     "description": "Sort order (default desc)"
@@ -3508,7 +3596,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "BundleType": {
             "type": "string",
@@ -3516,7 +3605,25 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\ n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+        },
+        "BundleSortField": {
+            "type": "string",
+            "enum": [
+                "created_at",
+                "updated_at",
+                "name",
+                "size"
+            ],
+            "description": "Fields available for sorting bundle query results"
+        },
+        "SortOrder": {
+            "type": "string",
+            "enum": [
+                "asc",
+                "desc"
+            ],
+            "description": "Sort direction for query results"
         }
     }
 }
@@ -3568,7 +3675,6 @@ public partial class AssetController
                 "bundleType",
                 "version",
                 "metadataVersion",
-                "realm",
                 "status",
                 "assetCount",
                 "createdAt"
@@ -3606,8 +3712,13 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm this bundle belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm this bundle belongs to. Null for cross-realm bundles."
                 },
                 "tags": {
                     "type": "object",
@@ -3656,11 +3767,12 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -3746,16 +3858,20 @@ public partial class AssetController
             "properties": {
                 "bundleId": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
                     "description": "Human-readable bundle identifier to get history for"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
                     "description": "Maximum versions to return"
                 },
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Pagination offset"
                 }
             }
@@ -3857,7 +3973,6 @@ public partial class AssetController
                 "bundleType",
                 "version",
                 "metadataVersion",
-                "realm",
                 "status",
                 "assetCount",
                 "createdAt"
@@ -3895,8 +4010,13 @@ public partial class AssetController
                     "description": "Owner account ID or service name (null for system-owned bundles)"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm this bundle belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm this bundle belongs to. Null for cross-realm bundles."
                 },
                 "tags": {
                     "type": "object",
@@ -3945,11 +4065,12 @@ public partial class AssetController
                 "source",
                 "metabundle"
             ],
-            "description": "Bundle category:\n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
+            "description": "Bundle category:\ n- source: Original bundle (uploaded or server-created from assets)\n- metabundle: Composed from other bundles server-side\n"
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "BundleLifecycle": {
             "type": "string",
@@ -3958,7 +4079,7 @@ public partial class AssetController
                 "deleted",
                 "processing"
             ],
-            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\ n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
+            "description": "Bundle lifecycle status:\n- active: Bundle is available for use\n- deleted: Bundle has been soft-deleted (within retention period)\n- processing: Bundle is being processed (metabundle creation)\n"
         }
     }
 }
@@ -4035,6 +4156,8 @@ public partial class AssetController
             "properties": {
                 "assetIds": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 100,
                     "items": {
                         "type": "string"
                     },
@@ -4178,8 +4301,13 @@ public partial class AssetController
                     "description": "Type classification for the asset"
                 },
                 "realm": {
-                    "$ref": "#/$defs/GameRealm",
-                    "description": "Game realm the asset belongs to"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/GameRealm"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Game realm the asset belongs to. Null for cross-realm assets."
                 },
                 "tags": {
                     "type": "array",
@@ -4224,7 +4352,8 @@ public partial class AssetController
         },
         "GameRealm": {
             "type": "string",
-            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nUse \"shared\" for assets that are available across all realms.\n"
+            "minLength": 1,
+            "description": "Realm stub name (lowercase string identifier) that this asset belongs to.\nUse the realm's stub_name property (e.g., \"realm-1\", \"realm-2\") from the Realm service.\nNull for assets that are available across all realms.\n"
         },
         "ProcessingStatus": {
             "type": "string",

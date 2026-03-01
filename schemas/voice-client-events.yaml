@@ -31,7 +31,7 @@ components:
     # Room State Events
     # ============================================
 
-    VoiceRoomStateEvent:
+    VoiceRoomStateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -89,7 +89,7 @@ components:
     # Peer Events
     # ============================================
 
-    VoicePeerJoinedEvent:
+    VoicePeerJoinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -120,7 +120,7 @@ components:
           type: integer
           description: Total participants after join
 
-    VoicePeerLeftEvent:
+    VoicePeerLeftClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -155,7 +155,7 @@ components:
           type: integer
           description: Participants remaining after departure
 
-    VoicePeerUpdatedEvent:
+    VoicePeerUpdatedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -187,7 +187,7 @@ components:
     # Tier Events
     # ============================================
 
-    VoiceTierUpgradeEvent:
+    VoiceTierUpgradeClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -237,7 +237,7 @@ components:
     # Room Lifecycle Events
     # ============================================
 
-    VoiceRoomClosedEvent:
+    VoiceRoomClosedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -269,7 +269,7 @@ components:
     # Broadcast Consent Events
     # ============================================
 
-    VoiceBroadcastConsentRequestEvent:
+    VoiceBroadcastConsentRequestClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -302,7 +302,7 @@ components:
           nullable: true
           description: Display name of requester for UI
 
-    VoiceBroadcastConsentUpdateEvent:
+    VoiceBroadcastConsentUpdateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

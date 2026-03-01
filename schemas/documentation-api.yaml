@@ -2524,7 +2524,8 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID in Asset Service
+          nullable: true
+          description: Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)
         documentCount:
           type: integer
           description: Number of documents in the archive

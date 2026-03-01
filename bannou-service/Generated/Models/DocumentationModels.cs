@@ -2689,10 +2689,10 @@ public partial class CreateArchiveResponse
     public string Namespace { get; set; } = default!;
 
     /// <summary>
-    /// Asset ID in Asset Service
+    /// Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
-    public System.Guid BundleAssetId { get; set; } = default!;
+    public System.Guid? BundleAssetId { get; set; } = default!;
 
     /// <summary>
     /// Number of documents in the archive

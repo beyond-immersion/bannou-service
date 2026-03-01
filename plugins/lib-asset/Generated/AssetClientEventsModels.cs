@@ -52,7 +52,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetUploadCompleteEvent : BaseClientEvent
+public partial class AssetUploadCompleteClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -116,7 +116,7 @@ public partial class AssetUploadCompleteEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingCompleteEvent : BaseClientEvent
+public partial class AssetProcessingCompleteClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -174,7 +174,7 @@ public partial class AssetProcessingCompleteEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingFailedEvent : BaseClientEvent
+public partial class AssetProcessingFailedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -226,7 +226,7 @@ public partial class AssetProcessingFailedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleValidationCompleteEvent : BaseClientEvent
+public partial class BundleValidationCompleteClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -282,7 +282,7 @@ public partial class BundleValidationCompleteEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleValidationFailedEvent : BaseClientEvent
+public partial class BundleValidationFailedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -316,7 +316,7 @@ public partial class BundleValidationFailedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleCreationCompleteEvent : BaseClientEvent
+public partial class BundleCreationCompleteClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -380,7 +380,7 @@ public partial class BundleCreationCompleteEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MetabundleCreationCompleteEvent : BaseClientEvent
+public partial class MetabundleCreationCompleteClientEvent : BaseClientEvent
 {
 
     /// <summary>

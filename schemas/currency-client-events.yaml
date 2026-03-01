@@ -28,7 +28,7 @@ components:
     # Balance Changed Client Event
     # ============================================
 
-    CurrencyBalanceChangedEvent:
+    CurrencyBalanceChangedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -81,7 +81,7 @@ components:
     # Wallet Frozen Client Event
     # ============================================
 
-    CurrencyWalletFrozenEvent:
+    CurrencyWalletFrozenClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -114,7 +114,7 @@ components:
     # Wallet Unfrozen Client Event
     # ============================================
 
-    CurrencyWalletUnfrozenEvent:
+    CurrencyWalletUnfrozenClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

@@ -50,7 +50,7 @@ using System = global::System;
 /// Published on period-changed boundaries, ratio changes, admin clock advancement, and on-demand via TriggerTimeSync. Contains a full game time snapshot for client time rendering and interpolation. Routed via Entity Session Registry.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateTimeSyncEvent : BaseClientEvent
+public partial class WorldstateTimeSyncClientEvent : BaseClientEvent
 {
 
     /// <summary>

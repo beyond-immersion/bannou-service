@@ -32,7 +32,7 @@ components:
     # Location Presence Changed Client Event
     # ============================================
 
-    LocationPresenceChangedEvent:
+    LocationPresenceChangedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

@@ -53,7 +53,7 @@ components:
           format: date-time
           description: When the event was generated (ISO 8601 format)
 
-    CapabilityManifestEvent:
+    CapabilityManifestClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -123,7 +123,7 @@ components:
           nullable: true
           description: Human-readable description
 
-    DisconnectNotificationEvent:
+    DisconnectNotificationClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -161,7 +161,7 @@ components:
             - server_shutdown: Server is shutting down gracefully
             - forced_disconnect: Administrative disconnection
 
-    SystemErrorEvent:
+    SystemErrorClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object
@@ -229,7 +229,7 @@ components:
           nullable: true
           description: Why capabilities were sent (e.g., "session_connected", "service_registered", "role_changed")
 
-    SystemNotificationEvent:
+    SystemNotificationClientEvent:
       allOf:
         - $ref: '#/components/schemas/BaseClientEvent'
       type: object

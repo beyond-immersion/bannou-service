@@ -19,7 +19,7 @@ paths: {}
 
 components:
   schemas:
-    WorldstateTimeSyncEvent:
+    WorldstateTimeSyncClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

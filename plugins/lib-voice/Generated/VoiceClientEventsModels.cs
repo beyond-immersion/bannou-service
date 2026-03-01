@@ -52,7 +52,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomStateEvent : BaseClientEvent
+public partial class VoiceRoomStateClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -121,7 +121,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerJoinedEvent : BaseClientEvent
+public partial class VoicePeerJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -161,7 +161,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerLeftEvent : BaseClientEvent
+public partial class VoicePeerLeftClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -208,7 +208,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerUpdatedEvent : BaseClientEvent
+public partial class VoicePeerUpdatedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -244,7 +244,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceTierUpgradeEvent : BaseClientEvent
+public partial class VoiceTierUpgradeClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -309,7 +309,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomClosedEvent : BaseClientEvent
+public partial class VoiceRoomClosedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -344,7 +344,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
+public partial class VoiceBroadcastConsentRequestClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -382,7 +382,7 @@ public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceBroadcastConsentUpdateEvent : BaseClientEvent
+public partial class VoiceBroadcastConsentUpdateClientEvent : BaseClientEvent
 {
 
     /// <summary>

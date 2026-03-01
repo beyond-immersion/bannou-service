@@ -32,7 +32,7 @@ components:
     # Subscription Status Changed Client Event
     # ============================================
 
-    SubscriptionStatusChangedEvent:
+    SubscriptionStatusChangedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

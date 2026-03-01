@@ -51,7 +51,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CapabilityManifestEvent : BaseClientEvent
+public partial class CapabilityManifestClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -146,7 +146,7 @@ public partial class ClientCapabilityEntry
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DisconnectNotificationEvent : BaseClientEvent
+public partial class DisconnectNotificationClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -194,7 +194,7 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SystemErrorEvent : BaseClientEvent
+public partial class SystemErrorClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -279,7 +279,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SystemNotificationEvent : BaseClientEvent
+public partial class SystemNotificationClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -295,7 +295,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemNotificationEventNotificationType NotificationType { get; set; } = default!;
+    public SystemNotificationClientEventNotificationType NotificationType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable notification message
@@ -552,7 +552,7 @@ public partial class SessionShortcutMetadata
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemNotificationEventNotificationType
+public enum SystemNotificationClientEventNotificationType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"info")]

@@ -52,7 +52,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionStateChangedEvent : BaseClientEvent
+public partial class SessionStateChangedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -108,7 +108,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerJoinedEvent : BaseClientEvent
+public partial class PlayerJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -154,7 +154,7 @@ public partial class PlayerJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerLeftEvent : BaseClientEvent
+public partial class PlayerLeftClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -207,7 +207,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerKickedEvent : BaseClientEvent
+public partial class PlayerKickedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -262,7 +262,7 @@ public partial class PlayerKickedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionCancelledEvent : BaseClientEvent
+public partial class SessionCancelledClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -297,7 +297,7 @@ public partial class SessionCancelledEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionChatReceivedEvent : BaseClientEvent
+public partial class SessionChatReceivedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -369,7 +369,7 @@ public partial class SessionChatReceivedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GameStateUpdatedEvent : BaseClientEvent
+public partial class GameStateUpdatedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -422,7 +422,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GameActionResultEvent : BaseClientEvent
+public partial class GameActionResultClientEvent : BaseClientEvent
 {
 
     /// <summary>

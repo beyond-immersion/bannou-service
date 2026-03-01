@@ -54,7 +54,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyBalanceChangedEvent : BaseClientEvent
+public partial class CurrencyBalanceChangedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -119,7 +119,7 @@ public partial class CurrencyBalanceChangedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyWalletFrozenEvent : BaseClientEvent
+public partial class CurrencyWalletFrozenClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -155,7 +155,7 @@ public partial class CurrencyWalletFrozenEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CurrencyWalletUnfrozenEvent : BaseClientEvent
+public partial class CurrencyWalletUnfrozenClientEvent : BaseClientEvent
 {
 
     /// <summary>

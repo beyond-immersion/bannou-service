@@ -66,30 +66,37 @@ paths:
         and receive a pre-signed URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"filename\",\n                \"size\",\n                \"contentType\"\
         ,\n                \"owner\"\n            ],\n            \"properties\": {\n                \"owner\": {\n      \
-        \              \"type\": \"string\",\n                    \"description\": \"Owner of this asset operation. NOT a
-        session ID.\\nFor user-initiated uploads: the accountId (UUID format).\\nFor service-initiated uploads: the service
-        name (e.g., \\\"behavior\\\", \\\"orchestrator\\\").\\n\"\n                },\n                \"filename\": {\n \
-        \                   \"type\": \"string\",\n                    \"description\": \"Original filename with extension\"\
+        \              \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\":
+        \"Owner of this asset operation. NOT a session ID.\\nFor user-initiated uploads: the accountId (UUID format).\\nFor
+        service-initiated uploads: the service name (e.g., \\\"behavior\\\", \\\"orchestrator\\\").\\n\"\n               \
+        \ },\n                \"filename\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 255,\n                    \"description\": \"Original filename with extension\"\
         \n                },\n                \"size\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"format\": \"int64\",\n                    \"description\": \"File size in bytes\"\n                },\n     \
-        \           \"contentType\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        MIME content type (e.g., image/png, model/gltf-binary)\"\n                },\n                \"metadata\": {\n  \
-        \                  \"$ref\": \"#/$defs/AssetMetadataInput\",\n                    \"description\": \"Optional metadata
-        for asset categorization\"\n                }\n            }\n        },\n        \"AssetMetadataInput\": {\n    \
-        \        \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"User-provided
-        metadata for asset categorization\",\n            \"properties\": {\n                \"assetType\": {\n          \
-        \          \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification for the asset\"\
-        \n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n       \
-        \             \"description\": \"Game realm the asset belongs to\"\n                },\n                \"tags\":
-        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\n       \
-        \         }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
-        behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
-        \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this
-        asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\
-        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
+        \  \"format\": \"int64\",\n                    \"minimum\": 1,\n                    \"description\": \"File size in
+        bytes\"\n                },\n                \"contentType\": {\n                    \"type\": \"string\",\n     \
+        \               \"minLength\": 1,\n                    \"description\": \"MIME content type (e.g., image/png, model/gltf-binary)\"\
+        \n                },\n                \"metadata\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"$ref\": \"#/$defs/AssetMetadataInput\"\n                        }\n               \
+        \     ],\n                    \"nullable\": true,\n                    \"description\": \"Optional metadata for asset
+        categorization (null to skip)\"\n                }\n            }\n        },\n        \"AssetMetadataInput\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        User-provided metadata for asset categorization\",\n            \"properties\": {\n                \"assetType\":
+        {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/AssetType\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Type classification for the asset (null to omit)\"\n                },\n                \"realm\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/GameRealm\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Game realm the asset belongs to (null for unscoped)\"\n                },\n                \"\
+        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Searchable tags for the asset (null to omit)\"\n                }\n            }\n        },\n        \"AssetType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
+        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
+        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
+        \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UploadResponse\"\
         ,\n    \"$defs\": {\n        \"UploadResponse\": {\n            \"description\": \"Response containing pre-signed
         URL and configuration for uploading an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -104,22 +111,24 @@ paths:
         ,\n                    \"description\": \"Configuration for multipart uploads if file size requires it\"\n       \
         \         },\n                \"requiredHeaders\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"description\": \"Headers the client must include when uploading to the pre-signed URL\"\n          \
-        \      }\n            }\n        },\n        \"MultipartConfig\": {\n            \"description\": \"Configuration
-        for multipart uploads of large files\",\n            \"type\": \"object\",\n            \"additionalProperties\":
-        false,\n            \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether multipart upload is required for this file size\"\n            \
-        \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
-        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
-        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
-        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
-        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \           \"nullable\": true,\n                    \"description\": \"Headers the client must include when uploading
+        to the pre-signed URL (null if no special headers needed)\"\n                }\n            }\n        },\n      \
+        \  \"MultipartConfig\": {\n            \"description\": \"Configuration for multipart uploads of large files\",\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
+        \              \"required\",\n                \"partSize\",\n                \"maxParts\"\n            ],\n      \
+        \      \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether multipart upload is required for this file size\"\n                },\n    \
+        \            \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n               \
+        \ \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n    \
+        \        }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a single
+        part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n    \
+        \        \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
         : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
         \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
@@ -192,27 +201,29 @@ paths:
         type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"File size
         in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
         ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
-        \  \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game
-        realm the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
-        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
-        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
-        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
-        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
-        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
-        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
-        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
-        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase
-        string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\
-        \") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n\
-        \        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"processing\",\n                \"complete\",\n                \"failed\"\n            ],\n  \
-        \          \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        \  \"realm\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\"\
+        : \"#/$defs/GameRealm\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Game realm the asset belongs to. Null for cross-realm assets.\"\n        \
+        \        },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags for the asset\"\n                },\n                \"processingStatus\": {\n                   \
+        \ \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status of asset processing
+        pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"description\": \"Whether the asset is in cold/archival storage\",\n                    \"default\"\
+        : false\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
+        \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
+        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
+        \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\"\
+        : {\n            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
+        (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
+        \", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n      \
+        \  },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
+        \   \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\n   \
+        \         ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Mark upload as complete, trigger processing\",\n    \"description\": \"\
         Called after the client has uploaded the file to the pre-signed URL.\\nTriggers the asset processing pipeline (texture
         conversion, model validation, etc.)\\nand emits completion events via WebSocket.\\n\",\n    \"tags\": [\n        \"\
@@ -248,10 +259,11 @@ paths:
         ,\n    \"$defs\": {\n        \"GetAssetRequest\": {\n            \"description\": \"Request to retrieve asset metadata
         and download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"\
-        assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset identifier\"\
-        \n                },\n                \"version\": {\n                    \"type\": \"string\",\n                \
-        \    \"default\": \"latest\",\n                    \"description\": \"Version ID or 'latest'\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 64,\n                \
+        \    \"maxLength\": 64,\n                    \"description\": \"Asset identifier (SHA-256 hex string)\"\n        \
+        \        },\n                \"version\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Version ID to retrieve (null for latest version)\"\n             \
+        \   }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"AssetWithDownloadUrl\": {\n            \"description\": \"Asset metadata with optional
         pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
@@ -286,28 +298,30 @@ paths:
         \                \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
         ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
         : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\"\
-        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
-        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
-        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
-        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
-        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
-        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
-        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
-        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
-        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\
-        nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\
-        \" for assets that are available across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n          \
-        \  \"type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n\
-        \                \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
-        pipeline status\"\n        }\n    }\n}"
+        for the asset\"\n                },\n                \"realm\": {\n                    \"allOf\": [\n            \
+        \            {\n                            \"$ref\": \"#/$defs/GameRealm\"\n                        }\n         \
+        \           ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm the asset
+        belongs to. Null for cross-realm assets.\"\n                },\n                \"tags\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n             \
+        \       },\n                    \"description\": \"Searchable tags for the asset\"\n                },\n         \
+        \       \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                   \
+        \ \"description\": \"Current status of asset processing pipeline\"\n                },\n                \"isArchived\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival
+        storage\",\n                    \"default\": false\n                },\n                \"createdAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the asset was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the asset was last updated\"\n                }\n            }\n        },\n        \"AssetType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
+        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
+        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
+        \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\",\n \
+        \               \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get asset metadata and download URL\",\n    \"description\": \"Retrieve
         asset metadata and generate a pre-signed download URL.\\nSpecify version to download a specific version, or omit for
         latest.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAsset\"\
@@ -345,18 +359,17 @@ paths:
         ,\n    \"$defs\": {\n        \"DeleteAssetRequest\": {\n            \"description\": \"Request to delete an asset
         from storage\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
         : [\n                \"assetId\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Asset identifier to delete\"\n\
-        \                },\n                \"versionId\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Specific version to delete. If omitted, all versions
-        are deleted.\\n\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 64,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Asset identifier to delete (SHA-256 hex string)\"\n                },\n\
+        \                \"versionId\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Specific version to delete. If omitted, all versions are deleted.\\n\"\n \
+        \               }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteAssetResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteAssetResponse\": {\n            \"description\": \"Response confirming asset
         deletion\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"assetId\",\n                \"versionsDeleted\"\n            ],\n            \"properties\"\
-        : {\n                \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Deleted asset identifier\"\n                },\n                \"versionsDeleted\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Number of versions deleted\"\n                }\n   \
-        \         }\n        }\n    }\n}"
+        : [\n                \"versionsDeleted\"\n            ],\n            \"properties\": {\n                \"versionsDeleted\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of versions deleted\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete an asset\",\n    \"description\": \"Delete an asset from storage.
         If versionId is specified, only that version is deleted.\\nIf versionId is omitted, all versions are deleted.\\n\"\
         ,\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteAsset\"\n\
@@ -392,36 +405,37 @@ paths:
         ,\n    \"$defs\": {\n        \"ListVersionsRequest\": {\n            \"description\": \"Request to list all versions
         of an asset with pagination\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"assetId\"\n            ],\n            \"properties\": {\n       \
-        \         \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Asset
-        identifier to list versions for\"\n                },\n                \"limit\": {\n                    \"type\"\
-        : \"integer\",\n                    \"default\": 50,\n                    \"description\": \"Maximum number of versions
-        to return\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n     \
-        \               \"default\": 0,\n                    \"description\": \"Number of versions to skip for pagination\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \         \"assetId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 64,\n    \
+        \                \"maxLength\": 64,\n                    \"description\": \"Asset identifier to list versions for
+        (SHA-256 hex string)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Maximum number of versions to return\"\n                },\n                \"offset\": {\n                  \
+        \  \"type\": \"integer\",\n                    \"default\": 0,\n                    \"minimum\": 0,\n            \
+        \        \"description\": \"Number of versions to skip for pagination\"\n                }\n            }\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetVersionList\"\
         ,\n    \"$defs\": {\n        \"AssetVersionList\": {\n            \"description\": \"Paginated list of asset versions\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"assetId\",\n                \"versions\",\n                \"total\",\n                \"limit\"\
-        ,\n                \"offset\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n   \
-        \                 \"type\": \"string\",\n                    \"description\": \"Asset identifier\"\n             \
-        \   },\n                \"versions\": {\n                    \"type\": \"array\",\n                    \"items\":
-        {\n                        \"$ref\": \"#/$defs/AssetVersion\"\n                    },\n                    \"description\"\
-        : \"List of asset versions\"\n                },\n                \"total\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of versions available\"\n                },\n             \
-        \   \"limit\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Maximum number
-        of versions returned per page\"\n                },\n                \"offset\": {\n                    \"type\":
-        \"integer\",\n                    \"description\": \"Number of versions skipped\"\n                }\n           \
-        \ }\n        },\n        \"AssetVersion\": {\n            \"description\": \"Metadata for a specific version of an
-        asset\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"versionId\",\n                \"createdAt\",\n                \"size\",\n                \"\
-        isArchived\"\n            ],\n            \"properties\": {\n                \"versionId\": {\n                  \
-        \  \"type\": \"string\",\n                    \"description\": \"Unique version identifier\"\n                },\n\
-        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when this version was created\"\n                },\n        \
-        \        \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n   \
-        \                 \"description\": \"File size in bytes for this version\"\n                },\n                \"\
-        isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this version
-        is in cold storage\"\n                }\n            }\n        }\n    }\n}"
+        \                \"versions\",\n                \"total\",\n                \"limit\",\n                \"offset\"\
+        \n            ],\n            \"properties\": {\n                \"versions\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetVersion\"\n         \
+        \           },\n                    \"description\": \"List of asset versions\"\n                },\n            \
+        \    \"total\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total number
+        of versions available\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Maximum number of versions returned per page\"\n                },\n   \
+        \             \"offset\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Number
+        of versions skipped\"\n                }\n            }\n        },\n        \"AssetVersion\": {\n            \"description\"\
+        : \"Metadata for a specific version of an asset\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"createdAt\",\n                \"size\",\n               \
+        \ \"isArchived\"\n            ],\n            \"properties\": {\n                \"versionId\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Unique
+        version identifier. Null when object storage versioning is not enabled.\"\n                },\n                \"\
+        createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"description\": \"Timestamp when this version was created\"\n                },\n                \"\
+        size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n              \
+        \      \"description\": \"File size in bytes for this version\"\n                },\n                \"isArchived\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this version is in
+        cold storage\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all versions of an asset\",\n    \"description\": \"Retrieve version
         history for an asset with pagination.\\nIncludes version IDs, creation timestamps, and archive status.\\n\",\n   \
         \ \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listAssetVersions\"\n\
@@ -464,16 +478,17 @@ paths:
         \n                },\n                \"contentType\": {\n                    \"type\": \"string\",\n            \
         \        \"nullable\": true,\n                    \"description\": \"MIME content type filter (null to skip content
         type filtering)\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 50,\n                    \"description\": \"Maximum number of results to return\"\
-        \n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                \
-        \    \"default\": 0,\n                    \"description\": \"Number of results to skip for pagination\"\n        \
-        \        }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"\
-        enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n                \"\
-        behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n\
-        \            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n         \
-        \   \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this
-        asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\
-        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
+        \                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"description\": \"\
+        Maximum number of results to return\"\n                },\n                \"offset\": {\n                    \"type\"\
+        : \"integer\",\n                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of results to skip for pagination\"\n                }\n            }\n        },\n        \"AssetType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
+        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
+        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
+        \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AssetSearchResult\"\
         ,\n    \"$defs\": {\n        \"AssetSearchResult\": {\n            \"description\": \"Paginated results from an asset
         search query\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -500,28 +515,30 @@ paths:
         \               \"size\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
         ,\n                    \"description\": \"File size in bytes\"\n                },\n                \"assetType\"\
         : {\n                    \"$ref\": \"#/$defs/AssetType\",\n                    \"description\": \"Type classification
-        for the asset\"\n                },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\"\
-        ,\n                    \"description\": \"Game realm the asset belongs to\"\n                },\n                \"\
-        tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Searchable tags for the asset\"\
-        \n                },\n                \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\"\
-        ,\n                    \"description\": \"Current status of asset processing pipeline\"\n                },\n    \
-        \            \"isArchived\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the asset is in cold/archival storage\",\n                    \"default\": false\n                },\n   \
-        \             \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the asset was created\"\n                },\n           \
-        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Timestamp when the asset was last updated\"\n                }\n         \
-        \   }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n            \"enum\": [\n        \
-        \        \"texture\",\n                \"model\",\n                \"audio\",\n                \"behavior\",\n   \
-        \             \"bundle\",\n                \"prefab\",\n                \"other\"\n            ],\n            \"\
-        description\": \"Type classification for assets\"\n        },\n        \"GameRealm\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\
-        nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\
-        \" for assets that are available across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n          \
-        \  \"type\": \"string\",\n            \"enum\": [\n                \"pending\",\n                \"processing\",\n\
-        \                \"complete\",\n                \"failed\"\n            ],\n            \"description\": \"Asset processing
-        pipeline status\"\n        }\n    }\n}"
+        for the asset\"\n                },\n                \"realm\": {\n                    \"allOf\": [\n            \
+        \            {\n                            \"$ref\": \"#/$defs/GameRealm\"\n                        }\n         \
+        \           ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm the asset
+        belongs to. Null for cross-realm assets.\"\n                },\n                \"tags\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n             \
+        \       },\n                    \"description\": \"Searchable tags for the asset\"\n                },\n         \
+        \       \"processingStatus\": {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                   \
+        \ \"description\": \"Current status of asset processing pipeline\"\n                },\n                \"isArchived\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival
+        storage\",\n                    \"default\": false\n                },\n                \"createdAt\": {\n       \
+        \             \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the asset was created\"\n                },\n                \"updatedAt\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
+        \"Timestamp when the asset was last updated\"\n                }\n            }\n        },\n        \"AssetType\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"texture\",\n                \"\
+        model\",\n                \"audio\",\n                \"behavior\",\n                \"bundle\",\n               \
+        \ \"prefab\",\n                \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\
+        \n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n       \
+        \     \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n        \
+        \    \"enum\": [\n                \"pending\",\n                \"processing\",\n                \"complete\",\n \
+        \               \"failed\"\n            ],\n            \"description\": \"Asset processing pipeline status\"\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Search assets by tags, type, or realm\",\n    \"description\": \"Search
         assets using various filters with pagination.\\nAll filters are optional and combine with AND logic.\\n\",\n    \"\
         tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"searchAssets\"\n}"
@@ -567,38 +584,42 @@ paths:
         ,\n                    \"description\": \"Owner of this bundle. NOT a session ID.\\nFor user-initiated bundles: the
         accountId (UUID format).\\nFor service-initiated bundles: the service name (e.g., \\\"orchestrator\\\").\\n\"\n  \
         \              },\n                \"bundleId\": {\n                    \"type\": \"string\",\n                  \
-        \  \"description\": \"Human-readable bundle identifier (e.g., \\\"synty/polygon-adventure\\\", \\\"my-bundle-v1\\\"\
-        )\"\n                },\n                \"version\": {\n                    \"type\": \"string\",\n             \
-        \       \"default\": \"1.0.0\",\n                    \"description\": \"Bundle version string\"\n                },\n\
-        \                \"realm\": {\n                    \"allOf\": [\n                        {\n                     \
-        \       \"$ref\": \"#/$defs/GameRealm\"\n                        }\n                    ],\n                    \"\
-        nullable\": true,\n                    \"description\": \"Game realm this bundle belongs to.\\nDefaults to 'shared'
-        if not specified.\\n\"\n                },\n                \"assetIds\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"description\": \"List of asset IDs to include in the bundle\"\n                },\n             \
-        \   \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n                    \"description\"\
-        : \"Compression algorithm to use for the bundle\"\n                },\n                \"metadata\": {\n         \
-        \           \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Custom metadata for the bundle (null if none). No Bannou plugin reads
-        specific keys from this field by convention.\"\n                }\n            }\n        },\n        \"GameRealm\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier)
-        that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the
-        Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n        \"\
-        CompressionType\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"lz4\",\n     \
-        \           \"lzma\",\n                \"none\"\n            ],\n            \"description\": \"Compression algorithm
-        for bundles\"\n        }\n    }\n}"
+        \  \"minLength\": 1,\n                    \"maxLength\": 255,\n                    \"description\": \"Human-readable
+        bundle identifier (e.g., \\\"synty/polygon-adventure\\\", \\\"my-bundle-v1\\\")\"\n                },\n          \
+        \      \"version\": {\n                    \"type\": \"string\",\n                    \"default\": \"1.0.0\",\n  \
+        \                  \"description\": \"Bundle version string\"\n                },\n                \"realm\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/GameRealm\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Game realm this bundle belongs to.\\nNull for realm-agnostic bundles available across all realms.\\\
+        n\"\n                },\n                \"assetIds\": {\n                    \"type\": \"array\",\n             \
+        \       \"minItems\": 1,\n                    \"items\": {\n                        \"type\": \"string\"\n       \
+        \             },\n                    \"description\": \"List of asset IDs to include in the bundle\"\n          \
+        \      },\n                \"compression\": {\n                    \"$ref\": \"#/$defs/CompressionType\",\n      \
+        \              \"description\": \"Compression algorithm to use for the bundle\"\n                },\n            \
+        \    \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Custom metadata for the bundle (null
+        if none). No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
+        \        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n        \
+        \    \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        },\n        \"CompressionType\": {\n            \"type\": \"string\",\n         \
+        \   \"enum\": [\n                \"lz4\",\n                \"lzma\",\n                \"none\"\n            ],\n \
+        \           \"description\": \"Compression algorithm for bundles\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateBundleResponse\": {\n            \"description\": \"Response with bundle creation
         status and estimated size\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
         \          \"required\": [\n                \"bundleId\",\n                \"status\",\n                \"estimatedSize\"\
         \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
         string\",\n                    \"description\": \"Human-readable bundle identifier (e.g., \\\"synty/polygon-adventure\\\
-        \", \\\"my-bundle-v1\\\")\"\n                },\n                \"status\": {\n                    \"type\": \"string\"\
-        ,\n                    \"enum\": [\n                        \"queued\",\n                        \"processing\",\n\
-        \                        \"ready\",\n                        \"failed\"\n                    ],\n                \
-        \    \"description\": \"Bundle creation status\"\n                },\n                \"estimatedSize\": {\n     \
-        \               \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
-        : \"Estimated bundle size in bytes\"\n                }\n            }\n        }\n    }\n}"
+        \", \\\"my-bundle-v1\\\")\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BundleStatus\"\
+        ,\n                    \"description\": \"Bundle creation status\"\n                },\n                \"estimatedSize\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        description\": \"Estimated bundle size in bytes\"\n                }\n            }\n        },\n        \"BundleStatus\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"queued\",\n                \"processing\"\
+        ,\n                \"ready\",\n                \"failed\",\n                \"cancelled\"\n            ],\n      \
+        \      \"description\": \"Bundle processing status:\\n- queued: Bundle creation is queued for processing\\n- processing:
+        Bundle is being processed\\n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled:
+        Bundle creation was cancelled\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create asset bundle from multiple assets\",\n    \"description\": \"Create
         a .bannou bundle containing multiple assets.\\nFor large bundles, processing is delegated to the processing pool.\\
         nCompletion notification sent via WebSocket event.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\"\
@@ -634,12 +655,13 @@ paths:
         ,\n    \"$defs\": {\n        \"GetBundleRequest\": {\n            \"description\": \"Request to retrieve bundle metadata
         and download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
         \ \"required\": [\n                \"bundleId\"\n            ],\n            \"properties\": {\n                \"\
-        bundleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable bundle
-        identifier to retrieve\"\n                },\n                \"format\": {\n                    \"$ref\": \"#/$defs/BundleFormat\"\
-        ,\n                    \"description\": \"Desired download format (bannou or zip)\"\n                }\n         \
-        \   }\n        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n     \
-        \           \"bannou\",\n                \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\
-        \n        }\n    }\n}"
+        bundleId\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                \
+        \    \"maxLength\": 255,\n                    \"description\": \"Human-readable bundle identifier to retrieve\"\n\
+        \                },\n                \"format\": {\n                    \"$ref\": \"#/$defs/BundleFormat\",\n    \
+        \                \"description\": \"Desired download format (bannou or zip)\"\n                }\n            }\n\
+        \        },\n        \"BundleFormat\": {\n            \"type\": \"string\",\n            \"enum\": [\n           \
+        \     \"bannou\",\n                \"zip\"\n            ],\n            \"description\": \"Bundle file format\"\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BundleWithDownloadUrl\"\
         ,\n    \"$defs\": {\n        \"BundleWithDownloadUrl\": {\n            \"description\": \"Bundle metadata combined
         with a pre-signed download URL\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -730,22 +752,24 @@ paths:
         ,\n                    \"description\": \"Configuration for multipart uploads if file size requires it\"\n       \
         \         },\n                \"requiredHeaders\": {\n                    \"type\": \"object\",\n                \
         \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"description\": \"Headers the client must include when uploading to the pre-signed URL\"\n          \
-        \      }\n            }\n        },\n        \"MultipartConfig\": {\n            \"description\": \"Configuration
-        for multipart uploads of large files\",\n            \"type\": \"object\",\n            \"additionalProperties\":
-        false,\n            \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether multipart upload is required for this file size\"\n            \
-        \    },\n                \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n           \
-        \     \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"\
-        items\": {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n\
-        \            }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a
-        single part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n   \
-        \         \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
+        \           \"nullable\": true,\n                    \"description\": \"Headers the client must include when uploading
+        to the pre-signed URL (null if no special headers needed)\"\n                }\n            }\n        },\n      \
+        \  \"MultipartConfig\": {\n            \"description\": \"Configuration for multipart uploads of large files\",\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n  \
+        \              \"required\",\n                \"partSize\",\n                \"maxParts\"\n            ],\n      \
+        \      \"properties\": {\n                \"required\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether multipart upload is required for this file size\"\n                },\n    \
+        \            \"partSize\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Size of each part in bytes\"\n                },\n                \"maxParts\": {\n                    \"type\": \"\
+        integer\",\n                    \"description\": \"Maximum number of parts\"\n                },\n               \
+        \ \"uploadUrls\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"Pre-signed URLs for each part of the multipart upload\",\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/PartUploadInfo\"\n                    }\n                }\n    \
+        \        }\n        },\n        \"PartUploadInfo\": {\n            \"description\": \"Upload information for a single
+        part in a multipart upload\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"partNumber\",\n                \"uploadUrl\"\n            ],\n    \
+        \        \"properties\": {\n                \"partNumber\": {\n                    \"type\": \"integer\",\n      \
+        \              \"description\": \"Part number (1-based)\"\n                },\n                \"uploadUrl\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"description\"\
         : \"Pre-signed URL for uploading this part\"\n                },\n                \"minSize\": {\n               \
         \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"\
@@ -823,9 +847,9 @@ paths:
         \  \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Custom metadata for the metabundle. No Bannou plugin reads specific keys from
         this field by convention.\"\n                }\n            }\n        },\n        \"GameRealm\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset
-        belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\
-        nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
+        type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name (lowercase string
+        identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\
+        \") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CreateMetabundleResponse\"\
         ,\n    \"$defs\": {\n        \"CreateMetabundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response from metabundle creation.\\nFor synchronous creation (small jobs):
@@ -837,50 +861,54 @@ paths:
         \  \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Job ID for
         async processing. Only present when status is 'queued' or 'processing'.\\nUse /bundles/job/status to poll for completion,
         or wait for\\nMetabundleCreationCompleteEvent via WebSocket.\\n\"\n                },\n                \"status\"\
-        : {\n                    \"type\": \"string\",\n                    \"enum\": [\n                        \"queued\"\
-        ,\n                        \"processing\",\n                        \"ready\",\n                        \"failed\"\
-        \n                    ],\n                    \"description\": \"Creation status.\\n- queued: Job accepted for async
-        processing (poll with jobId)\\n- processing: Job is actively running\\n- ready: Metabundle created and available for
-        download\\n- failed: Creation failed (see conflicts for details)\\n\"\n                },\n                \"downloadUrl\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uri\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Pre-signed download URL (only present when status is 'ready')\"\n\
-        \                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of assets in the metabundle\"\n                },\n                \"standaloneAssetCount\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Number of standalone assets included directly (not from bundles)\"\n                },\n                \"sizeBytes\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Total size in bytes\"\n                },\n                \"sourceBundles\": {\n               \
-        \     \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SourceBundleReference\"\
-        \n                    },\n                    \"description\": \"Provenance data for the metabundle\"\n          \
-        \      },\n                \"conflicts\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetConflict\"\n         \
-        \           },\n                    \"description\": \"Present if creation failed due to asset conflicts\"\n     \
-        \           }\n            }\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Provenance reference to a source bundle
-        used in metabundle creation\",\n            \"required\": [\n                \"bundleId\",\n                \"version\"\
-        ,\n                \"assetIds\",\n                \"contentHash\"\n            ],\n            \"properties\": {\n\
-        \                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\":
-        \"Source bundle identifier\"\n                },\n                \"version\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Version of source bundle at composition time\"\n               \
-        \ },\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Asset
-        IDs contributed from this source bundle\"\n                },\n                \"contentHash\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Hash of source bundle at composition time (for
-        integrity verification)\"\n                }\n            }\n        },\n        \"AssetConflict\": {\n          \
-        \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Describes a
-        conflict when the same asset ID has different content hashes\",\n            \"required\": [\n                \"assetId\"\
-        ,\n                \"conflictingBundles\"\n            ],\n            \"properties\": {\n                \"assetId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"The conflicting asset identifier\"\
-        \n                },\n                \"conflictingBundles\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"$ref\": \"#/$defs/ConflictingBundleEntry\"\n              \
-        \      },\n                    \"description\": \"Bundles with conflicting versions of this asset\"\n            \
-        \    }\n            }\n        },\n        \"ConflictingBundleEntry\": {\n            \"type\": \"object\",\n    \
-        \        \"additionalProperties\": false,\n            \"description\": \"A bundle entry in an asset conflict\",\n\
-        \            \"required\": [\n                \"bundleId\",\n                \"contentHash\"\n            ],\n   \
-        \         \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n        \
-        \            \"description\": \"Bundle containing this version\"\n                },\n                \"contentHash\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Content hash of asset in this
-        bundle\"\n                }\n            }\n        }\n    }\n}"
+        : {\n                    \"$ref\": \"#/$defs/BundleStatus\",\n                    \"description\": \"Creation status.\\
+        n- queued: Job accepted for async processing (poll with jobId)\\n- processing: Job is actively running\\n- ready:
+        Metabundle created and available for download\\n- failed: Creation failed (see conflicts for details)\\n\"\n     \
+        \           },\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed
+        download URL (only present when status is 'ready')\"\n                },\n                \"assetCount\": {\n    \
+        \                \"type\": \"integer\",\n                    \"description\": \"Number of assets in the metabundle\"\
+        \n                },\n                \"standaloneAssetCount\": {\n                    \"type\": \"integer\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Number of standalone assets included
+        directly (not from bundles)\"\n                },\n                \"sizeBytes\": {\n                    \"type\"\
+        : \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Total size in bytes\"\
+        \n                },\n                \"sourceBundles\": {\n                    \"type\": \"array\",\n           \
+        \         \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SourceBundleReference\"\
+        \n                    },\n                    \"description\": \"Provenance data for the metabundle (null when status
+        is not ready)\"\n                },\n                \"conflicts\": {\n                    \"type\": \"array\",\n\
+        \                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AssetConflict\"\
+        \n                    },\n                    \"description\": \"Present if creation failed due to asset conflicts\"\
+        \n                }\n            }\n        },\n        \"BundleStatus\": {\n            \"type\": \"string\",\n \
+        \           \"enum\": [\n                \"queued\",\n                \"processing\",\n                \"ready\",\n\
+        \                \"failed\",\n                \"cancelled\"\n            ],\n            \"description\": \"Bundle
+        processing status:\\n- queued: Bundle creation is queued for processing\\n- processing: Bundle is being processed\\
+        n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled: Bundle creation was cancelled\\\
+        n\"\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Provenance reference to a source bundle used in metabundle creation\",\n\
+        \            \"required\": [\n                \"bundleId\",\n                \"version\",\n                \"assetIds\"\
+        ,\n                \"contentHash\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Source bundle identifier\"\n  \
+        \              },\n                \"version\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Version of source bundle at composition time\"\n                },\n                \"assetIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Asset IDs contributed from this source
+        bundle\"\n                },\n                \"contentHash\": {\n                    \"type\": \"string\",\n    \
+        \                \"description\": \"Hash of source bundle at composition time (for integrity verification)\"\n   \
+        \             }\n            }\n        },\n        \"AssetConflict\": {\n            \"type\": \"object\",\n    \
+        \        \"additionalProperties\": false,\n            \"description\": \"Describes a conflict when the same asset
+        ID has different content hashes\",\n            \"required\": [\n                \"assetId\",\n                \"\
+        conflictingBundles\"\n            ],\n            \"properties\": {\n                \"assetId\": {\n            \
+        \        \"type\": \"string\",\n                    \"description\": \"The conflicting asset identifier\"\n      \
+        \          },\n                \"conflictingBundles\": {\n                    \"type\": \"array\",\n             \
+        \       \"items\": {\n                        \"$ref\": \"#/$defs/ConflictingBundleEntry\"\n                    },\n\
+        \                    \"description\": \"Bundles with conflicting versions of this asset\"\n                }\n   \
+        \         }\n        },\n        \"ConflictingBundleEntry\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"A bundle entry in an asset conflict\",\n          \
+        \  \"required\": [\n                \"bundleId\",\n                \"contentHash\"\n            ],\n            \"\
+        properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Bundle containing this version\"\n                },\n                \"contentHash\": {\n      \
+        \              \"type\": \"string\",\n                    \"description\": \"Content hash of asset in this bundle\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create metabundle from source bundles\",\n    \"description\": \"Compose
         a metabundle by extracting and repackaging assets from multiple\\nsource bundles. The resulting metabundle is a complete
         physical copy with\\nprovenance metadata tracking the source bundles.\\n\\nAssets are deduplicated by content hash.
@@ -932,49 +960,57 @@ paths:
         \            \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
         \                    \"description\": \"Job identifier\"\n                },\n                \"metabundleId\": {\n\
         \                    \"type\": \"string\",\n                    \"description\": \"Human-readable metabundle identifier
-        being created\"\n                },\n                \"status\": {\n                    \"type\": \"string\",\n  \
-        \                  \"enum\": [\n                        \"queued\",\n                        \"processing\",\n   \
-        \                     \"ready\",\n                        \"failed\",\n                        \"cancelled\"\n   \
-        \                 ],\n                    \"description\": \"Current job status.\\n- queued: Waiting for processing
-        resources\\n- processing: Actively being processed\\n- ready: Completed successfully\\n- failed: Creation failed\\
-        n- cancelled: Job was cancelled\\n\"\n                },\n                \"progress\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 100,\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Progress percentage (0-100) when status is 'processing'\"\
-        \n                },\n                \"downloadUrl\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uri\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed
-        download URL (only when status is 'ready')\"\n                },\n                \"assetCount\": {\n            \
-        \        \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Number of assets in metabundle (when ready)\"\n                },\n                \"standaloneAssetCount\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Number of standalone assets included (when ready)\"\n                },\n                \"sizeBytes\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Total size in bytes (when ready)\"\n                },\n         \
-        \       \"sourceBundles\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
-        \                    \"items\": {\n                        \"$ref\": \"#/$defs/SourceBundleReference\"\n         \
-        \           },\n                    \"description\": \"Provenance data (when ready)\"\n                },\n      \
-        \          \"errorCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Error code (when status is 'failed')\"\n                },\n             \
-        \   \"errorMessage\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Human-readable error description (when status is 'failed')\"\n               \
-        \ },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the job was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the job was last updated\"\n                },\n                \"processingTimeMs\": {\n               \
-        \     \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Total processing time in milliseconds (when complete)\"\n                }\n\
-        \            }\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Provenance reference to a source bundle used in metabundle
-        creation\",\n            \"required\": [\n                \"bundleId\",\n                \"version\",\n          \
-        \      \"assetIds\",\n                \"contentHash\"\n            ],\n            \"properties\": {\n           \
-        \     \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\": \"Source bundle
-        identifier\"\n                },\n                \"version\": {\n                    \"type\": \"string\",\n    \
-        \                \"description\": \"Version of source bundle at composition time\"\n                },\n         \
-        \       \"assetIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
-        \            \"type\": \"string\"\n                    },\n                    \"description\": \"Asset IDs contributed
-        from this source bundle\"\n                },\n                \"contentHash\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Hash of source bundle at composition time (for integrity verification)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        being created\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BundleStatus\"\
+        ,\n                    \"description\": \"Current job status.\\n- queued: Waiting for processing resources\\n- processing:
+        Actively being processed\\n- ready: Completed successfully\\n- failed: Creation failed\\n- cancelled: Job was cancelled\\\
+        n\"\n                },\n                \"progress\": {\n                    \"type\": \"integer\",\n           \
+        \         \"minimum\": 0,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Progress percentage (0-100) when status is 'processing'\"\n                },\n\
+        \                \"downloadUrl\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uri\",\n                    \"nullable\": true,\n                    \"description\": \"Pre-signed download URL (only
+        when status is 'ready')\"\n                },\n                \"assetCount\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Number of assets in metabundle
+        (when ready)\"\n                },\n                \"standaloneAssetCount\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Number of standalone assets
+        included (when ready)\"\n                },\n                \"sizeBytes\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Total size in bytes (when ready)\"\n                },\n                \"sourceBundles\": {\n               \
+        \     \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n          \
+        \              \"$ref\": \"#/$defs/SourceBundleReference\"\n                    },\n                    \"description\"\
+        : \"Provenance data (when ready)\"\n                },\n                \"errorCode\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"$ref\": \"#/$defs/MetabundleErrorCode\"\n          \
+        \              }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Error code (when status is 'failed')\"\n                },\n                \"errorMessage\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable
+        error description (when status is 'failed')\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\":
+        true,\n                    \"description\": \"When the job was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"When the job was last updated\"\n                },\n\
+        \                \"processingTimeMs\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Total processing time
+        in milliseconds (when complete)\"\n                }\n            }\n        },\n        \"BundleStatus\": {\n   \
+        \         \"type\": \"string\",\n            \"enum\": [\n                \"queued\",\n                \"processing\"\
+        ,\n                \"ready\",\n                \"failed\",\n                \"cancelled\"\n            ],\n      \
+        \      \"description\": \"Bundle processing status:\\n- queued: Bundle creation is queued for processing\\n- processing:
+        Bundle is being processed\\n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled:
+        Bundle creation was cancelled\\n\"\n        },\n        \"SourceBundleReference\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Provenance reference to a source bundle
+        used in metabundle creation\",\n            \"required\": [\n                \"bundleId\",\n                \"version\"\
+        ,\n                \"assetIds\",\n                \"contentHash\"\n            ],\n            \"properties\": {\n\
+        \                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Source bundle identifier\"\n                },\n                \"version\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Version of source bundle at composition time\"\n               \
+        \ },\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Asset
+        IDs contributed from this source bundle\"\n                },\n                \"contentHash\": {\n              \
+        \      \"type\": \"string\",\n                    \"description\": \"Hash of source bundle at composition time (for
+        integrity verification)\"\n                }\n            }\n        },\n        \"MetabundleErrorCode\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"SOURCE_BUNDLE_NOT_FOUND\",\n          \
+        \      \"SOURCE_BUNDLE_NOT_READY\",\n                \"STANDALONE_ASSET_NOT_FOUND\",\n                \"STANDALONE_ASSET_NOT_READY\"\
+        ,\n                \"REALM_MISMATCH\",\n                \"ASSET_CONFLICT\",\n                \"STORAGE_ERROR\",\n\
+        \                \"TIMEOUT\",\n                \"CANCELLED\",\n                \"INTERNAL_ERROR\"\n            ],\n\
+        \            \"description\": \"Error codes for metabundle creation failures\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get async metabundle job status\",\n    \"description\": \"Poll the status
         of an async metabundle creation job.\\nUse the jobId returned from createMetabundle when status was 'queued'.\\n\\
         nClients can either poll this endpoint or wait for the\\nMetabundleCreationCompleteEvent via WebSocket for completion
@@ -1021,17 +1057,16 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CancelJobResponse\"\
         ,\n    \"$defs\": {\n        \"CancelJobResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of job cancellation attempt\",\n            \"required\": [\n    \
-        \            \"jobId\",\n                \"cancelled\",\n                \"status\"\n            ],\n            \"\
-        properties\": {\n                \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Job identifier\"\n                },\n                \"cancelled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the job was successfully
-        cancelled\"\n                },\n                \"status\": {\n                    \"type\": \"string\",\n      \
-        \              \"enum\": [\n                        \"queued\",\n                        \"processing\",\n       \
-        \                 \"ready\",\n                        \"failed\",\n                        \"cancelled\"\n       \
-        \             ],\n                    \"description\": \"Current job status after cancellation attempt\"\n       \
-        \         },\n                \"message\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional context about the cancellation result\"\n             \
-        \   }\n            }\n        }\n    }\n}"
+        \            \"jobId\",\n                \"status\"\n            ],\n            \"properties\": {\n             \
+        \   \"jobId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"description\": \"Job identifier\"\n                },\n                \"status\": {\n             \
+        \       \"$ref\": \"#/$defs/BundleStatus\",\n                    \"description\": \"Current job status after cancellation
+        attempt\"\n                }\n            }\n        },\n        \"BundleStatus\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"queued\",\n                \"processing\",\n                \"ready\"\
+        ,\n                \"failed\",\n                \"cancelled\"\n            ],\n            \"description\": \"Bundle
+        processing status:\\n- queued: Bundle creation is queued for processing\\n- processing: Bundle is being processed\\
+        n- ready: Bundle is ready for download\\n- failed: Bundle creation failed\\n- cancelled: Bundle creation was cancelled\\\
+        n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cancel an async metabundle job\",\n    \"description\": \"Cancel a pending
         or processing metabundle creation job.\\nJobs that are already completed (ready or failed) cannot be cancelled.\\\
         n\\nSuccessfully cancelled jobs will emit a MetabundleCreationCompleteEvent\\nwith status 'cancelled' via WebSocket.\\\
@@ -1077,19 +1112,19 @@ paths:
         : false,\n            \"description\": \"Request to resolve optimal bundle downloads for requested assets\",\n   \
         \         \"required\": [\n                \"assetIds\",\n                \"realm\"\n            ],\n            \"\
         properties\": {\n                \"assetIds\": {\n                    \"type\": \"array\",\n                    \"\
-        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Platform asset IDs to resolve\"\n                },\n                \"realm\": {\n                    \"$ref\"\
-        : \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm to search within\"\n                },\n\
-        \                \"preferMetabundles\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Prefer metabundles when coverage is equal\"\n                },\n\
-        \                \"includeStandalone\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Include standalone assets not in any bundle\"\n                },\n\
-        \                \"maxBundles\": {\n                    \"type\": \"integer\",\n                    \"nullable\":
-        true,\n                    \"description\": \"Maximum number of bundles to return (optimization limit)\"\n       \
-        \         }\n            }\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
-        property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are
-        available across all realms.\\n\"\n        }\n    }\n}"
+        minItems\": 1,\n                    \"items\": {\n                        \"type\": \"string\"\n                 \
+        \   },\n                    \"description\": \"Platform asset IDs to resolve\"\n                },\n             \
+        \   \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game
+        realm to search within\"\n                },\n                \"preferMetabundles\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Prefer metabundles
+        when coverage is equal\"\n                },\n                \"includeStandalone\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": true,\n                    \"description\": \"Include standalone
+        assets not in any bundle\"\n                },\n                \"maxBundles\": {\n                    \"type\": \"\
+        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Maximum number of bundles
+        to return (optimization limit)\"\n                }\n            }\n        },\n        \"GameRealm\": {\n       \
+        \     \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name (lowercase
+        string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\
+        \") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ResolveBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"ResolveBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Optimal bundle set for requested assets\",\n            \"required\": [\n\
@@ -1198,48 +1233,48 @@ paths:
         ,\n                    \"default\": 50,\n                    \"description\": \"Maximum results to return\"\n    \
         \            },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"\
         default\": 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n    \
-        \    },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name
-        (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
-        \", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\\
-        n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n         \
-        \       \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
-        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
-        n\"\n        }\n    }\n}"
+        \    },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n            \"\
+        description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
+        property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across
+        all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\":
+        [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle
+        category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other
+        bundles server-side\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesByAssetResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesByAssetResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Bundles containing the requested asset\",\n       \
-        \     \"required\": [\n                \"assetId\",\n                \"bundles\",\n                \"total\",\n  \
-        \              \"limit\",\n                \"offset\"\n            ],\n            \"properties\": {\n           \
-        \     \"assetId\": {\n                    \"type\": \"string\",\n                    \"description\": \"The queried
-        asset ID\"\n                },\n                \"bundles\": {\n                    \"type\": \"array\",\n       \
-        \             \"items\": {\n                        \"$ref\": \"#/$defs/BundleSummary\"\n                    },\n\
-        \                    \"description\": \"Bundles containing this asset\"\n                },\n                \"total\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Total matching bundles\"\n\
-        \                },\n                \"limit\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"description\": \"Page size\"\n                },\n                \"offset\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Page offset\"\n                }\n            }\n        },\n\
-        \        \"BundleSummary\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n \
-        \           \"description\": \"Summary information about a bundle\",\n            \"required\": [\n              \
-        \  \"bundleId\",\n                \"bundleType\",\n                \"version\",\n                \"assetCount\",\n\
-        \                \"realm\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n     \
-        \               \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier\"\n\
-        \                },\n                \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\",\n  \
-        \                  \"description\": \"Source or metabundle\"\n                },\n                \"version\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Bundle version\"\n            \
-        \    },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of assets in bundle\"\n                },\n                \"sizeBytes\": {\n                    \"type\"\
-        : \"integer\",\n                    \"format\": \"int64\",\n                    \"nullable\": true,\n            \
-        \        \"description\": \"Bundle file size\"\n                },\n                \"realm\": {\n               \
-        \     \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm\"\n                },\n\
-        \                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When the bundle was created\"\n\
-        \                }\n            }\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n    \
-        \        \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"\
-        description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle:
-        Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse
-        the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\
-        \" for assets that are available across all realms.\\n\"\n        }\n    }\n}"
+        \     \"required\": [\n                \"bundles\",\n                \"total\",\n                \"limit\",\n    \
+        \            \"offset\"\n            ],\n            \"properties\": {\n                \"bundles\": {\n         \
+        \           \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BundleSummary\"\
+        \n                    },\n                    \"description\": \"Bundles containing this asset\"\n               \
+        \ },\n                \"total\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total matching bundles\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Page size\"\n                },\n                \"offset\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Page offset\"\n                }\n  \
+        \          }\n        },\n        \"BundleSummary\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Summary information about a bundle\",\n            \"required\": [\n    \
+        \            \"bundleId\",\n                \"bundleType\",\n                \"version\",\n                \"assetCount\"\
+        \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Human-readable bundle identifier\"\n                },\n       \
+        \         \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\",\n                    \"description\"\
+        : \"Source or metabundle\"\n                },\n                \"version\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Bundle version\"\n                },\n                \"assetCount\": {\n\
+        \                    \"type\": \"integer\",\n                    \"description\": \"Number of assets in bundle\"\n\
+        \                },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n              \
+        \      \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Bundle
+        file size\"\n                },\n                \"realm\": {\n                    \"allOf\": [\n                \
+        \        {\n                            \"$ref\": \"#/$defs/GameRealm\"\n                        }\n             \
+        \       ],\n                    \"nullable\": true,\n                    \"description\": \"Game realm. Null for cross-realm
+        bundles.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the bundle was created\"\n                }\n            }\n        },\n        \"BundleType\": {\n     \
+        \       \"type\": \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\
+        \n            ],\n            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created
+        from assets)\\n- metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n\
+        \            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
+        (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
+        \", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find all bundles containing a specific asset\",\n    \"description\": \"\
         Query the reverse index to find all bundles (source and metabundle)\\nthat contain a specific asset ID. Useful for
         understanding asset\\ndistribution and debugging resolution issues.\\n\",\n    \"tags\": [\n        \"Bundles\"\n\
@@ -1282,31 +1317,29 @@ paths:
         ,\n    \"$defs\": {\n        \"UpdateBundleRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to update bundle metadata\",\n            \"required\": [\n     \
         \           \"bundleId\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n       \
-        \             \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier to update\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"New bundle name (null to leave unchanged)\"\n      \
-        \          },\n                \"description\": {\n                    \"type\": \"string\",\n                   \
-        \ \"nullable\": true,\n                    \"description\": \"New bundle description (null to leave unchanged)\"\n\
-        \                },\n                \"tags\": {\n                    \"type\": \"object\",\n                    \"\
-        additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Replace all tags with these (null to leave unchanged)\"\
-        \n                },\n                \"addTags\": {\n                    \"type\": \"object\",\n                \
-        \    \"additionalProperties\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Tags to add (merged with existing)\"\n   \
-        \             },\n                \"removeTags\": {\n                    \"type\": \"array\",\n                  \
-        \  \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Tag keys to remove\"\n                },\n                \"reason\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for the update (recorded in version history)\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \             \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 255,\n\
+        \                    \"description\": \"Human-readable bundle identifier to update\"\n                },\n       \
+        \         \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"New bundle name (null to leave unchanged)\"\n                },\n              \
+        \  \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"New bundle description (null to leave unchanged)\"\n                },\n       \
+        \         \"tags\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": {\n\
+        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Replace all tags with these (null to leave unchanged)\"\n                },\n\
+        \                \"addTags\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Tags to add (merged with existing)\"\n                },\n               \
+        \ \"removeTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                 \
+        \   \"description\": \"Tag keys to remove\"\n                },\n                \"reason\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
+        reason for the update (recorded in version history)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdateBundleResponse\"\
         ,\n    \"$defs\": {\n        \"UpdateBundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of bundle update operation\",\n            \"required\": [\n     \
-        \           \"bundleId\",\n                \"version\",\n                \"previousVersion\",\n                \"\
-        changes\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"\
-        type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier that was updated\"\n\
-        \                },\n                \"version\": {\n                    \"type\": \"integer\",\n                \
-        \    \"description\": \"New version number after update\"\n                },\n                \"previousVersion\"\
+        \           \"version\",\n                \"previousVersion\",\n                \"changes\"\n            ],\n    \
+        \        \"properties\": {\n                \"version\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"New version number after update\"\n                },\n                \"previousVersion\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Version number before update\"\
         \n                },\n                \"changes\": {\n                    \"type\": \"array\",\n                 \
         \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
@@ -1359,26 +1392,27 @@ paths:
         ,\n    \"$defs\": {\n        \"DeleteBundleRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to delete a bundle\",\n            \"required\": [\n            \
         \    \"bundleId\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n              \
-        \      \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier to delete\"\n\
-        \                },\n                \"permanent\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"default\": false,\n                    \"description\": \"If true, permanently delete (admin only). If false,
-        soft-delete.\"\n                },\n                \"reason\": {\n                    \"type\": \"string\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Optional reason for deletion (recorded
-        in version history)\"\n                }\n            }\n        }\n    }\n}"
+        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 255,\n   \
+        \                 \"description\": \"Human-readable bundle identifier to delete\"\n                },\n          \
+        \      \"permanent\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n   \
+        \                 \"description\": \"If true, permanently delete (admin only). If false, soft-delete.\"\n        \
+        \        },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Optional reason for deletion (recorded in version history)\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteBundleResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteBundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of bundle deletion\",\n            \"required\": [\n             \
-        \   \"bundleId\",\n                \"status\",\n                \"deletedAt\"\n            ],\n            \"properties\"\
-        : {\n                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable bundle identifier that was deleted\"\n                },\n                \"status\": {\n     \
-        \               \"type\": \"string\",\n                    \"enum\": [\n                        \"deleted\",\n   \
-        \                     \"permanently_deleted\"\n                    ],\n                    \"description\": \"Deletion
+        \   \"status\",\n                \"deletedAt\"\n            ],\n            \"properties\": {\n                \"\
+        status\": {\n                    \"$ref\": \"#/$defs/DeletionStatus\",\n                    \"description\": \"Deletion
         status\"\n                },\n                \"deletedAt\": {\n                    \"type\": \"string\",\n      \
         \              \"format\": \"date-time\",\n                    \"description\": \"When the bundle was deleted\"\n\
         \                },\n                \"retentionUntil\": {\n                    \"type\": \"string\",\n          \
         \          \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When soft-deleted bundle will be permanently removed (null for permanent deletes)\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \       }\n        },\n        \"DeletionStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
+        \                \"deleted\",\n                \"permanently_deleted\"\n            ],\n            \"description\"\
+        : \"Result of a deletion operation:\\n- deleted: Soft-deleted (within retention period, can be restored)\\n- permanently_deleted:
+        Permanently removed (unrecoverable)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Soft-delete a bundle\",\n    \"description\": \"Soft-delete a bundle, marking
         it as deleted but retaining data\\nfor the configured retention period (default 30 days).\\n\\nDeleted bundles are
         excluded from resolution and queries by default.\\nUse permanent=true for immediate, unrecoverable deletion (admin
@@ -1423,22 +1457,23 @@ paths:
         ,\n    \"$defs\": {\n        \"RestoreBundleRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to restore a soft-deleted bundle\",\n            \"required\": [\n\
         \                \"bundleId\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier
-        to restore\"\n                },\n                \"reason\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Optional reason for restoration (recorded
-        in version history)\"\n                }\n            }\n        }\n    }\n}"
+        \                  \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 255,\n                    \"description\": \"Human-readable bundle identifier to restore\"\n                },\n\
+        \                \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for restoration (recorded in version history)\"\n        \
+        \        }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreBundleResponse\"\
         ,\n    \"$defs\": {\n        \"RestoreBundleResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Result of bundle restoration\",\n            \"required\": [\n          \
-        \      \"bundleId\",\n                \"status\",\n                \"restoredAt\",\n                \"restoredFromVersion\"\
-        \n            ],\n            \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Human-readable bundle identifier that was restored\"\n         \
-        \       },\n                \"status\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Current bundle status (should be \\\"active\\\")\"\n                },\n                \"restoredAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the bundle was restored\"\n                },\n                \"restoredFromVersion\": {\n             \
-        \       \"type\": \"integer\",\n                    \"description\": \"Version number the bundle was restored from\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \      \"status\",\n                \"restoredFromVersion\"\n            ],\n            \"properties\": {\n     \
+        \           \"status\": {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\"\
+        : \"Current bundle lifecycle status after restoration (should be \\\"active\\\")\"\n                },\n         \
+        \       \"restoredFromVersion\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Version number the bundle was restored from\"\n                }\n            }\n        },\n        \"BundleLifecycle\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
+        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
+        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
+        is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a soft-deleted bundle\",\n    \"description\": \"Restore a bundle
         that was soft-deleted, making it active again.\\nCan only restore bundles within their retention period.\\n\\nOnly
         the bundle owner or admin can restore.\\n\",\n    \"tags\": [\n        \"Bundles\"\n    ],\n    \"deprecated\": false,\n\
@@ -1507,28 +1542,33 @@ paths:
         \                       {\n                            \"$ref\": \"#/$defs/BundleType\"\n                        }\n\
         \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Filter by
         bundle type (source or metabundle)\"\n                },\n                \"sortField\": {\n                    \"\
-        type\": \"string\",\n                    \"enum\": [\n                        \"created_at\",\n                  \
-        \      \"updated_at\",\n                        \"name\",\n                        \"size\"\n                    ],\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Field to sort by (default created_at)\"\
-        \n                },\n                \"sortOrder\": {\n                    \"type\": \"string\",\n              \
-        \      \"enum\": [\n                        \"asc\",\n                        \"desc\"\n                    ],\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Sort order (default desc)\"\n    \
-        \            },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"\
-        default\": 100,\n                    \"description\": \"Maximum results to return (max 1000)\"\n                },\n\
-        \                \"offset\": {\n                    \"type\": \"integer\",\n                    \"default\": 0,\n\
-        \                    \"description\": \"Pagination offset\"\n                },\n                \"includeDeleted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
-        : \"Include soft-deleted bundles in results\"\n                }\n            }\n        },\n        \"BundleLifecycle\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
-        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
-        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
-        is being processed (metabundle creation)\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse
-        the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\
-        \" for assets that are available across all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n\
-        \            \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\
-        n- metabundle: Composed from other bundles server-side\\n\"\n        }\n    }\n}"
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BundleSortField\"\n       \
+        \                 }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Field to sort by (default created_at)\"\n                },\n                \"sortOrder\": {\n              \
+        \      \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/SortOrder\"\n    \
+        \                    }\n                    ],\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Sort order (default desc)\"\n                },\n                \"limit\": {\n                    \"type\": \"\
+        integer\",\n                    \"default\": 100,\n                    \"description\": \"Maximum results to return
+        (max 1000)\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n    \
+        \                \"default\": 0,\n                    \"description\": \"Pagination offset\"\n                },\n\
+        \                \"includeDeleted\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Include soft-deleted bundles in results\"\n                }\n  \
+        \          }\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n \
+        \           \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle
+        has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
+        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n    \
+        \        \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n            \"description\"\
+        : \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed
+        from other bundles server-side\\n\"\n        },\n        \"BundleSortField\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"created_at\",\n                \"updated_at\",\n                \"name\"\
+        ,\n                \"size\"\n            ],\n            \"description\": \"Fields available for sorting bundle query
+        results\"\n        },\n        \"SortOrder\": {\n            \"type\": \"string\",\n            \"enum\": [\n    \
+        \            \"asc\",\n                \"desc\"\n            ],\n            \"description\": \"Sort direction for
+        query results\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryBundlesResponse\"\
         ,\n    \"$defs\": {\n        \"QueryBundlesResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Bundle query results\",\n            \"required\": [\n                \"\
@@ -1543,48 +1583,49 @@ paths:
         \   }\n            }\n        },\n        \"BundleInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Complete metadata for an asset bundle (API response model)\",\n         \
         \   \"required\": [\n                \"bundleId\",\n                \"bundleType\",\n                \"version\",\n\
-        \                \"metadataVersion\",\n                \"realm\",\n                \"status\",\n                \"\
-        assetCount\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"bundleId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier
-        (e.g., \\\"synty/polygon-adventure\\\", \\\"my-bundle-v1\\\")\"\n                },\n                \"bundleType\"\
-        : {\n                    \"$ref\": \"#/$defs/BundleType\",\n                    \"description\": \"Whether source
-        or metabundle\"\n                },\n                \"version\": {\n                    \"type\": \"string\",\n \
-        \                   \"description\": \"Bundle content version string\"\n                },\n                \"metadataVersion\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Metadata version number (increments
+        \                \"metadataVersion\",\n                \"status\",\n                \"assetCount\",\n            \
+        \    \"createdAt\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier (e.g., \\\"\
+        synty/polygon-adventure\\\", \\\"my-bundle-v1\\\")\"\n                },\n                \"bundleType\": {\n    \
+        \                \"$ref\": \"#/$defs/BundleType\",\n                    \"description\": \"Whether source or metabundle\"\
+        \n                },\n                \"version\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Bundle content version string\"\n                },\n                \"metadataVersion\":
+        {\n                    \"type\": \"integer\",\n                    \"description\": \"Metadata version number (increments
         on metadata changes)\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Human-readable bundle name\"\n\
         \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
         \       \"nullable\": true,\n                    \"description\": \"Bundle description\"\n                },\n   \
         \             \"owner\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
         \                   \"description\": \"Owner account ID or service name (null for system-owned bundles)\"\n      \
-        \          },\n                \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n              \
-        \      \"description\": \"Game realm this bundle belongs to\"\n                },\n                \"tags\": {\n \
-        \                   \"type\": \"object\",\n                    \"additionalProperties\": {\n                     \
-        \   \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
-        description\": \"Key-value tags for categorization and filtering\"\n                },\n                \"status\"\
-        : {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\": \"Bundle lifecycle
-        status\"\n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n    \
-        \                \"description\": \"Number of assets in the bundle\"\n                },\n                \"sizeBytes\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Bundle file size in bytes (null if not yet calculated)\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the bundle was created\"\n        \
-        \        },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the bundle
-        metadata was last updated\"\n                },\n                \"deletedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"When the bundle was soft-deleted (null if active)\"\n                }\n            }\n\
-        \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
-        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
-        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm
-        stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\
-        \"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across
-        all realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n            \"enum\"\
-        : [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n            ],\n \
-        \           \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted: Bundle
-        has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
-        n\"\n        }\n    }\n}"
+        \          },\n                \"realm\": {\n                    \"allOf\": [\n                        {\n       \
+        \                     \"$ref\": \"#/$defs/GameRealm\"\n                        }\n                    ],\n       \
+        \             \"nullable\": true,\n                    \"description\": \"Game realm this bundle belongs to. Null
+        for cross-realm bundles.\"\n                },\n                \"tags\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"string\"\n               \
+        \     },\n                    \"nullable\": true,\n                    \"description\": \"Key-value tags for categorization
+        and filtering\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/BundleLifecycle\"\
+        ,\n                    \"description\": \"Bundle lifecycle status\"\n                },\n                \"assetCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of assets in the bundle\"\
+        \n                },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n             \
+        \       \"format\": \"int64\",\n                    \"nullable\": true,\n                    \"description\": \"Bundle
+        file size in bytes (null if not yet calculated)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the bundle was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When the bundle metadata was last updated\"\n                },\n                \"\
+        deletedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"When the bundle was soft-deleted (null
+        if active)\"\n                }\n            }\n        },\n        \"BundleType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"source\",\n                \"metabundle\"\n            ],\n        \
+        \    \"description\": \"Bundle category:\\n- source: Original bundle (uploaded or server-created from assets)\\n-
+        metabundle: Composed from other bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\"\
+        : \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name (lowercase string identifier)
+        that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the
+        Realm service.\\nNull for assets that are available across all realms.\\n\"\n        },\n        \"BundleLifecycle\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"active\",\n                \"deleted\"\
+        ,\n                \"processing\"\n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active:
+        Bundle is available for use\\n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle
+        is being processed (metabundle creation)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query bundles with advanced filters\",\n    \"description\": \"Query bundles
         with flexible filtering options including:\\n- Tag matching (exact, exists, not exists)\\n- Status filtering (active,
         deleted)\\n- Date range filtering\\n- Name search (contains)\\n- Owner filtering\\n- Realm and bundle type filtering\\
@@ -1628,12 +1669,13 @@ paths:
         ,\n    \"$defs\": {\n        \"ListBundleVersionsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to list bundle version history\",\n            \"required\": [\n\
         \                \"bundleId\"\n            ],\n            \"properties\": {\n                \"bundleId\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Human-readable bundle identifier
-        to get history for\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"default\": 50,\n                    \"description\": \"Maximum versions to return\"\n   \
-        \             },\n                \"offset\": {\n                    \"type\": \"integer\",\n                    \"\
-        default\": 0,\n                    \"description\": \"Pagination offset\"\n                }\n            }\n    \
-        \    }\n    }\n}"
+        \                  \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 255,\n                    \"description\": \"Human-readable bundle identifier to get history for\"\n           \
+        \     },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\"\
+        : 50,\n                    \"minimum\": 1,\n                    \"description\": \"Maximum versions to return\"\n\
+        \                },\n                \"offset\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"Pagination offset\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListBundleVersionsResponse\"\
         ,\n    \"$defs\": {\n        \"ListBundleVersionsResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Bundle version history\",\n            \"required\"\
@@ -1664,48 +1706,50 @@ paths:
         (only for current version)\"\n                }\n            }\n        },\n        \"BundleInfo\": {\n          \
         \  \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Complete metadata
         for an asset bundle (API response model)\",\n            \"required\": [\n                \"bundleId\",\n        \
-        \        \"bundleType\",\n                \"version\",\n                \"metadataVersion\",\n                \"realm\"\
-        ,\n                \"status\",\n                \"assetCount\",\n                \"createdAt\"\n            ],\n \
-        \           \"properties\": {\n                \"bundleId\": {\n                    \"type\": \"string\",\n      \
-        \              \"description\": \"Human-readable bundle identifier (e.g., \\\"synty/polygon-adventure\\\", \\\"my-bundle-v1\\\
-        \")\"\n                },\n                \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\"\
-        ,\n                    \"description\": \"Whether source or metabundle\"\n                },\n                \"version\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Bundle content version string\"\
-        \n                },\n                \"metadataVersion\": {\n                    \"type\": \"integer\",\n       \
-        \             \"description\": \"Metadata version number (increments on metadata changes)\"\n                },\n\
-        \                \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Human-readable bundle name\"\n                },\n                \"description\"\
+        \        \"bundleType\",\n                \"version\",\n                \"metadataVersion\",\n                \"status\"\
+        ,\n                \"assetCount\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"bundleId\": {\n                    \"type\": \"string\",\n                    \"description\":
+        \"Human-readable bundle identifier (e.g., \\\"synty/polygon-adventure\\\", \\\"my-bundle-v1\\\")\"\n             \
+        \   },\n                \"bundleType\": {\n                    \"$ref\": \"#/$defs/BundleType\",\n               \
+        \     \"description\": \"Whether source or metabundle\"\n                },\n                \"version\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Bundle content version string\"\n \
+        \               },\n                \"metadataVersion\": {\n                    \"type\": \"integer\",\n         \
+        \           \"description\": \"Metadata version number (increments on metadata changes)\"\n                },\n  \
+        \              \"name\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n \
+        \                   \"description\": \"Human-readable bundle name\"\n                },\n                \"description\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Bundle description\"\n                },\n                \"owner\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Owner account ID or service name
-        (null for system-owned bundles)\"\n                },\n                \"realm\": {\n                    \"$ref\"\
-        : \"#/$defs/GameRealm\",\n                    \"description\": \"Game realm this bundle belongs to\"\n           \
-        \     },\n                \"tags\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Key-value tags for categorization and filtering\"\n                },\n  \
-        \              \"status\": {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\"\
-        : \"Bundle lifecycle status\"\n                },\n                \"assetCount\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of assets in the bundle\"\n                },\n    \
-        \            \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Bundle file size in bytes (null
-        if not yet calculated)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the bundle was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When the bundle metadata was last updated\"\n                },\n                \"deletedAt\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the bundle was soft-deleted (null if active)\"\n                }\n \
-        \           }\n        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n\
-        \                \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle
-        category:\\n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other
-        bundles server-side\\n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name
-        property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nUse \\\"shared\\\" for assets that are
-        available across all realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n\
-        \            \"enum\": [\n                \"active\",\n                \"deleted\",\n                \"processing\"\
-        \n            ],\n            \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\
-        n- deleted: Bundle has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle
-        creation)\\n\"\n        }\n    }\n}"
+        (null for system-owned bundles)\"\n                },\n                \"realm\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"$ref\": \"#/$defs/GameRealm\"\n                    \
+        \    }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"Game
+        realm this bundle belongs to. Null for cross-realm bundles.\"\n                },\n                \"tags\": {\n \
+        \                   \"type\": \"object\",\n                    \"additionalProperties\": {\n                     \
+        \   \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n                    \"\
+        description\": \"Key-value tags for categorization and filtering\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/BundleLifecycle\",\n                    \"description\": \"Bundle lifecycle
+        status\"\n                },\n                \"assetCount\": {\n                    \"type\": \"integer\",\n    \
+        \                \"description\": \"Number of assets in the bundle\"\n                },\n                \"sizeBytes\"\
+        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Bundle file size in bytes (null if not yet calculated)\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the bundle was created\"\n        \
+        \        },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the bundle
+        metadata was last updated\"\n                },\n                \"deletedAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
+        \       \"description\": \"When the bundle was soft-deleted (null if active)\"\n                }\n            }\n\
+        \        },\n        \"BundleType\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
+        \   \"source\",\n                \"metabundle\"\n            ],\n            \"description\": \"Bundle category:\\
+        n- source: Original bundle (uploaded or server-created from assets)\\n- metabundle: Composed from other bundles server-side\\\
+        n\"\n        },\n        \"GameRealm\": {\n            \"type\": \"string\",\n            \"minLength\": 1,\n    \
+        \        \"description\": \"Realm stub name (lowercase string identifier) that this asset belongs to.\\nUse the realm's
+        stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available
+        across all realms.\\n\"\n        },\n        \"BundleLifecycle\": {\n            \"type\": \"string\",\n         \
+        \   \"enum\": [\n                \"active\",\n                \"deleted\",\n                \"processing\"\n     \
+        \       ],\n            \"description\": \"Bundle lifecycle status:\\n- active: Bundle is available for use\\n- deleted:
+        Bundle has been soft-deleted (within retention period)\\n- processing: Bundle is being processed (metabundle creation)\\\
+        n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List version history for a bundle\",\n    \"description\": \"Get the version
         history for a bundle, showing all metadata changes\\nover time. Each version record includes:\\n- Version number\\
         n- When the change was made\\n- Who made the change\\n- What changed\\n- Optional reason for the change\\n\\nThe current
@@ -1743,11 +1787,11 @@ paths:
         ,\n    \"$defs\": {\n        \"BulkGetAssetsRequest\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Request to retrieve metadata for multiple assets\",\n            \"required\"\
         : [\n                \"assetIds\"\n            ],\n            \"properties\": {\n                \"assetIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Asset IDs to retrieve (max 100)\"\n     \
-        \           },\n                \"includeDownloadUrls\": {\n                    \"type\": \"boolean\",\n         \
-        \           \"default\": false,\n                    \"description\": \"Whether to generate pre-signed download URLs\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"array\",\n                    \"minItems\": 1,\n                    \"maxItems\"\
+        : 100,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n \
+        \                   \"description\": \"Asset IDs to retrieve (max 100)\"\n                },\n                \"includeDownloadUrls\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\"\
+        : \"Whether to generate pre-signed download URLs\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BulkGetAssetsResponse\"\
         ,\n    \"$defs\": {\n        \"BulkGetAssetsResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Batch asset metadata response\",\n            \"required\": [\n         \
@@ -1790,27 +1834,29 @@ paths:
         \               \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\"\
         : \"File size in bytes\"\n                },\n                \"assetType\": {\n                    \"$ref\": \"#/$defs/AssetType\"\
         ,\n                    \"description\": \"Type classification for the asset\"\n                },\n              \
-        \  \"realm\": {\n                    \"$ref\": \"#/$defs/GameRealm\",\n                    \"description\": \"Game
-        realm the asset belongs to\"\n                },\n                \"tags\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n      \
-        \              \"description\": \"Searchable tags for the asset\"\n                },\n                \"processingStatus\"\
-        : {\n                    \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status
-        of asset processing pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the asset is in cold/archival storage\",\n        \
-        \            \"default\": false\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when
-        the asset was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset
-        was last updated\"\n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\":
-        \"string\",\n            \"enum\": [\n                \"texture\",\n                \"model\",\n                \"\
-        audio\",\n                \"behavior\",\n                \"bundle\",\n                \"prefab\",\n              \
-        \  \"other\"\n            ],\n            \"description\": \"Type classification for assets\"\n        },\n      \
-        \  \"GameRealm\": {\n            \"type\": \"string\",\n            \"description\": \"Realm stub name (lowercase
-        string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\", \\\"realm-2\\\
-        \") from the Realm service.\\nUse \\\"shared\\\" for assets that are available across all realms.\\n\"\n        },\n\
-        \        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"processing\",\n                \"complete\",\n                \"failed\"\n            ],\n  \
-        \          \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
+        \  \"realm\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\"\
+        : \"#/$defs/GameRealm\"\n                        }\n                    ],\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Game realm the asset belongs to. Null for cross-realm assets.\"\n        \
+        \        },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
+        Searchable tags for the asset\"\n                },\n                \"processingStatus\": {\n                   \
+        \ \"$ref\": \"#/$defs/ProcessingStatus\",\n                    \"description\": \"Current status of asset processing
+        pipeline\"\n                },\n                \"isArchived\": {\n                    \"type\": \"boolean\",\n  \
+        \                  \"description\": \"Whether the asset is in cold/archival storage\",\n                    \"default\"\
+        : false\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the asset was last updated\"\
+        \n                }\n            }\n        },\n        \"AssetType\": {\n            \"type\": \"string\",\n    \
+        \        \"enum\": [\n                \"texture\",\n                \"model\",\n                \"audio\",\n     \
+        \           \"behavior\",\n                \"bundle\",\n                \"prefab\",\n                \"other\"\n \
+        \           ],\n            \"description\": \"Type classification for assets\"\n        },\n        \"GameRealm\"\
+        : {\n            \"type\": \"string\",\n            \"minLength\": 1,\n            \"description\": \"Realm stub name
+        (lowercase string identifier) that this asset belongs to.\\nUse the realm's stub_name property (e.g., \\\"realm-1\\\
+        \", \\\"realm-2\\\") from the Realm service.\\nNull for assets that are available across all realms.\\n\"\n      \
+        \  },\n        \"ProcessingStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
+        \   \"pending\",\n                \"processing\",\n                \"complete\",\n                \"failed\"\n   \
+        \         ],\n            \"description\": \"Asset processing pipeline status\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Batch asset metadata lookup\",\n    \"description\": \"Retrieve metadata
         for multiple assets in a single request.\\nOptionally includes pre-signed download URLs.\\nMaximum 100 asset IDs per
         request.\\n\",\n    \"tags\": [\n        \"Assets\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"bulkGetAssets\"\
@@ -1830,10 +1876,11 @@ components:
       description: Type classification for assets
     GameRealm:
       type: string
+      minLength: 1
       description: |
         Realm stub name (lowercase string identifier) that this asset belongs to.
         Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
-        Use "shared" for assets that are available across all realms.
+        Null for assets that are available across all realms.
     ProcessingStatus:
       type: string
       enum:
@@ -1864,6 +1911,133 @@ components:
         Bundle category:
         - source: Original bundle (uploaded or server-created from assets)
         - metabundle: Composed from other bundles server-side
+    DeletionStatus:
+      type: string
+      enum:
+      - deleted
+      - permanently_deleted
+      description: |
+        Result of a deletion operation:
+        - deleted: Soft-deleted (within retention period, can be restored)
+        - permanently_deleted: Permanently removed (unrecoverable)
+    BundleSortField:
+      type: string
+      enum:
+      - created_at
+      - updated_at
+      - name
+      - size
+      description: Fields available for sorting bundle query results
+    SortOrder:
+      type: string
+      enum:
+      - asc
+      - desc
+      description: Sort direction for query results
+    StorageProvider:
+      type: string
+      enum:
+      - minio
+      - s3
+      - r2
+      - azure
+      - filesystem
+      description: Storage backend type for asset persistence
+    ProcessingMode:
+      type: string
+      enum:
+      - api
+      - worker
+      - both
+      description: |
+        Service mode for asset processing:
+        - api: Only handle API requests (no processing)
+        - worker: Only process queued jobs (no API)
+        - both: Handle API requests and process jobs
+    AudioOutputFormat:
+      type: string
+      enum:
+      - mp3
+      - opus
+      - aac
+      description: Default audio transcoding output format
+    ProcessingType:
+      type: string
+      enum:
+      - mipmaps
+      - lod_generation
+      - transcode
+      - compression
+      - validation
+      - behavior_compile
+      description: Type of processing to be performed on an asset
+    UploadErrorCode:
+      type: string
+      enum:
+      - VALIDATION_FAILED
+      - HASH_MISMATCH
+      - SIZE_EXCEEDED
+      - STORAGE_ERROR
+      - TIMEOUT
+      description: Error codes for asset upload failures
+    ProcessingErrorCode:
+      type: string
+      enum:
+      - PROCESSING_FAILED
+      - INVALID_FORMAT
+      - RESOURCE_EXHAUSTED
+      - TIMEOUT
+      - PROCESSOR_UNAVAILABLE
+      description: Error codes for asset processing failures
+    ValidationErrorCode:
+      type: string
+      enum:
+      - INVALID_ARCHIVE
+      - MISSING_MANIFEST
+      - INVALID_MANIFEST
+      - HASH_MISMATCH
+      - PATH_TRAVERSAL
+      - SIZE_EXCEEDED
+      - DUPLICATE_ASSET_ID
+      - MISSING_DEPENDENCY
+      description: Error codes for bundle validation failures
+    MetabundleErrorCode:
+      type: string
+      enum:
+      - SOURCE_BUNDLE_NOT_FOUND
+      - SOURCE_BUNDLE_NOT_READY
+      - STANDALONE_ASSET_NOT_FOUND
+      - STANDALONE_ASSET_NOT_READY
+      - REALM_MISMATCH
+      - ASSET_CONFLICT
+      - STORAGE_ERROR
+      - TIMEOUT
+      - CANCELLED
+      - INTERNAL_ERROR
+      description: Error codes for metabundle creation failures
+    ProcessingOutput:
+      type: object
+      additionalProperties: false
+      description: Information about a generated derivative asset from processing
+      required:
+      - outputType
+      properties:
+        outputType:
+          type: string
+          description: Type of output (e.g., "mipmap_level_1", "lod_2")
+        key:
+          type: string
+          nullable: true
+          description: Storage key for the output (service-to-service context)
+        assetId:
+          type: string
+          nullable: true
+          description: Asset identifier for the generated output (client context)
+        size:
+          type: integer
+          format: int64
+          nullable: true
+          description: Size of the output in bytes
     UploadRequest:
       description: Request to initiate an asset upload and receive a pre-signed URL
       type: object
@@ -1876,23 +2050,30 @@ components:
       properties:
         owner:
           type: string
+          minLength: 1
           description: |
             Owner of this asset operation. NOT a session ID.
             For user-initiated uploads: the accountId (UUID format).
             For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Original filename with extension
         size:
           type: integer
           format: int64
+          minimum: 1
           description: File size in bytes
         contentType:
           type: string
+          minLength: 1
           description: MIME content type (e.g., image/png, model/gltf-binary)
         metadata:
-          $ref: '#/components/schemas/AssetMetadataInput'
-          description: Optional metadata for asset categorization
+          allOf:
+          - $ref: '#/components/schemas/AssetMetadataInput'
+          nullable: true
+          description: Optional metadata for asset categorization (null to skip)
     UploadResponse:
       description: Response containing pre-signed URL and configuration for uploading an asset
       type: object
@@ -1921,7 +2102,9 @@ components:
           type: object
           additionalProperties:
             type: string
-          description: Headers the client must include when uploading to the pre-signed URL
+          nullable: true
+          description: Headers the client must include when uploading to the pre-signed URL (null if no special headers 
+            needed)
     CompleteUploadRequest:
       description: Request to finalize an upload and trigger asset processing
       type: object
@@ -1957,6 +2140,10 @@ components:
       description: Configuration for multipart uploads of large files
       type: object
       additionalProperties: false
+      required:
+      - required
+      - partSize
+      - maxParts
       properties:
         required:
           type: boolean
@@ -2002,16 +2189,21 @@ components:
       description: User-provided metadata for asset categorization
       properties:
         assetType:
-          $ref: '#/components/schemas/AssetType'
-          description: Type classification for the asset
+          allOf:
+          - $ref: '#/components/schemas/AssetType'
+          nullable: true
+          description: Type classification for the asset (null to omit)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to (null for unscoped)
         tags:
           type: array
           items:
             type: string
-          description: Searchable tags for the asset
+          nullable: true
+          description: Searchable tags for the asset (null to omit)
     AssetMetadata:
       type: object
       additionalProperties: false
@@ -2050,8 +2242,10 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm assets.
         tags:
           type: array
           items:
@@ -2081,11 +2275,13 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier
+          minLength: 64
+          maxLength: 64
+          description: Asset identifier (SHA-256 hex string)
         version:
           type: string
-          default: latest
-          description: Version ID or 'latest'
+          nullable: true
+          description: Version ID to retrieve (null for latest version)
     AssetWithDownloadUrl:
       description: Asset metadata with optional pre-signed download URL
       type: object
@@ -2136,7 +2332,9 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier to delete
+          minLength: 64
+          maxLength: 64
+          description: Asset identifier to delete (SHA-256 hex string)
         versionId:
           type: string
           nullable: true
@@ -2147,12 +2345,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - assetId
       - versionsDeleted
       properties:
-        assetId:
-          type: string
-          description: Deleted asset identifier
         versionsDeleted:
           type: integer
           description: Number of versions deleted
@@ -2165,29 +2359,29 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier to list versions for
+          minLength: 64
+          maxLength: 64
+          description: Asset identifier to list versions for (SHA-256 hex string)
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of versions to skip for pagination
     AssetVersionList:
       description: Paginated list of asset versions
       type: object
       additionalProperties: false
       required:
-      - assetId
       - versions
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: Asset identifier
         versions:
           type: array
           items:
@@ -2207,14 +2401,14 @@ components:
       type: object
       additionalProperties: false
       required:
-      - versionId
       - createdAt
       - size
       - isArchived
       properties:
         versionId:
           type: string
-          description: Unique version identifier
+          nullable: true
+          description: Unique version identifier. Null when object storage versioning is not enabled.
         createdAt:
           type: string
           format: date-time
@@ -2253,10 +2447,12 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of results to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of results to skip for pagination
     AssetSearchResult:
       description: Paginated results from an asset search query
@@ -2299,6 +2495,8 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         version:
           type: string
@@ -2310,9 +2508,10 @@ components:
           nullable: true
           description: |
             Game realm this bundle belongs to.
-            Defaults to 'shared' if not specified.
+            Null for realm-agnostic bundles available across all realms.
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: List of asset IDs to include in the bundle
@@ -2338,12 +2537,7 @@ components:
           type: string
           description: Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: Bundle creation status
         estimatedSize:
           type: integer
@@ -2358,6 +2552,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
@@ -2591,12 +2787,7 @@ components:
             Use /bundles/job/status to poll for completion, or wait for
             MetabundleCreationCompleteEvent via WebSocket.
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Creation status.
             - queued: Job accepted for async processing (poll with jobId)
@@ -2621,9 +2812,10 @@ components:
           description: Total size in bytes
         sourceBundles:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/SourceBundleReference'
-          description: Provenance data for the metabundle
+          description: Provenance data for the metabundle (null when status is not ready)
         conflicts:
           type: array
           nullable: true
@@ -2660,13 +2852,7 @@ components:
           type: string
           description: Human-readable metabundle identifier being created
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Current job status.
             - queued: Waiting for processing resources
@@ -2705,7 +2891,8 @@ components:
             $ref: '#/components/schemas/SourceBundleReference'
           description: Provenance data (when ready)
         errorCode:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/MetabundleErrorCode'
           nullable: true
           description: Error code (when status is 'failed')
         errorMessage:
@@ -2744,29 +2931,15 @@ components:
       description: Result of job cancellation attempt
       required:
       - jobId
-      - cancelled
       - status
       properties:
         jobId:
           type: string
           format: uuid
           description: Job identifier
-        cancelled:
-          type: boolean
-          description: Whether the job was successfully cancelled
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: Current job status after cancellation attempt
-        message:
-          type: string
-          nullable: true
-          description: Additional context about the cancellation result
     ResolveBundlesRequest:
       type: object
       additionalProperties: false
@@ -2777,6 +2950,7 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: Platform asset IDs to resolve
@@ -2950,15 +3124,11 @@ components:
       additionalProperties: false
       description: Bundles containing the requested asset
       required:
-      - assetId
       - bundles
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: The queried asset ID
         bundles:
           type: array
           items:
@@ -2982,7 +3152,6 @@ components:
       - bundleType
       - version
       - assetCount
-      - realm
       properties:
         bundleId:
           type: string
@@ -3002,8 +3171,10 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm. Null for cross-realm bundles.
         createdAt:
           type: string
           format: date-time
@@ -3018,6 +3189,8 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
+          maxItems: 100
           items:
             type: string
           description: Asset IDs to retrieve (max 100)
@@ -3046,16 +3219,18 @@ components:
     BundleStatus:
       type: string
       enum:
-      - pending
+      - queued
       - processing
       - ready
       - failed
+      - cancelled
       description: |
         Bundle processing status:
-        - pending: Bundle creation is pending/queued
+        - queued: Bundle creation is queued for processing
         - processing: Bundle is being processed
         - ready: Bundle is ready for download
         - failed: Bundle creation failed
+        - cancelled: Bundle creation was cancelled
     BundleLifecycle:
       type: string
       enum:
@@ -3076,7 +3251,6 @@ components:
       - bundleType
       - version
       - metadataVersion
-      - realm
       - status
       - assetCount
       - createdAt
@@ -3106,8 +3280,10 @@ components:
           nullable: true
           description: Owner account ID or service name (null for system-owned bundles)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm this bundle belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm this bundle belongs to. Null for cross-realm bundles.
         tags:
           type: object
           additionalProperties:
@@ -3148,6 +3324,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to update
         name:
           type: string
@@ -3184,14 +3362,10 @@ components:
       additionalProperties: false
       description: Result of bundle update operation
       required:
-      - bundleId
       - version
       - previousVersion
       - changes
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was updated
         version:
           type: integer
           description: New version number after update
@@ -3216,6 +3390,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to delete
         permanent:
           type: boolean
@@ -3230,18 +3406,11 @@ components:
       additionalProperties: false
       description: Result of bundle deletion
       required:
-      - bundleId
       - status
       - deletedAt
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was deleted
         status:
-          type: string
-          enum:
-          - deleted
-          - permanently_deleted
+          $ref: '#/components/schemas/DeletionStatus'
           description: Deletion status
         deletedAt:
           type: string
@@ -3261,6 +3430,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to restore
         reason:
           type: string
@@ -3271,21 +3442,12 @@ components:
       additionalProperties: false
       description: Result of bundle restoration
       required:
-      - bundleId
       - status
-      - restoredAt
       - restoredFromVersion
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was restored
         status:
-          type: string
-          description: Current bundle status (should be "active")
-        restoredAt:
-          type: string
-          format: date-time
-          description: When the bundle was restored
+          $ref: '#/components/schemas/BundleLifecycle'
+          description: Current bundle lifecycle status after restoration (should be "active")
         restoredFromVersion:
           type: integer
           description: Version number the bundle was restored from
@@ -3346,19 +3508,13 @@ components:
           nullable: true
           description: Filter by bundle type (source or metabundle)
         sortField:
-          type: string
-          enum:
-          - created_at
-          - updated_at
-          - name
-          - size
+          allOf:
+          - $ref: '#/components/schemas/BundleSortField'
           nullable: true
           description: Field to sort by (default created_at)
         sortOrder:
-          type: string
-          enum:
-          - asc
-          - desc
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
           nullable: true
           description: Sort order (default desc)
         limit:
@@ -3406,14 +3562,18 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to get history for
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListBundleVersionsResponse:
       type: object

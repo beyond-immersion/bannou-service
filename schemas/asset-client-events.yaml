@@ -31,7 +31,7 @@ components:
     # Upload Events
     # ============================================
 
-    AssetUploadCompleteEvent:
+    AssetUploadCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -85,7 +85,7 @@ components:
     # Processing Events
     # ============================================
 
-    AssetProcessingCompleteEvent:
+    AssetProcessingCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -132,7 +132,7 @@ components:
           nullable: true
           description: Human-readable error description
 
-    AssetProcessingFailedEvent:
+    AssetProcessingFailedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -175,7 +175,7 @@ components:
     # Bundle Events
     # ============================================
 
-    BundleValidationCompleteEvent:
+    BundleValidationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -221,7 +221,7 @@ components:
           items:
             $ref: '#/components/schemas/ValidationWarning'
 
-    BundleValidationFailedEvent:
+    BundleValidationFailedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -250,7 +250,7 @@ components:
           items:
             $ref: '#/components/schemas/ValidationError'
 
-    BundleCreationCompleteEvent:
+    BundleCreationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -298,7 +298,7 @@ components:
           nullable: true
           description: Human-readable error description
 
-    MetabundleCreationCompleteEvent:
+    MetabundleCreationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

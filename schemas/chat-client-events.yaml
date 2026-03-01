@@ -29,7 +29,7 @@ components:
     # Message Events
     # ============================================
 
-    ChatMessageReceivedEvent:
+    ChatMessageReceivedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -139,7 +139,7 @@ components:
           nullable: true
           description: Display name of the user who deleted the message
 
-    ChatMessagePinnedEvent:
+    ChatMessagePinnedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

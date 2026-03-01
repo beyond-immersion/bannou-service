@@ -356,6 +356,7 @@ Client                    Asset Service                     MinIO Storage
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/521 -->
 
 3. **Webhook-based processing trigger**: Currently `CompleteUpload` synchronously decides whether to dispatch processing. A fully event-driven approach could have the webhook handler trigger processing, removing the need for the client to call `CompleteUpload` at all.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/522 -->
 
 4. **Tiered storage**: Large, infrequently accessed assets could be migrated to cheaper storage tiers (S3 Glacier, Azure Cool) with automatic retrieval on access, using asset access timestamps.
 

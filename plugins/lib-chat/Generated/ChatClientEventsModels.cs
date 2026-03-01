@@ -55,7 +55,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatMessageReceivedEvent : BaseClientEvent
+public partial class ChatMessageReceivedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -196,7 +196,7 @@ public partial class ChatMessageDeletedClientEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatMessagePinnedEvent : BaseClientEvent
+public partial class ChatMessagePinnedClientEvent : BaseClientEvent
 {
 
     /// <summary>

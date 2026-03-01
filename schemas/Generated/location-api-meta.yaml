@@ -2327,6 +2327,12 @@ components:
       enum:
       - exclusive
       - inclusive
+    PresenceChangeType:
+      type: string
+      description: Type of entity presence change at a location
+      enum:
+      - Arrived
+      - Departed
     ValidateTerritoryRequest:
       type: object
       description: Request to validate a location against territory boundaries

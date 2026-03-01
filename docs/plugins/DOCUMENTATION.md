@@ -384,6 +384,7 @@ Archive System
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/520 -->
 
 2. **Archive bundle upload reliability**: If the Asset Service is unavailable during archive creation, the archive metadata is saved without a `BundleAssetId`. This means `RestoreDocumentationArchive` will return 404 for archives that were created without successful uploads.
+<!-- AUDIT:IN_PROGRESS:2026-03-01 -->
 
 ---
 

@@ -52,7 +52,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class QueueJoinedEvent : BaseClientEvent
+public partial class QueueJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -108,7 +108,7 @@ public partial class QueueJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchFoundEvent : BaseClientEvent
+public partial class MatchFoundClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -189,7 +189,7 @@ public partial class MatchFoundEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchPlayerAcceptedEvent : BaseClientEvent
+public partial class MatchPlayerAcceptedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -234,7 +234,7 @@ public partial class MatchPlayerAcceptedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchConfirmedEvent : BaseClientEvent
+public partial class MatchConfirmedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -281,7 +281,7 @@ public partial class MatchConfirmedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchmakingCancelledEvent : BaseClientEvent
+public partial class MatchmakingCancelledClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -343,7 +343,7 @@ public partial class MatchmakingCancelledEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchDeclinedEvent : BaseClientEvent
+public partial class MatchDeclinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -396,7 +396,7 @@ public partial class MatchDeclinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchmakingStatusUpdateEvent : BaseClientEvent
+public partial class MatchmakingStatusUpdateClientEvent : BaseClientEvent
 {
 
     /// <summary>

@@ -28,7 +28,7 @@ components:
     # Queue Joined Event
     # ============================================
 
-    QueueJoinedEvent:
+    QueueJoinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -72,7 +72,7 @@ components:
     # Match Found Event
     # ============================================
 
-    MatchFoundEvent:
+    MatchFoundClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -136,7 +136,7 @@ components:
     # Match Accepted Events
     # ============================================
 
-    MatchPlayerAcceptedEvent:
+    MatchPlayerAcceptedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -172,7 +172,7 @@ components:
           default: false
           description: Whether all players have accepted
 
-    MatchConfirmedEvent:
+    MatchConfirmedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -213,7 +213,7 @@ components:
     # Cancellation Events
     # ============================================
 
-    MatchmakingCancelledEvent:
+    MatchmakingCancelledClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -257,7 +257,7 @@ components:
           default: true
           description: Whether the player can immediately requeue
 
-    MatchDeclinedEvent:
+    MatchDeclinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -302,7 +302,7 @@ components:
     # Status Update Event
     # ============================================
 
-    MatchmakingStatusUpdateEvent:
+    MatchmakingStatusUpdateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

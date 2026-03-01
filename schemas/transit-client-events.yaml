@@ -6,7 +6,7 @@ info:
 
 components:
   schemas:
-    TransitJourneyUpdatedEvent:
+    TransitJourneyUpdatedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -65,7 +65,7 @@ components:
           type: string
           description: Primary transit mode code for the journey
 
-    TransitDiscoveryRevealedEvent:
+    TransitDiscoveryRevealedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -105,7 +105,7 @@ components:
           nullable: true
           description: Human-readable connection name for UI display
 
-    TransitConnectionStatusChangedEvent:
+    TransitConnectionStatusChangedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

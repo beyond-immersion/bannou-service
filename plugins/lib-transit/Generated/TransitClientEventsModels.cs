@@ -50,7 +50,7 @@ using System = global::System;
 /// Journey state changed -- pushed to the traveling entity's bound session
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TransitJourneyUpdatedEvent : BaseClientEvent
+public partial class TransitJourneyUpdatedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -134,7 +134,7 @@ public partial class TransitJourneyUpdatedEvent : BaseClientEvent
 /// A discoverable connection was revealed -- pushed to the discovering entity's session
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TransitDiscoveryRevealedEvent : BaseClientEvent
+public partial class TransitDiscoveryRevealedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -189,7 +189,7 @@ public partial class TransitDiscoveryRevealedEvent : BaseClientEvent
 /// A connection's operational status changed -- pushed to sessions in the affected realm
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class TransitConnectionStatusChangedEvent : BaseClientEvent
+public partial class TransitConnectionStatusChangedClientEvent : BaseClientEvent
 {
 
     /// <summary>
