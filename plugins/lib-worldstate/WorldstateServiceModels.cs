@@ -1,3 +1,6 @@
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Messaging;
+
 namespace BeyondImmersion.BannouService.Worldstate;
 
 /// <summary>
@@ -177,4 +180,162 @@ internal class RealmWorldstateConfigModel
 
     /// <summary>Real-world timestamp marking the start of this realm's game time.</summary>
     public DateTimeOffset RealmEpoch { get; set; }
+}
+
+/// <summary>
+/// Static helper for publishing boundary events from both the service and the worker.
+/// Extracted to eliminate duplication between WorldstateService.PublishBoundaryEventsAsync
+/// and WorldstateClockWorkerService.PublishWorkerBoundaryEventsAsync.
+/// </summary>
+internal static class WorldstateBoundaryEventPublisher
+{
+    /// <summary>
+    /// Publishes boundary events (hour, period, day, month, season, year) based on the
+    /// list of boundary crossings detected during clock advancement. Int boundary values
+    /// (hour, day, year) throw on null per IMPLEMENTATION TENETS (no sentinel values).
+    /// </summary>
+    /// <param name="realmId">The realm whose clock crossed boundaries.</param>
+    /// <param name="snapshot">The current game time snapshot after advancement.</param>
+    /// <param name="clock">The current clock state (for year on season events).</param>
+    /// <param name="boundaries">The list of boundary crossings to publish events for.</param>
+    /// <param name="isCatchUp">Whether these boundaries were crossed during catch-up processing.</param>
+    /// <param name="messageBus">The message bus for event publishing.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    internal static async Task PublishBoundaryEventsAsync(
+        Guid realmId,
+        GameTimeSnapshot snapshot,
+        RealmClockModel clock,
+        List<BoundaryCrossing> boundaries,
+        bool isCatchUp,
+        IMessageBus messageBus,
+        CancellationToken cancellationToken)
+    {
+        foreach (var boundary in boundaries)
+        {
+            switch (boundary.Type)
+            {
+                case BoundaryType.Hour:
+                    await messageBus.TryPublishAsync("worldstate.hour-changed", new WorldstateHourChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousHour = boundary.PreviousIntValue
+                            ?? throw new InvalidOperationException("Hour boundary crossing must have PreviousIntValue set"),
+                        CurrentHour = boundary.NewIntValue
+                            ?? throw new InvalidOperationException("Hour boundary crossing must have NewIntValue set"),
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+
+                case BoundaryType.Period:
+                    await messageBus.TryPublishAsync("worldstate.period-changed", new WorldstatePeriodChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousPeriod = boundary.PreviousStringValue
+                            ?? throw new InvalidOperationException("Period boundary crossing must have PreviousStringValue set"),
+                        CurrentPeriod = boundary.NewStringValue
+                            ?? throw new InvalidOperationException("Period boundary crossing must have NewStringValue set"),
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+
+                case BoundaryType.Day:
+                    await messageBus.TryPublishAsync("worldstate.day-changed", new WorldstateDayChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousDay = boundary.PreviousIntValue
+                            ?? throw new InvalidOperationException("Day boundary crossing must have PreviousIntValue set"),
+                        CurrentDay = boundary.NewIntValue
+                            ?? throw new InvalidOperationException("Day boundary crossing must have NewIntValue set"),
+                        DaysCrossed = boundary.CountCrossed,
+                        IsCatchUp = isCatchUp,
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+
+                case BoundaryType.Month:
+                    await messageBus.TryPublishAsync("worldstate.month-changed", new WorldstateMonthChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousMonth = boundary.PreviousStringValue
+                            ?? throw new InvalidOperationException("Month boundary crossing must have PreviousStringValue set"),
+                        CurrentMonth = boundary.NewStringValue
+                            ?? throw new InvalidOperationException("Month boundary crossing must have NewStringValue set"),
+                        MonthsCrossed = boundary.CountCrossed,
+                        IsCatchUp = isCatchUp,
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+
+                case BoundaryType.Season:
+                    await messageBus.TryPublishAsync("worldstate.season-changed", new WorldstateSeasonChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousSeason = boundary.PreviousStringValue
+                            ?? throw new InvalidOperationException("Season boundary crossing must have PreviousStringValue set"),
+                        CurrentSeason = boundary.NewStringValue
+                            ?? throw new InvalidOperationException("Season boundary crossing must have NewStringValue set"),
+                        CurrentYear = clock.Year,
+                        IsCatchUp = isCatchUp,
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+
+                case BoundaryType.Year:
+                    await messageBus.TryPublishAsync("worldstate.year-changed", new WorldstateYearChangedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RealmId = realmId,
+                        PreviousYear = boundary.PreviousIntValue
+                            ?? throw new InvalidOperationException("Year boundary crossing must have PreviousIntValue set"),
+                        CurrentYear = boundary.NewIntValue
+                            ?? throw new InvalidOperationException("Year boundary crossing must have NewIntValue set"),
+                        YearsCrossed = boundary.CountCrossed,
+                        IsCatchUp = isCatchUp,
+                        CurrentGameTime = snapshot
+                    }, cancellationToken: cancellationToken);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Maps a clock storage model to the API game time snapshot response type.
+    /// Shared between service and worker for consistent snapshot creation.
+    /// </summary>
+    /// <param name="clock">The internal clock storage model.</param>
+    /// <returns>The game time snapshot response.</returns>
+    internal static GameTimeSnapshot MapClockToSnapshot(RealmClockModel clock)
+    {
+        return new GameTimeSnapshot
+        {
+            RealmId = clock.RealmId,
+            GameServiceId = clock.GameServiceId,
+            Year = clock.Year,
+            MonthIndex = clock.MonthIndex,
+            MonthCode = clock.MonthCode,
+            DayOfMonth = clock.DayOfMonth,
+            DayOfYear = clock.DayOfYear,
+            Hour = clock.Hour,
+            Minute = clock.Minute,
+            Period = clock.Period,
+            IsDaylight = clock.IsDaylight,
+            Season = clock.Season,
+            SeasonIndex = clock.SeasonIndex,
+            SeasonProgress = clock.SeasonProgress,
+            TotalGameSecondsSinceEpoch = clock.TotalGameSecondsSinceEpoch,
+            TimeRatio = clock.TimeRatio,
+            Timestamp = clock.LastAdvancedRealTime
+        };
+    }
 }

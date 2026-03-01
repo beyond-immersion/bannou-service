@@ -54,6 +54,10 @@ public static class VariableProviderDefinitions
     /// <summary>Seed growth and capability data for ABML expressions (${seed.*})</summary>
     public const string Seed = "seed";
 
+    // Transit Service
+    /// <summary>Transit mode availability, journey state, and route data for ABML expressions (${transit.*})</summary>
+    public const string Transit = "transit";
+
     // Worldstate Service
     /// <summary>Game time, calendar, and season data for ABML expressions (${world.*})</summary>
     public const string World = "world";
@@ -77,6 +81,7 @@ public static class VariableProviderDefinitions
             [Personality] = new ProviderMetadata("CharacterPersonality", "Personality trait values for ABML expressions (${personality.*})"),
             [Quest] = new ProviderMetadata("Quest", "Active quest data for ABML expressions (${quest.*})"),
             [Seed] = new ProviderMetadata("Seed", "Seed growth and capability data for ABML expressions (${seed.*})"),
+            [Transit] = new ProviderMetadata("Transit", "Transit mode availability, journey state, and route data for ABML expressions (${transit.*})"),
             [World] = new ProviderMetadata("Worldstate", "Game time, calendar, and season data for ABML expressions (${world.*})"),
         };
 

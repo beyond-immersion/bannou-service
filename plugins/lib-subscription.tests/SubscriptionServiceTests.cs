@@ -3,8 +3,10 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using BeyondImmersion.Bannou.Subscription.ClientEvents;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -30,6 +32,7 @@ public class SubscriptionServiceTests
     private readonly Mock<ILogger<SubscriptionService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
     private readonly Mock<IGameServiceClient> _mockServiceClient;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
     private const string STATE_STORE = "subscription-statestore";
 
     public SubscriptionServiceTests()
@@ -46,6 +49,12 @@ public class SubscriptionServiceTests
             LockTimeoutSeconds = 10
         };
         _mockServiceClient = new Mock<IGameServiceClient>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+
+        // Setup default behavior for entity session registry
+        _mockEntitySessionRegistry.Setup(r => r.PublishToEntitySessionsAsync(
+            It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<BaseClientEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
@@ -80,7 +89,8 @@ public class SubscriptionServiceTests
             _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _configuration,
-            _mockServiceClient.Object);
+            _mockServiceClient.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     #region Constructor Tests
@@ -677,6 +687,17 @@ public class SubscriptionServiceTests
                 e.Action == SubscriptionAction.Created),
             It.IsAny<PublishOptions?>(),
             It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify client event pushed via IEntitySessionRegistry
+        _mockEntitySessionRegistry.Verify(r => r.PublishToEntitySessionsAsync(
+            "account",
+            accountId,
+            It.Is<SubscriptionStatusChangedEvent>(e =>
+                e.AccountId == accountId &&
+                e.ServiceId == serviceId &&
+                e.Action == SubscriptionAction.Created &&
+                e.IsActive == true),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

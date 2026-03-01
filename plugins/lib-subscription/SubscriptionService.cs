@@ -1,8 +1,10 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Subscription.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,6 +35,7 @@ public partial class SubscriptionService : ISubscriptionService
     private readonly ILogger<SubscriptionService> _logger;
     private readonly SubscriptionServiceConfiguration _configuration;
     private readonly IGameServiceClient _serviceClient;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
 
     // Key patterns for state store (internal for SubscriptionExpirationService access)
     internal const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
@@ -53,7 +56,8 @@ public partial class SubscriptionService : ISubscriptionService
         ITelemetryProvider telemetryProvider,
         ILogger<SubscriptionService> logger,
         SubscriptionServiceConfiguration configuration,
-        IGameServiceClient serviceClient)
+        IGameServiceClient serviceClient,
+        IEntitySessionRegistry entitySessionRegistry)
     {
         _subscriptionStore = stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreDefinitions.Subscription);
         _indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
@@ -63,6 +67,7 @@ public partial class SubscriptionService : ISubscriptionService
         _logger = logger;
         _configuration = configuration;
         _serviceClient = serviceClient;
+        _entitySessionRegistry = entitySessionRegistry;
     }
 
     /// <summary>
@@ -595,45 +600,39 @@ public partial class SubscriptionService : ISubscriptionService
     }
 
     /// <summary>
-    /// Adds a subscription ID to a list-based index using optimistic concurrency.
-    /// Uses GetWithETagAsync + TrySaveAsync with retry to prevent lost updates
-    /// when multiple instances modify the same index concurrently.
+    /// Adds a subscription ID to a list-based index using distributed locking.
+    /// Serializes writes per index key to prevent first-write races where two concurrent
+    /// creates for the same account (but different services) could overwrite each other's
+    /// index entries when the index key doesn't exist yet.
     /// </summary>
     private async Task AddToIndexAsync(string indexKey, Guid subscriptionId, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.subscription", "SubscriptionService.AddToIndex");
-        for (var attempt = 0; attempt < 3; attempt++)
+
+        var lockOwner = $"index-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SubscriptionLock,
+            $"index:{indexKey}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            var (subscriptionIds, etag) = await _indexStore.GetWithETagAsync(indexKey, cancellationToken);
-            subscriptionIds ??= new List<Guid>();
-
-            if (subscriptionIds.Contains(subscriptionId))
-            {
-                return; // Already present
-            }
-
-            subscriptionIds.Add(subscriptionId);
-
-            // If no prior value (null etag), just save directly
-            if (etag == null)
-            {
-                await _indexStore.SaveAsync(indexKey, subscriptionIds, cancellationToken: cancellationToken);
-                return;
-            }
-
-            // Otherwise use optimistic concurrency
-            // GetWithETagAsync returns non-null etag for existing records;
-            // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await _indexStore.TrySaveAsync(indexKey, subscriptionIds, etag ?? string.Empty, cancellationToken);
-            if (result != null)
-            {
-                return; // Success
-            }
-
-            _logger.LogDebug("Concurrent modification on index {IndexKey} during add, retrying (attempt {Attempt})", indexKey, attempt + 1);
+            _logger.LogWarning("Failed to acquire lock for index update on {IndexKey}, subscription {SubscriptionId} may not appear in queries",
+                indexKey, subscriptionId);
+            return;
         }
 
-        _logger.LogWarning("Failed to add subscription {SubscriptionId} to index {IndexKey} after retries", subscriptionId, indexKey);
+        var subscriptionIds = await _indexStore.GetAsync(indexKey, cancellationToken) ?? new List<Guid>();
+
+        if (subscriptionIds.Contains(subscriptionId))
+        {
+            return; // Already present
+        }
+
+        subscriptionIds.Add(subscriptionId);
+        await _indexStore.SaveAsync(indexKey, subscriptionIds, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -663,6 +662,51 @@ public partial class SubscriptionService : ISubscriptionService
 
         _logger.LogDebug("Published subscription.updated event for {SubscriptionId} with action {Action}",
             model.SubscriptionId, action);
+
+        // Push client event to all sessions for the affected account (best-effort)
+        try
+        {
+            await PublishSubscriptionClientEventAsync(model, action, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to push subscription client event for account {AccountId}, action {Action}. " +
+                "State mutation was already committed",
+                model.AccountId, action);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a subscription status changed client event to all WebSocket sessions
+    /// for the affected account via the Entity Session Registry's account routing.
+    /// </summary>
+    private async Task PublishSubscriptionClientEventAsync(
+        SubscriptionDataModel model, SubscriptionAction action, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.subscription", "SubscriptionService.PublishSubscriptionClientEvent");
+
+        var clientEvent = new SubscriptionStatusChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            AccountId = model.AccountId,
+            ServiceId = model.ServiceId,
+            ServiceName = model.DisplayName,
+            Action = action,
+            IsActive = model.IsActive,
+            ExpiresAt = model.ExpirationDateUnix.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(model.ExpirationDateUnix.Value)
+                : null
+        };
+
+        var count = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "account", model.AccountId, clientEvent, cancellationToken);
+
+        _logger.LogDebug(
+            "Published subscription.status_changed to {SessionCount} sessions for account {AccountId}",
+            count, model.AccountId);
     }
 
     private static SubscriptionInfo MapToSubscriptionInfo(SubscriptionDataModel model)

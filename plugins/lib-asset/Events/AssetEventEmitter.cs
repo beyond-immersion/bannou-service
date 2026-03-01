@@ -225,7 +225,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitAssetReadyAsync");
-        var eventData = new AssetReadyEvent
+        var eventData = new AssetReadyClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -250,7 +250,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         Guid jobId,
         string metabundleId,
         bool success,
-        MetabundleJobStatus? status = null,
+        BundleStatus? status = null,
         Uri? downloadUrl = null,
         long? sizeBytes = null,
         int? assetCount = null,

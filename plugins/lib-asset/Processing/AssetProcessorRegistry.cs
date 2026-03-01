@@ -9,8 +9,8 @@ public sealed class AssetProcessorRegistry
 {
     private readonly IReadOnlyList<IAssetProcessor> _processors;
     private readonly ILogger<AssetProcessorRegistry> _logger;
-    private readonly Dictionary<string, IAssetProcessor> _processorsByPoolType;
-    private readonly Dictionary<string, IAssetProcessor> _processorsByContentType;
+    private readonly IReadOnlyDictionary<string, IAssetProcessor> _processorsByPoolType;
+    private readonly IReadOnlyDictionary<string, IAssetProcessor> _processorsByContentType;
 
     /// <summary>
     /// Creates a new AssetProcessorRegistry with the provided processors.
@@ -22,19 +22,22 @@ public sealed class AssetProcessorRegistry
         _processors = processors.ToList();
         _logger = logger;
 
-        _processorsByPoolType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);
-        _processorsByContentType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);
+        var byPoolType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);
+        var byContentType = new Dictionary<string, IAssetProcessor>(StringComparer.OrdinalIgnoreCase);
 
         // Build lookup tables
         foreach (var processor in _processors)
         {
-            _processorsByPoolType[processor.PoolType] = processor;
+            byPoolType[processor.PoolType] = processor;
 
             foreach (var contentType in processor.SupportedContentTypes)
             {
-                _processorsByContentType[contentType] = processor;
+                byContentType[contentType] = processor;
             }
         }
+
+        _processorsByPoolType = byPoolType;
+        _processorsByContentType = byContentType;
 
         _logger.LogInformation(
             "Registered {ProcessorCount} asset processors: {PoolTypes}",
@@ -70,12 +73,12 @@ public sealed class AssetProcessorRegistry
     /// <summary>
     /// Gets all supported pool types.
     /// </summary>
-    public IReadOnlyCollection<string> GetPoolTypes() => _processorsByPoolType.Keys;
+    public IReadOnlyCollection<string> GetPoolTypes() => _processorsByPoolType.Keys.ToList();
 
     /// <summary>
     /// Gets all supported content types.
     /// </summary>
-    public IReadOnlyCollection<string> GetContentTypes() => _processorsByContentType.Keys;
+    public IReadOnlyCollection<string> GetContentTypes() => _processorsByContentType.Keys.ToList();
 
     /// <summary>
     /// Checks if a content type is supported by any processor.

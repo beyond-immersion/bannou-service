@@ -94,7 +94,7 @@ public sealed class AudioProcessor : IAssetProcessor
         }
 
         // Check for potentially problematic scenarios
-        if (context.SizeBytes > 100 * 1024 * 1024) // > 100MB
+        if (context.SizeBytes > _configuration.AudioLargeFileWarningThresholdMb * 1024L * 1024L)
         {
             warnings.Add("Large audio file may take significant time to process");
         }

@@ -24,7 +24,23 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Asset;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.Bannou.Asset.ClientEvents;
 
@@ -402,7 +418,7 @@ public partial class MetabundleCreationCompleteEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public MetabundleJobStatus? Status { get; set; } = default!;
+    public BundleStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed download URL (on success)
@@ -455,7 +471,7 @@ public partial class MetabundleCreationCompleteEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetReadyEvent : BaseClientEvent
+public partial class AssetReadyClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -503,118 +519,6 @@ public partial class AssetReadyEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Error codes for upload failures
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum UploadErrorCode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"VALIDATION_FAILED")]
-    VALIDATION_FAILED = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
-    HASH_MISMATCH = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
-    SIZE_EXCEEDED = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
-    STORAGE_ERROR = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Type of processing performed
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ProcessingType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"mipmaps")]
-    Mipmaps = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lod_generation")]
-    Lod_generation = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"transcode")]
-    Transcode = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"compression")]
-    Compression = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
-    Validation = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_compile")]
-    Behavior_compile = 5,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Error codes for processing failures
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ProcessingErrorCode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSING_FAILED")]
-    PROCESSING_FAILED = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_FORMAT")]
-    INVALID_FORMAT = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"RESOURCE_EXHAUSTED")]
-    RESOURCE_EXHAUSTED = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSOR_UNAVAILABLE")]
-    PROCESSOR_UNAVAILABLE = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Information about a generated derivative asset
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ProcessingOutput
-{
-
-    /// <summary>
-    /// Type of output (e.g., "mipmap_level_1", "lod_2")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("outputType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string OutputType { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the generated asset
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
-
-    /// <summary>
-    /// Size of the generated asset
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long? Size { get; set; } = default!;
 
 }
 
@@ -680,114 +584,6 @@ public partial class ValidationError
     public string? AssetPath { get; set; } = default!;
 
 }
-
-/// <summary>
-/// Error codes for bundle validation failures
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ValidationErrorCode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_ARCHIVE")]
-    INVALID_ARCHIVE = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_MANIFEST")]
-    MISSING_MANIFEST = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_MANIFEST")]
-    INVALID_MANIFEST = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
-    HASH_MISMATCH = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"PATH_TRAVERSAL")]
-    PATH_TRAVERSAL = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
-    SIZE_EXCEEDED = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"DUPLICATE_ASSET_ID")]
-    DUPLICATE_ASSET_ID = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_DEPENDENCY")]
-    MISSING_DEPENDENCY = 7,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Status of an async metabundle creation job.
-/// <br/>- queued: Job accepted, waiting for processing resources
-/// <br/>- processing: Job is actively being processed
-/// <br/>- ready: Job completed successfully
-/// <br/>- failed: Job failed (see errorCode/errorMessage)
-/// <br/>- cancelled: Job was cancelled before completion
-/// <br/>
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MetabundleJobStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
-    Queued = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
-    Processing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
-    Ready = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
-    Cancelled = 4,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Error codes for metabundle creation failures
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum MetabundleErrorCode
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_FOUND")]
-    SOURCE_BUNDLE_NOT_FOUND = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_READY")]
-    SOURCE_BUNDLE_NOT_READY = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_FOUND")]
-    STANDALONE_ASSET_NOT_FOUND = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_READY")]
-    STANDALONE_ASSET_NOT_READY = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"REALM_MISMATCH")]
-    REALM_MISMATCH = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ASSET_CONFLICT")]
-    ASSET_CONFLICT = 5,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
-    STORAGE_ERROR = 6,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
-    TIMEOUT = 7,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CANCELLED")]
-    CANCELLED = 8,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
-    INTERNAL_ERROR = 9,
-
-}
-#pragma warning restore CS1591
 
 
 

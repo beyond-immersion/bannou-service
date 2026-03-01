@@ -32,47 +32,6 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Asset;
 
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Storage backend type
-/// </summary>
-public enum StorageProvider
-{
-    Minio,
-    S3,
-    R2,
-    Azure,
-    Filesystem,
-}
-#pragma warning restore CS1591
-
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Service mode
-/// </summary>
-public enum ProcessingMode
-{
-    Api,
-    Worker,
-    Both,
-}
-#pragma warning restore CS1591
-
-
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-/// <summary>
-/// Default audio output format
-/// </summary>
-public enum AudioOutputFormat
-{
-    Mp3,
-    Opus,
-    Aac,
-}
-#pragma warning restore CS1591
-
 /// <summary>
 /// Configuration class for Asset service.
 /// Properties are automatically bound from environment variables.
@@ -117,16 +76,16 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public string? StoragePublicEndpoint { get; set; }
 
     /// <summary>
-    /// Storage access key/username
+    /// Storage access key/username. Required for production deployments.
     /// Environment variable: ASSET_STORAGE_ACCESS_KEY
     /// </summary>
-    public string StorageAccessKey { get; set; } = "minioadmin";
+    public string? StorageAccessKey { get; set; }
 
     /// <summary>
-    /// Storage secret key/password
+    /// Storage secret key/password. Required for production deployments.
     /// Environment variable: ASSET_STORAGE_SECRET_KEY
     /// </summary>
-    public string StorageSecretKey { get; set; } = "minioadmin";
+    public string? StorageSecretKey { get; set; }
 
     /// <summary>
     /// Storage region (for S3/R2)
@@ -150,42 +109,49 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// TTL for pre-signed upload/download URLs in seconds
     /// Environment variable: ASSET_TOKEN_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int TokenTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// TTL for download URLs (can be shorter than upload)
     /// Environment variable: ASSET_DOWNLOAD_TOKEN_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DownloadTokenTtlSeconds { get; set; } = 900;
 
     /// <summary>
     /// Maximum upload size in megabytes
     /// Environment variable: ASSET_MAX_UPLOAD_SIZE_MB
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxUploadSizeMb { get; set; } = 500;
 
     /// <summary>
     /// File size threshold for multipart uploads in megabytes
     /// Environment variable: ASSET_MULTIPART_THRESHOLD_MB
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MultipartThresholdMb { get; set; } = 50;
 
     /// <summary>
     /// Size of each part in multipart uploads in megabytes
     /// Environment variable: ASSET_MULTIPART_PART_SIZE_MB
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MultipartPartSizeMb { get; set; } = 16;
 
     /// <summary>
     /// Maximum number of asset IDs allowed in a single bundle resolution request
     /// Environment variable: ASSET_MAX_RESOLUTION_ASSETS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxResolutionAssets { get; set; } = 500;
 
     /// <summary>
     /// Maximum number of asset IDs allowed in a single bulk get request
     /// Environment variable: ASSET_MAX_BULK_GET_ASSETS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxBulkGetAssets { get; set; } = 100;
 
     /// <summary>
@@ -264,6 +230,7 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Default audio bitrate in kbps
     /// Environment variable: ASSET_AUDIO_BITRATE_KBPS
     /// </summary>
+    [ConfigRange(Minimum = 32, Maximum = 320)]
     public int AudioBitrateKbps { get; set; } = 192;
 
     /// <summary>
@@ -288,6 +255,7 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
     /// Environment variable: ASSET_DELETED_BUNDLE_RETENTION_DAYS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int DeletedBundleRetentionDays { get; set; } = 30;
 
     /// <summary>
@@ -529,5 +497,29 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
     /// </summary>
     public int DefaultBundleCacheTtlHours { get; set; } = 24;
+
+    /// <summary>
+    /// Maximum number of results per query/list request
+    /// Environment variable: ASSET_MAX_QUERY_LIMIT
+    /// </summary>
+    public int MaxQueryLimit { get; set; } = 1000;
+
+    /// <summary>
+    /// File size in MB above which audio processing logs a warning
+    /// Environment variable: ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB
+    /// </summary>
+    public int AudioLargeFileWarningThresholdMb { get; set; } = 100;
+
+    /// <summary>
+    /// File size in MB above which texture processing logs a warning
+    /// Environment variable: ASSET_TEXTURE_LARGE_FILE_WARNING_THRESHOLD_MB
+    /// </summary>
+    public int TextureLargeFileWarningThresholdMb { get; set; } = 100;
+
+    /// <summary>
+    /// File size in MB above which model processing logs a warning
+    /// Environment variable: ASSET_MODEL_LARGE_FILE_WARNING_THRESHOLD_MB
+    /// </summary>
+    public int ModelLargeFileWarningThresholdMb { get; set; } = 50;
 
 }

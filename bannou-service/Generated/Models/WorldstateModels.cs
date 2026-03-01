@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Worldstate;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Worldstate;
 
@@ -610,22 +625,14 @@ public partial class InitializeRealmClockRequest
 }
 
 /// <summary>
-/// Confirmation of realm clock initialization with resolved values
+/// Resolved entity state after realm clock initialization. Caller already knows realmId from request. Shows resolved values for optional fields that may have fallen back to config defaults.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InitializeRealmClockResponse
 {
 
     /// <summary>
-    /// Realm the clock was initialized for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Game service the realm belongs to
+    /// Game service the realm belongs to (resolved from realm lookup)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -633,7 +640,7 @@ public partial class InitializeRealmClockResponse
     public System.Guid GameServiceId { get; set; } = default!;
 
     /// <summary>
-    /// Calendar template code in use (resolved from request or config)
+    /// Calendar template code in use (resolved from request or config default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -642,14 +649,14 @@ public partial class InitializeRealmClockResponse
     public string CalendarTemplateCode { get; set; } = default!;
 
     /// <summary>
-    /// Initial game-seconds per real-second (resolved from request or config)
+    /// Initial game-seconds per real-second (resolved from request or config default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeRatio")]
     [System.ComponentModel.DataAnnotations.Range(0.1F, 10000.0F)]
     public float TimeRatio { get; set; } = default!;
 
     /// <summary>
-    /// Downtime handling policy (resolved from request or config)
+    /// Downtime handling policy (resolved from request or config default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("downtimePolicy")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -658,7 +665,7 @@ public partial class InitializeRealmClockResponse
     public DowntimePolicy DowntimePolicy { get; set; } = default!;
 
     /// <summary>
-    /// Real-world timestamp of the realm epoch
+    /// Real-world timestamp of the realm epoch (resolved from request or current time)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("epoch")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -666,7 +673,7 @@ public partial class InitializeRealmClockResponse
     public System.DateTimeOffset Epoch { get; set; } = default!;
 
     /// <summary>
-    /// Game year the clock started at
+    /// Game year the clock started at (resolved from request or default 0)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startingYear")]
     [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
@@ -708,40 +715,17 @@ public partial class SetTimeRatioRequest
 }
 
 /// <summary>
-/// Confirmation of time ratio change
+/// Result of time ratio change. Caller already knows realmId, newRatio, and reason from request.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SetTimeRatioResponse
 {
 
     /// <summary>
-    /// Realm the ratio was changed for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
-
-    /// <summary>
-    /// Previous game-seconds per real-second
+    /// Previous game-seconds per real-second before the change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousRatio")]
     public float PreviousRatio { get; set; } = default!;
-
-    /// <summary>
-    /// New game-seconds per real-second
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newRatio")]
-    public float NewRatio { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for the ratio change
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public TimeRatioChangeReason Reason { get; set; } = default!;
 
 }
 
@@ -791,19 +775,11 @@ public partial class AdvanceClockRequest
 }
 
 /// <summary>
-/// Result of manual clock advancement
+/// Result of manual clock advancement. Caller already knows realmId from request.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AdvanceClockResponse
 {
-
-    /// <summary>
-    /// Realm the clock was advanced for
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid RealmId { get; set; } = default!;
 
     /// <summary>
     /// Game time before advancement

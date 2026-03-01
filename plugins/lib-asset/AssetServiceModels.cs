@@ -55,7 +55,7 @@ public sealed class AssetProcessingJobEvent
     public string PoolType { get; set; } = string.Empty;
     public string ProcessorId { get; set; } = string.Empty;
     public string AppId { get; set; } = string.Empty;
-    public Guid LeaseId { get; set; }
+    public Guid? LeaseId { get; set; }
     public DateTimeOffset ExpiresAt { get; set; }
 }
 
@@ -115,7 +115,7 @@ internal sealed class MetabundleJob
     /// <summary>
     /// Current job status.
     /// </summary>
-    public InternalJobStatus Status { get; set; } = InternalJobStatus.Queued;
+    public BundleStatus Status { get; set; } = BundleStatus.Queued;
 
     /// <summary>
     /// Progress percentage (0-100) when processing.
@@ -154,7 +154,7 @@ internal sealed class MetabundleJob
     public long? ProcessingTimeMs { get; set; }
 
     /// <summary>
-    /// Error code if job failed. Uses MetabundleErrorCode enum per IMPLEMENTATION TENETS T25.
+    /// Error code if job failed. Uses MetabundleErrorCode enum per IMPLEMENTATION TENETS.
     /// </summary>
     public MetabundleErrorCode? ErrorCode { get; set; }
 
@@ -172,14 +172,6 @@ internal sealed class MetabundleJob
 /// <summary>
 /// Job status enum for internal tracking (distinct from client event enum).
 /// </summary>
-internal enum InternalJobStatus
-{
-    Queued,
-    Processing,
-    Ready,
-    Failed,
-    Cancelled
-}
 
 /// <summary>
 /// Result data stored when metabundle job completes successfully.

@@ -27,6 +27,20 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 **ALWAYS REFER TO AND FOLLOW THE TENETS WITHOUT EXCEPTION. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
 
+### ⛔ TENET AUDIT INTEGRITY (MANDATORY) ⛔
+
+**When auditing code against tenets, the tenet text is the SOLE AUTHORITY. The codebase is the subject being judged, not a source of counter-evidence.**
+
+**The forbidden pattern**: Reading a tenet rule, searching the codebase for code that contradicts it, finding violations in other files, and concluding "this is an established pattern, so it's not a violation." This is backwards — finding more violations proves the problem is widespread, it does NOT prove the tenet is wrong.
+
+**Rules**:
+1. **NEVER search the codebase to validate or invalidate a tenet finding.** If T16 says `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period. You do not get to grep for other three-part topics to build a case that the tenet "doesn't really mean that."
+2. **If existing code contradicts a tenet, that is an ADDITIONAL violation to report**, not evidence that the original finding is a false positive.
+3. **A "false positive" means the tenet genuinely does not apply to the situation** (e.g., the code is in a category the tenet explicitly exempts). It does NOT mean "other code also does this" or "this seems like it should be okay."
+4. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
+
+**Why this rule exists:** Claude read T16 ("dot separates entity from action only"), searched the codebase for three-part event topics, found violations in actor/asset/puppetmaster, and concluded "this is clearly the pattern" — dismissing the finding as a false positive. This is using existing tech debt as evidence that a clear rule doesn't apply. The tenets define what the code MUST do, not what it currently does.
+
 ---
 
 ## ⛔ CHUNKED FILE READING (MANDATORY) ⛔

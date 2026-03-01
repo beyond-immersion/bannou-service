@@ -101,7 +101,7 @@ public sealed class ModelProcessor : IAssetProcessor
         }
 
         // Check for potentially problematic scenarios
-        if (context.SizeBytes > 50 * 1024 * 1024) // > 50MB
+        if (context.SizeBytes > _configuration.ModelLargeFileWarningThresholdMb * 1024L * 1024L)
         {
             warnings.Add("Large model file may take significant time to process");
         }

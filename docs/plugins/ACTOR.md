@@ -96,6 +96,7 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `QuestProviderFactory` | `quest` | lib-quest | L2 |
 | `SeedProviderFactory` | `seed` | lib-seed | L2 |
 | `LocationContextProviderFactory` | `location` | lib-location | L2 |
+| `TransitVariableProviderFactory` | `transit` | lib-transit | L2 |
 
 **Character Brain vs Event Brain Data Access**
 
@@ -143,7 +144,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location (see Registered Provider Factories table above). The `world` provider namespace is defined in `variable-providers.yaml` (for `${world.*}` expressions) but lib-worldstate does not yet implement `IVariableProviderFactory`. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
+Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit (see Registered Provider Factories table above). The `world` provider namespace is defined in `variable-providers.yaml` (for `${world.*}` expressions) but lib-worldstate does not yet implement `IVariableProviderFactory`. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 

@@ -62,18 +62,26 @@ components:
     # ==========================================================================
 
     AssetUploadRequestedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a new upload is initiated via requestUpload API
       required:
+        - eventId
+        - timestamp
         - uploadId
         - owner
         - filename
         - size
         - contentType
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         uploadId:
           type: string
           format: uuid
@@ -103,20 +111,22 @@ components:
           $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of asset being uploaded
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm assets.
         isMultipart:
           type: boolean
           default: false
           description: Whether this is a multipart upload
 
     AssetUploadCompletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an upload is completed and file is stored
       required:
+        - eventId
+        - timestamp
         - assetId
         - uploadId
         - owner
@@ -125,6 +135,14 @@ components:
         - size
         - contentHash
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         assetId:
           type: string
           description: Assigned asset identifier
@@ -166,20 +184,28 @@ components:
     # ==========================================================================
 
     AssetProcessingQueuedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is queued for processing
       required:
+        - eventId
+        - timestamp
         - assetId
         - processingType
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
         processingType:
-          $ref: '#/components/schemas/ProcessingTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/ProcessingType'
           description: Type of processing to be performed on the asset
         priority:
           type: integer
@@ -195,21 +221,29 @@ components:
           description: Estimated processing duration
 
     AssetProcessingCompletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when asset processing completes
       required:
+        - eventId
+        - timestamp
         - assetId
         - processingType
         - success
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
         processingType:
-          $ref: '#/components/schemas/ProcessingTypeEnum'
+          $ref: 'asset-api.yaml#/components/schemas/ProcessingType'
           description: Type of processing that was performed
         success:
           type: boolean
@@ -223,7 +257,7 @@ components:
           nullable: true
           description: Generated derivative assets from processing
           items:
-            $ref: '#/components/schemas/ProcessingOutput'
+            $ref: 'asset-api.yaml#/components/schemas/ProcessingOutput'
         durationMs:
           type: integer
           nullable: true
@@ -234,17 +268,25 @@ components:
     # ==========================================================================
 
     AssetReadyEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when an asset is fully processed and available
       required:
+        - eventId
+        - timestamp
         - assetId
         - bucket
         - key
         - contentHash
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         assetId:
           type: string
           description: Asset identifier
@@ -274,26 +316,36 @@ components:
           $ref: 'asset-api.yaml#/components/schemas/AssetType'
           description: Category of the asset
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm assets.
 
     # ==========================================================================
     # Bundle Events
     # ==========================================================================
 
     BundleCreatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is successfully created
       required:
+        - eventId
+        - timestamp
         - bundleId
         - version
         - bucket
         - key
         - assetCount
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -326,20 +378,27 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
 
     MetabundleCreatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a metabundle is successfully created from source bundles
       required:
+        - eventId
+        - timestamp
         - metabundleId
         - version
-        - realm
         - sourceBundleCount
         - assetCount
         - bucket
         - key
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         metabundleId:
           type: string
           description: Human-readable metabundle identifier
@@ -347,8 +406,10 @@ components:
           type: string
           description: Metabundle version string
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm for this metabundle
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm for this metabundle. Null for cross-realm metabundles.
         sourceBundleCount:
           type: integer
           description: Number of source bundles composed
@@ -385,18 +446,26 @@ components:
             For service-initiated: the service name.
 
     BundleUpdatedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when bundle metadata is updated
       required:
+        - eventId
+        - timestamp
         - bundleId
         - version
         - previousVersion
         - changes
         - updatedBy
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -419,20 +488,30 @@ components:
           type: string
           description: Account ID or service name that performed the update
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm of the bundle
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm of the bundle. Null for cross-realm bundles.
 
     BundleDeletedEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a bundle is soft-deleted or permanently deleted
       required:
+        - eventId
+        - timestamp
         - bundleId
         - permanent
         - deletedBy
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -452,20 +531,30 @@ components:
           type: string
           description: Account ID or service name that performed the deletion
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm of the bundle
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm of the bundle. Null for cross-realm bundles.
 
     BundleRestoredEvent:
-      allOf:
-        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Event published when a soft-deleted bundle is restored
       required:
+        - eventId
+        - timestamp
         - bundleId
         - restoredFromVersion
         - restoredBy
       properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
         bundleId:
           type: string
           description: Human-readable bundle identifier
@@ -480,42 +569,13 @@ components:
           type: string
           description: Account ID or service name that performed the restoration
         realm:
-          $ref: 'asset-api.yaml#/components/schemas/GameRealm'
-          description: Game realm of the bundle
+          allOf:
+            - $ref: 'asset-api.yaml#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm of the bundle. Null for cross-realm bundles.
 
     # ==========================================================================
     # Supporting Types
-    # NOTE: AssetType, Realm, and CompressionType are defined in asset-api.yaml
-    # and referenced via $ref per IMPLEMENTATION TENETS (T26 schema hierarchy)
+    # NOTE: Canonical types are defined in asset-api.yaml and referenced via $ref
+    # per IMPLEMENTATION TENETS (mandatory type reuse)
     # ==========================================================================
-
-    ProcessingTypeEnum:
-      type: string
-      enum:
-        - mipmaps
-        - lod_generation
-        - transcode
-        - compression
-        - validation
-        - behavior_compile
-      description: Type of processing being performed
-
-    ProcessingOutput:
-      type: object
-      additionalProperties: false
-      description: Information about a generated derivative asset
-      required:  # NRT: Required event properties
-        - outputType
-        - key
-      properties:
-        outputType:
-          type: string
-          description: Type of output (e.g., "mipmap_level_1", "lod_2")
-        key:
-          type: string
-          description: Storage key for the output
-        size:
-          type: integer
-          format: int64
-          nullable: true  # NRT: Optional property MUST be nullable
-          description: Size of the output in bytes

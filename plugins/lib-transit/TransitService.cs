@@ -1,10 +1,16 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
+using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Inventory;
+using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State;
+using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -12,12 +18,21 @@ namespace BeyondImmersion.BannouService.Transit;
 
 /// <summary>
 /// Implementation of the Transit service.
-/// This class contains the business logic for all Transit operations.
+/// Provides geographic connectivity, transit mode registry, and journey tracking
+/// computed against Worldstate's game clock.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
 /// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// </para>
+/// <para>
+/// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
+/// <list type="bullet">
+///   <item>Hard dependencies (constructor injection): ILocationClient (L2), IWorldstateClient (L2),
+///         ICharacterClient (L2), ISpeciesClient (L2), IInventoryClient (L2), IResourceClient (L1)</item>
+///   <item>Soft dependencies (DI collection): IEnumerable&lt;ITransitCostModifierProvider&gt; (L4, graceful degradation)</item>
+/// </list>
 /// </para>
 /// <para>
 /// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
@@ -47,26 +62,120 @@ namespace BeyondImmersion.BannouService.Transit;
 [BannouService("transit", typeof(ITransitService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class TransitService : ITransitService
 {
+    // Infrastructure (L0)
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IDistributedLockProvider _lockProvider;
+
+    // State stores (8 stores per deep dive)
+    private readonly IQueryableStateStore<TransitModeModel> _modeStore;
+    private readonly IQueryableStateStore<TransitConnectionModel> _connectionStore;
+    private readonly IStateStore<TransitJourneyModel> _journeyStore;
+    private readonly IQueryableStateStore<JourneyArchiveModel> _journeyArchiveStore;
+    private readonly IStateStore<List<ConnectionGraphEntry>> _connectionGraphStore;
+    private readonly IQueryableStateStore<TransitDiscoveryModel> _discoveryStore;
+    private readonly IStateStore<HashSet<Guid>> _discoveryCacheStore;
+    private readonly IStateStore<string> _lockStore;
+
+    // Service clients (L1/L2 hard dependencies)
+    private readonly ILocationClient _locationClient;
+    private readonly IWorldstateClient _worldstateClient;
+    private readonly ICharacterClient _characterClient;
+    private readonly ISpeciesClient _speciesClient;
+    private readonly IInventoryClient _inventoryClient;
     private readonly IResourceClient _resourceClient;
+
+    // Helper services
+    private readonly ITransitConnectionGraphCache _graphCache;
+    private readonly ITransitRouteCalculator _routeCalculator;
+
+    // DI cost modifier providers (L4 soft dependency, graceful degradation)
+    private readonly IReadOnlyList<ITransitCostModifierProvider> _costModifierProviders;
+
+    // Client events
+    private readonly IClientEventPublisher _clientEventPublisher;
+
+    // Logging, telemetry, configuration
     private readonly ILogger<TransitService> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly TransitServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "transit-statestore";
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TransitService"/> class.
+    /// </summary>
+    /// <param name="stateStoreFactory">Factory for creating state store instances.</param>
+    /// <param name="messageBus">Event publishing via lib-messaging.</param>
+    /// <param name="lockProvider">Distributed locking for journey state transitions and connection status updates.</param>
+    /// <param name="locationClient">Location service client for validation and position reporting (L2 hard).</param>
+    /// <param name="worldstateClient">Worldstate service client for game-time calculations (L2 hard).</param>
+    /// <param name="characterClient">Character service client for species lookups (L2 hard).</param>
+    /// <param name="speciesClient">Species service client for mode restriction checks (L2 hard).</param>
+    /// <param name="inventoryClient">Inventory service client for item requirement checks (L2 hard).</param>
+    /// <param name="resourceClient">Resource service client for cleanup registration (L1 hard).</param>
+    /// <param name="graphCache">Connection graph cache for route calculation.</param>
+    /// <param name="routeCalculator">Route calculator for Dijkstra path finding.</param>
+    /// <param name="costModifierProviders">DI collection of L4 cost enrichment providers (empty if none registered).</param>
+    /// <param name="clientEventPublisher">Publisher for server-to-client WebSocket events.</param>
+    /// <param name="logger">Structured logger.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
+    /// <param name="configuration">Typed service configuration.</param>
+    /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     public TransitService(
-        IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IMessageBus messageBus,
+        IDistributedLockProvider lockProvider,
+        ILocationClient locationClient,
+        IWorldstateClient worldstateClient,
+        ICharacterClient characterClient,
+        ISpeciesClient speciesClient,
+        IInventoryClient inventoryClient,
         IResourceClient resourceClient,
+        ITransitConnectionGraphCache graphCache,
+        ITransitRouteCalculator routeCalculator,
+        IEnumerable<ITransitCostModifierProvider> costModifierProviders,
+        IClientEventPublisher clientEventPublisher,
         ILogger<TransitService> logger,
-        TransitServiceConfiguration configuration)
+        ITelemetryProvider telemetryProvider,
+        TransitServiceConfiguration configuration,
+        IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
+        _lockProvider = lockProvider;
+
+        // Create 8 state stores from StateStoreDefinitions constants
+        _modeStore = stateStoreFactory.GetQueryableStore<TransitModeModel>(StateStoreDefinitions.TransitModes);
+        _connectionStore = stateStoreFactory.GetQueryableStore<TransitConnectionModel>(StateStoreDefinitions.TransitConnections);
+        _journeyStore = stateStoreFactory.GetStore<TransitJourneyModel>(StateStoreDefinitions.TransitJourneys);
+        _journeyArchiveStore = stateStoreFactory.GetQueryableStore<JourneyArchiveModel>(StateStoreDefinitions.TransitJourneysArchive);
+        _connectionGraphStore = stateStoreFactory.GetStore<List<ConnectionGraphEntry>>(StateStoreDefinitions.TransitConnectionGraph);
+        _discoveryStore = stateStoreFactory.GetQueryableStore<TransitDiscoveryModel>(StateStoreDefinitions.TransitDiscovery);
+        _discoveryCacheStore = stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.TransitDiscoveryCache);
+        _lockStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.TransitLock);
+
+        // Service clients (L1/L2 hard dependencies - fail at startup if missing)
+        _locationClient = locationClient;
+        _worldstateClient = worldstateClient;
+        _characterClient = characterClient;
+        _speciesClient = speciesClient;
+        _inventoryClient = inventoryClient;
         _resourceClient = resourceClient;
+
+        // Helper services
+        _graphCache = graphCache;
+        _routeCalculator = routeCalculator;
+
+        // L4 cost modifier providers (always non-null, may be empty)
+        _costModifierProviders = costModifierProviders.ToList();
+
+        // Client events
+        _clientEventPublisher = clientEventPublisher;
+
+        // Logging, telemetry, configuration
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _configuration = configuration;
+
+        // Register event consumers (must be last in constructor)
+        RegisterEventConsumers(eventConsumer);
     }
 
     /// <summary>

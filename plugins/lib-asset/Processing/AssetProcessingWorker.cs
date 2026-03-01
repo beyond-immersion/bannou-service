@@ -447,13 +447,19 @@ public sealed class AssetProcessingWorker : BackgroundService
             await UpdateAssetMetadataAsync(job.AssetId, result, cancellationToken);
 
             // Release the processor lease
-            if (job.LeaseId != Guid.Empty)
+            if (job.LeaseId.HasValue)
             {
-                await ReleaseProcessorLeaseAsync(job.LeaseId, result.Success, cancellationToken);
+                await ReleaseProcessorLeaseAsync(job.LeaseId.Value, result.Success, cancellationToken);
             }
 
             // Emit completion or failure event
             await EmitProcessingResultEventAsync(job, result, cancellationToken);
+
+            // If processing succeeded, publish asset.ready event
+            if (result.Success)
+            {
+                await EmitAssetReadyEventAsync(job, result, cancellationToken);
+            }
 
             _logger.LogInformation(
                 "Completed job {JobId} for asset {AssetId}: Success={Success}, Duration={Duration}ms",
@@ -473,9 +479,9 @@ public sealed class AssetProcessingWorker : BackgroundService
                 job.AssetId);
 
             // Release the processor lease on failure
-            if (job.LeaseId != Guid.Empty)
+            if (job.LeaseId.HasValue)
             {
-                await ReleaseProcessorLeaseAsync(job.LeaseId, false, cancellationToken);
+                await ReleaseProcessorLeaseAsync(job.LeaseId.Value, false, cancellationToken);
             }
 
             // Emit failure event
@@ -601,15 +607,15 @@ public sealed class AssetProcessingWorker : BackgroundService
         }
     }
 
-    private static ProcessingTypeEnum MapProcessingType(string contentType)
+    private static ProcessingType MapProcessingType(string contentType)
     {
         // Map content types to processing types defined in schema
         return contentType switch
         {
-            var ct when ct.StartsWith("image/") => ProcessingTypeEnum.Mipmaps,
-            var ct when ct.StartsWith("audio/") => ProcessingTypeEnum.Transcode,
-            var ct when ct.StartsWith("model/") || ct.Contains("gltf") => ProcessingTypeEnum.Lod_generation,
-            _ => ProcessingTypeEnum.Validation
+            var ct when ct.StartsWith("image/") => ProcessingType.Mipmaps,
+            var ct when ct.StartsWith("audio/") => ProcessingType.Transcode,
+            var ct when ct.StartsWith("model/") || ct.Contains("gltf") => ProcessingType.LodGeneration,
+            _ => ProcessingType.Validation
         };
     }
 
@@ -639,6 +645,46 @@ public sealed class AssetProcessingWorker : BackgroundService
             _logger.LogWarning(
                 ex,
                 "Failed to emit failure event for asset {AssetId}",
+                job.AssetId);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an asset.ready event after successful processing.
+    /// </summary>
+    private async Task EmitAssetReadyEventAsync(
+        AssetProcessingJobEvent job,
+        AssetProcessingResult result,
+        CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessingWorker.EmitAssetReadyEventAsync");
+        try
+        {
+            // Read asset metadata to populate the ready event
+            var stateKey = $"{_configuration.AssetKeyPrefix}{job.AssetId}";
+            var metadata = await _stateStore.GetAsync(stateKey, cancellationToken);
+
+            await _messageBus.TryPublishAsync(
+                "asset.ready",
+                new AssetReadyEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    AssetId = job.AssetId,
+                    Bucket = metadata?.Bucket ?? _configuration.StorageBucket,
+                    Key = result.ProcessedStorageKey ?? job.StorageKey,
+                    ContentHash = metadata?.ContentHash ?? string.Empty,
+                    Size = result.ProcessedSizeBytes,
+                    ContentType = result.ProcessedContentType ?? job.ContentType,
+                    AssetType = metadata?.AssetType ?? AssetType.Other,
+                    Realm = metadata?.Realm
+                });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Failed to emit asset.ready event for asset {AssetId}",
                 job.AssetId);
         }
     }

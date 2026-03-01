@@ -1,7 +1,7 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Worldstate.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
@@ -37,10 +37,10 @@ public partial class WorldstateService : IWorldstateService
     private readonly IRealmClient _realmClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IEntitySessionRegistry _entitySessionRegistry;
-    private readonly IClientEventPublisher _clientEventPublisher;
     private readonly ILogger<WorldstateService> _logger;
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly WorldstateServiceConfiguration _configuration;
+    private readonly IWorldstateTimeCalculator _timeCalculator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorldstateService"/> class.
@@ -53,11 +53,11 @@ public partial class WorldstateService : IWorldstateService
         IRealmClient realmClient,
         IGameServiceClient gameServiceClient,
         IEntitySessionRegistry entitySessionRegistry,
-        IClientEventPublisher clientEventPublisher,
         ILogger<WorldstateService> logger,
         ITelemetryProvider telemetryProvider,
         WorldstateServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IWorldstateTimeCalculator timeCalculator)
     {
         _messageBus = messageBus;
         _clockStore = stateStoreFactory.GetStore<RealmClockModel>(StateStoreDefinitions.WorldstateRealmClock);
@@ -71,10 +71,10 @@ public partial class WorldstateService : IWorldstateService
         _realmClient = realmClient;
         _gameServiceClient = gameServiceClient;
         _entitySessionRegistry = entitySessionRegistry;
-        _clientEventPublisher = clientEventPublisher;
         _logger = logger;
         _telemetryProvider = telemetryProvider;
         _configuration = configuration;
+        _timeCalculator = timeCalculator;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -98,37 +98,145 @@ public partial class WorldstateService : IWorldstateService
             return (StatusCodes.NotFound, null);
         }
 
-        return (StatusCodes.OK, MapClockToSnapshot(clock));
+        return (StatusCodes.OK, WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock));
     }
 
     /// <summary>
-    /// Implementation of GetRealmTimeByCode operation.
+    /// Gets the current game time snapshot for a realm resolved by its code.
+    /// Resolves the realm code to a realm ID via the Realm service, then delegates
+    /// to the standard realm time retrieval logic.
     /// </summary>
+    /// <param name="body">The request containing the realm code.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The current game time snapshot, or NotFound if the realm or clock does not exist.</returns>
     public async Task<(StatusCodes, GameTimeSnapshot?)> GetRealmTimeByCodeAsync(GetRealmTimeByCodeRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetRealmTimeByCode
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetRealmTimeByCode not yet implemented");
+        _logger.LogDebug("Getting realm time by code {RealmCode}", body.RealmCode);
+
+        // Resolve realm by code via Realm service (L2 hard dependency)
+        RealmResponse realm;
+        try
+        {
+            realm = await _realmClient.GetRealmByCodeAsync(
+                new GetRealmByCodeRequest { Code = body.RealmCode }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Realm service call failed for realm code {RealmCode}", body.RealmCode);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+
+        // Delegate to GetRealmTimeAsync logic
+        return await GetRealmTimeAsync(new GetRealmTimeRequest { RealmId = realm.RealmId }, cancellationToken);
     }
 
     /// <summary>
-    /// Implementation of BatchGetRealmTimes operation.
+    /// Gets the current game time snapshots for multiple realms in a single request.
+    /// Validates the batch size against configuration limits and returns snapshots
+    /// for all realms that have initialized clocks.
     /// </summary>
+    /// <param name="body">The request containing the list of realm IDs.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of game time snapshots for all found realms.</returns>
     public async Task<(StatusCodes, BatchGetRealmTimesResponse?)> BatchGetRealmTimesAsync(BatchGetRealmTimesRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement BatchGetRealmTimes
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method BatchGetRealmTimes not yet implemented");
+        _logger.LogDebug("Batch getting realm times for {Count} realm(s)", body.RealmIds.Count);
+
+        // Validate batch size
+        if (body.RealmIds.Count > _configuration.MaxBatchRealmTimeQueries)
+        {
+            _logger.LogWarning("Batch realm time request exceeds maximum of {Max}, requested {Count}",
+                _configuration.MaxBatchRealmTimeQueries, body.RealmIds.Count);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var snapshots = new List<GameTimeSnapshot>();
+
+        foreach (var realmId in body.RealmIds)
+        {
+            var clockKey = $"realm:{realmId}";
+            var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
+            if (clock != null)
+            {
+                snapshots.Add(WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock));
+            }
+            else
+            {
+                _logger.LogDebug("No clock initialized for realm {RealmId}, skipping in batch results", realmId);
+            }
+        }
+
+        return (StatusCodes.OK, new BatchGetRealmTimesResponse
+        {
+            Snapshots = snapshots
+        });
     }
 
     /// <summary>
-    /// Implementation of GetElapsedGameTime operation.
+    /// Computes the elapsed game time between two real-world timestamps for a realm.
+    /// Uses piecewise integration across time ratio segments to accurately account
+    /// for ratio changes over time. Returns both raw game-seconds and decomposed
+    /// calendar units (days, hours, minutes).
     /// </summary>
+    /// <param name="body">The request containing realm ID and real-time range.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The elapsed game time in raw seconds and decomposed calendar units.</returns>
     public async Task<(StatusCodes, GetElapsedGameTimeResponse?)> GetElapsedGameTimeAsync(GetElapsedGameTimeRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement GetElapsedGameTime
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method GetElapsedGameTime not yet implemented");
+        _logger.LogDebug("Computing elapsed game time for realm {RealmId} from {From} to {To}",
+            body.RealmId, body.FromRealTime, body.ToRealTime);
+
+        // Validate time range ordering
+        if (body.FromRealTime >= body.ToRealTime)
+        {
+            _logger.LogWarning("Invalid time range for elapsed game time: fromRealTime {From} must be before toRealTime {To}",
+                body.FromRealTime, body.ToRealTime);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Load ratio history for piecewise integration
+        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioHistory = await _ratioHistoryStore.GetAsync(ratioKey, cancellationToken);
+        if (ratioHistory == null)
+        {
+            _logger.LogDebug("No ratio history found for realm {RealmId} (no clock initialized)", body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Compute total elapsed game-seconds via piecewise integration
+        var totalGameSeconds = _timeCalculator.ComputeElapsedGameTime(
+            ratioHistory.Segments, body.FromRealTime, body.ToRealTime);
+
+        // Load realm config to get the calendar template for decomposition
+        var configKey = $"realm-config:{body.RealmId}";
+        var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
+        if (realmConfig == null)
+        {
+            _logger.LogWarning("Ratio history exists but realm config is missing for realm {RealmId} (possible data corruption)",
+                body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Load calendar template for decomposition
+        var calendarKey = $"calendar:{realmConfig.GameServiceId}:{realmConfig.CalendarTemplateCode}";
+        var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
+        if (calendar == null)
+        {
+            _logger.LogWarning("Calendar template {TemplateCode} not found for game service {GameServiceId} during elapsed time computation",
+                realmConfig.CalendarTemplateCode, realmConfig.GameServiceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Decompose into calendar units
+        var (days, hours, minutes) = _timeCalculator.DecomposeGameSeconds(calendar, totalGameSeconds);
+
+        return (StatusCodes.OK, new GetElapsedGameTimeResponse
+        {
+            TotalGameSeconds = totalGameSeconds,
+            GameDays = days,
+            GameHours = hours,
+            GameMinutes = minutes
+        });
     }
 
     /// <summary>
@@ -213,9 +321,9 @@ public partial class WorldstateService : IWorldstateService
         var startingYear = body.StartingYear ?? 1;
         var downtimePolicy = body.DowntimePolicy ?? _configuration.DefaultDowntimePolicy;
 
-        // Resolve initial period and season from calendar
-        var initialPeriod = ResolveDayPeriod(calendar, 0);
-        var initialSeason = ResolveSeason(calendar, 0);
+        // Resolve initial period and season from calendar via time calculator
+        var initialPeriod = _timeCalculator.ResolveDayPeriod(calendar, 0);
+        var initialSeason = _timeCalculator.ResolveSeason(calendar, 0);
 
         // Compute initial day of year (day 1 of month 0 = day 1 of year)
         var initialDayOfYear = 1;
@@ -308,7 +416,6 @@ public partial class WorldstateService : IWorldstateService
 
         return (StatusCodes.Created, new InitializeRealmClockResponse
         {
-            RealmId = body.RealmId,
             GameServiceId = realm.GameServiceId,
             CalendarTemplateCode = templateCode,
             TimeRatio = initialRatio,
@@ -319,23 +426,326 @@ public partial class WorldstateService : IWorldstateService
     }
 
     /// <summary>
-    /// Implementation of SetTimeRatio operation.
+    /// Changes the game-time-to-real-time ratio for a realm. Materializes the current
+    /// clock state by computing and advancing elapsed game-seconds since the last
+    /// advancement, publishes any boundary events crossed during materialization,
+    /// appends the new ratio segment to the ratio history, and publishes ratio changed
+    /// and time sync events.
     /// </summary>
+    /// <param name="body">The request containing realm ID, new ratio, and reason.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The ratio change response with previous and new ratios.</returns>
     public async Task<(StatusCodes, SetTimeRatioResponse?)> SetTimeRatioAsync(SetTimeRatioRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement SetTimeRatio
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method SetTimeRatio not yet implemented");
+        _logger.LogDebug("Setting time ratio for realm {RealmId} to {NewRatio} (reason: {Reason})",
+            body.RealmId, body.NewRatio, body.Reason);
+
+        // Validate non-negative ratio (negative ratio would mean time running backwards)
+        if (body.NewRatio < 0.0f)
+        {
+            _logger.LogWarning("Negative time ratio {NewRatio} rejected for realm {RealmId}", body.NewRatio, body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Acquire distributed lock
+        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.WorldstateLock,
+            $"ratio:{body.RealmId}",
+            lockOwner,
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for ratio change on realm {RealmId}", body.RealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Load clock
+        var clockKey = $"realm:{body.RealmId}";
+        var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
+        if (clock == null)
+        {
+            _logger.LogDebug("No clock initialized for realm {RealmId}", body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var previousRatio = clock.TimeRatio;
+
+        // Load calendar template for materialization
+        var calendarKey = $"calendar:{clock.GameServiceId}:{clock.CalendarTemplateCode}";
+        var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
+        if (calendar == null)
+        {
+            _logger.LogWarning("Calendar template {TemplateCode} not found for realm {RealmId} during ratio change",
+                clock.CalendarTemplateCode, body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Materialize current state: compute elapsed game-seconds since last advancement
+        var now = DateTimeOffset.UtcNow;
+        var realElapsed = now - clock.LastAdvancedRealTime;
+        var gameSecondsElapsed = (long)(realElapsed.TotalSeconds * clock.TimeRatio);
+
+        // Advance the clock to materialize current state
+        List<BoundaryCrossing> boundaries = new();
+        if (gameSecondsElapsed > 0)
+        {
+            boundaries = _timeCalculator.AdvanceGameTime(clock, calendar, gameSecondsElapsed);
+        }
+
+        // Publish boundary events from materialization
+        await PublishBoundaryEventsAsync(body.RealmId, clock, boundaries, false, cancellationToken);
+
+        // Update clock with new ratio
+        clock.TimeRatio = body.NewRatio;
+        clock.IsActive = body.NewRatio > 0.0f;
+        clock.LastAdvancedRealTime = now;
+        await _clockStore.SaveAsync(clockKey, clock, cancellationToken: cancellationToken);
+
+        // Update realm config
+        var configKey = $"realm-config:{body.RealmId}";
+        var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
+        if (realmConfig != null)
+        {
+            realmConfig.TimeRatio = body.NewRatio;
+            await _realmConfigStore.SaveAsync(configKey, realmConfig, cancellationToken: cancellationToken);
+        }
+
+        // Append new ratio segment to history
+        var ratioKey = $"ratio:{body.RealmId}";
+        var ratioHistory = await _ratioHistoryStore.GetAsync(ratioKey, cancellationToken);
+        if (ratioHistory != null)
+        {
+            ratioHistory.Segments.Add(new TimeRatioSegmentEntry
+            {
+                SegmentStartRealTime = now,
+                TimeRatio = body.NewRatio,
+                Reason = body.Reason
+            });
+            await _ratioHistoryStore.SaveAsync(ratioKey, ratioHistory, cancellationToken: cancellationToken);
+        }
+
+        // Publish ratio changed event
+        await _messageBus.TryPublishAsync("worldstate.ratio-changed", new WorldstateRatioChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RealmId = body.RealmId,
+            PreviousRatio = previousRatio,
+            NewRatio = body.NewRatio,
+            Reason = body.Reason
+        }, cancellationToken: cancellationToken);
+
+        // Publish realm config updated lifecycle event for the TimeRatio change
+        if (realmConfig != null)
+        {
+            await _messageBus.TryPublishAsync("worldstate.realm-config.updated", new RealmConfigUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RealmId = body.RealmId,
+                GameServiceId = realmConfig.GameServiceId,
+                CalendarTemplateCode = realmConfig.CalendarTemplateCode,
+                CurrentTimeRatio = realmConfig.TimeRatio,
+                DowntimePolicy = realmConfig.DowntimePolicy,
+                RealmEpoch = realmConfig.RealmEpoch,
+                ChangedFields = new List<string> { "currentTimeRatio" }
+            }, cancellationToken: cancellationToken);
+        }
+
+        // Publish time sync client event
+        var syncEvent = new WorldstateTimeSyncEvent
+        {
+            RealmId = body.RealmId,
+            Year = clock.Year,
+            MonthIndex = clock.MonthIndex,
+            MonthCode = clock.MonthCode,
+            DayOfMonth = clock.DayOfMonth,
+            DayOfYear = clock.DayOfYear,
+            Hour = clock.Hour,
+            Minute = clock.Minute,
+            Period = clock.Period,
+            IsDaylight = clock.IsDaylight,
+            Season = clock.Season,
+            SeasonIndex = clock.SeasonIndex,
+            SeasonProgress = clock.SeasonProgress,
+            TotalGameSecondsSinceEpoch = clock.TotalGameSecondsSinceEpoch,
+            TimeRatio = clock.TimeRatio,
+            PreviousPeriod = null,
+            SyncReason = TimeSyncReason.RatioChanged
+        };
+        await _entitySessionRegistry.PublishToEntitySessionsAsync("realm", body.RealmId, syncEvent, cancellationToken);
+
+        _logger.LogInformation("Time ratio changed for realm {RealmId}: {PreviousRatio} -> {NewRatio} (reason: {Reason})",
+            body.RealmId, previousRatio, body.NewRatio, body.Reason);
+
+        return (StatusCodes.OK, new SetTimeRatioResponse
+        {
+            PreviousRatio = previousRatio
+        });
     }
 
     /// <summary>
-    /// Implementation of AdvanceClock operation.
+    /// Manually advances a realm's game clock by a specified amount of game time.
+    /// Acquires a distributed lock, loads the clock and calendar template, advances
+    /// the clock by the requested game-seconds (converting from days/months/years if
+    /// specified), publishes boundary events, updates the clock store, and publishes
+    /// a time sync client event.
     /// </summary>
+    /// <param name="body">The request specifying realm ID and time amount to advance.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The previous and new time snapshots plus boundary event count, or an error status.</returns>
     public async Task<(StatusCodes, AdvanceClockResponse?)> AdvanceClockAsync(AdvanceClockRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement AdvanceClock
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method AdvanceClock not yet implemented");
+        _logger.LogDebug("Advancing clock for realm {RealmId}", body.RealmId);
+
+        // Acquire distributed lock
+        var lockOwner = $"worldstate-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.WorldstateLock,
+            $"clock:{body.RealmId}",
+            lockOwner,
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for clock advancement on realm {RealmId}", body.RealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Load clock
+        var clockKey = $"realm:{body.RealmId}";
+        var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
+        if (clock == null)
+        {
+            _logger.LogDebug("No clock initialized for realm {RealmId}", body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Capture previous snapshot before advancement
+        var previousSnapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
+
+        // Load realm config to get calendar template code
+        var configKey = $"realm-config:{body.RealmId}";
+        var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
+        if (realmConfig == null)
+        {
+            _logger.LogWarning("Clock exists but realm config is missing for realm {RealmId} (possible data corruption)",
+                body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Load calendar template
+        var calendarKey = $"calendar:{realmConfig.GameServiceId}:{realmConfig.CalendarTemplateCode}";
+        var calendar = await _calendarStore.GetAsync(calendarKey, cancellationToken);
+        if (calendar == null)
+        {
+            _logger.LogWarning("Calendar template {TemplateCode} not found for realm {RealmId} during clock advancement",
+                realmConfig.CalendarTemplateCode, body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Validate that at least one time parameter was provided
+        var hasAnyTimeParam = body.GameSeconds.HasValue
+            || body.GameYears.HasValue
+            || body.GameMonths.HasValue
+            || body.GameDays.HasValue;
+
+        if (!hasAnyTimeParam)
+        {
+            _logger.LogWarning("Clock advancement for realm {RealmId} has no time parameters (gameSeconds, gameDays, gameMonths, gameYears all absent)",
+                body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Convert days/months/years to game-seconds, then add any explicit gameSeconds
+        var totalGameSeconds = body.GameSeconds ?? 0L;
+
+        if (body.GameYears.HasValue && body.GameYears.Value > 0)
+        {
+            var secondsPerDay = (long)calendar.GameHoursPerDay * 3600L;
+            totalGameSeconds += (long)body.GameYears.Value * calendar.DaysPerYear * secondsPerDay;
+        }
+
+        if (body.GameMonths.HasValue && body.GameMonths.Value > 0)
+        {
+            var secondsPerDay = (long)calendar.GameHoursPerDay * 3600L;
+            // Use average days per month since months can have different lengths
+            var avgDaysPerMonth = (double)calendar.DaysPerYear / calendar.MonthsPerYear;
+            totalGameSeconds += (long)(body.GameMonths.Value * avgDaysPerMonth * secondsPerDay);
+        }
+
+        if (body.GameDays.HasValue && body.GameDays.Value > 0)
+        {
+            var secondsPerDay = (long)calendar.GameHoursPerDay * 3600L;
+            totalGameSeconds += (long)body.GameDays.Value * secondsPerDay;
+        }
+
+        if (totalGameSeconds <= 0)
+        {
+            _logger.LogWarning("Clock advancement for realm {RealmId} resulted in zero or negative total game-seconds from provided parameters",
+                body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Advance the clock
+        var boundaries = _timeCalculator.AdvanceGameTime(clock, calendar, totalGameSeconds);
+
+        // Respect batch size limit to prevent event storms (consistent with worker behavior)
+        var boundariesToPublish = boundaries;
+        if (boundariesToPublish.Count > _configuration.BoundaryEventBatchSize)
+        {
+            boundariesToPublish = boundariesToPublish
+                .Take(_configuration.BoundaryEventBatchSize)
+                .ToList();
+        }
+
+        // Publish boundary events
+        await PublishBoundaryEventsAsync(body.RealmId, clock, boundariesToPublish, false, cancellationToken);
+
+        // Update clock store with new state
+        clock.LastAdvancedRealTime = DateTimeOffset.UtcNow;
+        await _clockStore.SaveAsync(clockKey, clock, cancellationToken: cancellationToken);
+
+        // Publish time sync client event (populate PreviousPeriod from boundaries if available,
+        // consistent with worker behavior)
+        var syncEvent = new WorldstateTimeSyncEvent
+        {
+            RealmId = body.RealmId,
+            Year = clock.Year,
+            MonthIndex = clock.MonthIndex,
+            MonthCode = clock.MonthCode,
+            DayOfMonth = clock.DayOfMonth,
+            DayOfYear = clock.DayOfYear,
+            Hour = clock.Hour,
+            Minute = clock.Minute,
+            Period = clock.Period,
+            IsDaylight = clock.IsDaylight,
+            Season = clock.Season,
+            SeasonIndex = clock.SeasonIndex,
+            SeasonProgress = clock.SeasonProgress,
+            TotalGameSecondsSinceEpoch = clock.TotalGameSecondsSinceEpoch,
+            TimeRatio = clock.TimeRatio,
+            PreviousPeriod = boundariesToPublish
+                .Where(b => b.Type == BoundaryType.Period)
+                .Select(b => b.PreviousStringValue)
+                .FirstOrDefault(),
+            SyncReason = TimeSyncReason.AdminAdvance
+        };
+        await _entitySessionRegistry.PublishToEntitySessionsAsync("realm", body.RealmId, syncEvent, cancellationToken);
+
+        var newSnapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
+
+        _logger.LogInformation("Advanced clock for realm {RealmId} by {GameSeconds} game-seconds, {BoundaryCount} boundary events published (of {TotalBoundaries} total)",
+            body.RealmId, totalGameSeconds, boundariesToPublish.Count, boundaries.Count);
+
+        return (StatusCodes.OK, new AdvanceClockResponse
+        {
+            PreviousTime = previousSnapshot,
+            NewTime = newSnapshot,
+            BoundaryEventsPublished = boundariesToPublish.Count
+        });
     }
 
     /// <summary>
@@ -1152,77 +1562,28 @@ public partial class WorldstateService : IWorldstateService
     }
 
     /// <summary>
-    /// Resolves the day period for a given game hour based on the calendar template.
+    /// Publishes boundary events (hour, period, day, month, season, year) based on the
+    /// list of boundary crossings detected during clock advancement. Delegates to the
+    /// shared static helper to avoid duplication with the worker's boundary publishing.
     /// </summary>
-    /// <param name="calendar">The calendar template with day period definitions.</param>
-    /// <param name="hour">The game hour to resolve (0-based).</param>
-    /// <returns>A tuple of (period code, isDaylight) for the matching day period.</returns>
-    private static (string code, bool isDaylight) ResolveDayPeriod(CalendarTemplateModel calendar, int hour)
+    /// <param name="realmId">The realm whose clock crossed boundaries.</param>
+    /// <param name="clock">The current clock state after advancement.</param>
+    /// <param name="boundaries">The list of boundary crossings to publish events for.</param>
+    /// <param name="isCatchUp">Whether these boundaries were crossed during catch-up processing.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task PublishBoundaryEventsAsync(
+        Guid realmId,
+        RealmClockModel clock,
+        List<BoundaryCrossing> boundaries,
+        bool isCatchUp,
+        CancellationToken cancellationToken)
     {
-        foreach (var period in calendar.DayPeriods)
-        {
-            if (hour >= period.StartHour && hour < period.EndHour)
-            {
-                return (period.Code, period.IsDaylight);
-            }
-        }
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.worldstate", "WorldstateService.PublishBoundaryEvents");
 
-        // Calendars are validated before storage — if no period matches, data is corrupt.
-        throw new InvalidOperationException(
-            $"No day period covers hour {hour} in calendar template '{calendar.TemplateCode}'. This indicates corrupted calendar data.");
-    }
-
-    /// <summary>
-    /// Resolves the season for a given month index based on the calendar template.
-    /// </summary>
-    /// <param name="calendar">The calendar template with month and season definitions.</param>
-    /// <param name="monthIndex">The month index (0-based) to resolve.</param>
-    /// <returns>A tuple of (season code, season index) for the month's season.</returns>
-    private static (string code, int index) ResolveSeason(CalendarTemplateModel calendar, int monthIndex)
-    {
-        var month = calendar.Months[monthIndex];
-        var seasonCode = month.SeasonCode;
-
-        for (var i = 0; i < calendar.Seasons.Count; i++)
-        {
-            if (calendar.Seasons[i].Code == seasonCode)
-            {
-                return (seasonCode, calendar.Seasons[i].Ordinal);
-            }
-        }
-
-        // Calendars are validated before storage — if no season matches, data is corrupt.
-        throw new InvalidOperationException(
-            $"Month at index {monthIndex} references season code '{seasonCode}' which does not exist in calendar template '{calendar.TemplateCode}'. This indicates corrupted calendar data.");
-    }
-
-    /// <summary>
-    /// Maps a clock storage model to the API game time snapshot response type.
-    /// </summary>
-    /// <param name="clock">The internal clock storage model.</param>
-    /// <returns>The game time snapshot response.</returns>
-    private static GameTimeSnapshot MapClockToSnapshot(RealmClockModel clock)
-    {
-        return new GameTimeSnapshot
-        {
-            RealmId = clock.RealmId,
-            GameServiceId = clock.GameServiceId,
-            Year = clock.Year,
-            MonthIndex = clock.MonthIndex,
-            MonthCode = clock.MonthCode,
-            DayOfMonth = clock.DayOfMonth,
-            DayOfYear = clock.DayOfYear,
-            Hour = clock.Hour,
-            Minute = clock.Minute,
-            Period = clock.Period,
-            IsDaylight = clock.IsDaylight,
-            Season = clock.Season,
-            SeasonIndex = clock.SeasonIndex,
-            SeasonProgress = clock.SeasonProgress,
-            TotalGameSecondsSinceEpoch = clock.TotalGameSecondsSinceEpoch,
-            TimeRatio = clock.TimeRatio,
-            Timestamp = clock.LastAdvancedRealTime
-        };
+        var snapshot = WorldstateBoundaryEventPublisher.MapClockToSnapshot(clock);
+        await WorldstateBoundaryEventPublisher.PublishBoundaryEventsAsync(
+            realmId, snapshot, clock, boundaries, isCatchUp, _messageBus, cancellationToken);
     }
 
     #endregion

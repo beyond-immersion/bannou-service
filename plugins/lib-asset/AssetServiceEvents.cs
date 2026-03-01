@@ -62,7 +62,7 @@ public partial class AssetService
             _logger.LogWarning("Metabundle job timed out before processing: JobId={JobId}, Age={AgeSeconds}s",
                 evt.JobId, jobAgeSeconds);
 
-            job.Status = InternalJobStatus.Failed;
+            job.Status = BundleStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ErrorCode = MetabundleErrorCode.TIMEOUT;
@@ -76,7 +76,7 @@ public partial class AssetService
         }
 
         // Update status to Processing
-        job.Status = InternalJobStatus.Processing;
+        job.Status = BundleStatus.Processing;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         await jobStore.SaveAsync(jobKey, job,
             new StateOptions { Ttl = _configuration.MetabundleJobTtlSeconds },
@@ -90,7 +90,7 @@ public partial class AssetService
             stopwatch.Stop();
 
             // Update job with result
-            job.Status = InternalJobStatus.Ready;
+            job.Status = BundleStatus.Ready;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
@@ -111,7 +111,7 @@ public partial class AssetService
                 evt.JobId, evt.MetabundleId);
 
             // Update job with failure
-            job.Status = InternalJobStatus.Failed;
+            job.Status = BundleStatus.Failed;
             job.UpdatedAt = DateTimeOffset.UtcNow;
             job.CompletedAt = DateTimeOffset.UtcNow;
             job.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
@@ -437,7 +437,7 @@ public partial class AssetService
             return;
         }
 
-        var success = job.Status == InternalJobStatus.Ready;
+        var success = job.Status == BundleStatus.Ready;
         Uri? downloadUrl = null;
 
         // Generate download URL for successful jobs
@@ -458,32 +458,18 @@ public partial class AssetService
             }
         }
 
-        // Map internal status to client event status
-        var clientStatus = job.Status switch
-        {
-            InternalJobStatus.Queued => MetabundleJobStatus.Queued,
-            InternalJobStatus.Processing => MetabundleJobStatus.Processing,
-            InternalJobStatus.Ready => MetabundleJobStatus.Ready,
-            InternalJobStatus.Failed => MetabundleJobStatus.Failed,
-            InternalJobStatus.Cancelled => MetabundleJobStatus.Cancelled,
-            _ => MetabundleJobStatus.Failed
-        };
-
-        // Error code is already typed per IMPLEMENTATION TENETS T25
-        var errorCode = job.ErrorCode;
-
         await _eventEmitter.EmitMetabundleCreationCompleteAsync(
             sessionId,
             job.JobId,
             job.MetabundleId,
             success,
-            clientStatus,
+            job.Status,
             downloadUrl,
             job.Result?.SizeBytes,
             job.Result?.AssetCount,
             job.Result?.StandaloneAssetCount,
             job.ProcessingTimeMs,
-            errorCode,
+            job.ErrorCode,
             job.ErrorMessage,
             cancellationToken).ConfigureAwait(false);
     }

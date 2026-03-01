@@ -28,9 +28,9 @@ public sealed class BundleMetadata
     public required BundleType BundleType { get; init; }
 
     /// <summary>
-    /// Game realm stub name this bundle belongs to.
+    /// Game realm stub name this bundle belongs to. Null for cross-realm bundles.
     /// </summary>
-    public required string Realm { get; init; }
+    public string? Realm { get; init; }
 
     /// <summary>
     /// Human-readable bundle name.

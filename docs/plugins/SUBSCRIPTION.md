@@ -10,7 +10,7 @@
 
 ## Overview
 
-The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
+The Subscription service (L2 GameFoundation) manages user subscriptions to game services, controlling which accounts have access to which games/applications with time-limited access. Publishes `subscription.updated` events consumed by GameSession for real-time shortcut publishing, and pushes `subscription.status_changed` client events to connected players via WebSocket account-session routing. Includes a background expiration worker that periodically deactivates expired subscriptions. Internal-only, serves as the canonical source for subscription state.
 
 ---
 
@@ -23,6 +23,7 @@ The Subscription service (L2 GameFoundation) manages user subscriptions to game 
 | lib-messaging (`IMessageBus`) | Publishing `subscription.updated` events |
 | lib-telemetry (`ITelemetryProvider`) | Telemetry span instrumentation for all async methods |
 | lib-game-service (`IGameServiceClient`) | Resolving service metadata (stub name, display name) during subscription creation; validating service existence for stubName queries |
+| lib-connect (`IEntitySessionRegistry`) | Publishing client events to all WebSocket sessions for an account via `"account"` entity type routing |
 
 ---
 
@@ -79,6 +80,21 @@ The Subscription service (L2 GameFoundation) manages user subscriptions to game 
 
 This plugin does not consume external events. No `SubscriptionServiceEvents.cs` file exists.
 
+### Client Events (WebSocket Push)
+
+| Event Name | Event Type | Routing | Trigger |
+|------------|-----------|---------|---------|
+| `subscription.status_changed` | `SubscriptionStatusChangedEvent` | `IEntitySessionRegistry` → `"account"` entity type | All subscription state changes |
+
+**Schema**: `schemas/subscription-client-events.yaml`
+**Generated Model**: `plugins/lib-subscription/Generated/SubscriptionClientEventsModels.cs`
+
+**Payload fields**: `accountId`, `serviceId`, `serviceName`, `action` (SubscriptionAction enum), `isActive`, `expiresAt` (nullable).
+
+**Routing**: Uses `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, event, ct)` to push to all WebSocket sessions for the affected account. The `"account"` entity type is maintained natively by Connect (no Gardener registration required).
+
+**Why this matters**: Background expiration by the `SubscriptionExpirationService` deactivates subscriptions without player initiation. Without client events, the player would not know their subscription expired until their next API call fails. Admin renewals similarly change subscription state without the player's knowledge. The client event ensures immediate notification for all 5 action types: `created`, `updated`, `cancelled`, `expired`, `renewed`.
+
 ---
 
 ## Configuration
@@ -103,6 +119,7 @@ This plugin does not consume external events. No `SubscriptionServiceEvents.cs` 
 | `IDistributedLockProvider` | Singleton | Distributed locking for all mutating operations |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation |
 | `IGameServiceClient` | Singleton | Resolves service metadata during creation/query |
+| `IEntitySessionRegistry` | Singleton | Publishes client events to account's WebSocket sessions |
 | `SubscriptionExpirationService` | HostedService | Background worker for periodic expiration checks |
 
 **Service Lifetime**: `SubscriptionService` is registered as **Singleton** (unusual for Bannou - see Quirk #7).
@@ -205,8 +222,7 @@ None identified.
 6. **Proration support**: Handle mid-cycle upgrades/downgrades with prorated billing periods.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/516 -->
 
-7. **Client events for real-time subscription status** ([#500](https://github.com/beyond-immersion/bannou-service/issues/500)): Push `SubscriptionStatusChanged` client event via `IClientEventPublisher` when subscriptions are created, cancelled, expired (by background worker), or renewed. Uses Connect's existing `account → session` routing (not Entity Session Registry) since subscriptions are account-scoped. Especially important for background expiration where the player didn't initiate the change.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/500 -->
+7. ~~**Client events for real-time subscription status**~~: **FIXED** (2026-02-28) - Implemented `SubscriptionStatusChangedEvent` client event pushed via `IEntitySessionRegistry` account routing for all 5 subscription actions. See Client Events section above. ([#500](https://github.com/beyond-immersion/bannou-service/issues/500))
 
 ---
 
@@ -236,18 +252,23 @@ None identified.
 
 9. **`ExpireSubscriptionAsync` via partial interface extension**: The `ExpireSubscriptionAsync` method is defined on `ISubscriptionService` via a partial interface extension in `ISubscriptionServiceExtensions.cs` (following the pattern established by lib-permission). This allows the background worker to call it through DI-resolved `ISubscriptionService` without it being an HTTP endpoint. The method takes a `Guid` parameter (not string) per IMPLEMENTATION TENETS type safety rules.
 
+10. **Event publishing without transactional outbox**: State store update and event publish are separate operations (no transactional outbox pattern). This is the standard Bannou architecture used by all services (see MESSAGING.md Quirk #1). `TryPublishAsync` implements aggressive retry with in-memory buffering (5-second retry, crash-fast at 10,000 messages or 5 minutes). True event loss only occurs if the node dies before the buffer flushes. The expiration worker provides additional resilience for expired subscriptions by re-publishing events on each cycle.
+
 ### Design Considerations (Requires Planning)
 
 1. **Index cleanup only applies to global index**: While the expiration worker uses ETag-based optimistic concurrency to clean `subscription-index`, there is no mechanism to clean `account-subscriptions:{accountId}` or `service-subscriptions:{serviceId}` indexes. These grow indefinitely with cancelled/expired entries, potentially impacting query performance over time.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/517 -->
-2. **Event publishing without transactional outbox**: State store update and event publish are separate operations (no transactional outbox pattern). However, lib-messaging's `TryPublishAsync` implements aggressive retry: if RabbitMQ is unavailable, messages are buffered in-memory and retried every 5 seconds. The node crashes if the buffer exceeds 10,000 messages or 5 minutes age - making failures visible rather than silent. True event loss only occurs if the node dies before the buffer flushes. The expiration worker provides additional resilience for expired subscriptions by re-publishing events on each cycle. This is the standard Bannou architecture used by all services (see MESSAGING.md Quirk #1).
+2. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/518 -->
 
-3. **No subscription deletion endpoint**: There is no endpoint to permanently delete subscription records. The indexes grow indefinitely with cancelled/expired entries. This may be intentional (audit trail) but should be documented as a design decision.
-
-4. **First-write race on account/service indexes**: `AddToIndexAsync` bypasses ETag-based optimistic concurrency when the index key doesn't exist yet (`etag == null` path does a plain `SaveAsync`). If two subscriptions for different services are created simultaneously for the same brand-new account, both threads hit the null-etag path for `account-subscriptions:{accountId}` and the second write overwrites the first, orphaning one subscription ID from the account index. The subscription data itself is unaffected (stored under unique keys), but queries by account would miss the orphaned entry. Extremely unlikely in practice (requires two concurrent first-ever subscriptions for the same account), but a real index consistency gap.
+3. ~~**First-write race on account/service indexes**~~: **FIXED** (2026-02-28) - Replaced the flawed optimistic concurrency approach in `AddToIndexAsync` with distributed locking per index key. The old code bypassed ETag-based concurrency when the index key didn't exist yet (`etag == null` path did unconditional `SaveAsync`), allowing concurrent first-writes to overwrite each other. The new implementation acquires a distributed lock on `index:{indexKey}` before reading/modifying, serializing all writes to each index key and eliminating the race.
 
 ---
 
 ## Work Tracking
 
 *This section tracks active development work managed by the `/audit-plugin` workflow.*
+
+### Completed
+- **2026-02-28**: Issue #500 - Added `SubscriptionStatusChangedEvent` client event via `IEntitySessionRegistry` account routing for all 5 subscription actions (created, updated, cancelled, expired, renewed)
+- **2026-02-28**: Fixed first-write race on account/service indexes in `AddToIndexAsync` by replacing optimistic concurrency with distributed locking per index key

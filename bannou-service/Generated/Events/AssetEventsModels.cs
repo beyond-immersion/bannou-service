@@ -50,8 +50,24 @@ using System = global::System;
 /// Event published when a new upload is initiated via requestUpload API
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetUploadRequestedEvent : BaseServiceEvent
+public partial class AssetUploadRequestedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Upload session identifier
@@ -108,10 +124,11 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
     public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
-    /// Game realm the asset belongs to
+    /// Game realm the asset belongs to. Null for cross-realm assets.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// Whether this is a multipart upload
@@ -125,8 +142,24 @@ public partial class AssetUploadRequestedEvent : BaseServiceEvent
 /// Event published when an upload is completed and file is stored
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetUploadCompletedEvent : BaseServiceEvent
+public partial class AssetUploadCompletedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Assigned asset identifier
@@ -203,8 +236,24 @@ public partial class AssetUploadCompletedEvent : BaseServiceEvent
 /// Event published when an asset is queued for processing
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingQueuedEvent : BaseServiceEvent
+public partial class AssetProcessingQueuedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -221,7 +270,7 @@ public partial class AssetProcessingQueuedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingTypeEnum ProcessingType { get; set; } = default!;
+    public ProcessingType ProcessingType { get; set; } = default!;
 
     /// <summary>
     /// Processing priority (1=highest, 10=lowest)
@@ -247,8 +296,24 @@ public partial class AssetProcessingQueuedEvent : BaseServiceEvent
 /// Event published when asset processing completes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetProcessingCompletedEvent : BaseServiceEvent
+public partial class AssetProcessingCompletedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -265,7 +330,7 @@ public partial class AssetProcessingCompletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ProcessingTypeEnum ProcessingType { get; set; } = default!;
+    public ProcessingType ProcessingType { get; set; } = default!;
 
     /// <summary>
     /// Whether processing completed successfully
@@ -297,8 +362,24 @@ public partial class AssetProcessingCompletedEvent : BaseServiceEvent
 /// Event published when an asset is fully processed and available
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class AssetReadyEvent : BaseServiceEvent
+public partial class AssetReadyEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Asset identifier
@@ -358,10 +439,11 @@ public partial class AssetReadyEvent : BaseServiceEvent
     public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
-    /// Game realm the asset belongs to
+    /// Game realm the asset belongs to. Null for cross-realm assets.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
 }
 
@@ -369,8 +451,24 @@ public partial class AssetReadyEvent : BaseServiceEvent
 /// Event published when a bundle is successfully created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleCreatedEvent : BaseServiceEvent
+public partial class BundleCreatedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier
@@ -438,8 +536,24 @@ public partial class BundleCreatedEvent : BaseServiceEvent
 /// Event published when a metabundle is successfully created from source bundles
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MetabundleCreatedEvent : BaseServiceEvent
+public partial class MetabundleCreatedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Human-readable metabundle identifier
@@ -458,12 +572,11 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
     public string Version { get; set; } = default!;
 
     /// <summary>
-    /// Game realm for this metabundle
+    /// Game realm for this metabundle. Null for cross-realm metabundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// Number of source bundles composed
@@ -526,8 +639,24 @@ public partial class MetabundleCreatedEvent : BaseServiceEvent
 /// Event published when bundle metadata is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleUpdatedEvent : BaseServiceEvent
+public partial class BundleUpdatedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier
@@ -572,10 +701,11 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
     public string UpdatedBy { get; set; } = default!;
 
     /// <summary>
-    /// Game realm of the bundle
+    /// Game realm of the bundle. Null for cross-realm bundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
 }
 
@@ -583,8 +713,24 @@ public partial class BundleUpdatedEvent : BaseServiceEvent
 /// Event published when a bundle is soft-deleted or permanently deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleDeletedEvent : BaseServiceEvent
+public partial class BundleDeletedEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier
@@ -621,10 +767,11 @@ public partial class BundleDeletedEvent : BaseServiceEvent
     public string DeletedBy { get; set; } = default!;
 
     /// <summary>
-    /// Game realm of the bundle
+    /// Game realm of the bundle. Null for cross-realm bundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
 }
 
@@ -632,8 +779,24 @@ public partial class BundleDeletedEvent : BaseServiceEvent
 /// Event published when a soft-deleted bundle is restored
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BundleRestoredEvent : BaseServiceEvent
+public partial class BundleRestoredEvent
 {
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Human-readable bundle identifier
@@ -664,70 +827,11 @@ public partial class BundleRestoredEvent : BaseServiceEvent
     public string RestoredBy { get; set; } = default!;
 
     /// <summary>
-    /// Game realm of the bundle
+    /// Game realm of the bundle. Null for cross-realm bundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Type of processing being performed
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ProcessingTypeEnum
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"mipmaps")]
-    Mipmaps = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"lod_generation")]
-    Lod_generation = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"transcode")]
-    Transcode = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"compression")]
-    Compression = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
-    Validation = 4,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"behavior_compile")]
-    Behavior_compile = 5,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
-/// Information about a generated derivative asset
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ProcessingOutput
-{
-
-    /// <summary>
-    /// Type of output (e.g., "mipmap_level_1", "lod_2")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("outputType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string OutputType { get; set; } = default!;
-
-    /// <summary>
-    /// Storage key for the output
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("key")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Key { get; set; } = default!;
-
-    /// <summary>
-    /// Size of the output in bytes
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("size")]
-    public long? Size { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
 }
 
