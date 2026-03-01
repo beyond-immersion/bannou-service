@@ -423,7 +423,7 @@ The Trade service (L4 GameFeatures) is the economic logistics and supply orchest
 
 ## Transit {#transit}
 
-**Deep Dive**: [docs/plugins/TRANSIT.md](plugins/TRANSIT.md)
+**Version**: 1.0.0 | **Schema**: `schemas/transit-api.yaml` | **Endpoints**: 33 | **Deep Dive**: [docs/plugins/TRANSIT.md](plugins/TRANSIT.md)
 
 The Transit service (L2 GameFoundation) is the geographic connectivity and movement primitive for Bannou. It completes the spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree), then provides a type registry for **how** things move (transit modes) and temporal tracking for **when** they arrive (journeys computed against Worldstate's game clock). Transit is to movement what Seed is to growth and Collection is to unlocks -- a generic, reusable primitive that higher-layer services orchestrate for domain-specific purposes. Internal-only, never internet-facing.
 
@@ -460,7 +460,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Total services**: 75
-- **Total endpoints**: 859
+- **Total endpoints**: 892
 
 ---
 

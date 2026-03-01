@@ -123,20 +123,23 @@ public partial class GameTimeSnapshot
     /// Current game year (0-based from realm epoch)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("year")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Year { get; set; } = default!;
 
     /// <summary>
     /// 0-based index into calendar months
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("monthIndex")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int MonthIndex { get; set; } = default!;
 
     /// <summary>
     /// Month code from calendar template (e.g., "greenleaf")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("monthCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string MonthCode { get; set; } = default!;
 
     /// <summary>
@@ -171,8 +174,9 @@ public partial class GameTimeSnapshot
     /// Current day period code from calendar (e.g., "dawn", "morning")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("period")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Period { get; set; } = default!;
 
     /// <summary>
@@ -185,8 +189,9 @@ public partial class GameTimeSnapshot
     /// Current season code from calendar (e.g., "spring")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("season")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string Season { get; set; } = default!;
 
     /// <summary>
@@ -631,14 +636,16 @@ public partial class InitializeRealmClockResponse
     /// Calendar template code in use (resolved from request or config)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string CalendarTemplateCode { get; set; } = default!;
 
     /// <summary>
     /// Initial game-seconds per real-second (resolved from request or config)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeRatio")]
+    [System.ComponentModel.DataAnnotations.Range(0.1F, 10000.0F)]
     public float TimeRatio { get; set; } = default!;
 
     /// <summary>
@@ -662,6 +669,7 @@ public partial class InitializeRealmClockResponse
     /// Game year the clock started at
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("startingYear")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int StartingYear { get; set; } = default!;
 
 }
@@ -899,8 +907,9 @@ public partial class CalendarTemplateResponse
     /// Calendar template identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string TemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -915,6 +924,7 @@ public partial class CalendarTemplateResponse
     /// Number of game hours in a day
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameHoursPerDay")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int GameHoursPerDay { get; set; } = default!;
 
     /// <summary>
@@ -1114,17 +1124,11 @@ public partial class DeleteCalendarRequest
 }
 
 /// <summary>
-/// Confirmation of calendar template deletion
+/// Empty response. HTTP 200 confirms the deletion succeeded.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class DeleteCalendarResponse
 {
-
-    /// <summary>
-    /// Whether the calendar template was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deleted")]
-    public bool Deleted { get; set; } = default!;
 
 }
 
@@ -1172,8 +1176,9 @@ public partial class RealmConfigResponse
     /// Calendar template code in use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string CalendarTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -1324,8 +1329,9 @@ public partial class RealmClockSummary
     /// Calendar template code in use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string CalendarTemplateCode { get; set; } = default!;
 
     /// <summary>
@@ -1338,14 +1344,16 @@ public partial class RealmClockSummary
     /// Current season code
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentSeason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(64, MinimumLength = 1)]
     public string CurrentSeason { get; set; } = default!;
 
     /// <summary>
     /// Current game year
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentYear")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentYear { get; set; } = default!;
 
     /// <summary>
@@ -1376,17 +1384,11 @@ public partial class CleanupByRealmRequest
 }
 
 /// <summary>
-/// Confirmation of realm worldstate cleanup
+/// Empty response. HTTP 200 confirms the cleanup succeeded.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CleanupByRealmResponse
 {
-
-    /// <summary>
-    /// Whether worldstate data was found and cleaned up for this realm
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cleaned")]
-    public bool Cleaned { get; set; } = default!;
 
 }
 

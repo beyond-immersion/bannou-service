@@ -26,6 +26,7 @@ public class SubscriptionExpirationServiceTests
     private readonly Mock<IStateStore<List<Guid>>> _mockIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ISubscriptionService> _mockSubscriptionService;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<SubscriptionExpirationService>> _mockLogger;
     private readonly SubscriptionServiceConfiguration _configuration;
 
@@ -39,6 +40,7 @@ public class SubscriptionExpirationServiceTests
         _mockIndexStore = new Mock<IStateStore<List<Guid>>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockSubscriptionService = new Mock<ISubscriptionService>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<SubscriptionExpirationService>>();
         _configuration = new SubscriptionServiceConfiguration();
 
@@ -66,16 +68,25 @@ public class SubscriptionExpirationServiceTests
             .Returns(_mockIndexStore.Object);
     }
 
+    /// <summary>
+    /// Creates a SubscriptionExpirationService with all mocked dependencies.
+    /// </summary>
+    private SubscriptionExpirationService CreateService()
+    {
+        return new SubscriptionExpirationService(
+            _mockServiceProvider.Object,
+            _mockTelemetryProvider.Object,
+            _mockLogger.Object,
+            _configuration);
+    }
+
     #region Constructor Tests
 
     [Fact]
     public void Constructor_WithValidParameters_ShouldNotThrow()
     {
         // Arrange & Act
-        using var service = new SubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
         // Assert
         Assert.NotNull(service);
@@ -86,16 +97,13 @@ public class SubscriptionExpirationServiceTests
 
     #endregion
 
-    #region ExecuteAsync Tests
+    #region CheckAndExpireSubscriptionsAsync Tests
 
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldStopGracefully()
     {
         // Arrange
-        using var service = new SubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
         using var cts = new CancellationTokenSource();
 
@@ -108,43 +116,37 @@ public class SubscriptionExpirationServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNoSubscriptions_ShouldLogDebug()
+    public async Task CheckAndExpireSubscriptions_WhenNoSubscriptions_ShouldLogDebug()
     {
         // Arrange
         _mockIndexStore.Setup(s => s.GetAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync((List<Guid>?)null);
 
-        using var service = new TestableSubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
-        // Act
-        await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        // Act - call internal method directly via InternalsVisibleTo
+        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - Should not throw
         _mockStateStoreFactory.Verify(f => f.GetStore<List<Guid>>(STATE_STORE), Times.Once);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenStateStoreFactoryNotAvailable_ShouldThrow()
+    public async Task CheckAndExpireSubscriptions_WhenStateStoreFactoryNotAvailable_ShouldThrow()
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(IStateStoreFactory)))
             .Returns((object?)null);
 
-        using var service = new TestableSubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None));
+            () => service.CheckAndExpireSubscriptionsAsync(CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenSubscriptionServiceNotAvailable_ShouldThrow()
+    public async Task CheckAndExpireSubscriptions_WhenSubscriptionServiceNotAvailable_ShouldThrow()
     {
         // Arrange
         _mockScopedServiceProvider.Setup(sp => sp.GetService(typeof(ISubscriptionService)))
@@ -166,30 +168,24 @@ public class SubscriptionExpirationServiceTests
         _mockStateStoreFactory.Setup(f => f.GetStore<SubscriptionDataModel>(STATE_STORE))
             .Returns(mockSubscriptionStore.Object);
 
-        using var service = new TestableSubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
         // Act & Assert - Required dependency missing should throw
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None));
+            () => service.CheckAndExpireSubscriptionsAsync(CancellationToken.None));
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithEmptySubscriptionIndex_ShouldNotPublishEvents()
+    public async Task CheckAndExpireSubscriptions_WithEmptySubscriptionIndex_ShouldNotPublishEvents()
     {
         // Arrange
         _mockIndexStore.Setup(s => s.GetAsync("subscription-index", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid>());
 
-        using var service = new TestableSubscriptionExpirationService(
-            _mockServiceProvider.Object,
-            _mockLogger.Object,
-            _configuration);
+        using var service = CreateService();
 
         // Act
-        await service.TestCheckAndExpireSubscriptionsAsync(CancellationToken.None);
+        await service.CheckAndExpireSubscriptionsAsync(CancellationToken.None);
 
         // Assert - No events should be published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -201,38 +197,4 @@ public class SubscriptionExpirationServiceTests
     }
 
     #endregion
-
-    /// <summary>
-    /// Testable wrapper for SubscriptionExpirationService to expose protected methods.
-    /// </summary>
-    private class TestableSubscriptionExpirationService : SubscriptionExpirationService
-    {
-        public TestableSubscriptionExpirationService(
-            IServiceProvider serviceProvider,
-            ILogger<SubscriptionExpirationService> logger,
-            SubscriptionServiceConfiguration configuration)
-            : base(serviceProvider, logger, configuration)
-        {
-        }
-
-        /// <summary>
-        /// Exposes the subscription checking logic for testing.
-        /// Uses reflection to call the private CheckAndExpireSubscriptionsAsync method.
-        /// </summary>
-        public async Task TestCheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
-        {
-            var method = typeof(SubscriptionExpirationService)
-                .GetMethod("CheckAndExpireSubscriptionsAsync",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            if (method != null)
-            {
-                var task = (Task?)method.Invoke(this, new object[] { cancellationToken });
-                if (task != null)
-                {
-                    await task;
-                }
-            }
-        }
-    }
 }

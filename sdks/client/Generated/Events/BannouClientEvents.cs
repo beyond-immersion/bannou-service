@@ -22,7 +22,9 @@ public sealed class BannouClientEvents
     private GameSessionEventSubscriptions? _gamesession;
     private InventoryEventSubscriptions? _inventory;
     private MatchmakingEventSubscriptions? _matchmaking;
+    private StatusEventSubscriptions? _status;
     private SystemEventSubscriptions? _system;
+    private TransitEventSubscriptions? _transit;
     private VoiceEventSubscriptions? _voice;
     private WorldstateEventSubscriptions? _worldstate;
 
@@ -80,10 +82,22 @@ public sealed class BannouClientEvents
         _matchmaking ??= new MatchmakingEventSubscriptions(_client);
 
     /// <summary>
+    /// Event subscriptions for Status service.
+    /// </summary>
+    public StatusEventSubscriptions Status =>
+        _status ??= new StatusEventSubscriptions(_client);
+
+    /// <summary>
     /// Event subscriptions for System service.
     /// </summary>
     public SystemEventSubscriptions System =>
         _system ??= new SystemEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Transit service.
+    /// </summary>
+    public TransitEventSubscriptions Transit =>
+        _transit ??= new TransitEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Voice service.

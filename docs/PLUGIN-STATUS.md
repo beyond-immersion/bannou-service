@@ -67,9 +67,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Relationship](#relationship-status) | L2 | 95% | 0 | All 21 endpoints done. Hardened: telemetry, constructor caching, deprecation lifecycle, sentinel elimination. Variable Provider Factory pending (#147). |
 | [Seed](#seed-status) | L2 | 95% | 0 | Production-hardened (T6/T26/T30 compliant). Constructor caching, telemetry spans, sentinel elimination, schema validation. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
-| [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
-| [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Geographic connectivity graph, transit modes, and declarative journey tracking spec. No schema, no code. |
-| [Worldstate](#worldstate-status) | L2 | 0% | 0 | Pre-implementation. Per-realm game clock, calendar system, and temporal event broadcasting spec. No schema, no code. |
+| [Subscription](#subscription-status) | L2 | 95% | 0 | L3-hardened. Distributed locks, telemetry spans, constructor caching, type safety, worker delegation. 33 tests, 0 warnings. |
+| [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Deep dive audited to L3. 32 endpoints, 13 events, 3 client events, 8 state stores, 1 variable provider, 1 DI enrichment interface. No schema, no code. |
+| [Worldstate](#worldstate-status) | L2 | 5% | 0 | Stub. Schemas complete, code generated, all 18 endpoints throw NotImplementedException. 3 schema issues (T8 success booleans, missing lock store). Deep dive audited to L3. |
 | [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
 | [Asset](#asset-status) | L3 | 82% | 1 | Upload/download pipeline works. 2/3 processors stubbed, cleanup tasks missing. |
 | [Documentation](#documentation-status) | L3 | 85% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Semantic search pending. |
@@ -934,9 +934,9 @@ gh issue list --search "Species:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [SUBSCRIPTION.md](plugins/SUBSCRIPTION.md)
 
-### Production Readiness: 88%
+### Production Readiness: 95%
 
-Feature-complete with all 7 endpoints implemented and a background expiration worker with grace period, startup delay, and data integrity validation. No stubs, no bugs. However, three design considerations represent genuine production risks: no optimistic concurrency or distributed locks on subscription mutations (concurrent cancel+renew could produce inconsistent state), no locking on index read-modify-write operations (race conditions could lose index entries), and indefinite growth of account/service indexes with no cleanup mechanism. These concurrency gaps are more concerning here than in lower-frequency services because subscriptions have user-facing write operations.
+L3-hardened. All 7 endpoints + background expiration worker fully production-ready. Distributed locking on all mutating operations (T9), telemetry spans on all async methods (T30), constructor-cached state store references (T6), type-safe enum/Guid parameters throughout (T25), background worker delegates to service for consistent locking and event publishing. Schema NRT-compliant with validation keywords. 33 unit tests, 0 warnings. Only remaining concerns: account/service index indefinite growth, and no subscription deletion endpoint.
 
 ### Bug Count: 0
 
@@ -950,9 +950,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Concurrency control on subscription operations** | Update, cancel, renew, and expire all perform read-modify-write without distributed locks or ETag concurrency. Two simultaneous operations could produce inconsistent state. | No issue |
-| 2 | **Index cleanup for account and service indexes** | The expiration worker only cleans the global subscription-index. Account-subscriptions and service-subscriptions indexes grow indefinitely with cancelled/expired entries. | [#223](https://github.com/beyond-immersion/bannou-service/issues/223) |
-| 3 | **Subscription deletion endpoint** | No endpoint exists to permanently delete subscription records. Combined with the index cleanup gap, subscription data accumulates forever. | No issue |
+| 1 | **Index cleanup for account and service indexes** | The expiration worker only cleans the global subscription-index. Account-subscriptions and service-subscriptions indexes grow indefinitely with cancelled/expired entries. | [#223](https://github.com/beyond-immersion/bannou-service/issues/223) |
+| 2 | **Subscription deletion endpoint** | No endpoint exists to permanently delete subscription records. Combined with the index cleanup gap, subscription data accumulates forever. | No issue |
+| 3 | **Client events for real-time subscription status** | Push SubscriptionStatusChanged client event via IClientEventPublisher when subscriptions change state, especially important for background expiration. | [#500](https://github.com/beyond-immersion/bannou-service/issues/500) |
 
 ### GH Issues
 
@@ -968,7 +968,7 @@ gh issue list --search "Subscription:" --state open
 
 ### Production Readiness: 0%
 
-Aspirational/planned only. The deep dive explicitly states "No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a geographic connectivity and movement primitive that completes Location's spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree). Three core capabilities: a **mode registry** (string-coded transit modes like walking, horseback, wagon, teleportation -- registered via API, not hardcoded), a **connectivity graph** (typed edges between locations with distance, terrain, seasonal availability, and mode compatibility), and **declarative journeys** (temporal travel tracking computed against Worldstate's game clock, with depart/advance/arrive driven by the game, not auto-simulated). Route calculation uses Dijkstra's algorithm over the connection graph filtered by mode compatibility. DI-based cost enrichment via `ITransitCostModifierProvider` enables L4 services (Disposition, Environment, Faction) to affect travel costs without hierarchy violations. Placed at L2 so Actor, Quest, Game Session, and Workshop can all compute travel times. Specifies 22 planned endpoints, 5 state stores (2 MySQL, 2 Redis, 1 MySQL archive), 10 published events, 2 consumed events, 2 background workers (seasonal connection, journey archival), 1 variable provider namespace (`${transit.*}`), and 7 design considerations. No endpoints, no generated code, no service implementation exists.
+Aspirational/planned only. Deep dive audited to L3 quality. No schema, no code, no generated infrastructure. Specifies 32 planned endpoints, 8 state stores (3 MySQL, 4 Redis, 1 lock), 13 published events (7 journey lifecycle, 3 mode lifecycle, 3 connection lifecycle), 1 consumed event, 3 client events, 2 background workers, 1 variable provider namespace (`${transit.*}`), and 1 DI enrichment interface (`ITransitCostModifierProvider`). Audit findings applied: T8 filler removal, T25 string→enum, T31 Category A deprecation lifecycle (deprecate/undeprecate/delete with dedicated `transit-mode.deleted` event), NRT compliance on all nullable fields, validation keywords on all numeric properties (model and config), `seasonalWarnings` promoted from `[string]` to typed `SeasonalRouteWarning` sub-model, `ISeededResourceProvider` terminology corrected to `x-references`, Type Field Classification table completed with `source`/`entityType`/`maximumEntitySizeCategory`/`resolved` rationales, schema requirement notes added (x-service-layer, servers URL, x-event-publications).
 
 ### Bug Count: 0
 
@@ -998,25 +998,27 @@ gh issue list --search "Transit:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
 
-### Production Readiness: 0%
+### Production Readiness: 5%
 
-Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a per-realm game clock, calendar system, and temporal event broadcasting service. Maps real-world time to configurable game-time progression (default 24:1 ratio: 1 real hour = 1 game day, ~2.6 real years = 1 saeculum). Provides calendar templates (configurable days, months, seasons, years as opaque strings), day-period cycles (dawn, morning, afternoon, evening, night), boundary event publishing at game-time transitions, piecewise time-ratio history for lazy evaluation, and the `${world.*}` variable namespace for ABML behavior expressions via the Variable Provider Factory pattern. Specifies 14 planned endpoints, 8 published events, 2 consumed events, 4 state stores, 11 configuration properties, 1 background worker, and a 5-phase implementation plan. Fills the "ghost clock" gap: dozens of existing services reference game time (`${world.time.period}` in ABML, `TimeOfDay` in Storyline, `inGameTime` in encounters, `seasonalAvailability` in trade routes) with no authoritative provider. No endpoints, no generated code, no service implementation exists.
+Complete stub. Schemas are complete and well-designed (4 schema files: api, events, configuration, client-events). Code generation has been run — all generated files exist (controller, interface, models, client, events, configuration, permission registration, reference tracking, client events). The service class exists with all 18 endpoint methods scaffolded, but every method throws `NotImplementedException`. No business logic, no state store initialization, no background worker, no variable provider, no internal models. 2 tests (constructor validation + config instantiation). Deep dive audited to L3 (2026-02-28): comprehensive specification covering 18 endpoints (4 clock queries, 1 client sync, 3 clock admin, 5 calendar management, 3 realm config, 2 cleanup), 14 published events (6 boundary + 6 lifecycle + 2 administrative), 1 consumed event (self-subscription for cache invalidation), 1 client event (`WorldstateTimeSyncEvent`), 3 state stores (Redis clock, MySQL calendar, MySQL ratio-history), 12 configuration properties, 1 background worker (clock advancement), 1 variable provider (`${world.*}` namespace with 14 variables), and a 6-phase implementation plan. Fills the "ghost clock" gap referenced by dozens of services.
+
+**Schema audit findings**: 3 FAIL (T8 success booleans on `DeleteCalendarResponse.deleted` and `CleanupByRealmResponse.cleaned`, missing `worldstate-lock` state store in `state-stores.yaml`), 12 WARN (missing `minLength`/`minimum` on `GameTimeSnapshot` response fields, `WorldstateTimeSyncEvent` duplicates `GameTimeSnapshot` fields inline, inconsistent `isCatchUp` across boundary events). **Code audit findings**: 3 violations in scaffolding (T6/T3: missing `IEventConsumer` in constructor, T23: non-async event handler, T30: missing `ITelemetryProvider`). Missing `IDistributedLockProvider` injection.
 
 ### Bug Count: 0
 
-No implementation exists to have bugs.
+No business logic exists to have bugs. 3 schema-level issues and 3 scaffolding violations are tracked above.
 
 ### Top 3 Bugs
 
-*(None -- pre-implementation)*
+*(None — stub implementation has no business logic bugs)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Phase 1 - Calendar Infrastructure** | Create schemas, generate code, implement calendar template CRUD with structural validation (period coverage, season-month mapping, consistency checks). | No issue |
-| 2 | **Phase 2 - Realm Clock Core** | Implement clock advancement background worker, boundary detection, event publishing, Redis cache for hot reads, and downtime catch-up with configurable policy (advance vs pause). | No issue |
-| 3 | **Phase 4 - Variable Provider** | Implement `WorldProviderFactory` and `WorldProvider` for the `${world.*}` ABML namespace, filling the ghost clock gap referenced by ABML behaviors, Storyline, encounters, and trade routes. | No issue |
+| 1 | **Full implementation (Phases 1-5)** | Calendar CRUD with structural validation, realm clock background worker, boundary event publishing, elapsed game-time computation with piecewise integration, ratio management, downtime catch-up. 18 endpoints, 3 state stores, 1 background worker. | No master issue |
+| 2 | **Variable Provider (Phase 4)** | Implement `WorldProviderFactory` for `${world.*}` namespace (14 variables). Fills the ghost clock gap for ABML behaviors, Storyline, encounters, and trade routes. | [#477](https://github.com/beyond-immersion/bannou-service/issues/477) |
+| 3 | **Cross-service game-time migration (Phase 6)** | Currency autogain (#433), Seed decay (#434), and Character-Encounter memory decay need transition from real-time to game-time via `GetElapsedGameTime`. | [#433](https://github.com/beyond-immersion/bannou-service/issues/433), [#434](https://github.com/beyond-immersion/bannou-service/issues/434) |
 
 ### GH Issues
 

@@ -6,7 +6,6 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
-using Resource = BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
 using BeyondImmersion.BannouService.State;
@@ -15,6 +14,7 @@ using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Resource = BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.Species.Tests;
 

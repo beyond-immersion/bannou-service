@@ -29,6 +29,23 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 ---
 
+## ⛔ CHUNKED FILE READING (MANDATORY) ⛔
+
+**Always read files in chunks of 300 lines max using the `limit` and `offset` parameters.** Never call `Read` on a file without specifying `limit`. When a file requires multiple chunks, read them sequentially using `offset`.
+
+**If the Read tool output is truncated and saved to a temp file: NEVER read the temp file.** Go back to the original source file and read it with `offset`/`limit` parameters instead. Temp files contain duplicated line-number prefixes that make them even larger, guaranteeing the same truncation will happen again.
+
+**Why this rule exists:** Claude's Read tool has an output buffer smaller than 2000 lines of dense markdown. When a file exceeds the buffer, the system truncates it, saves the full output to a temp file, and returns only a 2KB preview. Claude then reads the temp file, which also gets truncated, wasting multiple rounds of tool calls and 3x+ the context window on content that should have been read once. This has repeatedly destroyed session context budgets during audit work.
+
+**Rules:**
+1. **Always specify `limit: 300`** (or smaller) on every Read call
+2. **For files you know are small** (< 200 lines), `limit: 300` still works and costs nothing
+3. **For multi-chunk reads**, use parallel Read calls with different offsets when the chunks are independent
+4. **Never re-read temp/persisted output files** — always go back to the original source path
+5. **If you don't know a file's size**, start with `limit: 300` from offset 0 and continue as needed
+
+---
+
 ## ⛔ FORBIDDEN DESTRUCTIVE COMMANDS ⛔
 
 **The following commands are ABSOLUTELY FORBIDDEN without explicit user approval:**
@@ -177,7 +194,7 @@ These documents provide the high-level architectural north-star context for the 
 | Agent Mission | Must Read Before Starting |
 |---------------|--------------------------|
 | **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md` |
-| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
+| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 

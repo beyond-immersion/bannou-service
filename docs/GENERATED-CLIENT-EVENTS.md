@@ -66,8 +66,12 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `MatchPlayerAcceptedEvent` | `matchmaking.player_accepted` | Sent to all match participants when a player accepts. |
 | `QueueJoinedEvent` | `matchmaking.queue_joined` | Sent to the player when they successfully join a matchmaking... |
 | `MatchmakingStatusUpdateEvent` | `matchmaking.status_update` | Periodic status update sent to players in queue. |
+| `StatusEffectChangedClientEvent` | `status.effect_changed` | Sent to sessions observing an entity when a status effect is... |
 | `SystemErrorEvent` | `system.error` | Generic error notification sent to client. |
 | `SystemNotificationEvent` | `system.notification` | Generic notification event for system-level messages. |
+| `TransitConnectionStatusChangedEvent` | `transit.connection_status_changed` | A connection's operational status changed -- pushed to sessi... |
+| `TransitDiscoveryRevealedEvent` | `transit.discovery_revealed` | A discoverable connection was revealed -- pushed to the disc... |
+| `TransitJourneyUpdatedEvent` | `transit.journey_updated` | Journey state changed -- pushed to the traveling entity's bo... |
 | `VoiceBroadcastConsentRequestEvent` | `voice.broadcast_consent_request` | Sent to all room participants when someone requests broadcas... |
 | `VoiceBroadcastConsentUpdateEvent` | `voice.broadcast_consent_update` | Sent to all room participants when the broadcast consent sta... |
 | `VoicePeerJoinedEvent` | `voice.peer_joined` | Sent to existing room participants when a new peer joins. |
@@ -1072,6 +1076,91 @@ Periodic status update sent to players in queue.
 
 ---
 
+## Status Client Events API
+
+Server-to-client push events for the Status service. These events notify clients of real-time status effect changes delivered via WebSocket through the Entity Session Registry.
+
+### `StatusEffectChangedClientEvent`
+
+**Event Name**: `status.effect_changed`
+
+Sent to sessions observing an entity when a status effect is granted,
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `category` | Status category (buff, debuff, death, etc.) for cl |
+| `changeType` | Type of status change that occurred |
+| `entityId` | Entity that the status effect applies to |
+| `entityType` | Type of entity (character, account, etc.) |
+| `expiresAt` | When the status will expire (for granted/stacked c |
+| `sourceId` | Source entity that granted the status (for granted |
+| `stackCount` | Current stack count after the change (for stacking |
+| `statusInstanceId` | Specific status instance that was affected |
+| `statusTemplateCode` | Template code identifying the status effect type |
+
+---
+
+## Transit Client Events
+
+Server-to-client WebSocket push events for the Transit service
+
+### `TransitConnectionStatusChangedEvent`
+
+**Event Name**: `transit.connection_status_changed`
+
+A connection's operational status changed -- pushed to sessions in the affected realm
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `connectionId` | The connection whose status changed |
+| `fromLocationId` | Origin location of the connection |
+| `newStatus` | Status after the change |
+| `previousStatus` | Status before the change |
+| `reason` | Reason for the status change |
+| `toLocationId` | Destination location of the connection |
+
+### `TransitDiscoveryRevealedEvent`
+
+**Event Name**: `transit.discovery_revealed`
+
+A discoverable connection was revealed -- pushed to the discovering entity's session
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `connectionId` | The connection that was discovered |
+| `connectionName` | Human-readable connection name for UI display |
+| `fromLocationId` | Origin location of the discovered connection |
+| `source` | How the connection was discovered (e.g., travel, g |
+| `toLocationId` | Destination location of the discovered connection |
+
+### `TransitJourneyUpdatedEvent`
+
+**Event Name**: `transit.journey_updated`
+
+Journey state changed -- pushed to the traveling entity's bound session
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `currentLegIndex` | Index of the current leg (0-based) |
+| `currentLocationId` | Where the entity currently is |
+| `destinationLocationId` | Final destination of the journey |
+| `entityId` | The traveling entity |
+| `estimatedArrivalGameTime` | Estimated arrival in game-time units |
+| `journeyId` | The journey that changed state |
+| `primaryModeCode` | Primary transit mode code for the journey |
+| `remainingLegs` | Number of legs remaining in the journey |
+| `status` | Current journey status |
+
+---
+
 ## Voice Client Events API
 
 Server-to-client push events for the Voice service. These events notify clients of voice room state changes, peer connections, and tier upgrades delivered via WebSocket.
@@ -1234,8 +1323,8 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 68
-- **Services with events**: 11
+- **Total event types**: 72
+- **Services with events**: 13
 
 ---
 

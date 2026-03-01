@@ -419,10 +419,42 @@ export const eventRegistry = new Map<string, EventMetadata>([
       service: 'matchmaking',
     },
   ],
+  [
+    'status.effect_changed',
+    {
+      eventName: 'status.effect_changed',
+      typeName: 'StatusEffectChangedClientEvent',
+      service: 'status',
+    },
+  ],
   ['system.error', { eventName: 'system.error', typeName: 'SystemErrorEvent', service: 'common' }],
   [
     'system.notification',
     { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' },
+  ],
+  [
+    'transit.connection_status_changed',
+    {
+      eventName: 'transit.connection_status_changed',
+      typeName: 'TransitConnectionStatusChangedEvent',
+      service: 'transit',
+    },
+  ],
+  [
+    'transit.discovery_revealed',
+    {
+      eventName: 'transit.discovery_revealed',
+      typeName: 'TransitDiscoveryRevealedEvent',
+      service: 'transit',
+    },
+  ],
+  [
+    'transit.journey_updated',
+    {
+      eventName: 'transit.journey_updated',
+      typeName: 'TransitJourneyUpdatedEvent',
+      service: 'transit',
+    },
   ],
   [
     'voice.broadcast_consent_request',

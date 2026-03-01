@@ -467,6 +467,24 @@ public static class StateStoreDefinitions
     /// <summary>User subscriptions to game services</summary>
     public const string Subscription = "subscription-statestore";
 
+    // Transit Service
+    /// <summary>Cached per-realm connection adjacency lists for Dijkstra route calculation</summary>
+    public const string TransitConnectionGraph = "transit-connection-graph";
+    /// <summary>Transit connections between locations (durable graph edges)</summary>
+    public const string TransitConnections = "transit-connections";
+    /// <summary>Per-entity connection discovery tracking (permanent world knowledge)</summary>
+    public const string TransitDiscovery = "transit-discovery";
+    /// <summary>Per-entity discovery set cache for fast route calculation filtering</summary>
+    public const string TransitDiscoveryCache = "transit-discovery-cache";
+    /// <summary>Active transit journeys (hot state, archived to MySQL by background worker)</summary>
+    public const string TransitJourneys = "transit-journeys";
+    /// <summary>Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)</summary>
+    public const string TransitJourneysArchive = "transit-journeys-archive";
+    /// <summary>Distributed locks for journey state transitions and connection status updates</summary>
+    public const string TransitLock = "transit-lock";
+    /// <summary>Transit mode definitions (durable registry)</summary>
+    public const string TransitModes = "transit-modes";
+
     // Voice Service
     /// <summary>Voice room and peer state</summary>
     public const string Voice = "voice-statestore";
@@ -474,6 +492,8 @@ public static class StateStoreDefinitions
     // Worldstate Service
     /// <summary>Calendar template definitions and per-realm worldstate configuration (durable, queryable)</summary>
     public const string WorldstateCalendar = "worldstate-calendar";
+    /// <summary>Distributed locks for clock advancement, ratio changes, and calendar mutations</summary>
+    public const string WorldstateLock = "worldstate-lock";
     /// <summary>Time ratio change history per realm for elapsed game-time computation (append-only, compacted)</summary>
     public const string WorldstateRatioHistory = "worldstate-ratio-history";
     /// <summary>Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)</summary>
@@ -664,8 +684,17 @@ public static class StateStoreDefinitions
             [SubscriptionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "subscription:lock" },
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
+            [TransitConnectionGraph] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:graph" },
+            [TransitConnections] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_connections" },
+            [TransitDiscovery] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_discovery" },
+            [TransitDiscoveryCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:discovery" },
+            [TransitJourneys] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:journey" },
+            [TransitJourneysArchive] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_journeys_archive" },
+            [TransitLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:lock" },
+            [TransitModes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_modes" },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
             [WorldstateCalendar] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_calendar" },
+            [WorldstateLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:lock" },
             [WorldstateRatioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_ratio_history" },
             [WorldstateRealmClock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:clock" },
         };
@@ -854,8 +883,17 @@ public static class StateStoreDefinitions
             [SubscriptionLock] = new StoreMetadata("Subscription", "Distributed locks for subscription mutations and index operations", "redis"),
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
+            [TransitConnectionGraph] = new StoreMetadata("Transit", "Cached per-realm connection adjacency lists for Dijkstra route calculation", "redis"),
+            [TransitConnections] = new StoreMetadata("Transit", "Transit connections between locations (durable graph edges)", "mysql"),
+            [TransitDiscovery] = new StoreMetadata("Transit", "Per-entity connection discovery tracking (permanent world knowledge)", "mysql"),
+            [TransitDiscoveryCache] = new StoreMetadata("Transit", "Per-entity discovery set cache for fast route calculation filtering", "redis"),
+            [TransitJourneys] = new StoreMetadata("Transit", "Active transit journeys (hot state, archived to MySQL by background worker)", "redis"),
+            [TransitJourneysArchive] = new StoreMetadata("Transit", "Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)", "mysql"),
+            [TransitLock] = new StoreMetadata("Transit", "Distributed locks for journey state transitions and connection status updates", "redis"),
+            [TransitModes] = new StoreMetadata("Transit", "Transit mode definitions (durable registry)", "mysql"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),
             [WorldstateCalendar] = new StoreMetadata("Worldstate", "Calendar template definitions and per-realm worldstate configuration (durable, queryable)", "mysql"),
+            [WorldstateLock] = new StoreMetadata("Worldstate", "Distributed locks for clock advancement, ratio changes, and calendar mutations", "redis"),
             [WorldstateRatioHistory] = new StoreMetadata("Worldstate", "Time ratio change history per realm for elapsed game-time computation (append-only, compacted)", "mysql"),
             [WorldstateRealmClock] = new StoreMetadata("Worldstate", "Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)", "redis"),
         };

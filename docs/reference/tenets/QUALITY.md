@@ -186,24 +186,9 @@ For `IAsyncDisposable`, same pattern with `await` in finally. `#pragma warning d
 
 ---
 
-## Quick Reference: Quality Violations
+## Quick Reference
 
-| Violation | Tenet | Fix |
-|-----------|-------|-----|
-| `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
-| Emojis in log messages | T10 | Plain text only (scripts excepted) |
-| String interpolation in logs | T10 | Use message templates with placeholders |
-| Logging passwords/tokens | T10 | Redact or log length only |
-| HTTP fallback in tests | T12 | Remove fallback, fix root cause |
-| Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
-| Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
-| Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
-| Wrong naming pattern | T16 | Follow category-specific pattern |
-| Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
-| Missing env var in config doc | T19 | Add environment variable to summary |
-| `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
-| Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
-| Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
+For the consolidated violations table covering all quality tenets, see [TENETS.md Quick Reference: Common Violations](../TENETS.md#quick-reference-common-violations).
 
 ---
 

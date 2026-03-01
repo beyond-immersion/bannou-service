@@ -34,11 +34,11 @@ public partial class SubscriptionService : ISubscriptionService
     private readonly SubscriptionServiceConfiguration _configuration;
     private readonly IGameServiceClient _serviceClient;
 
-    // Key patterns for state store
-    private const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
+    // Key patterns for state store (internal for SubscriptionExpirationService access)
+    internal const string SUBSCRIPTION_KEY_PREFIX = "subscription:";
     private const string ACCOUNT_SUBSCRIPTIONS_PREFIX = "account-subscriptions:";
     private const string SERVICE_SUBSCRIPTIONS_PREFIX = "service-subscriptions:";
-    private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
+    internal const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
 
     // Event topics
     private const string SUBSCRIPTION_UPDATED_TOPIC = "subscription.updated";
@@ -125,7 +125,7 @@ public partial class SubscriptionService : ISubscriptionService
         // Validate that at least one filter is provided
         if (body.AccountId == null && string.IsNullOrEmpty(body.StubName))
         {
-            _logger.LogWarning("QueryCurrentSubscriptions called without accountId or stubName");
+            _logger.LogDebug("QueryCurrentSubscriptions called without accountId or stubName");
             return (StatusCodes.BadRequest, null);
         }
 
@@ -159,7 +159,7 @@ public partial class SubscriptionService : ISubscriptionService
             catch (ApiException ex) when (ex.StatusCode == 404)
             {
                 // Service not found - return empty result (this is a query, not a specific lookup)
-                _logger.LogWarning("Service not found for stubName {StubName}", body.StubName);
+                _logger.LogDebug("Service not found for stubName {StubName}", body.StubName);
                 serviceResponse = null;
             }
 
@@ -223,7 +223,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (model == null)
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            _logger.LogDebug("Subscription {SubscriptionId} not found", body.SubscriptionId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -252,13 +252,13 @@ public partial class SubscriptionService : ISubscriptionService
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
+            _logger.LogDebug("Service {ServiceId} not found", body.ServiceId);
             return (StatusCodes.NotFound, null);
         }
 
         if (serviceInfo == null)
         {
-            _logger.LogWarning("Service {ServiceId} not found", body.ServiceId);
+            _logger.LogDebug("Service {ServiceId} not found", body.ServiceId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -289,7 +289,7 @@ public partial class SubscriptionService : ISubscriptionService
                 existing.ServiceId == body.ServiceId &&
                 existing.IsActive)
             {
-                _logger.LogWarning("Active subscription already exists for account {AccountId} and service {ServiceId}",
+                _logger.LogDebug("Active subscription already exists for account {AccountId} and service {ServiceId}",
                     body.AccountId, body.ServiceId);
                 return (StatusCodes.Conflict, null);
             }
@@ -376,7 +376,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (model == null)
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            _logger.LogDebug("Subscription {SubscriptionId} not found", body.SubscriptionId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -431,7 +431,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (model == null)
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            _logger.LogDebug("Subscription {SubscriptionId} not found", body.SubscriptionId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -482,7 +482,7 @@ public partial class SubscriptionService : ISubscriptionService
 
         if (model == null)
         {
-            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            _logger.LogDebug("Subscription {SubscriptionId} not found", body.SubscriptionId);
             return (StatusCodes.NotFound, null);
         }
 
@@ -581,35 +581,59 @@ public partial class SubscriptionService : ISubscriptionService
 
     private async Task AddToAccountIndexAsync(Guid accountId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var subscriptionIds = await _indexStore.GetAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", cancellationToken) ?? new List<Guid>();
-
-        if (!subscriptionIds.Contains(subscriptionId))
-        {
-            subscriptionIds.Add(subscriptionId);
-            await _indexStore.SaveAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", subscriptionIds, cancellationToken: cancellationToken);
-        }
+        await AddToIndexAsync($"{ACCOUNT_SUBSCRIPTIONS_PREFIX}{accountId}", subscriptionId, cancellationToken);
     }
 
     private async Task AddToServiceIndexAsync(Guid serviceId, Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var subscriptionIds = await _indexStore.GetAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", cancellationToken) ?? new List<Guid>();
-
-        if (!subscriptionIds.Contains(subscriptionId))
-        {
-            subscriptionIds.Add(subscriptionId);
-            await _indexStore.SaveAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", subscriptionIds, cancellationToken: cancellationToken);
-        }
+        await AddToIndexAsync($"{SERVICE_SUBSCRIPTIONS_PREFIX}{serviceId}", subscriptionId, cancellationToken);
     }
 
     private async Task AddToSubscriptionIndexAsync(Guid subscriptionId, CancellationToken cancellationToken)
     {
-        var subscriptionIds = await _indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken) ?? new List<Guid>();
+        await AddToIndexAsync(SUBSCRIPTION_INDEX_KEY, subscriptionId, cancellationToken);
+    }
 
-        if (!subscriptionIds.Contains(subscriptionId))
+    /// <summary>
+    /// Adds a subscription ID to a list-based index using optimistic concurrency.
+    /// Uses GetWithETagAsync + TrySaveAsync with retry to prevent lost updates
+    /// when multiple instances modify the same index concurrently.
+    /// </summary>
+    private async Task AddToIndexAsync(string indexKey, Guid subscriptionId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.subscription", "SubscriptionService.AddToIndex");
+        for (var attempt = 0; attempt < 3; attempt++)
         {
+            var (subscriptionIds, etag) = await _indexStore.GetWithETagAsync(indexKey, cancellationToken);
+            subscriptionIds ??= new List<Guid>();
+
+            if (subscriptionIds.Contains(subscriptionId))
+            {
+                return; // Already present
+            }
+
             subscriptionIds.Add(subscriptionId);
-            await _indexStore.SaveAsync(SUBSCRIPTION_INDEX_KEY, subscriptionIds, cancellationToken: cancellationToken);
+
+            // If no prior value (null etag), just save directly
+            if (etag == null)
+            {
+                await _indexStore.SaveAsync(indexKey, subscriptionIds, cancellationToken: cancellationToken);
+                return;
+            }
+
+            // Otherwise use optimistic concurrency
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await _indexStore.TrySaveAsync(indexKey, subscriptionIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return; // Success
+            }
+
+            _logger.LogDebug("Concurrent modification on index {IndexKey} during add, retrying (attempt {Attempt})", indexKey, attempt + 1);
         }
+
+        _logger.LogWarning("Failed to add subscription {SubscriptionId} to index {IndexKey} after retries", subscriptionId, indexKey);
     }
 
     /// <summary>
@@ -618,6 +642,7 @@ public partial class SubscriptionService : ISubscriptionService
     private async Task PublishSubscriptionUpdatedEventAsync(
         SubscriptionDataModel model, SubscriptionAction action, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.subscription", "SubscriptionService.PublishSubscriptionUpdatedEvent");
         var eventData = new SubscriptionUpdatedEvent
         {
             EventId = Guid.NewGuid(),

@@ -127,6 +127,13 @@ public class WorldstateServiceConfiguration : BaseServiceConfiguration
     public string? DefaultCalendarTemplateCode { get; set; }
 
     /// <summary>
+    /// Maximum number of realm IDs accepted in a single BatchGetRealmTimes request.
+    /// Environment variable: WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int MaxBatchRealmTimeQueries { get; set; } = 100;
+
+    /// <summary>
     /// Timeout in seconds for distributed lock acquisition during clock advancement, ratio changes, and calendar mutations.
     /// Environment variable: WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
     /// </summary>

@@ -1,11 +1,11 @@
 # Transit Plugin Deep Dive
 
-> **Plugin**: lib-transit (not yet created)
-> **Schema**: `schemas/transit-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis) — all planned
+> **Plugin**: lib-transit
+> **Schema**: `schemas/transit-api.yaml`
+> **Version**: 1.0.0
+> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis), transit-lock (Redis)
 > **Layer**: GameFoundation
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Status**: Schemas created, code generated, service implementation in progress.
 
 ---
 
@@ -181,271 +181,60 @@ Route calculation does NOT factor in DI cost modifiers (those are entity-specifi
 
 ## Data Models
 
-### Transit Mode
+Full schemas in `schemas/transit-api.yaml`. Use `make print-models PLUGIN="transit"` for compact field shapes.
 
-```yaml
-TransitMode:
-  code: string                      # Unique identifier ("walking", "horseback", "wagon")
+### TransitMode
 
-  # Display
-  name: string                      # Human-readable ("Horseback", "River Boat")
-  description: string               # Detailed description
+Movement capability definition registered via API. Key fields: `code` (unique string identifier), `baseSpeedKmPerGameHour` (min 0.1), `terrainSpeedModifiers` (nullable array of `TerrainSpeedModifier`), `passengerCapacity` (min 1), `cargoCapacityKg` (min 0), `cargoSpeedPenaltyRate` (nullable, 0-1), `compatibleTerrainTypes` (string array), `validEntityTypes` (nullable string array), `requirements` (TransitModeRequirements), `fatigueRatePerGameHour` (min 0), `noiseLevelNormalized` (0-1), `realmRestrictions` (nullable uuid array), deprecation triple (`isDeprecated`/`deprecatedAt`?/`deprecationReason`?), `tags` (nullable string array).
 
-  # Movement properties
-  baseSpeedKmPerGameHour: decimal   # Base speed in game-kilometers per game-hour (used when no
-                                    # terrain-specific speed is defined for the current terrain)
-  terrainSpeedModifiers:            # Optional per-terrain speed multipliers. Typed array of
-    [TerrainSpeedModifier]          # {terrainType: string, multiplier: decimal} pairs.
-                                    # Example: [{terrainType: "road", multiplier: 1.2},
-                                    #           {terrainType: "trail", multiplier: 0.8},
-                                    #           {terrainType: "forest", multiplier: 0.5}]
-                                    # null = base speed applies uniformly across all compatible terrain.
-                                    # effectiveSpeed = baseSpeed × multiplier for matching terrainType.
-                                    # Terrain type not in the list → defaults to 1.0 (base speed).
-  passengerCapacity: integer        # How many entities can ride (1 for horse, 20 for ship)
-  cargoCapacityKg: decimal          # Weight capacity in game-kg (0 for walking, 500 for wagon)
-  cargoSpeedPenaltyRate: decimal    # Optional per-mode cargo speed penalty rate. When set, overrides
-                                    # the plugin-level DefaultCargoSpeedPenaltyRate. null = use plugin
-                                    # config default. 0.0 = no cargo penalty (e.g., pack mule, dedicated
-                                    # cargo vessel). See CargoSpeedPenaltyRate in Configuration.
+**Design notes**:
+- `terrainSpeedModifiers`: `effectiveSpeed = baseSpeed × multiplier` for matching terrain type. Terrain type not in the list defaults to multiplier 1.0 (base speed). Null = base speed applies uniformly across all compatible terrain.
+- `cargoSpeedPenaltyRate`: Overrides plugin-level `DefaultCargoSpeedPenaltyRate` when set. `0.0` = no cargo penalty (e.g., dedicated cargo vessel, pack mule). Null = use plugin config default.
+- `compatibleTerrainTypes`: Empty array = all terrain (e.g., walking, flying).
+- `validEntityTypes`: Null = no entity type restriction. Characters are NOT exempt — a mode for armies/caravans may validly exclude characters.
+- `requirements`: Item, species, and physical requirements only. Proficiency-based speed bonuses are NOT a mode requirement — they flow through `ITransitCostModifierProvider` from L4 services that query Status for seed-derived capabilities.
+- Category A deprecation per IMPLEMENTATION TENETS: connections store `compatibleModes` and journeys store `primaryModeCode`/`legModes` referencing mode codes, so persistent data in OTHER entities references this entity's ID.
 
-  # Terrain compatibility
-  compatibleTerrainTypes: [string]  # Which terrain types this mode traverses
-                                    # Empty = all terrain (e.g., walking, flying)
+### TransitModeRequirements
 
-  # Entity type restrictions
-  validEntityTypes: [string]        # Optional. When set, only these entity types may use this mode.
-                                    # Examples: ["character", "npc"] for horseback (caravans can't ride),
-                                    # ["caravan", "army"] for wagon (individuals walk).
-                                    # null = no entity type restriction (caller's responsibility to
-                                    # enforce any game-specific rules for non-character entity types).
-                                    # Note: characters are NOT exempt -- a mode for armies/caravans
-                                    # may validly exclude characters.
+Sub-model of TransitMode. Fields: `requiredItemTag` (nullable — null = no item needed, e.g. `"mount_horse"` = need item with this tag), `allowedSpeciesCodes` (nullable — null = any species), `excludedSpeciesCodes` (nullable — these species CANNOT use this mode), `minimumPartySize` (default 1, min 1 — some modes need crew, e.g. ocean_vessel: 3), `maximumEntitySizeCategory` (nullable — Category B content code, game-defined at deployment time, e.g. "small"/"medium"/"large" — centaurs can't ride horses).
 
-  # Requirements (all must be met to use this mode -- applies to character entities only)
-  requirements: TransitModeRequirements   # Item, species, and physical requirements only.
-                                          # Proficiency-based speed bonuses are NOT a mode requirement --
-                                          # they flow through ITransitCostModifierProvider from L4 services
-                                          # that query Status for seed-derived capabilities.
+### TransitConnection
 
-  # Behavioral properties
-  fatigueRatePerGameHour: decimal   # Stamina cost per game-hour of travel (0 = no fatigue)
-  noiseLevelNormalized: decimal     # 0.0 (silent) to 1.0 (loud) -- affects detection risk
+Graph edge between two locations. Key fields: `fromLocationId`/`toLocationId` (Location entities), `bidirectional`, `distanceKm` (min 0.01), `terrainType` (Category B content code), `compatibleModes` (string array — empty = walking only), `seasonalAvailability` (nullable array of `SeasonalAvailabilityEntry`), `baseRiskLevel` (0-1), `riskDescription` (nullable), `status` (enum: `open`|`closed`|`dangerous`|`blocked`|`seasonal_closed`), `statusReason` (nullable), `statusChangedAt`, `discoverable` (default false), `name`/`code` (nullable), `tags` (nullable string array), `fromRealmId`/`toRealmId`/`crossRealm` (derived from locations — never caller-specified).
 
-  # Scope
-  realmRestrictions: [uuid]         # Empty = available in all realms. If set, only these realms.
+**Design notes**:
+- `seasonalAvailability`: Season strings MUST match the realm's Worldstate season codes. Worldstate uses opaque calendar templates — season names are configurable per realm (a desert realm may have "wet"/"dry", not "winter"/"spring"). The Seasonal Connection Worker queries Worldstate for the realm's current season name and matches against these entries.
+- `fromRealmId`/`toRealmId`/`crossRealm`: Derived from endpoint locations via Location service. Cross-realm connections are fully supported at the platform level. Games control cross-realm travel by policy: if a game's world design treats realms as isolated, it simply never creates cross-realm connections.
+- `discoverable`: When `true`, filtered from route queries unless the requesting entity has discovered it. Hidden passages, smuggler routes, ancient paths, shortcuts.
 
-  # Deprecation (Category A per IMPLEMENTATION TENETS — connections and journeys
-  # store mode codes, so persistent data in OTHER entities references this entity's ID.
-  # Category A requires: deprecate, undeprecate, and deprecate-before-delete.)
-  isDeprecated: boolean             # Whether this mode is deprecated
-  deprecatedAt: timestamp?          # When deprecation occurred (null if not deprecated)
-  deprecationReason: string?        # Why this mode was deprecated (null if not deprecated)
+### SeasonalAvailabilityEntry
 
-  # Metadata
-  tags: [string]                    # Freeform tags ("mount", "vehicle", "magical", "aquatic")
+Sub-model: `season` (string — season code matching the realm's Worldstate calendar template, validated against realm's Worldstate season codes on creation), `available` (boolean).
 
-  createdAt: timestamp
-  modifiedAt: timestamp
-```
+### TransitJourney
 
-### Transit Mode Requirements
+Active or completed travel record. Key fields: `entityId`/`entityType` (polymorphic traveler — "character", "npc", "caravan", "army", "creature"), `legs` (TransitJourneyLeg array), `currentLegIndex` (0-based), `primaryModeCode`, `effectiveSpeedKmPerGameHour`, game-time timestamps (`plannedDepartureGameTime`, `actualDepartureGameTime`?, `estimatedArrivalGameTime`, `actualArrivalGameTime`?), `originLocationId`/`destinationLocationId`/`currentLocationId`, `status` (enum: `preparing`|`in_transit`|`at_waypoint`|`arrived`|`interrupted`|`abandoned`), `statusReason` (nullable), `interruptions` (TransitInterruption array), `partySize` (min 1), `cargoWeightKg` (min 0).
 
-```yaml
-TransitModeRequirements:
-  # Item requirement (e.g., horseback requires a mount item)
-  requiredItemTag: string           # null = no item needed. "mount_horse" = need item with this tag
+### TransitJourneyLeg
 
-  # Species restriction
-  allowedSpeciesCodes: [string]     # Empty = any species. If set, only these species can use mode
-  excludedSpeciesCodes: [string]    # These species CANNOT use this mode
+Per-leg route segment. Key fields: `connectionId`, `fromLocationId`/`toLocationId`, `modeCode` (overrides journey's `primaryModeCode` when the connection supports a different mode — enables multi-modal journeys: ride horse to river, boat downstream, walk to cave), `distanceKm`/`terrainType` (copied from connection for journey record), `estimatedDurationGameHours`, `waypointTransferTimeGameHours` (nullable — models intra-location transfer time: disembarking a river boat, waiting at a dock, crossing a city to reach the next departure point, changing mounts at a stable; factored into journey ETA and totalGameHours calculations), `status` (enum: `pending`|`in_progress`|`completed`|`skipped`), `completedAtGameTime` (nullable).
 
-  # Physical requirements
-  minimumPartySize: integer         # Some modes need crew (ocean_vessel: 3)
-  maximumEntitySizeCategory: string # "small", "medium", "large" -- centaurs can't ride horses
-```
+### TransitInterruption
 
-### Transit Connection
+Interruption record within a journey. Fields: `legIndex`, `gameTime`, `reason` (e.g. "bandit_attack", "storm", "breakdown", "encounter"), `durationGameHours` (min 0 — 0 if resolved immediately, e.g. instantly repelled attack), `resolved` (boolean — NOT T8 filler: an interruption can be resolved with 0 duration, so this flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from `durationGameHours`).
 
-```yaml
-TransitConnection:
-  id: uuid
+### TransitRouteOption (Not Persisted)
 
-  # Endpoints
-  fromLocationId: uuid              # Location service entity
-  toLocationId: uuid                # Location service entity
+Returned by `/transit/route/calculate`. Key fields: `waypoints` (ordered location IDs), `connections` (ordered connection IDs), `legCount`, `primaryModeCode`, `legModes` (per-leg mode codes for multi-modal routes), `totalDistanceKm`, `totalGameHours` (includes `waypointTransferTimeGameHours` for each leg), `totalRealMinutes` (approximate — time ratios can change during travel), `averageRisk`/`maxLegRisk`, `allLegsOpen`, `seasonalWarnings` (nullable `SeasonalRouteWarning` array — structured warnings for legs with upcoming seasonal closures, typed sub-model so consumers can render specific UI or make programmatic decisions), `rank` (1 = best option by sort criteria).
 
-  # Directionality
-  bidirectional: boolean            # true = traversable both ways. false = one-way only
+### SeasonalRouteWarning
 
-  # Geography
-  distanceKm: decimal               # Distance in game-kilometers
-  terrainType: string               # "road", "trail", "forest", "mountain", "river",
-                                    # "ocean", "swamp", "desert", "underground", "aerial"
+Warning sub-model: `connectionId`, `connectionName` (nullable), `legIndex`, `currentSeason`, `closingSeason`, `closingSeasonIndex` (how many season transitions until closure, 1 = next season).
 
-  # Mode compatibility
-  compatibleModes: [string]         # Which transit mode codes can use this connection
-                                    # Empty = walking only
+### TerrainSpeedModifier
 
-  # Seasonal availability
-  seasonalAvailability:             # Typed array of {season: string, available: boolean} pairs.
-    [SeasonalAvailabilityEntry]     # Season strings MUST match the realm's Worldstate season codes.
-                                    # Worldstate uses opaque calendar templates -- season names are
-                                    # configurable per realm (a desert realm may have "wet"/"dry",
-                                    # not "winter"/"spring"). The Seasonal Connection Worker queries
-                                    # Worldstate for the realm's current season name and matches
-                                    # against these entries.
-                                    # Example: [{season: "winter", available: false},
-                                    #           {season: "spring", available: true}]
-                                    # null = always available
-
-  # Risk
-  baseRiskLevel: decimal            # 0.0 (safe) to 1.0 (extremely dangerous)
-  riskDescription: string           # "Bandit territory", "Avalanche prone", etc.
-
-  # Status (see "Status Transitions with Optimistic Concurrency" in Design Philosophy)
-  status: enum                      # open | closed | dangerous | blocked | seasonal_closed
-  statusReason: string              # Why the connection is in this status
-  statusChangedAt: timestamp
-
-  # Discovery
-  discoverable: boolean             # false (default) = common knowledge, visible to all route queries.
-                                    # true = only visible in route queries for entities that have
-                                    # discovered this connection (via travel, explicit grant, or hearsay).
-                                    # Hidden passages, smuggler routes, ancient paths, shortcuts.
-
-  # Metadata
-  name: string                      # Optional human name ("The King's Road", "Serpent River")
-  code: string                      # Optional code for lookup ("kings_road")
-  tags: [string]                    # Freeform ("trade_route", "military", "smuggler_path")
-
-  # Realms (derived from endpoint locations, stored for query efficiency)
-  fromRealmId: uuid                 # Realm of fromLocationId (derived, not caller-specified)
-  toRealmId: uuid                   # Realm of toLocationId (derived, not caller-specified)
-  crossRealm: boolean              # Derived: fromRealmId != toRealmId. Convenience flag for queries.
-                                    # Games that don't want cross-realm travel (e.g., Arcadia) simply
-                                    # never create cross-realm connections. The platform supports it;
-                                    # usage is game-specific.
-
-  createdAt: timestamp
-  modifiedAt: timestamp
-```
-
-### Transit Journey
-
-```yaml
-TransitJourney:
-  id: uuid
-
-  # Traveler (the entity that physically moves -- not a business abstraction like "shipment")
-  entityId: uuid                    # Who is traveling
-  entityType: string                # "character", "npc", "caravan", "army", "creature"
-
-  # Route
-  legs: [TransitJourneyLeg]         # Ordered list of connections to traverse
-  currentLegIndex: integer          # Which leg the entity is currently on (0-based)
-
-  # Mode (primary -- individual legs can override for multi-modal journeys)
-  primaryModeCode: string           # Primary transit mode for this journey
-  effectiveSpeedKmPerGameHour: decimal  # Current effective speed (may differ from base due to modifiers)
-
-  # Timing (game-time via Worldstate)
-  plannedDepartureGameTime: decimal # Game-time timestamp of planned departure
-  actualDepartureGameTime: decimal  # Game-time timestamp of actual departure (null if not departed)
-  estimatedArrivalGameTime: decimal # Computed ETA based on route + speed + worldstate
-  actualArrivalGameTime: decimal    # Game-time timestamp of actual arrival (null if not arrived)
-
-  # Locations
-  originLocationId: uuid            # Starting location
-  destinationLocationId: uuid       # Final destination
-  currentLocationId: uuid           # Where the entity currently is (last known position)
-
-  # Status
-  status: enum                      # preparing | in_transit | at_waypoint | arrived
-                                    # interrupted | abandoned
-  statusReason: string              # Reason for interruption/abandonment
-
-  # Interruption tracking
-  interruptions: [TransitInterruption]
-
-  # Metadata
-  partySize: integer                # How many entities are traveling together
-  cargoWeightKg: decimal            # Total cargo weight (affects speed on some modes)
-
-  createdAt: timestamp
-  modifiedAt: timestamp
-
-TransitJourneyLeg:
-  connectionId: uuid                # Which transit connection this leg follows
-  fromLocationId: uuid
-  toLocationId: uuid
-  modeCode: string                  # Transit mode for THIS leg. Overrides journey's primaryModeCode
-                                    # when the connection supports a different mode than the primary.
-                                    # Enables multi-modal journeys: ride horse to river, boat downstream,
-                                    # walk to the cave. Each leg uses the mode appropriate to its terrain.
-  distanceKm: decimal               # Copied from connection for journey record
-  terrainType: string               # Copied from connection
-  estimatedDurationGameHours: decimal
-  waypointTransferTimeGameHours: decimal  # Optional. Delay at the waypoint BEFORE starting this leg.
-                                    # Models intra-location transfer time: disembarking a river boat,
-                                    # waiting at a dock, crossing a city to reach the next departure
-                                    # point, changing mounts at a stable. Analogous to elevator wait
-                                    # time -- you arrived at the location but need time before
-                                    # continuing on the next connection.
-                                    # null or 0.0 = no transfer delay (immediate continuation).
-                                    # Factored into journey ETA and totalGameHours calculations.
-                                    # Set by the game on journey creation or dynamically via advance.
-  status: enum                      # pending | in_progress | completed | skipped
-  completedAtGameTime: decimal      # When this leg was completed (null if not)
-
-TransitInterruption:
-  legIndex: integer                 # Which leg was interrupted
-  gameTime: decimal                 # When the interruption occurred
-  reason: string                    # "bandit_attack", "storm", "breakdown", "encounter"
-  durationGameHours: decimal        # How long the interruption lasted (0 if unresolved)
-  resolved: boolean                 # Whether travel resumed
-
-TerrainSpeedModifier:
-  terrainType: string               # Terrain type code (e.g., "road", "trail", "forest")
-  multiplier: decimal               # Speed multiplier applied to base speed (1.0 = no change)
-
-SeasonalAvailabilityEntry:
-  season: string                    # Season code matching the realm's Worldstate calendar template
-  available: boolean                # Whether the connection is open during this season
-```
-
-### Transit Route Option
-
-```yaml
-# Returned by /transit/route/calculate -- not persisted
-TransitRouteOption:
-  # Path
-  waypoints: [uuid]                 # Ordered location IDs from source to destination
-  connections: [uuid]               # Ordered connection IDs
-  legCount: integer                 # Number of legs
-
-  # Mode (per-leg for multi-modal routes)
-  primaryModeCode: string           # Dominant transit mode for this option
-  legModes: [string]                # Per-leg mode codes (may differ from primary on multi-modal routes)
-
-  # Distance and time
-  totalDistanceKm: decimal          # Sum of all leg distances
-  totalGameHours: decimal           # Estimated total travel time in game-hours (includes
-                                    # waypointTransferTimeGameHours for each leg when set)
-  totalRealMinutes: decimal         # Converted to real-time at current time ratio (approximate --
-                                    # time ratios can change during travel)
-
-  # Risk
-  averageRisk: decimal              # Weighted average risk across legs
-  maxLegRisk: decimal               # Highest risk on any single leg
-
-  # Seasonal status
-  allLegsOpen: boolean              # Are all legs currently open?
-  seasonalWarnings: [string]        # Any legs that may close soon
-
-  # Comparison helpers
-  rank: integer                     # 1 = best option by sort criteria (caller knows what they requested)
-```
+Sub-model: `terrainType` (Category B content code), `multiplier` (min 0.01 — speed multiplier applied to base speed, 1.0 = no change).
 
 ---
 
@@ -491,256 +280,65 @@ TransitRouteOption:
 | connection `status` | C (System State) | Service-specific enum (`open`, `closed`, `dangerous`, `blocked`, `seasonal_closed`) | Finite set of system-owned connection operational states; supports optimistic concurrency transitions |
 | journey `status` | C (System State) | Service-specific enum (`preparing`, `in_transit`, `at_waypoint`, `arrived`, `interrupted`, `abandoned`) | Finite journey lifecycle state machine; system-owned transitions |
 | journey leg `status` | C (System State) | Service-specific enum (`pending`, `in_progress`, `completed`, `skipped`) | Finite leg lifecycle state machine; system-owned transitions |
+| `source` (discovery) | B (Content Code) | Opaque string | How a connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward"). Game-configurable, extensible without schema changes |
+| `maximumEntitySizeCategory` (mode requirements) | B (Content Code) | Opaque string | Entity size categories (e.g., "small", "medium", "large") are game-defined at deployment time per IMPLEMENTATION TENETS T14 Test 1. False positive — not a system enum |
+| `resolved` (TransitInterruption) | — (Stored State) | boolean | NOT T8 filler. An interruption can be resolved with 0 durationGameHours (immediately repelled). The `resolved` flag is stored entity state distinguishing active interruptions from resolved ones, not derivable from other fields |
 | mode `isDeprecated` / `deprecatedAt` / `deprecationReason` | C (System State) | Standard triple-field deprecation model (`boolean`, `timestamp?`, `string?`) | Category A per IMPLEMENTATION TENETS: connections store `compatibleModes` and journeys store `primaryModeCode`/`legModes` referencing mode codes → deprecate/undeprecate/delete required |
 
 ---
 
 ## State Storage
 
-```yaml
-# schemas/state-stores.yaml additions
+**Store**: `transit-modes` (Backend: MySQL)
+- Purpose: Transit mode definitions (durable registry)
 
-transit-modes:
-  backend: mysql
-  service: Transit
-  purpose: Transit mode definitions (durable registry)
+**Store**: `transit-connections` (Backend: MySQL)
+- Purpose: Transit connections between locations (durable graph edges)
 
-transit-connections:
-  backend: mysql
-  service: Transit
-  purpose: Transit connections between locations (durable graph edges)
+**Store**: `transit-journeys` (Backend: Redis, prefix: `transit:journey`)
+- Purpose: Active transit journeys (hot state, archived to MySQL by background worker)
 
-transit-journeys:
-  backend: redis
-  prefix: "transit:journey"
-  service: Transit
-  purpose: Active transit journeys (hot state, archived to MySQL by background worker)
+**Store**: `transit-journeys-archive` (Backend: MySQL)
+- Purpose: Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)
 
-transit-journeys-archive:
-  backend: mysql
-  service: Transit
-  purpose: Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)
+**Store**: `transit-connection-graph` (Backend: Redis, prefix: `transit:graph`)
+- Purpose: Cached per-realm connection adjacency lists for Dijkstra route calculation
 
-transit-connection-graph:
-  backend: redis
-  prefix: "transit:graph"
-  service: Transit
-  purpose: Cached per-realm connection adjacency lists for Dijkstra route calculation
+**Store**: `transit-discovery` (Backend: MySQL)
+- Purpose: Per-entity connection discovery tracking (permanent world knowledge)
 
-transit-discovery:
-  backend: mysql
-  service: Transit
-  purpose: Per-entity connection discovery tracking (permanent world knowledge)
+**Store**: `transit-discovery-cache` (Backend: Redis, prefix: `transit:discovery`)
+- Purpose: Per-entity discovery set cache for fast route calculation filtering
 
-transit-discovery-cache:
-  backend: redis
-  prefix: "transit:discovery"
-  service: Transit
-  purpose: Per-entity discovery set cache for fast route calculation filtering
-
-transit-lock:
-  backend: redis
-  prefix: "transit:lock"
-  service: Transit
-  purpose: Distributed locks for journey state transitions and connection status updates
-```
+**Store**: `transit-lock` (Backend: Redis, prefix: `transit:lock`)
+- Purpose: Distributed locks for journey state transitions and connection status updates
 
 ---
 
 ## Events
 
-```yaml
-# Published via lib-messaging (IMessageBus)
+Full event schemas in `schemas/transit-events.yaml` and `schemas/transit-client-events.yaml`.
 
-# Connection events
-transit-connection.status-changed:
-  description: "A connection's operational status changed"
-  payload:
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    previousStatus: ConnectionStatus  # enum: open | closed | dangerous | blocked | seasonal_closed
-    newStatus: ConnectionStatus        # enum: open | closed | dangerous | blocked | seasonal_closed
-    reason: string
-    forceUpdated: boolean         # Whether this was a forceUpdate override
-    fromRealmId: uuid
-    toRealmId: uuid
-    crossRealm: boolean
-  consumers:
-    - Trade (L4): recalculates trade route viability
-    - Actor (L2): NPCs may need to replan travel
-    - Puppetmaster (L4): regional watchers notice road closures
-    - Quest (L2): connection-state objectives ("clear the blocked road")
+### Published Events (Service Bus)
 
-# Journey lifecycle events
-transit.journey.departed:
-  description: "An entity has begun traveling"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    originLocationId: uuid
-    destinationLocationId: uuid
-    primaryModeCode: string
-    estimatedArrivalGameTime: decimal
-    partySize: integer
-    originRealmId: uuid
-    destinationRealmId: uuid
-    crossRealm: boolean
-  consumers:
-    - Trade (L4): tracks shipment progress
-    - Analytics (L4): travel pattern aggregation
-    - Puppetmaster (L4): regional watchers notice travelers
-    - Character History (L4): significant journeys become backstory elements
-    - Quest (L2): travel departure objectives ("leave the village")
+| Topic | Type | Key Payload | Consumers |
+|-------|------|-------------|-----------|
+| `transit-connection.status-changed` | Custom | connectionId, from/to LocationId, previousStatus, newStatus, reason, forceUpdated, realm fields, crossRealm | Trade (route viability), Actor (NPC replan), Puppetmaster (watcher awareness), Quest (objectives) |
+| `transit.journey.departed` | Custom | journeyId, entity, origin/dest, primaryModeCode, ETA, partySize, realm fields, crossRealm | Trade (shipment), Analytics, Puppetmaster, Character History, Quest |
+| `transit.journey.waypoint-reached` | Custom | journeyId, entity, waypointLocationId, nextLocationId, legIndex, remainingLegs, connectionId, realmId, crossedRealmBoundary | Trade (border checks), Location (presence), Quest (waypoint objectives) |
+| `transit.journey.arrived` | Custom | journeyId, entity, origin/dest, primaryModeCode, totalGameHours, totalDistanceKm, interruptionCount, legsCompleted, realm fields, crossRealm | Trade (delivery), Location (presence), Analytics, Character History, Quest |
+| `transit.journey.interrupted` | Custom | journeyId, entity, currentLocationId, currentLegIndex, reason, realmId | Trade (delay), Puppetmaster (rescue/encounter), Analytics (hotspots) |
+| `transit.journey.resumed` | Custom | journeyId, entity, current/dest LocationId, currentLegIndex, remainingLegs, modeCode, realmId | Trade, Analytics |
+| `transit.journey.abandoned` | Custom | journeyId, entity, origin/dest, abandonedAtLocationId, reason, completed/total legs, realm fields, crossRealm | Trade (stranded), Character History, Analytics |
+| `transit.discovery.revealed` | Custom | entityId, connectionId, from/to LocationId, source, realm fields, crossRealm | Collection (unlocks), Quest (objectives), Analytics |
+| `transit-mode.registered` | Custom | Full TransitMode entity data | — |
+| `transit-mode.updated` | Custom | Full TransitMode + `changedFields` (deprecation includes isDeprecated, deprecatedAt, deprecationReason) | — |
+| `transit-mode.deleted` | Custom | code, deletedReason (full entity no longer exists) | — |
+| `transit-connection.created` | x-lifecycle | Full TransitConnection entity data | — |
+| `transit-connection.updated` | x-lifecycle | Full TransitConnection + changedFields | — |
+| `transit-connection.deleted` | x-lifecycle | Full TransitConnection + deletedReason | — |
 
-transit.journey.waypoint-reached:
-  description: "A traveling entity reached an intermediate waypoint"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    waypointLocationId: uuid
-    nextLocationId: uuid
-    legIndex: integer
-    remainingLegs: integer
-    connectionId: uuid           # Connection of the leg just completed
-    realmId: uuid                # Realm of waypointLocationId
-    crossedRealmBoundary: boolean # Whether the completed leg crossed a realm boundary
-  consumers:
-    - Trade (L4): triggers border crossing checks at checkpoints
-    - Location (L2): presence tracking updates
-    - Quest (L2): waypoint-based objectives ("pass through Riverside")
-
-transit.journey.arrived:
-  description: "A traveling entity reached its destination"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    originLocationId: uuid
-    destinationLocationId: uuid
-    primaryModeCode: string
-    totalGameHours: decimal
-    totalDistanceKm: decimal
-    interruptionCount: integer
-    legsCompleted: integer
-    originRealmId: uuid
-    destinationRealmId: uuid
-    crossRealm: boolean
-  consumers:
-    - Trade (L4): completes shipment delivery
-    - Location (L2): presence tracking updates
-    - Analytics (L4): travel time statistics
-    - Character History (L4): significant journey completion for backstory
-    - Quest (L2): travel arrival objectives ("reach the Iron Mines")
-
-transit.journey.interrupted:
-  description: "A journey was interrupted (combat, event, breakdown)"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    currentLocationId: uuid
-    currentLegIndex: integer
-    reason: string
-    realmId: uuid                # Realm of currentLocationId
-  consumers:
-    - Trade (L4): shipment delay notification
-    - Puppetmaster (L4): may orchestrate rescue/encounter
-    - Analytics (L4): interruption hotspot tracking
-
-transit.journey.resumed:
-  description: "An interrupted journey was resumed"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    currentLocationId: uuid
-    destinationLocationId: uuid
-    currentLegIndex: integer
-    remainingLegs: integer
-    modeCode: string
-    realmId: uuid                # Realm of currentLocationId
-  consumers:
-    - Trade (L4): shipment back in transit
-    - Analytics (L4): interruption duration statistics
-
-transit.journey.abandoned:
-  description: "A journey was abandoned before reaching destination"
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    entityType: string
-    originLocationId: uuid
-    destinationLocationId: uuid
-    abandonedAtLocationId: uuid
-    reason: string
-    completedLegs: integer
-    totalLegs: integer
-    originRealmId: uuid
-    destinationRealmId: uuid
-    abandonedAtRealmId: uuid     # Realm of abandonedAtLocationId
-    crossRealm: boolean
-  consumers:
-    - Trade (L4): handles stranded shipments
-    - Character History (L4): significant travel failure for backstory
-    - Analytics (L4): abandonment pattern aggregation
-
-# Discovery events
-transit.discovery.revealed:
-  description: "A discoverable connection was revealed to an entity"
-  payload:
-    entityId: uuid
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    source: string              # "travel", "guide", "hearsay", "map", "quest_reward"
-    fromRealmId: uuid
-    toRealmId: uuid
-    crossRealm: boolean
-  consumers:
-    - Collection (L2): route discovery → collection unlocks (e.g., "Explorer's Atlas")
-    - Quest (L2): travel-based objectives ("discover the hidden pass")
-    - Analytics (L4): discovery pattern tracking
-```
-
-### Mode Status Events (Custom)
-
-```yaml
-# Custom events -- modes use register/update semantics, not standard CRUD lifecycle.
-# These are NOT x-lifecycle generated.
-transit-mode.registered:
-  description: "A new transit mode was registered"
-  payload: TransitMode              # Full entity data per FOUNDATION TENETS event pattern
-
-transit-mode.updated:
-  description: "A transit mode was updated (covers property changes, deprecation, and deletion via changedFields)"
-  payload:
-    mode: TransitMode               # Full entity data per FOUNDATION TENETS event pattern
-    changedFields: [string]         # List of fields that changed. Deprecation includes
-                                    # "isDeprecated", "deprecatedAt", "deprecationReason".
-```
-
-### Connection Lifecycle Events (x-lifecycle)
-
-```yaml
-# Auto-generated via x-lifecycle in events schema.
-# x-lifecycle generates Created, Updated, and Deleted events with full entity data.
-transit-connection.created:
-  description: "A new connection was created between locations"
-  payload: TransitConnection (full entity data)
-
-transit-connection.updated:
-  description: "A connection's properties were updated"
-  payload: TransitConnection (full entity data + changedFields)
-
-transit-connection.deleted:
-  description: "A connection was removed"
-  payload: TransitConnection (full entity data + deletedReason)
-```
-
-All events include standard `eventId` (uuid) and `timestamp` (date-time) fields per FOUNDATION TENETS event schema pattern. `x-event-publications` in `transit-events.yaml` must list all published events as the authoritative registry.
+All events include standard `eventId` (uuid) and `timestamp` (date-time) fields per FOUNDATION TENETS event schema pattern. Mode events are custom (not x-lifecycle) since modes use register/update semantics, not standard CRUD. Connection lifecycle events use `x-lifecycle` for auto-generation. `x-event-publications` in `transit-events.yaml` lists all 14 published events as the authoritative registry.
 
 ### Consumed Events
 
@@ -752,7 +350,7 @@ Transit does not subscribe to `location.deleted` or `character.deleted` events f
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
-Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup coordination. These are declared via `x-references` in the API schema.
+Transit declares `x-references` in its API schema for lib-resource cleanup coordination. The code generator produces cleanup callback registration from these declarations.
 
 | Target Resource | Source Type | On Delete | Cleanup Action |
 |----------------|-------------|-----------|----------------|
@@ -761,47 +359,13 @@ Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup 
 
 ### Client Events (via IClientEventPublisher)
 
-Per IMPLEMENTATION TENETS (T17), server→client push events use `IClientEventPublisher`, not `IMessageBus`. These target session bindings via the Entity Session Registry ([#426](https://github.com/beyond-immersion/bannou-service/issues/426)).
+Per IMPLEMENTATION TENETS (T17), server→client push events use `IClientEventPublisher`, not `IMessageBus`. These target session bindings via the Entity Session Registry ([#426](https://github.com/beyond-immersion/bannou-service/issues/426)). Full schemas in `schemas/transit-client-events.yaml`.
 
-```yaml
-# schemas/transit-client-events.yaml
-
-TransitJourneyUpdated:
-  description: "Journey state changed — pushed to the traveling entity's bound session"
-  target: "character → session"     # Via Gardener's character-session binding
-  discriminator: JourneyStatus      # enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned
-  payload:
-    journeyId: uuid
-    entityId: uuid
-    status: JourneyStatus
-    currentLocationId: uuid
-    destinationLocationId: uuid
-    estimatedArrivalGameTime: decimal
-    currentLegIndex: integer
-    remainingLegs: integer
-    primaryModeCode: string
-
-TransitDiscoveryRevealed:
-  description: "A discoverable connection was revealed — pushed to the discovering entity's session"
-  target: "character → session"
-  payload:
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    source: string
-    connectionName: string          # Human-readable name for UI display
-
-TransitConnectionStatusChanged:
-  description: "A connection's operational status changed — pushed to sessions in the affected realm"
-  target: "realm → session"         # Via Agency's realm-session binding (already registered for Worldstate time sync)
-  payload:
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    previousStatus: ConnectionStatus
-    newStatus: ConnectionStatus
-    reason: string
-```
+| Event | Target | Key Payload |
+|-------|--------|-------------|
+| `TransitJourneyUpdated` | character → session | journeyId, entityId, status (discriminator: JourneyStatus enum), currentLocationId, destinationLocationId, estimatedArrivalGameTime, currentLegIndex, remainingLegs, primaryModeCode |
+| `TransitDiscoveryRevealed` | character → session | connectionId, from/to LocationId, source, connectionName |
+| `TransitConnectionStatusChanged` | realm → session | connectionId, from/to LocationId, previousStatus, newStatus, reason |
 
 Design reference: [#501](https://github.com/beyond-immersion/bannou-service/issues/501)
 
@@ -809,82 +373,24 @@ Design reference: [#501](https://github.com/beyond-immersion/bannou-service/issu
 
 ## Configuration
 
-```yaml
-# schemas/transit-configuration.yaml
-TransitServiceConfiguration:
-  properties:
-    DefaultWalkingSpeedKmPerGameHour:
-      type: number
-      default: 5.0
-      description: "Default walking speed used when no mode is specified"
-      env: TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR
+Full schema in `schemas/transit-configuration.yaml`.
 
-    MaxRouteCalculationLegs:
-      type: integer
-      default: 8
-      description: "Maximum number of legs to consider in route calculation (prevents combinatorial explosion)"
-      env: TRANSIT_MAX_ROUTE_CALCULATION_LEGS
+| Property | Type | Default | Env Var | Purpose |
+|----------|------|---------|---------|---------|
+| `DefaultWalkingSpeedKmPerGameHour` | decimal | 5.0 | `TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR` | Speed when no mode specified (min 0.1) |
+| `MaxRouteCalculationLegs` | int | 8 | `TRANSIT_MAX_ROUTE_CALCULATION_LEGS` | Prevents combinatorial explosion (1-50) |
+| `MaxRouteOptions` | int | 5 | `TRANSIT_MAX_ROUTE_OPTIONS` | Max route options returned (1-20) |
+| `ConnectionGraphCacheSeconds` | int | 300 | `TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS` | Redis graph cache TTL (0 = no caching) |
+| `JourneyArchiveAfterGameHours` | decimal | 168.0 | `TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS` | Game-hours after arrival/abandonment before archival to MySQL (0 = immediate) |
+| `CargoSpeedPenaltyThresholdKg` | decimal | 100.0 | `TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG` | Cargo weight above this reduces speed |
+| `SeasonalConnectionCheckIntervalSeconds` | int | 60 | `TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS` | Background worker check interval |
+| `DiscoveryCacheTtlSeconds` | int | 600 | `TRANSIT_DISCOVERY_CACHE_TTL_SECONDS` | Per-entity discovery cache TTL (0 = no caching) |
+| `DefaultCargoSpeedPenaltyRate` | decimal | 0.3 | `TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE` | Default cargo penalty rate (0-1). Overridden by per-mode `cargoSpeedPenaltyRate` |
+| `JourneyArchiveRetentionDays` | int | 365 | `TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS` | MySQL archive retention in real days (0 = indefinite) |
+| `JourneyArchivalWorkerIntervalSeconds` | int | 300 | `TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS` | Archival sweep interval in real seconds |
+| `AutoUpdateLocationOnTransition` | bool | true | `TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION` | Auto-call Location's `/location/report-entity-position` on journey departure, waypoint arrival, and final arrival. Location's presence has 30s TTL so Transit must re-report on each transition. Both are L2 so direct API calls are used — not events. |
 
-    MaxRouteOptions:
-      type: integer
-      default: 5
-      description: "Maximum number of route options to return from calculate endpoint"
-      env: TRANSIT_MAX_ROUTE_OPTIONS
-
-    ConnectionGraphCacheSeconds:
-      type: integer
-      default: 300
-      description: "TTL for cached connection graph in Redis (seconds). Graph is rebuilt on cache miss."
-      env: TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS
-
-    JourneyArchiveAfterGameHours:
-      type: number
-      default: 168.0
-      description: "Game-hours after arrival/abandonment before journey is archived from Redis to MySQL"
-      env: TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS
-
-    CargoSpeedPenaltyThresholdKg:
-      type: number
-      default: 100.0
-      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * DefaultCargoSpeedPenaltyRate"
-      env: TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG
-
-    SeasonalConnectionCheckIntervalSeconds:
-      type: integer
-      default: 60
-      description: "How often the background worker checks Worldstate for seasonal connection status changes"
-      env: TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS
-
-    DiscoveryCacheTtlSeconds:
-      type: integer
-      default: 600
-      description: "TTL for per-entity discovery cache in Redis (seconds). Route calculation checks this cache to filter discoverable connections."
-      env: TRANSIT_DISCOVERY_CACHE_TTL_SECONDS
-
-    DefaultCargoSpeedPenaltyRate:
-      type: number
-      default: 0.3
-      description: "Default cargo speed penalty rate applied when a mode's cargoSpeedPenaltyRate is null. Speed reduction = (cargo - threshold) / (capacity - threshold) * rate. 0.3 = 30% max speed reduction at full capacity."
-      env: TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE
-
-    JourneyArchiveRetentionDays:
-      type: integer
-      default: 365
-      description: "Number of real-time days to retain archived journeys in MySQL before cleanup. 0 = retain indefinitely. The archival worker deletes records older than this threshold during each sweep."
-      env: TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS
-
-    JourneyArchivalWorkerIntervalSeconds:
-      type: integer
-      default: 300
-      description: "Real-time interval in seconds between journey archival worker sweeps. The worker scans Redis for completed/abandoned journeys older than JourneyArchiveAfterGameHours and moves them to MySQL."
-      env: TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS
-
-    AutoUpdateLocationOnTransition:
-      type: boolean
-      default: true
-      description: "When true, Transit automatically calls Location's /location/report-entity-position endpoint to update the entity's current location on journey departure, waypoint arrival, and final arrival. Location's presence system uses ephemeral Redis storage with 30s TTL, so Transit must re-report on each state transition. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events."
-      env: TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION
-```
+**Cargo speed penalty formula**: `speed_reduction = (cargo - CargoSpeedPenaltyThresholdKg) / (mode.cargoCapacityKg - threshold) × rate` where `rate` = mode's `cargoSpeedPenaltyRate` ?? `DefaultCargoSpeedPenaltyRate`. Max penalty = `rate` (e.g., 0.3 = 30% speed reduction at full capacity).
 
 ---
 
@@ -896,7 +402,7 @@ TransitServiceConfiguration:
 | `TransitServiceConfiguration` | Typed configuration access |
 | `ITelemetryProvider` | Distributed tracing spans for all async methods per IMPLEMENTATION TENETS |
 | `IStateStoreFactory` | State store access (creates 8 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache, transit-lock) |
-| `IMessageBus` | Event publishing (journey lifecycle, connection status, discovery, mode status, connection lifecycle) |
+| `IMessageBus` | Event publishing (journey lifecycle, connection status, discovery, mode registered/updated/deleted, connection lifecycle) |
 | `IEventConsumer` | Subscribes to `worldstate.season-changed` for seasonal connection status updates |
 | `ILocationClient` | Location existence validation, entity position reporting via `AutoUpdateLocationOnTransition` (L2 hard dependency) |
 | `IWorldstateClient` | Game-time calculations for journey ETAs, seasonal context for connection status (L2 hard dependency) |
@@ -916,659 +422,101 @@ TransitServiceConfiguration:
 
 ## API Endpoints
 
+Full request/response schemas in `schemas/transit-api.yaml`. Use `make print-models PLUGIN="transit"` for model shapes.
+
 ### Mode Management
 
-```yaml
-/transit/mode/register:
-  access: developer
-  description: "Register a new transit mode type"
-  request:
-    code: string                    # Unique mode code
-    name: string
-    description: string
-    baseSpeedKmPerGameHour: decimal
-    terrainSpeedModifiers: [TerrainSpeedModifier]  # Optional - per-terrain speed multipliers
-    passengerCapacity: integer
-    cargoCapacityKg: decimal
-    cargoSpeedPenaltyRate: decimal  # Optional - overrides plugin config default
-    compatibleTerrainTypes: [string]
-    validEntityTypes: [string]      # Optional - entity type restrictions
-    requirements: TransitModeRequirements
-    fatigueRatePerGameHour: decimal
-    noiseLevelNormalized: decimal
-    realmRestrictions: [uuid]       # Optional
-    tags: [string]
-  response: { mode: TransitMode }
-  errors:
-    - MODE_CODE_ALREADY_EXISTS
+| Endpoint | Access | Description | Errors | Events |
+|----------|--------|-------------|--------|--------|
+| `/transit/mode/register` | developer | Register a new transit mode type | `MODE_CODE_ALREADY_EXISTS` | `transit-mode.registered` |
+| `/transit/mode/get` | user | Get a transit mode by code | `MODE_NOT_FOUND` | — |
+| `/transit/mode/list` | user | List modes (filters: realmId, terrainType, tags, includeDeprecated) | — | — |
+| `/transit/mode/update` | developer | Update a transit mode's properties | `MODE_NOT_FOUND` | `transit-mode.updated` |
+| `/transit/mode/deprecate` | developer | Deprecate a mode (Category A, idempotent) | `MODE_NOT_FOUND` | `transit-mode.updated` |
+| `/transit/mode/undeprecate` | developer | Reverse deprecation (Category A, idempotent) | `MODE_NOT_FOUND` | `transit-mode.updated` |
+| `/transit/mode/delete` | developer | Delete a deprecated mode | `MODE_NOT_FOUND`, `NOT_DEPRECATED`, `ACTIVE_JOURNEYS_EXIST`, `CONNECTIONS_REFERENCE_MODE` | `transit-mode.deleted` |
+| `/transit/mode/check-availability` | user | Check which modes an entity can currently use | — | — |
 
-/transit/mode/get:
-  access: user
-  description: "Get a transit mode by code"
-  request:
-    code: string
-  response: { mode: TransitMode }
-  errors:
-    - MODE_NOT_FOUND
-
-/transit/mode/list:
-  access: user
-  description: "List all registered transit modes"
-  request:
-    realmId: uuid                   # Optional - filter by realm availability
-    terrainType: string             # Optional - filter by terrain compatibility
-    tags: [string]                  # Optional - filter by tags
-    includeDeprecated: boolean      # Default false
-  response: { modes: [TransitMode] }
-
-/transit/mode/update:
-  access: developer
-  description: "Update a transit mode's properties"
-  request:
-    code: string
-    name: string                    # Optional
-    description: string             # Optional
-    baseSpeedKmPerGameHour: decimal # Optional
-    terrainSpeedModifiers: [TerrainSpeedModifier]  # Optional - per-terrain speed multipliers
-    passengerCapacity: integer      # Optional
-    cargoCapacityKg: decimal        # Optional
-    cargoSpeedPenaltyRate: decimal  # Optional - per-mode cargo penalty override
-    compatibleTerrainTypes: [string] # Optional
-    validEntityTypes: [string]      # Optional - entity type restrictions
-    requirements: TransitModeRequirements # Optional
-    fatigueRatePerGameHour: decimal # Optional
-    noiseLevelNormalized: decimal   # Optional
-    realmRestrictions: [uuid]       # Optional
-    tags: [string]                  # Optional
-  response: { mode: TransitMode }
-  errors:
-    - MODE_NOT_FOUND
-
-/transit/mode/deprecate:
-  access: developer
-  description: "Deprecate a transit mode (existing journeys continue, new journeys cannot use it). Sets the triple-field deprecation model: isDeprecated=true, deprecatedAt=now, deprecationReason=reason. Idempotent: returns OK if already deprecated (caller's intent is satisfied). Category A per IMPLEMENTATION TENETS: connections store compatibleModes referencing mode codes, and journeys store primaryModeCode/legModes — persistent data in other entities stores this entity's ID."
-  request:
-    code: string
-    reason: string
-  response: { mode: TransitMode }
-  emits: transit.mode.updated       # changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
-  errors:
-    - MODE_NOT_FOUND
-
-/transit/mode/undeprecate:
-  access: developer
-  description: "Reverse deprecation of a transit mode (Category A — undeprecate is required). Clears isDeprecated, deprecatedAt, deprecationReason. Idempotent: returns OK if not currently deprecated."
-  request:
-    code: string
-  response: { mode: TransitMode }
-  emits: transit.mode.updated       # changedFields: ["isDeprecated", "deprecatedAt", "deprecationReason"]
-  errors:
-    - MODE_NOT_FOUND
-
-/transit/mode/delete:
-  access: developer
-  description: "Delete a deprecated transit mode (Category A — must be deprecated before deletion). Rejects if active journeys use this mode. Archived journeys retain the mode code as historical data."
-  request:
-    code: string
-  response: { }                     # 200 OK confirms deletion
-  emits: transit.mode.updated       # changedFields includes deletion marker
-  errors:
-    - MODE_NOT_FOUND
-    - NOT_DEPRECATED                # Must deprecate before deleting (Category A)
-    - ACTIVE_JOURNEYS_EXIST         # Cannot delete while active journeys use this mode
-    - CONNECTIONS_REFERENCE_MODE    # Cannot delete while connections list this in compatibleModes
-```
+**Key behaviors**:
+- **deprecate**: Sets triple-field deprecation model. Existing journeys continue; new journeys cannot use it. Idempotent: returns OK if already deprecated.
+- **undeprecate**: Clears deprecation fields. Idempotent: returns OK if not currently deprecated.
+- **delete**: Must be deprecated first (Category A). Rejects if active journeys use this mode OR connections list it in `compatibleModes`. Archived journeys retain the mode code as historical data.
+- **check-availability**: Checks entity type against mode's `validEntityTypes` (if set), calls lib-inventory for required item tags, calls lib-character/lib-species for species compatibility. Also applies `ITransitCostModifierProvider` enrichment to compute `preferenceCost` and `effectiveSpeed` adjustments (including proficiency-based speed bonuses from Status providers). Returns per-mode: `available` (bool), `unavailableReason` (null if available — "missing_item", "wrong_species", etc.), `effectiveSpeed` (adjusted for cargo), `preferenceCost` (from DI providers, 0.0 = neutral, 1.0 = dreads it). This is the endpoint the variable provider calls internally.
 
 ### Connection Management
 
-```yaml
-/transit/connection/create:
-  access: developer
-  description: "Create a connection between two locations"
-  request:
-    fromLocationId: uuid
-    toLocationId: uuid
-    bidirectional: boolean
-    distanceKm: decimal
-    terrainType: string
-    compatibleModes: [string]
-    seasonalAvailability: [SeasonalAvailabilityEntry]  # Optional
-    baseRiskLevel: decimal
-    riskDescription: string         # Optional
-    discoverable: boolean           # Default false. When true, filtered from route queries
-                                    # unless the requesting entity has discovered it.
-    name: string                    # Optional
-    code: string                    # Optional
-    tags: [string]                  # Optional
-  response: { connection: TransitConnection }
-  errors:
-    - LOCATIONS_NOT_FOUND           # One or both locations don't exist
-    - CONNECTION_ALREADY_EXISTS     # Duplicate from→to connection
-    - SAME_LOCATION                 # from and to are the same
-    - INVALID_MODE_CODE             # Referenced mode doesn't exist
-    - INVALID_SEASON_KEY            # seasonalAvailability key doesn't match realm's Worldstate seasons
-  notes: |
-    fromRealmId, toRealmId, and crossRealm are derived from the locations via
-    the Location service -- callers never specify them. Cross-realm connections
-    (where from and to are in different realms) are fully supported at the
-    platform level. Games control cross-realm travel by policy: if a game's
-    world design treats realms as isolated, it simply never creates connections
-    between locations in different realms.
+| Endpoint | Access | Description | Errors | Events |
+|----------|--------|-------------|--------|--------|
+| `/transit/connection/create` | developer | Create a connection between two locations | `LOCATIONS_NOT_FOUND`, `CONNECTION_ALREADY_EXISTS`, `SAME_LOCATION`, `INVALID_MODE_CODE`, `INVALID_SEASON_KEY` | `transit-connection.created` |
+| `/transit/connection/get` | user | Get by ID or code (one of connectionId/code required) | `CONNECTION_NOT_FOUND` | — |
+| `/transit/connection/query` | user | Query by location, terrain, mode, status, realm, tags | — | — |
+| `/transit/connection/update` | developer | Update properties (not status — use update-status) | `CONNECTION_NOT_FOUND` | `transit-connection.updated` |
+| `/transit/connection/update-status` | user | Status transition with optimistic concurrency | `CONNECTION_NOT_FOUND`, `STATUS_MISMATCH` | `transit-connection.status-changed` |
+| `/transit/connection/delete` | developer | Delete a connection | `CONNECTION_NOT_FOUND`, `ACTIVE_JOURNEYS_EXIST` | `transit-connection.deleted` |
+| `/transit/connection/bulk-seed` | developer | Seed connections from configuration | — | `transit-connection.created` (per connection) |
 
-    When seasonalAvailability is provided, keys are validated against the realm's
-    Worldstate season codes. If the realm's calendar template defines seasons
-    ["wet", "dry"] but the caller provides {"winter": false}, the request fails
-    with INVALID_SEASON_KEY. This prevents silent misconfiguration where seasonal
-    connections never close because the key doesn't match any actual season.
-    For cross-realm connections, season keys are validated against both realms'
-    calendars (since each realm may use different season names).
-
-/transit/connection/get:
-  access: user
-  description: "Get a connection by ID or code"
-  request:
-    connectionId: uuid              # One of these required
-    code: string                    # One of these required
-  response: { connection: TransitConnection }
-  errors:
-    - CONNECTION_NOT_FOUND
-
-/transit/connection/query:
-  access: user
-  description: "Query connections by location, terrain, mode, or status"
-  request:
-    fromLocationId: uuid            # Optional - connections FROM this location
-    toLocationId: uuid              # Optional - connections TO this location
-    locationId: uuid                # Optional - connections involving this location (either end)
-    realmId: uuid                   # Optional - connections touching this realm (fromRealmId OR toRealmId)
-    crossRealm: boolean             # Optional - filter to only cross-realm (true) or intra-realm (false)
-    terrainType: string             # Optional - filter by terrain
-    modeCode: string                # Optional - filter by mode compatibility
-    status: ConnectionStatus        # Optional - filter by status (enum: open | closed | dangerous | blocked | seasonal_closed)
-    tags: [string]                  # Optional - filter by tags
-    includeSeasonalClosed: boolean  # Default true
-    page: integer
-    pageSize: integer
-  response: { connections: [TransitConnection], totalCount: integer }
-
-/transit/connection/update:
-  access: developer
-  description: "Update a connection's properties (not status -- use update-status for that)"
-  request:
-    connectionId: uuid
-    distanceKm: decimal             # Optional
-    terrainType: string             # Optional
-    compatibleModes: [string]       # Optional
-    seasonalAvailability: [SeasonalAvailabilityEntry]  # Optional
-    baseRiskLevel: decimal          # Optional
-    riskDescription: string         # Optional
-    discoverable: boolean           # Optional
-    name: string                    # Optional
-    code: string                    # Optional
-    tags: [string]                  # Optional
-  response: { connection: TransitConnection }
-  errors:
-    - CONNECTION_NOT_FOUND
-
-/transit/connection/update-status:
-  access: user
-  description: "Transition a connection's operational status with optimistic concurrency"
-  request:
-    connectionId: uuid
-    currentStatus: enum             # What caller believes current status is. Required unless forceUpdate.
-                                    # open | closed | dangerous | blocked | seasonal_closed
-    newStatus: enum                 # Target status: open | closed | dangerous | blocked
-    reason: string
-    forceUpdate: boolean            # Default false. When true, currentStatus is ignored (nullable).
-                                    # Use for administrative overrides.
-  response: { connection: TransitConnection }
-  emits: transit-connection.status-changed
-  errors:
-    - CONNECTION_NOT_FOUND
-    - STATUS_MISMATCH               # currentStatus doesn't match actual. Response includes actual
-                                    # status so caller can refresh and retry. Only when forceUpdate=false.
-  notes: |
-    Separated from general update because status changes are operational (game-driven)
-    while property changes are administrative (developer-driven).
-    Status changes publish events; property changes do not.
-
-    Optimistic concurrency prevents silent status conflicts between independent actors.
-    Environment (L4) closing a road for a storm while Faction (L4) blocks it for a war:
-    whichever writes second sees STATUS_MISMATCH and retries with awareness of the
-    current state. Use forceUpdate=true for admin overrides that don't need concurrency.
-
-    The seasonal_closed status is managed by the Seasonal Connection Worker -- it uses
-    forceUpdate=true since it is the authoritative source for seasonal state.
-
-/transit/connection/delete:
-  access: developer
-  description: "Delete a connection between locations"
-  request:
-    connectionId: uuid
-  response: { }                    # 200 OK confirms deletion; no filler properties per IMPLEMENTATION TENETS
-  errors:
-    - CONNECTION_NOT_FOUND
-    - ACTIVE_JOURNEYS_EXIST         # Cannot delete while journeys are using this connection
-
-/transit/connection/bulk-seed:
-  access: developer
-  description: "Seed connections from configuration (two-pass: create connections, then validate modes)"
-  request:
-    realmId: uuid                   # Optional - scope location code resolution to this realm.
-                                    # When provided, all location codes are resolved within this realm
-                                    # and replaceExisting deletes connections for this realm only.
-                                    # When null, location codes must be globally unique or qualified.
-    connections: [
-      {
-        fromLocationCode: string    # Location codes (resolved via Location service)
-        toLocationCode: string
-        bidirectional: boolean
-        distanceKm: decimal
-        terrainType: string
-        compatibleModes: [string]
-        seasonalAvailability: [SeasonalAvailabilityEntry]
-        baseRiskLevel: decimal
-        name: string
-        code: string
-        tags: [string]
-      }
-    ]
-    replaceExisting: boolean        # If true, delete existing connections scoped by realmId first
-  response: { created: integer, updated: integer, errors: [string] }
-  notes: |
-    Two-pass resolution: first pass creates connections with location code lookup,
-    second pass validates all mode codes exist. Follows Location's bulk-seed pattern.
-
-    Cross-realm connections can be seeded by omitting realmId and using globally-unique
-    location codes, or by providing location codes from different realms in separate
-    bulk-seed calls and linking them with individual connection/create calls.
-```
+**Key behaviors**:
+- **create**: `fromRealmId`, `toRealmId`, and `crossRealm` are derived from the locations via Location service — callers never specify them. Cross-realm connections fully supported at the platform level; games control cross-realm travel by never creating them if unwanted. Season keys in `seasonalAvailability` are validated against the realm's Worldstate season codes. If the realm's calendar defines seasons `["wet", "dry"]` but the caller provides `{"winter": false}`, the request fails with `INVALID_SEASON_KEY`. For cross-realm connections, season keys are validated against both realms' calendars.
+- **update-status**: Separated from general update because status changes are operational (game-driven) while property changes are administrative (developer-driven). Status changes publish events; property changes do not (except via x-lifecycle updated). `STATUS_MISMATCH` returns the actual status so the caller can refresh and retry. The `seasonal_closed` status is managed by the Seasonal Connection Worker using `forceUpdate=true` since it is the authoritative source for seasonal state. `newStatus` cannot be `seasonal_closed` — only the worker sets that.
+- **query**: Filters include `fromLocationId`, `toLocationId`, `locationId` (either end), `realmId` (touching this realm), `crossRealm` (filter to cross-realm or intra-realm only), `terrainType`, `modeCode`, `status`, `tags`, `includeSeasonalClosed` (default true), pagination.
+- **bulk-seed**: Two-pass resolution: first pass creates connections with location code lookup, second pass validates all mode codes exist. Follows Location's bulk-seed pattern. `realmId` scopes location code resolution and `replaceExisting` deletion. Cross-realm connections can be seeded by omitting `realmId` and using globally-unique location codes.
 
 ### Journey Lifecycle
 
-```yaml
-/transit/journey/create:
-  access: user
-  description: "Plan a journey (status: preparing). Does not start travel."
-  request:
-    entityId: uuid
-    entityType: string              # "character", "npc", "caravan", "army", "creature"
-    originLocationId: uuid
-    destinationLocationId: uuid
-    primaryModeCode: string         # Preferred transit mode. Used for all legs unless overridden.
-    preferMultiModal: boolean       # Default false. When true, route calculation selects the
-                                    # best mode per leg (e.g., horseback on roads, river_boat on
-                                    # rivers, walking on trails). Each leg's modeCode may differ.
-    plannedDepartureGameTime: decimal  # Optional - defaults to current game-time
-    partySize: integer              # Default 1
-    cargoWeightKg: decimal          # Default 0
-  response: { journey: TransitJourney }
-  errors:
-    - ORIGIN_NOT_FOUND
-    - DESTINATION_NOT_FOUND
-    - MODE_NOT_FOUND
-    - MODE_DEPRECATED
-    - NO_ROUTE_AVAILABLE            # No connected path for this mode
-    - MODE_REQUIREMENTS_NOT_MET     # Entity doesn't meet mode requirements
-    - ENTITY_TYPE_NOT_ALLOWED       # Entity type not in mode's validEntityTypes
-  notes: |
-    Internally calls route/calculate to find the best path and populate legs.
-    Checks mode compatibility via check-availability.
-    Does NOT start the journey -- call /transit/journey/depart for that.
+| Endpoint | Access | Description | Errors | Events |
+|----------|--------|-------------|--------|--------|
+| `/transit/journey/create` | user | Plan a journey (status: preparing) | `ORIGIN_NOT_FOUND`, `DESTINATION_NOT_FOUND`, `MODE_NOT_FOUND`, `MODE_DEPRECATED`, `NO_ROUTE_AVAILABLE`, `MODE_REQUIREMENTS_NOT_MET`, `ENTITY_TYPE_NOT_ALLOWED` | — |
+| `/transit/journey/depart` | user | Start travel (preparing → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit.journey.departed` |
+| `/transit/journey/resume` | user | Resume interrupted journey (interrupted → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit.journey.resumed` |
+| `/transit/journey/advance` | user | Mark waypoint reached (completes leg, starts next or arrives) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `NO_CURRENT_LEG` | `transit.journey.waypoint-reached` or `transit.journey.arrived` |
+| `/transit/journey/advance-batch` | user | Batch advance for NPC scale | `PARTIAL_FAILURE` | Per-journey events |
+| `/transit/journey/arrive` | user | Force-arrive at destination (skip remaining legs) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.arrived` |
+| `/transit/journey/interrupt` | user | Interrupt journey (combat, event, breakdown) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.interrupted` |
+| `/transit/journey/abandon` | user | Abandon journey (entity stays at current location) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.abandoned` |
+| `/transit/journey/get` | user | Get a journey by ID | `JOURNEY_NOT_FOUND` | — |
+| `/transit/journey/query-by-connection` | user | List active journeys traversing a specific connection | `CONNECTION_NOT_FOUND` | — |
+| `/transit/journey/list` | user | List journeys by entity, realm, status | — | — |
+| `/transit/journey/query-archive` | user | Query archived journeys from MySQL | — | — |
 
-    When preferMultiModal is true, each leg gets the fastest compatible mode
-    the entity can use on that connection. The journey's primaryModeCode is
-    set to the mode used for the most legs (plurality).
-
-/transit/journey/depart:
-  access: user
-  description: "Start a prepared journey (preparing → in_transit)"
-  request:
-    journeyId: uuid
-  response: { journey: TransitJourney }
-  emits: transit.journey.departed
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "preparing"
-    - CONNECTION_CLOSED             # First leg's connection is now closed
-
-/transit/journey/resume:
-  access: user
-  description: "Resume an interrupted journey (interrupted → in_transit)"
-  request:
-    journeyId: uuid
-  response: { journey: TransitJourney }
-  emits: transit.journey.resumed
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "interrupted"
-    - CONNECTION_CLOSED             # Current leg's connection is now closed
-  notes: |
-    Distinct from depart: depart is for initial departure (preparing → in_transit),
-    resume is for continuing after interruption (interrupted → in_transit).
-    Consumers (Trade, Analytics) can distinguish "started" from "resumed" via events.
-
-/transit/journey/advance:
-  access: user
-  description: "Mark arrival at next waypoint (completes current leg, starts next or arrives)"
-  request:
-    journeyId: uuid
-    arrivedAtGameTime: decimal      # Game-time when waypoint was reached
-    incidents: [                    # Optional - things that happened during this leg
-      {
-        reason: string              # "bandit_attack", "storm_delay", "detour"
-        durationGameHours: decimal  # How much time the incident added
-        description: string         # Optional narrative description
-      }
-    ]
-  response: { journey: TransitJourney }
-  emits: transit.journey.waypoint-reached   # If more legs remain
-  emits: transit.journey.arrived             # If this was the last leg
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "in_transit"
-    - NO_CURRENT_LEG                # Already at final destination
-  notes: |
-    If this completes the final leg, journey status transitions to "arrived"
-    and transit.journey.arrived is emitted instead of waypoint-reached.
-    The arrivedAtGameTime is recorded for historical accuracy.
-
-/transit/journey/advance-batch:
-  access: user
-  description: "Advance multiple journeys in a single call (SDK efficiency for NPC scale)"
-  request:
-    advances: [
-      {
-        journeyId: uuid
-        arrivedAtGameTime: decimal
-        incidents: [               # Optional - per-journey incidents
-          {
-            reason: string
-            durationGameHours: decimal
-            description: string
-          }
-        ]
-      }
-    ]
-  response:
-    results: [
-      {
-        journeyId: uuid
-        error: string              # null on success. Error code on failure.
-        journey: TransitJourney    # Updated journey on success. Null on failure
-                                   # (null/non-null journey indicates success per IMPLEMENTATION TENETS).
-      }
-    ]
-  emits: transit.journey.waypoint-reached   # Per journey, if more legs remain
-  emits: transit.journey.arrived             # Per journey, if final leg completed
-  errors:
-    - PARTIAL_FAILURE              # Some advances failed -- check individual results
-  notes: |
-    Batch version of /transit/journey/advance for game SDK efficiency.
-    Journey progression is game-engine-driven: the game server (or NPC Actor
-    brain via SDK) must explicitly call advance when entities reach waypoints.
-    At NPC scale (10,000+ concurrent journeys), the game engine advances
-    entities in batches per tick rather than making individual API calls.
-
-    Each advance in the batch is processed independently -- failure of one
-    does not roll back others. Results include per-journey success/failure
-    with error details. Events are emitted per-journey as with the single
-    advance endpoint.
-
-    Ordering within the batch is preserved: advances are applied sequentially
-    to handle cases where the same journeyId appears multiple times (advancing
-    through multiple waypoints in a single tick).
-
-/transit/journey/arrive:
-  access: user
-  description: "Force-arrive a journey at destination (skips remaining legs)"
-  request:
-    journeyId: uuid
-    arrivedAtGameTime: decimal
-    reason: string                  # Why legs were skipped ("teleported", "fast_travel", "narrative")
-  response: { journey: TransitJourney }
-  emits: transit.journey.arrived
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "in_transit" or "at_waypoint"
-  notes: |
-    Used for narrative fast-travel, teleportation, or game-driven skip.
-    Remaining legs are marked as "skipped" rather than "completed".
-
-/transit/journey/interrupt:
-  access: user
-  description: "Interrupt an active journey (combat, event, breakdown)"
-  request:
-    journeyId: uuid
-    reason: string
-    gameTime: decimal               # When the interruption occurred
-  response: { journey: TransitJourney }
-  emits: transit.journey.interrupted
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "in_transit"
-  notes: |
-    Journey status transitions to "interrupted". To resume, call /transit/journey/resume
-    (which transitions interrupted → in_transit and emits transit.journey.resumed).
-    To give up, call /transit/journey/abandon.
-
-/transit/journey/abandon:
-  access: user
-  description: "Abandon a journey (entity stays at current location)"
-  request:
-    journeyId: uuid
-    reason: string
-  response: { journey: TransitJourney }
-  emits: transit.journey.abandoned
-  errors:
-    - JOURNEY_NOT_FOUND
-    - INVALID_STATUS                # Must be "preparing", "in_transit", "at_waypoint", or "interrupted"
-
-/transit/journey/get:
-  access: user
-  description: "Get a journey by ID"
-  request:
-    journeyId: uuid
-  response: { journey: TransitJourney }
-  errors:
-    - JOURNEY_NOT_FOUND
-
-/transit/journey/query-by-connection:
-  access: user
-  description: "List active journeys currently traversing a specific connection"
-  request:
-    connectionId: uuid
-    status: JourneyStatus           # Optional - filter by status (default: in_transit)
-                                    # enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned
-    page: integer
-    pageSize: integer
-  response: { journeys: [TransitJourney], totalCount: integer }
-  errors:
-    - CONNECTION_NOT_FOUND
-  notes: |
-    Returns journeys whose current leg uses this connection. Enables "who's on
-    this road?" queries for encounter generation, bandit ambush targeting,
-    caravan interception, and road traffic monitoring. Overlaps with Location's
-    "entities at location" query but provides transit-specific context (mode,
-    direction, progress, ETA) that Location cannot.
-
-/transit/journey/list:
-  access: user
-  description: "List journeys for an entity or within a realm"
-  request:
-    entityId: uuid                  # Optional - journeys for this entity
-    entityType: string              # Optional - filter by entity type
-    realmId: uuid                   # Optional - journeys touching this realm (origin OR destination)
-    crossRealm: boolean             # Optional - filter to cross-realm journeys only
-    status: JourneyStatus           # Optional - filter by status (enum: preparing | in_transit | at_waypoint | arrived | interrupted | abandoned)
-    activeOnly: boolean             # Default true (excludes arrived, abandoned)
-    page: integer
-    pageSize: integer
-  response: { journeys: [TransitJourney], totalCount: integer }
-
-/transit/journey/query-archive:
-  access: user
-  description: "Query archived (completed/abandoned) journeys from MySQL historical store"
-  request:
-    entityId: uuid                  # Optional
-    entityType: string              # Optional
-    realmId: uuid                   # Optional - journeys touching this realm (origin OR destination)
-    crossRealm: boolean             # Optional - filter to cross-realm journeys only
-    originLocationId: uuid          # Optional
-    destinationLocationId: uuid     # Optional
-    modeCode: string                # Optional
-    status: JourneyStatus           # Optional (typically arrived or abandoned)
-    fromGameTime: decimal           # Optional - journey departed after this game-time
-    toGameTime: decimal             # Optional - journey departed before this game-time
-    page: integer
-    pageSize: integer
-  response: { journeys: [TransitJourney], totalCount: integer }
-  notes: |
-    Reads from the MySQL archive store (transit-journeys-archive).
-    Used by Trade (velocity calculations), Analytics (travel patterns),
-    and Character History (travel biography generation).
-```
+**Key behaviors**:
+- **create**: Internally calls route/calculate to find the best path and populate legs. Checks mode compatibility via check-availability. Does NOT start the journey — call depart for that. When `preferMultiModal` is true, each leg gets the fastest compatible mode the entity can use on that connection; `primaryModeCode` is set to the mode used for the most legs (plurality).
+- **depart vs resume**: Distinct endpoints — depart is for initial departure (preparing → in_transit), resume is for continuing after interruption (interrupted → in_transit). Consumers (Trade, Analytics) can distinguish "started" from "resumed" via different events.
+- **advance**: Takes `arrivedAtGameTime` and optional `incidents` array (reason, durationGameHours, description). If this completes the final leg, journey transitions to "arrived" and emits `transit.journey.arrived` instead of `waypoint-reached`. Also auto-reveals discoverable connections traversed during the completed leg.
+- **advance-batch**: Batch version for game SDK efficiency at NPC scale (10,000+ concurrent journeys). Each advance processed independently — failure of one does not roll back others. Results include per-journey success/failure (null/non-null journey indicates success per IMPLEMENTATION TENETS). Ordering within batch preserved for same-journeyId multiple advances (advancing through multiple waypoints in a single tick). Events emitted per-journey.
+- **arrive (force)**: Marks remaining legs as "skipped" rather than "completed". Used for narrative fast-travel, teleportation, or game-driven skip. Valid from `in_transit` or `at_waypoint`.
+- **abandon**: Valid from `preparing`, `in_transit`, `at_waypoint`, or `interrupted`.
+- **query-by-connection**: Returns journeys whose current leg uses this connection. Enables "who's on this road?" queries for encounter generation, bandit ambush targeting, caravan interception, and road traffic monitoring. Provides transit-specific context (mode, direction, progress, ETA) that Location's "entities at location" query cannot.
+- **list**: Filters include `entityId`, `entityType`, `realmId` (origin OR destination), `crossRealm`, `status`, `activeOnly` (default true — excludes arrived, abandoned), pagination.
+- **query-archive**: Reads from MySQL archive store. Filters include `entityId`, `entityType`, `realmId`, `crossRealm`, `originLocationId`, `destinationLocationId`, `modeCode`, `status`, `fromGameTime`/`toGameTime`, pagination. Used by Trade (velocity calculations), Analytics (travel patterns), Character History (travel biography).
 
 ### Route Calculation
 
-```yaml
-/transit/route/calculate:
-  access: user
-  description: "Calculate route options between two locations (pure computation, no state mutation)"
-  request:
-    fromLocationId: uuid
-    toLocationId: uuid
-    modeCode: string                # Optional - specific mode. Null = try all modes
-    preferMultiModal: boolean       # Default false. When true, selects best mode per leg.
-    entityId: uuid                  # Optional - for discovery filtering. When provided,
-                                    # discoverable connections are filtered to only those
-                                    # this entity has discovered. When null, discoverable
-                                    # connections are excluded entirely (conservative).
-    maxLegs: integer                # Optional - maximum legs to consider (default from config)
-    sortBy: enum                    # fastest (default) | safest | shortest
-    maxOptions: integer             # How many options to return (default from config)
-    includeSeasonalClosed: boolean  # Default false - exclude currently closed routes
-  response: { options: [TransitRouteOption] }
-  errors:
-    - LOCATIONS_NOT_FOUND
-    - NO_ROUTE_AVAILABLE            # No connected path exists
-  notes: |
-    Pure computation endpoint. Performs graph search over connection graph.
-    Does NOT apply entity-specific DI cost modifiers (those are applied by
-    the variable provider when GOAP evaluates the results).
-    Returns objective travel data: distance, time, risk, mode.
+| Endpoint | Access | Description | Errors | Events |
+|----------|--------|-------------|--------|--------|
+| `/transit/route/calculate` | user | Calculate route options (pure computation, no state mutation) | `LOCATIONS_NOT_FOUND`, `NO_ROUTE_AVAILABLE` | — |
 
-    The graph search uses Dijkstra's algorithm with configurable cost function:
-    - "fastest": cost = estimated_hours (distance / effective_speed per leg,
-      where effective_speed = baseSpeed × terrainSpeedModifiers[legTerrainType])
-    - "safest": cost = cumulative_risk
-    - "shortest": cost = distance_km
-
-    Multiple connections between the same location pair (parallel edges) are
-    supported. Route calculation evaluates each connection independently,
-    choosing the best per mode. E.g., a road and a river between two towns
-    are separate connections with different mode compatibility.
-
-    When preferMultiModal is true, each leg selects the fastest compatible mode
-    the entity can use. Route options include per-leg mode codes in legModes[].
-
-    Cross-realm routing: When fromLocationId and toLocationId are in different
-    realms, the graph search merges the connection graphs for all relevant realms.
-    Cross-realm connections appear in both realms' cached graphs, so the merge
-    naturally discovers realm-spanning paths. Games that never create cross-realm
-    connections will never see cross-realm routes -- the platform supports it,
-    but the graph content determines what's reachable.
-```
-
-### Mode Compatibility
-
-```yaml
-/transit/mode/check-availability:
-  access: user
-  description: "Check which transit modes an entity can currently use"
-  request:
-    entityId: uuid
-    entityType: string
-    locationId: uuid                # Optional - only modes available at this location
-    modeCode: string                # Optional - check specific mode only
-  response:
-    availableModes: [
-      {
-        code: string
-        available: boolean
-        unavailableReason: string   # null if available. "missing_item", "wrong_species", etc.
-        effectiveSpeed: decimal     # Adjusted for cargo weight if applicable
-        preferenceCost: decimal     # From DI cost modifier providers (0.0 = neutral, 1.0 = dreads it)
-      }
-    ]
-  notes: |
-    Checks mode requirements against entity state:
-    - Entity type: checks entityType against mode's validEntityTypes (if set).
-      Modes with null validEntityTypes skip this check for non-character entities.
-    - Item requirements: calls lib-inventory to check if entity has required item tag (L2 hard)
-    - Species requirements: calls lib-character or lib-species for species code (L2 hard)
-    - Terrain speed: effectiveSpeed accounts for terrainSpeedModifiers when locationId
-      is provided and the entity's current connection terrain is known.
-
-    Also applies ITransitCostModifierProvider enrichment to compute preferenceCost
-    and effectiveSpeed adjustments (e.g., proficiency-based speed bonuses from Status).
-    This is the endpoint the variable provider calls internally.
-```
+**Key behaviors**:
+- Dijkstra's algorithm with configurable cost function: `fastest` (cost = estimated_hours using `baseSpeed × terrainSpeedModifiers`), `safest` (cost = cumulative_risk), `shortest` (cost = distance_km). Default: `fastest`.
+- Multiple connections between the same location pair (parallel edges) are supported. Route calculation evaluates each independently, choosing the best per mode.
+- Does NOT apply entity-specific DI cost modifiers — those are applied by the variable provider when GOAP evaluates results. Returns objective travel data.
+- When `preferMultiModal` is true, each leg selects the fastest compatible mode. Route options include per-leg mode codes in `legModes[]`.
+- Discovery filtering: when `entityId` is provided, discoverable connections are filtered to only those the entity has discovered. When null, discoverable connections are excluded entirely (conservative).
+- Cross-realm routing: merges connection graphs for all relevant realms. Cross-realm connections appear in both realms' cached graphs. Games that never create cross-realm connections will never see cross-realm routes.
+- `includeSeasonalClosed` (default false) excludes currently closed routes.
 
 ### Connection Discovery
 
-```yaml
-/transit/discovery/reveal:
-  access: user
-  description: "Reveal a discoverable connection to an entity (explicit grant)"
-  request:
-    entityId: uuid
-    connectionId: uuid
-    source: string                  # How discovered: "travel", "guide", "hearsay", "map", "quest_reward"
-  response:
-    discovery:                        # Discovery record (per IMPLEMENTATION TENETS — no filler booleans)
-      entityId: uuid
-      connectionId: uuid
-      source: string
-      discoveredAt: timestamp         # When discovery occurred (now for new, original time if already known)
-      isNew: boolean                  # Whether this was a new discovery (true) or already known (false).
-                                      # NOT a filler property -- stored entity state distinguishing
-                                      # first discovery from re-revelation, needed by Collection
-                                      # (only new discoveries trigger unlock events).
-  errors:
-    - CONNECTION_NOT_FOUND
-    - NOT_DISCOVERABLE              # Connection is not marked as discoverable (already public)
-  notes: |
-    Also called internally by journey/advance when a leg uses a discoverable connection.
-    Hearsay (L4) calls this when propagating route knowledge via rumor.
-    Quest rewards can include connection reveals.
+| Endpoint | Access | Description | Errors | Events |
+|----------|--------|-------------|--------|--------|
+| `/transit/discovery/reveal` | user | Reveal a discoverable connection to an entity | `CONNECTION_NOT_FOUND`, `NOT_DISCOVERABLE` | `transit.discovery.revealed` |
+| `/transit/discovery/list` | user | List connections an entity has discovered (filter: realmId) | — | — |
+| `/transit/discovery/check` | user | Check if entity has discovered specific connections | — | — |
 
-/transit/discovery/list:
-  access: user
-  description: "List connections an entity has discovered"
-  request:
-    entityId: uuid
-    realmId: uuid                   # Optional - filter by realm (fromRealmId OR toRealmId)
-  response: { connectionIds: [uuid] }
+**Key behaviors**:
+- **reveal**: Also called internally by journey/advance when a leg uses a discoverable connection. Hearsay (L4) calls this when propagating route knowledge via rumor. Quest rewards can include connection reveals. Response includes `isNew` boolean — NOT a filler property; stored entity state distinguishing first discovery from re-revelation, needed by Collection (only new discoveries trigger unlock events).
+- **check**: Returns per-connection: `discovered` (bool), `discoveredAt` (null if not), `source` (how it was discovered, null if not).
 
-/transit/discovery/check:
-  access: user
-  description: "Check if an entity has discovered specific connections"
-  request:
-    entityId: uuid
-    connectionIds: [uuid]
-  response:
-    results: [
-      {
-        connectionId: uuid
-        discovered: boolean
-        discoveredAt: timestamp     # null if not discovered
-        source: string              # How it was discovered (null if not)
-      }
-    ]
-```
-
-**Total endpoints: 32**
+**Total endpoints: 33**
 
 ---
 
@@ -1613,16 +561,13 @@ teleportation, fast-travel, or narrative skip.
 
 ---
 
-## Stubs & Unimplemented Features
+## Implementation Status
 
-This service is entirely aspirational -- no schema, code, or tests exist. Implementation requires:
-1. Create `schemas/transit-api.yaml`, `transit-events.yaml`, `transit-configuration.yaml`
-2. Add state store definitions to `schemas/state-stores.yaml`
-3. Run `cd scripts && ./generate-service.sh transit`
-4. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
-5. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
-6. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
-7. Write unit tests in `plugins/lib-transit.tests/`
+Schemas created and code generated. Remaining implementation:
+1. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
+2. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
+3. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
+4. Write unit tests in `plugins/lib-transit.tests/`
 
 ---
 
@@ -1655,78 +600,21 @@ services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>(
 
 ### Available Variables
 
-```yaml
-# Mode availability and preference (per entity, computed via check-availability)
-${transit.mode.<code>.available}:
-  type: boolean
-  description: "Can this entity currently use this transit mode?"
-  example: "${transit.mode.horseback.available}"
-  notes: "Checks item requirements, species restrictions, skill requirements"
-
-${transit.mode.<code>.speed}:
-  type: decimal
-  description: "Effective speed in km/game-hour for this entity on this mode"
-  example: "${transit.mode.wagon.speed}"
-  notes: "Accounts for cargo weight penalty and DI cost modifier speed multipliers (including proficiency bonuses from Status providers)"
-
-${transit.mode.<code>.preference_cost}:
-  type: decimal
-  description: "GOAP cost modifier from DI enrichment providers. 0.0 = neutral, 1.0 = extreme aversion"
-  example: "${transit.mode.horseback.preference_cost}"
-  notes: |
-    Aggregated from ITransitCostModifierProvider implementations:
-    - Disposition: dread/comfort feelings toward this mode
-    - Hearsay: believed danger of mode (e.g., "ships are cursed")
-    - Ethology: species-level affinity (wolves don't ride horses)
-
-# Active journey state
-${transit.journey.active}:
-  type: boolean
-  description: "Is this entity currently on a journey?"
-
-${transit.journey.mode}:
-  type: string
-  description: "Transit mode of the active journey (null if no active journey)"
-
-${transit.journey.destination_code}:
-  type: string
-  description: "Location code of the journey destination"
-
-${transit.journey.eta_hours}:
-  type: decimal
-  description: "Estimated game-hours until arrival"
-
-${transit.journey.progress}:
-  type: decimal
-  description: "Journey progress from 0.0 (just departed) to 1.0 (arrived)"
-
-${transit.journey.remaining_legs}:
-  type: integer
-  description: "Number of route legs remaining"
-
-# Nearest location queries (cached, refreshed periodically)
-${transit.nearest.<location_code>.hours}:
-  type: decimal
-  description: "Best-case travel time in game-hours to the named location from current position"
-  example: "${transit.nearest.eldoria.hours}"
-  notes: "Uses best available mode for this entity. Cached per-entity, refreshed on location change."
-
-${transit.nearest.<location_code>.best_mode}:
-  type: string
-  description: "Fastest available transit mode to reach the named location"
-  example: "${transit.nearest.iron_mines.best_mode}"
-
-# Discovery state (per entity)
-${transit.discovered_connections}:
-  type: integer
-  description: "Total number of discoverable connections this entity has revealed"
-
-${transit.connection.<code>.discovered}:
-  type: boolean
-  description: "Has this entity discovered the named connection?"
-  example: "${transit.connection.smuggler_tunnel.discovered}"
-  notes: "Only meaningful for connections with discoverable=true. Always true for non-discoverable."
-```
+| Variable | Type | Description | Notes |
+|----------|------|-------------|-------|
+| `${transit.mode.<code>.available}` | boolean | Can this entity currently use this transit mode? | Checks item requirements, species restrictions, skill requirements |
+| `${transit.mode.<code>.speed}` | decimal | Effective speed in km/game-hour for this entity on this mode | Accounts for cargo weight penalty and DI cost modifier speed multipliers (including proficiency bonuses from Status providers) |
+| `${transit.mode.<code>.preference_cost}` | decimal | GOAP cost modifier from DI enrichment providers. 0.0 = neutral, 1.0 = extreme aversion | Aggregated from Disposition (dread/comfort), Hearsay (believed danger), Ethology (species-level affinity) |
+| `${transit.journey.active}` | boolean | Is this entity currently on a journey? | — |
+| `${transit.journey.mode}` | string | Transit mode of the active journey | Null if no active journey |
+| `${transit.journey.destination_code}` | string | Location code of the journey destination | — |
+| `${transit.journey.eta_hours}` | decimal | Estimated game-hours until arrival | — |
+| `${transit.journey.progress}` | decimal | Journey progress 0.0 (just departed) to 1.0 (arrived) | — |
+| `${transit.journey.remaining_legs}` | integer | Number of route legs remaining | — |
+| `${transit.nearest.<location_code>.hours}` | decimal | Best-case travel time in game-hours to the named location | Uses best available mode. Cached per-entity, refreshed on location change. |
+| `${transit.nearest.<location_code>.best_mode}` | string | Fastest available transit mode to reach the named location | — |
+| `${transit.discovered_connections}` | integer | Total number of discoverable connections this entity has revealed | — |
+| `${transit.connection.<code>.discovered}` | boolean | Has this entity discovered the named connection? | Only meaningful for connections with `discoverable=true`. Always true for non-discoverable. |
 
 ### GOAP Integration Example
 
@@ -1938,7 +826,7 @@ Analytics consumes all transit journey events for aggregation:
 
 ### Resource (L1) -- Cleanup Integration
 
-Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup coordination:
+Transit declares `x-references` in its API schema for lib-resource cleanup coordination:
 - **Location deletion (CASCADE)**: When a location is deleted, Resource calls Transit's cleanup callback. Transit closes all connections referencing the deleted location (`status: closed`, `reason: "location_deleted"`) and interrupts active journeys passing through it.
 - **Character deletion (CASCADE)**: Transit's cleanup callback clears discovery data for the deleted entity from the `transit-discovery` store and abandons any active journeys for that entity.
 - Transit does NOT subscribe to `location.deleted` or `character.deleted` events for cleanup -- this is handled exclusively through the Resource cleanup callback pattern per FOUNDATION TENETS (Resource-Managed Cleanup).
@@ -1949,38 +837,11 @@ Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup 
 
 ### Seasonal Connection Worker
 
-```yaml
-SeasonalConnectionWorker:
-  interval: config.SeasonalConnectionCheckIntervalSeconds
-  description: |
-    Subscribes to Worldstate season-change events. When a season boundary occurs,
-    scans all connections with seasonalAvailability restrictions and updates their
-    status accordingly. Connections closing for the season transition to
-    "seasonal_closed"; connections opening transition to "open".
-
-    Also checks for active journeys on newly-closed connections and publishes
-    warnings (but does NOT interrupt them -- the game decides how to handle
-    travelers caught by seasonal closure).
-
-  publishes:
-    - transit.connection.status-changed (for each connection that changes)
-```
+Subscribes to Worldstate season-change events. When a season boundary occurs, scans all connections with `seasonalAvailability` restrictions and updates their status accordingly. Connections closing for the season transition to `seasonal_closed`; connections opening transition to `open`. Also checks for active journeys on newly-closed connections and publishes warnings (but does NOT interrupt them -- the game decides how to handle travelers caught by seasonal closure). Publishes `transit-connection.status-changed` for each connection that changes. Runs periodic checks every `SeasonalConnectionCheckIntervalSeconds`.
 
 ### Journey Archival Worker
 
-```yaml
-JourneyArchivalWorker:
-  interval: 300  # Every 5 minutes (real-time)
-  description: |
-    Scans Redis for completed/abandoned journeys older than
-    JourneyArchiveAfterGameHours and moves them to MySQL archive.
-    Frees Redis memory while preserving historical travel data
-    for analytics and NPC memory.
-
-    Also enforces JourneyArchiveRetentionDays: deletes archived journeys
-    older than the retention threshold from MySQL. When set to 0, archives
-    are retained indefinitely.
-```
+Scans Redis for completed/abandoned journeys older than `JourneyArchiveAfterGameHours` and moves them to MySQL archive. Frees Redis memory while preserving historical travel data for analytics and NPC memory. Also enforces `JourneyArchiveRetentionDays`: deletes archived journeys older than the retention threshold from MySQL. When set to 0, archives are retained indefinitely. Runs every `JourneyArchivalWorkerIntervalSeconds` (default 300 = every 5 minutes real-time).
 
 ---
 
@@ -2019,55 +880,3 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 6. **Transit and Mapping relationship**: Complementary, not overlapping. Mapping is continuous spatial data ("where exactly am I"), Transit is discrete connectivity ("how do I get from town A to town B"). No integration needed beyond both referencing Location entities.
 
 7. **Cross-realm connections**: Fully supported at the platform level. Connections store `fromRealmId` and `toRealmId` (derived from their endpoint locations), with a convenience `crossRealm` flag. Route calculation merges per-realm graphs when origin and destination are in different realms. Games control cross-realm travel by policy: Arcadia's realms are intentionally isolated (no cross-realm connections are ever created), but other games on the platform may freely connect locations across realms. The platform provides the primitive; game design decides whether to use it.
-
-8. **Connection discovery**: Core feature. Connections have `discoverable: boolean` flag. Per-entity discovery tracking in Redis. Route calculation filters by discovery status. Discovery via travel, explicit grant, or Hearsay integration.
-
-9. **Proficiency via DI enrichment**: Proficiency-based speed bonuses flow through `ITransitCostModifierProvider`, not through direct Seed integration. An L4 provider queries Status (which aggregates seed-derived capabilities) and returns a `SpeedMultiplier` to Transit. This keeps Transit decoupled from growth mechanics while still supporting the content flywheel: experienced riders are faster, but Transit doesn't know why -- it just receives a multiplier from the enrichment layer.
-
-10. **Status transition concurrency**: Optimistic concurrency pattern with `currentStatus`/`newStatus` and `forceUpdate` bypass. Prevents silent status conflicts between independent actors while supporting administrative overrides.
-
-11. **Terrain speed modifiers**: Core feature. Modes define optional `terrainSpeedModifiers` (per-terrain multipliers on base speed). Route calculation uses `baseSpeed × terrainSpeedModifiers[terrainType]` per-leg, making terrain a first-class factor in path cost evaluation. Missing keys default to 1.0 (base speed).
-
-12. **Per-mode cargo speed penalty**: Core feature. Each mode can optionally set `cargoSpeedPenaltyRate` to override the plugin-level `DefaultCargoSpeedPenaltyRate`. Null falls back to the plugin config. 0.0 disables the penalty entirely (pack mules, cargo ships). This avoids unrealistic penalties on modes designed for cargo.
-
-13. **Entity type validation**: Core feature. Modes define optional `validEntityTypes` (string array). When set, only those entity types may use the mode. Null disables validation for non-character entities (caller's responsibility). Characters are not exempt -- modes for armies/caravans may validly exclude characters.
-
-14. **Seasonal key validation**: Core feature. Connection `seasonalAvailability` keys are validated against the realm's Worldstate season codes on creation. Invalid keys produce `INVALID_SEASON_KEY` error. Prevents silent misconfiguration where seasonal closures never trigger.
-
-15. **Discovery store durability**: MySQL-backed with Redis cache. Discovery is permanent world knowledge that must survive Redis restarts. The Redis cache (`transit-discovery-cache`) provides fast route calculation lookups with lazy population from MySQL on cache miss.
-
-16. **Location presence tracking**: API-based, not event-based. `AutoUpdateLocationOnTransition` config (default true) makes Transit call `/location/report-entity-position` on departure, waypoint arrival, and final arrival. Location's presence entries are ephemeral (30s TTL in Redis) with bidirectional lookups, so Transit must re-report on each state transition to keep entries alive. Both services are L2 and always co-deployed, so direct API calls are correct. Entities remain at their last known location while in transit between graph nodes.
-
-17. **Journey archive retention**: Configurable via `JourneyArchiveRetentionDays` (default 365). The archival worker deletes archives older than the threshold. 0 = retain indefinitely.
-
-18. **Variable provider cache strategy**: Lazy invalidation with configurable TTL. Mode availability is cached per-entity and expires after TTL. Acceptable tradeoff given worlds are large and transit decisions are not frame-rate-sensitive. Eager invalidation deferred until empirical evidence of staleness issues.
-
-19. **Journey progression is game-engine-driven**: The game server (or NPC Actor brain via game engine SDK) must explicitly call `advance` (or `advance-batch` at scale) when entities reach waypoints. Transit cannot auto-progress journeys because real game models running into proper obstacles (terrain collision, NPC encounters, physics) cannot be tracked in real-time by backend services. The game engine runs the simulation; Transit records the outcomes. This is architecturally consistent with the declarative lifecycle pattern (resolved decision #2) but specifically addresses the "who drives the clock" question: the game engine does, not Transit, and the batch endpoint exists to make this efficient at 10K+ concurrent journey scale.
-
-20. **Entity presence during transit is game-driven**: While an entity is traveling between waypoints, its physical position in the game world is the game engine's concern, not Transit's. Transit updates Location's ephemeral presence on each state transition (departure, waypoint, arrival) via `AutoUpdateLocationOnTransition`, but between transitions the entity's moment-to-moment position is tracked by the game engine. There is no TTL-based "entity in transit" heartbeat from Transit -- the game engine's own tick loop is responsible for keeping entities visible in the world. This is the same principle as journey progression: the game simulates, Transit records.
-
----
-
-## Known Quirks & Caveats
-
-#### Bugs (Fix Immediately)
-
-No bugs identified -- this service is aspirational (pre-implementation).
-
-#### Intentional Quirks (Documented Behavior)
-
-No intentional quirks documented yet -- quirks will be identified during implementation.
-
-#### Design Considerations (Requires Planning)
-
-No design considerations identified yet -- these will emerge during implementation.
-
----
-
-## Work Tracking
-
-No active work items. This document is an aspirational design specification. Implementation has not begun.
-
----
-
-*This document is an aspirational deep dive for a service that does not yet exist. No schema files or implementation code have been created. The design follows established Bannou patterns and respects the service hierarchy. Implementation requires schemas, code generation, service implementation, and testing -- in that order.*

@@ -14,6 +14,8 @@ using BeyondImmersion.Bannou.Currency.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.Bannou.Inventory.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
+using BeyondImmersion.Bannou.Status.ClientEvents;
+using BeyondImmersion.Bannou.Transit.ClientEvents;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.Bannou.Worldstate.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
@@ -85,8 +87,12 @@ public static class ClientEventRegistry
         { typeof(SessionCancelledEvent), "game_session.session_cancelled" },
         { typeof(SessionChatReceivedEvent), "game_session.chat_received" },
         { typeof(SessionStateChangedEvent), "game_session.state_changed" },
+        { typeof(StatusEffectChangedClientEvent), "status.effect_changed" },
         { typeof(SystemErrorEvent), "system.error" },
         { typeof(SystemNotificationEvent), "system.notification" },
+        { typeof(TransitConnectionStatusChangedEvent), "transit.connection_status_changed" },
+        { typeof(TransitDiscoveryRevealedEvent), "transit.discovery_revealed" },
+        { typeof(TransitJourneyUpdatedEvent), "transit.journey_updated" },
         { typeof(VoiceBroadcastConsentRequestEvent), "voice.broadcast_consent_request" },
         { typeof(VoiceBroadcastConsentUpdateEvent), "voice.broadcast_consent_update" },
         { typeof(VoicePeerJoinedEvent), "voice.peer_joined" },
@@ -157,8 +163,12 @@ public static class ClientEventRegistry
         { "matchmaking.player_accepted", typeof(MatchPlayerAcceptedEvent) },
         { "matchmaking.queue_joined", typeof(QueueJoinedEvent) },
         { "matchmaking.status_update", typeof(MatchmakingStatusUpdateEvent) },
+        { "status.effect_changed", typeof(StatusEffectChangedClientEvent) },
         { "system.error", typeof(SystemErrorEvent) },
         { "system.notification", typeof(SystemNotificationEvent) },
+        { "transit.connection_status_changed", typeof(TransitConnectionStatusChangedEvent) },
+        { "transit.discovery_revealed", typeof(TransitDiscoveryRevealedEvent) },
+        { "transit.journey_updated", typeof(TransitJourneyUpdatedEvent) },
         { "voice.broadcast_consent_request", typeof(VoiceBroadcastConsentRequestEvent) },
         { "voice.broadcast_consent_update", typeof(VoiceBroadcastConsentUpdateEvent) },
         { "voice.peer_joined", typeof(VoicePeerJoinedEvent) },

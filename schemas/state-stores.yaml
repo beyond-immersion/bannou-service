@@ -1156,6 +1156,12 @@ x-state-stores:
   # Worldstate Stores (L2 GameFoundation Service)
   # ============================================================================
 
+  worldstate-lock:
+    backend: redis
+    prefix: "worldstate:lock"
+    service: Worldstate
+    purpose: Distributed locks for clock advancement, ratio changes, and calendar mutations
+
   worldstate-realm-clock:
     backend: redis
     prefix: "worldstate:clock"
@@ -1171,3 +1177,51 @@ x-state-stores:
     backend: mysql
     service: Worldstate
     purpose: Time ratio change history per realm for elapsed game-time computation (append-only, compacted)
+
+  # ============================================================================
+  # Transit Stores (L2 GameFoundation Service)
+  # ============================================================================
+
+  transit-modes:
+    backend: mysql
+    service: Transit
+    purpose: Transit mode definitions (durable registry)
+
+  transit-connections:
+    backend: mysql
+    service: Transit
+    purpose: Transit connections between locations (durable graph edges)
+
+  transit-journeys:
+    backend: redis
+    prefix: "transit:journey"
+    service: Transit
+    purpose: Active transit journeys (hot state, archived to MySQL by background worker)
+
+  transit-journeys-archive:
+    backend: mysql
+    service: Transit
+    purpose: Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)
+
+  transit-connection-graph:
+    backend: redis
+    prefix: "transit:graph"
+    service: Transit
+    purpose: Cached per-realm connection adjacency lists for Dijkstra route calculation
+
+  transit-discovery:
+    backend: mysql
+    service: Transit
+    purpose: Per-entity connection discovery tracking (permanent world knowledge)
+
+  transit-discovery-cache:
+    backend: redis
+    prefix: "transit:discovery"
+    service: Transit
+    purpose: Per-entity discovery set cache for fast route calculation filtering
+
+  transit-lock:
+    backend: redis
+    prefix: "transit:lock"
+    service: Transit
+    purpose: Distributed locks for journey state transitions and connection status updates

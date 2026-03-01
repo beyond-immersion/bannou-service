@@ -183,12 +183,21 @@ This document lists all state store components used in Bannou.
 | `subscription-lock` | Redis | Subscription | Distributed locks for subscription mutations and index operations |
 | `subscription-statestore` | MySQL | Subscription | User subscriptions to game services |
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
+| `transit-connection-graph` | Redis | Transit | Cached per-realm connection adjacency lists for Dijkstra route calculation |
+| `transit-connections` | MySQL | Transit | Transit connections between locations (durable graph edges) |
+| `transit-discovery` | MySQL | Transit | Per-entity connection discovery tracking (permanent world knowledge) |
+| `transit-discovery-cache` | Redis | Transit | Per-entity discovery set cache for fast route calculation filtering |
+| `transit-journeys` | Redis | Transit | Active transit journeys (hot state, archived to MySQL by background worker) |
+| `transit-journeys-archive` | MySQL | Transit | Archived completed/abandoned journeys (historical record for Trade velocity, Analytics) |
+| `transit-lock` | Redis | Transit | Distributed locks for journey state transitions and connection status updates |
+| `transit-modes` | MySQL | Transit | Transit mode definitions (durable registry) |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 | `worldstate-calendar` | MySQL | Worldstate | Calendar template definitions and per-realm worldstate configuration (durable, queryable) |
+| `worldstate-lock` | Redis | Worldstate | Distributed locks for clock advancement, ratio changes, and calendar mutations |
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 178 stores (111 Redis, 67 MySQL)
+**Total**: 187 stores (116 Redis, 71 MySQL)
 
 ## Naming Conventions
 

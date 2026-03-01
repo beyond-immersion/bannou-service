@@ -4416,8 +4416,30 @@ public partial class QuestController
                     "type": "string",
                     "format": "uuid",
                     "description": "Character to get log for"
+                },
+                "category": {
+                    "description": "Filter active quests by category",
+                    "nullable": true,
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/QuestCategory"
+                        }
+                    ]
                 }
             }
+        },
+        "QuestCategory": {
+            "type": "string",
+            "enum": [
+                "MAIN",
+                "SIDE",
+                "BOUNTY",
+                "DAILY",
+                "WEEKLY",
+                "EVENT",
+                "TUTORIAL"
+            ],
+            "description": "Category of quest for organization"
         }
     }
 }

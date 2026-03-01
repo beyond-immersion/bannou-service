@@ -24,6 +24,7 @@ public partial class SeedController
     "$defs": {
         "CreateSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to create a new seed.",
             "required": [
                 "ownerId",
@@ -42,6 +43,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code (e.g., \"guardian\", \"dungeon_core\")."
                 },
                 "gameServiceId": {
@@ -74,6 +76,7 @@ public partial class SeedController
     "$defs": {
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -103,6 +106,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -118,6 +122,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -133,6 +138,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -215,6 +221,7 @@ public partial class SeedController
     "$defs": {
         "GetSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get a seed by ID.",
             "required": [
                 "seedId"
@@ -238,6 +245,7 @@ public partial class SeedController
     "$defs": {
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -267,6 +275,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -282,6 +291,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -297,6 +307,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -379,6 +390,7 @@ public partial class SeedController
     "$defs": {
         "GetSeedsByOwnerRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get seeds by owner.",
             "required": [
                 "ownerId",
@@ -417,6 +429,7 @@ public partial class SeedController
     "$defs": {
         "ListSeedsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Paginated list of seeds.",
             "required": [
                 "seeds",
@@ -432,12 +445,14 @@ public partial class SeedController
                 },
                 "totalCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Total matching seeds across all pages."
                 }
             }
         },
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -467,6 +482,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -482,6 +498,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -497,6 +514,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -579,6 +597,7 @@ public partial class SeedController
     "$defs": {
         "ListSeedsRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list seeds with optional filters.",
             "properties": {
                 "seedTypeCode": {
@@ -607,17 +626,24 @@ public partial class SeedController
                     "description": "Filter by current growth phase code."
                 },
                 "status": {
-                    "$ref": "#/$defs/SeedStatus",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SeedStatus"
+                        }
+                    ],
                     "nullable": true,
                     "description": "Filter by seed status."
                 },
                 "page": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Page number (1-based).",
                     "default": 1
                 },
                 "pageSize": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Number of results per page.",
                     "default": 50
                 }
@@ -643,6 +669,7 @@ public partial class SeedController
     "$defs": {
         "ListSeedsResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Paginated list of seeds.",
             "required": [
                 "seeds",
@@ -658,12 +685,14 @@ public partial class SeedController
                 },
                 "totalCount": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Total matching seeds across all pages."
                 }
             }
         },
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -693,6 +722,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -708,6 +738,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -723,6 +754,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -805,6 +837,7 @@ public partial class SeedController
     "$defs": {
         "UpdateSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to update a seed's mutable fields.",
             "required": [
                 "seedId"
@@ -839,6 +872,7 @@ public partial class SeedController
     "$defs": {
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -868,6 +902,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -883,6 +918,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -898,6 +934,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -980,6 +1017,7 @@ public partial class SeedController
     "$defs": {
         "ActivateSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to activate a seed.",
             "required": [
                 "seedId"
@@ -1003,6 +1041,7 @@ public partial class SeedController
     "$defs": {
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -1032,6 +1071,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -1047,6 +1087,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -1062,6 +1103,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -1144,6 +1186,7 @@ public partial class SeedController
     "$defs": {
         "ArchiveSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to archive a seed.",
             "required": [
                 "seedId"
@@ -1167,6 +1210,7 @@ public partial class SeedController
     "$defs": {
         "SeedResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed entity response.",
             "required": [
                 "seedId",
@@ -1196,6 +1240,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Registered seed type code."
                 },
                 "gameServiceId": {
@@ -1211,6 +1256,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current computed growth phase code."
                 },
                 "totalGrowth": {
@@ -1226,6 +1272,7 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "status": {
@@ -1308,6 +1355,7 @@ public partial class SeedController
     "$defs": {
         "GetGrowthRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get growth data for a seed.",
             "required": [
                 "seedId"
@@ -1331,6 +1379,7 @@ public partial class SeedController
     "$defs": {
         "GrowthResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Growth domain data for a seed.",
             "required": [
                 "seedId",
@@ -1423,6 +1472,7 @@ public partial class SeedController
     "$defs": {
         "RecordGrowthRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to record growth in a specific domain.",
             "required": [
                 "seedId",
@@ -1438,15 +1488,19 @@ public partial class SeedController
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Dot-separated domain path (e.g., \"combat.melee.sword\"). New domains are created automatically on first contribution.\n"
                 },
                 "amount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Amount of growth to add."
                 },
                 "source": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Identifier of the contributing service (e.g., \"character-encounter\")."
                 },
                 "sourceEventId": {
@@ -1468,6 +1522,7 @@ public partial class SeedController
     "$defs": {
         "GrowthResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Growth domain data for a seed.",
             "required": [
                 "seedId",
@@ -1560,6 +1615,7 @@ public partial class SeedController
     "$defs": {
         "RecordGrowthBatchRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to record growth across multiple domains atomically.",
             "required": [
                 "seedId",
@@ -1577,16 +1633,19 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/GrowthEntry"
                     },
+                    "minItems": 1,
                     "description": "Domain-amount pairs to record."
                 },
                 "source": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Identifier of the contributing service."
                 }
             }
         },
         "GrowthEntry": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A single domain-amount pair for batch growth recording.",
             "required": [
                 "domain",
@@ -1595,11 +1654,14 @@ public partial class SeedController
             "properties": {
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Dot-separated domain path."
                 },
                 "amount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "description": "Growth amount to add."
                 }
             }
@@ -1615,6 +1677,7 @@ public partial class SeedController
     "$defs": {
         "GrowthResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Growth domain data for a seed.",
             "required": [
                 "seedId",
@@ -1707,6 +1770,7 @@ public partial class SeedController
     "$defs": {
         "GetGrowthPhaseRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get the current growth phase.",
             "required": [
                 "seedId"
@@ -1730,6 +1794,7 @@ public partial class SeedController
     "$defs": {
         "GrowthPhaseResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Current growth phase information for a seed.",
             "required": [
                 "seedId",
@@ -1745,10 +1810,12 @@ public partial class SeedController
                 },
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current phase code."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Current phase display name."
                 },
                 "totalGrowth": {
@@ -1834,6 +1901,7 @@ public partial class SeedController
     "$defs": {
         "GetCapabilityManifestRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get the capability manifest.",
             "required": [
                 "seedId"
@@ -1857,6 +1925,7 @@ public partial class SeedController
     "$defs": {
         "CapabilityManifestResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Computed capability manifest for a seed.",
             "required": [
                 "seedId",
@@ -1873,6 +1942,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type for consumer interpretation."
                 },
                 "computedAt": {
@@ -1882,6 +1952,7 @@ public partial class SeedController
                 },
                 "version": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Monotonically increasing version number."
                 },
                 "capabilities": {
@@ -1895,6 +1966,7 @@ public partial class SeedController
         },
         "Capability": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A single capability entry in the manifest.",
             "required": [
                 "capabilityCode",
@@ -1905,15 +1977,19 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier. Consumer-interpreted (e.g., UX module ID, spawning permission, faction action).\n"
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Growth domain this capability maps to."
                 },
                 "fidelity": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
+                    "maximum": 1,
                     "description": "Capability fidelity from 0.0 to 1.0. Higher values mean the seed has more developed capability in this area.\n"
                 },
                 "unlocked": {
@@ -1987,6 +2063,7 @@ public partial class SeedController
     "$defs": {
         "RegisterSeedTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to register a new seed type definition.",
             "required": [
                 "seedTypeCode",
@@ -2001,6 +2078,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique code for this seed type (e.g., \"guardian\", \"dungeon_core\")."
                 },
                 "gameServiceId": {
@@ -2011,14 +2089,17 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Description of what this seed type represents."
                 },
                 "maxPerOwner": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Maximum seeds of this type per owner entity."
                 },
                 "allowedOwnerTypes": {
@@ -2026,6 +2107,7 @@ public partial class SeedController
                     "items": {
                         "type": "object"
                     },
+                    "minItems": 1,
                     "description": "Entity types that can own seeds of this type."
                 },
                 "growthPhases": {
@@ -2033,10 +2115,12 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/GrowthPhaseDefinition"
                     },
+                    "minItems": 1,
                     "description": "Ordered growth phase definitions with thresholds."
                 },
                 "bondCardinality": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Max bond participants. 0 = no bonding, 1 = pair bonds, N = group bonds of up to N+1 participants.\n"
                 },
                 "bondPermanent": {
@@ -2083,6 +2167,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -2092,21 +2177,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -2117,25 +2206,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -2144,6 +2238,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -2158,6 +2253,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -2166,11 +2262,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -2192,6 +2290,7 @@ public partial class SeedController
     "$defs": {
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -2207,6 +2306,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -2217,10 +2317,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -2300,6 +2402,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -2309,21 +2412,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -2334,25 +2441,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -2361,6 +2473,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -2375,6 +2488,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -2383,11 +2497,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -2463,6 +2579,7 @@ public partial class SeedController
     "$defs": {
         "GetSeedTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get a seed type definition.",
             "required": [
                 "seedTypeCode"
@@ -2470,6 +2587,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type code."
                 },
                 "gameServiceId": {
@@ -2491,6 +2609,7 @@ public partial class SeedController
     "$defs": {
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -2506,6 +2625,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -2516,10 +2636,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -2599,6 +2721,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -2608,21 +2731,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -2633,25 +2760,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -2660,6 +2792,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -2674,6 +2807,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -2682,11 +2816,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -2762,6 +2898,7 @@ public partial class SeedController
     "$defs": {
         "ListSeedTypesRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to list seed types, optionally filtered by game service.",
             "properties": {
                 "gameServiceId": {
@@ -2788,6 +2925,7 @@ public partial class SeedController
     "$defs": {
         "ListSeedTypesResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "List of registered seed types.",
             "required": [
                 "seedTypes"
@@ -2804,6 +2942,7 @@ public partial class SeedController
         },
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -2819,6 +2958,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -2829,10 +2969,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -2912,6 +3054,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -2921,21 +3064,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -2946,25 +3093,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -2973,6 +3125,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -2987,6 +3140,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -2995,11 +3149,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -3075,6 +3231,7 @@ public partial class SeedController
     "$defs": {
         "UpdateSeedTypeRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to update a seed type definition.",
             "required": [
                 "seedTypeCode"
@@ -3082,6 +3239,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type to update."
                 },
                 "gameServiceId": {
@@ -3152,6 +3310,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -3161,21 +3320,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -3186,25 +3349,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -3213,6 +3381,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -3227,6 +3396,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -3235,11 +3405,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -3261,6 +3433,7 @@ public partial class SeedController
     "$defs": {
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -3276,6 +3449,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -3286,10 +3460,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -3369,6 +3545,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -3378,21 +3555,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -3403,25 +3584,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -3430,6 +3616,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -3444,6 +3631,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -3452,11 +3640,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -3535,11 +3725,13 @@ public partial class SeedController
             "description": "Request to deprecate a seed type, preventing new seed creation.",
             "additionalProperties": false,
             "required": [
-                "seedTypeCode"
+                "seedTypeCode",
+                "reason"
             ],
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type to deprecate."
                 },
                 "gameServiceId": {
@@ -3550,8 +3742,8 @@ public partial class SeedController
                 },
                 "reason": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 500,
-                    "nullable": true,
                     "description": "Optional reason for deprecation (for audit purposes)."
                 }
             }
@@ -3567,6 +3759,7 @@ public partial class SeedController
     "$defs": {
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -3582,6 +3775,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -3592,10 +3786,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -3675,6 +3871,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -3684,21 +3881,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -3709,25 +3910,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -3736,6 +3942,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -3750,6 +3957,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -3758,11 +3966,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -3846,6 +4056,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type to restore."
                 },
                 "gameServiceId": {
@@ -3867,6 +4078,7 @@ public partial class SeedController
     "$defs": {
         "SeedTypeResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
@@ -3882,6 +4094,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique type code."
                 },
                 "gameServiceId": {
@@ -3892,10 +4105,12 @@ public partial class SeedController
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable name."
                 },
                 "description": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Type description."
                 },
                 "maxPerOwner": {
@@ -3975,6 +4190,7 @@ public partial class SeedController
         },
         "GrowthPhaseDefinition": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Defines a growth phase with its threshold.",
             "required": [
                 "phaseCode",
@@ -3984,21 +4200,25 @@ public partial class SeedController
             "properties": {
                 "phaseCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Machine-readable phase identifier (e.g., \"nascent\", \"awakening\")."
                 },
                 "displayName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Human-readable phase label."
                 },
                 "minTotalGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum total growth to enter this phase."
                 }
             }
         },
         "CapabilityRule": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a growth domain to a capability with unlock threshold and fidelity formula.",
             "required": [
                 "capabilityCode",
@@ -4009,25 +4229,30 @@ public partial class SeedController
             "properties": {
                 "capabilityCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Unique capability identifier (e.g., \"combat.stance\")."
                 },
                 "domain": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Which growth domain this capability maps to."
                 },
                 "unlockThreshold": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Minimum domain depth to unlock this capability."
                 },
                 "fidelityFormula": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
                 }
             }
         },
         "CollectionGrowthMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
             "required": [
                 "collectionType",
@@ -4036,6 +4261,7 @@ public partial class SeedController
             "properties": {
                 "collectionType": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
                 },
                 "domainMappings": {
@@ -4050,6 +4276,7 @@ public partial class SeedController
         },
         "CollectionDomainMapping": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
             "required": [
                 "tagPrefix",
@@ -4058,11 +4285,13 @@ public partial class SeedController
             "properties": {
                 "tagPrefix": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
                 },
                 "baseAmount": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Base growth amount to record when a tag matches this prefix."
                 },
                 "discoveryBonusPerLevel": {
@@ -4146,6 +4375,7 @@ public partial class SeedController
             "properties": {
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "The seed type to delete."
                 },
                 "gameServiceId": {
@@ -4225,6 +4455,7 @@ public partial class SeedController
     "$defs": {
         "InitiateBondRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to initiate a bond between seeds.",
             "required": [
                 "initiatorSeedId",
@@ -4254,6 +4485,7 @@ public partial class SeedController
     "$defs": {
         "BondResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full bond record response.",
             "required": [
                 "bondId",
@@ -4272,6 +4504,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Seed type this bond connects."
                 },
                 "participants": {
@@ -4279,6 +4512,7 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/BondParticipant"
                     },
+                    "minItems": 2,
                     "description": "Seeds participating in this bond."
                 },
                 "createdAt": {
@@ -4293,17 +4527,20 @@ public partial class SeedController
                 "bondStrength": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Grows with shared growth. Consumer-interpreted."
                 },
                 "sharedGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total accumulated shared growth."
                 }
             }
         },
         "BondParticipant": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A participant in a seed bond.",
             "required": [
                 "seedId",
@@ -4400,6 +4637,7 @@ public partial class SeedController
     "$defs": {
         "ConfirmBondRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to confirm a pending bond.",
             "required": [
                 "bondId",
@@ -4429,6 +4667,7 @@ public partial class SeedController
     "$defs": {
         "BondResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full bond record response.",
             "required": [
                 "bondId",
@@ -4447,6 +4686,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Seed type this bond connects."
                 },
                 "participants": {
@@ -4454,6 +4694,7 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/BondParticipant"
                     },
+                    "minItems": 2,
                     "description": "Seeds participating in this bond."
                 },
                 "createdAt": {
@@ -4468,17 +4709,20 @@ public partial class SeedController
                 "bondStrength": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Grows with shared growth. Consumer-interpreted."
                 },
                 "sharedGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total accumulated shared growth."
                 }
             }
         },
         "BondParticipant": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A participant in a seed bond.",
             "required": [
                 "seedId",
@@ -4575,6 +4819,7 @@ public partial class SeedController
     "$defs": {
         "GetBondRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get a bond by ID.",
             "required": [
                 "bondId"
@@ -4598,6 +4843,7 @@ public partial class SeedController
     "$defs": {
         "BondResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full bond record response.",
             "required": [
                 "bondId",
@@ -4616,6 +4862,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Seed type this bond connects."
                 },
                 "participants": {
@@ -4623,6 +4870,7 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/BondParticipant"
                     },
+                    "minItems": 2,
                     "description": "Seeds participating in this bond."
                 },
                 "createdAt": {
@@ -4637,17 +4885,20 @@ public partial class SeedController
                 "bondStrength": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Grows with shared growth. Consumer-interpreted."
                 },
                 "sharedGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total accumulated shared growth."
                 }
             }
         },
         "BondParticipant": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A participant in a seed bond.",
             "required": [
                 "seedId",
@@ -4744,6 +4995,7 @@ public partial class SeedController
     "$defs": {
         "GetBondForSeedRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get the bond for a specific seed.",
             "required": [
                 "seedId"
@@ -4767,6 +5019,7 @@ public partial class SeedController
     "$defs": {
         "BondResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Full bond record response.",
             "required": [
                 "bondId",
@@ -4785,6 +5038,7 @@ public partial class SeedController
                 },
                 "seedTypeCode": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Seed type this bond connects."
                 },
                 "participants": {
@@ -4792,6 +5046,7 @@ public partial class SeedController
                     "items": {
                         "$ref": "#/$defs/BondParticipant"
                     },
+                    "minItems": 2,
                     "description": "Seeds participating in this bond."
                 },
                 "createdAt": {
@@ -4806,17 +5061,20 @@ public partial class SeedController
                 "bondStrength": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Grows with shared growth. Consumer-interpreted."
                 },
                 "sharedGrowth": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0,
                     "description": "Total accumulated shared growth."
                 }
             }
         },
         "BondParticipant": {
             "type": "object",
+            "additionalProperties": false,
             "description": "A participant in a seed bond.",
             "required": [
                 "seedId",
@@ -4913,6 +5171,7 @@ public partial class SeedController
     "$defs": {
         "GetBondPartnersRequest": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Request to get partner seed information.",
             "required": [
                 "seedId"
@@ -4936,6 +5195,7 @@ public partial class SeedController
     "$defs": {
         "BondPartnersResponse": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Partner seed summaries for a bond.",
             "required": [
                 "bondId",
@@ -4958,6 +5218,7 @@ public partial class SeedController
         },
         "PartnerSummary": {
             "type": "object",
+            "additionalProperties": false,
             "description": "Public summary of a bond partner's seed.",
             "required": [
                 "seedId",
@@ -4983,6 +5244,7 @@ public partial class SeedController
                 },
                 "growthPhase": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Partner's current growth phase."
                 },
                 "status": {

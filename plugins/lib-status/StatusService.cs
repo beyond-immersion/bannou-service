@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Status.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Contract;
@@ -7,11 +8,10 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.Bannou.Status.ClientEvents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

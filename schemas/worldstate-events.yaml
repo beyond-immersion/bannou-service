@@ -309,6 +309,7 @@ components:
         - previousMonth
         - currentMonth
         - monthsCrossed
+        - isCatchUp
         - currentGameTime
       properties:
         eventName:
@@ -329,6 +330,9 @@ components:
           type: integer
           minimum: 1
           description: Number of months crossed (1 for normal, greater than 1 for catch-up)
+        isCatchUp:
+          type: boolean
+          description: True if this event was generated during post-downtime catch-up processing
         currentGameTime:
           $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
           description: Full game time snapshot at the time of the event
@@ -351,6 +355,7 @@ components:
         - previousSeason
         - currentSeason
         - currentYear
+        - isCatchUp
         - currentGameTime
       properties:
         eventName:
@@ -370,6 +375,9 @@ components:
         currentYear:
           type: integer
           description: Current game year at the time of the season change
+        isCatchUp:
+          type: boolean
+          description: True if this event was generated during post-downtime catch-up processing
         currentGameTime:
           $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
           description: Full game time snapshot at the time of the event
@@ -392,6 +400,7 @@ components:
         - previousYear
         - currentYear
         - yearsCrossed
+        - isCatchUp
         - currentGameTime
       properties:
         eventName:
@@ -412,6 +421,9 @@ components:
           type: integer
           minimum: 1
           description: Number of years crossed (1 for normal, greater than 1 for catch-up)
+        isCatchUp:
+          type: boolean
+          description: True if this event was generated during post-downtime catch-up processing
         currentGameTime:
           $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
           description: Full game time snapshot at the time of the event

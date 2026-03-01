@@ -1,6 +1,6 @@
 # Worldstate Plugin Deep Dive
 
-> **Plugin**: lib-worldstate (not yet created)
+> **Plugin**: lib-worldstate
 > **Schema**: `schemas/worldstate-api.yaml`
 > **Version**: 1.0.0
 > **Layer**: GameFoundation
@@ -464,7 +464,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). Called exclus
 
 ## Stubs & Unimplemented Features
 
-**Schemas are complete** (`worldstate-api.yaml`, `worldstate-events.yaml`, `worldstate-configuration.yaml`, `worldstate-client-events.yaml`). No generated code or service implementation exists yet. The following phases are planned:
+**Schemas are complete** (`worldstate-api.yaml`, `worldstate-events.yaml`, `worldstate-configuration.yaml`, `worldstate-client-events.yaml`). Code generation has been run — all generated files exist (controller, interface, models, client, events, configuration, permission registration, reference tracking, client events). The service class is scaffolded with all 18 endpoint methods, but every method throws `NotImplementedException`. No business logic has been written. The following phases are planned:
 
 ### Phase 1: Schema Generation & Calendar Infrastructure
 - Generate service code from existing schemas

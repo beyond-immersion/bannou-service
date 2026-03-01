@@ -461,14 +461,6 @@ public partial class SpeciesController
                 "totalCount": {
                     "type": "integer",
                     "description": "Total number of species matching the query (for pagination)"
-                },
-                "page": {
-                    "type": "integer",
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "description": "Number of items per page"
                 }
             }
         },
@@ -653,6 +645,11 @@ public partial class SpeciesController
                     "nullable": true,
                     "description": "Filter by playable status"
                 },
+                "includeDeprecated": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to include deprecated species in results"
+                },
                 "page": {
                     "type": "integer",
                     "minimum": 1,
@@ -696,14 +693,6 @@ public partial class SpeciesController
                 "totalCount": {
                     "type": "integer",
                     "description": "Total number of species matching the query (for pagination)"
-                },
-                "page": {
-                    "type": "integer",
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "description": "Number of items per page"
                 }
             }
         },
@@ -1448,11 +1437,11 @@ public partial class SpeciesController
                     "format": "uuid",
                     "description": "ID of the species to deprecate"
                 },
-                "reason": {
+                "deprecationReason": {
                     "type": "string",
                     "maxLength": 500,
                     "nullable": true,
-                    "description": "Optional reason for deprecation (for audit purposes)"
+                    "description": "Audit reason for deprecation, explaining why this species is being phased out"
                 }
             }
         }
@@ -1855,29 +1844,26 @@ public partial class SpeciesController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sourceSpeciesId",
-                "targetSpeciesId",
                 "charactersMigrated",
                 "sourceDeleted"
             ],
             "properties": {
-                "sourceSpeciesId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the deprecated species that was merged from"
-                },
-                "targetSpeciesId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the species that characters were merged into"
-                },
                 "charactersMigrated": {
                     "type": "integer",
-                    "description": "Number of characters updated to use the target species"
+                    "description": "Number of characters successfully migrated to the target species"
                 },
                 "sourceDeleted": {
                     "type": "boolean",
-                    "description": "Whether the source species was hard-deleted after merge"
+                    "description": "Whether the source species was hard-deleted after merge (skipped on partial failure)"
+                },
+                "failedEntityIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "nullable": true,
+                    "description": "Character IDs that failed migration, null if no failures occurred"
                 }
             }
         }
@@ -2365,19 +2351,26 @@ public partial class SpeciesController
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the species"
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "Unique code for the species (e.g., \"HUMAN\", \"ELF\")"
                 },
                 "name": {
                     "type": "string",
-                    "description": "Display name"
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Display name for the species"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
                     "nullable": true,
                     "description": "Description of the species (null if not provided)"
                 },
                 "category": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Category for grouping (null if not categorized)"
                 },

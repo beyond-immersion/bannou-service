@@ -245,47 +245,47 @@ paths:
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"relationships\",\n                \"totalCount\",\n              \
-        \  \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"relationships\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/RelationshipResponse\"\n                    },\n                    \"description\": \"List of relationships
-        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of relationships matching the query\"\n                },\n\
-        \                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
-        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        there are more results on the next page\"\n                },\n                \"hasPreviousPage\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"description\": \"Whether there are results on the previous
-        page\"\n                }\n            }\n        },\n        \"RelationshipResponse\": {\n            \"description\"\
-        : \"Complete details of a relationship between two entities\",\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"relationshipId\",\n               \
-        \ \"entity1Id\",\n                \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\"\
-        ,\n                \"relationshipTypeId\",\n                \"startedAt\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"relationshipId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the relationship\"\n                },\n                \"entity1Id\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the first entity in the
-        relationship\"\n                },\n                \"entity1Type\": {\n                    \"type\": \"object\",\n\
-        \                    \"description\": \"Type of the first entity in the relationship\"\n                },\n     \
-        \           \"entity2Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the second entity in the relationship\"\n                },\n    \
-        \            \"entity2Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
-        Type of the second entity in the relationship\"\n                },\n                \"relationshipTypeId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Relationship type ID defining the kind of relationship\"\n                },\n                \"startedAt\": {\n\
+        \  \"page\",\n                \"pageSize\",\n                \"hasNextPage\",\n                \"hasPreviousPage\"\
+        \n            ],\n            \"properties\": {\n                \"relationships\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RelationshipResponse\"\
+        \n                    },\n                    \"description\": \"List of relationships matching the query\"\n    \
+        \            },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Total number of relationships matching the query\"\n                },\n                \"\
+        page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number
+        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"Number of results per page\"\n                },\n                \"hasNextPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more results
+        on the next page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether there are results on the previous page\"\n                }\n  \
+        \          }\n        },\n        \"RelationshipResponse\": {\n            \"description\": \"Complete details of
+        a relationship between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"relationshipId\",\n                \"entity1Id\",\n              \
+        \  \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\",\n                \"relationshipTypeId\"\
+        ,\n                \"startedAt\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"relationshipId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier of the relationship\"\n                },\n\
+        \                \"entity1Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the first entity in the relationship\"\n                },\n     \
+        \           \"entity1Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
+        Type of the first entity in the relationship\"\n                },\n                \"entity2Id\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the second entity in the relationship\"\n                },\n                \"entity2Type\": {\n          \
+        \          \"type\": \"object\",\n                    \"description\": \"Type of the second entity in the relationship\"\
+        \n                },\n                \"relationshipTypeId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Relationship type ID defining the kind
+        of relationship\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game timestamp when relationship
+        started\"\n                },\n                \"endedAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"In-game timestamp when relationship ended, null if still active\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided relationship data. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"In-game timestamp when relationship started\"\n                },\n                \"endedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"In-game timestamp when relationship ended, null if still
-        active\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
-        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.\"\n   \
-        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"date-time\",\n                    \"description\": \"System timestamp when the relationship record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"System timestamp when the relationship record was last updated\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        description\": \"System timestamp when the relationship record was created\"\n                },\n               \
+        \ \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"System timestamp when the relationship
+        record was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all relationships for an entity\",\n    \"description\": \"Returns
         all relationships where the specified entity is either\\nentity1 or entity2. Supports filtering by relationship type,\\
         nother entity type, and whether to include ended relationships.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\
@@ -341,47 +341,47 @@ paths:
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"relationships\",\n                \"totalCount\",\n              \
-        \  \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"relationships\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/RelationshipResponse\"\n                    },\n                    \"description\": \"List of relationships
-        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of relationships matching the query\"\n                },\n\
-        \                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
-        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        there are more results on the next page\"\n                },\n                \"hasPreviousPage\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"description\": \"Whether there are results on the previous
-        page\"\n                }\n            }\n        },\n        \"RelationshipResponse\": {\n            \"description\"\
-        : \"Complete details of a relationship between two entities\",\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"relationshipId\",\n               \
-        \ \"entity1Id\",\n                \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\"\
-        ,\n                \"relationshipTypeId\",\n                \"startedAt\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"relationshipId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the relationship\"\n                },\n                \"entity1Id\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the first entity in the
-        relationship\"\n                },\n                \"entity1Type\": {\n                    \"type\": \"object\",\n\
-        \                    \"description\": \"Type of the first entity in the relationship\"\n                },\n     \
-        \           \"entity2Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the second entity in the relationship\"\n                },\n    \
-        \            \"entity2Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
-        Type of the second entity in the relationship\"\n                },\n                \"relationshipTypeId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Relationship type ID defining the kind of relationship\"\n                },\n                \"startedAt\": {\n\
+        \  \"page\",\n                \"pageSize\",\n                \"hasNextPage\",\n                \"hasPreviousPage\"\
+        \n            ],\n            \"properties\": {\n                \"relationships\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RelationshipResponse\"\
+        \n                    },\n                    \"description\": \"List of relationships matching the query\"\n    \
+        \            },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Total number of relationships matching the query\"\n                },\n                \"\
+        page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number
+        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"Number of results per page\"\n                },\n                \"hasNextPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more results
+        on the next page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether there are results on the previous page\"\n                }\n  \
+        \          }\n        },\n        \"RelationshipResponse\": {\n            \"description\": \"Complete details of
+        a relationship between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"relationshipId\",\n                \"entity1Id\",\n              \
+        \  \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\",\n                \"relationshipTypeId\"\
+        ,\n                \"startedAt\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"relationshipId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier of the relationship\"\n                },\n\
+        \                \"entity1Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the first entity in the relationship\"\n                },\n     \
+        \           \"entity1Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
+        Type of the first entity in the relationship\"\n                },\n                \"entity2Id\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the second entity in the relationship\"\n                },\n                \"entity2Type\": {\n          \
+        \          \"type\": \"object\",\n                    \"description\": \"Type of the second entity in the relationship\"\
+        \n                },\n                \"relationshipTypeId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Relationship type ID defining the kind
+        of relationship\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game timestamp when relationship
+        started\"\n                },\n                \"endedAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"In-game timestamp when relationship ended, null if still active\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided relationship data. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"In-game timestamp when relationship started\"\n                },\n                \"endedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"In-game timestamp when relationship ended, null if still
-        active\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
-        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.\"\n   \
-        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"date-time\",\n                    \"description\": \"System timestamp when the relationship record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"System timestamp when the relationship record was last updated\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        description\": \"System timestamp when the relationship record was created\"\n                },\n               \
+        \ \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"System timestamp when the relationship
+        record was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all relationships between two specific entities\",\n    \"description\"\
         : \"Returns all relationships that exist between two specific entities,\\nregardless of which is entity1 or entity2.\\\
         n\",\n    \"tags\": [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -432,47 +432,47 @@ paths:
         ,\n    \"$defs\": {\n        \"RelationshipListResponse\": {\n            \"description\": \"Paginated list of relationships
         with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"relationships\",\n                \"totalCount\",\n              \
-        \  \"page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"relationships\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/RelationshipResponse\"\n                    },\n                    \"description\": \"List of relationships
-        matching the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Total number of relationships matching the query\"\n                },\n\
-        \                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Current page number (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n        \
-        \        \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        there are more results on the next page\"\n                },\n                \"hasPreviousPage\": {\n          \
-        \          \"type\": \"boolean\",\n                    \"description\": \"Whether there are results on the previous
-        page\"\n                }\n            }\n        },\n        \"RelationshipResponse\": {\n            \"description\"\
-        : \"Complete details of a relationship between two entities\",\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"relationshipId\",\n               \
-        \ \"entity1Id\",\n                \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\"\
-        ,\n                \"relationshipTypeId\",\n                \"startedAt\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"relationshipId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of
-        the relationship\"\n                },\n                \"entity1Id\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the first entity in the
-        relationship\"\n                },\n                \"entity1Type\": {\n                    \"type\": \"object\",\n\
-        \                    \"description\": \"Type of the first entity in the relationship\"\n                },\n     \
-        \           \"entity2Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the second entity in the relationship\"\n                },\n    \
-        \            \"entity2Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
-        Type of the second entity in the relationship\"\n                },\n                \"relationshipTypeId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Relationship type ID defining the kind of relationship\"\n                },\n                \"startedAt\": {\n\
+        \  \"page\",\n                \"pageSize\",\n                \"hasNextPage\",\n                \"hasPreviousPage\"\
+        \n            ],\n            \"properties\": {\n                \"relationships\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RelationshipResponse\"\
+        \n                    },\n                    \"description\": \"List of relationships matching the query\"\n    \
+        \            },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Total number of relationships matching the query\"\n                },\n                \"\
+        page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number
+        (1-based)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n   \
+        \                 \"description\": \"Number of results per page\"\n                },\n                \"hasNextPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more results
+        on the next page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether there are results on the previous page\"\n                }\n  \
+        \          }\n        },\n        \"RelationshipResponse\": {\n            \"description\": \"Complete details of
+        a relationship between two entities\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"relationshipId\",\n                \"entity1Id\",\n              \
+        \  \"entity1Type\",\n                \"entity2Id\",\n                \"entity2Type\",\n                \"relationshipTypeId\"\
+        ,\n                \"startedAt\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n\
+        \                \"relationshipId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier of the relationship\"\n                },\n\
+        \                \"entity1Id\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the first entity in the relationship\"\n                },\n     \
+        \           \"entity1Type\": {\n                    \"type\": \"object\",\n                    \"description\": \"\
+        Type of the first entity in the relationship\"\n                },\n                \"entity2Id\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the second entity in the relationship\"\n                },\n                \"entity2Type\": {\n          \
+        \          \"type\": \"object\",\n                    \"description\": \"Type of the second entity in the relationship\"\
+        \n                },\n                \"relationshipTypeId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Relationship type ID defining the kind
+        of relationship\"\n                },\n                \"startedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"In-game timestamp when relationship
+        started\"\n                },\n                \"endedAt\": {\n                    \"type\": \"string\",\n       \
+        \             \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"In-game timestamp when relationship ended, null if still active\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided relationship data. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"In-game timestamp when relationship started\"\n                },\n                \"endedAt\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"In-game timestamp when relationship ended, null if still
-        active\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n       \
-        \             \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention.\"\n   \
-        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
-        \  \"format\": \"date-time\",\n                    \"description\": \"System timestamp when the relationship record
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"System timestamp when the relationship record was last updated\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        description\": \"System timestamp when the relationship record was created\"\n                },\n               \
+        \ \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"System timestamp when the relationship
+        record was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all relationships of a specific type\",\n    \"description\": \"Returns
         all relationships that use a specific relationship type.\\nUseful for finding all \\\"FRIEND\\\" relationships, for
         example.\\n\",\n    \"tags\": [\n        \"Relationship Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -579,10 +579,11 @@ paths:
         : {\n                \"relationshipId\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"uuid\",\n                    \"description\": \"ID of the relationship to end\"\n                },\n        \
         \        \"endedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"In-game timestamp when relationship ended (defaults to now)\"\n        \
-        \        },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"maxLength\": 500,\n                    \"description\": \"Optional reason for ending
-        the relationship\"\n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"nullable\": true,\n                    \"description\": \"In-game timestamp when relationship
+        ended (null defaults to now)\"\n                },\n                \"reason\": {\n                    \"type\": \"\
+        string\",\n                    \"nullable\": true,\n                    \"maxLength\": 500,\n                    \"\
+        description\": \"Optional reason for ending the relationship\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-response-schema-json: '{}'
       x-endpoint-info-json: "{\n    \"summary\": \"End a relationship\",\n    \"description\": \"Marks a relationship as ended
         with a timestamp.\\nEnded relationships are preserved for history and can be re-created.\\nThe composite uniqueness
@@ -628,14 +629,13 @@ paths:
         Realm)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByEntityResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByEntityResponse\": {\n            \"description\": \"Response summarizing the
-        results of a cascading relationship cleanup operation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"relationshipsEnded\",\n                \"success\"\n    \
-        \        ],\n            \"properties\": {\n                \"relationshipsEnded\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Number of active relationships that were ended during cleanup\"\
-        \n                },\n                \"alreadyEnded\": {\n                    \"type\": \"integer\",\n          \
-        \          \"description\": \"Number of relationships that were already ended (skipped)\"\n                },\n  \
-        \              \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether the cleanup completed without errors\"\n                }\n            }\n        }\n    }\n}"
+        results of a cascading relationship cleanup operation. HTTP 200 confirms success.\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"relationshipsEnded\"\
+        ,\n                \"alreadyEnded\"\n            ],\n            \"properties\": {\n                \"relationshipsEnded\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of active relationships
+        that were ended during cleanup\"\n                },\n                \"alreadyEnded\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of relationships that were already ended (skipped)\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cleanup relationships referencing a deleted entity\",\n    \"description\"\
         : \"Called by lib-resource cleanup coordination when a foundational entity\\n(character, realm) is deleted. Ends all
         active relationships where the\\nspecified entity is either entity1 or entity2. Ended relationships are\\npreserved
@@ -1015,9 +1015,9 @@ paths:
         \         \"additionalProperties\": false,\n            \"required\": [\n                \"matches\"\n           \
         \ ],\n            \"properties\": {\n                \"matches\": {\n                    \"type\": \"boolean\",\n\
         \                    \"description\": \"True if typeId equals or descends from ancestorTypeId\"\n                },\n\
-        \                \"depth\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
-        Number of levels between the types (0 if same, -1 if no match)\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        \                \"depth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Number of levels between the types (0 if same type, null if no match)\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check if type matches ancestor in hierarchy\",\n    \"description\": \"\
         Checks if a relationship type matches or descends from an ancestor type.\\nFor example, \\\"SON\\\" matches \\\"CHILD\\\
         \" because CHILD is an ancestor of SON.\\nThis enables queries like \\\"find all CHILD relationships\\\" to match
@@ -1374,8 +1374,6 @@ paths:
                 $ref: '#/components/schemas/RelationshipTypeResponse'
         '404':
           description: Relationship type not found
-        '409':
-          description: Relationship type is already deprecated
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateRelationshipTypeRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateRelationshipTypeRequest\": {\n            \"description\": \"Request to deprecate
         a relationship type, preventing its use for new relationships while preserving existing ones\",\n            \"type\"\
@@ -1460,8 +1458,6 @@ paths:
                 $ref: '#/components/schemas/RelationshipTypeResponse'
         '404':
           description: Relationship type not found
-        '400':
-          description: Relationship type is not deprecated
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateRelationshipTypeRequest\"\
         ,\n    \"$defs\": {\n        \"UndeprecateRelationshipTypeRequest\": {\n            \"description\": \"Request to
         restore a deprecated relationship type back to active status\",\n            \"type\": \"object\",\n            \"\
@@ -1572,28 +1568,24 @@ paths:
         ,\n    \"$defs\": {\n        \"MergeRelationshipTypeResponse\": {\n            \"description\": \"Response summarizing
         the results of a merge operation including the number of relationships migrated and any failures\",\n            \"\
         type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
-        sourceTypeId\",\n                \"targetTypeId\",\n                \"relationshipsMigrated\",\n                \"\
-        relationshipsFailed\",\n                \"sourceDeleted\"\n            ],\n            \"properties\": {\n       \
-        \         \"sourceTypeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the deprecated type that was merged from\"\n                },\n \
-        \               \"targetTypeId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"ID of the type that relationships were merged into\"\n           \
-        \     },\n                \"relationshipsMigrated\": {\n                    \"type\": \"integer\",\n             \
-        \       \"description\": \"Number of relationships successfully updated to use the target type\"\n               \
-        \ },\n                \"relationshipsFailed\": {\n                    \"type\": \"integer\",\n                   \
-        \ \"description\": \"Number of relationships that failed to migrate\"\n                },\n                \"sourceDeleted\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the source type was
-        hard-deleted after merge\"\n                },\n                \"migrationErrors\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/MigrationError\"\n   \
-        \                 },\n                    \"description\": \"Details of individual migration failures (limited to
-        first 100)\"\n                }\n            }\n        },\n        \"MigrationError\": {\n            \"description\"\
-        : \"Details of a single relationship that failed to migrate\",\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"required\": [\n                \"relationshipId\",\n               \
-        \ \"error\"\n            ],\n            \"properties\": {\n                \"relationshipId\": {\n              \
-        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID
-        of the relationship that failed to migrate\"\n                },\n                \"error\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Error message explaining why the migration failed\"\
-        \n                }\n            }\n        }\n    }\n}"
+        relationshipsMigrated\",\n                \"relationshipsFailed\",\n                \"sourceDeleted\"\n          \
+        \  ],\n            \"properties\": {\n                \"relationshipsMigrated\": {\n                    \"type\":
+        \"integer\",\n                    \"description\": \"Number of relationships successfully updated to use the target
+        type\"\n                },\n                \"relationshipsFailed\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of relationships that failed to migrate\"\n                },\n \
+        \               \"sourceDeleted\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the source type was hard-deleted after merge\"\n                },\n                \"migrationErrors\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/MigrationError\"\n                    },\n                    \"\
+        description\": \"Details of individual migration failures (limited to first 100), null when no failures\"\n      \
+        \          }\n            }\n        },\n        \"MigrationError\": {\n            \"description\": \"Details of
+        a single relationship that failed to migrate\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"relationshipId\",\n                \"error\"\n          \
+        \  ],\n            \"properties\": {\n                \"relationshipId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the relationship that failed
+        to migrate\"\n                },\n                \"error\": {\n                    \"type\": \"string\",\n      \
+        \              \"description\": \"Error message explaining why the migration failed\"\n                }\n       \
+        \     }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Merge a deprecated type into another type\",\n    \"description\": \"Migrate
         all relationships using a deprecated type to a target type.\\nThis is the recommended way to handle type removal:\\
         n1. Deprecate the source type\\n2. Merge into the target type (or VOID for effective deletion)\\n3. Optionally hard-delete
@@ -1642,23 +1634,26 @@ paths:
         used for seeding, with code-based parent and inverse references\",\n            \"type\": \"object\",\n          \
         \  \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
         \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Unique code for the relationship type\"\n                },\n          \
-        \      \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display name
-        for the relationship type\"\n                },\n                \"description\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Human-readable description
-        of the relationship type (null if not provided)\"\n                },\n                \"category\": {\n         \
-        \           \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Category for grouping relationship types (null if not categorized)\"\n                },\n                \"parentTypeCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Code of the parent type (resolved during seeding) (null for root types)\"\n                },\n              \
-        \  \"inverseTypeCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n  \
-        \                  \"description\": \"Code of the inverse relationship (null if not applicable)\"\n              \
-        \  },\n                \"isBidirectional\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": false,\n                    \"description\": \"Whether the relationship is the same in both directions\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention.\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 50,\n                    \"pattern\"\
+        : \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\": \"Unique code for the relationship type\"\n       \
+        \         },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 100,\n                    \"description\": \"Display name for the relationship
+        type\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n      \
+        \              \"maxLength\": 500,\n                    \"nullable\": true,\n                    \"description\":
+        \"Human-readable description of the relationship type (null if not provided)\"\n                },\n             \
+        \   \"category\": {\n                    \"type\": \"string\",\n                    \"maxLength\": 50,\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Category for grouping relationship types (null
+        if not categorized)\"\n                },\n                \"parentTypeCode\": {\n                    \"type\": \"\
+        string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n                    \"\
+        description\": \"Code of the parent type (resolved during seeding) (null for root types)\"\n                },\n \
+        \               \"inverseTypeCode\": {\n                    \"type\": \"string\",\n                    \"maxLength\"\
+        : 50,\n                    \"nullable\": true,\n                    \"description\": \"Code of the inverse relationship
+        (null if not applicable)\"\n                },\n                \"isBidirectional\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Whether the relationship
+        is the same in both directions\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Client-provided relationship type metadata. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedRelationshipTypesResponse\"\
         ,\n    \"$defs\": {\n        \"SeedRelationshipTypesResponse\": {\n            \"description\": \"Response summarizing
         the results of a bulk seed operation with counts of created, updated, and skipped types\",\n            \"type\":
@@ -1884,7 +1879,8 @@ components:
         endedAt:
           type: string
           format: date-time
-          description: In-game timestamp when relationship ended (defaults to now)
+          nullable: true
+          description: In-game timestamp when relationship ended (null defaults to now)
         reason:
           type: string
           nullable: true
@@ -1906,12 +1902,13 @@ components:
           $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of the deleted entity (e.g., Character, Realm)
     CleanupByEntityResponse:
-      description: Response summarizing the results of a cascading relationship cleanup operation
+      description: Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms 
+        success.
       type: object
       additionalProperties: false
       required:
       - relationshipsEnded
-      - success
+      - alreadyEnded
       properties:
         relationshipsEnded:
           type: integer
@@ -1919,9 +1916,6 @@ components:
         alreadyEnded:
           type: integer
           description: Number of relationships that were already ended (skipped)
-        success:
-          type: boolean
-          description: Whether the cleanup completed without errors
     RelationshipResponse:
       description: Complete details of a relationship between two entities
       type: object
@@ -1992,6 +1986,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         relationships:
           type: array
@@ -2282,24 +2278,33 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique code for the relationship type
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Display name for the relationship type
         description:
           type: string
+          maxLength: 500
           nullable: true
           description: Human-readable description of the relationship type (null if not provided)
         category:
           type: string
+          maxLength: 50
           nullable: true
           description: Category for grouping relationship types (null if not categorized)
         parentTypeCode:
           type: string
+          maxLength: 50
           nullable: true
           description: Code of the parent type (resolved during seeding) (null for root types)
         inverseTypeCode:
           type: string
+          maxLength: 50
           nullable: true
           description: Code of the inverse relationship (null if not applicable)
         isBidirectional:
@@ -2425,7 +2430,8 @@ components:
           description: True if typeId equals or descends from ancestorTypeId
         depth:
           type: integer
-          description: Number of levels between the types (0 if same, -1 if no match)
+          nullable: true
+          description: Number of levels between the types (0 if same type, null if no match)
     SeedRelationshipTypesResponse:
       description: Response summarizing the results of a bulk seed operation with counts of created, updated, and 
         skipped types
@@ -2457,20 +2463,10 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sourceTypeId
-      - targetTypeId
       - relationshipsMigrated
       - relationshipsFailed
       - sourceDeleted
       properties:
-        sourceTypeId:
-          type: string
-          format: uuid
-          description: ID of the deprecated type that was merged from
-        targetTypeId:
-          type: string
-          format: uuid
-          description: ID of the type that relationships were merged into
         relationshipsMigrated:
           type: integer
           description: Number of relationships successfully updated to use the target type
@@ -2482,9 +2478,10 @@ components:
           description: Whether the source type was hard-deleted after merge
         migrationErrors:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/MigrationError'
-          description: Details of individual migration failures (limited to first 100)
+          description: Details of individual migration failures (limited to first 100), null when no failures
     MigrationError:
       description: Details of a single relationship that failed to migrate
       type: object

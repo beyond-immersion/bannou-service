@@ -938,7 +938,9 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `REALM_MERGE_LOCK_TIMEOUT_SECONDS` | int | `120` | Timeout in seconds for distributed lock during realm merge o... |
 | `REALM_MERGE_PAGE_SIZE` | int | `50` | Page size for paginated entity migration during realm merge ... |
+| `REALM_OPTIMISTIC_RETRY_ATTEMPTS` | int | `3` | Number of retry attempts for ETag-based optimistic concurren... |
 
 ### Realm History
 
@@ -1056,6 +1058,7 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
+| `SPECIES_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on speci... |
 | `SPECIES_MERGE_PAGE_SIZE` | int | `100` | Number of characters to process per page during species merg... |
 
 ### State
@@ -1144,6 +1147,7 @@ Applied when... |
 |---------------------|------|---------|-------------|
 | `SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES` | int | `5` | Interval in minutes between subscription expiration checks |
 | `SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS` | int | `30` | Grace period in seconds before expired subscriptions are mar... |
+| `SUBSCRIPTION_LOCK_TIMEOUT_SECONDS` | int | `10` | Maximum time in seconds to wait for a distributed lock acqui... |
 | `SUBSCRIPTION_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before background service starts processing |
 
 ### Telemetry
@@ -1158,6 +1162,23 @@ Applied when... |
 | `TELEMETRY_SERVICE_NAMESPACE` | string | `bannou` | Service namespace for telemetry grouping |
 | `TELEMETRY_TRACING_ENABLED` | bool | `true` | Enable distributed tracing export |
 | `TELEMETRY_TRACING_SAMPLING_RATIO` | double | `1.0` | Trace sampling ratio (0.0-1.0). Use 1.0 for full sampling in... |
+
+### Transit
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION` | bool | `true` | When true, Transit automatically calls Location's /location/... |
+| `TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG` | double | `100.0` | Cargo weight above this threshold reduces speed. Speed reduc... |
+| `TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS` | int | `300` | TTL for cached connection graph in Redis (seconds). Graph is... |
+| `TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE` | double | `0.3` | Default cargo speed penalty rate applied when a mode's cargo... |
+| `TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR` | double | `5.0` | Default walking speed used when no mode is specified |
+| `TRANSIT_DISCOVERY_CACHE_TTL_SECONDS` | int | `600` | TTL for per-entity discovery cache in Redis (seconds). Route... |
+| `TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS` | int | `300` | Real-time interval in seconds between journey archival worke... |
+| `TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS` | double | `168.0` | Game-hours after arrival/abandonment before journey is archi... |
+| `TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS` | int | `365` | Number of real-time days to retain archived journeys in MySQ... |
+| `TRANSIT_MAX_ROUTE_CALCULATION_LEGS` | int | `8` | Maximum number of legs to consider in route calculation (pre... |
+| `TRANSIT_MAX_ROUTE_OPTIONS` | int | `5` | Maximum number of route options to return from calculate end... |
+| `TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS` | int | `60` | How often the background worker checks Worldstate for season... |
 
 ### Voice
 
@@ -1205,9 +1226,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 914
+- **Total properties**: 930
 - **Required (no default)**: 55
-- **Optional (has default)**: 859
+- **Optional (has default)**: 875
 
 ## Environment Variable Naming Convention
 

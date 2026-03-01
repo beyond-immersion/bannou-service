@@ -11525,6 +11525,694 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/transit/mode/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a new transit mode type
+     * @description Register a new transit mode type with movement properties, terrain
+     *     compatibility, entity restrictions, and requirements. Mode codes are
+     *     unique string identifiers (e.g., "walking", "horseback", "wagon").
+     */
+    post: operations['registerMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a transit mode by code
+     * @description Retrieve a transit mode definition by its unique code.
+     */
+    post: operations['getMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all registered transit modes
+     * @description List transit modes with optional filtering by realm availability,
+     *     terrain compatibility, tags, and deprecation status.
+     */
+    post: operations['listModes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a transit mode's properties
+     * @description Update properties of an existing transit mode. Only provided fields
+     *     are updated; null fields are left unchanged.
+     */
+    post: operations['updateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a transit mode
+     * @description Deprecate a transit mode. Existing journeys using this mode continue,
+     *     but new journeys cannot use it. Sets the triple-field deprecation model:
+     *     isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+     *     Idempotent: returns OK if already deprecated (caller's intent is satisfied).
+     *     Category A per IMPLEMENTATION TENETS: connections store compatibleModes
+     *     and journeys store primaryModeCode/legModes referencing mode codes.
+     */
+    post: operations['deprecateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/undeprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reverse deprecation of a transit mode
+     * @description Reverse deprecation of a transit mode (Category A — undeprecate is required).
+     *     Clears isDeprecated, deprecatedAt, deprecationReason.
+     *     Idempotent: returns OK if not currently deprecated.
+     */
+    post: operations['undeprecateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a deprecated transit mode
+     * @description Delete a deprecated transit mode (Category A — must be deprecated before
+     *     deletion). Rejects if active journeys use this mode or if connections
+     *     still list this mode in compatibleModes. Archived journeys retain the
+     *     mode code as historical data.
+     */
+    post: operations['deleteMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/check-availability': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check which transit modes an entity can currently use
+     * @description Check mode availability for an entity based on item requirements,
+     *     species restrictions, entity type restrictions, and optional location
+     *     context. Also applies ITransitCostModifierProvider enrichment to
+     *     compute preferenceCost and effectiveSpeed adjustments.
+     */
+    post: operations['checkModeAvailability'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a connection between two locations
+     * @description Create a directed or bidirectional connection between two locations.
+     *     fromRealmId, toRealmId, and crossRealm are derived from the locations
+     *     via the Location service. Season keys in seasonalAvailability are
+     *     validated against the realm's Worldstate season codes.
+     */
+    post: operations['createConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a connection by ID or code
+     * @description Retrieve a connection by its unique ID or code. One of connectionId or code must be provided.
+     */
+    post: operations['getConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/query': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query connections by location, terrain, mode, or status
+     * @description Query connections with optional filters. All filters are optional;
+     *     an empty request returns all connections paginated.
+     */
+    post: operations['queryConnections'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a connection's properties
+     * @description Update properties of an existing connection. Does not update status —
+     *     use update-status for operational status changes. Only provided fields
+     *     are updated; null fields are left unchanged.
+     */
+    post: operations['updateConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/update-status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Transition a connection's operational status with optimistic concurrency
+     * @description Transition a connection's operational status using optimistic concurrency.
+     *     Caller specifies currentStatus (what they believe the status is) and
+     *     newStatus. If the actual status does not match currentStatus, returns
+     *     Bad Request with the actual status. Use forceUpdate=true for administrative
+     *     overrides where currentStatus is ignored. The seasonal_closed status is
+     *     typically only set by the Seasonal Connection Worker via forceUpdate=true.
+     */
+    post: operations['updateConnectionStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a connection between locations
+     * @description Delete a connection. Rejects if active journeys are currently using
+     *     this connection.
+     */
+    post: operations['deleteConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/bulk-seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Seed connections from configuration
+     * @description Seed connections from configuration using location codes resolved via
+     *     the Location service. Two-pass resolution: first pass creates connections
+     *     with location code lookup, second pass validates all mode codes exist.
+     *     When realmId is provided, location codes are resolved within that realm
+     *     and replaceExisting deletes connections for that realm only.
+     */
+    post: operations['bulkSeedConnections'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Plan a journey (status preparing)
+     * @description Plan a journey from origin to destination. Internally calls route/calculate
+     *     to find the best path and populate legs. Checks mode compatibility via
+     *     check-availability. Does NOT start the journey — call /transit/journey/depart
+     *     for that. When preferMultiModal is true, each leg gets the fastest compatible
+     *     mode the entity can use on that connection.
+     */
+    post: operations['createJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/depart': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a prepared journey
+     * @description Start a prepared journey, transitioning status from preparing to in_transit.
+     *     Publishes transit.journey.departed event.
+     */
+    post: operations['departJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/resume': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Resume an interrupted journey
+     * @description Resume an interrupted journey, transitioning status from interrupted
+     *     to in_transit. Distinct from depart: depart is for initial departure
+     *     (preparing to in_transit), resume is for continuing after interruption.
+     *     Publishes transit.journey.resumed event.
+     */
+    post: operations['resumeJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/advance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark arrival at next waypoint
+     * @description Mark arrival at the next waypoint, completing the current leg and
+     *     starting the next. If this completes the final leg, journey status
+     *     transitions to arrived. Publishes transit.journey.waypoint-reached
+     *     or transit.journey.arrived accordingly.
+     */
+    post: operations['advanceJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/advance-batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Advance multiple journeys in a single call
+     * @description Advance multiple journeys in a single call for game SDK efficiency at
+     *     NPC scale (10,000+ concurrent journeys). Each advance is processed
+     *     independently — failure of one does not roll back others. Results
+     *     include per-journey success/failure with error details. Ordering within
+     *     the batch is preserved for cases where the same journeyId appears
+     *     multiple times (advancing through multiple waypoints in a single tick).
+     */
+    post: operations['advanceBatchJourneys'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/arrive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Force-arrive a journey at destination
+     * @description Force-arrive a journey at its destination, skipping remaining legs.
+     *     Remaining legs are marked as skipped rather than completed. Used for
+     *     narrative fast-travel, teleportation, or game-driven skip.
+     *     Publishes transit.journey.arrived event.
+     */
+    post: operations['arriveJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/interrupt': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Interrupt an active journey
+     * @description Interrupt an active journey due to combat, event, or breakdown.
+     *     Transitions status to interrupted. To resume, call /transit/journey/resume.
+     *     To abandon, call /transit/journey/abandon.
+     *     Publishes transit.journey.interrupted event.
+     */
+    post: operations['interruptJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/abandon': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Abandon a journey
+     * @description Abandon a journey. The entity stays at its current location.
+     *     Publishes transit.journey.abandoned event.
+     */
+    post: operations['abandonJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a journey by ID
+     * @description Retrieve a journey by its unique ID.
+     */
+    post: operations['getJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/query-by-connection': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List active journeys on a specific connection
+     * @description List active journeys currently traversing a specific connection.
+     *     Enables queries like "who is on this road?" for encounter generation,
+     *     bandit ambush targeting, caravan interception, and road traffic monitoring.
+     */
+    post: operations['queryJourneysByConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List journeys for an entity or within a realm
+     * @description List journeys with optional filtering by entity, entity type, realm,
+     *     cross-realm status, journey status, and active-only flag.
+     */
+    post: operations['listJourneys'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/query-archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query archived journeys from MySQL historical store
+     * @description Query archived (completed/abandoned) journeys from the MySQL historical
+     *     store. Used by Trade (velocity calculations), Analytics (travel patterns),
+     *     and Character History (travel biography generation).
+     */
+    post: operations['queryJourneyArchive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/route/calculate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Calculate route options between two locations
+     * @description Calculate route options between two locations. Pure computation endpoint
+     *     with no state mutation. Performs Dijkstra graph search over the connection
+     *     graph filtered by mode compatibility, seasonal availability, and discovery
+     *     status. Does NOT apply entity-specific DI cost modifiers (those are applied
+     *     by the variable provider when GOAP evaluates the results).
+     */
+    post: operations['calculateRoute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/reveal': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reveal a discoverable connection to an entity
+     * @description Reveal a discoverable connection to an entity via explicit grant.
+     *     Also called internally by journey/advance when a leg uses a discoverable
+     *     connection. Hearsay (L4) calls this when propagating route knowledge
+     *     via rumor. Publishes transit.discovery.revealed event for new discoveries.
+     */
+    post: operations['revealDiscovery'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List connections an entity has discovered
+     * @description List all discoverable connections that an entity has discovered, with optional realm filtering.
+     */
+    post: operations['listDiscoveries'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/check': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if an entity has discovered specific connections
+     * @description Check whether an entity has discovered each of the specified connections.
+     */
+    post: operations['checkDiscoveries'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/voice/peer/answer': {
     parameters: {
       query?: never;
@@ -12130,6 +12818,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description Request to abandon a journey */
+    AbandonJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to abandon
+       */
+      journeyId: string;
+      /** @description Reason for abandonment */
+      reason: string;
+    };
     /** @description Request to abandon an active quest */
     AbandonQuestRequest: {
       /**
@@ -12723,6 +13421,16 @@ export interface components {
       /** @description Total registered room types */
       totalRoomTypes: number;
     };
+    /** @description Request to advance multiple journeys in a single call */
+    AdvanceBatchRequest: {
+      /** @description Individual advance entries */
+      advances: components['schemas']['BatchAdvanceEntry'][];
+    };
+    /** @description Response from batch advance operation with per-journey results */
+    AdvanceBatchResponse: {
+      /** @description Per-journey advance results */
+      results: components['schemas']['BatchAdvanceResult'][];
+    };
     /** @description Request to manually advance a realm's clock by a specified amount */
     AdvanceClockRequest: {
       /**
@@ -12774,6 +13482,21 @@ export interface components {
       newLevel: number;
       /** @description Information keys revealed at the new level */
       reveals: string[];
+    };
+    /** @description Request to mark arrival at the next waypoint */
+    AdvanceJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to advance
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the waypoint was reached
+       */
+      arrivedAtGameTime: number;
+      /** @description Events that occurred during this leg */
+      incidents?: components['schemas']['JourneyIncident'][] | null;
     };
     /**
      * @description Describes a capability or interaction mode for a node.
@@ -13021,6 +13744,21 @@ export interface components {
        * @description When this area config was last updated
        */
       updatedAt?: string | null;
+    };
+    /** @description Request to force-arrive a journey at destination (skips remaining legs) */
+    ArriveJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to force-arrive
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time of arrival
+       */
+      arrivedAtGameTime: number;
+      /** @description Why legs were skipped (e.g., "teleported", "fast_travel", "narrative") */
+      reason: string;
     };
     /** @description Describes a conflict when the same asset ID has different content hashes */
     AssetConflict: {
@@ -13562,6 +14300,33 @@ export interface components {
       reason?: string | null;
       /** @description Ban duration in minutes (null for permanent) */
       durationMinutes?: number | null;
+    };
+    /** @description A single advance entry in a batch advance request */
+    BatchAdvanceEntry: {
+      /**
+       * Format: uuid
+       * @description Journey to advance
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the waypoint was reached
+       */
+      arrivedAtGameTime: number;
+      /** @description Events that occurred during this leg */
+      incidents?: components['schemas']['JourneyIncident'][] | null;
+    };
+    /** @description Result for a single journey in a batch advance */
+    BatchAdvanceResult: {
+      /**
+       * Format: uuid
+       * @description Journey that was advanced
+       */
+      journeyId: string;
+      /** @description Error code on failure. Null on success. */
+      error?: string | null;
+      /** @description Updated journey on success. Null on failure. */
+      journey?: components['schemas']['TransitJourney'] | null;
     };
     /** @description Result of a single balance query in a batch */
     BatchBalanceResult: {
@@ -14378,6 +15143,61 @@ export interface components {
       /** @description Asset IDs that weren't found */
       notFound: string[];
     };
+    /** @description A single connection entry in a bulk seed request */
+    BulkSeedConnectionEntry: {
+      /** @description Location code for the starting point (resolved via Location service) */
+      fromLocationCode: string;
+      /** @description Location code for the ending point (resolved via Location service) */
+      toLocationCode: string;
+      /** @description Whether the connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain type code. Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Null means always available. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable connection name */
+      name?: string | null;
+      /** @description Unique code for lookup */
+      code?: string | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
+    };
+    /** @description Request to seed connections from configuration */
+    BulkSeedConnectionsRequest: {
+      /**
+       * Format: uuid
+       * @description Scope location code resolution to this realm. When provided, replaceExisting deletes connections for this realm only.
+       */
+      realmId?: string | null;
+      /** @description Connection entries to seed */
+      connections: components['schemas']['BulkSeedConnectionEntry'][];
+      /**
+       * @description If true, delete existing connections scoped by realmId before seeding
+       * @default false
+       */
+      replaceExisting: boolean;
+    };
+    /** @description Response from bulk seed operation */
+    BulkSeedConnectionsResponse: {
+      /** @description Number of connections created */
+      created: number;
+      /** @description Number of connections updated */
+      updated: number;
+      /** @description Error messages for individual entries that failed */
+      errors: string[];
+    };
     /**
      * @description Bundle file format
      * @enum {string}
@@ -14604,6 +15424,47 @@ export interface components {
       conversionPath: components['schemas']['ConversionStep'][];
       /** @description Base currency used for conversion */
       baseCurrency: string;
+    };
+    /** @description Request to calculate route options between two locations (pure computation) */
+    CalculateRouteRequest: {
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Destination location
+       */
+      toLocationId: string;
+      /** @description Specific mode to calculate for. Null means try all modes. */
+      modeCode?: string | null;
+      /**
+       * @description When true, selects best mode per leg
+       * @default false
+       */
+      preferMultiModal: boolean;
+      /**
+       * Format: uuid
+       * @description Entity for discovery filtering. When provided, discoverable connections are filtered to only those this entity has discovered. Null means discoverable connections are excluded entirely.
+       */
+      entityId?: string | null;
+      /** @description Maximum legs to consider. Uses service config default if null. */
+      maxLegs?: number | null;
+      /** @description Sort criteria for results. Defaults to fastest. */
+      sortBy?: components['schemas']['RouteSortBy'] | null;
+      /** @description Maximum route options to return. Uses service config default if null. */
+      maxOptions?: number | null;
+      /**
+       * @description Whether to include currently seasonally closed routes
+       * @default false
+       */
+      includeSeasonalClosed: boolean;
+    };
+    /** @description Response containing calculated route options */
+    CalculateRouteResponse: {
+      /** @description Route options ranked by sort criteria */
+      options: components['schemas']['TransitRouteOption'][];
     };
     /** @description A calendar template definition with computed summary fields */
     CalendarTemplateResponse: {
@@ -15295,6 +16156,21 @@ export interface components {
       /** @description Explanation if not allowed */
       reason?: string | null;
     };
+    /** @description Request to check if an entity has discovered specific connections */
+    CheckDiscoveriesRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to check discoveries for
+       */
+      entityId: string;
+      /** @description Connection IDs to check */
+      connectionIds: string[];
+    };
+    /** @description Response containing discovery check results */
+    CheckDiscoveriesResponse: {
+      /** @description Per-connection discovery status */
+      results: components['schemas']['DiscoveryCheckResult'][];
+    };
     /** @description Request to check faction membership */
     CheckMembershipRequest: {
       /**
@@ -15324,6 +16200,28 @@ export interface components {
       isMember: boolean;
       /** @description Member's role (null if not a member) */
       role?: components['schemas']['FactionMemberRole'];
+    };
+    /** @description Request to check which transit modes an entity can use */
+    CheckModeAvailabilityRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to check availability for
+       */
+      entityId: string;
+      /** @description Type of entity (e.g., "character", "npc", "caravan") */
+      entityType: string;
+      /**
+       * Format: uuid
+       * @description Only check modes available at this location
+       */
+      locationId?: string | null;
+      /** @description Check specific mode only (omit to check all modes) */
+      modeCode?: string | null;
+    };
+    /** @description Response containing mode availability results for an entity */
+    CheckModeAvailabilityResponse: {
+      /** @description Availability status for each checked mode */
+      availableModes: components['schemas']['ModeAvailabilityResult'][];
     };
     /** @description Request to check reference count for a character */
     CheckReferencesRequest: {
@@ -15534,14 +16432,12 @@ export interface components {
       /** @description Type of the deleted entity (e.g., Character, Realm) */
       entityType: components['schemas']['EntityType'];
     };
-    /** @description Response summarizing the results of a cascading relationship cleanup operation */
+    /** @description Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success. */
     CleanupByEntityResponse: {
       /** @description Number of active relationships that were ended during cleanup */
       relationshipsEnded: number;
       /** @description Number of relationships that were already ended (skipped) */
-      alreadyEnded?: number;
-      /** @description Whether the cleanup completed without errors */
-      success: boolean;
+      alreadyEnded: number;
     };
     /** @description Request to cleanup divine data for a deleted game service (called by lib-resource) */
     CleanupByGameServiceRequest: {
@@ -16390,6 +17286,16 @@ export interface components {
       /** @description Content hash of asset in this bundle */
       contentHash: string;
     };
+    /** @description Response containing a single transit connection */
+    ConnectionResponse: {
+      /** @description The transit connection */
+      connection: components['schemas']['TransitConnection'];
+    };
+    /**
+     * @description Operational status of a transit connection
+     * @enum {string}
+     */
+    ConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked' | 'seasonal_closed';
     /**
      * @description How a scenario instance connects to the broader game world
      * @enum {string}
@@ -17338,6 +18244,50 @@ export interface components {
        */
       gameServiceId: string;
     };
+    /** @description Request to create a connection between two locations */
+    CreateConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Starting location ID
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location ID
+       */
+      toLocationId: string;
+      /** @description Whether the connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain type code. Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Season keys validated against realm's Worldstate seasons. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable risk description */
+      riskDescription?: string | null;
+      /**
+       * @description Whether this connection requires discovery to appear in route queries
+       * @default false
+       */
+      discoverable: boolean;
+      /** @description Human-readable connection name */
+      name?: string | null;
+      /** @description Unique code for lookup */
+      code?: string | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
+    };
     /** @description Request to create a new container */
     CreateContainerRequest: {
       /**
@@ -17846,6 +18796,49 @@ export interface components {
       itemUseBehavior?: components['schemas']['ItemUseBehavior'];
       /** @description How CanUse validation failures should be handled (defaults to block) */
       canUseBehavior?: components['schemas']['CanUseBehavior'];
+    };
+    /** @description Request to plan a journey (creates in preparing status) */
+    CreateJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Entity that will travel
+       */
+      entityId: string;
+      /** @description Type of traveling entity (e.g., "character", "npc", "caravan") */
+      entityType: string;
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      originLocationId: string;
+      /**
+       * Format: uuid
+       * @description Final destination
+       */
+      destinationLocationId: string;
+      /** @description Preferred transit mode. Used for all legs unless overridden by multi-modal. */
+      primaryModeCode: string;
+      /**
+       * @description When true, route calculation selects the best mode per leg
+       * @default false
+       */
+      preferMultiModal: boolean;
+      /**
+       * Format: decimal
+       * @description Planned departure game-time. Defaults to current game-time if null.
+       */
+      plannedDepartureGameTime?: number | null;
+      /**
+       * @description Number of entities traveling together
+       * @default 1
+       */
+      partySize: number;
+      /**
+       * Format: decimal
+       * @description Total cargo weight in game-kg
+       * @default 0
+       */
+      cargoWeightKg: number;
     };
     /** @description Request to create a new leaderboard */
     CreateLeaderboardDefinitionRequest: {
@@ -18909,11 +19902,8 @@ export interface components {
       /** @description Calendar template code to delete */
       templateCode: string;
     };
-    /** @description Confirmation of calendar template deletion */
-    DeleteCalendarResponse: {
-      /** @description Whether the calendar template was deleted */
-      deleted: boolean;
-    };
+    /** @description Empty response. HTTP 200 confirms the deletion succeeded. */
+    DeleteCalendarResponse: Record<string, never>;
     /** @description Request to delete a collection */
     DeleteCollectionRequest: {
       /**
@@ -18922,6 +19912,16 @@ export interface components {
        */
       collectionId: string;
     };
+    /** @description Request to delete a connection */
+    DeleteConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to delete
+       */
+      connectionId: string;
+    };
+    /** @description Confirms successful connection deletion */
+    DeleteConnectionResponse: Record<string, never>;
     /** @description Request to permanently delete a deity and all dependent data */
     DeleteDeityRequest: {
       /**
@@ -18961,6 +19961,13 @@ export interface components {
        */
       messageId: string;
     };
+    /** @description Request to delete a deprecated transit mode */
+    DeleteModeRequest: {
+      /** @description Mode code to delete */
+      code: string;
+    };
+    /** @description Confirms successful mode deletion */
+    DeleteModeResponse: Record<string, never>;
     /** @description Request to delete a norm definition */
     DeleteNormRequest: {
       /**
@@ -19076,6 +20083,14 @@ export interface components {
      * @enum {string}
      */
     DeltaAlgorithm: 'JSON_PATCH' | 'BSDIFF' | 'XDELTA';
+    /** @description Request to start a prepared journey */
+    DepartJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to start
+       */
+      journeyId: string;
+    };
     /**
      * @description Current deployment phase for scenario availability gating
      * @enum {string}
@@ -19121,6 +20136,13 @@ export interface components {
        */
       factionId: string;
     };
+    /** @description Request to deprecate a transit mode */
+    DeprecateModeRequest: {
+      /** @description Mode code to deprecate */
+      code: string;
+      /** @description Why this mode is being deprecated */
+      reason: string;
+    };
     /** @description Request to mark a quest definition as deprecated */
     DeprecateQuestDefinitionRequest: {
       /**
@@ -19161,7 +20183,7 @@ export interface components {
        */
       gameServiceId?: string | null;
       /** @description Optional reason for deprecation (for audit purposes). */
-      reason?: string | null;
+      reason: string;
     };
     /** @description Request to deprecate a template */
     DeprecateTemplateRequest: {
@@ -19233,12 +20255,51 @@ export interface components {
       /** @description Whether discard was successful */
       discarded: boolean;
     };
+    /** @description Discovery status for a single connection */
+    DiscoveryCheckResult: {
+      /**
+       * Format: uuid
+       * @description Connection checked
+       */
+      connectionId: string;
+      /** @description Whether the entity has discovered this connection */
+      discovered: boolean;
+      /**
+       * Format: date-time
+       * @description When it was discovered. Null if not discovered.
+       */
+      discoveredAt?: string | null;
+      /** @description How it was discovered. Null if not discovered. */
+      source?: string | null;
+    };
     /** @description A discovery level defining what information is revealed at this level */
     DiscoveryLevel: {
       /** @description Discovery level number (zero-indexed) */
       level: number;
       /** @description List of field or information keys revealed at this level */
       reveals: string[];
+    };
+    /** @description Record of a connection discovery by an entity */
+    DiscoveryRecord: {
+      /**
+       * Format: uuid
+       * @description Entity that discovered the connection
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Connection that was discovered
+       */
+      connectionId: string;
+      /** @description How the connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward") */
+      source: string;
+      /**
+       * Format: date-time
+       * @description When discovery occurred (now for new, original time if already known)
+       */
+      discoveredAt: string;
+      /** @description Whether this was a new discovery (true) or already known (false). Stored entity state needed by Collection to distinguish first discovery from re-revelation. */
+      isNew: boolean;
     };
     /** @description Request to raise a dispute on a funded escrow */
     DisputeRequest: {
@@ -21857,6 +22918,16 @@ export interface components {
        */
       characterId: string;
     };
+    /** @description Request to get a connection by ID or code. One of connectionId or code must be provided. */
+    GetConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection ID to look up
+       */
+      connectionId?: string | null;
+      /** @description Connection code to look up */
+      code?: string | null;
+    };
     /** @description Request to get consent status for all parties */
     GetConsentStatusRequest: {
       /**
@@ -22487,6 +23558,14 @@ export interface components {
        */
       processingTimeMs?: number | null;
     };
+    /** @description Request to get a journey by ID */
+    GetJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to retrieve
+       */
+      journeyId: string;
+    };
     /** @description Request to get a license definition by board template ID and code */
     GetLicenseDefinitionRequest: {
       /**
@@ -22584,6 +23663,11 @@ export interface components {
       contractId: string;
       /** @description Milestone code */
       milestoneCode: string;
+    };
+    /** @description Request to get a transit mode by code */
+    GetModeRequest: {
+      /** @description Transit mode code to look up */
+      code: string;
     };
     /** @description Request to get detailed progress for a specific objective */
     GetObjectiveProgressRequest: {
@@ -22731,6 +23815,8 @@ export interface components {
        * @description Character to get log for
        */
       characterId: string;
+      /** @description Filter active quests by category */
+      category?: components['schemas']['QuestCategory'] | null;
     };
     /** @description Request to get details of a quest instance */
     GetQuestRequest: {
@@ -24077,6 +25163,21 @@ export interface components {
        */
       poiId: string;
     };
+    /** @description Request to interrupt an active journey */
+    InterruptJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to interrupt
+       */
+      journeyId: string;
+      /** @description Reason for interruption (e.g., "bandit_attack", "storm", "breakdown") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the interruption occurred
+       */
+      gameTime: number;
+    };
     /** @description Melodic interval preference weights */
     IntervalPreferences: {
       /**
@@ -24451,6 +25552,39 @@ export interface components {
       /** @description Requested role (defaults to Member if not specified) */
       role?: components['schemas']['ChatParticipantRole'] | null;
     };
+    /** @description An incident that occurred during a journey leg */
+    JourneyIncident: {
+      /** @description Type of incident (e.g., "bandit_attack", "storm_delay", "detour") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description How much game-time the incident added
+       */
+      durationGameHours: number;
+      /** @description Optional narrative description of the incident */
+      description?: string | null;
+    };
+    /**
+     * @description Lifecycle status of a journey leg
+     * @enum {string}
+     */
+    JourneyLegStatus: 'pending' | 'in_progress' | 'completed' | 'skipped';
+    /** @description Response containing a single transit journey */
+    JourneyResponse: {
+      /** @description The transit journey */
+      journey: components['schemas']['TransitJourney'];
+    };
+    /**
+     * @description Lifecycle status of a transit journey
+     * @enum {string}
+     */
+    JourneyStatus:
+      | 'preparing'
+      | 'in_transit'
+      | 'at_waypoint'
+      | 'arrived'
+      | 'interrupted'
+      | 'abandoned';
     /**
      * @description JSON Patch operation per RFC 6902.
      *     Uses JsonPatch.Net library (MIT licensed).
@@ -25192,6 +26326,24 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
     };
+    /** @description Request to list connections an entity has discovered */
+    ListDiscoveriesRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to list discoveries for
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Filter by realm (fromRealmId or toRealmId)
+       */
+      realmId?: string | null;
+    };
+    /** @description Response containing discovered connection IDs */
+    ListDiscoveriesResponse: {
+      /** @description IDs of connections this entity has discovered */
+      connectionIds: string[];
+    };
     /** @description Request to list documents with optional filtering and pagination */
     ListDocumentsRequest: {
       /** @description Documentation namespace to list documents from */
@@ -25503,6 +26655,47 @@ export interface components {
        */
       wasTruncated: boolean;
     };
+    /** @description Request to list journeys with optional filters */
+    ListJourneysRequest: {
+      /**
+       * Format: uuid
+       * @description Filter to journeys for this entity
+       */
+      entityId?: string | null;
+      /** @description Filter by entity type */
+      entityType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to journeys touching this realm (origin or destination)
+       */
+      realmId?: string | null;
+      /** @description Filter to cross-realm journeys only */
+      crossRealm?: boolean | null;
+      /** @description Filter by journey status */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * @description When true, excludes arrived and abandoned journeys
+       * @default true
+       */
+      activeOnly: boolean;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Response containing a paginated list of journeys */
+    ListJourneysResponse: {
+      /** @description Journeys matching the query */
+      journeys: components['schemas']['TransitJourney'][];
+      /** @description Total matching journeys across all pages */
+      totalCount: number;
+    };
     /** @description Request to list all license definitions for a board template */
     ListLicenseDefinitionsRequest: {
       /**
@@ -25644,6 +26837,28 @@ export interface components {
       characterId: string;
       /** @description All faction memberships for the character */
       memberships: components['schemas']['CharacterMembershipEntry'][];
+    };
+    /** @description Request to list transit modes with optional filters */
+    ListModesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm availability
+       */
+      realmId?: string | null;
+      /** @description Filter by terrain compatibility */
+      terrainType?: string | null;
+      /** @description Filter by tags (modes matching any tag are included) */
+      tags?: string[] | null;
+      /**
+       * @description Whether to include deprecated modes in results
+       * @default false
+       */
+      includeDeprecated: boolean;
+    };
+    /** @description Response containing a list of transit modes */
+    ListModesResponse: {
+      /** @description Transit modes matching the query */
+      modes: components['schemas']['TransitMode'][];
     };
     /** @description Request to list norms defined by a faction */
     ListNormsRequest: {
@@ -26180,7 +27395,7 @@ export interface components {
       /** @description Filter by current growth phase code. */
       growthPhase?: string | null;
       /** @description Filter by seed status. */
-      status?: components['schemas']['SeedStatus'];
+      status?: components['schemas']['SeedStatus'] | null;
       /**
        * @description Page number (1-based).
        * @default 1
@@ -26265,6 +27480,11 @@ export interface components {
       realmId: string;
       /** @description Filter by playable status */
       isPlayable?: boolean | null;
+      /**
+       * @description Whether to include deprecated species in results
+       * @default false
+       */
+      includeDeprecated: boolean;
       /**
        * @description Page number for pagination (1-based)
        * @default 1
@@ -26886,8 +28106,8 @@ export interface components {
     MatchesHierarchyResponse: {
       /** @description True if typeId equals or descends from ancestorTypeId */
       matches: boolean;
-      /** @description Number of levels between the types (0 if same, -1 if no match) */
-      depth?: number;
+      /** @description Number of levels between the types (0 if same type, null if no match) */
+      depth?: number | null;
     };
     /** @description Matchmaking operational statistics */
     MatchmakingStatsResponse: {
@@ -27224,6 +28444,25 @@ export interface components {
      * @enum {string}
      */
     MilestoneStatus: 'pending' | 'active' | 'completed' | 'failed' | 'skipped';
+    /** @description Availability result for a single transit mode for an entity */
+    ModeAvailabilityResult: {
+      /** @description Transit mode code */
+      code: string;
+      /** @description Whether the entity can currently use this mode */
+      available: boolean;
+      /** @description Why the mode is unavailable. Null if available. */
+      unavailableReason?: string | null;
+      /**
+       * Format: decimal
+       * @description Effective speed in km/game-hour adjusted for cargo weight
+       */
+      effectiveSpeed: number;
+      /**
+       * Format: decimal
+       * @description GOAP preference cost from DI cost modifier providers (0.0 = neutral, 1.0 = extreme aversion)
+       */
+      preferenceCost: number;
+    };
     /** @description Probability distribution over musical modes */
     ModeDistribution: {
       /**
@@ -27274,6 +28513,11 @@ export interface components {
        * @default 0
        */
       locrian: number;
+    };
+    /** @description Response containing a single transit mode */
+    ModeResponse: {
+      /** @description The transit mode */
+      mode: components['schemas']['TransitMode'];
     };
     /**
      * @description Musical mode/scale type
@@ -28772,6 +30016,61 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to query connections with optional filters */
+    QueryConnectionsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter to connections FROM this location
+       */
+      fromLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections TO this location
+       */
+      toLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections involving this location (either end)
+       */
+      locationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections touching this realm
+       */
+      realmId?: string | null;
+      /** @description Filter to only cross-realm (true) or intra-realm (false) connections */
+      crossRealm?: boolean | null;
+      /** @description Filter by terrain type */
+      terrainType?: string | null;
+      /** @description Filter by mode compatibility */
+      modeCode?: string | null;
+      /** @description Filter by connection status */
+      status?: components['schemas']['ConnectionStatus'] | null;
+      /** @description Filter by tags */
+      tags?: string[] | null;
+      /**
+       * @description Whether to include seasonally closed connections
+       * @default true
+       */
+      includeSeasonalClosed: boolean;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Response containing a paginated list of connections */
+    QueryConnectionsResponse: {
+      /** @description Connections matching the query */
+      connections: components['schemas']['TransitConnection'][];
+      /** @description Total matching connections across all pages */
+      totalCount: number;
+    };
     /** @description Request to query contract instances with cursor-based pagination. */
     QueryContractInstancesRequest: {
       /**
@@ -28921,6 +30220,77 @@ export interface components {
       items: components['schemas']['QueryResultItem'][];
       /** @description Total matching */
       totalCount: number;
+    };
+    /** @description Request to query archived journeys from MySQL historical store */
+    QueryJourneyArchiveRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by entity
+       */
+      entityId?: string | null;
+      /** @description Filter by entity type */
+      entityType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to journeys touching this realm
+       */
+      realmId?: string | null;
+      /** @description Filter to cross-realm journeys only */
+      crossRealm?: boolean | null;
+      /**
+       * Format: uuid
+       * @description Filter by origin location
+       */
+      originLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by destination location
+       */
+      destinationLocationId?: string | null;
+      /** @description Filter by primary mode code */
+      modeCode?: string | null;
+      /** @description Filter by status (typically arrived or abandoned) */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * Format: decimal
+       * @description Filter to journeys departed after this game-time
+       */
+      fromGameTime?: number | null;
+      /**
+       * Format: decimal
+       * @description Filter to journeys departed before this game-time
+       */
+      toGameTime?: number | null;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Request to list active journeys on a specific connection */
+    QueryJourneysByConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to query journeys for
+       */
+      connectionId: string;
+      /** @description Filter by journey status (defaults to in_transit in service logic) */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Request to find all locations containing a spatial position */
     QueryLocationsByPositionRequest: {
@@ -29595,9 +30965,9 @@ export interface components {
       /** @description Number of realms per page */
       pageSize: number;
       /** @description Whether there are more realms available on the next page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are realms available on the previous page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description A machine-readable lore element for behavior system consumption */
     RealmLoreElement: {
@@ -29739,9 +31109,9 @@ export interface components {
       /** @description True if all requested realms exist AND are active (not deprecated) */
       allActive: boolean;
       /** @description List of realm IDs that do not exist (empty if all exist) */
-      invalidRealmIds?: string[];
+      invalidRealmIds: string[];
       /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
-      deprecatedRealmIds?: string[];
+      deprecatedRealmIds: string[];
     };
     /** @description Request to record growth across multiple domains atomically. */
     RecordGrowthBatchRequest: {
@@ -29854,6 +31224,54 @@ export interface components {
        * @description Character becoming a follower
        */
       characterId: string;
+    };
+    /** @description Request to register a new transit mode */
+    RegisterModeRequest: {
+      /** @description Unique mode code (e.g., "walking", "horseback", "wagon") */
+      code: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description of this transit mode */
+      description: string;
+      /**
+       * Format: decimal
+       * @description Base speed in game-kilometers per game-hour
+       */
+      baseSpeedKmPerGameHour: number;
+      /** @description Per-terrain speed multipliers. Null means base speed applies uniformly. */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description How many entities can ride */
+      passengerCapacity: number;
+      /**
+       * Format: decimal
+       * @description Weight capacity in game-kg
+       */
+      cargoCapacityKg: number;
+      /**
+       * Format: decimal
+       * @description Per-mode cargo speed penalty rate override. Null means use plugin config default.
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Terrain types this mode can traverse. Empty array means all terrain. */
+      compatibleTerrainTypes: string[];
+      /** @description Entity types allowed to use this mode. Null means no restriction. */
+      validEntityTypes?: string[] | null;
+      /** @description Requirements that must be met to use this mode */
+      requirements: components['schemas']['TransitModeRequirements'];
+      /**
+       * Format: decimal
+       * @description Stamina cost per game-hour of travel
+       */
+      fatigueRatePerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Noise level from 0.0 (silent) to 1.0 (loud)
+       */
+      noiseLevelNormalized: number;
+      /** @description Realm IDs where this mode is available. Null means all realms. */
+      realmRestrictions?: string[] | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
     };
     /** @description Request to register a reference to a resource */
     RegisterReferenceRequest: {
@@ -30041,9 +31459,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results on the next page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results on the previous page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description Complete details of a relationship between two entities */
     RelationshipResponse: {
@@ -30805,6 +32223,34 @@ export interface components {
       /** @description Version number the bundle was restored from */
       restoredFromVersion: number;
     };
+    /** @description Request to resume an interrupted journey */
+    ResumeJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to resume
+       */
+      journeyId: string;
+    };
+    /** @description Request to reveal a discoverable connection to an entity */
+    RevealDiscoveryRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to reveal the connection to
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Discoverable connection to reveal
+       */
+      connectionId: string;
+      /** @description How the connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward") */
+      source: string;
+    };
+    /** @description Response containing the discovery record */
+    RevealDiscoveryResponse: {
+      /** @description The discovery record */
+      discovery: components['schemas']['DiscoveryRecord'];
+    };
     /** @description Request to revoke an active blessing */
     RevokeBlessingRequest: {
       /**
@@ -30887,6 +32333,11 @@ export interface components {
      * @enum {string}
      */
     RoomTypeStatus: 'Active' | 'Deprecated';
+    /**
+     * @description Sort criteria for route calculation results
+     * @enum {string}
+     */
+    RouteSortBy: 'fastest' | 'safest' | 'shortest';
     /** @description Search engine optimization and social media sharing metadata */
     SEOMetadata: {
       /** @description Meta description for search engines */
@@ -31819,6 +33270,31 @@ export interface components {
        */
       entryCount?: number;
     };
+    /** @description Per-season availability for a connection. Season codes must match the realm's Worldstate calendar template. */
+    SeasonalAvailabilityEntry: {
+      /** @description Season code matching the realm's Worldstate calendar template (e.g., "winter", "wet", "dry") */
+      season: string;
+      /** @description Whether the connection is open during this season */
+      available: boolean;
+    };
+    /** @description Warning about an upcoming seasonal closure on a route leg */
+    SeasonalRouteWarning: {
+      /**
+       * Format: uuid
+       * @description Connection with the seasonal risk
+       */
+      connectionId: string;
+      /** @description Human-readable connection name for display */
+      connectionName?: string | null;
+      /** @description Which leg in the route uses this connection */
+      legIndex: number;
+      /** @description Current season code (from Worldstate) */
+      currentSeason: string;
+      /** @description Season code when this connection closes */
+      closingSeason: string;
+      /** @description How many season transitions until closure (1 = next season) */
+      closingSeasonIndex: number;
+    };
     /** @description Request to bulk seed a board template with license definitions */
     SeedBoardTemplateRequest: {
       /**
@@ -32301,6 +33777,11 @@ export interface components {
       /** @description Reason for the ratio change */
       reason: components['schemas']['TimeRatioChangeReason'];
     };
+    /**
+     * @description Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+     * @enum {string}
+     */
+    SettableConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked';
     /** @description Shared garden state for bonded players */
     SharedGardenStateResponse: {
       /**
@@ -32510,10 +33991,6 @@ export interface components {
       species: components['schemas']['SpeciesResponse'][];
       /** @description Total number of species matching the query (for pagination) */
       totalCount: number;
-      /** @description Current page number */
-      page?: number;
-      /** @description Number of items per page */
-      pageSize?: number;
     };
     /** @description Complete species data including all attributes and realm associations */
     SpeciesResponse: {
@@ -33096,7 +34573,7 @@ export interface components {
       /** @description Stub name of the service (denormalized for efficiency) */
       stubName: string;
       /** @description Display name of the service (denormalized for efficiency) */
-      displayName?: string;
+      displayName: string;
       /**
        * Format: date-time
        * @description When the subscription started
@@ -33131,8 +34608,6 @@ export interface components {
     SubscriptionListResponse: {
       /** @description List of subscriptions matching the filter criteria */
       subscriptions: components['schemas']['SubscriptionInfo'][];
-      /** @description Total number of subscriptions matching the filter */
-      totalCount: number;
     };
     /** @description Request to get related topic suggestions based on a source */
     SuggestRelatedRequest: {
@@ -33300,6 +34775,16 @@ export interface components {
       | 'unilateral_with_notice'
       | 'unilateral_immediate'
       | 'non_terminable';
+    /** @description Per-terrain speed multiplier applied to a mode's base speed */
+    TerrainSpeedModifier: {
+      /** @description Terrain type code (e.g., "road", "trail", "forest"). Category B content code (game-configurable). */
+      terrainType: string;
+      /**
+       * Format: decimal
+       * @description Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)
+       */
+      multiplier: number;
+    };
     /** @description A faction's territory claim on a location */
     TerritoryClaimResponse: {
       /**
@@ -33686,6 +35171,357 @@ export interface components {
       /** @description Scale relative to parent */
       scale: components['schemas']['Vector3'];
     };
+    /** @description A connection (edge) between two locations in the transit connectivity graph */
+    TransitConnection: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this connection
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @description Starting location (Location service entity)
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location (Location service entity)
+       */
+      toLocationId: string;
+      /** @description Whether this connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain classification (e.g., "road", "trail", "forest", "mountain", "river"). Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection. Empty means walking only. */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Season codes must match the realm's Worldstate calendar template. Null means always available. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable risk description (e.g., "Bandit territory", "Avalanche prone"). Null means no specific risk. */
+      riskDescription?: string | null;
+      /** @description Current operational status of this connection */
+      status: components['schemas']['ConnectionStatus'];
+      /** @description Why the connection is in its current status. Null when open with no special reason. */
+      statusReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When the status was last changed
+       */
+      statusChangedAt: string;
+      /** @description Whether this connection requires discovery. False means common knowledge visible to all route queries. */
+      discoverable: boolean;
+      /** @description Human-readable connection name (e.g., "The King's Road", "Serpent River") */
+      name?: string | null;
+      /** @description Unique code for lookup (e.g., "kings_road") */
+      code?: string | null;
+      /** @description Freeform classification tags (e.g., "trade_route", "military", "smuggler_path"). Null means no tags. */
+      tags?: string[] | null;
+      /**
+       * Format: uuid
+       * @description Realm of fromLocationId (derived, not caller-specified)
+       */
+      fromRealmId: string;
+      /**
+       * Format: uuid
+       * @description Realm of toLocationId (derived, not caller-specified)
+       */
+      toRealmId: string;
+      /** @description Whether fromRealmId differs from toRealmId (derived convenience flag) */
+      crossRealm: boolean;
+      /**
+       * Format: date-time
+       * @description When this connection was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this connection was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description A recorded interruption during a journey */
+    TransitInterruption: {
+      /** @description Which leg was interrupted (0-based index) */
+      legIndex: number;
+      /**
+       * Format: decimal
+       * @description Game-time when the interruption occurred
+       */
+      gameTime: number;
+      /** @description Reason for interruption (e.g., "bandit_attack", "storm", "breakdown", "encounter") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description How long the interruption lasted in game-hours. 0 if unresolved or resolved immediately.
+       */
+      durationGameHours: number;
+      /** @description Whether travel resumed after this interruption. Stored entity state, not derivable from durationGameHours. */
+      resolved: boolean;
+    };
+    /** @description An active or completed transit journey tracking entity movement across connections */
+    TransitJourney: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this journey
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @description Entity that is traveling
+       */
+      entityId: string;
+      /** @description Type of traveling entity (e.g., "character", "npc", "caravan", "army", "creature"). Category B content code. */
+      entityType: string;
+      /** @description Ordered list of connections to traverse */
+      legs: components['schemas']['TransitJourneyLeg'][];
+      /** @description Which leg the entity is currently on (0-based) */
+      currentLegIndex: number;
+      /** @description Primary transit mode for this journey */
+      primaryModeCode: string;
+      /**
+       * Format: decimal
+       * @description Current effective speed accounting for modifiers
+       */
+      effectiveSpeedKmPerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of planned departure
+       */
+      plannedDepartureGameTime: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of actual departure. Null if not yet departed.
+       */
+      actualDepartureGameTime?: number | null;
+      /**
+       * Format: decimal
+       * @description Estimated arrival game-time based on route, speed, and worldstate
+       */
+      estimatedArrivalGameTime: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of actual arrival. Null if not yet arrived.
+       */
+      actualArrivalGameTime?: number | null;
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      originLocationId: string;
+      /**
+       * Format: uuid
+       * @description Final destination
+       */
+      destinationLocationId: string;
+      /**
+       * Format: uuid
+       * @description Last known position (most recently departed-from or arrived-at location)
+       */
+      currentLocationId: string;
+      /** @description Current journey lifecycle status */
+      status: components['schemas']['JourneyStatus'];
+      /** @description Reason for interruption or abandonment. Null for normal status transitions. */
+      statusReason?: string | null;
+      /** @description Recorded interruptions during this journey */
+      interruptions: components['schemas']['TransitInterruption'][];
+      /** @description Number of entities traveling together */
+      partySize: number;
+      /**
+       * Format: decimal
+       * @description Total cargo weight affecting speed on some modes
+       */
+      cargoWeightKg: number;
+      /**
+       * Format: date-time
+       * @description When this journey was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this journey was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description A single leg of a journey following one connection */
+    TransitJourneyLeg: {
+      /**
+       * Format: uuid
+       * @description Transit connection this leg follows
+       */
+      connectionId: string;
+      /**
+       * Format: uuid
+       * @description Starting location of this leg
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location of this leg
+       */
+      toLocationId: string;
+      /** @description Transit mode for this leg. May differ from the journey's primaryModeCode for multi-modal journeys. */
+      modeCode: string;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers (copied from connection)
+       */
+      distanceKm: number;
+      /** @description Terrain type of this leg's connection. Category B content code. */
+      terrainType: string;
+      /**
+       * Format: decimal
+       * @description Estimated duration for this leg in game-hours
+       */
+      estimatedDurationGameHours: number;
+      /**
+       * Format: decimal
+       * @description Delay at the waypoint before starting this leg. Models intra-location transfer time (disembarking, changing mounts, crossing a city). Null or 0 means no delay.
+       */
+      waypointTransferTimeGameHours?: number | null;
+      /** @description Current status of this journey leg */
+      status: components['schemas']['JourneyLegStatus'];
+      /**
+       * Format: decimal
+       * @description Game-time when this leg was completed. Null if pending or in_progress.
+       */
+      completedAtGameTime?: number | null;
+    };
+    /** @description A transit mode defining movement capabilities (e.g., walking, horseback, wagon) */
+    TransitMode: {
+      /** @description Unique string identifier for this mode (e.g., "walking", "horseback", "wagon") */
+      code: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description of this transit mode */
+      description: string;
+      /**
+       * Format: decimal
+       * @description Base speed in game-kilometers per game-hour. Used when no terrain-specific speed modifier is defined.
+       */
+      baseSpeedKmPerGameHour: number;
+      /** @description Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain. */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description How many entities can ride (1 for horse, 20 for ship) */
+      passengerCapacity: number;
+      /**
+       * Format: decimal
+       * @description Weight capacity in game-kg (0 for walking, 500 for wagon)
+       */
+      cargoCapacityKg: number;
+      /**
+       * Format: decimal
+       * @description Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying). */
+      compatibleTerrainTypes: string[];
+      /** @description Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt. */
+      validEntityTypes?: string[] | null;
+      /** @description Requirements that must be met to use this mode */
+      requirements: components['schemas']['TransitModeRequirements'];
+      /**
+       * Format: decimal
+       * @description Stamina cost per game-hour of travel (0 = no fatigue)
+       */
+      fatigueRatePerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk
+       */
+      noiseLevelNormalized: number;
+      /** @description Realm IDs where this mode is available. Null means available in all realms. */
+      realmRestrictions?: string[] | null;
+      /** @description Whether this mode is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When deprecation occurred. Null if not deprecated.
+       */
+      deprecatedAt?: string | null;
+      /** @description Why this mode was deprecated. Null if not deprecated. */
+      deprecationReason?: string | null;
+      /** @description Freeform classification tags (e.g., "mount", "vehicle", "magical", "aquatic"). Null means no tags. */
+      tags?: string[] | null;
+      /**
+       * Format: date-time
+       * @description When this mode was registered
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this mode was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description Requirements that must be met to use a transit mode (applies to character entities only) */
+    TransitModeRequirements: {
+      /** @description Item tag required to use this mode (e.g., "mount_horse"). Null means no item needed. */
+      requiredItemTag?: string | null;
+      /** @description Species codes allowed to use this mode. Null means any species. */
+      allowedSpeciesCodes?: string[] | null;
+      /** @description Species codes that cannot use this mode. Null means no exclusions. */
+      excludedSpeciesCodes?: string[] | null;
+      /**
+       * @description Minimum party size required (e.g., ocean_vessel requires crew of 3)
+       * @default 1
+       */
+      minimumPartySize: number;
+      /** @description Maximum entity size category allowed (e.g., "small", "medium", "large"). Category B content code. Null means no size restriction. */
+      maximumEntitySizeCategory?: string | null;
+    };
+    /** @description A computed route option returned by route calculation (not persisted) */
+    TransitRouteOption: {
+      /** @description Ordered location IDs from source to destination */
+      waypoints: string[];
+      /** @description Ordered connection IDs */
+      connections: string[];
+      /** @description Number of legs in this route */
+      legCount: number;
+      /** @description Dominant transit mode for this option */
+      primaryModeCode: string;
+      /** @description Per-leg mode codes (may differ from primary on multi-modal routes) */
+      legModes: string[];
+      /**
+       * Format: decimal
+       * @description Sum of all leg distances in game-kilometers
+       */
+      totalDistanceKm: number;
+      /**
+       * Format: decimal
+       * @description Estimated total travel time in game-hours (includes waypoint transfer times)
+       */
+      totalGameHours: number;
+      /**
+       * Format: decimal
+       * @description Approximate real-time equivalent at current time ratio (may change during travel)
+       */
+      totalRealMinutes: number;
+      /**
+       * Format: decimal
+       * @description Weighted average risk across legs
+       */
+      averageRisk: number;
+      /**
+       * Format: decimal
+       * @description Highest risk on any single leg
+       */
+      maxLegRisk: number;
+      /** @description Whether all legs are currently open */
+      allLegsOpen: boolean;
+      /** @description Warnings for legs with upcoming seasonal closures. Null means no warnings. */
+      seasonalWarnings?: components['schemas']['SeasonalRouteWarning'][] | null;
+      /** @description Rank within results (1 = best option by sort criteria) */
+      rank: number;
+    };
     /** @description A condition that must be met for scenario triggering */
     TriggerCondition: {
       /** @description Type of condition to evaluate */
@@ -33807,6 +35643,11 @@ export interface components {
        * @description ID of the faction to reactivate
        */
       factionId: string;
+    };
+    /** @description Request to reverse deprecation of a transit mode */
+    UndeprecateModeRequest: {
+      /** @description Mode code to undeprecate */
+      code: string;
     };
     /** @description Request to restore a deprecated seed type to active status. */
     UndeprecateSeedTypeRequest: {
@@ -34157,6 +35998,59 @@ export interface components {
       /** @description New era label definitions (null = no change, empty array = clear all) */
       eraLabels?: components['schemas']['EraLabel'][] | null;
     };
+    /** @description Request to update a connection's properties. Does not update status. Only provided fields are updated. */
+    UpdateConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to update
+       */
+      connectionId: string;
+      /**
+       * Format: decimal
+       * @description Updated distance
+       */
+      distanceKm?: number | null;
+      /** @description Updated terrain type */
+      terrainType?: string | null;
+      /** @description Updated mode compatibility list */
+      compatibleModes?: string[] | null;
+      /** @description Updated seasonal availability */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Updated base risk level
+       */
+      baseRiskLevel?: number | null;
+      /** @description Updated risk description */
+      riskDescription?: string | null;
+      /** @description Updated discoverability flag */
+      discoverable?: boolean | null;
+      /** @description Updated connection name */
+      name?: string | null;
+      /** @description Updated connection code */
+      code?: string | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+    };
+    /** @description Request to transition a connection's operational status with optimistic concurrency */
+    UpdateConnectionStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to update
+       */
+      connectionId: string;
+      /** @description What the caller believes the current status is. Required when forceUpdate is false. Ignored when forceUpdate is true. */
+      currentStatus?: components['schemas']['ConnectionStatus'] | null;
+      /** @description Target status for the connection (seasonal_closed is excluded -- managed by the Seasonal Connection Worker) */
+      newStatus: components['schemas']['SettableConnectionStatus'];
+      /** @description Why the status is changing */
+      reason: string;
+      /**
+       * @description When true, currentStatus is ignored and the status is set unconditionally. Use for administrative overrides.
+       * @default false
+       */
+      forceUpdate: boolean;
+    };
     /** @description Request to update container properties */
     UpdateContainerRequest: {
       /**
@@ -34477,6 +36371,54 @@ export interface components {
      * @enum {string}
      */
     UpdateMode: 'replace' | 'increment' | 'max' | 'min';
+    /** @description Request to update a transit mode. Only provided fields are updated. */
+    UpdateModeRequest: {
+      /** @description Mode code to update (identifier, not updatable) */
+      code: string;
+      /** @description Updated display name */
+      name?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /**
+       * Format: decimal
+       * @description Updated base speed
+       */
+      baseSpeedKmPerGameHour?: number | null;
+      /** @description Updated per-terrain speed multipliers */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description Updated passenger capacity */
+      passengerCapacity?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated cargo capacity
+       */
+      cargoCapacityKg?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated per-mode cargo speed penalty rate
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Updated terrain compatibility list */
+      compatibleTerrainTypes?: string[] | null;
+      /** @description Updated entity type restrictions */
+      validEntityTypes?: string[] | null;
+      /** @description Updated mode requirements */
+      requirements?: components['schemas']['TransitModeRequirements'] | null;
+      /**
+       * Format: decimal
+       * @description Updated fatigue rate
+       */
+      fatigueRatePerGameHour?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated noise level
+       */
+      noiseLevelNormalized?: number | null;
+      /** @description Updated realm restrictions */
+      realmRestrictions?: string[] | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+    };
     /** @description Request to update an existing norm definition */
     UpdateNormRequest: {
       /**
@@ -50993,13 +52935,6 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Seed type already deprecated */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
     };
   };
   UndeprecateSeedType: {
@@ -51026,13 +52961,6 @@ export interface operations {
       };
       /** @description Seed type not found */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Seed type is not deprecated */
-      409: {
         headers: {
           [name: string]: unknown;
         };
@@ -52234,6 +54162,1002 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  registerMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode registered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listModes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListModesRequest'];
+      };
+    };
+    responses: {
+      /** @description Modes listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListModesResponse'];
+        };
+      };
+    };
+  };
+  updateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deprecateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  undeprecateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode undeprecated (or was not deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deleteMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteModeResponse'];
+        };
+      };
+      /** @description Mode is not deprecated (must deprecate before deleting) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ACTIVE_JOURNEYS_EXIST (active journeys use this mode) or CONNECTIONS_REFERENCE_MODE (connections list this mode in compatibleModes) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  checkModeAvailability: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckModeAvailabilityRequest'];
+      };
+    };
+    responses: {
+      /** @description Availability checked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckModeAvailabilityResponse'];
+        };
+      };
+    };
+  };
+  createConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Same location, invalid mode code, or invalid season key */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description One or both locations not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection already exists between these locations */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  queryConnections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryConnectionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Connections queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryConnectionsResponse'];
+        };
+      };
+    };
+  };
+  updateConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updateConnectionStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateConnectionStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Status updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Status mismatch — actual status differs from currentStatus (Bad Request forces caller to refresh and retry) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deleteConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ACTIVE_JOURNEYS_EXIST (cannot delete while journeys are using this connection) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  bulkSeedConnections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkSeedConnectionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Bulk seed completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkSeedConnectionsResponse'];
+        };
+      };
+    };
+  };
+  createJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey planned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Mode deprecated, requirements not met, or entity type not allowed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Origin, destination, or mode not found; no route available */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  departJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DepartJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey started */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be preparing) or first leg connection closed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  resumeJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResumeJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey resumed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be interrupted) or current leg connection closed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  advanceJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdvanceJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey advanced */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit) or no current leg */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  advanceBatchJourneys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdvanceBatchRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch processed (check individual results for per-journey errors) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdvanceBatchResponse'];
+        };
+      };
+    };
+  };
+  arriveJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ArriveJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey force-arrived */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit or at_waypoint) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  interruptJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InterruptJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey interrupted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  abandonJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AbandonJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey abandoned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be preparing, in_transit, at_waypoint, or interrupted) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  queryJourneysByConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryJourneysByConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Journeys queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listJourneys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListJourneysRequest'];
+      };
+    };
+    responses: {
+      /** @description Journeys listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+    };
+  };
+  queryJourneyArchive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryJourneyArchiveRequest'];
+      };
+    };
+    responses: {
+      /** @description Archived journeys queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+    };
+  };
+  calculateRoute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CalculateRouteRequest'];
+      };
+    };
+    responses: {
+      /** @description Route options calculated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalculateRouteResponse'];
+        };
+      };
+      /** @description Locations not found or no route available */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  revealDiscovery: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RevealDiscoveryRequest'];
+      };
+    };
+    responses: {
+      /** @description Discovery recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RevealDiscoveryResponse'];
+        };
+      };
+      /** @description Connection is not marked as discoverable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listDiscoveries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListDiscoveriesRequest'];
+      };
+    };
+    responses: {
+      /** @description Discoveries listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListDiscoveriesResponse'];
+        };
+      };
+    };
+  };
+  checkDiscoveries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckDiscoveriesRequest'];
+      };
+    };
+    responses: {
+      /** @description Discovery status checked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckDiscoveriesResponse'];
+        };
       };
     };
   };

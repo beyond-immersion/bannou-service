@@ -1,7 +1,7 @@
 # Bannou Service Development Tenets
 
-> **Version**: 9.0
-> **Last Updated**: 2026-02-25
+> **Version**: 9.1
+> **Last Updated**: 2026-02-28
 > **Scope**: All Bannou microservices and related infrastructure
 
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
@@ -178,7 +178,8 @@ Tenets are organized into categories based on when they're needed:
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
 | [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
-| [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26, T30, T31 | While actively writing service code |
+| [**Implementation: Behavior**](tenets/IMPLEMENTATION-BEHAVIOR.md) | T3, T7, T8, T9, T17, T30, T31 | While designing service method behavior |
+| [**Implementation: Data**](tenets/IMPLEMENTATION-DATA.md) | T14, T20, T21, T23, T24, T25, T26 | While writing code and modeling data |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
 > **Note**: Tenets 1 and 2 reference standalone documents (SCHEMA-RULES.md and SERVICE-HIERARCHY.md) that contain their own detailed rules.
@@ -203,9 +204,9 @@ Tenets are organized into categories based on when they're needed:
 
 ---
 
-## Implementation Tenets (Coding Patterns)
+## Implementation Tenets: Service Behavior & Contracts
 
-*Full details: [tenets/IMPLEMENTATION.md](tenets/IMPLEMENTATION.md)*
+*Full details: [tenets/IMPLEMENTATION-BEHAVIOR.md](tenets/IMPLEMENTATION-BEHAVIOR.md)*
 
 | # | Name | Core Rule |
 |---|------|-----------|
@@ -213,16 +214,25 @@ Tenets are organized into categories based on when they're needed:
 | **T7** | Error Handling | Generated controller provides catch-all boundary (do not duplicate in service methods); ApiException catch only for inter-service calls; service try-catch only for specific recovery logic; TryPublishErrorAsync; instance identity from IMeshInstanceIdentifier only |
 | **T8** | Return Pattern | All methods return `(StatusCodes, TResponse?)` tuples; null payload for errors; no filler properties in success responses |
 | **T9** | Multi-Instance Safety | No in-memory authoritative state; use distributed locks |
-| **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
 | **T17** | Client Event Schema Pattern | Use IClientEventPublisher for WebSocket push; not IMessageBus |
+| **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
+| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; no deprecation on instances |
+
+---
+
+## Implementation Tenets: Data Modeling & Code Discipline
+
+*Full details: [tenets/IMPLEMENTATION-DATA.md](tenets/IMPLEMENTATION-DATA.md)*
+
+| # | Name | Core Rule |
+|---|------|-----------|
+| **T14** | Polymorphic Associations | Entity ID + Type columns; composite string keys |
 | **T20** | JSON Serialization | Always use BannouJson; never direct JsonSerializer |
 | **T21** | Configuration-First | Use generated config classes; no dead config; no hardcoded tunables |
 | **T23** | Async Method Pattern | Task-returning methods must be async with await |
 | **T24** | Using Statement Pattern | Use `using` for disposables; manual Dispose only for class-owned resources |
 | **T25** | Type Safety Across All Models | ALL models use proper types (enums, Guids); "JSON requires strings" is FALSE |
 | **T26** | No Sentinel Values | Never use magic values (Guid.Empty, -1, empty string) for absence; use nullable types |
-| **T30** | Telemetry Span Instrumentation | All async methods get `StartActivity` spans; zero-signature-change via `Activity.Current` ambient context |
-| **T31** | Deprecation Lifecycle | Two categories (definitions vs templates); idempotent deprecation; standardized storage/events/behavior; no deprecation on instances |
 
 ---
 
@@ -271,6 +281,7 @@ Tenets are organized into categories based on when they're needed:
 | Missing event consumer registration | T3 | Add RegisterEventConsumers call |
 | Adding top-level try-catch to service endpoint methods | T7 | Generated controller already provides catch-all boundary with logging, error events, and 500 response; do not duplicate |
 | Generic catch returning 500 in service method | T7 | Let it propagate to the generated controller; only catch for specific recovery logic or inter-service `ApiException` |
+| Using IErrorEventEmitter | T7 | Use IMessageBus.TryPublishErrorAsync instead |
 | Emitting error events for user errors | T7 | Only emit for unexpected/internal failures |
 | Constructing `ServiceErrorEvent` directly | T7 | Use `TryPublishErrorAsync`; only `RabbitMQMessageBus` constructs the event |
 | Passing instance ID to `TryPublishErrorAsync` | T7 | Instance identity injected internally from `IMeshInstanceIdentifier` |
@@ -286,6 +297,7 @@ Tenets are organized into categories based on when they're needed:
 | Wrong exchange for client events | T17 | Use IClientEventPublisher, not IMessageBus |
 | Direct `JsonSerializer` usage | T20 | Use `BannouJson.Serialize/Deserialize` |
 | Direct `Environment.GetEnvironmentVariable` | T21 | Use service configuration class |
+| Hardcoded credential fallback | T21 | Remove default, require configuration |
 | Unused configuration property | T21 | Wire up in service or remove from schema |
 | Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
@@ -316,12 +328,16 @@ Tenets are organized into categories based on when they're needed:
 | Using empty string for "absent" | T26 | Make field `string?` nullable |
 | Non-nullable model field when value can be absent | T26 | Make field nullable, update schema |
 | `[TAG]` prefix in logs | T10 | Remove brackets, use structured logging |
+| String interpolation in log messages | T10 | Use message templates with named placeholders |
+| Logging passwords/tokens/PII | T10 | Redact or log length only |
 | Emojis in log messages | T10 | Plain text only (scripts excepted) |
 | HTTP fallback in tests | T12 | Remove fallback, fix root cause |
 | Changing test to pass with buggy impl | T12 | Keep test, fix implementation |
 | Using `null!` to test non-nullable params | T12 | Remove test - tests impossible scenario |
 | Adding null checks for NRT-protected params | T12 | Don't add - NRT provides compile-time safety |
+| Wrong naming pattern (method, model, event, topic) | T16 | Follow category-specific pattern in T16 |
 | Missing XML documentation | T19 | Add `<summary>`, `<param>`, `<returns>` |
+| Missing env var in config XML doc | T19 | Document environment variable in summary |
 | `#pragma warning disable` without exception | T22 | Fix the warning instead of suppressing |
 | Blanket GlobalSuppressions.cs | T22 | Remove file, fix warnings individually |
 | Suppressing CS8602/CS8603/CS8604 in non-generated | T22 | Fix the null safety issue |
@@ -344,6 +360,8 @@ Tenets are organized into categories based on when they're needed:
 | Async helper method without `StartActivity` span | T30 | Add `using var activity = _telemetryProvider.StartActivity(...)` |
 | Manually adding spans to generated code | T30 | Add to code generation templates, not generated files |
 | Missing `ITelemetryProvider` in helper service constructor | T30 | Add constructor parameter for span creation |
+| Span on non-async synchronous method | T30 | Only async methods need spans |
+| Span name not following `{component}.{class}.{method}` pattern | T30 | Use `"bannou.{service}", "{Class}.{Method}"` format |
 | Adding deprecation to instance data (characters, sessions, etc.) | T31 | Use immediate hard delete; deprecation is for definitions only |
 | Bare boolean for deprecation (no timestamp or reason) | T31 | Use triple-field model: `IsDeprecated`, `DeprecatedAt`, `DeprecationReason` |
 | Missing `DeprecationReason` on Category A entity | T31 | Add `DeprecationReason` field; audit context is mandatory for world-building definitions |
@@ -352,6 +370,9 @@ Tenets are organized into categories based on when they're needed:
 | Delete without requiring deprecation (Category A) | T31 | Reject delete with `BadRequest` if `IsDeprecated == false` |
 | Dedicated deprecation event (`item-template.deprecated`) | T31 | Use `*.updated` event with `changedFields` containing deprecation fields |
 | Missing `includeDeprecated` on list endpoint | T31 | Add parameter with `default: false` to all list/query endpoints |
+| Undeprecate endpoint on Category B entity | T31 | Remove; Category B deprecation is one-way |
+| Delete endpoint on Category B entity | T31 | Remove; Category B templates persist forever |
+| Not checking deprecation before creating referencing entity | T31 | Check target's `Exists` or deprecation status; reject with `BadRequest` if deprecated |
 | Category B entity missing instance creation guard | T31 | Check `IsDeprecated` before creating instances; reject with `BadRequest` |
 
 ---

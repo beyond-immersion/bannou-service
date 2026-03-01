@@ -249,6 +249,12 @@ public partial class WorldstateMonthChangedEvent : BaseServiceEvent
     public int MonthsCrossed { get; set; } = default!;
 
     /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
+
+    /// <summary>
     /// Full game time snapshot at the time of the event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentGameTime")]
@@ -304,6 +310,12 @@ public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
     public int CurrentYear { get; set; } = default!;
 
     /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
+
+    /// <summary>
     /// Full game time snapshot at the time of the event
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentGameTime")]
@@ -354,6 +366,12 @@ public partial class WorldstateYearChangedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("yearsCrossed")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int YearsCrossed { get; set; } = default!;
+
+    /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
 
     /// <summary>
     /// Full game time snapshot at the time of the event

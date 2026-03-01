@@ -128,6 +128,9 @@ public static class EventSubscriptionRegistration
         // From status-events.yaml
         EventSubscriptionRegistry.Register<SeedCapabilityUpdatedEvent>("seed.capability.updated");
 
+        // From transit-events.yaml
+        EventSubscriptionRegistry.Register<WorldstateSeasonChangedEvent>("worldstate.season-changed");
+
         // From worldstate-events.yaml
         EventSubscriptionRegistry.Register<CalendarTemplateUpdatedEvent>("worldstate.calendar-template.updated");
     }

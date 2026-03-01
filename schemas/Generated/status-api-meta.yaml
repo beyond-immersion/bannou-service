@@ -1453,6 +1453,21 @@ components:
       - stacked
       - refreshed
       - replaced
+    StatusChangeType:
+      type: string
+      description: |
+        Type of status effect change for client event push notification.
+        - granted: new status effect applied to entity
+        - removed: status explicitly removed (by source, admin, or cancellation)
+        - expired: status TTL elapsed (lazy expiration during cache rebuild)
+        - stacked: stack count increased or duration refreshed on existing status
+        - cleansed: status removed by category cleanse mechanic
+      enum:
+      - granted
+      - removed
+      - expired
+      - stacked
+      - cleansed
     StatusEffectSummary:
       type: object
       description: Unified summary of an active effect from any source (item-based or seed-derived)

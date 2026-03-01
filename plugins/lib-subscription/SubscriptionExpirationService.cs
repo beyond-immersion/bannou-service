@@ -14,10 +14,13 @@ namespace BeyondImmersion.BannouService.Subscription;
 public class SubscriptionExpirationService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<SubscriptionExpirationService> _logger;
     private readonly SubscriptionServiceConfiguration _configuration;
 
-    private const string SUBSCRIPTION_INDEX_KEY = "subscription-index";
+    // Key constants shared from SubscriptionService (internal const)
+    private static string SubscriptionKeyPrefix => SubscriptionService.SUBSCRIPTION_KEY_PREFIX;
+    private static string SubscriptionIndexKey => SubscriptionService.SUBSCRIPTION_INDEX_KEY;
 
     /// <summary>
     /// Interval between expiration checks, from configuration.
@@ -39,10 +42,12 @@ public class SubscriptionExpirationService : BackgroundService
     /// </summary>
     public SubscriptionExpirationService(
         IServiceProvider serviceProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<SubscriptionExpirationService> logger,
         SubscriptionServiceConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -112,8 +117,9 @@ public class SubscriptionExpirationService : BackgroundService
     /// Checks for expired subscriptions and delegates expiration to the main SubscriptionService.
     /// Removes fully-processed entries from the global index to prevent unbounded growth.
     /// </summary>
-    private async Task CheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
+    internal async Task CheckAndExpireSubscriptionsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.subscription", "SubscriptionExpirationService.CheckAndExpireSubscriptions");
         _logger.LogDebug("Checking for expired subscriptions");
 
         using var scope = _serviceProvider.CreateScope();
@@ -122,7 +128,7 @@ public class SubscriptionExpirationService : BackgroundService
 
         // Get the subscription index to find all subscription IDs
         var indexStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Subscription);
-        var subscriptionIndex = await indexStore.GetAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
+        var subscriptionIndex = await indexStore.GetAsync(SubscriptionIndexKey, cancellationToken);
 
         if (subscriptionIndex == null || subscriptionIndex.Count == 0)
         {
@@ -140,7 +146,7 @@ public class SubscriptionExpirationService : BackgroundService
             try
             {
                 var subscription = await subscriptionStore.GetAsync(
-                    $"subscription:{subscriptionId}",
+                    $"{SubscriptionKeyPrefix}{subscriptionId}",
                     cancellationToken);
 
                 if (subscription == null)
@@ -211,9 +217,10 @@ public class SubscriptionExpirationService : BackgroundService
         List<Guid> idsToRemove,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.subscription", "SubscriptionExpirationService.CleanupSubscriptionIndex");
         for (var attempt = 0; attempt < 3; attempt++)
         {
-            var (currentIndex, etag) = await indexStore.GetWithETagAsync(SUBSCRIPTION_INDEX_KEY, cancellationToken);
+            var (currentIndex, etag) = await indexStore.GetWithETagAsync(SubscriptionIndexKey, cancellationToken);
             if (currentIndex == null || currentIndex.Count == 0)
             {
                 return;
@@ -229,7 +236,7 @@ public class SubscriptionExpirationService : BackgroundService
 
             // GetWithETagAsync returns non-null etag for existing records;
             // coalesce satisfies compiler's nullable analysis (will never execute)
-            var result = await indexStore.TrySaveAsync(SUBSCRIPTION_INDEX_KEY, updatedIndex, etag ?? string.Empty, cancellationToken);
+            var result = await indexStore.TrySaveAsync(SubscriptionIndexKey, updatedIndex, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 _logger.LogDebug("Cleaned {Count} entries from subscription index", currentIndex.Count - updatedIndex.Count);

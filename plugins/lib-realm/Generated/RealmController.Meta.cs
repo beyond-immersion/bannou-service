@@ -424,7 +424,9 @@ public partial class RealmController
                 "realms",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "realms": {
@@ -642,6 +644,7 @@ public partial class RealmController
                 },
                 "category": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 50,
                     "nullable": true,
                     "description": "Category for grouping (e.g., \"MAIN\", \"SPECIAL\")"
@@ -857,6 +860,7 @@ public partial class RealmController
                 },
                 "category": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 50,
                     "nullable": true,
                     "description": "Category for grouping"
@@ -1127,7 +1131,8 @@ public partial class RealmController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "realmId"
+                "realmId",
+                "reason"
             ],
             "properties": {
                 "realmId": {
@@ -1137,9 +1142,9 @@ public partial class RealmController
                 },
                 "reason": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 500,
-                    "nullable": true,
-                    "description": "Optional reason for deprecation (for audit purposes)"
+                    "description": "Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION TENETS)"
                 }
             }
         }
@@ -1516,8 +1521,6 @@ public partial class RealmController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sourceRealmId",
-                "targetRealmId",
                 "speciesMigrated",
                 "speciesFailed",
                 "locationsMigrated",
@@ -1527,16 +1530,6 @@ public partial class RealmController
                 "sourceDeleted"
             ],
             "properties": {
-                "sourceRealmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the source realm that was merged from"
-                },
-                "targetRealmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the target realm that entities were merged into"
-                },
                 "speciesMigrated": {
                     "type": "integer",
                     "description": "Number of species successfully added to target realm and removed from source"
@@ -1782,7 +1775,9 @@ public partial class RealmController
             "required": [
                 "results",
                 "allExist",
-                "allActive"
+                "allActive",
+                "invalidRealmIds",
+                "deprecatedRealmIds"
             ],
             "properties": {
                 "results": {
@@ -1942,10 +1937,15 @@ public partial class RealmController
             "properties": {
                 "code": {
                     "type": "string",
-                    "description": "Unique code for the realm"
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
+                    "description": "Unique code for the realm (e.g., \"REALM_1\", \"REALM_2\")"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Display name for the realm"
                 },
                 "gameServiceId": {
@@ -1955,11 +1955,14 @@ public partial class RealmController
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "nullable": true,
                     "description": "Detailed description of the realm and its characteristics"
                 },
                 "category": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Category for grouping realms (e.g., \"MAIN\", \"SPECIAL\", \"TEST\")"
                 },

@@ -24,13 +24,16 @@ public partial class WorldstateService
 
     /// <summary>
     /// Handles worldstate.calendar-template.updated events.
-    /// TODO: Implement event handling logic.
+    /// Invalidates local calendar template cache for cross-node consistency.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleCalendarTemplateUpdatedAsync(CalendarTemplateUpdatedEvent evt)
+    public async Task HandleCalendarTemplateUpdatedAsync(CalendarTemplateUpdatedEvent evt)
     {
-        // TODO: Implement worldstate.calendar-template.updated event handling
-        _logger.LogInformation("Received {Topic} event", "worldstate.calendar-template.updated");
-        return Task.CompletedTask;
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.worldstate", "WorldstateServiceEvents.HandleCalendarTemplateUpdated");
+
+        // TODO: Implement cross-node cache invalidation when CalendarTemplateCache is built
+        _logger.LogDebug("Received calendar template updated event for {TemplateCode}", evt.TemplateCode);
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
     }
 }

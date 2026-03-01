@@ -616,6 +616,12 @@ This document lists all events defined in Bannou's event schemas.
 | `StatusRemovedEvent` | Custom | `status-removed` | Published when a status effect is removed from an ... |
 | `StatusStackedEvent` | Custom | `status-stacked` | Published when a status effect stack count changes |
 
+### Status (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StatusEffectChangedClientEvent` | Custom | `status-effect-changed-client` | Sent to sessions observing an entity when a status... |
+
 ### Storyline
 
 | Event | Type | Likely Topic | Description |
@@ -632,6 +638,30 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
+
+### Transit
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `TransitConnectionStatusChangedEvent` | Custom | `transit-connection-status-changed` | Published when a connection's operational status c... |
+| `TransitDiscoveryRevealedEvent` | Custom | `transit-discovery-revealed` | Published when a discoverable connection is reveal... |
+| `TransitJourneyAbandonedEvent` | Custom | `transit-journey-abandoned` | Published when a journey is abandoned before reach... |
+| `TransitJourneyArrivedEvent` | Custom | `transit-journey-arrived` | Published when a traveling entity reaches its dest... |
+| `TransitJourneyDepartedEvent` | Custom | `transit-journey-departed` | Published when an entity begins traveling |
+| `TransitJourneyInterruptedEvent` | Custom | `transit-journey-interrupted` | Published when a journey is interrupted (combat, e... |
+| `TransitJourneyResumedEvent` | Custom | `transit-journey-resumed` | Published when an interrupted journey is resumed |
+| `TransitJourneyWaypointReachedEvent` | Custom | `transit-journey-waypoint-reached` | Published when a traveling entity reaches an inter... |
+| `TransitModeDeletedEvent` | Lifecycle (Deleted) | `transit-mode.deleted` | Published when a deprecated transit mode is perman... |
+| `TransitModeRegisteredEvent` | Registration | `transit-mode.registered` | Published when a new transit mode is registered |
+| `TransitModeUpdatedEvent` | Lifecycle (Updated) | `transit-mode.updated` | Published when a transit mode is updated (covers p... |
+
+### Transit (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `TransitConnectionStatusChangedEvent` | Custom | `transit-connection-status-changed` | A connection's operational status changed -- pushe... |
+| `TransitDiscoveryRevealedEvent` | Custom | `transit-discovery-revealed` | A discoverable connection was revealed -- pushed t... |
+| `TransitJourneyUpdatedEvent` | Lifecycle (Updated) | `transit-journey.updated` | Journey state changed -- pushed to the traveling e... |
 
 ### Voice
 

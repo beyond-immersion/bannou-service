@@ -1580,8 +1580,14 @@ paths:
         : \"Request to get a player-facing quest log summary\",\n            \"additionalProperties\": false,\n          \
         \  \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n             \
         \   \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"Character to get log for\"\n                }\n            }\n        }\n   \
-        \ }\n}"
+        \                 \"description\": \"Character to get log for\"\n                },\n                \"category\"\
+        : {\n                    \"description\": \"Filter active quests by category\",\n                    \"nullable\"\
+        : true,\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/QuestCategory\"\
+        \n                        }\n                    ]\n                }\n            }\n        },\n        \"QuestCategory\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"MAIN\",\n                \"SIDE\"\
+        ,\n                \"BOUNTY\",\n                \"DAILY\",\n                \"WEEKLY\",\n                \"EVENT\"\
+        ,\n                \"TUTORIAL\"\n            ],\n            \"description\": \"Category of quest for organization\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuestLogResponse\"\
         ,\n    \"$defs\": {\n        \"QuestLogResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Player-facing quest log with active quests and completion counts\",\n            \"additionalProperties\": false,\n\
@@ -2661,6 +2667,11 @@ components:
           type: string
           format: uuid
           description: Character to get log for
+        category:
+          description: Filter active quests by category
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/QuestCategory'
     QuestInstanceResponse:
       type: object
       description: Active or completed quest instance with progress information

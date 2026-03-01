@@ -82,14 +82,18 @@ public partial class WorldstateController
                 },
                 "year": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current game year (0-based from realm epoch)"
                 },
                 "monthIndex": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "0-based index into calendar months"
                 },
                 "monthCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Month code from calendar template (e.g., \"greenleaf\")"
                 },
                 "dayOfMonth": {
@@ -115,6 +119,8 @@ public partial class WorldstateController
                 },
                 "period": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current day period code from calendar (e.g., \"dawn\", \"morning\")"
                 },
                 "isDaylight": {
@@ -123,6 +129,8 @@ public partial class WorldstateController
                 },
                 "season": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current season code from calendar (e.g., \"spring\")"
                 },
                 "seasonIndex": {
@@ -280,14 +288,18 @@ public partial class WorldstateController
                 },
                 "year": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current game year (0-based from realm epoch)"
                 },
                 "monthIndex": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "0-based index into calendar months"
                 },
                 "monthCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Month code from calendar template (e.g., \"greenleaf\")"
                 },
                 "dayOfMonth": {
@@ -313,6 +325,8 @@ public partial class WorldstateController
                 },
                 "period": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current day period code from calendar (e.g., \"dawn\", \"morning\")"
                 },
                 "isDaylight": {
@@ -321,6 +335,8 @@ public partial class WorldstateController
                 },
                 "season": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current season code from calendar (e.g., \"spring\")"
                 },
                 "seasonIndex": {
@@ -499,14 +515,18 @@ public partial class WorldstateController
                 },
                 "year": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current game year (0-based from realm epoch)"
                 },
                 "monthIndex": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "0-based index into calendar months"
                 },
                 "monthCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Month code from calendar template (e.g., \"greenleaf\")"
                 },
                 "dayOfMonth": {
@@ -532,6 +552,8 @@ public partial class WorldstateController
                 },
                 "period": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current day period code from calendar (e.g., \"dawn\", \"morning\")"
                 },
                 "isDaylight": {
@@ -540,6 +562,8 @@ public partial class WorldstateController
                 },
                 "season": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current season code from calendar (e.g., \"spring\")"
                 },
                 "seasonIndex": {
@@ -974,11 +998,15 @@ public partial class WorldstateController
                 },
                 "calendarTemplateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template code in use (resolved from request or config)"
                 },
                 "timeRatio": {
                     "type": "number",
                     "format": "float",
+                    "minimum": 0.1,
+                    "maximum": 10000.0,
                     "description": "Initial game-seconds per real-second (resolved from request or config)"
                 },
                 "downtimePolicy": {
@@ -992,6 +1020,7 @@ public partial class WorldstateController
                 },
                 "startingYear": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Game year the clock started at"
                 }
             }
@@ -1341,14 +1370,18 @@ public partial class WorldstateController
                 },
                 "year": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current game year (0-based from realm epoch)"
                 },
                 "monthIndex": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "0-based index into calendar months"
                 },
                 "monthCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Month code from calendar template (e.g., \"greenleaf\")"
                 },
                 "dayOfMonth": {
@@ -1374,6 +1407,8 @@ public partial class WorldstateController
                 },
                 "period": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current day period code from calendar (e.g., \"dawn\", \"morning\")"
                 },
                 "isDaylight": {
@@ -1382,6 +1417,8 @@ public partial class WorldstateController
                 },
                 "season": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current season code from calendar (e.g., \"spring\")"
                 },
                 "seasonIndex": {
@@ -1693,6 +1730,8 @@ public partial class WorldstateController
             "properties": {
                 "templateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template identifier"
                 },
                 "gameServiceId": {
@@ -1702,6 +1741,7 @@ public partial class WorldstateController
                 },
                 "gameHoursPerDay": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Number of game hours in a day"
                 },
                 "dayPeriods": {
@@ -1986,6 +2026,8 @@ public partial class WorldstateController
             "properties": {
                 "templateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template identifier"
                 },
                 "gameServiceId": {
@@ -1995,6 +2037,7 @@ public partial class WorldstateController
                 },
                 "gameHoursPerDay": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Number of game hours in a day"
                 },
                 "dayPeriods": {
@@ -2289,6 +2332,8 @@ public partial class WorldstateController
             "properties": {
                 "templateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template identifier"
                 },
                 "gameServiceId": {
@@ -2298,6 +2343,7 @@ public partial class WorldstateController
                 },
                 "gameHoursPerDay": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Number of game hours in a day"
                 },
                 "dayPeriods": {
@@ -2748,6 +2794,8 @@ public partial class WorldstateController
             "properties": {
                 "templateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template identifier"
                 },
                 "gameServiceId": {
@@ -2757,6 +2805,7 @@ public partial class WorldstateController
                 },
                 "gameHoursPerDay": {
                     "type": "integer",
+                    "minimum": 1,
                     "description": "Number of game hours in a day"
                 },
                 "dayPeriods": {
@@ -3026,16 +3075,8 @@ public partial class WorldstateController
         "DeleteCalendarResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Confirmation of calendar template deletion",
-            "required": [
-                "deleted"
-            ],
-            "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether the calendar template was deleted"
-                }
-            }
+            "description": "Empty response. HTTP 200 confirms the deletion succeeded.",
+            "properties": {}
         }
     }
 }
@@ -3152,6 +3193,8 @@ public partial class WorldstateController
                 },
                 "calendarTemplateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template code in use"
                 },
                 "currentTimeRatio": {
@@ -3320,6 +3363,8 @@ public partial class WorldstateController
                 },
                 "calendarTemplateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template code in use"
                 },
                 "currentTimeRatio": {
@@ -3506,6 +3551,8 @@ public partial class WorldstateController
                 },
                 "calendarTemplateCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
                     "description": "Calendar template code in use"
                 },
                 "currentTimeRatio": {
@@ -3515,10 +3562,13 @@ public partial class WorldstateController
                 },
                 "currentSeason": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
                     "description": "Current season code"
                 },
                 "currentYear": {
                     "type": "integer",
+                    "minimum": 0,
                     "description": "Current game year"
                 },
                 "lastAdvancedAt": {
@@ -3620,16 +3670,8 @@ public partial class WorldstateController
         "CleanupByRealmResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Confirmation of realm worldstate cleanup",
-            "required": [
-                "cleaned"
-            ],
-            "properties": {
-                "cleaned": {
-                    "type": "boolean",
-                    "description": "Whether worldstate data was found and cleaned up for this realm"
-                }
-            }
+            "description": "Empty response. HTTP 200 confirms the cleanup succeeded.",
+            "properties": {}
         }
     }
 }

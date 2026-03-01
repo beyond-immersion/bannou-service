@@ -1,0 +1,972 @@
+openapi: 3.0.4
+info:
+  title: Transit Service Events
+  version: 1.0.0
+  description: "AUTO-RESOLVED: Complex cross-file refs have been inlined for NSwag compatibility.\nDO NOT EDIT - Regenerate
+    with scripts/resolve-event-refs.py\nSource: transit-events.yaml\n\nEvents published and consumed by the Transit service"
+
+  x-event-subscriptions:
+  - topic: worldstate.season-changed
+    event: WorldstateSeasonChangedEvent
+    handler: HandleSeasonChanged
+
+  x-event-publications:
+    # Connection lifecycle events (x-lifecycle generated)
+  - topic: transit-connection.created
+    event: TransitConnectionCreatedEvent
+    description: Published when a new connection is created between locations
+  - topic: transit-connection.updated
+    event: TransitConnectionUpdatedEvent
+    description: Published when a connection's properties are updated
+  - topic: transit-connection.deleted
+    event: TransitConnectionDeletedEvent
+    description: Published when a connection is permanently removed
+
+    # Connection status event (custom)
+  - topic: transit-connection.status-changed
+    event: TransitConnectionStatusChangedEvent
+    description: Published when a connection's operational status changes
+
+    # Journey lifecycle events (custom)
+  - topic: transit.journey.departed
+    event: TransitJourneyDepartedEvent
+    description: Published when an entity begins traveling
+  - topic: transit.journey.waypoint-reached
+    event: TransitJourneyWaypointReachedEvent
+    description: Published when a traveling entity reaches an intermediate waypoint
+  - topic: transit.journey.arrived
+    event: TransitJourneyArrivedEvent
+    description: Published when a traveling entity reaches its destination
+  - topic: transit.journey.interrupted
+    event: TransitJourneyInterruptedEvent
+    description: Published when a journey is interrupted
+  - topic: transit.journey.resumed
+    event: TransitJourneyResumedEvent
+    description: Published when an interrupted journey is resumed
+  - topic: transit.journey.abandoned
+    event: TransitJourneyAbandonedEvent
+    description: Published when a journey is abandoned before reaching destination
+
+    # Discovery event (custom)
+  - topic: transit.discovery.revealed
+    event: TransitDiscoveryRevealedEvent
+    description: Published when a discoverable connection is revealed to an entity
+
+    # Mode events (custom -- register/update semantics, not standard CRUD lifecycle)
+  - topic: transit-mode.registered
+    event: TransitModeRegisteredEvent
+    description: Published when a new transit mode is registered
+  - topic: transit-mode.updated
+    event: TransitModeUpdatedEvent
+    description: Published when a transit mode is updated (covers property changes and deprecation state)
+  - topic: transit-mode.deleted
+    event: TransitModeDeletedEvent
+    description: Published when a deprecated transit mode is permanently deleted
+
+x-lifecycle:
+  TransitConnection:
+    model:
+      id: {type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the connection"}
+      fromLocationId: {type: string, format: uuid, required: true, description: "Origin location of the connection"}
+      toLocationId: {type: string, format: uuid, required: true, description: "Destination location of the connection"}
+      bidirectional: {type: boolean, required: true, description: "Whether the connection can be traversed in both directions"}
+      distanceKm: {type: number, format: decimal, required: true, description: "Distance of the connection in kilometers"}
+      terrainType: {type: string, required: true, description: "Terrain classification code for the connection path"}
+      compatibleModes:
+        type: array
+        items:
+          type: string
+        required: true
+        description: "Transit mode codes that can traverse this connection"
+      seasonalAvailability:
+        type: array
+        nullable: true
+        items:
+          $ref: '../transit-api.yaml#/components/schemas/SeasonalAvailabilityEntry'
+        description: "Seasonal availability overrides, null if available year-round"
+      baseRiskLevel: {type: number, format: decimal, required: true, description: "Base risk level for traversing this connection"}
+      riskDescription: {type: string, nullable: true, description: "Human-readable description of the risk, if any"}
+      status: {$ref: '../transit-api.yaml#/components/schemas/ConnectionStatus', required: true, description: "Current operational
+          status of the connection"}
+      statusReason: {type: string, nullable: true, description: "Reason for the current status, if any"}
+      statusChangedAt: {type: string, format: date-time, required: true, description: "Timestamp when the status was last
+          changed"}
+      discoverable: {type: boolean, required: true, description: "Whether the connection must be discovered before use"}
+      name: {type: string, nullable: true, description: "Optional display name for the connection"}
+      code: {type: string, nullable: true, description: "Optional machine-readable code for the connection"}
+      tags:
+        type: array
+        nullable: true
+        items:
+          type: string
+        description: "Optional tags for categorization and filtering"
+      fromRealmId: {type: string, format: uuid, required: true, description: "Realm of the origin location"}
+      toRealmId: {type: string, format: uuid, required: true, description: "Realm of the destination location"}
+      crossRealm: {type: boolean, required: true, description: "Whether this connection spans realm boundaries"}
+      createdAt: {type: string, format: date-time, required: true, description: "Timestamp when the connection was created"}
+      modifiedAt: {type: string, format: date-time, required: true, description: "Timestamp when the connection was last modified"}
+
+components:
+  schemas:
+    # === Custom Connection Events ===
+
+    TransitConnectionStatusChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a connection's operational status changes
+      required:
+      - eventId
+      - timestamp
+      - connectionId
+      - fromLocationId
+      - toLocationId
+      - previousStatus
+      - newStatus
+      - reason
+      - forceUpdated
+      - fromRealmId
+      - toRealmId
+      - crossRealm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        connectionId:
+          type: string
+          format: uuid
+          description: The connection whose status changed
+        fromLocationId:
+          type: string
+          format: uuid
+          description: Origin location of the connection
+        toLocationId:
+          type: string
+          format: uuid
+          description: Destination location of the connection
+        previousStatus:
+          allOf:
+          - $ref: '../transit-api.yaml#/components/schemas/ConnectionStatus'
+          description: Status before the change
+        newStatus:
+          allOf:
+          - $ref: '../transit-api.yaml#/components/schemas/ConnectionStatus'
+          description: Status after the change
+        reason:
+          type: string
+          description: Reason for the status change
+        forceUpdated:
+          type: boolean
+          description: Whether this was a forceUpdate override
+        fromRealmId:
+          type: string
+          format: uuid
+          description: Realm of the origin location
+        toRealmId:
+          type: string
+          format: uuid
+          description: Realm of the destination location
+        crossRealm:
+          type: boolean
+          description: Whether this connection spans realm boundaries
+
+    # === Journey Lifecycle Events ===
+
+    TransitJourneyDepartedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity begins traveling
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - originLocationId
+      - destinationLocationId
+      - primaryModeCode
+      - estimatedArrivalGameTime
+      - partySize
+      - originRealmId
+      - destinationRealmId
+      - crossRealm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that departed
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        originLocationId:
+          type: string
+          format: uuid
+          description: Starting location of the journey
+        destinationLocationId:
+          type: string
+          format: uuid
+          description: Final destination of the journey
+        primaryModeCode:
+          type: string
+          description: Primary transit mode code for the journey
+        estimatedArrivalGameTime:
+          type: number
+          format: decimal
+          description: Estimated arrival in game-time units
+        partySize:
+          type: integer
+          description: Number of entities traveling together
+        originRealmId:
+          type: string
+          format: uuid
+          description: Realm of the origin location
+        destinationRealmId:
+          type: string
+          format: uuid
+          description: Realm of the destination location
+        crossRealm:
+          type: boolean
+          description: Whether the journey crosses realm boundaries
+
+    TransitJourneyWaypointReachedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a traveling entity reaches an intermediate waypoint
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - waypointLocationId
+      - nextLocationId
+      - legIndex
+      - remainingLegs
+      - connectionId
+      - realmId
+      - crossedRealmBoundary
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey in progress
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        waypointLocationId:
+          type: string
+          format: uuid
+          description: The waypoint location that was reached
+        nextLocationId:
+          type: string
+          format: uuid
+          description: The next location on the journey
+        legIndex:
+          type: integer
+          description: Index of the leg just completed (0-based)
+        remainingLegs:
+          type: integer
+          description: Number of legs remaining in the journey
+        connectionId:
+          type: string
+          format: uuid
+          description: Connection of the leg just completed
+        realmId:
+          type: string
+          format: uuid
+          description: Realm of the waypoint location
+        crossedRealmBoundary:
+          type: boolean
+          description: Whether the completed leg crossed a realm boundary
+
+    TransitJourneyArrivedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a traveling entity reaches its destination
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - originLocationId
+      - destinationLocationId
+      - primaryModeCode
+      - totalGameHours
+      - totalDistanceKm
+      - interruptionCount
+      - legsCompleted
+      - originRealmId
+      - destinationRealmId
+      - crossRealm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that arrived
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        originLocationId:
+          type: string
+          format: uuid
+          description: Starting location of the journey
+        destinationLocationId:
+          type: string
+          format: uuid
+          description: Final destination that was reached
+        primaryModeCode:
+          type: string
+          description: Primary transit mode code used for the journey
+        totalGameHours:
+          type: number
+          format: decimal
+          description: Total travel time in game-hours
+        totalDistanceKm:
+          type: number
+          format: decimal
+          description: Total distance traveled in game-kilometers
+        interruptionCount:
+          type: integer
+          description: Number of interruptions during the journey
+        legsCompleted:
+          type: integer
+          description: Number of legs completed
+        originRealmId:
+          type: string
+          format: uuid
+          description: Realm of the origin location
+        destinationRealmId:
+          type: string
+          format: uuid
+          description: Realm of the destination location
+        crossRealm:
+          type: boolean
+          description: Whether the journey crossed realm boundaries
+
+    TransitJourneyInterruptedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a journey is interrupted (combat, event, breakdown)
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - currentLocationId
+      - currentLegIndex
+      - reason
+      - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that was interrupted
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        currentLocationId:
+          type: string
+          format: uuid
+          description: Location where the interruption occurred
+        currentLegIndex:
+          type: integer
+          description: Index of the leg during which the interruption occurred (0-based)
+        reason:
+          type: string
+          description: Reason for the interruption (e.g., bandit_attack, storm, breakdown)
+        realmId:
+          type: string
+          format: uuid
+          description: Realm of the current location
+
+    TransitJourneyResumedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an interrupted journey is resumed
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - currentLocationId
+      - destinationLocationId
+      - currentLegIndex
+      - remainingLegs
+      - modeCode
+      - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that was resumed
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        currentLocationId:
+          type: string
+          format: uuid
+          description: Location where the journey was resumed
+        destinationLocationId:
+          type: string
+          format: uuid
+          description: Final destination of the journey
+        currentLegIndex:
+          type: integer
+          description: Index of the leg being resumed (0-based)
+        remainingLegs:
+          type: integer
+          description: Number of legs remaining in the journey
+        modeCode:
+          type: string
+          description: Transit mode code for the resumed leg
+        realmId:
+          type: string
+          format: uuid
+          description: Realm of the current location
+
+    TransitJourneyAbandonedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a journey is abandoned before reaching destination
+      required:
+      - eventId
+      - timestamp
+      - journeyId
+      - entityId
+      - entityType
+      - originLocationId
+      - destinationLocationId
+      - abandonedAtLocationId
+      - reason
+      - completedLegs
+      - totalLegs
+      - originRealmId
+      - destinationRealmId
+      - abandonedAtRealmId
+      - crossRealm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        journeyId:
+          type: string
+          format: uuid
+          description: The journey that was abandoned
+        entityId:
+          type: string
+          format: uuid
+          description: The traveling entity
+        entityType:
+          type: string
+          description: Type of the traveling entity (e.g., character, npc, caravan)
+        originLocationId:
+          type: string
+          format: uuid
+          description: Starting location of the journey
+        destinationLocationId:
+          type: string
+          format: uuid
+          description: Intended destination of the journey
+        abandonedAtLocationId:
+          type: string
+          format: uuid
+          description: Location where the journey was abandoned
+        reason:
+          type: string
+          description: Reason for abandoning the journey
+        completedLegs:
+          type: integer
+          description: Number of legs completed before abandonment
+        totalLegs:
+          type: integer
+          description: Total number of legs in the planned journey
+        originRealmId:
+          type: string
+          format: uuid
+          description: Realm of the origin location
+        destinationRealmId:
+          type: string
+          format: uuid
+          description: Realm of the destination location
+        abandonedAtRealmId:
+          type: string
+          format: uuid
+          description: Realm of the location where the journey was abandoned
+        crossRealm:
+          type: boolean
+          description: Whether the journey crossed realm boundaries
+
+    # === Discovery Events ===
+
+    TransitDiscoveryRevealedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a discoverable connection is revealed to an entity
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - connectionId
+      - fromLocationId
+      - toLocationId
+      - source
+      - fromRealmId
+      - toRealmId
+      - crossRealm
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        entityId:
+          type: string
+          format: uuid
+          description: The entity that discovered the connection
+        connectionId:
+          type: string
+          format: uuid
+          description: The connection that was discovered
+        fromLocationId:
+          type: string
+          format: uuid
+          description: Origin location of the discovered connection
+        toLocationId:
+          type: string
+          format: uuid
+          description: Destination location of the discovered connection
+        source:
+          type: string
+          description: How the connection was discovered (e.g., travel, guide, hearsay, map, quest_reward)
+        fromRealmId:
+          type: string
+          format: uuid
+          description: Realm of the origin location
+        toRealmId:
+          type: string
+          format: uuid
+          description: Realm of the destination location
+        crossRealm:
+          type: boolean
+          description: Whether the discovered connection spans realm boundaries
+
+    # === Mode Events (Custom -- register/update semantics, not standard CRUD lifecycle) ===
+
+    TransitModeRegisteredEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a new transit mode is registered
+      required:
+      - eventId
+      - timestamp
+      - code
+      - name
+      - description
+      - baseSpeedKmPerGameHour
+      - passengerCapacity
+      - cargoCapacityKg
+      - compatibleTerrainTypes
+      - requirements
+      - fatigueRatePerGameHour
+      - noiseLevelNormalized
+      - isDeprecated
+      - createdAt
+      - modifiedAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        code:
+          type: string
+          description: Unique identifier code for the transit mode
+        name:
+          type: string
+          description: Human-readable name
+        description:
+          type: string
+          description: Detailed description of the transit mode
+        baseSpeedKmPerGameHour:
+          type: number
+          format: decimal
+          description: Base speed in game-kilometers per game-hour
+        terrainSpeedModifiers:
+          type: array
+          nullable: true
+          description: Per-terrain speed multipliers (null means base speed applies uniformly)
+          items:
+            $ref: '#/components/schemas/TerrainSpeedModifier'
+        passengerCapacity:
+          type: integer
+          description: Maximum number of entities that can ride
+        cargoCapacityKg:
+          type: number
+          format: decimal
+          description: Weight capacity in game-kg
+        cargoSpeedPenaltyRate:
+          type: number
+          format: decimal
+          nullable: true
+          description: Per-mode cargo speed penalty rate (null means use plugin config default)
+        compatibleTerrainTypes:
+          type: array
+          description: Terrain types this mode can traverse (empty means all terrain)
+          items:
+            type: string
+        validEntityTypes:
+          type: array
+          nullable: true
+          description: Entity types allowed to use this mode (null means no restriction)
+          items:
+            type: string
+        requirements:
+          allOf:
+          - $ref: '#/components/schemas/TransitModeRequirements'
+          description: Requirements that must be met to use this mode
+        fatigueRatePerGameHour:
+          type: number
+          format: decimal
+          description: Stamina cost per game-hour of travel
+        noiseLevelNormalized:
+          type: number
+          format: decimal
+          description: Noise level from 0.0 (silent) to 1.0 (loud)
+        realmRestrictions:
+          type: array
+          nullable: true
+          description: Realm IDs where this mode is available (null means all realms)
+          items:
+            type: string
+            format: uuid
+        isDeprecated:
+          type: boolean
+          description: Whether this mode is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When deprecation occurred (null if not deprecated)
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why this mode was deprecated (null if not deprecated)
+        tags:
+          type: array
+          nullable: true
+          description: Freeform classification tags
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: When the mode was created
+        modifiedAt:
+          type: string
+          format: date-time
+          description: When the mode was last modified
+
+    TransitModeUpdatedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a transit mode is updated (covers property changes and deprecation state via 
+        changedFields)
+      required:
+      - eventId
+      - timestamp
+      - mode
+      - changedFields
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/TransitMode'
+          description: Full entity data for the updated transit mode
+        changedFields:
+          type: array
+          description: List of fields that changed (deprecation includes isDeprecated, deprecatedAt, deprecationReason)
+          items:
+            type: string
+
+    TransitModeDeletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a deprecated transit mode is permanently deleted
+      required:
+      - eventId
+      - timestamp
+      - code
+      - deletedReason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+        code:
+          type: string
+          description: The deleted mode's code (full entity no longer exists)
+        deletedReason:
+          type: string
+          description: Why the mode was deleted
+    TerrainSpeedModifier:
+      type: object
+      additionalProperties: false
+      description: Per-terrain speed multiplier applied to a mode's base speed
+      required:
+      - terrainType
+      - multiplier
+      properties:
+        terrainType:
+          type: string
+          description: Terrain type code (e.g., "road", "trail", "forest"). Category B content code (game-configurable).
+        multiplier:
+          type: number
+          format: decimal
+          minimum: 0.01
+          description: Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)
+
+    TransitMode:
+      type: object
+      additionalProperties: false
+      description: A transit mode defining movement capabilities (e.g., walking, horseback, wagon)
+      required:
+      - code
+      - name
+      - description
+      - baseSpeedKmPerGameHour
+      - passengerCapacity
+      - cargoCapacityKg
+      - compatibleTerrainTypes
+      - requirements
+      - fatigueRatePerGameHour
+      - noiseLevelNormalized
+      - isDeprecated
+      - createdAt
+      - modifiedAt
+      properties:
+        code:
+          type: string
+          description: Unique string identifier for this mode (e.g., "walking", "horseback", "wagon")
+        name:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Detailed description of this transit mode
+        baseSpeedKmPerGameHour:
+          type: number
+          format: decimal
+          minimum: 0.1
+          description: Base speed in game-kilometers per game-hour. Used when no terrain-specific speed modifier is 
+            defined.
+        terrainSpeedModifiers:
+          type: array
+          nullable: true
+          description: Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible 
+            terrain.
+          items:
+            $ref: '#/components/schemas/TerrainSpeedModifier'
+        passengerCapacity:
+          type: integer
+          minimum: 1
+          description: How many entities can ride (1 for horse, 20 for ship)
+        cargoCapacityKg:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Weight capacity in game-kg (0 for walking, 500 for wagon)
+        cargoSpeedPenaltyRate:
+          type: number
+          format: decimal
+          nullable: true
+          minimum: 0
+          maximum: 1
+          description: Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate. Null 
+            means use plugin config default. 0.0 means no cargo penalty.
+        compatibleTerrainTypes:
+          type: array
+          description: Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying).
+          items:
+            type: string
+        validEntityTypes:
+          type: array
+          nullable: true
+          description: Entity types allowed to use this mode. Null means no entity type restriction. Characters are not 
+            exempt.
+          items:
+            type: string
+        requirements:
+          allOf:
+          - $ref: '#/components/schemas/TransitModeRequirements'
+          description: Requirements that must be met to use this mode
+        fatigueRatePerGameHour:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Stamina cost per game-hour of travel (0 = no fatigue)
+        noiseLevelNormalized:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          description: Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk
+        realmRestrictions:
+          type: array
+          nullable: true
+          description: Realm IDs where this mode is available. Null means available in all realms.
+          items:
+            type: string
+            format: uuid
+        isDeprecated:
+          type: boolean
+          description: Whether this mode is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When deprecation occurred. Null if not deprecated.
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Why this mode was deprecated. Null if not deprecated.
+        tags:
+          type: array
+          nullable: true
+          description: Freeform classification tags (e.g., "mount", "vehicle", "magical", "aquatic"). Null means no 
+            tags.
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+          description: When this mode was registered
+        modifiedAt:
+          type: string
+          format: date-time
+          description: When this mode was last modified
+
+    TransitModeRequirements:
+      type: object
+      additionalProperties: false
+      description: Requirements that must be met to use a transit mode (applies to character entities only)
+      properties:
+        requiredItemTag:
+          type: string
+          nullable: true
+          description: Item tag required to use this mode (e.g., "mount_horse"). Null means no item needed.
+        allowedSpeciesCodes:
+          type: array
+          nullable: true
+          description: Species codes allowed to use this mode. Null means any species.
+          items:
+            type: string
+        excludedSpeciesCodes:
+          type: array
+          nullable: true
+          description: Species codes that cannot use this mode. Null means no exclusions.
+          items:
+            type: string
+        minimumPartySize:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Minimum party size required (e.g., ocean_vessel requires crew of 3)
+        maximumEntitySizeCategory:
+          type: string
+          nullable: true
+          description: Maximum entity size category allowed (e.g., "small", "medium", "large"). Category B content code.
+            Null means no size restriction.
+
+x-inlined-types:
+- TerrainSpeedModifier
+- TransitMode
+- TransitModeRequirements

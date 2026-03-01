@@ -60,6 +60,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
+| [Transit Service API](#transit) | `client.Transit` | 33 | Geographic connectivity graph, transit mode registry, and jo... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 11 | Voice room coordination service. Internal service accessed b... |
 | [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
 | [Worldstate Service API](#worldstate) | `client.Worldstate` | 18 | Per-realm game time authority, calendar system, and temporal... |
@@ -2338,6 +2339,77 @@ Unified observability plugin providing distributed tracing, metrics, and log cor
 
 ---
 
+## Transit Service API {#transit}
+
+**Proxy**: `client.Transit` | **Version**: 1.0.0
+
+Geographic connectivity graph, transit mode registry, and journey tracking service (L2 GameFoundation). Provides edges (connections between locatio...
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbylocationEventAsync` | `CleanupByLocationRequest` | *(fire-and-forget)* | Clean up transit data for a deleted location |
+| `CleanupbycharacterEventAsync` | `CleanupByCharacterRequest` | *(fire-and-forget)* | Clean up transit data for a deleted character |
+
+### Connection
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateConnectionAsync` | `CreateConnectionRequest` | `ConnectionResponse` | Create a connection between two locations |
+| `GetConnectionAsync` | `GetConnectionRequest` | `ConnectionResponse` | Get a connection by ID or code |
+| `QueryconnectionsAsync` | `QueryConnectionsRequest` | `QueryConnectionsResponse` | Query connections by location, terrain, mode, or status |
+| `UpdateConnectionAsync` | `UpdateConnectionRequest` | `ConnectionResponse` | Update a connection's properties |
+| `UpdateConnectionstatusAsync` | `UpdateConnectionStatusRequest` | `ConnectionResponse` | Transition a connection's operational status with optimistic concurrency |
+| `DeleteConnectionAsync` | `DeleteConnectionRequest` | `DeleteConnectionResponse` | Delete a connection between locations |
+| `BulkseedconnectionsAsync` | `BulkSeedConnectionsRequest` | `BulkSeedConnectionsResponse` | Seed connections from configuration |
+
+### Discovery
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RevealdiscoveryAsync` | `RevealDiscoveryRequest` | `RevealDiscoveryResponse` | Reveal a discoverable connection to an entity |
+| `ListDiscoveriesAsync` | `ListDiscoveriesRequest` | `ListDiscoveriesResponse` | List connections an entity has discovered |
+| `CheckdiscoveriesAsync` | `CheckDiscoveriesRequest` | `CheckDiscoveriesResponse` | Check if an entity has discovered specific connections |
+
+### Journey
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateJourneyAsync` | `CreateJourneyRequest` | `JourneyResponse` | Plan a journey (status preparing) |
+| `DepartjourneyAsync` | `DepartJourneyRequest` | `JourneyResponse` | Start a prepared journey |
+| `ResumejourneyAsync` | `ResumeJourneyRequest` | `JourneyResponse` | Resume an interrupted journey |
+| `AdvancejourneyAsync` | `AdvanceJourneyRequest` | `JourneyResponse` | Mark arrival at next waypoint |
+| `AdvancebatchjourneysAsync` | `AdvanceBatchRequest` | `AdvanceBatchResponse` | Advance multiple journeys in a single call |
+| `ArrivejourneyAsync` | `ArriveJourneyRequest` | `JourneyResponse` | Force-arrive a journey at destination |
+| `InterruptjourneyAsync` | `InterruptJourneyRequest` | `JourneyResponse` | Interrupt an active journey |
+| `AbandonjourneyAsync` | `AbandonJourneyRequest` | `JourneyResponse` | Abandon a journey |
+| `GetJourneyAsync` | `GetJourneyRequest` | `JourneyResponse` | Get a journey by ID |
+| `QueryjourneysbyconnectionAsync` | `QueryJourneysByConnectionRequest` | `ListJourneysResponse` | List active journeys on a specific connection |
+| `ListJourneysAsync` | `ListJourneysRequest` | `ListJourneysResponse` | List journeys for an entity or within a realm |
+| `QueryjourneyarchiveAsync` | `QueryJourneyArchiveRequest` | `ListJourneysResponse` | Query archived journeys from MySQL historical store |
+
+### Mode
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterModeAsync` | `RegisterModeRequest` | `ModeResponse` | Register a new transit mode type |
+| `GetModeAsync` | `GetModeRequest` | `ModeResponse` | Get a transit mode by code |
+| `ListModesAsync` | `ListModesRequest` | `ListModesResponse` | List all registered transit modes |
+| `UpdateModeAsync` | `UpdateModeRequest` | `ModeResponse` | Update a transit mode's properties |
+| `DeprecatemodeAsync` | `DeprecateModeRequest` | `ModeResponse` | Deprecate a transit mode |
+| `UndeprecatemodeAsync` | `UndeprecateModeRequest` | `ModeResponse` | Reverse deprecation of a transit mode |
+| `DeleteModeAsync` | `DeleteModeRequest` | `DeleteModeResponse` | Delete a deprecated transit mode |
+| `CheckmodeavailabilityAsync` | `CheckModeAvailabilityRequest` | `CheckModeAvailabilityResponse` | Check which transit modes an entity can currently use |
+
+### Route
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CalculaterouteAsync` | `CalculateRouteRequest` | `CalculateRouteResponse` | Calculate route options between two locations |
+
+---
+
 ## Bannou Voice Service API {#voice}
 
 **Proxy**: `client.Voice` | **Version**: 2.0.0
@@ -2455,8 +2527,8 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 
 ## Summary
 
-- **Total services**: 54
-- **Total methods**: 852
+- **Total services**: 55
+- **Total methods**: 885
 
 ---
 

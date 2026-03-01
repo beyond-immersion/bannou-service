@@ -1,0 +1,87 @@
+x-service-configuration:
+  properties:
+    DefaultWalkingSpeedKmPerGameHour:
+      type: number
+      default: 5.0
+      minimum: 0.1
+      env: TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR
+      description: Default walking speed used when no mode is specified
+
+    MaxRouteCalculationLegs:
+      type: integer
+      default: 8
+      minimum: 1
+      maximum: 50
+      env: TRANSIT_MAX_ROUTE_CALCULATION_LEGS
+      description: Maximum number of legs to consider in route calculation (prevents combinatorial explosion)
+
+    MaxRouteOptions:
+      type: integer
+      default: 5
+      minimum: 1
+      maximum: 20
+      env: TRANSIT_MAX_ROUTE_OPTIONS
+      description: Maximum number of route options to return from calculate endpoint
+
+    ConnectionGraphCacheSeconds:
+      type: integer
+      default: 300
+      minimum: 0
+      env: TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS
+      description: TTL for cached connection graph in Redis (seconds). Graph is rebuilt on cache miss. 0 = no caching.
+
+    JourneyArchiveAfterGameHours:
+      type: number
+      default: 168.0
+      minimum: 0
+      env: TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS
+      description: Game-hours after arrival/abandonment before journey is archived from Redis to MySQL. 0 = archive immediately.
+
+    CargoSpeedPenaltyThresholdKg:
+      type: number
+      default: 100.0
+      minimum: 0
+      env: TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG
+      description: Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * DefaultCargoSpeedPenaltyRate
+
+    SeasonalConnectionCheckIntervalSeconds:
+      type: integer
+      default: 60
+      minimum: 1
+      env: TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS
+      description: How often the background worker checks Worldstate for seasonal connection status changes
+
+    DiscoveryCacheTtlSeconds:
+      type: integer
+      default: 600
+      minimum: 0
+      env: TRANSIT_DISCOVERY_CACHE_TTL_SECONDS
+      description: TTL for per-entity discovery cache in Redis (seconds). Route calculation checks this cache to filter discoverable connections. 0 = no caching.
+
+    DefaultCargoSpeedPenaltyRate:
+      type: number
+      default: 0.3
+      minimum: 0
+      maximum: 1
+      env: TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE
+      description: Default cargo speed penalty rate applied when a mode's cargoSpeedPenaltyRate is null. Speed reduction = (cargo - threshold) / (capacity - threshold) * rate. 0.3 = 30% max speed reduction at full capacity.
+
+    JourneyArchiveRetentionDays:
+      type: integer
+      default: 365
+      minimum: 0
+      env: TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS
+      description: Number of real-time days to retain archived journeys in MySQL before cleanup. 0 = retain indefinitely. The archival worker deletes records older than this threshold during each sweep.
+
+    JourneyArchivalWorkerIntervalSeconds:
+      type: integer
+      default: 300
+      minimum: 1
+      env: TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS
+      description: Real-time interval in seconds between journey archival worker sweeps. The worker scans Redis for completed/abandoned journeys older than JourneyArchiveAfterGameHours and moves them to MySQL.
+
+    AutoUpdateLocationOnTransition:
+      type: boolean
+      default: true
+      env: TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION
+      description: When true, Transit automatically calls Location's /location/report-entity-position endpoint to update the entity's current location on journey departure, waypoint arrival, and final arrival. Location's presence system uses ephemeral Redis storage with 30s TTL, so Transit must re-report on each state transition. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events.

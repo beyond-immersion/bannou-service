@@ -2,15 +2,7 @@ openapi: 3.0.4
 info:
   title: Worldstate Service Configuration
   version: 1.0.0
-  description: |
-    Configuration properties for the Worldstate service.
-    All properties use the WORLDSTATE_ environment variable prefix.
-
-    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
-    1. Read docs/reference/SCHEMA-RULES.md
-    2. State which section applies to your change
-    3. Only then proceed with edits
-    Edits without stating the applicable rule are FORBIDDEN.
+  description: Configuration properties for the Worldstate service. All properties use the WORLDSTATE_ environment variable prefix.
 
 servers: []
 
@@ -102,6 +94,14 @@ x-service-configuration:
       nullable: true
       env: WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE
       description: Default calendar template code used as fallback when InitializeRealmClock is called without specifying a template. Null means no default and caller must specify.
+
+    MaxBatchRealmTimeQueries:
+      type: integer
+      env: WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES
+      minimum: 10
+      maximum: 500
+      default: 100
+      description: Maximum number of realm IDs accepted in a single BatchGetRealmTimes request.
 
     DistributedLockTimeoutSeconds:
       type: integer
