@@ -117,7 +117,8 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Response models | `{Entity}Response` | `AccountResponse` |
 | Event models (service) | `{Entity}{Action}Event` | `AccountCreatedEvent` |
 | Event models (client) | `{Entity}{Action}ClientEvent` | `CharacterUpdatedClientEvent` |
-| Event topics | `{entity}.{action}` | `account.created`, `game-session.deleted`, `chat-room-type.updated` (entity uses hyphens for multi-word names; dot separates entity from action only) |
+| Event topics (single-entity) | `{entity}.{action}` | `account.created`, `game-session.player-joined`, `personality.evolved` (Pattern A: service has one entity type, or entity name is independent of service name) |
+| Event topics (multi-entity) | `{service}.{entity}.{action}` | `worldstate.calendar-template.created`, `transit.connection.created`, `divine.blessing.granted` (Pattern C: dot-separated service namespace for services with multiple entity types) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |
 | Test methods | `UnitOfWork_State_Result` | `GetAccount_WhenExists_Returns` |

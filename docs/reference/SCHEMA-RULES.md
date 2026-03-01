@@ -818,7 +818,57 @@ Each `{service}-events.yaml` MUST contain ONLY canonical definitions for events 
 
 ### Topic Naming Convention
 
-**Pattern**: `{entity}.{action}` (kebab-case entity, lowercase action). Examples: `account.created`, `game-session.player-joined`. Infrastructure events use `bannou-` prefix.
+Event topics use **two patterns** depending on whether a service owns one entity type or multiple:
+
+**Pattern A — Single-entity**: `{entity}.{action}` (kebab-case entity, lowercase action). Used when the service name IS the entity, or the entity stands independently (no service prefix needed for disambiguation).
+
+```
+account.created              # account service, one entity type
+realm.merged                 # realm service, one entity type
+personality.evolved          # character-personality service, entity stands alone
+combat-preferences.updated   # character-personality service, entity stands alone
+encounter.recorded           # character-encounter service, entity stands alone
+game-session.player-joined   # game-session service, compound action
+subscription.updated         # subscription service, one entity type
+```
+
+**Pattern C — Multi-entity namespaced**: `{service}.{entity}.{action}` (dot-separated service namespace). Used when a service owns multiple entity types, providing a namespace prefix to group related events.
+
+```
+worldstate.calendar-template.created   # worldstate service, calendar-template entity
+worldstate.realm-config.deleted        # worldstate service, realm-config entity
+worldstate.hour-changed                # worldstate service, boundary action
+transit.connection.created             # transit service, connection entity
+transit.journey.departed               # transit service, journey entity
+divine.blessing.granted                # divine service, blessing entity
+actor.instance.character-bound         # actor service, instance entity
+contract.milestone.completed           # contract service, milestone entity
+gardener.scenario.started              # gardener service, scenario entity
+```
+
+**Choosing between A and C:**
+- If the service has ONE entity type (or entities that don't share the service name as prefix): use Pattern A
+- If the service has MULTIPLE entity types that need a shared namespace for grouping: use Pattern C
+- Infrastructure events use `bannou.` prefix (e.g., `bannou.service-heartbeat`)
+
+**FORBIDDEN — Hybrid B (service name embedded in entity via hyphens):**
+
+```
+# WRONG: service name baked into entity with hyphen
+transit-connection.created        # → use transit.connection.created
+actor-template.updated            # → use actor.template.updated
+chat-participant.joined           # → use chat.participant.joined
+inventory-container.full          # → use inventory.container.full
+
+# CORRECT Pattern A (no service prefix — entity stands alone)
+game-session.player-joined        # game-session IS the entity, not a prefix
+combat-preferences.evolved        # entity name independent of service name
+encounter.memory.faded            # encounter IS the entity, memory is sub-entity
+```
+
+**The litmus test**: If the topic entity starts with `{service-name}-{sub-entity}`, it's Pattern B and must become `{service-name}.{sub-entity}.{action}` (Pattern C). If the entity name does NOT embed the publishing service's name, it's Pattern A and is correct as-is.
+
+**All parts use kebab-case** (lowercase with hyphens for multi-word segments). No underscores in topic strings.
 
 ### Client Events vs Service Events
 

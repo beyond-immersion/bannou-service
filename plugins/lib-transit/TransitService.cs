@@ -11,6 +11,7 @@ using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -3082,13 +3083,13 @@ public partial class TransitService : ITransitService
             return baseSpeed;
         }
 
-        var threshold = _configuration.CargoSpeedPenaltyThresholdKg;
+        var threshold = (decimal)_configuration.CargoSpeedPenaltyThresholdKg;
         if (cargoWeightKg <= threshold)
         {
             return baseSpeed;
         }
 
-        var rate = mode.CargoSpeedPenaltyRate ?? _configuration.DefaultCargoSpeedPenaltyRate;
+        var rate = mode.CargoSpeedPenaltyRate ?? (decimal)_configuration.DefaultCargoSpeedPenaltyRate;
         var capacity = mode.CargoCapacityKg;
 
         if (capacity <= threshold)
@@ -3129,7 +3130,7 @@ public partial class TransitService : ITransitService
         // Avoid division by zero
         if (effectiveSpeed <= 0)
         {
-            effectiveSpeed = _configuration.DefaultWalkingSpeedKmPerGameHour;
+            effectiveSpeed = (decimal)_configuration.DefaultWalkingSpeedKmPerGameHour;
         }
 
         return distanceKm / effectiveSpeed;
@@ -3924,7 +3925,7 @@ public partial class TransitService : ITransitService
 
         cachedSet.Add(connectionId);
 
-        await _discoveryCacheStore.SaveAsync(cacheKey, cachedSet, ttl: TimeSpan.FromSeconds(ttlSeconds), cancellationToken: cancellationToken);
+        await _discoveryCacheStore.SaveAsync(cacheKey, cachedSet, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
     }
 
     /// <summary>
