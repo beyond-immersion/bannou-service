@@ -6,7 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using ServiceHealthStatus = BeyondImmersion.BannouService.Orchestrator.ServiceHealthStatus;
+using ServiceHealthEntry = BeyondImmersion.BannouService.Orchestrator.ServiceHealthEntry;
 
 namespace LibOrchestrator;
 
@@ -35,7 +35,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     private const string CONFIG_HISTORY_PREFIX = "history:";
 
     // Cached stores (lazy initialization after InitializeAsync)
-    private IStateStore<InstanceHealthStatus>? _heartbeatStore;
+    private IStateStore<InstanceHealthState>? _heartbeatStore;
     private IStateStore<HeartbeatIndex>? _heartbeatIndexStore;
     private IStateStore<ServiceRouting>? _routingStore;
     private IStateStore<RoutingIndex>? _routingIndexStore;
@@ -81,7 +81,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             await _stateStoreFactory.InitializeAsync(cancellationToken);
 
             // Get stores for each type
-            _heartbeatStore = await _stateStoreFactory.GetStoreAsync<InstanceHealthStatus>(HEARTBEATS_STORE, cancellationToken);
+            _heartbeatStore = await _stateStoreFactory.GetStoreAsync<InstanceHealthState>(HEARTBEATS_STORE, cancellationToken);
             _heartbeatIndexStore = await _stateStoreFactory.GetStoreAsync<HeartbeatIndex>(HEARTBEATS_STORE, cancellationToken);
             _routingStore = await _stateStoreFactory.GetStoreAsync<ServiceRouting>(ROUTINGS_STORE, cancellationToken);
             _routingIndexStore = await _stateStoreFactory.GetStoreAsync<RoutingIndex>(ROUTINGS_STORE, cancellationToken);
@@ -156,11 +156,11 @@ public class OrchestratorStateManager : IOrchestratorStateManager
         try
         {
             // Create health status from heartbeat event
-            var healthStatus = new InstanceHealthStatus
+            var healthStatus = new InstanceHealthState
             {
                 InstanceId = heartbeat.ServiceId,
                 AppId = heartbeat.AppId,
-                Status = heartbeat.Status.ToString().ToLowerInvariant(),
+                Status = heartbeat.Status,
                 LastSeen = DateTimeOffset.UtcNow,
                 Services = heartbeat.Services?.Select(s => s.ServiceName).ToList() ?? new List<string>(),
                 Issues = heartbeat.Issues?.ToList(),
@@ -245,16 +245,16 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// <summary>
     /// Get all service heartbeats using index-based pattern.
     /// </summary>
-    public async Task<List<ServiceHealthStatus>> GetServiceHeartbeatsAsync()
+    public async Task<List<ServiceHealthEntry>> GetServiceHeartbeatsAsync()
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceHeartbeatsAsync");
         if (_heartbeatStore == null || _heartbeatIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot retrieve heartbeats.");
-            return new List<ServiceHealthStatus>();
+            return new List<ServiceHealthEntry>();
         }
 
-        var heartbeats = new List<ServiceHealthStatus>();
+        var heartbeats = new List<ServiceHealthEntry>();
 
         try
         {
@@ -276,8 +276,8 @@ public class OrchestratorStateManager : IOrchestratorStateManager
             {
                 if (results.TryGetValue(appId, out var healthStatus))
                 {
-                    // Convert InstanceHealthStatus to ServiceHealthStatus
-                    heartbeats.Add(new ServiceHealthStatus
+                    // Convert InstanceHealthState to ServiceHealthEntry
+                    heartbeats.Add(new ServiceHealthEntry
                     {
                         ServiceId = healthStatus.InstanceId.ToString(),
                         AppId = healthStatus.AppId,
@@ -344,7 +344,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     /// <summary>
     /// Get specific service heartbeat by serviceId and appId.
     /// </summary>
-    public async Task<ServiceHealthStatus?> GetServiceHeartbeatAsync(string serviceId, string appId)
+    public async Task<ServiceHealthEntry?> GetServiceHeartbeatAsync(string serviceId, string appId)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorStateManager.GetServiceHeartbeatAsync");
         if (_heartbeatStore == null)
@@ -362,7 +362,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                 return null;
             }
 
-            return new ServiceHealthStatus
+            return new ServiceHealthEntry
             {
                 ServiceId = healthStatus.InstanceId.ToString(),
                 AppId = healthStatus.AppId,
@@ -699,7 +699,7 @@ public class OrchestratorStateManager : IOrchestratorStateManager
                 AppId = defaultAppId,
                 Host = defaultAppId,
                 Port = 80,
-                Status = "healthy",
+                Status = ServiceHealthStatus.Healthy,
                 LastUpdated = DateTimeOffset.UtcNow
             };
 
@@ -1132,4 +1132,5 @@ public class OrchestratorStateManager : IOrchestratorStateManager
     }
 
     #endregion
+
 }

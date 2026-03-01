@@ -57,7 +57,7 @@ public partial class VoiceRoomStateClientEvent : BaseClientEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Associated game session ID
+    /// Associated WebSocket session ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid? SessionId { get; set; } = default!;
@@ -412,91 +412,6 @@ public partial class VoiceBroadcastConsentUpdateClientEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("declinedByDisplayName")]
     public string? DeclinedByDisplayName { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Peer connection information for P2P voice
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerInfo
-{
-
-    /// <summary>
-    /// WebSocket session ID for this peer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PeerSessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Peer's display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// SDP offer for WebRTC negotiation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SdpOffer { get; set; } = default!;
-
-    /// <summary>
-    /// ICE candidates for NAT traversal
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
-
-    /// <summary>
-    /// Whether peer is currently muted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isMuted")]
-    public bool IsMuted { get; set; } = false;
-
-}
-
-/// <summary>
-/// SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
-/// <br/>These credentials are dynamically generated per-user per-room and should be used
-/// <br/>for SIP REGISTER and subsequent INVITE requests.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SipCredentials
-{
-
-    /// <summary>
-    /// SIP username (typically sessionId or a hash-derived identifier)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("username")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Username { get; set; } = default!;
-
-    /// <summary>
-    /// SIP password (dynamically generated, short-lived)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("password")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Password { get; set; } = default!;
-
-    /// <summary>
-    /// SIP domain/realm for authentication (e.g., "voice.bannou.local")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Domain { get; set; } = default!;
-
-    /// <summary>
-    /// When these credentials expire (clients should re-authenticate before this)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
 

@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Orchestrator;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -31,13 +32,27 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Simple health ping event published to verify pub/sub path is active.
-/// <br/>Used by infrastructure health checks.
-/// <br/>
+/// Simple health ping event published to verify pub/sub path is active. Used by infrastructure health checks.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class OrchestratorHealthPingEvent : BaseServiceEvent
+public partial class OrchestratorHealthPingEvent
 {
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this event was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Current health status
@@ -47,6 +62,165 @@ public partial class OrchestratorHealthPingEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public OrchestratorHealthPingEventStatus Status { get; set; } = BeyondImmersion.BannouService.Events.OrchestratorHealthPingEventStatus.Ok;
+
+}
+
+/// <summary>
+/// Published when deployment state changes. Topic bannou.deployment-events.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DeploymentEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Type of deployment action that triggered this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("action")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DeploymentAction Action { get; set; } = default!;
+
+    /// <summary>
+    /// Unique identifier for the deployment
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string DeploymentId { get; set; } = default!;
+
+    /// <summary>
+    /// Preset name used for deployment (if applicable)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("preset")]
+    public string? Preset { get; set; } = default!;
+
+    /// <summary>
+    /// Container orchestration backend used
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("backend")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BackendType? Backend { get; set; } = default!;
+
+    /// <summary>
+    /// Summary of changes made
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changes")]
+    public System.Collections.Generic.ICollection<string>? Changes { get; set; } = default!;
+
+    /// <summary>
+    /// Error message if failed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("error")]
+    public string? Error { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a service is restarted. Topic bannou.service-lifecycle.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceRestartEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Name of the service that was restarted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ServiceName { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for the restart
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Whether restart was forced without waiting for graceful shutdown
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("forced")]
+    public bool Forced { get; set; } = default!;
+
+    /// <summary>
+    /// Environment variables updated during restart
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newEnvironment")]
+    public System.Collections.Generic.IDictionary<string, string>? NewEnvironment { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when configuration or secrets change. All containers receive this via RabbitMQ. Plugins decide if they care based on changedKeys prefixes and request restart if needed. Topic bannou.configuration-events.
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ConfigurationChangedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event instance
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When this configuration change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Monotonically increasing version number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("configVersion")]
+    public int ConfigVersion { get; set; } = default!;
+
+    /// <summary>
+    /// Configuration keys that changed (not values for security). Key prefixes indicate scope (auth.*, database.*, mesh.*, connect.*).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
 }
 

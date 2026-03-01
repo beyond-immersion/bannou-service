@@ -97,7 +97,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         try
         {
-            var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Healthy);
+            var heartbeat = BuildHeartbeatEvent(InstanceHealthStatus.Healthy);
 
             await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
@@ -229,7 +229,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
 
         try
         {
-            var heartbeat = BuildHeartbeatEvent(ServiceHeartbeatEventStatus.Shutting_down);
+            var heartbeat = BuildHeartbeatEvent(InstanceHealthStatus.Shutting_down);
 
             await _messageBus.TryPublishAsync(
                 HEARTBEAT_TOPIC,
@@ -291,7 +291,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Build the heartbeat event with all service statuses.
     /// Filters out services that are routed to a different app-id.
     /// </summary>
-    private ServiceHeartbeatEvent BuildHeartbeatEvent(ServiceHeartbeatEventStatus overallStatus)
+    private ServiceHeartbeatEvent BuildHeartbeatEvent(InstanceHealthStatus overallStatus)
     {
         var serviceStatuses = new List<ServiceStatus>();
 
@@ -326,7 +326,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                     {
                         ServiceId = service.InstanceId,
                         ServiceName = plugin.PluginName,
-                        Status = ServiceStatusStatus.Degraded,
+                        Status = (Events.ServiceHealthStatus)ServiceHealthStatus.Degraded,
                         Version = service.ServiceVersion
                     });
                 }
@@ -345,7 +345,7 @@ public class ServiceHeartbeatManager : IAsyncDisposable
             Timestamp = DateTimeOffset.UtcNow,
             ServiceId = InstanceId,
             AppId = AppId,
-            Status = overallStatus,
+            Status = (Events.InstanceHealthStatus)overallStatus,
             Services = serviceStatuses,
             Issues = _currentIssues.Count > 0 ? _currentIssues.ToList() : null,
             Capacity = GetInstanceCapacity()
@@ -356,14 +356,14 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     /// Determine the overall status based on all service statuses.
     /// Returns the worst status among all services (excluding suppressed services).
     /// </summary>
-    private ServiceHeartbeatEventStatus DetermineOverallStatus()
+    private InstanceHealthStatus DetermineOverallStatus()
     {
         if (_currentIssues.Count > 0)
         {
-            return ServiceHeartbeatEventStatus.Degraded;
+            return InstanceHealthStatus.Degraded;
         }
 
-        var worstServiceStatus = ServiceStatusStatus.Healthy;
+        var worstServiceStatus = ServiceHealthStatus.Healthy;
 
         foreach (var plugin in _pluginLoader.EnabledPlugins)
         {
@@ -379,15 +379,15 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                 try
                 {
                     var status = service.OnHeartbeat();
-                    if (status.Status > worstServiceStatus)
+                    if ((int)status.Status > (int)worstServiceStatus)
                     {
-                        worstServiceStatus = status.Status;
+                        worstServiceStatus = (ServiceHealthStatus)status.Status;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Service {ServiceName} OnHeartbeat threw exception, marking as degraded", plugin.PluginName);
-                    worstServiceStatus = ServiceStatusStatus.Degraded;
+                    worstServiceStatus = ServiceHealthStatus.Degraded;
                 }
             }
         }
@@ -395,10 +395,10 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         // Map service status to heartbeat status
         return worstServiceStatus switch
         {
-            ServiceStatusStatus.Healthy => ServiceHeartbeatEventStatus.Healthy,
-            ServiceStatusStatus.Degraded => ServiceHeartbeatEventStatus.Degraded,
-            ServiceStatusStatus.Unavailable => ServiceHeartbeatEventStatus.Unavailable,
-            _ => ServiceHeartbeatEventStatus.Healthy
+            ServiceHealthStatus.Healthy => InstanceHealthStatus.Healthy,
+            ServiceHealthStatus.Degraded => InstanceHealthStatus.Degraded,
+            ServiceHealthStatus.Unavailable => InstanceHealthStatus.Unavailable,
+            _ => InstanceHealthStatus.Healthy
         };
     }
 

@@ -33,7 +33,7 @@ public interface IServiceHealthMonitor
     /// <summary>
     /// Get health status for a specific service instance.
     /// </summary>
-    Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId);
+    Task<ServiceHealthEntry?> GetServiceHealthEntryAsync(string serviceId, string appId);
 
     /// <summary>
     /// Update service routing for a specific service. Called by OrchestratorService during deployment.

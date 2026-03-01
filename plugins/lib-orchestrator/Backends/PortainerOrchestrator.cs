@@ -4,16 +4,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-// Type aliases for Orchestrator types
-using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
-using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
-using ContainerRestartResponse = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse;
-using ContainerRestartResponseRestartStrategy = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponseRestartStrategy;
-using ContainerStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatus;
-using ContainerStatusStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatusStatus;
-using OrchestratorServiceConfiguration = BeyondImmersion.BannouService.Orchestrator.OrchestratorServiceConfiguration;
-using RestartHistoryEntry = BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry;
-using RestartPriority = BeyondImmersion.BannouService.Orchestrator.RestartPriority;
+using BeyondImmersion.BannouService.Orchestrator;
 
 namespace LibOrchestrator.Backends;
 
@@ -117,7 +108,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 return new ContainerStatus
                 {
                     AppName = appName,
-                    Status = ContainerStatusStatus.Stopped,
+                    Status = ContainerStatusType.Stopped,
                     Timestamp = DateTimeOffset.UtcNow,
                     Instances = 0
                 };
@@ -131,7 +122,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             return new ContainerStatus
             {
                 AppName = appName,
-                Status = ContainerStatusStatus.Unhealthy,
+                Status = ContainerStatusType.Unhealthy,
                 Timestamp = DateTimeOffset.UtcNow,
                 Instances = 0
             };
@@ -158,9 +149,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             {
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"No container found with app-id '{appName}'"
+                    Accepted = false
                 };
             }
 
@@ -182,9 +171,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 var error = await response.Content.ReadAsStringAsync(cancellationToken);
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"Portainer API error: {response.StatusCode} - {error}"
+                    Accepted = false
                 };
             }
 
@@ -195,11 +182,9 @@ public class PortainerOrchestrator : IContainerOrchestrator
             return new ContainerRestartResponse
             {
                 Accepted = true,
-                AppName = appName,
                 ScheduledFor = DateTimeOffset.UtcNow,
                 CurrentInstances = 1,
-                RestartStrategy = ContainerRestartResponseRestartStrategy.Simultaneous,
-                Message = $"Container {container.Id[..12]} restarted successfully"
+                RestartStrategy = RestartStrategy.Simultaneous
             };
         }
         catch (Exception ex)
@@ -207,9 +192,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Error restarting Portainer container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Error: {ex.Message}"
+                Accepted = false
             };
         }
     }
@@ -342,13 +325,13 @@ public class PortainerOrchestrator : IContainerOrchestrator
         var dockerState = container.State?.ToLowerInvariant() ?? "";
         var status = dockerState switch
         {
-            "running" => ContainerStatusStatus.Running,
-            "restarting" => ContainerStatusStatus.Starting,
-            "exited" => ContainerStatusStatus.Stopped,
-            "dead" => ContainerStatusStatus.Unhealthy,
-            "created" => ContainerStatusStatus.Stopped,
-            "paused" => ContainerStatusStatus.Stopping,
-            _ => ContainerStatusStatus.Unhealthy
+            "running" => ContainerStatusType.Running,
+            "restarting" => ContainerStatusType.Starting,
+            "exited" => ContainerStatusType.Stopped,
+            "dead" => ContainerStatusType.Unhealthy,
+            "created" => ContainerStatusType.Stopped,
+            "paused" => ContainerStatusType.Stopping,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -356,7 +339,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             AppName = appName,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
-            Instances = status == ContainerStatusStatus.Running ? 1 : 0,
+            Instances = status == ContainerStatusType.Running ? 1 : 0,
             RestartHistory = new List<RestartHistoryEntry>()
         };
     }

@@ -99,6 +99,52 @@ public enum EntityType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring.
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceHealthStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    Degraded = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    Unavailable = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (overloaded, shutting_down).
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum InstanceHealthStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    Degraded = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"overloaded")]
+    Overloaded = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"shutting_down")]
+    Shutting_down = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    Unavailable = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Standardized sentiment categories for anonymous audience and reaction data. Used by lib-chat for sentiment room messages and lib-stream for platform audience processing. Designed for privacy-safe communication where text content is inappropriate or unnecessary.
 /// <br/>
 /// </summary>

@@ -32,6 +32,26 @@ public partial class OrchestratorService
 }
 
 // ============================================================================
+// RESTART MODELS (internal signaling between SmartRestartManager and service)
+// ============================================================================
+
+/// <summary>
+/// Internal result from SmartRestartManager, separate from the API response model.
+/// Carries success/failure signaling that the service method uses to choose the HTTP status code.
+/// </summary>
+/// <param name="Succeeded">Whether the restart completed and the service became healthy.</param>
+/// <param name="DeclineReason">Non-null if the restart was declined or failed. Used by the service to distinguish 409 (declined) from 500 (failed).</param>
+/// <param name="Duration">Formatted duration of the restart operation.</param>
+/// <param name="PreviousStatus">Service health status before the restart attempt.</param>
+/// <param name="CurrentStatus">Service health status after the restart attempt.</param>
+public record RestartOutcome(
+    bool Succeeded,
+    string? DeclineReason,
+    string Duration,
+    InstanceHealthStatus? PreviousStatus,
+    InstanceHealthStatus? CurrentStatus);
+
+// ============================================================================
 // PRESET MODELS (used by PresetLoader for YAML-based deployment presets)
 // ============================================================================
 

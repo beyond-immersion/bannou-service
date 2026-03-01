@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -10,9 +11,6 @@ using BeyondImmersion.BannouService.Voice.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-// Alias to disambiguate from internal SipCredentials type in Services namespace
-using ClientSipCredentials = BeyondImmersion.Bannou.Voice.ClientEvents.SipCredentials;
-
 namespace BeyondImmersion.BannouService.Voice;
 
 /// <summary>
@@ -52,7 +50,6 @@ namespace BeyondImmersion.BannouService.Voice;
 [BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class VoiceService : IVoiceService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<VoiceService> _logger;
     private readonly VoiceServiceConfiguration _configuration;
@@ -62,6 +59,9 @@ public partial class VoiceService : IVoiceService
     private readonly IClientEventPublisher _clientEventPublisher;
     private readonly IPermissionClient _permissionClient;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly IStateStore<VoiceRoomData> _roomStore;
+    private readonly IStateStore<string> _stringStore;
 
     private const string ROOM_KEY_PREFIX = "voice:room:";
     private const string SESSION_ROOM_KEY_PREFIX = "voice:session-room:";
@@ -80,6 +80,7 @@ public partial class VoiceService : IVoiceService
     /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
     /// <param name="permissionClient">Permission client for managing voice permission states.</param>
     /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    /// <param name="lockProvider">Distributed lock provider for cross-instance coordination.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -91,9 +92,9 @@ public partial class VoiceService : IVoiceService
         IEventConsumer eventConsumer,
         IClientEventPublisher clientEventPublisher,
         IPermissionClient permissionClient,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IDistributedLockProvider lockProvider)
     {
-        _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
@@ -104,6 +105,9 @@ public partial class VoiceService : IVoiceService
         _permissionClient = permissionClient;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
+        _lockProvider = lockProvider;
+        _roomStore = stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+        _stringStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
 
         // Register event handlers via partial class (VoiceServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -116,9 +120,24 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Creating voice room for session {SessionId}", body.SessionId);
 
+        // Distributed lock prevents concurrent room creation for the same session
+        // (check-then-act race on session-room mapping per IMPLEMENTATION TENETS)
+        var lockOwner = $"create-room-{body.SessionId:N}-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.VoiceLock,
+            $"session-room:{body.SessionId}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire room creation lock for session {SessionId}", body.SessionId);
+            return (StatusCodes.Conflict, null);
+        }
+
         // Check if room already exists for this session
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
-        var existingRoomIdStr = await stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
+        var existingRoomIdStr = await _stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
 
         if (!string.IsNullOrEmpty(existingRoomIdStr) && Guid.TryParse(existingRoomIdStr, out _))
         {
@@ -134,8 +153,8 @@ public partial class VoiceService : IVoiceService
         {
             RoomId = roomId,
             SessionId = body.SessionId,
-            Tier = body.PreferredTier,
-            Codec = body.Codec,
+            Tier = body.PreferredTier ?? VoiceTier.P2P,
+            Codec = body.Codec ?? VoiceCodec.Opus,
             MaxParticipants = body.MaxParticipants > 0 ? body.MaxParticipants : _p2pCoordinator.GetP2PMaxParticipants(),
             CreatedAt = now,
             RtpServerUri = null,
@@ -144,11 +163,10 @@ public partial class VoiceService : IVoiceService
         };
 
         // Save room data
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+        await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Save session -> room mapping (store Guid as string since IStateStore requires reference types)
-        await stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId.ToString(), cancellationToken: cancellationToken);
+        await _stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId.ToString(), cancellationToken: cancellationToken);
 
         // Publish service event
         await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
@@ -176,7 +194,6 @@ public partial class VoiceService : IVoiceService
             RtpServerUri = null,
             AutoCleanup = roomData.AutoCleanup,
             IsPasswordProtected = !string.IsNullOrEmpty(roomData.Password),
-            IsBroadcasting = false,
             BroadcastState = BroadcastConsentState.Inactive
         });
     }
@@ -188,8 +205,7 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Getting voice room {RoomId}", body.RoomId);
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -213,7 +229,6 @@ public partial class VoiceService : IVoiceService
             RtpServerUri = roomData.RtpServerUri,
             AutoCleanup = roomData.AutoCleanup,
             IsPasswordProtected = !string.IsNullOrEmpty(roomData.Password),
-            IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
             BroadcastState = roomData.BroadcastState
         });
     }
@@ -228,43 +243,63 @@ public partial class VoiceService : IVoiceService
         _logger.LogDebug("Session {SessionId} joining voice room {RoomId}", body.SessionId, body.RoomId);
 
         // Get room data
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
             // Ad-hoc room support: auto-create when enabled
             if (_configuration.AdHocRoomsEnabled)
             {
-                _logger.LogInformation("Auto-creating ad-hoc voice room {RoomId}", body.RoomId);
-                var now = DateTimeOffset.UtcNow;
-                roomData = new VoiceRoomData
+                // Distributed lock prevents concurrent ad-hoc room creation for the same
+                // room ID (check-then-act race per IMPLEMENTATION TENETS)
+                var adHocLockOwner = $"adhoc-create-{body.SessionId:N}-{Guid.NewGuid():N}";
+                await using var adHocLock = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.VoiceLock,
+                    $"room-create:{body.RoomId}",
+                    adHocLockOwner,
+                    _configuration.LockTimeoutSeconds,
+                    cancellationToken: cancellationToken);
+
+                if (!adHocLock.Success)
                 {
-                    RoomId = body.RoomId,
-                    SessionId = body.SessionId,
-                    Tier = VoiceTier.P2p,
-                    Codec = VoiceCodec.Opus,
-                    MaxParticipants = _p2pCoordinator.GetP2PMaxParticipants(),
-                    CreatedAt = now,
-                    AutoCleanup = true
-                };
+                    _logger.LogWarning("Failed to acquire ad-hoc room creation lock for room {RoomId}", body.RoomId);
+                    return (StatusCodes.Conflict, null);
+                }
 
-                await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+                // Re-check after acquiring lock — another instance may have created the room
+                roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
-                // Save session -> room mapping
-                var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
-                await stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", body.RoomId.ToString(), cancellationToken: cancellationToken);
-
-                // Publish room created event
-                await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+                if (roomData == null)
                 {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    RoomId = body.RoomId,
-                    SessionId = body.SessionId,
-                    Tier = roomData.Tier,
-                    MaxParticipants = roomData.MaxParticipants
-                });
+                    _logger.LogInformation("Auto-creating ad-hoc voice room {RoomId}", body.RoomId);
+                    var now = DateTimeOffset.UtcNow;
+                    roomData = new VoiceRoomData
+                    {
+                        RoomId = body.RoomId,
+                        SessionId = body.SessionId,
+                        Tier = VoiceTier.P2P,
+                        Codec = VoiceCodec.Opus,
+                        MaxParticipants = _p2pCoordinator.GetP2PMaxParticipants(),
+                        CreatedAt = now,
+                        AutoCleanup = true
+                    };
+
+                    await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+                    // Save session -> room mapping
+                    await _stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", body.RoomId.ToString(), cancellationToken: cancellationToken);
+
+                    // Publish room created event
+                    await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        RoomId = body.RoomId,
+                        SessionId = body.SessionId,
+                        Tier = roomData.Tier,
+                        MaxParticipants = roomData.MaxParticipants
+                    });
+                }
             }
             else
             {
@@ -308,7 +343,7 @@ public partial class VoiceService : IVoiceService
                 if (upgradeResult)
                 {
                     // Reload room data after upgrade
-                    roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+                    roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
                     if (roomData == null)
                     {
                         _logger.LogError("Room data disappeared after tier upgrade for room {RoomId}", body.RoomId);
@@ -365,18 +400,18 @@ public partial class VoiceService : IVoiceService
             }, cancellationToken);
             _logger.LogDebug("Set voice:in_room state for session {SessionId}", body.SessionId);
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to set voice:in_room state for session {SessionId}", body.SessionId);
         }
 
-        // Publish participant joined service event
-        await _messageBus.TryPublishAsync("voice.participant.joined", new VoiceParticipantJoinedEvent
+        // Publish peer joined service event
+        await _messageBus.TryPublishAsync("voice.peer.joined", new VoicePeerJoinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = body.RoomId,
-            ParticipantSessionId = body.SessionId,
+            PeerSessionId = body.SessionId,
             CurrentCount = newCount
         });
 
@@ -400,7 +435,6 @@ public partial class VoiceService : IVoiceService
                 RtpServerUri = roomData.RtpServerUri,
                 StunServers = stunServers,
                 TierUpgradePending = false,
-                IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
                 BroadcastState = roomData.BroadcastState
             });
         }
@@ -430,7 +464,7 @@ public partial class VoiceService : IVoiceService
                 _logger.LogDebug("Set voice:ringing state for joining session {SessionId} with {PeerCount} existing peers",
                     body.SessionId, peers.Count);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:ringing state for joining session {SessionId}", body.SessionId);
             }
@@ -444,7 +478,9 @@ public partial class VoiceService : IVoiceService
             {
                 try
                 {
-                    await TryUpgradeToScaledTierAsync(body.RoomId, roomData, cancellationToken);
+                    // Use CancellationToken.None: tier upgrade must complete independently of the
+                    // originating HTTP request whose cancellationToken is request-scoped
+                    await TryUpgradeToScaledTierAsync(body.RoomId, roomData, CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
@@ -458,13 +494,12 @@ public partial class VoiceService : IVoiceService
         return (StatusCodes.OK, new JoinVoiceRoomResponse
         {
             RoomId = body.RoomId,
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = roomData.Codec,
             Peers = peers,
             RtpServerUri = null,
             StunServers = stunServers,
             TierUpgradePending = tierUpgradePending,
-            IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
             BroadcastState = roomData.BroadcastState
         });
     }
@@ -494,7 +529,7 @@ public partial class VoiceService : IVoiceService
                 ServiceId = "voice"
             }, cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", body.SessionId);
         }
@@ -502,13 +537,13 @@ public partial class VoiceService : IVoiceService
         // Get remaining count
         var remainingCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
 
-        // Publish participant left service event
-        await _messageBus.TryPublishAsync("voice.participant.left", new VoiceParticipantLeftEvent
+        // Publish peer left service event
+        await _messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = body.RoomId,
-            ParticipantSessionId = body.SessionId,
+            PeerSessionId = body.SessionId,
             RemainingCount = remainingCount
         });
 
@@ -516,24 +551,40 @@ public partial class VoiceService : IVoiceService
         await NotifyPeerLeftAsync(body.RoomId, removed.SessionId, removed.DisplayName, remainingCount, cancellationToken);
 
         // Check if leaving participant breaks broadcast consent
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        // Distributed lock prevents concurrent leave/consent operations from racing on
+        // the read-modify-write of BroadcastState (per IMPLEMENTATION TENETS)
+        var lockOwner = $"leave-broadcast-{body.SessionId:N}-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.VoiceLock,
+            $"broadcast-consent:{body.RoomId}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
 
-        if (roomData != null)
+        if (lockResponse.Success)
         {
-            // If broadcasting and participant leaves, stop broadcast (consent broken)
-            if (roomData.BroadcastState == BroadcastConsentState.Approved ||
-                roomData.BroadcastState == BroadcastConsentState.Pending)
-            {
-                await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.ConsentRevoked, cancellationToken);
-            }
+            var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
-            // If room is now empty and AutoCleanup, set timestamp for grace period
-            if (remainingCount == 0 && roomData.AutoCleanup)
+            if (roomData != null)
             {
-                roomData.LastParticipantLeftAt = DateTimeOffset.UtcNow;
-                await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+                // If broadcasting and participant leaves, stop broadcast (consent broken)
+                if (roomData.BroadcastState == BroadcastConsentState.Approved ||
+                    roomData.BroadcastState == BroadcastConsentState.Pending)
+                {
+                    await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.ConsentRevoked, cancellationToken);
+                }
+
+                // If room is now empty and AutoCleanup, set timestamp for grace period
+                if (remainingCount == 0 && roomData.AutoCleanup)
+                {
+                    roomData.LastParticipantLeftAt = DateTimeOffset.UtcNow;
+                    await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+                }
             }
+        }
+        else
+        {
+            _logger.LogWarning("Failed to acquire broadcast consent lock during leave for room {RoomId}, broadcast state may be stale", body.RoomId);
         }
 
         _logger.LogInformation("Session {SessionId} left voice room {RoomId}", body.SessionId, body.RoomId);
@@ -550,8 +601,7 @@ public partial class VoiceService : IVoiceService
         _logger.LogDebug("Deleting voice room {RoomId}", body.RoomId);
 
         // Get room data
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -559,11 +609,35 @@ public partial class VoiceService : IVoiceService
             return StatusCodes.NotFound;
         }
 
-        // If broadcasting, stop broadcast first
+        // If broadcasting, stop broadcast first (with lock per IMPLEMENTATION TENETS)
         if (roomData.BroadcastState == BroadcastConsentState.Approved ||
             roomData.BroadcastState == BroadcastConsentState.Pending)
         {
-            await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.RoomClosed, cancellationToken);
+            var broadcastLockOwner = $"delete-broadcast-{Guid.NewGuid():N}";
+            await using var broadcastLock = await _lockProvider.LockAsync(
+                StateStoreDefinitions.VoiceLock,
+                $"broadcast-consent:{body.RoomId}",
+                broadcastLockOwner,
+                _configuration.LockTimeoutSeconds,
+                cancellationToken: cancellationToken);
+
+            if (broadcastLock.Success)
+            {
+                // Re-read state inside lock to avoid stale data
+                var freshRoomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+                if (freshRoomData != null &&
+                    (freshRoomData.BroadcastState == BroadcastConsentState.Approved ||
+                     freshRoomData.BroadcastState == BroadcastConsentState.Pending))
+                {
+                    await StopBroadcastInternalAsync(body.RoomId, freshRoomData, VoiceBroadcastStoppedReason.RoomClosed, cancellationToken);
+                    // Update local reference so downstream deletion uses correct state
+                    roomData = freshRoomData;
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Failed to acquire broadcast consent lock during delete for room {RoomId}", body.RoomId);
+            }
         }
 
         // Get all participants before clearing
@@ -580,23 +654,23 @@ public partial class VoiceService : IVoiceService
         }
 
         // Delete room data
-        await roomStore.DeleteAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        await _roomStore.DeleteAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         // Delete session -> room mapping
-        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
-        await stringStore.DeleteAsync($"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken);
+        await _stringStore.DeleteAsync($"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken);
 
         // Publish room deleted service event
+        var deleteReason = body.Reason ?? VoiceRoomDeletedReason.Manual;
         await _messageBus.TryPublishAsync("voice.room.deleted", new VoiceRoomDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = body.RoomId,
-            Reason = VoiceRoomDeletedReason.Manual
+            Reason = deleteReason
         });
 
         // Notify all participants that room is closed
-        await NotifyRoomClosedAsync(body.RoomId, participants, VoiceRoomDeletedReason.Manual, cancellationToken);
+        await NotifyRoomClosedAsync(body.RoomId, participants, deleteReason, cancellationToken);
 
         // Clear permission states for all participants
         foreach (var participant in participants)
@@ -609,7 +683,7 @@ public partial class VoiceService : IVoiceService
                     ServiceId = "voice"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", participant.SessionId);
             }
@@ -689,8 +763,23 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Broadcast consent requested for room {RoomId}", body.RoomId);
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        // Distributed lock prevents concurrent broadcast consent requests from racing on
+        // the read-modify-write of BroadcastState (per IMPLEMENTATION TENETS)
+        var lockOwner = $"request-consent-{body.RequestingSessionId:N}-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.VoiceLock,
+            $"broadcast-consent:{body.RoomId}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire broadcast consent lock for room {RoomId}", body.RoomId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -717,7 +806,7 @@ public partial class VoiceService : IVoiceService
         roomData.BroadcastRequestedBy = body.RequestingSessionId;
         roomData.BroadcastConsentedSessions = new HashSet<Guid>();
         roomData.BroadcastRequestedAt = DateTimeOffset.UtcNow;
-        await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+        await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
 
         // Set voice:consent_pending permission state for ALL participants
         foreach (var sessionId in participantSessionIds)
@@ -731,7 +820,7 @@ public partial class VoiceService : IVoiceService
                     NewState = "consent_pending"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:consent_pending for session {SessionId}", sessionId);
             }
@@ -777,8 +866,23 @@ public partial class VoiceService : IVoiceService
         _logger.LogDebug("Broadcast consent response from {SessionId} for room {RoomId}: consented={Consented}",
             body.SessionId, body.RoomId, body.Consented);
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        // Distributed lock prevents concurrent consent responses from overwriting each other's
+        // consented session sets (read-modify-write race per IMPLEMENTATION TENETS)
+        var lockOwner = $"consent-{body.SessionId:N}-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.VoiceLock,
+            $"broadcast-consent:{body.RoomId}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire broadcast consent lock for room {RoomId}", body.RoomId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -801,13 +905,13 @@ public partial class VoiceService : IVoiceService
             roomData.BroadcastConsentedSessions.Clear();
             roomData.BroadcastRequestedBy = null;
             roomData.BroadcastRequestedAt = null;
-            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+            await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
 
             // Clear consent_pending states
             await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
 
             // Publish declined service event
-            await _messageBus.TryPublishAsync("voice.room.broadcast.declined", new VoiceRoomBroadcastDeclinedEvent
+            await _messageBus.TryPublishAsync("voice.broadcast.declined", new VoiceBroadcastDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -845,13 +949,13 @@ public partial class VoiceService : IVoiceService
         {
             // All consented -> Approved
             roomData.BroadcastState = BroadcastConsentState.Approved;
-            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+            await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
 
             // Clear consent_pending states, restore to in_room
             await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
 
             // Publish approved service event
-            await _messageBus.TryPublishAsync("voice.room.broadcast.approved", new VoiceRoomBroadcastApprovedEvent
+            await _messageBus.TryPublishAsync("voice.broadcast.approved", new VoiceBroadcastApprovedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -879,7 +983,7 @@ public partial class VoiceService : IVoiceService
         }
 
         // Still waiting for more consents
-        await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+        await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
 
         var pendingIds = participantSessionIds.Except(roomData.BroadcastConsentedSessions).ToList();
 
@@ -906,8 +1010,23 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Stopping broadcast for room {RoomId}", body.RoomId);
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        // Distributed lock prevents concurrent stop/consent operations from racing on
+        // the read-check-modify of BroadcastState (per IMPLEMENTATION TENETS)
+        var lockOwner = $"stop-broadcast-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.VoiceLock,
+            $"broadcast-consent:{body.RoomId}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken: cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire broadcast consent lock for room {RoomId}", body.RoomId);
+            return StatusCodes.Conflict;
+        }
+
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -933,8 +1052,7 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Getting broadcast status for room {RoomId}", body.RoomId);
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+        var roomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
 
         if (roomData == null)
         {
@@ -972,11 +1090,10 @@ public partial class VoiceService : IVoiceService
         roomData.BroadcastRequestedBy = null;
         roomData.BroadcastRequestedAt = null;
 
-        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-        await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+        await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Publish stopped service event
-        await _messageBus.TryPublishAsync("voice.room.broadcast.stopped", new VoiceRoomBroadcastStoppedEvent
+        await _messageBus.TryPublishAsync("voice.broadcast.stopped", new VoiceBroadcastStoppedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1016,7 +1133,7 @@ public partial class VoiceService : IVoiceService
                     NewState = "in_room"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
             }
@@ -1093,7 +1210,7 @@ public partial class VoiceService : IVoiceService
                 }, cancellationToken);
                 _logger.LogDebug("Set voice:ringing state for session {SessionId}", participant.SessionId);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", participant.SessionId);
             }
@@ -1203,7 +1320,7 @@ public partial class VoiceService : IVoiceService
         {
             var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(participant.SessionId, roomId);
 
-            var clientCredentials = new ClientSipCredentials
+            var clientCredentials = new SipCredentials
             {
                 Username = internalCredentials.Username,
                 Password = internalCredentials.Password,
@@ -1216,7 +1333,7 @@ public partial class VoiceService : IVoiceService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = roomId,
-                PreviousTier = VoiceTier.P2p,
+                PreviousTier = VoiceTier.P2P,
                 NewTier = VoiceTier.Scaled,
                 RtpServerUri = rtpServerUri,
                 SipCredentials = clientCredentials,
@@ -1263,8 +1380,7 @@ public partial class VoiceService : IVoiceService
             roomData.MaxParticipants = _scaledTierCoordinator.GetScaledMaxParticipants();
             roomData.RtpServerUri = rtpServerUri;
 
-            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+            await _roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
 
             // Publish tier upgraded service event
             await _messageBus.TryPublishAsync("voice.room.tier-upgraded", new VoiceRoomTierUpgradedEvent
@@ -1272,7 +1388,7 @@ public partial class VoiceService : IVoiceService
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 RoomId = roomId,
-                PreviousTier = VoiceTier.P2p,
+                PreviousTier = VoiceTier.P2P,
                 NewTier = VoiceTier.Scaled,
                 RtpAudioEndpoint = rtpServerUri
             });

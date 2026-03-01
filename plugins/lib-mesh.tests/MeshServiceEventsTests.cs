@@ -86,7 +86,7 @@ public class MeshServiceEventsTests
     private static ServiceHeartbeatEvent CreateHeartbeatEvent(
         Guid? serviceId = null,
         string appId = "test-app",
-        ServiceHeartbeatEventStatus status = ServiceHeartbeatEventStatus.Healthy,
+        InstanceHealthStatus status = InstanceHealthStatus.Healthy,
         float cpuUsage = 10f,
         int? currentConnections = 5,
         int? maxConnections = 100)
@@ -270,7 +270,7 @@ public class MeshServiceEventsTests
         {
             ServiceId = instanceId,
             AppId = "test-app",
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Capacity = null,
         };
         var existing = CreateExistingEndpoint(instanceId);
@@ -336,7 +336,7 @@ public class MeshServiceEventsTests
         {
             ServiceId = instanceId,
             AppId = "new-app",
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Capacity = null,
             // Services defaults to empty Collection (non-nullable, [Required])
         };
@@ -381,13 +381,13 @@ public class MeshServiceEventsTests
     // =========================================================================
 
     [Theory]
-    [InlineData(ServiceHeartbeatEventStatus.Healthy, EndpointStatus.Healthy)]
-    [InlineData(ServiceHeartbeatEventStatus.Degraded, EndpointStatus.Degraded)]
-    [InlineData(ServiceHeartbeatEventStatus.Overloaded, EndpointStatus.Degraded)]
-    [InlineData(ServiceHeartbeatEventStatus.Unavailable, EndpointStatus.Unavailable)]
-    [InlineData(ServiceHeartbeatEventStatus.Shutting_down, EndpointStatus.ShuttingDown)]
+    [InlineData(InstanceHealthStatus.Healthy, EndpointStatus.Healthy)]
+    [InlineData(InstanceHealthStatus.Degraded, EndpointStatus.Degraded)]
+    [InlineData(InstanceHealthStatus.Overloaded, EndpointStatus.Degraded)]
+    [InlineData(InstanceHealthStatus.Unavailable, EndpointStatus.Unavailable)]
+    [InlineData(InstanceHealthStatus.Shutting_down, EndpointStatus.ShuttingDown)]
     public async Task HandleServiceHeartbeatAsync_MapsHeartbeatStatus_Correctly(
-        ServiceHeartbeatEventStatus heartbeatStatus,
+        InstanceHealthStatus heartbeatStatus,
         EndpointStatus expectedEndpointStatus)
     {
         var instanceId = Guid.NewGuid();
@@ -415,7 +415,7 @@ public class MeshServiceEventsTests
     public async Task HandleServiceHeartbeatAsync_DefaultStatus_MapsToHealthy()
     {
         var instanceId = Guid.NewGuid();
-        // Default enum value (0) is ServiceHeartbeatEventStatus.Healthy
+        // Default enum value (0) is InstanceHealthStatus.Healthy
         var evt = CreateHeartbeatEvent(serviceId: instanceId, status: default);
         var existing = CreateExistingEndpoint(instanceId);
 
@@ -446,7 +446,7 @@ public class MeshServiceEventsTests
         var instanceId = Guid.NewGuid();
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 50f);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
 
@@ -468,7 +468,7 @@ public class MeshServiceEventsTests
         var instanceId = Guid.NewGuid();
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded);
+            status: InstanceHealthStatus.Degraded);
         // Previous status is already Degraded
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Degraded);
 
@@ -487,7 +487,7 @@ public class MeshServiceEventsTests
         var instanceId = Guid.NewGuid();
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Healthy);
+            status: InstanceHealthStatus.Healthy);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Degraded);
 
         _stateManager.Setup(sm => sm.GetEndpointByInstanceIdAsync(instanceId))
@@ -510,7 +510,7 @@ public class MeshServiceEventsTests
         // CPU at 85% exceeds default threshold of 80%
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 85f);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
 
@@ -532,7 +532,7 @@ public class MeshServiceEventsTests
         // Connections at max (100 >= 100)
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 10f, // low CPU
             currentConnections: 100);
         var existing = CreateExistingEndpoint(
@@ -557,7 +557,7 @@ public class MeshServiceEventsTests
         // Status is Degraded but CPU and connections are low
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 10f,
             currentConnections: 5);
         var existing = CreateExistingEndpoint(
@@ -586,7 +586,7 @@ public class MeshServiceEventsTests
 
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 10f,
             currentConnections: 5);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
@@ -619,7 +619,7 @@ public class MeshServiceEventsTests
 
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 10f,
             currentConnections: 5);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
@@ -886,7 +886,7 @@ public class MeshServiceEventsTests
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
             appId: "production-app",
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 95f);
         var lastSeen = DateTimeOffset.UtcNow.AddMinutes(-5);
         var existing = CreateExistingEndpoint(instanceId, appId: "production-app", status: EndpointStatus.Healthy);
@@ -927,7 +927,7 @@ public class MeshServiceEventsTests
         var instanceId = Guid.NewGuid();
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Degraded,
+            status: InstanceHealthStatus.Degraded,
             cpuUsage: 10f);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
 
@@ -975,7 +975,7 @@ public class MeshServiceEventsTests
         // Overloaded maps to Degraded, which triggers degradation detection
         var evt = CreateHeartbeatEvent(
             serviceId: instanceId,
-            status: ServiceHeartbeatEventStatus.Overloaded,
+            status: InstanceHealthStatus.Overloaded,
             cpuUsage: 10f);
         var existing = CreateExistingEndpoint(instanceId, status: EndpointStatus.Healthy);
 

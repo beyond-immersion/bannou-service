@@ -129,7 +129,7 @@ public class P2PCoordinator : IP2PCoordinator
         var response = new JoinVoiceRoomResponse
         {
             RoomId = roomId,
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = defaultCodec,
             Peers = peers,
             RtpServerUri = null, // P2P mode, no RTP server

@@ -191,13 +191,14 @@ This document lists all state store components used in Bannou.
 | `transit-journeys-archive` | MySQL | Transit | Archived completed/abandoned journeys (historical record for Trade velocity, Analytics) |
 | `transit-lock` | Redis | Transit | Distributed locks for journey state transitions and connection status updates |
 | `transit-modes` | MySQL | Transit | Transit mode definitions (durable registry) |
+| `voice-lock` | Redis | Voice | Distributed locks for broadcast consent and room mutations |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 | `worldstate-calendar` | MySQL | Worldstate | Calendar template definitions and per-realm worldstate configuration (durable, queryable) |
 | `worldstate-lock` | Redis | Worldstate | Distributed locks for clock advancement, ratio changes, and calendar mutations |
 | `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
 | `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 187 stores (116 Redis, 71 MySQL)
+**Total**: 188 stores (117 Redis, 71 MySQL)
 
 ## Naming Conventions
 

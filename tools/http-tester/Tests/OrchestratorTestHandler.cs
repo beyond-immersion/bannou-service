@@ -2,9 +2,6 @@ using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
-// Alias to resolve naming conflict with Orchestrator.TestResult
-using TestResult = BeyondImmersion.BannouService.Testing.TestResult;
-
 namespace BeyondImmersion.BannouService.HttpTester.Tests;
 
 /// <summary>

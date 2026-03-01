@@ -3,16 +3,7 @@ using k8s;
 using k8s.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-// Type aliases for Orchestrator types
-using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
-using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
-using ContainerRestartResponse = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse;
-using ContainerRestartResponseRestartStrategy = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponseRestartStrategy;
-using ContainerStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatus;
-using ContainerStatusStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatusStatus;
-using OrchestratorServiceConfiguration = BeyondImmersion.BannouService.Orchestrator.OrchestratorServiceConfiguration;
-using RestartHistoryEntry = BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry;
-using RestartPriority = BeyondImmersion.BannouService.Orchestrator.RestartPriority;
+using BeyondImmersion.BannouService.Orchestrator;
 
 namespace LibOrchestrator.Backends;
 
@@ -117,7 +108,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
                 return new ContainerStatus
                 {
                     AppName = appName,
-                    Status = ContainerStatusStatus.Stopped,
+                    Status = ContainerStatusType.Stopped,
                     Timestamp = DateTimeOffset.UtcNow,
                     Instances = 0
                 };
@@ -131,7 +122,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             return new ContainerStatus
             {
                 AppName = appName,
-                Status = ContainerStatusStatus.Unhealthy,
+                Status = ContainerStatusType.Unhealthy,
                 Timestamp = DateTimeOffset.UtcNow,
                 Instances = 0
             };
@@ -158,9 +149,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             {
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"No deployment found with app-id '{appName}' in namespace '{_namespace}'"
+                    Accepted = false
                 };
             }
 
@@ -202,11 +191,9 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             return new ContainerRestartResponse
             {
                 Accepted = true,
-                AppName = appName,
                 ScheduledFor = DateTimeOffset.UtcNow,
                 CurrentInstances = desiredReplicas,
-                RestartStrategy = ContainerRestartResponseRestartStrategy.Rolling,
-                Message = $"Rolling restart initiated for deployment {deployment.Metadata.Name}"
+                RestartStrategy = RestartStrategy.Rolling
             };
         }
         catch (k8s.Autorest.HttpOperationException ex)
@@ -214,9 +201,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Kubernetes API error restarting deployment for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Kubernetes API error: {ex.Message}"
+                Accepted = false
             };
         }
         catch (Exception ex)
@@ -224,9 +209,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Error restarting Kubernetes deployment for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Error: {ex.Message}"
+                Accepted = false
             };
         }
     }
@@ -362,10 +345,10 @@ public class KubernetesOrchestrator : IContainerOrchestrator
 
         var status = (readyReplicas, desiredReplicas) switch
         {
-            (0, _) => ContainerStatusStatus.Stopped,
-            var (r, d) when r == d => ContainerStatusStatus.Running,
-            var (r, d) when r < d => ContainerStatusStatus.Starting,
-            _ => ContainerStatusStatus.Unhealthy
+            (0, _) => ContainerStatusType.Stopped,
+            var (r, d) when r == d => ContainerStatusType.Running,
+            var (r, d) when r < d => ContainerStatusType.Starting,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -386,11 +369,11 @@ public class KubernetesOrchestrator : IContainerOrchestrator
         var phase = pod.Status.Phase?.ToLowerInvariant();
         var status = phase switch
         {
-            "running" => ContainerStatusStatus.Running,
-            "pending" => ContainerStatusStatus.Starting,
-            "succeeded" => ContainerStatusStatus.Stopped,
-            "failed" => ContainerStatusStatus.Unhealthy,
-            _ => ContainerStatusStatus.Unhealthy
+            "running" => ContainerStatusType.Running,
+            "pending" => ContainerStatusType.Starting,
+            "succeeded" => ContainerStatusType.Stopped,
+            "failed" => ContainerStatusType.Unhealthy,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -398,7 +381,7 @@ public class KubernetesOrchestrator : IContainerOrchestrator
             AppName = appName,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
-            Instances = status == ContainerStatusStatus.Running ? 1 : 0,
+            Instances = status == ContainerStatusType.Running ? 1 : 0,
             RestartHistory = new List<RestartHistoryEntry>()
         };
     }

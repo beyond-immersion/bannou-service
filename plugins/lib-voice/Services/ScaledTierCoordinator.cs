@@ -70,7 +70,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     }
 
     /// <inheritdoc />
-    public SipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId)
+    public ScaledTierSipCredentials GenerateSipCredentials(Guid sessionId, Guid roomId)
     {
         // Generate deterministic password using SHA256(sessionId:roomId:salt)
         // Using sessionId instead of accountId to support multiple sessions per account
@@ -98,7 +98,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
             "Generated SIP credentials for session {SessionId} in room {RoomId}",
             sessionIdStr[..8], roomId);
 
-        return new SipCredentials
+        return new ScaledTierSipCredentials
         {
             Registrar = $"sip:{_configuration.KamailioHost}:{_configuration.KamailioSipPort}",
             Username = username,

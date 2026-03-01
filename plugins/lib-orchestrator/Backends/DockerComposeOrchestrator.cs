@@ -11,15 +11,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-// Type aliases to shadow Docker.DotNet types with our Orchestrator types
-using BackendType = BeyondImmersion.BannouService.Orchestrator.BackendType;
-using ContainerRestartRequest = BeyondImmersion.BannouService.Orchestrator.ContainerRestartRequest;
-using ContainerRestartResponse = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponse;
-using ContainerRestartResponseRestartStrategy = BeyondImmersion.BannouService.Orchestrator.ContainerRestartResponseRestartStrategy;
+// Docker.DotNet.Models.ContainerStatus collides with our ContainerStatus
 using ContainerStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatus;
-using ContainerStatusStatus = BeyondImmersion.BannouService.Orchestrator.ContainerStatusStatus;
-using RestartHistoryEntry = BeyondImmersion.BannouService.Orchestrator.RestartHistoryEntry;
-using RestartPriority = BeyondImmersion.BannouService.Orchestrator.RestartPriority;
 
 namespace LibOrchestrator.Backends;
 
@@ -354,7 +347,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return new ContainerStatus
             {
                 AppName = appName,
-                Status = ContainerStatusStatus.Stopped,
+                Status = ContainerStatusType.Stopped,
                 Timestamp = DateTimeOffset.UtcNow,
                 Instances = 0
             };
@@ -383,9 +376,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             {
                 return new ContainerRestartResponse
                 {
-                    Accepted = false,
-                    AppName = appName,
-                    Message = $"No container found with app-id '{appName}'"
+                    Accepted = false
                 };
             }
 
@@ -414,11 +405,9 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             return new ContainerRestartResponse
             {
                 Accepted = true,
-                AppName = appName,
                 ScheduledFor = DateTimeOffset.UtcNow,
                 CurrentInstances = 1,
-                RestartStrategy = ContainerRestartResponseRestartStrategy.Simultaneous,
-                Message = $"Container {container.ID[..12]} restarted successfully"
+                RestartStrategy = RestartStrategy.Simultaneous
             };
         }
         catch (DockerApiException ex)
@@ -426,9 +415,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Docker API error restarting container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Docker API error: {ex.Message}"
+                Accepted = false
             };
         }
         catch (Exception ex)
@@ -436,9 +423,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             _logger.LogError(ex, "Error restarting container for {AppName}", appName);
             return new ContainerRestartResponse
             {
-                Accepted = false,
-                AppName = appName,
-                Message = $"Error: {ex.Message}"
+                Accepted = false
             };
         }
     }
@@ -623,13 +608,13 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
         var dockerState = container.State.ToLowerInvariant();
         var status = dockerState switch
         {
-            "running" => ContainerStatusStatus.Running,
-            "restarting" => ContainerStatusStatus.Starting,
-            "exited" => ContainerStatusStatus.Stopped,
-            "dead" => ContainerStatusStatus.Unhealthy,
-            "created" => ContainerStatusStatus.Stopped,
-            "paused" => ContainerStatusStatus.Stopping,
-            _ => ContainerStatusStatus.Unhealthy
+            "running" => ContainerStatusType.Running,
+            "restarting" => ContainerStatusType.Starting,
+            "exited" => ContainerStatusType.Stopped,
+            "dead" => ContainerStatusType.Unhealthy,
+            "created" => ContainerStatusType.Stopped,
+            "paused" => ContainerStatusType.Stopping,
+            _ => ContainerStatusType.Unhealthy
         };
 
         return new ContainerStatus
@@ -637,7 +622,7 @@ public class DockerComposeOrchestrator : IContainerOrchestrator
             AppName = appName,
             Status = status,
             Timestamp = DateTimeOffset.UtcNow,
-            Instances = status == ContainerStatusStatus.Running ? 1 : 0,
+            Instances = status == ContainerStatusType.Running ? 1 : 0,
             RestartHistory = new List<RestartHistoryEntry>(),
             Labels = container.Labels ?? new Dictionary<string, string>()
         };

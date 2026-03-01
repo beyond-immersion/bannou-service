@@ -132,7 +132,7 @@ public class OrchestratorServicePlugin : StandardServicePlugin<IOrchestratorServ
                     AppId = defaultAppId,
                     Host = defaultAppId,
                     Port = 80,
-                    Status = "healthy",
+                    Status = ServiceHealthStatus.Healthy,
                     LastUpdated = DateTimeOffset.UtcNow
                 };
 

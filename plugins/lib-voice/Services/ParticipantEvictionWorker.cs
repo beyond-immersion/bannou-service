@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Events;
@@ -256,13 +257,13 @@ public class ParticipantEvictionWorker : BackgroundService
 
             var remainingCount = await _endpointRegistry.GetParticipantCountAsync(roomId, cancellationToken);
 
-            // Publish participant left service event
-            await messageBus.TryPublishAsync("voice.participant.left", new VoiceParticipantLeftEvent
+            // Publish peer left service event
+            await messageBus.TryPublishAsync("voice.peer.left", new VoicePeerLeftEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 RoomId = roomId,
-                ParticipantSessionId = stale.SessionId,
+                PeerSessionId = stale.SessionId,
                 RemainingCount = remainingCount
             });
 
@@ -295,7 +296,7 @@ public class ParticipantEvictionWorker : BackgroundService
                     ServiceId = "voice"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to clear voice permission state for evicted session {SessionId}", stale.SessionId);
             }
@@ -409,14 +410,14 @@ public class ParticipantEvictionWorker : BackgroundService
                     NewState = "in_room"
                 }, cancellationToken);
             }
-            catch (Exception ex)
+            catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
             }
         }
 
         // Publish declined service event
-        await messageBus.TryPublishAsync("voice.room.broadcast.declined", new VoiceRoomBroadcastDeclinedEvent
+        await messageBus.TryPublishAsync("voice.broadcast.declined", new VoiceBroadcastDeclinedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -467,7 +468,7 @@ public class ParticipantEvictionWorker : BackgroundService
         await roomStore.SaveAsync($"voice:room:{roomId}", roomData, cancellationToken: cancellationToken);
 
         // Publish stopped service event
-        await messageBus.TryPublishAsync("voice.room.broadcast.stopped", new VoiceRoomBroadcastStoppedEvent
+        await messageBus.TryPublishAsync("voice.broadcast.stopped", new VoiceBroadcastStoppedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -493,7 +494,7 @@ public class ParticipantEvictionWorker : BackgroundService
                         NewState = "in_room"
                     }, cancellationToken);
                 }
-                catch (Exception ex)
+                catch (ApiException ex)
                 {
                     _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
                 }

@@ -27,6 +27,7 @@ x-service-configuration:
       description: Cache TTL in minutes for orchestrator data
       env: ORCHESTRATOR_CACHE_TTL_MINUTES
       default: 5
+      minimum: 1
 
     # Backend Configuration
     DefaultBackend:
@@ -41,11 +42,13 @@ x-service-configuration:
       description: Service heartbeat timeout in seconds
       env: ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS
       default: 90
+      minimum: 1
     DegradationThresholdMinutes:
       type: integer
       description: Time in minutes before a service is marked as degraded
       env: ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES
       default: 5
+      minimum: 1
 
     # Portainer Configuration (Docker Swarm/Compose backend)
     PortainerUrl:
@@ -65,6 +68,7 @@ x-service-configuration:
       description: Portainer endpoint ID
       env: ORCHESTRATOR_PORTAINER_ENDPOINT_ID
       default: 1
+      minimum: 1
 
     # Docker Configuration (Docker Compose backend)
     DockerImageName:
@@ -109,11 +113,14 @@ x-service-configuration:
       description: OpenResty port for cache invalidation calls
       env: ORCHESTRATOR_OPENRESTY_PORT
       default: 80
+      minimum: 1
+      maximum: 65535
     OpenRestyRequestTimeoutSeconds:
       type: integer
       description: Timeout in seconds for OpenResty HTTP requests
       env: ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS
       default: 5
+      minimum: 1
 
     # Kubernetes Configuration
     KubernetesNamespace:
@@ -134,16 +141,19 @@ x-service-configuration:
       description: TTL in seconds for service heartbeat entries in state store
       env: ORCHESTRATOR_HEARTBEAT_TTL_SECONDS
       default: 90
+      minimum: 1
     RoutingTtlSeconds:
       type: integer
       description: TTL in seconds for service routing entries in state store
       env: ORCHESTRATOR_ROUTING_TTL_SECONDS
       default: 300
+      minimum: 1
     ConfigHistoryTtlDays:
       type: integer
       description: TTL in days for configuration history entries in state store
       env: ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS
       default: 30
+      minimum: 1
 
     # Smart Restart Configuration
     RestartTimeoutSeconds:
@@ -151,16 +161,19 @@ x-service-configuration:
       description: Default timeout in seconds for container restart operations
       env: ORCHESTRATOR_RESTART_TIMEOUT_SECONDS
       default: 120
+      minimum: 1
     HealthCheckIntervalMs:
       type: integer
       description: Interval in milliseconds between health checks during restart
       env: ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS
       default: 2000
+      minimum: 100
     DefaultWaitBeforeKillSeconds:
       type: integer
       description: Default seconds to wait before killing a container during stop
       env: ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS
       default: 30
+      minimum: 1
 
     # Polling Configuration
     ContainerStatusPollIntervalSeconds:
@@ -168,6 +181,45 @@ x-service-configuration:
       description: Interval in seconds for polling container status during deploy
       env: ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS
       default: 2
+      minimum: 1
+
+    # Service Mesh Broadcasting
+    FullMappingsIntervalSeconds:
+      type: integer
+      description: Interval in seconds for publishing full service-to-appId mappings broadcast
+      env: ORCHESTRATOR_FULL_MAPPINGS_INTERVAL_SECONDS
+      default: 30
+      minimum: 1
+
+    # Orphan Container Detection
+    OrphanContainerThresholdHours:
+      type: integer
+      description: Hours since last heartbeat before a container is considered orphaned
+      env: ORCHESTRATOR_ORPHAN_CONTAINER_THRESHOLD_HOURS
+      default: 24
+      minimum: 1
+
+    # State Manager Retry Configuration
+    IndexUpdateMaxRetries:
+      type: integer
+      description: Maximum number of retry attempts for state index update operations
+      env: ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES
+      default: 3
+      minimum: 1
+
+    # Processing Pool Configuration
+    DefaultPoolLeaseTimeoutSeconds:
+      type: integer
+      description: Default lease timeout in seconds for acquired processing pool instances
+      env: ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS
+      default: 300
+      minimum: 1
+    PoolLockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for acquiring distributed locks on processing pool operations
+      env: ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS
+      default: 15
+      minimum: 1
 
     # Infrastructure Connection Strings
     RedisConnectionString:

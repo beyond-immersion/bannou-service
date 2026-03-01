@@ -5,7 +5,6 @@ using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Voice;
 using System.Text;
-using GameSessionVoiceTier = BeyondImmersion.BannouService.Voice.VoiceTier; // Alias preserved for test readability
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -816,7 +815,7 @@ a=rtpmap:111 opus/48000/2";
                 // Client 3 joins voice room (should trigger tier upgrade)
                 var client3Tier = await JoinExistingVoiceRoomAsync(client3, voiceRoomId);
                 Console.WriteLine($"   Client 3 voice join tier: {client3Tier}");
-                if (client3Tier != GameSessionVoiceTier.Scaled)
+                if (client3Tier != VoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 3 should have joined directly into scaled tier, got: {client3Tier}");
                     return false;
@@ -999,7 +998,7 @@ a=rtpmap:111 opus/48000/2";
                 var client3Tier = await JoinExistingVoiceRoomAsync(client3, voiceRoomId);
                 Console.WriteLine($"   Client 3 joined with tier: {client3Tier}");
 
-                if (client3Tier != GameSessionVoiceTier.Scaled)
+                if (client3Tier != VoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 3 should have joined scaled tier, got: {client3Tier}");
                     return false;
@@ -1043,7 +1042,7 @@ a=rtpmap:111 opus/48000/2";
                 var client4Tier = await JoinExistingVoiceRoomAsync(client4, voiceRoomId);
                 Console.WriteLine($"   Client 4 joined with tier: {client4Tier}");
 
-                if (client4Tier != GameSessionVoiceTier.Scaled)
+                if (client4Tier != VoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 4 should have joined SCALED tier (room already upgraded), got: {client4Tier}");
                     Console.WriteLine("   This indicates the room incorrectly downgraded to P2P when participants left!");
@@ -1072,7 +1071,7 @@ a=rtpmap:111 opus/48000/2";
                 var client5Tier = await JoinExistingVoiceRoomAsync(client5, voiceRoomId);
                 Console.WriteLine($"   Client 5 joined with tier: {client5Tier}");
 
-                if (client5Tier != GameSessionVoiceTier.Scaled)
+                if (client5Tier != VoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 5 should have joined SCALED tier, got: {client5Tier}");
                     return false;
@@ -1106,7 +1105,7 @@ a=rtpmap:111 opus/48000/2";
                 var client3RejoinTier = await JoinExistingVoiceRoomAsync(client3, voiceRoomId);
                 Console.WriteLine($"   Client 3 rejoined with tier: {client3RejoinTier}");
 
-                if (client3RejoinTier != GameSessionVoiceTier.Scaled)
+                if (client3RejoinTier != VoiceTier.Scaled)
                 {
                     Console.WriteLine($"   FAIL: Client 3 rejoin should be SCALED tier, got: {client3RejoinTier}");
                     Console.WriteLine("   The room incorrectly downgraded when only 1 participant remained!");

@@ -15,7 +15,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TransitClientEvents = BeyondImmersion.Bannou.Transit.ClientEvents;
+using BeyondImmersion.Bannou.Transit.ClientEvents;
 
 namespace BeyondImmersion.BannouService.Transit;
 
@@ -3535,7 +3535,7 @@ public partial class TransitService : ITransitService
 
         var remainingLegs = journey.Legs.Count - journey.CurrentLegIndex;
 
-        var clientEvent = new TransitClientEvents.TransitJourneyUpdatedClientEvent
+        var clientEvent = new TransitJourneyUpdatedClientEvent
         {
             JourneyId = journey.Id,
             EntityId = journey.EntityId,
@@ -4404,7 +4404,7 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishConnectionStatusChangedClientEventAsync");
 
-        var clientEvent = new TransitClientEvents.TransitConnectionStatusChangedClientEvent
+        var clientEvent = new TransitConnectionStatusChangedClientEvent
         {
             ConnectionId = model.Id,
             FromLocationId = model.FromLocationId,
@@ -4502,7 +4502,7 @@ public partial class TransitService : ITransitService
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishDiscoveryRevealedClientEventAsync");
 
-        var clientEvent = new TransitClientEvents.TransitDiscoveryRevealedClientEvent
+        var clientEvent = new TransitDiscoveryRevealedClientEvent
         {
             ConnectionId = discovery.ConnectionId,
             FromLocationId = connection.FromLocationId,

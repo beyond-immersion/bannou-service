@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Orchestrator;
 using BeyondImmersion.BannouService.Services;
 using Docker.DotNet;
@@ -63,7 +64,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// Restart a service container with optional environment updates.
     /// Implements smart restart logic based on health metrics.
     /// </summary>
-    public async Task<ServiceRestartResult> RestartServiceAsync(ServiceRestartRequest request)
+    public async Task<RestartOutcome> RestartServiceAsync(ServiceRestartRequest request)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.RestartServiceAsync");
         var startTime = DateTime.UtcNow;
@@ -76,15 +77,12 @@ public class SmartRestartManager : ISmartRestartManager
                 var recommendation = await _healthMonitor.ShouldRestartServiceAsync(request.ServiceName);
                 if (!recommendation.ShouldRestart)
                 {
-                    return new ServiceRestartResult
-                    {
-                        Success = false,
-                        ServiceName = request.ServiceName,
-                        Duration = (DateTime.UtcNow - startTime).ToString(@"hh\:mm\:ss"),
-                        PreviousStatus = recommendation.CurrentStatus,
-                        CurrentStatus = recommendation.CurrentStatus,
-                        Message = $"Restart not needed: {recommendation.Reason}"
-                    };
+                    return new RestartOutcome(
+                        Succeeded: false,
+                        DeclineReason: $"Restart not needed: {recommendation.Reason}",
+                        Duration: (DateTime.UtcNow - startTime).ToString(@"hh\:mm\:ss"),
+                        PreviousStatus: recommendation.CurrentStatus,
+                        CurrentStatus: recommendation.CurrentStatus);
                 }
             }
 
@@ -134,38 +132,30 @@ public class SmartRestartManager : ISmartRestartManager
             // Publish restart event
             await _eventManager.PublishServiceRestartEventAsync(new ServiceRestartEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 ServiceName = request.ServiceName,
                 Reason = $"Smart restart - previous status: {previousStatus}",
                 Forced = request.Force,
                 NewEnvironment = request.Environment != null ? new Dictionary<string, string>(request.Environment) : new Dictionary<string, string>()
             });
 
-            return new ServiceRestartResult
-            {
-                Success = isHealthy,
-                ServiceName = request.ServiceName,
-                Duration = duration.ToString(@"hh\:mm\:ss"),
-                PreviousStatus = previousStatus,
-                CurrentStatus = currentStatus,
-                Message = isHealthy
-                    ? $"Service restarted successfully in {duration.TotalSeconds:F1} seconds"
-                    : $"Service restarted but failed to become healthy within {timeout.TotalSeconds} seconds"
-            };
+            return new RestartOutcome(
+                Succeeded: isHealthy,
+                DeclineReason: isHealthy ? null : $"Service restarted but failed to become healthy within {timeout.TotalSeconds} seconds",
+                Duration: duration.ToString(@"hh\:mm\:ss"),
+                PreviousStatus: previousStatus,
+                CurrentStatus: currentStatus);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to restart service: {ServiceName}", request.ServiceName);
 
-            return new ServiceRestartResult
-            {
-                Success = false,
-                ServiceName = request.ServiceName,
-                Duration = (DateTime.UtcNow - startTime).ToString(@"hh\:mm\:ss"),
-                PreviousStatus = "unknown",
-                CurrentStatus = "error",
-                Message = $"Restart failed: {ex.Message}"
-            };
+            return new RestartOutcome(
+                Succeeded: false,
+                DeclineReason: $"Restart failed: {ex.Message}",
+                Duration: (DateTime.UtcNow - startTime).ToString(@"hh\:mm\:ss"),
+                PreviousStatus: null,
+                CurrentStatus: null);
         }
     }
 
@@ -213,7 +203,7 @@ public class SmartRestartManager : ISmartRestartManager
         {
             var recommendation = await _healthMonitor.ShouldRestartServiceAsync(serviceName);
 
-            if (recommendation.CurrentStatus == "healthy")
+            if (recommendation.CurrentStatus == ServiceHealthStatus.Healthy)
             {
                 var elapsed = DateTime.UtcNow - startTime;
                 _logger.LogInformation(
@@ -239,7 +229,7 @@ public class SmartRestartManager : ISmartRestartManager
     /// <summary>
     /// Get current service status from health monitoring.
     /// </summary>
-    private async Task<string> GetCurrentServiceStatusAsync(string serviceName)
+    private async Task<ServiceHealthStatus?> GetCurrentServiceStatusAsync(string serviceName)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "SmartRestartManager.GetCurrentServiceStatusAsync");
         var recommendation = await _healthMonitor.ShouldRestartServiceAsync(serviceName);

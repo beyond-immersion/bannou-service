@@ -248,7 +248,6 @@ public partial class OrchestratorService : IOrchestratorService
         {
             await _messageBus.TryPublishAsync("orchestrator-health", new OrchestratorHealthPingEvent
             {
-                EventName = "orchestrator.health_ping",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 Status = OrchestratorHealthPingEventStatus.Ok
@@ -334,21 +333,22 @@ public partial class OrchestratorService : IOrchestratorService
             "Executing RestartService operation for: {ServiceName} (force: {Force})",
             body.ServiceName, body.Force);
 
-        var result = await _restartManager.RestartServiceAsync(body);
+        var outcome = await _restartManager.RestartServiceAsync(body);
 
-        if (!result.Success)
+        if (!outcome.Succeeded)
         {
-            // Check if restart was declined (healthy service)
-            if (result.Message?.Contains("not needed") == true)
-            {
-                return (StatusCodes.Conflict, result);
-            }
-
-            // Restart failed
-            return (StatusCodes.InternalServerError, result);
+            // Restart declined (healthy service) vs restart failed
+            return outcome.DeclineReason?.Contains("not needed") == true
+                ? (StatusCodes.Conflict, null)
+                : (StatusCodes.InternalServerError, null);
         }
 
-        return (StatusCodes.OK, result);
+        return (StatusCodes.OK, new ServiceRestartResult
+        {
+            Duration = outcome.Duration,
+            PreviousStatus = outcome.PreviousStatus,
+            CurrentStatus = outcome.CurrentStatus
+        });
     }
 
     /// <summary>
@@ -432,9 +432,9 @@ public partial class OrchestratorService : IOrchestratorService
         // Publish deployment started event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = DeploymentEventAction.Started,
+            Action = DeploymentAction.Started,
             DeploymentId = deploymentId,
             Preset = body.Preset,
             Backend = effectiveBackend
@@ -556,7 +556,6 @@ public partial class OrchestratorService : IOrchestratorService
                 Backend = orchestrator.BackendType,
                 Preset = "default",
                 Duration = $"{resetDuration.TotalSeconds:F1}s",
-                Message = resetResult.Message,
                 Topology = new ServiceTopology { Nodes = new List<TopologyNode>() }, // Empty topology = default
                 Services = resetResult.TornDownServices.Select(s => new DeployedService
                 {
@@ -616,7 +615,7 @@ public partial class OrchestratorService : IOrchestratorService
 
             // VALIDATION: Reject any node attempting to deploy orchestrator service
             // Orchestrator cannot deploy itself or another orchestrator - route cannot be overridden
-            if (node.Services.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)))
+            if (node.Services?.Any(s => s.Equals("orchestrator", StringComparison.OrdinalIgnoreCase)) == true)
             {
                 _logger.LogError(
                     "REJECTED: Node '{NodeName}' contains 'orchestrator' service - orchestrator cannot deploy itself or another orchestrator",
@@ -691,7 +690,7 @@ public partial class OrchestratorService : IOrchestratorService
             }
 
             // Build service enable flags for this node's specified services
-            foreach (var serviceName in node.Services)
+            foreach (var serviceName in node.Services ?? Array.Empty<string>())
             {
                 var serviceEnvKey = $"{serviceName.ToUpperInvariant().Replace("-", "_")}_SERVICE_ENABLED";
                 environment[serviceEnvKey] = "true";
@@ -933,7 +932,7 @@ public partial class OrchestratorService : IOrchestratorService
             // Build service configuration from deployed nodes
             foreach (var node in nodesToDeploy)
             {
-                foreach (var serviceName in node.Services)
+                foreach (var serviceName in node.Services ?? Array.Empty<string>())
                 {
                     deploymentConfig.Services[serviceName] = new ServiceDeploymentConfig
                     {
@@ -976,19 +975,15 @@ public partial class OrchestratorService : IOrchestratorService
             DeploymentId = deploymentId,
             Backend = orchestrator.BackendType,
             Duration = $"{duration.TotalSeconds:F1}s",
-            Message = body.DryRun
-                ? $"DryRun mode: Would deploy {deployedServices.Count} node(s)"
-                : success
-                    ? $"Successfully deployed {deployedServices.Count} node(s)"
-                    : $"Deployed {deployedServices.Count} node(s), {failedServices.Count} failed: {string.Join("; ", failedServices)}"
+            Warnings = failedServices.Count > 0 ? failedServices : null
         };
 
         // Publish deployment completed/failed event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
             DeploymentId = deploymentId,
             Preset = body.Preset,
             Backend = orchestrator.BackendType,
@@ -1127,9 +1122,9 @@ public partial class OrchestratorService : IOrchestratorService
             // Publish teardown started event (topology-changed action indicates infrastructure modification)
             await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
             {
-                EventId = Guid.NewGuid().ToString(),
+                EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
-                Action = DeploymentEventAction.TopologyChanged,
+                Action = DeploymentAction.TopologyChanged,
                 DeploymentId = teardownId
             });
         }
@@ -1217,9 +1212,7 @@ public partial class OrchestratorService : IOrchestratorService
             StoppedContainers = result.Stopped,
             RemovedVolumes = result.RemovedVolumes,
             RemovedInfrastructure = result.RemovedInfrastructure,
-            Message = success
-                ? "Teardown completed"
-                : "Teardown completed with failures"
+            Errors = result.Failed.Count > 0 ? result.Failed : null
         };
 
         return (StatusCodes.OK, response);
@@ -1329,9 +1322,9 @@ public partial class OrchestratorService : IOrchestratorService
         // Publish teardown completed/failed event
         await _eventManager.PublishDeploymentEventAsync(new DeploymentEvent
         {
-            EventId = Guid.NewGuid().ToString(),
+            EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            Action = success ? DeploymentEventAction.Completed : DeploymentEventAction.Failed,
+            Action = success ? DeploymentAction.Completed : DeploymentAction.Failed,
             DeploymentId = teardownId,
             Changes = stoppedContainers,
             Error = success ? null : string.Join("; ", failedTeardowns)
@@ -1381,7 +1374,7 @@ public partial class OrchestratorService : IOrchestratorService
             _logger.LogInformation("Cleaning stopped containers...");
             var containers = await orchestrator.ListContainersAsync(cancellationToken);
             var stoppedContainers = containers.Where(c =>
-                c.Status == ContainerStatusStatus.Stopped).ToList();
+                c.Status == ContainerStatusType.Stopped).ToList();
 
             foreach (var container in stoppedContainers)
             {
@@ -1490,8 +1483,7 @@ public partial class OrchestratorService : IOrchestratorService
             RemovedContainers = removedContainers,
             RemovedNetworks = removedNetworks,
             RemovedVolumes = removedVolumes,
-            RemovedImages = removedImages,
-            Message = messageBuilder.ToString()
+            RemovedImages = removedImages
         };
 
         _logger.LogInformation(
@@ -1567,7 +1559,7 @@ public partial class OrchestratorService : IOrchestratorService
     private static bool IsOrphanedContainer(ContainerStatus container)
     {
         // Container must be stopped to be considered orphaned
-        if (container.Status != ContainerStatusStatus.Stopped)
+        if (container.Status != ContainerStatusType.Stopped)
         {
             return false;
         }
@@ -1621,13 +1613,13 @@ public partial class OrchestratorService : IOrchestratorService
         // Docker logs with Timestamps=true format: "2024-01-01T12:00:00.123456789Z message"
         // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
         var logEntries = new List<LogEntry>();
-        var currentStream = LogEntryStream.Stdout;
+        var currentStream = LogStreamType.Stdout;
 
         foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             if (line == "[STDERR]")
             {
-                currentStream = LogEntryStream.Stderr;
+                currentStream = LogStreamType.Stderr;
                 continue;
             }
 
@@ -1847,6 +1839,12 @@ public partial class OrchestratorService : IOrchestratorService
 
                     case TopologyChangeAction.Scale:
                         // Scale service instances on a node
+                        if (!change.Replicas.HasValue)
+                        {
+                            appliedChange.Success = false;
+                            appliedChange.Error = "Scale action requires replicas to be specified";
+                            break;
+                        }
                         if (change.Services != null)
                         {
                             var scaleSucceeded = 0;
@@ -1859,7 +1857,7 @@ public partial class OrchestratorService : IOrchestratorService
 
                                 var scaleResult = await orchestrator.ScaleServiceAsync(
                                     appId,
-                                    change.Replicas,
+                                    change.Replicas.Value,
                                     cancellationToken);
 
                                 if (scaleResult.Success)
@@ -1965,10 +1963,7 @@ public partial class OrchestratorService : IOrchestratorService
             Success = allSucceeded,
             AppliedChanges = appliedChanges,
             Duration = $"{duration.TotalSeconds:F1}s",
-            Warnings = warnings,
-            Message = allSucceeded
-                ? $"Successfully applied {successCount} topology change(s)"
-                : $"Applied {successCount} change(s), {failCount} failed"
+            Warnings = warnings
         };
 
         return (StatusCodes.OK, response);
@@ -1991,14 +1986,17 @@ public partial class OrchestratorService : IOrchestratorService
         // Create ContainerRestartRequest from the body for the orchestrator
         var restartRequest = new ContainerRestartRequest
         {
-            Priority = body.Priority,
             Reason = body.Reason
         };
+        if (body.Priority.HasValue)
+        {
+            restartRequest.Priority = body.Priority.Value;
+        }
         var response = await orchestrator.RestartContainerAsync(appName, restartRequest, cancellationToken);
 
         if (!response.Accepted)
         {
-            return (StatusCodes.InternalServerError, response);
+            return (StatusCodes.InternalServerError, null);
         }
 
         return (StatusCodes.OK, response);
@@ -2016,7 +2014,7 @@ public partial class OrchestratorService : IOrchestratorService
         var orchestrator = await GetOrchestratorAsync(cancellationToken);
         var status = await orchestrator.GetContainerStatusAsync(appName, cancellationToken);
 
-        if (status.Status == ContainerStatusStatus.Stopped && status.Instances == 0)
+        if (status.Status == ContainerStatusType.Stopped && status.Instances == 0)
         {
             // Container not found is returned as Stopped with 0 instances
             return (StatusCodes.NotFound, status);
@@ -2100,8 +2098,7 @@ public partial class OrchestratorService : IOrchestratorService
         {
             PreviousVersion = currentVersion,
             CurrentVersion = newVersion,
-            ChangedKeys = changedKeys,
-            Message = $"Successfully rolled back to configuration version {targetVersion}. Reason: {body.Reason}"
+            ChangedKeys = changedKeys
         });
     }
 
@@ -2186,15 +2183,15 @@ public partial class OrchestratorService : IOrchestratorService
     /// <summary>
     /// Maps container status to deployed service status.
     /// </summary>
-    private static DeployedServiceStatus MapContainerStatusToDeployedServiceStatus(ContainerStatusStatus containerStatus)
+    private static DeployedServiceStatus MapContainerStatusToDeployedServiceStatus(ContainerStatusType containerStatus)
     {
         return containerStatus switch
         {
-            ContainerStatusStatus.Running => DeployedServiceStatus.Running,
-            ContainerStatusStatus.Stopped => DeployedServiceStatus.Stopped,
-            ContainerStatusStatus.Unhealthy => DeployedServiceStatus.Unhealthy,
-            ContainerStatusStatus.Starting => DeployedServiceStatus.Starting,
-            ContainerStatusStatus.Stopping => DeployedServiceStatus.Stopped, // Stopping maps to Stopped (closest match)
+            ContainerStatusType.Running => DeployedServiceStatus.Running,
+            ContainerStatusType.Stopped => DeployedServiceStatus.Stopped,
+            ContainerStatusType.Unhealthy => DeployedServiceStatus.Unhealthy,
+            ContainerStatusType.Starting => DeployedServiceStatus.Starting,
+            ContainerStatusType.Stopping => DeployedServiceStatus.Stopped, // Stopping maps to Stopped (closest match)
             _ => DeployedServiceStatus.Unhealthy
         };
     }
@@ -2529,7 +2526,6 @@ public partial class OrchestratorService : IOrchestratorService
 
         return (StatusCodes.OK, new ReleaseProcessorResponse
         {
-            Released = true,
             ProcessorId = lease.ProcessorId
         });
     }
@@ -2564,7 +2560,6 @@ public partial class OrchestratorService : IOrchestratorService
 
         var response = new PoolStatusResponse
         {
-            PoolType = body.PoolType,
             TotalInstances = allInstances.Count,
             AvailableInstances = availableInstances.Count,
             BusyInstances = leases.Count,
@@ -2806,7 +2801,6 @@ public partial class OrchestratorService : IOrchestratorService
 
         return (StatusCodes.OK, new ScalePoolResponse
         {
-            PoolType = body.PoolType,
             PreviousInstances = previousCount,
             CurrentInstances = currentInstances.Count,
             ScaledUp = scaledUp,
@@ -2847,10 +2841,8 @@ public partial class OrchestratorService : IOrchestratorService
         {
             return (StatusCodes.OK, new CleanupPoolResponse
             {
-                PoolType = body.PoolType,
                 InstancesRemoved = 0,
-                CurrentInstances = currentInstances.Count,
-                Message = "No idle instances to remove"
+                CurrentInstances = currentInstances.Count
             });
         }
 
@@ -2893,10 +2885,8 @@ public partial class OrchestratorService : IOrchestratorService
 
         return (StatusCodes.OK, new CleanupPoolResponse
         {
-            PoolType = body.PoolType,
             InstancesRemoved = removedCount,
-            CurrentInstances = currentInstances.Count,
-            Message = $"Cleaned up {removedCount} idle processor(s)"
+            CurrentInstances = currentInstances.Count
         });
     }
 

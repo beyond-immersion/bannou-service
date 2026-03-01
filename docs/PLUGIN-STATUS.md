@@ -73,7 +73,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
 | [Asset](#asset-status) | L3 | 92% | 0 | L3-hardened. Schema/enum consolidation, background workers (bundle cleanup, ZIP cache), transactional indexes, all events published. 117 tests. |
 | [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
-| [Voice](#voice-status) | L3 | 87% | 0 | P2P + SFU tiers work. WebRTC signaling, broadcast consent. Single RTP server limitation. |
+| [Voice](#voice-status) | L3 | 95% | 0 | L3-hardened. Full TENET audit (2 rounds): NRT-compliant schemas, distributed locks on all read-modify-write paths (6 methods), T7/T8/T9/T16/T21/T25 compliant, dead code removed. 89 tests. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Deep dive L3-audited: x-lifecycle events, Redis tracking IDs, camera API endpoints, nullable configs, codec enums, worker intervals, T15 webhook exception. No schema, no code. |
 | [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
@@ -1130,9 +1130,9 @@ gh issue list --search "Documentation:" --state open
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [VOICE.md](plugins/VOICE.md)
 
-### Production Readiness: 87%
+### Production Readiness: 95%
 
-Core voice room lifecycle, P2P mesh topology, scaled SFU with automatic tier upgrade, WebRTC SDP signaling, broadcast consent flow with full privacy enforcement, participant heartbeat eviction, and all 11 API endpoints are fully implemented with no bugs. Production-ready for its current scope. Remaining gaps are primarily around RTP server pool allocation (single-server only), unused RTPEngine publish/subscribe methods, SIP credential expiration not being enforced server-side, and dependency on future services (lib-broadcast, lib-showtime).
+L3-hardened with two rounds of full TENET audit. Core voice room lifecycle, P2P mesh topology, scaled SFU with automatic tier upgrade, WebRTC SDP signaling, broadcast consent flow, participant heartbeat eviction, and all 11 API endpoints are fully implemented with no bugs. All read-modify-write paths protected by distributed locks (6 methods: CreateVoiceRoom, JoinVoiceRoom ad-hoc, RequestBroadcastConsent, RespondBroadcastConsent, StopBroadcast, LeaveVoiceRoom/DeleteVoiceRoom broadcast-stop). Schema NRT-compliant, enum casing standardized (PascalCase), dead Kamailio client code fully deleted, filler properties removed (T8), exception handling narrowed to ApiException for inter-service calls (T7), state stores constructor-cached (T6), fire-and-forget uses CancellationToken.None (T9), event topics follow T16 naming, DeleteVoiceRoomRequest.reason uses proper enum type (T25). 89 unit tests passing including lock failure path coverage. Remaining gaps are primarily around RTP server pool allocation (single-server only), unused RTPEngine publish/subscribe methods, SIP credential expiration not being enforced server-side, and dependency on future services (lib-broadcast, lib-showtime).
 
 ### Bug Count: 0
 

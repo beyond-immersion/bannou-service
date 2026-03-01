@@ -6,7 +6,6 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-
 namespace LibOrchestrator;
 
 /// <summary>
@@ -157,7 +156,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                     }
 
                     // Same app-id - update status and load only
-                    existingRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                    existingRouting.Status = serviceStatus.Status;
                     existingRouting.LoadPercent = loadPercent;
                     existingRouting.LastUpdated = DateTimeOffset.UtcNow;
 
@@ -186,7 +185,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                         }
 
                         // Same app-id - update status
-                        redisRouting.Status = serviceStatus.Status.ToString().ToLowerInvariant();
+                        redisRouting.Status = serviceStatus.Status;
                         redisRouting.LoadPercent = loadPercent;
                         redisRouting.LastUpdated = DateTimeOffset.UtcNow;
                         await _stateManager.WriteServiceRoutingAsync(serviceName, redisRouting);
@@ -203,7 +202,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                             AppId = heartbeat.AppId,
                             Host = heartbeat.AppId, // In Docker, container name = app_id
                             Port = 80,
-                            Status = serviceStatus.Status.ToString().ToLowerInvariant(),
+                            Status = serviceStatus.Status,
                             LoadPercent = loadPercent
                         };
 
@@ -244,7 +243,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             AppId = appId,
             Host = appId,
             Port = 80,
-            Status = "healthy"
+            Status = InstanceHealthStatus.Healthy
         };
 
         await _stateManager.WriteServiceRoutingAsync(serviceName, routing);
@@ -272,7 +271,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             AppId = defaultAppId,
             Host = defaultAppId,
             Port = 80,
-            Status = "healthy",
+            Status = InstanceHealthStatus.Healthy,
             LastUpdated = DateTimeOffset.UtcNow
         };
 
@@ -312,7 +311,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                     AppId = defaultAppId,
                     Host = defaultAppId,
                     Port = 80,
-                    Status = "healthy",
+                    Status = InstanceHealthStatus.Healthy,
                     LastUpdated = DateTimeOffset.UtcNow
                 };
             }
@@ -457,8 +456,8 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         var heartbeatTimeout = TimeSpan.FromSeconds(_configuration.HeartbeatTimeoutSeconds);
         var controlPlaneAppId = _controlPlaneProvider.ControlPlaneAppId;
 
-        var healthyServices = new List<ServiceHealthStatus>();
-        var unhealthyServices = new List<ServiceHealthStatus>();
+        var healthyServices = new List<ServiceHealthEntry>();
+        var unhealthyServices = new List<ServiceHealthEntry>();
 
         // Get deployed services from Redis heartbeats (if requested)
         if (source == ServiceHealthSource.All || source == ServiceHealthSource.DeployedOnly)
@@ -477,7 +476,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
                 var timeSinceLastHeartbeat = now - heartbeat.LastSeen;
                 var isExpired = timeSinceLastHeartbeat > heartbeatTimeout;
 
-                if (isExpired || heartbeat.Status == "unavailable" || heartbeat.Status == "shutting_down")
+                if (isExpired || heartbeat.Status == InstanceHealthStatus.Unavailable || heartbeat.Status == InstanceHealthStatus.Unknown)
                 {
                     unhealthyServices.Add(heartbeat);
                 }
@@ -559,8 +558,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             return new RestartRecommendation
             {
                 ShouldRestart = true,
-                ServiceName = serviceName,
-                CurrentStatus = "unavailable",
+                CurrentStatus = InstanceHealthStatus.Unavailable,
                 Reason = "No heartbeat data found - service appears to be down"
             };
         }
@@ -583,12 +581,12 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         string reason;
         string? degradedDuration = null;
 
-        if (worstStatus == "unavailable" || worstStatus == "shutting_down")
+        if (worstStatus == InstanceHealthStatus.Unavailable || worstStatus == InstanceHealthStatus.Unknown)
         {
             shouldRestart = true;
             reason = $"Service is {worstStatus}";
         }
-        else if (worstStatus == "degraded" || worstStatus == "overloaded")
+        else if (worstStatus == InstanceHealthStatus.Degraded)
         {
             if (timeSinceLastHeartbeat > degradationThreshold)
             {
@@ -612,7 +610,6 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         return new RestartRecommendation
         {
             ShouldRestart = shouldRestart,
-            ServiceName = serviceName,
             CurrentStatus = worstStatus,
             LastSeen = latestHeartbeat.LastSeen,
             DegradedDuration = degradedDuration, // Nullable per schema - null when not degraded
@@ -622,32 +619,17 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
 
     /// <summary>
     /// Determine the worst status among multiple service instances.
-    /// Priority: unavailable > shutting_down > overloaded > degraded > healthy
+    /// Priority: unavailable > unknown > degraded > healthy
     /// </summary>
-    private string DetermineWorstStatus(List<ServiceHealthStatus> heartbeats)
+    private static InstanceHealthStatus DetermineWorstStatus(List<ServiceHealthEntry> heartbeats)
     {
-        var statusPriority = new Dictionary<string, int>
-        {
-            { "unavailable", 5 },
-            { "shutting_down", 4 },
-            { "overloaded", 3 },
-            { "degraded", 2 },
-            { "healthy", 1 }
-        };
-
-        var worstStatus = "healthy";
-        var worstPriority = 0;
+        var worstStatus = InstanceHealthStatus.Healthy;
 
         foreach (var heartbeat in heartbeats)
         {
-            var status = heartbeat.Status ?? "unavailable";
-            if (statusPriority.TryGetValue(status, out var priority))
+            if (heartbeat.Status > worstStatus)
             {
-                if (priority > worstPriority)
-                {
-                    worstPriority = priority;
-                    worstStatus = status;
-                }
+                worstStatus = heartbeat.Status;
             }
         }
 
@@ -657,9 +639,9 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     /// <summary>
     /// Get health status for a specific service instance.
     /// </summary>
-    public async Task<ServiceHealthStatus?> GetServiceHealthStatusAsync(string serviceId, string appId)
+    public async Task<ServiceHealthEntry?> GetServiceHealthEntryAsync(string serviceId, string appId)
     {
-        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthStatusAsync");
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "ServiceHealthMonitor.GetServiceHealthEntryAsync");
         return await _stateManager.GetServiceHeartbeatAsync(serviceId, appId);
     }
 

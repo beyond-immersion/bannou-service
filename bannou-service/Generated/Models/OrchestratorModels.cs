@@ -187,7 +187,7 @@ public partial class ListPresetsRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ListPresetsRequestCategory? Category { get; set; } = default!;
+    public PresetCategory? Category { get; set; } = default!;
 
 }
 
@@ -241,6 +241,7 @@ public partial class GetLogsRequest
     /// Number of lines from end of logs
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tail")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Tail { get; set; } = 100;
 
     /// <summary>
@@ -279,12 +280,13 @@ public partial class ContainerRestartRequestBody
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RestartPriority Priority { get; set; } = default!;
+    public RestartPriority? Priority { get; set; } = default!;
 
     /// <summary>
     /// Seconds to allow graceful shutdown before force-kill
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("shutdownGracePeriod")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int ShutdownGracePeriod { get; set; } = 30;
 
 }
@@ -394,7 +396,7 @@ public partial class ComponentHealth
     /// Component-specific metrics reported by the service. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metrics")]
-    public object Metrics { get; set; } = default!;
+    public object? Metrics { get; set; } = default!;
 
 }
 
@@ -439,16 +441,17 @@ public partial class HealthChecks
 {
 
     /// <summary>
-    /// When the last health check was performed
+    /// When the last health check was performed (null if no checks yet)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastCheck")]
-    public System.DateTimeOffset LastCheck { get; set; } = default!;
+    public System.DateTimeOffset? LastCheck { get; set; } = default!;
 
     /// <summary>
-    /// Result of the last health check
+    /// Result of the last health check (null if no checks performed yet)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceHealthStatus? Status { get; set; } = default!;
 
     /// <summary>
     /// Number of consecutive health check failures
@@ -514,7 +517,7 @@ public partial class ServiceHealthReport
     [System.Text.Json.Serialization.JsonPropertyName("healthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<ServiceHealthStatus> HealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthStatus>();
+    public System.Collections.Generic.ICollection<ServiceHealthEntry> HealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthEntry>();
 
     /// <summary>
     /// Services with expired heartbeats or unhealthy status
@@ -522,17 +525,15 @@ public partial class ServiceHealthReport
     [System.Text.Json.Serialization.JsonPropertyName("unhealthyServices")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<ServiceHealthStatus> UnhealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthStatus>();
+    public System.Collections.Generic.ICollection<ServiceHealthEntry> UnhealthyServices { get; set; } = new System.Collections.ObjectModel.Collection<ServiceHealthEntry>();
 
 }
 
 /// <summary>
-/// Service health status from heartbeat monitoring.
-/// <br/>Uses ServiceHeartbeatEvent schema from common-events.yaml.
-/// <br/>
+/// Individual service health entry from heartbeat monitoring. Uses InstanceHealthStatus enum from common-api.yaml for status classification.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceHealthStatus
+public partial class ServiceHealthEntry
 {
 
     /// <summary>
@@ -552,12 +553,13 @@ public partial class ServiceHealthStatus
     public string AppId { get; set; } = default!;
 
     /// <summary>
-    /// Service status from heartbeat
+    /// Instance health status from heartbeat
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public InstanceHealthStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Last heartbeat timestamp
@@ -600,19 +602,20 @@ public partial class ServiceRestartRequest
     /// Optional environment variable updates
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
-    /// Force restart even if healthy (default false)
+    /// Force restart even if healthy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("force")]
-    public bool Force { get; set; } = default!;
+    public bool Force { get; set; } = false;
 
     /// <summary>
-    /// Timeout for service to become healthy (seconds, default 120)
+    /// Timeout in seconds for service to become healthy after restart
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeout")]
-    public int Timeout { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int Timeout { get; set; } = 120;
 
 }
 
@@ -624,20 +627,6 @@ public partial class ServiceRestartResult
 {
 
     /// <summary>
-    /// Restart success status
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("success")]
-    public bool Success { get; set; } = default!;
-
-    /// <summary>
-    /// Service that was restarted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
     /// Time taken to restart and become healthy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
@@ -646,22 +635,18 @@ public partial class ServiceRestartResult
     public string Duration { get; set; } = default!;
 
     /// <summary>
-    /// Service status before restart
+    /// Instance health status before restart
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousStatus")]
-    public string PreviousStatus { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public InstanceHealthStatus? PreviousStatus { get; set; } = default!;
 
     /// <summary>
-    /// Service status after restart
+    /// Instance health status after restart
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentStatus")]
-    public string CurrentStatus { get; set; } = default!;
-
-    /// <summary>
-    /// Restart result message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public InstanceHealthStatus? CurrentStatus { get; set; } = default!;
 
 }
 
@@ -696,26 +681,17 @@ public partial class RestartRecommendation
     public bool ShouldRestart { get; set; } = default!;
 
     /// <summary>
-    /// Service being evaluated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
-
-    /// <summary>
-    /// Current service health status
+    /// Current instance health status (null if service never seen)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentStatus")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string CurrentStatus { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public InstanceHealthStatus? CurrentStatus { get; set; } = default!;
 
     /// <summary>
-    /// Last heartbeat timestamp
+    /// Last heartbeat timestamp (null if service never seen)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastSeen")]
-    public System.DateTimeOffset LastSeen { get; set; } = default!;
+    public System.DateTimeOffset? LastSeen { get; set; } = default!;
 
     /// <summary>
     /// How long service has been degraded (null if not degraded)
@@ -790,32 +766,25 @@ public partial class BackendInfo
     /// Backend version (e.g., "1.28.0" for Docker)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public string Version { get; set; } = default!;
+    public string? Version { get; set; } = default!;
 
     /// <summary>
     /// Backend API endpoint (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoint")]
-    public string Endpoint { get; set; } = default!;
+    public string? Endpoint { get; set; } = default!;
 
     /// <summary>
-    /// Supported capabilities for this backend:
-    /// <br/>- live-topology: Can change service distribution without restart
-    /// <br/>- scaling: Can scale services horizontally
-    /// <br/>- rolling-update: Supports rolling deployments
-    /// <br/>- secrets: Native secrets management
-    /// <br/>- volumes: Persistent volume support
-    /// <br/>- networks: Custom network creation
-    /// <br/>
+    /// Supported capabilities for this backend (live-topology, scaling, rolling-update, secrets, volumes, networks)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("capabilities")]
-    public System.Collections.Generic.ICollection<string> Capabilities { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Capabilities { get; set; } = default!;
 
     /// <summary>
     /// Error message if detection failed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
-    public string Error { get; set; } = default!;
+    public string? Error { get; set; } = default!;
 
 }
 
@@ -852,11 +821,11 @@ public partial class BackendsResponse
     public BackendType Recommended { get; set; } = default!;
 
     /// <summary>
-    /// Currently active backend (if environment deployed)
+    /// Currently active backend (null if no environment deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("activeBackend")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BackendType ActiveBackend { get; set; } = default!;
+    public BackendType? ActiveBackend { get; set; } = default!;
 
 }
 
@@ -884,11 +853,11 @@ public partial class DeploymentPreset
     public string Description { get; set; } = default!;
 
     /// <summary>
-    /// Preset category
+    /// Preset category (null if uncategorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeploymentPresetCategory Category { get; set; } = default!;
+    public PresetCategory? Category { get; set; } = default!;
 
     /// <summary>
     /// Service topology defined by this preset
@@ -902,14 +871,14 @@ public partial class DeploymentPreset
     /// Default environment variables for this preset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
-    /// Backends that support this preset (empty = all)
+    /// Backends that support this preset (null or empty = all)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredBackends")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<BackendType> RequiredBackends { get; set; } = default!;
+    public System.Collections.Generic.ICollection<BackendType>? RequiredBackends { get; set; } = default!;
 
     /// <summary>
     /// Whether this is a built-in preset
@@ -921,7 +890,7 @@ public partial class DeploymentPreset
     /// Path to preset configuration file
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filePath")]
-    public string FilePath { get; set; } = default!;
+    public string? FilePath { get; set; } = default!;
 
 }
 
@@ -941,10 +910,10 @@ public partial class PresetsResponse
     public System.Collections.Generic.ICollection<DeploymentPreset> Presets { get; set; } = new System.Collections.ObjectModel.Collection<DeploymentPreset>();
 
     /// <summary>
-    /// Currently active preset name (if any)
+    /// Currently active preset name (null if no preset active)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("activePreset")]
-    public string ActivePreset { get; set; } = default!;
+    public string? ActivePreset { get; set; } = default!;
 
 }
 
@@ -967,7 +936,7 @@ public partial class ServiceTopology
     /// Infrastructure service configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("infrastructure")]
-    public InfrastructureConfig Infrastructure { get; set; } = default!;
+    public InfrastructureConfig? Infrastructure { get; set; } = default!;
 
 }
 
@@ -987,44 +956,36 @@ public partial class TopologyNode
     public string Name { get; set; } = default!;
 
     /// <summary>
-    /// Service layers to enable on this node. Listed layers are enabled,
-    /// <br/>unlisted layers are disabled. When omitted, layer enablement is
-    /// <br/>inherited from the container's environment.
-    /// <br/>Individual services in the 'services' list override layer settings.
-    /// <br/>
+    /// Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("layers")]
     // TODO(system.text.json): Add string enum item converter
-    public System.Collections.Generic.ICollection<Layers> Layers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<ServiceLayerType>? Layers { get; set; } = default!;
 
     /// <summary>
-    /// Individual services to enable on this node.
-    /// <br/>When used with 'layers', these act as overrides for services
-    /// <br/>outside the enabled layers.
-    /// <br/>When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
-    /// <br/>with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
-    /// <br/>
+    /// Individual services to enable on this node. Acts as overrides for services outside enabled layers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
     /// Number of replicas for this node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("replicas")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Replicas { get; set; } = 1;
 
     /// <summary>
     /// Resource limits and requests for this node
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resources")]
-    public ResourceLimits Resources { get; set; } = default!;
+    public ResourceLimits? Resources { get; set; } = default!;
 
     /// <summary>
     /// Node-specific environment overrides
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
     /// Whether mesh routing is enabled
@@ -1033,10 +994,10 @@ public partial class TopologyNode
     public bool MeshEnabled { get; set; } = true;
 
     /// <summary>
-    /// App-id override for mesh routing (default derives from node name)
+    /// App-id override for mesh routing (null derives from node name)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("appId")]
-    public string AppId { get; set; } = default!;
+    public string? AppId { get; set; } = default!;
 
 }
 
@@ -1051,25 +1012,25 @@ public partial class InfrastructureConfig
     /// Redis configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("redis")]
-    public InfraServiceConfig Redis { get; set; } = default!;
+    public InfraServiceConfig? Redis { get; set; } = default!;
 
     /// <summary>
     /// RabbitMQ configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rabbitmq")]
-    public InfraServiceConfig Rabbitmq { get; set; } = default!;
+    public InfraServiceConfig? Rabbitmq { get; set; } = default!;
 
     /// <summary>
     /// MySQL configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("mysql")]
-    public InfraServiceConfig Mysql { get; set; } = default!;
+    public InfraServiceConfig? Mysql { get; set; } = default!;
 
     /// <summary>
     /// Ingress/reverse proxy configuration
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ingress")]
-    public IngressConfig Ingress { get; set; } = default!;
+    public IngressConfig? Ingress { get; set; } = default!;
 
 }
 
@@ -1087,28 +1048,28 @@ public partial class InfraServiceConfig
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Docker image override
+    /// Docker image override (null uses default)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("image")]
-    public string Image { get; set; } = default!;
+    public string? Image { get; set; } = default!;
 
     /// <summary>
     /// Resource limits and requests
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resources")]
-    public ResourceLimits Resources { get; set; } = default!;
+    public ResourceLimits? Resources { get; set; } = default!;
 
     /// <summary>
     /// Environment variables for this service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
     /// Volume mounts
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("volumes")]
-    public System.Collections.Generic.ICollection<string> Volumes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Volumes { get; set; } = default!;
 
 }
 
@@ -1126,17 +1087,17 @@ public partial class IngressConfig
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Type of ingress/reverse proxy to use
+    /// Type of ingress or reverse proxy to use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("type")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public IngressConfigType Type { get; set; } = BeyondImmersion.BannouService.Orchestrator.IngressConfigType.Openresty;
+    public IngressType Type { get; set; } = BeyondImmersion.BannouService.Orchestrator.IngressType.Openresty;
 
     /// <summary>
     /// Port configuration for HTTP and HTTPS traffic
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ports")]
-    public Ports Ports { get; set; } = default!;
+    public Ports? Ports { get; set; } = default!;
 
     /// <summary>
     /// Whether SSL/TLS is enabled
@@ -1157,12 +1118,14 @@ public partial class Ports
     /// HTTP port number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("http")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Http { get; set; } = 80;
 
     /// <summary>
     /// HTTPS port number
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("https")]
+    [System.ComponentModel.DataAnnotations.Range(1, 65535)]
     public int Https { get; set; } = 443;
 
 }
@@ -1178,25 +1141,25 @@ public partial class ResourceLimits
     /// CPU limit (e.g., "0.5", "2")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cpuLimit")]
-    public string CpuLimit { get; set; } = default!;
+    public string? CpuLimit { get; set; } = default!;
 
     /// <summary>
     /// Memory limit (e.g., "512m", "2g")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memoryLimit")]
-    public string MemoryLimit { get; set; } = default!;
+    public string? MemoryLimit { get; set; } = default!;
 
     /// <summary>
     /// CPU request (Kubernetes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cpuRequest")]
-    public string CpuRequest { get; set; } = default!;
+    public string? CpuRequest { get; set; } = default!;
 
     /// <summary>
     /// Memory request (Kubernetes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("memoryRequest")]
-    public string MemoryRequest { get; set; } = default!;
+    public string? MemoryRequest { get; set; } = default!;
 
 }
 
@@ -1267,6 +1230,7 @@ public partial class DeployRequest
     /// Deployment timeout in seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeout")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Timeout { get; set; } = 300;
 
     /// <summary>
@@ -1317,7 +1281,7 @@ public partial class DeployResponse
     /// Preset used (if applicable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
-    public string Preset { get; set; } = default!;
+    public string? Preset { get; set; } = default!;
 
     /// <summary>
     /// Time taken to deploy
@@ -1331,25 +1295,19 @@ public partial class DeployResponse
     /// Final applied topology
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
-    public ServiceTopology Topology { get; set; } = default!;
+    public ServiceTopology? Topology { get; set; } = default!;
 
     /// <summary>
     /// Status of deployed services
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<DeployedService> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<DeployedService>? Services { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal warnings during deployment
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
-    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable deployment summary
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Warnings { get; set; } = default!;
 
 }
 
@@ -1386,22 +1344,22 @@ public partial class DeployedService
     public string Node { get; set; } = default!;
 
     /// <summary>
-    /// Container ID (Compose/Swarm)
+    /// Container ID (Compose/Swarm, null for Kubernetes)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    public string ContainerId { get; set; } = default!;
+    public string? ContainerId { get; set; } = default!;
 
     /// <summary>
-    /// Pod name (Kubernetes)
+    /// Pod name (Kubernetes, null for Compose/Swarm)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("podName")]
-    public string PodName { get; set; } = default!;
+    public string? PodName { get; set; } = default!;
 
     /// <summary>
     /// Exposed endpoints
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("endpoints")]
-    public System.Collections.Generic.ICollection<string> Endpoints { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Endpoints { get; set; } = default!;
 
 }
 
@@ -1427,53 +1385,53 @@ public partial class EnvironmentStatus
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// Current deployment identifier
+    /// Current deployment identifier (null if not deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
-    public string DeploymentId { get; set; } = default!;
+    public string? DeploymentId { get; set; } = default!;
 
     /// <summary>
-    /// Container orchestration backend in use
+    /// Container orchestration backend in use (null if not deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("backend")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BackendType Backend { get; set; } = default!;
+    public BackendType? Backend { get; set; } = default!;
 
     /// <summary>
-    /// Active preset name
+    /// Active preset name (null if no preset active)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preset")]
-    public string Preset { get; set; } = default!;
+    public string? Preset { get; set; } = default!;
 
     /// <summary>
-    /// Current topology configuration
+    /// Current topology configuration (null if not deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
-    public ServiceTopology Topology { get; set; } = default!;
+    public ServiceTopology? Topology { get; set; } = default!;
 
     /// <summary>
-    /// All deployed services with status
+    /// All deployed services with status (null if not deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<DeployedService> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<DeployedService>? Services { get; set; } = default!;
 
     /// <summary>
-    /// Infrastructure component health
+    /// Infrastructure component health (null if not checked)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("infrastructure")]
-    public InfrastructureHealthResponse Infrastructure { get; set; } = default!;
+    public InfrastructureHealthResponse? Infrastructure { get; set; } = default!;
 
     /// <summary>
-    /// Overall resource usage
+    /// Overall resource usage (null if not collected)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("resources")]
-    public ResourceUsage Resources { get; set; } = default!;
+    public ResourceUsage? Resources { get; set; } = default!;
 
     /// <summary>
-    /// Time since deployment
+    /// Time since deployment (null if not deployed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("uptime")]
-    public string Uptime { get; set; } = default!;
+    public string? Uptime { get; set; } = default!;
 
 }
 
@@ -1572,6 +1530,7 @@ public partial class TeardownRequest
     /// Graceful shutdown timeout in seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeout")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Timeout { get; set; } = 60;
 
     /// <summary>
@@ -1623,37 +1582,31 @@ public partial class TeardownResponse
     /// Container IDs that were stopped
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stoppedContainers")]
-    public System.Collections.Generic.ICollection<string> StoppedContainers { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? StoppedContainers { get; set; } = default!;
 
     /// <summary>
     /// Volumes that were removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedVolumes")]
-    public System.Collections.Generic.ICollection<string> RemovedVolumes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemovedVolumes { get; set; } = default!;
 
     /// <summary>
     /// Networks that were removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedNetworks")]
-    public System.Collections.Generic.ICollection<string> RemovedNetworks { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemovedNetworks { get; set; } = default!;
 
     /// <summary>
     /// Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("removedInfrastructure")]
-    public System.Collections.Generic.ICollection<string> RemovedInfrastructure { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? RemovedInfrastructure { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal errors during teardown
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
-    public System.Collections.Generic.ICollection<string> Errors { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable teardown summary
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Errors { get; set; } = default!;
 
 }
 
@@ -1766,13 +1719,7 @@ public partial class CleanResponse
     /// Non-fatal errors during cleanup
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errors")]
-    public System.Collections.Generic.ICollection<string> Errors { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable cleanup summary
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Errors { get; set; } = default!;
 
 }
 
@@ -1784,16 +1731,16 @@ public partial class LogsResponse
 {
 
     /// <summary>
-    /// Service name (if queried by service)
+    /// Service name (null if queried by container)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("service")]
-    public string Service { get; set; } = default!;
+    public string? Service { get; set; } = default!;
 
     /// <summary>
-    /// Container ID/name
+    /// Container ID/name (null if queried by service)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("container")]
-    public string Container { get; set; } = default!;
+    public string? Container { get; set; } = default!;
 
     /// <summary>
     /// Log entries matching the query
@@ -1831,7 +1778,7 @@ public partial class LogEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stream")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public LogEntryStream Stream { get; set; } = default!;
+    public LogStreamType? Stream { get; set; } = default!;
 
     /// <summary>
     /// Log message content
@@ -1869,6 +1816,7 @@ public partial class TopologyUpdateRequest
     /// Timeout for topology update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeout")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Timeout { get; set; } = 120;
 
 }
@@ -1890,34 +1838,34 @@ public partial class TopologyChange
     public TopologyChangeAction Action { get; set; } = default!;
 
     /// <summary>
-    /// Target node name
+    /// Target node name (null for actions that don't target a specific node)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeName")]
-    public string NodeName { get; set; } = default!;
+    public string? NodeName { get; set; } = default!;
 
     /// <summary>
     /// Services affected by this change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("services")]
-    public System.Collections.Generic.ICollection<string> Services { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Services { get; set; } = default!;
 
     /// <summary>
     /// New replica count (for scale action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("replicas")]
-    public int Replicas { get; set; } = default!;
+    public int? Replicas { get; set; } = default!;
 
     /// <summary>
     /// Environment updates (for update-env action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("environment")]
-    public System.Collections.Generic.IDictionary<string, string> Environment { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Environment { get; set; } = default!;
 
     /// <summary>
     /// Full node config (for add-node action)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("nodeConfig")]
-    public TopologyNode NodeConfig { get; set; } = default!;
+    public TopologyNode? NodeConfig { get; set; } = default!;
 
 }
 
@@ -1946,25 +1894,19 @@ public partial class TopologyUpdateResponse
     /// New topology after changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("topology")]
-    public ServiceTopology Topology { get; set; } = default!;
+    public ServiceTopology? Topology { get; set; } = default!;
 
     /// <summary>
     /// Time taken to apply topology changes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
-    public string Duration { get; set; } = default!;
+    public string? Duration { get; set; } = default!;
 
     /// <summary>
     /// Non-fatal warnings during topology update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("warnings")]
-    public System.Collections.Generic.ICollection<string> Warnings { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable update summary
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Warnings { get; set; } = default!;
 
 }
 
@@ -1987,7 +1929,7 @@ public partial class AppliedChange
     /// Node or service affected
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("target")]
-    public string Target { get; set; } = default!;
+    public string? Target { get; set; } = default!;
 
     /// <summary>
     /// Whether this specific change was applied successfully
@@ -1996,76 +1938,7 @@ public partial class AppliedChange
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Error message if failed
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("error")]
-    public string Error { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when deployment state changes.
-/// <br/>Topic: bannou.deployment-events
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DeploymentEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Type of deployment action that triggered this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("action")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeploymentEventAction Action { get; set; } = default!;
-
-    /// <summary>
-    /// Unique identifier for the deployment
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deploymentId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string DeploymentId { get; set; } = default!;
-
-    /// <summary>
-    /// Preset name used for deployment (if applicable)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("preset")]
-    public string? Preset { get; set; } = default!;
-
-    /// <summary>
-    /// Container orchestration backend used
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("backend")]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public BackendType Backend { get; set; } = default!;
-
-    /// <summary>
-    /// Summary of changes made
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changes")]
-    public System.Collections.Generic.ICollection<string> Changes { get; set; } = default!;
-
-    /// <summary>
-    /// Error message if failed
+    /// Error message if failed (null on success)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
     public string? Error { get; set; } = default!;
@@ -2073,100 +1946,231 @@ public partial class DeploymentEvent
 }
 
 /// <summary>
-/// Published when a service is restarted.
-/// <br/>Topic: bannou.service-lifecycle
-/// <br/>
+/// Type of deployment action that triggered an event
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ServiceRestartEvent
+public enum DeploymentAction
 {
 
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"started")]
+    Started = 0,
 
-    /// <summary>
-    /// Name of the service that was restarted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceName { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"completed")]
+    Completed = 1,
 
-    /// <summary>
-    /// Reason for the restart
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
+    Failed = 2,
 
-    /// <summary>
-    /// Whether restart was forced without waiting for graceful shutdown
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("forced")]
-    public bool Forced { get; set; } = default!;
-
-    /// <summary>
-    /// Environment variables updated during restart
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newEnvironment")]
-    public System.Collections.Generic.IDictionary<string, string> NewEnvironment { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"topology-changed")]
+    TopologyChanged = 3,
 
 }
+#pragma warning restore CS1591
 
 /// <summary>
-/// Published by orchestrator when configuration or secrets change.
-/// <br/>All containers receive this event via RabbitMQ. Plugins decide if they care
-/// <br/>based on the changedKeys prefixes and request restart if needed.
-/// <br/>Topic: bannou.configuration-events
-/// <br/>
+/// Category classification for deployment presets
 /// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ConfigurationChangedEvent
+public enum PresetCategory
 {
 
-    /// <summary>
-    /// Unique identifier for this event instance
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"development")]
+    Development = 0,
 
-    /// <summary>
-    /// When this configuration change occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"testing")]
+    Testing = 1,
 
-    /// <summary>
-    /// Monotonically increasing version number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("configVersion")]
-    public int ConfigVersion { get; set; } = default!;
+    [System.Runtime.Serialization.EnumMember(Value = @"production")]
+    Production = 2,
 
-    /// <summary>
-    /// Configuration keys that changed (not values for security).
-    /// <br/>Key prefixes indicate scope:
-    /// <br/>- "auth.*" - Authentication-related
-    /// <br/>- "database.*" - Database connections
-    /// <br/>- "mesh.*" - Mesh components (typically global impact)
-    /// <br/>- "connect.*" - WebSocket/connection settings
-    /// <br/>
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
+    Custom = 3,
 
 }
+#pragma warning restore CS1591
+
+/// <summary>
+/// Service hierarchy layer type for topology node configuration
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceLayerType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFoundation")]
+    AppFoundation = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFoundation")]
+    GameFoundation = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AppFeatures")]
+    AppFeatures = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GameFeatures")]
+    GameFeatures = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Extensions")]
+    Extensions = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Current runtime status of a container
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ContainerStatusType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"running")]
+    Running = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
+    Starting = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stopping")]
+    Stopping = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
+    Stopped = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
+    Unhealthy = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Current status of a deployed service instance
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeployedServiceStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
+    Starting = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"running")]
+    Running = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
+    Unhealthy = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
+    Stopped = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of topology modification to apply
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum TopologyChangeAction
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"add-node")]
+    AddNode = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"remove-node")]
+    RemoveNode = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"move-service")]
+    MoveService = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"scale")]
+    Scale = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"update-env")]
+    UpdateEnv = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Output stream type for log entries
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum LogStreamType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stdout")]
+    Stdout = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"stderr")]
+    Stderr = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of ingress or reverse proxy to use
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum IngressType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"openresty")]
+    Openresty = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"nginx")]
+    Nginx = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"traefik")]
+    Traefik = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Strategy for performing container restarts
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum RestartStrategy
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"rolling")]
+    Rolling = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"simultaneous")]
+    Simultaneous = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Health status for an individual infrastructure component
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ComponentHealthStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
+    Healthy = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
+    Degraded = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
+    Unavailable = 2,
+
+}
+#pragma warning restore CS1591
 
 /// <summary>
 /// Restart urgency level:
@@ -2218,6 +2222,7 @@ public partial class ContainerRestartRequest
     /// Seconds to allow graceful shutdown before force-kill
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("shutdownGracePeriod")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int ShutdownGracePeriod { get; set; } = 30;
 
 }
@@ -2230,24 +2235,16 @@ public partial class ContainerRestartResponse
 {
 
     /// <summary>
-    /// Whether the restart request was accepted
+    /// Whether the restart request was accepted (may be queued)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accepted")]
     public bool Accepted { get; set; } = default!;
 
     /// <summary>
-    /// Container that will be restarted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("appName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AppName { get; set; } = default!;
-
-    /// <summary>
-    /// When restart is scheduled (may be queued)
+    /// When restart is scheduled (null if immediate)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scheduledFor")]
-    public System.DateTimeOffset ScheduledFor { get; set; } = default!;
+    public System.DateTimeOffset? ScheduledFor { get; set; } = default!;
 
     /// <summary>
     /// Number of running instances
@@ -2260,13 +2257,7 @@ public partial class ContainerRestartResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("restartStrategy")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ContainerRestartResponseRestartStrategy RestartStrategy { get; set; } = default!;
-
-    /// <summary>
-    /// Additional information
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public RestartStrategy? RestartStrategy { get; set; } = default!;
 
 }
 
@@ -2292,7 +2283,7 @@ public partial class ContainerStatus
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ContainerStatusStatus Status { get; set; } = default!;
+    public ContainerStatusType Status { get; set; } = default!;
 
     /// <summary>
     /// When this status was captured
@@ -2312,13 +2303,13 @@ public partial class ContainerStatus
     /// Plugins running in this container
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("plugins")]
-    public System.Collections.Generic.ICollection<string> Plugins { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Plugins { get; set; } = default!;
 
     /// <summary>
-    /// When container was last restarted
+    /// When container was last restarted (null if never restarted)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastRestart")]
-    public System.DateTimeOffset LastRestart { get; set; } = default!;
+    public System.DateTimeOffset? LastRestart { get; set; } = default!;
 
     /// <summary>
     /// Number of restarts in last 24 hours
@@ -2330,19 +2321,19 @@ public partial class ContainerStatus
     /// Recent restart history
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("restartHistory")]
-    public System.Collections.Generic.ICollection<RestartHistoryEntry> RestartHistory { get; set; } = default!;
+    public System.Collections.Generic.ICollection<RestartHistoryEntry>? RestartHistory { get; set; } = default!;
 
     /// <summary>
     /// Health check configuration and current health status results
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("healthChecks")]
-    public HealthChecks HealthChecks { get; set; } = default!;
+    public HealthChecks? HealthChecks { get; set; } = default!;
 
     /// <summary>
     /// Container labels for metadata and management
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("labels")]
-    public System.Collections.Generic.IDictionary<string, string> Labels { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? Labels { get; set; } = default!;
 
 }
 
@@ -2374,13 +2365,13 @@ public partial class RestartHistoryEntry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public RestartPriority Priority { get; set; } = default!;
+    public RestartPriority? Priority { get; set; } = default!;
 
     /// <summary>
     /// Time taken to restart
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("duration")]
-    public string Duration { get; set; } = default!;
+    public string? Duration { get; set; } = default!;
 
     /// <summary>
     /// Whether the restart completed successfully
@@ -2389,10 +2380,10 @@ public partial class RestartHistoryEntry
     public bool Success { get; set; } = default!;
 
     /// <summary>
-    /// Error message if restart failed
+    /// Error message if restart failed (null on success)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("error")]
-    public string Error { get; set; } = default!;
+    public string? Error { get; set; } = default!;
 
 }
 
@@ -2436,13 +2427,7 @@ public partial class ConfigRollbackResponse
     /// Keys that were reverted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("changedKeys")]
-    public System.Collections.Generic.ICollection<string> ChangedKeys { get; set; } = default!;
-
-    /// <summary>
-    /// Human-readable rollback summary
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? ChangedKeys { get; set; } = default!;
 
 }
 
@@ -2480,10 +2465,10 @@ public partial class ConfigVersionResponse
     public int KeyCount { get; set; } = default!;
 
     /// <summary>
-    /// Configuration key prefixes present (e.g., "auth", "database")
+    /// Configuration key prefixes present (e.g., "auth", "database"). Null if not requested.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("keyPrefixes")]
-    public System.Collections.Generic.ICollection<string> KeyPrefixes { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? KeyPrefixes { get; set; } = default!;
 
 }
 
@@ -2506,12 +2491,14 @@ public partial class AcquireProcessorRequest
     /// Request priority (higher = more urgent)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("priority")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Priority { get; set; } = 0;
 
     /// <summary>
     /// How long the lease is valid for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timeoutSeconds")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int TimeoutSeconds { get; set; } = 300;
 
     /// <summary>
@@ -2588,7 +2575,7 @@ public partial class ReleaseProcessorRequest
     /// Client-provided processing metrics (duration, items processed, etc.). No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metrics")]
-    public object Metrics { get; set; } = default!;
+    public object? Metrics { get; set; } = default!;
 
 }
 
@@ -2600,15 +2587,11 @@ public partial class ReleaseProcessorResponse
 {
 
     /// <summary>
-    /// Whether the processor was successfully released
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("released")]
-    public bool Released { get; set; } = default!;
-
-    /// <summary>
     /// ID of the released processor
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("processorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string ProcessorId { get; set; } = default!;
 
 }
@@ -2642,14 +2625,6 @@ public partial class GetPoolStatusRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class PoolStatusResponse
 {
-
-    /// <summary>
-    /// Pool type
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string PoolType { get; set; } = default!;
 
     /// <summary>
     /// Total processor instances in the pool
@@ -2700,10 +2675,10 @@ public partial class PoolStatusResponse
     public float ScaleUpThreshold { get; set; } = default!;
 
     /// <summary>
-    /// Recent processing statistics
+    /// Recent processing statistics (null if metrics not requested)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("recentMetrics")]
-    public PoolMetrics RecentMetrics { get; set; } = default!;
+    public PoolMetrics? RecentMetrics { get; set; } = default!;
 
 }
 
@@ -2733,10 +2708,10 @@ public partial class PoolMetrics
     public int AvgProcessingTimeMs { get; set; } = default!;
 
     /// <summary>
-    /// When the pool was last scaled
+    /// When the pool was last scaled (null if never scaled)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("lastScaleEvent")]
-    public System.DateTimeOffset LastScaleEvent { get; set; } = default!;
+    public System.DateTimeOffset? LastScaleEvent { get; set; } = default!;
 
 }
 
@@ -2778,14 +2753,6 @@ public partial class ScalePoolResponse
 {
 
     /// <summary>
-    /// Pool type that was scaled
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string PoolType { get; set; } = default!;
-
-    /// <summary>
     /// Instance count before scaling
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousInstances")]
@@ -2808,12 +2775,6 @@ public partial class ScalePoolResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("scaledDown")]
     public int ScaledDown { get; set; } = default!;
-
-    /// <summary>
-    /// Status message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
 
 }
 
@@ -2848,14 +2809,6 @@ public partial class CleanupPoolResponse
 {
 
     /// <summary>
-    /// Pool type that was cleaned up
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("poolType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string PoolType { get; set; } = default!;
-
-    /// <summary>
     /// Number of idle instances removed
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instancesRemoved")]
@@ -2867,230 +2820,7 @@ public partial class CleanupPoolResponse
     [System.Text.Json.Serialization.JsonPropertyName("currentInstances")]
     public int CurrentInstances { get; set; } = default!;
 
-    /// <summary>
-    /// Status message
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string Message { get; set; } = default!;
-
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ListPresetsRequestCategory
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"development")]
-    Development = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"testing")]
-    Testing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"production")]
-    Production = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ComponentHealthStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-    Healthy = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"degraded")]
-    Degraded = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unavailable")]
-    Unavailable = 2,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeploymentPresetCategory
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"development")]
-    Development = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"testing")]
-    Testing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"production")]
-    Production = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"custom")]
-    Custom = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum Layers
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AppFoundation")]
-    AppFoundation = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GameFoundation")]
-    GameFoundation = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"AppFeatures")]
-    AppFeatures = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"GameFeatures")]
-    GameFeatures = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"Extensions")]
-    Extensions = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum IngressConfigType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"openresty")]
-    Openresty = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"nginx")]
-    Nginx = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"traefik")]
-    Traefik = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"none")]
-    None = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeployedServiceStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
-    Starting = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
-    Running = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"healthy")]
-    Healthy = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
-    Unhealthy = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
-    Stopped = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum LogEntryStream
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stdout")]
-    Stdout = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stderr")]
-    Stderr = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum TopologyChangeAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"add-node")]
-    AddNode = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"remove-node")]
-    RemoveNode = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"move-service")]
-    MoveService = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scale")]
-    Scale = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"update-env")]
-    UpdateEnv = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeploymentEventAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"started")]
-    Started = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"completed")]
-    Completed = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"topology-changed")]
-    TopologyChanged = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ContainerRestartResponseRestartStrategy
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"rolling")]
-    Rolling = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"simultaneous")]
-    Simultaneous = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum ContainerStatusStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"running")]
-    Running = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"starting")]
-    Starting = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stopping")]
-    Stopping = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"stopped")]
-    Stopped = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"unhealthy")]
-    Unhealthy = 4,
-
-}
-#pragma warning restore CS1591
 
 
 

@@ -486,6 +486,8 @@ public static class StateStoreDefinitions
     public const string TransitModes = "transit-modes";
 
     // Voice Service
+    /// <summary>Distributed locks for broadcast consent and room mutations</summary>
+    public const string VoiceLock = "voice-lock";
     /// <summary>Voice room and peer state</summary>
     public const string Voice = "voice-statestore";
 
@@ -692,6 +694,7 @@ public static class StateStoreDefinitions
             [TransitJourneysArchive] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_journeys_archive" },
             [TransitLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "transit:lock" },
             [TransitModes] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "transit_modes" },
+            [VoiceLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice:lock" },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
             [WorldstateCalendar] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_calendar" },
             [WorldstateLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:lock" },
@@ -891,6 +894,7 @@ public static class StateStoreDefinitions
             [TransitJourneysArchive] = new StoreMetadata("Transit", "Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)", "mysql"),
             [TransitLock] = new StoreMetadata("Transit", "Distributed locks for journey state transitions and connection status updates", "redis"),
             [TransitModes] = new StoreMetadata("Transit", "Transit mode definitions (durable registry)", "mysql"),
+            [VoiceLock] = new StoreMetadata("Voice", "Distributed locks for broadcast consent and room mutations", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),
             [WorldstateCalendar] = new StoreMetadata("Worldstate", "Calendar template definitions and per-realm worldstate configuration (durable, queryable)", "mysql"),
             [WorldstateLock] = new StoreMetadata("Worldstate", "Distributed locks for clock advancement, ratio changes, and calendar mutations", "redis"),

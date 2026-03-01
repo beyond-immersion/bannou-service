@@ -19,7 +19,7 @@ public class VoiceRoomData
     /// <summary>
     /// Current voice tier (p2p or scaled).
     /// </summary>
-    public VoiceTier Tier { get; set; } = VoiceTier.P2p;
+    public VoiceTier Tier { get; set; } = VoiceTier.P2P;
 
     /// <summary>
     /// Audio codec for the room.

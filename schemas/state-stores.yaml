@@ -118,6 +118,12 @@ x-state-stores:
     service: Voice
     purpose: Voice room and peer state
 
+  voice-lock:
+    backend: redis
+    prefix: "voice:lock"
+    service: Voice
+    purpose: Distributed locks for broadcast consent and room mutations
+
   asset-statestore:
     backend: redis
     prefix: asset

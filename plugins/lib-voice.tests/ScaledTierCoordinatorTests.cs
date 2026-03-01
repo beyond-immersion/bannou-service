@@ -29,7 +29,6 @@ public class ScaledTierCoordinatorTests
             SipDomain = "voice.bannou",
             SipPasswordSalt = "test-salt-12345",
             KamailioHost = "localhost",
-            KamailioRpcPort = 5080,
             RtpEngineHost = "localhost",
             RtpEnginePort = 22222,
             StunServers = "stun:stun.l.google.com:19302,stun:stun2.l.google.com:19302"

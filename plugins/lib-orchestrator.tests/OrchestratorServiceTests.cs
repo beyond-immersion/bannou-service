@@ -912,10 +912,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
         {
             AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Services = new List<ServiceStatus>
             {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+                new() { ServiceName = "auth", Status = ServiceHealthStatus.Healthy }
             }
         };
 
@@ -962,10 +962,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
         {
             AppId = "bannou", // Different from "bannou-auth"
             ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Services = new List<ServiceStatus>
             {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+                new() { ServiceName = "auth", Status = ServiceHealthStatus.Healthy }
             }
         };
 
@@ -1007,10 +1007,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
         {
             AppId = "bannou-auth", // Same as the mapped app-id
             ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Services = new List<ServiceStatus>
             {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Degraded }
+                new() { ServiceName = "auth", Status = ServiceHealthStatus.Degraded }
             }
         };
 
@@ -1045,10 +1045,10 @@ public class ServiceHealthMonitorRoutingProtectionTests
         {
             AppId = "bannou-deployed-node",
             ServiceId = Guid.NewGuid(),
-            Status = ServiceHeartbeatEventStatus.Healthy,
+            Status = InstanceHealthStatus.Healthy,
             Services = new List<ServiceStatus>
             {
-                new() { ServiceName = "auth", Status = ServiceStatusStatus.Healthy }
+                new() { ServiceName = "auth", Status = ServiceHealthStatus.Healthy }
             }
         };
 
@@ -1304,7 +1304,7 @@ public class OrchestratorStateManagerTests
         {
             ServiceId = Guid.NewGuid(),
             AppId = "test-app",
-            Status = ServiceHeartbeatEventStatus.Healthy
+            Status = InstanceHealthStatus.Healthy
         };
 
         // Act & Assert - should log warning but not throw

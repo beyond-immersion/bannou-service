@@ -30,6 +30,8 @@ x-service-configuration:
       description: Migration deadline in milliseconds when upgrading tiers
       env: VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS
       default: 30000
+      minimum: 1000
+      maximum: 120000
 
     # Participant Limits
     P2PMaxParticipants:
@@ -73,11 +75,6 @@ x-service-configuration:
       description: Kamailio SIP server host
       env: VOICE_KAMAILIO_HOST
       default: "localhost"
-    KamailioRpcPort:
-      type: integer
-      description: Kamailio JSON-RPC port (typically 5080, not SIP port 5060)
-      env: VOICE_KAMAILIO_RPC_PORT
-      default: 5080
     KamailioSipPort:
       type: integer
       description: Kamailio SIP signaling port for client registration
@@ -105,21 +102,14 @@ x-service-configuration:
       minimum: 1
       maximum: 60
 
-    # Request Timeout Configuration
-    KamailioRequestTimeoutSeconds:
-      type: integer
-      description: Timeout in seconds for Kamailio service requests
-      env: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
-      default: 5
-      minimum: 1
-      maximum: 300
-
     # SIP Credential Configuration
     SipCredentialExpirationHours:
       type: integer
       description: Hours until SIP credentials expire (clients should re-authenticate before expiration)
       env: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
       default: 24
+      minimum: 1
+      maximum: 720
 
     # Eviction Worker
     EvictionWorkerInitialDelaySeconds:
@@ -143,6 +133,15 @@ x-service-configuration:
       description: How often the background worker checks for stale participants
       env: VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS
       default: 15
+      minimum: 5
+      maximum: 120
+
+    # Distributed Locks
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed lock acquisition
+      env: VOICE_LOCK_TIMEOUT_SECONDS
+      default: 30
       minimum: 5
       maximum: 120
 

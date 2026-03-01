@@ -26,20 +26,20 @@ info:
     - topic: voice.room.tier-upgraded
       event: VoiceRoomTierUpgradedEvent
       description: Published when a room upgrades from P2P to scaled tier
-    - topic: voice.participant.joined
-      event: VoiceParticipantJoinedEvent
-      description: Published when a participant joins a room
-    - topic: voice.participant.left
-      event: VoiceParticipantLeftEvent
-      description: Published when a participant leaves a room
-    - topic: voice.room.broadcast.approved
-      event: VoiceRoomBroadcastApprovedEvent
+    - topic: voice.peer.joined
+      event: VoicePeerJoinedEvent
+      description: Published when a peer joins a room
+    - topic: voice.peer.left
+      event: VoicePeerLeftEvent
+      description: Published when a peer leaves a room
+    - topic: voice.broadcast.approved
+      event: VoiceBroadcastApprovedEvent
       description: All participants consented to broadcasting
-    - topic: voice.room.broadcast.declined
-      event: VoiceRoomBroadcastDeclinedEvent
+    - topic: voice.broadcast.declined
+      event: VoiceBroadcastDeclinedEvent
       description: A participant declined broadcast consent
-    - topic: voice.room.broadcast.stopped
-      event: VoiceRoomBroadcastStoppedEvent
+    - topic: voice.broadcast.stopped
+      event: VoiceBroadcastStoppedEvent
       description: Broadcasting stopped (consent revoked, room closed, or manual stop)
 
 servers: []
@@ -133,14 +133,14 @@ components:
           description: RTP mixed audio endpoint (for lib-stream to connect to)
 
     # ============================================
-    # Participant Events
+    # Peer Events
     # ============================================
 
-    VoiceParticipantJoinedEvent:
+    VoicePeerJoinedEvent:
       type: object
       additionalProperties: false
-      description: Published when a participant joins a room
-      required: [eventId, timestamp, roomId, participantSessionId, currentCount]
+      description: Published when a peer joins a room
+      required: [eventId, timestamp, roomId, peerSessionId, currentCount]
       properties:
         eventId:
           type: string
@@ -154,19 +154,19 @@ components:
           type: string
           format: uuid
           description: Voice room ID
-        participantSessionId:
+        peerSessionId:
           type: string
           format: uuid
-          description: WebSocket session ID of the participant who joined
+          description: WebSocket session ID of the peer who joined
         currentCount:
           type: integer
-          description: Total participants after join
+          description: Total peers after join
 
-    VoiceParticipantLeftEvent:
+    VoicePeerLeftEvent:
       type: object
       additionalProperties: false
-      description: Published when a participant leaves a room
-      required: [eventId, timestamp, roomId, participantSessionId, remainingCount]
+      description: Published when a peer leaves a room
+      required: [eventId, timestamp, roomId, peerSessionId, remainingCount]
       properties:
         eventId:
           type: string
@@ -180,19 +180,19 @@ components:
           type: string
           format: uuid
           description: Voice room ID
-        participantSessionId:
+        peerSessionId:
           type: string
           format: uuid
-          description: WebSocket session ID of the participant who left
+          description: WebSocket session ID of the peer who left
         remainingCount:
           type: integer
-          description: Participants remaining after departure
+          description: Peers remaining after departure
 
     # ============================================
     # Broadcast Consent Events
     # ============================================
 
-    VoiceRoomBroadcastApprovedEvent:
+    VoiceBroadcastApprovedEvent:
       type: object
       additionalProperties: false
       description: >
@@ -222,7 +222,7 @@ components:
           nullable: true
           description: RTP endpoint for mixed audio (for lib-stream to connect RTMP output)
 
-    VoiceRoomBroadcastDeclinedEvent:
+    VoiceBroadcastDeclinedEvent:
       type: object
       additionalProperties: false
       description: A participant declined broadcast consent
@@ -246,7 +246,7 @@ components:
           nullable: true
           description: Session ID of the participant who declined (null if auto-declined by consent timeout)
 
-    VoiceRoomBroadcastStoppedEvent:
+    VoiceBroadcastStoppedEvent:
       type: object
       additionalProperties: false
       description: Broadcasting stopped

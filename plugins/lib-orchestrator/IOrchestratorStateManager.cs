@@ -19,7 +19,7 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// Get all service heartbeat data.
     /// Uses index-based pattern to avoid KEYS/SCAN operations.
     /// </summary>
-    Task<List<ServiceHealthStatus>> GetServiceHeartbeatsAsync();
+    Task<List<ServiceHealthEntry>> GetServiceHeartbeatsAsync();
 
     /// <summary>
     /// Check if state stores are connected and healthy.
@@ -29,7 +29,7 @@ public interface IOrchestratorStateManager : IAsyncDisposable, IDisposable
     /// <summary>
     /// Get specific service heartbeat by serviceId and appId.
     /// </summary>
-    Task<ServiceHealthStatus?> GetServiceHeartbeatAsync(string serviceId, string appId);
+    Task<ServiceHealthEntry?> GetServiceHeartbeatAsync(string serviceId, string appId);
 
     /// <summary>
     /// Write service heartbeat data.
@@ -220,8 +220,8 @@ public class ServiceRouting
     /// <summary>Port the service is listening on.</summary>
     public int Port { get; set; } = 80;
 
-    /// <summary>Service health status.</summary>
-    public string Status { get; set; } = "unknown";
+    /// <summary>Service health status (null if no status known yet).</summary>
+    public ServiceHealthStatus? Status { get; set; }
 
     /// <summary>Last update timestamp.</summary>
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.UtcNow;
@@ -234,7 +234,7 @@ public class ServiceRouting
 /// Instance health status stored in state store.
 /// Represents the aggregated health state of a bannou app instance.
 /// </summary>
-public class InstanceHealthStatus
+public class InstanceHealthState
 {
     /// <summary>Unique GUID identifying this bannou instance.</summary>
     public Guid InstanceId { get; set; }
@@ -243,7 +243,7 @@ public class InstanceHealthStatus
     public required string AppId { get; set; }
 
     /// <summary>Overall instance health status.</summary>
-    public required string Status { get; set; }
+    public required InstanceHealthStatus Status { get; set; }
 
     /// <summary>When the last heartbeat was received.</summary>
     public DateTimeOffset LastSeen { get; set; }

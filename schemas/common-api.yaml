@@ -51,6 +51,16 @@ components:
         - custom
         - other
 
+    ServiceHealthStatus:
+      type: string
+      enum: [healthy, degraded, unavailable]
+      description: Health status for individual services and components. Used by heartbeat events and orchestrator health monitoring.
+
+    InstanceHealthStatus:
+      type: string
+      enum: [healthy, degraded, overloaded, shutting_down, unavailable]
+      description: Operational status for app instances. Superset of ServiceHealthStatus with instance-level states (overloaded, shutting_down).
+
     SentimentCategory:
       type: string
       description: >

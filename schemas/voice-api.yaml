@@ -18,8 +18,8 @@ info:
     1. Any in-room participant requests broadcast consent via /voice/room/broadcast/request
     2. All participants receive VoiceBroadcastConsentRequestEvent
     3. Each participant responds via /voice/room/broadcast/consent
-    4. If all consent, voice.room.broadcast.approved is published
-    5. If any decline or timeout, voice.room.broadcast.declined is published
+    4. If all consent, voice.broadcast.approved is published
+    5. If any decline or timeout, voice.broadcast.declined is published
 
     **Dual Room Modes**:
     - **Persistent**: Created via API, explicit delete required unless autoCleanup=true
@@ -248,7 +248,7 @@ paths:
         broadcast request is denied.
 
         This endpoint is the ONLY way to initiate voice room broadcasting.
-        lib-stream subscribes to the resulting approval/decline events.
+        lib-broadcast subscribes to the resulting approval/decline events.
       operationId: requestBroadcastConsent
       tags:
       - Voice Broadcasting
@@ -280,8 +280,8 @@ paths:
       description: >
         Called by each participant to consent or decline broadcasting.
         When all participants consent, lib-voice publishes
-        voice.room.broadcast.approved. If any participant declines,
-        lib-voice publishes voice.room.broadcast.declined.
+        voice.broadcast.approved. If any participant declines,
+        lib-voice publishes voice.broadcast.declined.
       operationId: respondBroadcastConsent
       tags:
       - Voice Broadcasting
@@ -311,7 +311,7 @@ paths:
       description: >
         Any participant can stop an active broadcast at any time.
         This is equivalent to revoking consent. Publishes
-        voice.room.broadcast.stopped with reason ConsentRevoked.
+        voice.broadcast.stopped with reason ConsentRevoked.
       operationId: stopBroadcast
       tags:
       - Voice Broadcasting
@@ -368,15 +368,15 @@ components:
 
     VoiceTier:
       type: string
-      enum: [p2p, scaled]
+      enum: [P2P, Scaled]
       description: |
         Voice communication tier:
-        - p2p: Direct peer-to-peer connections (up to 6 participants)
-        - scaled: RTP server-mediated communication (unlimited participants)
+        - P2P: Direct peer-to-peer connections (up to 6 participants)
+        - Scaled: RTP server-mediated communication (unlimited participants)
 
     VoiceCodec:
       type: string
-      enum: [opus, g711, g722]
+      enum: [Opus, G711, G722]
       description: Audio codec for voice communication
 
     BroadcastConsentState:
@@ -399,6 +399,67 @@ components:
       description: Reason broadcasting was stopped
 
     # ============================================
+    # Shared Types
+    # ============================================
+
+    VoicePeerInfo:
+      type: object
+      additionalProperties: false
+      description: Peer connection information for P2P voice
+      required:
+        - peerSessionId
+        - sdpOffer
+      properties:
+        peerSessionId:
+          type: string
+          format: uuid
+          description: WebSocket session ID for this peer
+        displayName:
+          type: string
+          nullable: true
+          description: Peer's display name
+        sdpOffer:
+          type: string
+          description: SDP offer for WebRTC negotiation
+        iceCandidates:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: ICE candidates for NAT traversal
+        isMuted:
+          type: boolean
+          default: false
+          description: Whether peer is currently muted
+
+    SipCredentials:
+      type: object
+      additionalProperties: false
+      description: |
+        SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+        These credentials are dynamically generated per-user per-room and should be used
+        for SIP REGISTER and subsequent INVITE requests.
+      required:
+        - username
+        - password
+        - domain
+      properties:
+        username:
+          type: string
+          description: SIP username (typically sessionId or a hash-derived identifier)
+        password:
+          type: string
+          description: SIP password (dynamically generated, short-lived)
+        domain:
+          type: string
+          description: SIP domain/realm for authentication (e.g., "voice.bannou.local")
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When these credentials expire (clients should re-authenticate before this)
+
+    # ============================================
     # Request Models
     # ============================================
 
@@ -414,8 +475,10 @@ components:
           format: uuid
           description: Session ID this voice room is associated with
         preferredTier:
-          $ref: '#/components/schemas/VoiceTier'
-          description: Preferred voice tier (defaults to p2p)
+          allOf:
+            - $ref: '#/components/schemas/VoiceTier'
+          nullable: true
+          description: Preferred voice tier (defaults to P2P)
         maxParticipants:
           type: integer
           minimum: 2
@@ -423,8 +486,10 @@ components:
           default: 6
           description: Maximum participants before tier upgrade
         codec:
-          $ref: '#/components/schemas/VoiceCodec'
-          description: Preferred audio codec (defaults to opus)
+          allOf:
+            - $ref: '#/components/schemas/VoiceCodec'
+          nullable: true
+          description: Preferred audio codec (defaults to Opus)
         autoCleanup:
           type: boolean
           default: false
@@ -469,6 +534,7 @@ components:
         displayName:
           type: string
           maxLength: 50
+          nullable: true
           description: Display name for UI
         password:
           type: string
@@ -504,8 +570,9 @@ components:
           format: uuid
           description: Voice room ID to delete
         reason:
-          type: string
-          description: Reason for deletion
+          $ref: '#/components/schemas/VoiceRoomDeletedReason'
+          nullable: true
+          description: Reason for deletion (defaults to Manual if not specified)
 
     PeerHeartbeatRequest:
       type: object
@@ -553,6 +620,7 @@ components:
           description: SDP answer generated by this client's WebRTC stack
         iceCandidates:
           type: array
+          nullable: true
           items:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
@@ -636,7 +704,14 @@ components:
       - roomId
       - sessionId
       - tier
+      - codec
+      - maxParticipants
+      - currentParticipants
+      - participants
       - createdAt
+      - autoCleanup
+      - isPasswordProtected
+      - broadcastState
       properties:
         roomId:
           type: string
@@ -677,9 +752,6 @@ components:
         isPasswordProtected:
           type: boolean
           description: Whether the room requires a password to join
-        isBroadcasting:
-          type: boolean
-          description: Whether the room is currently broadcasting (Approved state)
         broadcastState:
           $ref: '#/components/schemas/BroadcastConsentState'
           description: Current broadcast consent state
@@ -691,6 +763,10 @@ components:
       required:
       - roomId
       - tier
+      - codec
+      - peers
+      - stunServers
+      - broadcastState
       properties:
         roomId:
           type: string
@@ -720,9 +796,6 @@ components:
           type: boolean
           default: false
           description: True if room is about to upgrade to scaled tier
-        isBroadcasting:
-          type: boolean
-          description: Whether the room is currently broadcasting (Approved state)
         broadcastState:
           $ref: '#/components/schemas/BroadcastConsentState'
           description: Current broadcast consent state
@@ -731,6 +804,11 @@ components:
       type: object
       additionalProperties: false
       description: Current broadcast consent status for a voice room
+      required:
+      - roomId
+      - state
+      - consentedSessionIds
+      - pendingSessionIds
       properties:
         roomId:
           type: string
@@ -761,7 +839,7 @@ components:
           nullable: true
           description: >
             RTP audio endpoint for the room's mixed audio output. Only populated
-            when room is in scaled tier. Provided to lib-stream so it can connect
+            when room is in scaled tier. Provided to lib-broadcast so it can connect
             its RTMP output to the voice room's audio.
 
     # ============================================
@@ -780,6 +858,7 @@ components:
           description: SDP offer for WebRTC negotiation
         iceCandidates:
           type: array
+          nullable: true
           items:
             type: string
           description: ICE candidates for NAT traversal
