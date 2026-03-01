@@ -13450,13 +13450,8 @@ export interface components {
       /** @description Number of game-years to advance (uses current calendar structure) */
       gameYears?: number | null;
     };
-    /** @description Result of manual clock advancement */
+    /** @description Result of manual clock advancement. Caller already knows realmId from request. */
     AdvanceClockResponse: {
-      /**
-       * Format: uuid
-       * @description Realm the clock was advanced for
-       */
-      realmId: string;
       /** @description Game time before advancement */
       previousTime: components['schemas']['GameTimeSnapshot'];
       /** @description Game time after advancement */
@@ -13675,9 +13670,9 @@ export interface components {
       namespace: string;
       /**
        * Format: uuid
-       * @description Asset ID in Asset Service
+       * @description Asset ID in Asset Service (null if bundle creation failed)
        */
-      bundleAssetId?: string;
+      bundleAssetId?: string | null;
       /** @description Description of the archive */
       description?: string | null;
       /** @description Number of documents in the archive */
@@ -13692,11 +13687,11 @@ export interface components {
        */
       createdAt: string;
       /**
-       * @description Owner of this archive. NOT a session ID.
+       * @description Owner of this archive. NOT a session ID (null if owner unknown).
        *     Contains either an accountId (UUID format) for user-initiated archives
        *     or a service name for service-initiated archives.
        */
-      owner?: string;
+      owner?: string | null;
     };
     /** @description Request to archive a room (makes it read-only) */
     ArchiveRoomRequest: {
@@ -13784,8 +13779,8 @@ export interface components {
       size: number;
       /** @description Type classification for the asset */
       assetType: components['schemas']['AssetType'];
-      /** @description Game realm the asset belongs to */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm the asset belongs to. Null for cross-realm assets. */
+      realm: components['schemas']['GameRealm'] | null;
       /** @description Searchable tags for the asset */
       tags: string[];
       /** @description Current status of asset processing pipeline */
@@ -13808,12 +13803,12 @@ export interface components {
     };
     /** @description User-provided metadata for asset categorization */
     AssetMetadataInput: {
-      /** @description Type classification for the asset */
-      assetType?: components['schemas']['AssetType'];
-      /** @description Game realm the asset belongs to */
-      realm?: components['schemas']['GameRealm'];
-      /** @description Searchable tags for the asset */
-      tags?: string[];
+      /** @description Type classification for the asset (null to omit) */
+      assetType?: components['schemas']['AssetType'] | null;
+      /** @description Game realm the asset belongs to (null for unscoped) */
+      realm?: components['schemas']['GameRealm'] | null;
+      /** @description Searchable tags for the asset (null to omit) */
+      tags?: string[] | null;
     };
     /** @description Reference to an asset in lib-asset */
     AssetReference: {
@@ -13923,8 +13918,8 @@ export interface components {
     };
     /** @description Metadata for a specific version of an asset */
     AssetVersion: {
-      /** @description Unique version identifier */
-      versionId: string;
+      /** @description Unique version identifier. Null when object storage versioning is not enabled. */
+      versionId?: string | null;
       /**
        * Format: date-time
        * @description Timestamp when this version was created
@@ -13940,8 +13935,6 @@ export interface components {
     };
     /** @description Paginated list of asset versions */
     AssetVersionList: {
-      /** @description Asset identifier */
-      assetId: string;
       /** @description List of asset versions */
       versions: components['schemas']['AssetVersion'][];
       /** @description Total number of versions available */
@@ -14491,8 +14484,10 @@ export interface components {
     };
     /** @description Game time snapshots for multiple realms */
     BatchGetRealmTimesResponse: {
-      /** @description Game time snapshots for each requested realm (omits realms without initialized clocks) */
+      /** @description Game time snapshots for each requested realm that has an initialized clock */
       snapshots: components['schemas']['GameTimeSnapshot'][];
+      /** @description Realm IDs from the request that had no initialized clock */
+      notFoundRealmIds: string[];
     };
     /** @description Individual message entry in a batch send operation */
     BatchMessageEntry: {
@@ -14589,7 +14584,7 @@ export interface components {
       excludePatterns: string[] | null;
       /** @description Map directory prefixes to categories (empty mapping if not provided) */
       categoryMapping?: {
-        [key: string]: string;
+        [key: string]: components['schemas']['DocumentCategory'];
       } | null;
       /** @description Default category for documents without mapping */
       defaultCategory?: components['schemas']['DocumentCategory'];
@@ -14614,16 +14609,16 @@ export interface components {
       /** @description Namespace the repository is bound to */
       namespace: string;
       /** @description URL of the bound repository */
-      repositoryUrl?: string;
+      repositoryUrl: string;
       /** @description Branch being synced */
-      branch?: string;
+      branch: string;
       /** @description Current status of the binding */
       status: components['schemas']['BindingStatus'];
       /**
        * Format: date-time
        * @description Timestamp when the binding was created
        */
-      createdAt?: string;
+      createdAt: string;
     };
     /**
      * @description Status of a repository binding
@@ -15219,8 +15214,8 @@ export interface components {
       description?: string | null;
       /** @description Owner account ID or service name (null for system-owned bundles) */
       owner?: string | null;
-      /** @description Game realm this bundle belongs to */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm this bundle belongs to. Null for cross-realm bundles. */
+      realm?: components['schemas']['GameRealm'] | null;
       /** @description Key-value tags for categorization and filtering */
       tags?: {
         [key: string]: string;
@@ -15267,6 +15262,21 @@ export interface components {
       /** @description Number of assets declared in the manifest */
       assetCount: number;
     };
+    /**
+     * @description Fields available for sorting bundle query results
+     * @enum {string}
+     */
+    BundleSortField: 'created_at' | 'updated_at' | 'name' | 'size';
+    /**
+     * @description Bundle processing status:
+     *     - queued: Bundle creation is queued for processing
+     *     - processing: Bundle is being processed
+     *     - ready: Bundle is ready for download
+     *     - failed: Bundle creation failed
+     *     - cancelled: Bundle creation was cancelled
+     * @enum {string}
+     */
+    BundleStatus: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
     /** @description Summary information about a bundle */
     BundleSummary: {
       /** @description Human-readable bundle identifier */
@@ -15282,8 +15292,8 @@ export interface components {
        * @description Bundle file size
        */
       sizeBytes?: number | null;
-      /** @description Game realm */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm. Null for cross-realm bundles. */
+      realm?: components['schemas']['GameRealm'] | null;
       /**
        * Format: date-time
        * @description When the bundle was created
@@ -15515,15 +15525,8 @@ export interface components {
        * @description Job identifier
        */
       jobId: string;
-      /** @description Whether the job was successfully cancelled */
-      cancelled: boolean;
-      /**
-       * @description Current job status after cancellation attempt
-       * @enum {string}
-       */
-      status: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
-      /** @description Additional context about the cancellation result */
-      message?: string | null;
+      /** @description Current job status after cancellation attempt */
+      status: components['schemas']['BundleStatus'];
     };
     /** @description Request to cancel escrow before fully funded */
     CancelRequest: {
@@ -17562,6 +17565,11 @@ export interface components {
       /** @description Items in container */
       items: components['schemas']['ContainerItem'][];
     };
+    /**
+     * @description Format of the content field in a document response
+     * @enum {string}
+     */
+    ContentFormat: 'markdown' | 'html' | 'none';
     /** @description Selected content entry for an area */
     ContentSelectionResponse: {
       /** @description Code of the selected entry */
@@ -18116,9 +18124,9 @@ export interface components {
       namespace: string;
       /**
        * Format: uuid
-       * @description Asset ID in Asset Service
+       * @description Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)
        */
-      bundleAssetId?: string;
+      bundleAssetId?: string | null;
       /** @description Number of documents in the archive */
       documentCount?: number;
       /** @description Total size of the archive in bytes */
@@ -18200,7 +18208,7 @@ export interface components {
       version: string;
       /**
        * @description Game realm this bundle belongs to.
-       *     Defaults to 'shared' if not specified.
+       *     Null for realm-agnostic bundles available across all realms.
        */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description List of asset IDs to include in the bundle */
@@ -18216,11 +18224,8 @@ export interface components {
     CreateBundleResponse: {
       /** @description Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
       bundleId: string;
-      /**
-       * @description Bundle creation status
-       * @enum {string}
-       */
-      status: 'queued' | 'processing' | 'ready' | 'failed';
+      /** @description Bundle creation status */
+      status: components['schemas']['BundleStatus'];
       /**
        * Format: int64
        * @description Estimated bundle size in bytes
@@ -18946,9 +18951,8 @@ export interface components {
        *     - processing: Job is actively running
        *     - ready: Metabundle created and available for download
        *     - failed: Creation failed (see conflicts for details)
-       * @enum {string}
        */
-      status: 'queued' | 'processing' | 'ready' | 'failed';
+      status: components['schemas']['BundleStatus'];
       /**
        * Format: uri
        * @description Pre-signed download URL (only present when status is 'ready')
@@ -18963,8 +18967,8 @@ export interface components {
        * @description Total size in bytes
        */
       sizeBytes: number;
-      /** @description Provenance data for the metabundle */
-      sourceBundles?: components['schemas']['SourceBundleReference'][];
+      /** @description Provenance data for the metabundle (null when status is not ready) */
+      sourceBundles?: components['schemas']['SourceBundleReference'][] | null;
       /** @description Present if creation failed due to asset conflicts */
       conflicts?: components['schemas']['AssetConflict'][] | null;
     };
@@ -19874,13 +19878,8 @@ export interface components {
     };
     /** @description Result of bundle deletion */
     DeleteBundleResponse: {
-      /** @description Human-readable bundle identifier that was deleted */
-      bundleId: string;
-      /**
-       * @description Deletion status
-       * @enum {string}
-       */
-      status: 'deleted' | 'permanently_deleted';
+      /** @description Deletion status */
+      status: components['schemas']['DeletionStatus'];
       /**
        * Format: date-time
        * @description When the bundle was deleted
@@ -20074,6 +20073,13 @@ export interface components {
        */
       bytesFreed: number;
     };
+    /**
+     * @description Result of a deletion operation:
+     *     - deleted: Soft-deleted (within retention period, can be restored)
+     *     - permanently_deleted: Permanently removed (unrecoverable)
+     * @enum {string}
+     */
+    DeletionStatus: 'deleted' | 'permanently_deleted';
     /**
      * @description Algorithm used for delta computation.
      *     JSON_PATCH: RFC 6902, best for structured JSON data
@@ -20405,20 +20411,20 @@ export interface components {
       title: string;
       /** @description Category for organizing the document */
       category: components['schemas']['DocumentCategory'];
-      /** @description Full markdown content of the document */
-      content?: string;
+      /** @description Full markdown content of the document (null if content not requested) */
+      content?: string | null;
       /** @description Brief text summary of the document */
       summary?: string | null;
       /** @description Concise summary optimized for voice AI */
       voiceSummary?: string | null;
-      /** @description Tags for filtering and search */
-      tags?: string[];
-      /** @description IDs of related documents */
-      relatedDocuments?: string[];
-      /** @description Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention. */
+      /** @description Tags for filtering and search (null if no tags) */
+      tags?: string[] | null;
+      /** @description IDs of related documents (null if none linked) */
+      relatedDocuments?: string[] | null;
+      /** @description Client-provided custom metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
-      };
+      } | null;
       /**
        * Format: date-time
        * @description Timestamp when the document was created
@@ -20456,7 +20462,7 @@ export interface components {
       slug: string;
       /** @description Display title of the document */
       title: string;
-      /** @description Category of the document */
+      /** @description Category of the document (null if uncategorized) */
       category?: components['schemas']['DocumentCategory'];
       /** @description Brief text summary of the document */
       summary?: string | null;
@@ -20469,8 +20475,8 @@ export interface components {
        * @description Relevance score from 0.0 to 1.0
        */
       relevanceScore: number;
-      /** @description Text snippets showing where matches occurred */
-      matchHighlights?: string[];
+      /** @description Text snippets showing where matches occurred (null if not computed) */
+      matchHighlights?: string[] | null;
     };
     /** @description Lightweight document representation for listings and references */
     DocumentSummary: {
@@ -20489,8 +20495,8 @@ export interface components {
       summary?: string | null;
       /** @description Concise summary optimized for voice AI */
       voiceSummary?: string | null;
-      /** @description Tags associated with the document */
-      tags?: string[];
+      /** @description Tags associated with the document (null if no tags) */
+      tags?: string[] | null;
     };
     /** @description A deity's influence in a specific domain with a weight representing strength */
     DomainInfluence: {
@@ -22304,7 +22310,7 @@ export interface components {
     /**
      * @description Realm stub name (lowercase string identifier) that this asset belongs to.
      *     Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
-     *     Use "shared" for assets that are available across all realms.
+     *     Null for assets that are available across all realms.
      */
     GameRealm: string;
     /** @description Complete details of a game session including players and settings */
@@ -22652,13 +22658,10 @@ export interface components {
     };
     /** @description Request to retrieve asset metadata and download URL */
     GetAssetRequest: {
-      /** @description Asset identifier */
+      /** @description Asset identifier (SHA-256 hex string) */
       assetId: string;
-      /**
-       * @description Version ID or 'latest'
-       * @default latest
-       */
-      version: string;
+      /** @description Version ID to retrieve (null for latest version) */
+      version?: string | null;
     };
     /** @description Request payload for getting a character's backstory */
     GetBackstoryRequest: {
@@ -23130,13 +23133,10 @@ export interface components {
     GetDocumentResponse: {
       /** @description The requested document */
       document: components['schemas']['Document'];
-      /** @description List of related documents based on includeRelated depth */
-      relatedDocuments?: components['schemas']['DocumentSummary'][];
-      /**
-       * @description Format of the content field in the response
-       * @enum {string}
-       */
-      contentFormat?: 'markdown' | 'html' | 'none';
+      /** @description List of related documents based on includeRelated depth (null if not requested) */
+      relatedDocuments?: components['schemas']['DocumentSummary'][] | null;
+      /** @description Format of the content field in the response (null if content not included) */
+      contentFormat?: components['schemas']['ContentFormat'];
     };
     /** @description Request to get unified effects for an entity */
     GetEffectsRequest: {
@@ -23517,9 +23517,8 @@ export interface components {
        *     - ready: Completed successfully
        *     - failed: Creation failed
        *     - cancelled: Job was cancelled
-       * @enum {string}
        */
-      status: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
+      status: components['schemas']['BundleStatus'];
       /** @description Progress percentage (0-100) when status is 'processing' */
       progress?: number | null;
       /**
@@ -23539,7 +23538,7 @@ export interface components {
       /** @description Provenance data (when ready) */
       sourceBundles?: components['schemas']['SourceBundleReference'][] | null;
       /** @description Error code (when status is 'failed') */
-      errorCode?: string | null;
+      errorCode?: components['schemas']['MetabundleErrorCode'] | null;
       /** @description Human-readable error description (when status is 'failed') */
       errorMessage?: string | null;
       /**
@@ -25096,33 +25095,28 @@ export interface components {
       /** @description Initial downtime handling policy (falls back to DefaultDowntimePolicy config) */
       downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
     };
-    /** @description Confirmation of realm clock initialization with resolved values */
+    /** @description Resolved entity state after realm clock initialization. Caller already knows realmId from request. Shows resolved values for optional fields that may have fallen back to config defaults. */
     InitializeRealmClockResponse: {
       /**
        * Format: uuid
-       * @description Realm the clock was initialized for
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Game service the realm belongs to
+       * @description Game service the realm belongs to (resolved from realm lookup)
        */
       gameServiceId: string;
-      /** @description Calendar template code in use (resolved from request or config) */
+      /** @description Calendar template code in use (resolved from request or config default) */
       calendarTemplateCode: string;
       /**
        * Format: float
-       * @description Initial game-seconds per real-second (resolved from request or config)
+       * @description Initial game-seconds per real-second (resolved from request or config default)
        */
       timeRatio: number;
-      /** @description Downtime handling policy (resolved from request or config) */
+      /** @description Downtime handling policy (resolved from request or config default) */
       downtimePolicy: components['schemas']['DowntimePolicy'];
       /**
        * Format: date-time
-       * @description Real-world timestamp of the realm epoch
+       * @description Real-world timestamp of the realm epoch (resolved from request or current time)
        */
       epoch: string;
-      /** @description Game year the clock started at */
+      /** @description Game year the clock started at (resolved from request or default 0) */
       startingYear: number;
     };
     /** @description Request to initiate a bond between seeds. */
@@ -26348,36 +26342,32 @@ export interface components {
     ListDocumentsRequest: {
       /** @description Documentation namespace to list documents from */
       namespace: string;
-      /** @description Filter to a specific category */
+      /** @description Filter to a specific category (null for all categories) */
       category?: components['schemas']['DocumentCategory'];
       /** @description Filter by tags (null to skip tag filtering) */
       tags?: string[] | null;
-      /**
-       * @description Whether documents must match all tags or any tag
-       * @default all
-       * @enum {string}
-       */
-      tagsMatch: 'all' | 'any';
+      /** @description Whether documents must match all tags or any tag */
+      tagsMatch?: components['schemas']['TagMatchMode'];
       /**
        * Format: date-time
-       * @description Filter to documents created after this timestamp
+       * @description Filter to documents created after this timestamp (null to skip)
        */
-      createdAfter?: string;
+      createdAfter?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents created before this timestamp
+       * @description Filter to documents created before this timestamp (null to skip)
        */
-      createdBefore?: string;
+      createdBefore?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents updated after this timestamp
+       * @description Filter to documents updated after this timestamp (null to skip)
        */
-      updatedAfter?: string;
+      updatedAfter?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents updated before this timestamp
+       * @description Filter to documents updated before this timestamp (null to skip)
        */
-      updatedBefore?: string;
+      updatedBefore?: string | null;
       /**
        * @description Return only document titles without summaries
        * @default false
@@ -26395,25 +26385,15 @@ export interface components {
       pageSize: number;
       /** @description Field to sort results by */
       sortBy?: components['schemas']['ListSortField'];
-      /**
-       * @description Sort order direction
-       * @default desc
-       * @enum {string}
-       */
-      sortOrder: 'asc' | 'desc';
+      /** @description Sort order direction */
+      sortOrder?: components['schemas']['SortOrder'];
     };
     /** @description Response containing a paginated list of documents */
     ListDocumentsResponse: {
-      /** @description The namespace that was listed */
-      namespace: string;
       /** @description List of documents in the namespace */
       documents: components['schemas']['DocumentSummary'][];
       /** @description Total number of documents matching filters */
       totalCount?: number;
-      /** @description Current page number */
-      page?: number;
-      /** @description Number of documents per page */
-      pageSize?: number;
       /** @description Total number of pages available */
       totalPages?: number;
     };
@@ -27035,10 +27015,6 @@ export interface components {
       items: components['schemas']['RealmClockSummary'][];
       /** @description Total matching realm clocks */
       totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Items per page */
-      pageSize: number;
     };
     /** @description Request to list realms with optional filtering and pagination */
     ListRealmsRequest: {
@@ -27700,7 +27676,7 @@ export interface components {
     };
     /** @description Request to list all versions of an asset with pagination */
     ListVersionsRequest: {
-      /** @description Asset identifier to list versions for */
+      /** @description Asset identifier to list versions for (SHA-256 hex string) */
       assetId: string;
       /**
        * @description Maximum number of versions to return
@@ -28223,6 +28199,21 @@ export interface components {
       nextCursor?: string | null;
     };
     /**
+     * @description Error codes for metabundle creation failures
+     * @enum {string}
+     */
+    MetabundleErrorCode:
+      | 'SOURCE_BUNDLE_NOT_FOUND'
+      | 'SOURCE_BUNDLE_NOT_READY'
+      | 'STANDALONE_ASSET_NOT_FOUND'
+      | 'STANDALONE_ASSET_NOT_READY'
+      | 'REALM_MISMATCH'
+      | 'ASSET_CONFLICT'
+      | 'STORAGE_ERROR'
+      | 'TIMEOUT'
+      | 'CANCELLED'
+      | 'INTERNAL_ERROR';
+    /**
      * @description Type of metadata to update
      * @enum {string}
      */
@@ -28620,11 +28611,11 @@ export interface components {
     /** @description Configuration for multipart uploads of large files */
     MultipartConfig: {
       /** @description Whether multipart upload is required for this file size */
-      required?: boolean;
+      required: boolean;
       /** @description Size of each part in bytes */
-      partSize?: number;
+      partSize: number;
       /** @description Maximum number of parts */
-      maxParts?: number;
+      maxParts: number;
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
     };
@@ -29876,8 +29867,6 @@ export interface components {
     };
     /** @description Bundles containing the requested asset */
     QueryBundlesByAssetResponse: {
-      /** @description The queried asset ID */
-      assetId: string;
       /** @description Bundles containing this asset */
       bundles: components['schemas']['BundleSummary'][];
       /** @description Total matching bundles */
@@ -29917,16 +29906,10 @@ export interface components {
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Filter by bundle type (source or metabundle) */
       bundleType?: components['schemas']['BundleType'] | null;
-      /**
-       * @description Field to sort by (default created_at)
-       * @enum {string|null}
-       */
-      sortField?: 'created_at' | 'updated_at' | 'name' | 'size' | null;
-      /**
-       * @description Sort order (default desc)
-       * @enum {string|null}
-       */
-      sortOrder?: 'asc' | 'desc' | null;
+      /** @description Field to sort by (default created_at) */
+      sortField?: components['schemas']['BundleSortField'] | null;
+      /** @description Sort order (default desc) */
+      sortOrder?: components['schemas']['SortOrder'] | null;
       /**
        * @description Maximum results to return (max 1000)
        * @default 100
@@ -30109,10 +30092,10 @@ export interface components {
       query: string;
       /**
        * Format: uuid
-       * @description Optional session ID for conversational context
+       * @description Optional session ID for conversational context (null if not tracking)
        */
-      sessionId?: string;
-      /** @description Filter results to a specific category */
+      sessionId?: string | null;
+      /** @description Filter results to a specific category (null for all categories) */
       category?: components['schemas']['DocumentCategory'];
       /**
        * @description Maximum number of results to return
@@ -30138,20 +30121,16 @@ export interface components {
     };
     /** @description Response containing search results and voice-friendly summaries */
     QueryDocumentationResponse: {
-      /** @description The namespace that was searched */
-      namespace: string;
-      /** @description The original query string */
-      query: string;
       /** @description List of matching documents */
       results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents */
-      totalResults?: number;
-      /** @description Concise spoken summary for voice AI */
-      voiceSummary?: string;
-      /** @description Suggested follow-up queries */
-      suggestedFollowups?: string[];
-      /** @description User-friendly message when no results found */
-      noResultsMessage?: string;
+      /** @description Total number of matching documents (null if count unavailable) */
+      totalResults?: number | null;
+      /** @description Concise spoken summary for voice AI (null if not generated) */
+      voiceSummary?: string | null;
+      /** @description Suggested follow-up queries (null if none available) */
+      suggestedFollowups?: string[] | null;
+      /** @description User-friendly message when no results found (null when results exist) */
+      noResultsMessage?: string | null;
     };
     /** @description Request to query unlocked entries */
     QueryEntriesRequest: {
@@ -31888,7 +31867,7 @@ export interface components {
       /** @description URL of the bound repository */
       repositoryUrl: string;
       /** @description Branch being synced */
-      branch?: string;
+      branch: string;
       /** @description Current status of the binding */
       status: components['schemas']['BindingStatus'];
       /** @description Whether automatic sync is enabled */
@@ -31901,13 +31880,13 @@ export interface components {
        * Format: date-time
        * @description Timestamp when the binding was created
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * @description Owner of this binding. NOT a session ID.
        *     Contains either an accountId (UUID format) for user-initiated bindings
        *     or a service name for service-initiated bindings.
        */
-      owner?: string;
+      owner: string;
     };
     /** @description Request to get current repository binding and sync status */
     RepositoryStatusRequest: {
@@ -31916,9 +31895,9 @@ export interface components {
     };
     /** @description Response containing binding configuration and recent sync information */
     RepositoryStatusResponse: {
-      /** @description Current binding configuration and status */
+      /** @description Current binding configuration and status (null if no binding exists) */
       binding?: components['schemas']['RepositoryBindingInfo'];
-      /** @description Information about the most recent sync */
+      /** @description Information about the most recent sync (null if no sync has occurred) */
       lastSync?: components['schemas']['SyncInfo'];
     };
     /** @description Request for full snapshot */
@@ -32211,15 +32190,8 @@ export interface components {
     };
     /** @description Result of bundle restoration */
     RestoreBundleResponse: {
-      /** @description Human-readable bundle identifier that was restored */
-      bundleId: string;
-      /** @description Current bundle status (should be "active") */
-      status: string;
-      /**
-       * Format: date-time
-       * @description When the bundle was restored
-       */
-      restoredAt: string;
+      /** @description Current bundle lifecycle status after restoration (should be "active") */
+      status: components['schemas']['BundleLifecycle'];
       /** @description Version number the bundle was restored from */
       restoredFromVersion: number;
     };
@@ -33145,12 +33117,8 @@ export interface components {
       maxResults: number;
       /** @description Fields to search within (null for default fields) */
       searchIn?: components['schemas']['SearchField'][] | null;
-      /**
-       * @description How to sort the search results
-       * @default relevance
-       * @enum {string}
-       */
-      sortBy: 'relevance' | 'recency' | 'alphabetical';
+      /** @description How to sort the search results */
+      sortBy?: components['schemas']['SearchSortBy'];
       /**
        * @description Whether to include full document content in results
        * @default false
@@ -33159,14 +33127,10 @@ export interface components {
     };
     /** @description Response containing keyword search results */
     SearchDocumentationResponse: {
-      /** @description The namespace that was searched */
-      namespace: string;
       /** @description List of matching documents */
       results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents */
-      totalResults?: number;
-      /** @description The original search term */
-      searchTerm?: string;
+      /** @description Total number of matching documents (null if count unavailable) */
+      totalResults?: number | null;
     };
     /**
      * @description Fields that can be searched within documents
@@ -33235,6 +33199,12 @@ export interface components {
       /** @description Total matches */
       total: number;
     };
+    /**
+     * @description How to sort search results
+     * @default relevance
+     * @enum {string}
+     */
+    SearchSortBy: 'relevance' | 'recency' | 'alphabetical';
     /** @description A season within a calendar template year */
     SeasonDefinition: {
       /** @description Season identifier code (e.g., "winter", "spring", "summer", "autumn") */
@@ -33757,25 +33727,13 @@ export interface components {
       /** @description Reason for the ratio change */
       reason: components['schemas']['TimeRatioChangeReason'];
     };
-    /** @description Confirmation of time ratio change */
+    /** @description Result of time ratio change. Caller already knows realmId, newRatio, and reason from request. */
     SetTimeRatioResponse: {
       /**
-       * Format: uuid
-       * @description Realm the ratio was changed for
-       */
-      realmId: string;
-      /**
        * Format: float
-       * @description Previous game-seconds per real-second
+       * @description Previous game-seconds per real-second before the change
        */
       previousRatio: number;
-      /**
-       * Format: float
-       * @description New game-seconds per real-second
-       */
-      newRatio: number;
-      /** @description Reason for the ratio change */
-      reason: components['schemas']['TimeRatioChangeReason'];
     };
     /**
      * @description Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
@@ -33889,10 +33847,10 @@ export interface components {
       };
     };
     /**
-     * @description How scores are sorted
+     * @description Sort direction for query results
      * @enum {string}
      */
-    SortOrder: 'descending' | 'ascending';
+    SortOrder: 'asc' | 'desc';
     /**
      * @description When item becomes bound to a character
      * @enum {string}
@@ -34615,13 +34573,13 @@ export interface components {
       namespace: string;
       /** @description Type of source to base suggestions on */
       suggestionSource: components['schemas']['SuggestionSource'];
-      /** @description The value for the suggestion source (document ID, slug, topic, or category) */
-      sourceValue?: string;
+      /** @description The value for the suggestion source (document ID, slug, topic, or category; null if source is context-based) */
+      sourceValue?: string | null;
       /**
        * Format: uuid
-       * @description Optional session ID for personalized suggestions
+       * @description Optional session ID for personalized suggestions (null if not tracking)
        */
-      sessionId?: string;
+      sessionId?: string | null;
       /**
        * @description Maximum number of suggestions to return
        * @default 5
@@ -34639,8 +34597,8 @@ export interface components {
       namespace: string;
       /** @description List of suggested related topics */
       suggestions: components['schemas']['TopicSuggestion'][];
-      /** @description Voice-friendly prompt for presenting suggestions */
-      voicePrompt?: string;
+      /** @description Voice-friendly prompt for presenting suggestions (null if not generated) */
+      voicePrompt?: string | null;
       /** @description Whether suggestions were influenced by session history */
       sessionInfluenced?: boolean;
     };
@@ -34653,23 +34611,23 @@ export interface components {
     SyncInfo: {
       /**
        * Format: uuid
-       * @description Unique identifier of the sync operation
+       * @description Unique identifier of the sync operation (null if no sync has occurred)
        */
-      syncId?: string;
-      /** @description Result status of the sync */
+      syncId?: string | null;
+      /** @description Result status of the sync (null if no sync has occurred) */
       status?: components['schemas']['SyncStatus'];
-      /** @description What triggered the sync */
+      /** @description What triggered the sync (null if no sync has occurred) */
       triggeredBy?: components['schemas']['SyncTrigger'];
       /**
        * Format: date-time
-       * @description Timestamp when sync started
+       * @description Timestamp when sync started (null if no sync has occurred)
        */
-      startedAt?: string;
+      startedAt?: string | null;
       /**
        * Format: date-time
-       * @description Timestamp when sync completed
+       * @description Timestamp when sync completed (null if sync is in progress or none occurred)
        */
-      completedAt?: string;
+      completedAt?: string | null;
       /** @description Git commit hash that was synced (null if sync failed or repo is empty) */
       commitHash?: string | null;
       /** @description Total documents processed in sync */
@@ -34719,6 +34677,12 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'manual' | 'scheduled';
+    /**
+     * @description Whether documents must match all specified tags or any tag
+     * @default all
+     * @enum {string}
+     */
+    TagMatchMode: 'all' | 'any';
     /**
      * @description Current lifecycle status of a scenario template
      * @enum {string}
@@ -34919,14 +34883,14 @@ export interface components {
        * @description Unique identifier of the suggested document
        */
       documentId: string;
-      /** @description URL-friendly slug of the suggested document */
-      slug?: string;
+      /** @description URL-friendly slug of the suggested document (null if unavailable) */
+      slug?: string | null;
       /** @description Title of the suggested document */
       title: string;
-      /** @description Category of the suggested document */
+      /** @description Category of the suggested document (null if uncategorized) */
       category?: components['schemas']['DocumentCategory'];
-      /** @description Explanation of why this document is relevant */
-      relevanceReason?: string;
+      /** @description Explanation of why this document is relevant (null if not computed) */
+      relevanceReason?: string | null;
     };
     /**
      * @description Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
@@ -35964,8 +35928,6 @@ export interface components {
     };
     /** @description Result of bundle update operation */
     UpdateBundleResponse: {
-      /** @description Human-readable bundle identifier that was updated */
-      bundleId: string;
       /** @description New version number after update */
       version: number;
       /** @description Version number before update */
@@ -36529,9 +36491,9 @@ export interface components {
       excludePatterns?: string[] | null;
       /** @description New directory-to-category mapping (null to keep unchanged) */
       categoryMapping?: {
-        [key: string]: string;
+        [key: string]: components['schemas']['DocumentCategory'];
       } | null;
-      /** @description New default category for unmapped documents */
+      /** @description New default category for unmapped documents (null to keep unchanged) */
       defaultCategory?: components['schemas']['DocumentCategory'];
       /** @description Enable or disable archive functionality */
       archiveEnabled?: boolean;
@@ -36758,8 +36720,8 @@ export interface components {
       size: number;
       /** @description MIME content type (e.g., image/png, model/gltf-binary) */
       contentType: string;
-      /** @description Optional metadata for asset categorization */
-      metadata?: components['schemas']['AssetMetadataInput'];
+      /** @description Optional metadata for asset categorization (null to skip) */
+      metadata?: components['schemas']['AssetMetadataInput'] | null;
     };
     /** @description Response containing pre-signed URL and configuration for uploading an asset */
     UploadResponse: {
@@ -36780,10 +36742,10 @@ export interface components {
       expiresAt: string;
       /** @description Configuration for multipart uploads if file size requires it */
       multipart?: components['schemas']['MultipartConfig'];
-      /** @description Headers the client must include when uploading to the pre-signed URL */
+      /** @description Headers the client must include when uploading to the pre-signed URL (null if no special headers needed) */
       requiredHeaders?: {
         [key: string]: string;
-      };
+      } | null;
     };
     /** @description Request to use an item instance by executing its behavior contract */
     UseItemRequest: {

@@ -158,7 +158,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.created when a relationshiptype is created
+      description: Published to relationship.type.created when a relationshiptype is created
       required:
       - eventName
       - eventId
@@ -174,8 +174,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.created
-          description: 'Event type identifier: relationship-type.created'
+          default: relationship.type.created
+          description: 'Event type identifier: relationship.type.created'
         relationshipTypeId: &id012
           type: string
           format: uuid
@@ -249,7 +249,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.updated when a relationshiptype is updated
+      description: Published to relationship.type.updated when a relationshiptype is updated
       required:
       - eventName
       - eventId
@@ -266,8 +266,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.updated
-          description: 'Event type identifier: relationship-type.updated'
+          default: relationship.type.updated
+          description: 'Event type identifier: relationship.type.updated'
         relationshipTypeId: *id012
         code: *id013
         name: *id014
@@ -295,7 +295,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.deleted when a relationshiptype is deleted
+      description: Published to relationship.type.deleted when a relationshiptype is deleted
       required:
       - eventName
       - eventId
@@ -311,8 +311,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.deleted
-          description: 'Event type identifier: relationship-type.deleted'
+          default: relationship.type.deleted
+          description: 'Event type identifier: relationship.type.deleted'
         relationshipTypeId: *id012
         code: *id013
         name: *id014

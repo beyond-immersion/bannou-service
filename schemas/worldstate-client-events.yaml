@@ -49,7 +49,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "worldstate.time_sync"
+          default: "worldstate.time-sync"
           description: Fixed event type identifier
         realmId:
           type: string

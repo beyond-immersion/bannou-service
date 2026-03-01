@@ -3146,7 +3146,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Assert.Equal(5, response.MaxPerOwner);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "seed-type.updated",
+            "seed.type.updated",
             It.Is<SeedTypeUpdatedEvent>(e =>
                 e.ChangedFields.Contains("displayName") && e.ChangedFields.Contains("maxPerOwner")),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -3417,7 +3417,7 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
             $"type:{_testGameServiceId}:guardian", It.IsAny<CancellationToken>()), Times.Once);
 
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "seed-type.deleted",
+            "seed.type.deleted",
             It.Is<SeedTypeDeletedEvent>(e => e.SeedTypeCode == "guardian"),
             It.IsAny<CancellationToken>()), Times.Once);
     }

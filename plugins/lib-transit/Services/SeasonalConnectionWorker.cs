@@ -375,7 +375,7 @@ public class SeasonalConnectionWorker : BackgroundService
     }
 
     /// <summary>
-    /// Publishes a transit-connection.status-changed event from the background worker context.
+    /// Publishes a transit.connection.status-changed event from the background worker context.
     /// Uses the same event model as the main service but publishes directly via IMessageBus
     /// since the worker operates in its own scope.
     /// </summary>
@@ -412,15 +412,15 @@ public class SeasonalConnectionWorker : BackgroundService
         };
 
         var published = await messageBus.TryPublishAsync(
-            "transit-connection.status-changed", eventModel, cancellationToken: cancellationToken);
+            "transit.connection.status-changed", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-connection.status-changed event for {ConnectionId}: {PreviousStatus} -> {NewStatus}",
+            _logger.LogDebug("Published transit.connection.status-changed event for {ConnectionId}: {PreviousStatus} -> {NewStatus}",
                 connection.Id, previousStatus, connection.Status);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-connection.status-changed event for {ConnectionId}",
+            _logger.LogWarning("Failed to publish transit.connection.status-changed event for {ConnectionId}",
                 connection.Id);
         }
     }

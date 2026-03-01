@@ -383,8 +383,7 @@ Archive System
 1. **Voice summary generation**: `GenerateVoiceSummary()` strips markdown and truncates the first paragraph. No actual NLG, TTS-optimization, or prosody considerations are applied - it is a simple text extraction.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-01:https://github.com/beyond-immersion/bannou-service/issues/520 -->
 
-2. **Archive bundle upload reliability**: If the Asset Service is unavailable during archive creation, the archive metadata is saved without a `BundleAssetId`. This means `RestoreDocumentationArchive` will return 404 for archives that were created without successful uploads.
-<!-- AUDIT:IN_PROGRESS:2026-03-01 -->
+2. ~~**Archive bundle upload reliability**~~: **FIXED** (2026-03-01) - `CreateArchiveResponse.bundleAssetId` was a non-nullable `Guid` (T26 sentinel value violation — defaulted to `Guid.Empty` when upload failed) and was never set in the response even on success. Fixed: schema updated to `nullable: true` (matching `ArchiveInfo`), and the response now sets `BundleAssetId = archive.BundleAssetId` so callers can detect whether the bundle was uploaded. Restore still returns 404 for archives without bundles — this is correct graceful degradation behavior.
 
 ---
 
@@ -450,4 +449,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-(none currently)
+- **Archive bundle upload reliability** (2026-03-01): Fixed T26 sentinel value violation in `CreateArchiveResponse.bundleAssetId` (non-nullable Guid → nullable) and populated field in response.

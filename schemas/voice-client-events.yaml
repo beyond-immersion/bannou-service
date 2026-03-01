@@ -50,7 +50,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.room_state"
+          default: "voice.room-state"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -107,7 +107,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.peer_joined"
+          default: "voice.peer-joined"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -137,7 +137,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.peer_left"
+          default: "voice.peer-left"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -173,7 +173,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.peer_updated"
+          default: "voice.peer-updated"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -208,7 +208,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.tier_upgrade"
+          default: "voice.tier-upgrade"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -255,7 +255,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.room_closed"
+          default: "voice.room-closed"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -286,7 +286,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.broadcast_consent_request"
+          default: "voice.broadcast-consent-request"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -320,7 +320,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.broadcast_consent_update"
+          default: "voice.broadcast-consent-update"
           description: Fixed event type identifier
         roomId:
           type: string

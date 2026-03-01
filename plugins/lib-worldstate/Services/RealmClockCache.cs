@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace BeyondImmersion.BannouService.Worldstate;
 

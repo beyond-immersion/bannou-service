@@ -675,7 +675,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = payloadSummary
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized_publish";
+        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
         await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
     }
 
@@ -2201,7 +2201,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? payload.ObjectType : null
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized_publish";
+        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
         await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
     }
 
@@ -2437,7 +2437,7 @@ public partial class MappingService : IMappingService
             PayloadSummary = alertConfig?.IncludePayloadSummary == true ? $"ingest:{evt.Payloads.Count} payloads" : null
         };
 
-        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized_publish";
+        var topic = alertConfig?.AlertTopic ?? "map.warnings.unauthorized-publish";
         await _messageBus.TryPublishAsync(topic, warning, cancellationToken: cancellationToken);
     }
 

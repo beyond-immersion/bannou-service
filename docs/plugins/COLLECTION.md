@@ -89,11 +89,11 @@ Used for template update/delete, collection delete, grant, metadata update, and 
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `collection-entry-template.created` | `CollectionEntryTemplateCreatedEvent` | Entry template created (single or via seed) |
-| `collection-entry-template.updated` | `CollectionEntryTemplateUpdatedEvent` | Entry template fields updated |
-| `collection-entry-template.deleted` | `CollectionEntryTemplateDeletedEvent` | Entry template deleted |
-| `collection-area-content-config.created` | `CollectionAreaContentConfigCreatedEvent` | Area content config created via SetAreaContentConfigAsync |
-| `collection-area-content-config.updated` | `CollectionAreaContentConfigUpdatedEvent` | Area content config updated via SetAreaContentConfigAsync (with `changedFields` list) |
+| `collection.entry-template.created` | `CollectionEntryTemplateCreatedEvent` | Entry template created (single or via seed) |
+| `collection.entry-template.updated` | `CollectionEntryTemplateUpdatedEvent` | Entry template fields updated |
+| `collection.entry-template.deleted` | `CollectionEntryTemplateDeletedEvent` | Entry template deleted |
+| `collection.area-content-config.created` | `CollectionAreaContentConfigCreatedEvent` | Area content config created via SetAreaContentConfigAsync |
+| `collection.area-content-config.updated` | `CollectionAreaContentConfigUpdatedEvent` | Area content config updated via SetAreaContentConfigAsync (with `changedFields` list) |
 | `collection.created` | `CollectionCreatedEvent` | Collection instance created (explicit or auto-create during grant) |
 | `collection.deleted` | `CollectionDeletedEvent` | Collection instance deleted (explicit via DeleteCollectionAsync or cascading via owner cleanup) |
 | `collection.entry-unlocked` | `CollectionEntryUnlockedEvent` | Entry successfully granted/unlocked in a collection |

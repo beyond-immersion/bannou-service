@@ -268,7 +268,7 @@ public partial class TransitService : ITransitService
 
         await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        // Publish transit-mode.registered event
+        // Publish transit.mode.registered event
         await PublishModeRegisteredEventAsync(model, cancellationToken);
 
         _logger.LogInformation("Registered transit mode {ModeCode}", body.Code);
@@ -385,7 +385,7 @@ public partial class TransitService : ITransitService
                 return (StatusCodes.Conflict, null);
             }
 
-            // Publish transit-mode.updated event with changedFields
+            // Publish transit.mode.updated event with changedFields
             await PublishModeUpdatedEventAsync(model, changedFields, cancellationToken);
 
             _logger.LogInformation("Updated transit mode {ModeCode}, changed fields: {ChangedFields}",
@@ -440,7 +440,7 @@ public partial class TransitService : ITransitService
             return (StatusCodes.Conflict, null);
         }
 
-        // Publish transit-mode.updated event with deprecation fields
+        // Publish transit.mode.updated event with deprecation fields
         await PublishModeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
         _logger.LogInformation("Deprecated transit mode {ModeCode}", body.Code);
@@ -487,7 +487,7 @@ public partial class TransitService : ITransitService
             return (StatusCodes.Conflict, null);
         }
 
-        // Publish transit-mode.updated event with deprecation fields cleared
+        // Publish transit.mode.updated event with deprecation fields cleared
         await PublishModeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
 
         _logger.LogInformation("Undeprecated transit mode {ModeCode}", body.Code);
@@ -573,7 +573,7 @@ public partial class TransitService : ITransitService
         // Delete from store (lock ensures no concurrent modification)
         await _modeStore.DeleteAsync(key, cancellationToken);
 
-        // Publish transit-mode.deleted event
+        // Publish transit.mode.deleted event
         await PublishModeDeletedEventAsync(model.Code, model.DeprecationReason ?? "deprecated_mode_deleted", cancellationToken);
 
         _logger.LogInformation("Deleted transit mode {ModeCode}", body.Code);
@@ -972,7 +972,7 @@ public partial class TransitService : ITransitService
     #region Mode Event Publishing
 
     /// <summary>
-    /// Publishes a transit-mode.registered event with full entity data.
+    /// Publishes a transit.mode.registered event with full entity data.
     /// </summary>
     private async Task PublishModeRegisteredEventAsync(TransitModeModel model, CancellationToken cancellationToken)
     {
@@ -1015,19 +1015,19 @@ public partial class TransitService : ITransitService
             ModifiedAt = model.ModifiedAt
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-mode.registered", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.mode.registered", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-mode.registered event for {ModeCode}", model.Code);
+            _logger.LogDebug("Published transit.mode.registered event for {ModeCode}", model.Code);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-mode.registered event for {ModeCode}", model.Code);
+            _logger.LogWarning("Failed to publish transit.mode.registered event for {ModeCode}", model.Code);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-mode.updated event with current state and changed fields.
+    /// Publishes a transit.mode.updated event with current state and changed fields.
     /// Used for property updates, deprecation, and undeprecation.
     /// </summary>
     private async Task PublishModeUpdatedEventAsync(TransitModeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
@@ -1043,20 +1043,20 @@ public partial class TransitService : ITransitService
             ChangedFields = changedFieldsList
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-mode.updated", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.mode.updated", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
+            _logger.LogDebug("Published transit.mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
                 model.Code, string.Join(", ", changedFieldsList));
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-mode.updated event for {ModeCode}", model.Code);
+            _logger.LogWarning("Failed to publish transit.mode.updated event for {ModeCode}", model.Code);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-mode.deleted event after mode removal.
+    /// Publishes a transit.mode.deleted event after mode removal.
     /// </summary>
     private async Task PublishModeDeletedEventAsync(string code, string deletedReason, CancellationToken cancellationToken)
     {
@@ -1070,14 +1070,14 @@ public partial class TransitService : ITransitService
             DeletedReason = deletedReason
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-mode.deleted", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.mode.deleted", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-mode.deleted event for {ModeCode}", code);
+            _logger.LogDebug("Published transit.mode.deleted event for {ModeCode}", code);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-mode.deleted event for {ModeCode}", code);
+            _logger.LogWarning("Failed to publish transit.mode.deleted event for {ModeCode}", code);
         }
     }
 
@@ -1261,7 +1261,7 @@ public partial class TransitService : ITransitService
             : new[] { fromRealmId };
         await _graphCache.InvalidateAsync(affectedRealms, cancellationToken);
 
-        // Publish transit-connection.created event (x-lifecycle)
+        // Publish transit.connection.created event (x-lifecycle)
         await PublishConnectionCreatedEventAsync(model, cancellationToken);
 
         _logger.LogInformation("Created connection {ConnectionId} from {FromLocationId} to {ToLocationId} in realm {FromRealmId}",
@@ -1456,7 +1456,7 @@ public partial class TransitService : ITransitService
                 : new[] { model.FromRealmId };
             await _graphCache.InvalidateAsync(affectedRealms, cancellationToken);
 
-            // Publish transit-connection.updated event with changedFields
+            // Publish transit.connection.updated event with changedFields
             await PublishConnectionUpdatedEventAsync(model, changedFields, cancellationToken);
 
             _logger.LogInformation("Updated connection {ConnectionId}, changed fields: {ChangedFields}",
@@ -1546,7 +1546,7 @@ public partial class TransitService : ITransitService
             : new[] { model.FromRealmId };
         await _graphCache.InvalidateAsync(affectedRealms, cancellationToken);
 
-        // Publish transit-connection.status-changed event
+        // Publish transit.connection.status-changed event
         await PublishConnectionStatusChangedEventAsync(model, previousStatus, body.ForceUpdate, cancellationToken);
 
         // Client event via IEntitySessionRegistry: TransitConnectionStatusChanged to realm sessions
@@ -1560,7 +1560,7 @@ public partial class TransitService : ITransitService
 
     /// <summary>
     /// Deletes a connection. Rejects if active journeys reference this connection.
-    /// Invalidates graph cache and publishes transit-connection.deleted event.
+    /// Invalidates graph cache and publishes transit.connection.deleted event.
     /// </summary>
     /// <param name="body">Request containing the connection ID to delete.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -1583,8 +1583,8 @@ public partial class TransitService : ITransitService
         // Check no active journeys reference this connection in the MySQL archive store
         var activeJourneys = await _journeyArchiveStore.QueryAsync(
             j => j.Legs.Any(l => l.ConnectionId == body.ConnectionId) &&
-                 (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit ||
-                  j.Status == JourneyStatus.AtWaypoint || j.Status == JourneyStatus.Interrupted),
+                (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.InTransit ||
+                j.Status == JourneyStatus.AtWaypoint || j.Status == JourneyStatus.Interrupted),
             cancellationToken);
 
         if (activeJourneys.Count > 0)
@@ -1611,7 +1611,7 @@ public partial class TransitService : ITransitService
             : new[] { model.FromRealmId };
         await _graphCache.InvalidateAsync(affectedRealms, cancellationToken);
 
-        // Publish transit-connection.deleted event (x-lifecycle)
+        // Publish transit.connection.deleted event (x-lifecycle)
         await PublishConnectionDeletedEventAsync(model, "deleted_via_api", cancellationToken);
 
         _logger.LogInformation("Deleted connection {ConnectionId} from {FromLocationId} to {ToLocationId}",
@@ -2223,7 +2223,7 @@ public partial class TransitService : ITransitService
             // Non-fatal for event publishing; null will be coalesced in event publisher
         }
 
-        // Publish transit-journey.departed event
+        // Publish transit.journey.departed event
         await PublishJourneyDepartedEventAsync(journey, originRealmId, destinationRealmId, cancellationToken);
 
         // Publish client event
@@ -2312,7 +2312,7 @@ public partial class TransitService : ITransitService
         // Resolve realm for event (nullable per IMPLEMENTATION TENETS -- no sentinel values)
         var realmId = await ResolveLocationRealmIdAsync(journey.CurrentLocationId, cancellationToken);
 
-        // Publish transit-journey.resumed event
+        // Publish transit.journey.resumed event
         await PublishJourneyResumedEventAsync(journey, realmId, cancellationToken);
 
         // Publish client event
@@ -2429,7 +2429,7 @@ public partial class TransitService : ITransitService
             var originRealmId = await ResolveLocationRealmIdAsync(journey.OriginLocationId, cancellationToken);
             var destRealmId = await ResolveLocationRealmIdAsync(journey.DestinationLocationId, cancellationToken);
 
-            // Publish transit-journey.arrived event
+            // Publish transit.journey.arrived event
             await PublishJourneyArrivedEventAsync(journey, originRealmId, destRealmId, cancellationToken);
 
             // Publish client event
@@ -2455,7 +2455,7 @@ public partial class TransitService : ITransitService
             var fromRealmId = await ResolveLocationRealmIdAsync(completedLeg.FromLocationId, cancellationToken);
             var crossedRealmBoundary = fromRealmId != waypointRealmId;
 
-            // Publish transit-journey.waypoint-reached event
+            // Publish transit.journey.waypoint-reached event
             await PublishJourneyWaypointReachedEventAsync(
                 journey, completedLeg.ToLocationId, nextLeg.ToLocationId,
                 journey.CurrentLegIndex - 1, completedLeg.ConnectionId,
@@ -2608,7 +2608,7 @@ public partial class TransitService : ITransitService
         var originRealmId = await ResolveLocationRealmIdAsync(journey.OriginLocationId, cancellationToken);
         var destRealmId = await ResolveLocationRealmIdAsync(journey.DestinationLocationId, cancellationToken);
 
-        // Publish transit-journey.arrived event
+        // Publish transit.journey.arrived event
         await PublishJourneyArrivedEventAsync(journey, originRealmId, destRealmId, cancellationToken);
 
         // Publish client event
@@ -2685,7 +2685,7 @@ public partial class TransitService : ITransitService
         // Resolve realm for event
         var realmId = await ResolveLocationRealmIdAsync(journey.CurrentLocationId, cancellationToken);
 
-        // Publish transit-journey.interrupted event
+        // Publish transit.journey.interrupted event
         await PublishJourneyInterruptedEventAsync(journey, realmId, cancellationToken);
 
         // Publish client event
@@ -2757,7 +2757,7 @@ public partial class TransitService : ITransitService
         var destRealmId = await ResolveLocationRealmIdAsync(journey.DestinationLocationId, cancellationToken);
         var abandonedAtRealmId = await ResolveLocationRealmIdAsync(journey.CurrentLocationId, cancellationToken);
 
-        // Publish transit-journey.abandoned event
+        // Publish transit.journey.abandoned event
         await PublishJourneyAbandonedEventAsync(journey, originRealmId, destRealmId, abandonedAtRealmId, cancellationToken);
 
         // Publish client event
@@ -2838,7 +2838,7 @@ public partial class TransitService : ITransitService
 
         var archiveMatches = await _journeyArchiveStore.QueryAsync(
             j => j.Legs.Any(l => l.ConnectionId == filterConnectionId) &&
-                 (!filterStatus.HasValue || j.Status == filterStatus.Value),
+                (!filterStatus.HasValue || j.Status == filterStatus.Value),
             cancellationToken);
 
         var journeys = archiveMatches
@@ -3275,7 +3275,7 @@ public partial class TransitService : ITransitService
     #region Journey Event Publishing
 
     /// <summary>
-    /// Publishes a transit-journey.departed event.
+    /// Publishes a transit.journey.departed event.
     /// </summary>
     private async Task PublishJourneyDepartedEventAsync(
         TransitJourneyModel journey,
@@ -3302,19 +3302,19 @@ public partial class TransitService : ITransitService
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.departed", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.departed", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.departed event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.departed event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.departed event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.departed event for journey {JourneyId}", journey.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-journey.waypoint-reached event.
+    /// Publishes a transit.journey.waypoint-reached event.
     /// </summary>
     private async Task PublishJourneyWaypointReachedEventAsync(
         TransitJourneyModel journey,
@@ -3344,19 +3344,19 @@ public partial class TransitService : ITransitService
             CrossedRealmBoundary = crossedRealmBoundary
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.waypoint-reached", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.waypoint-reached", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.waypoint-reached event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.waypoint-reached event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.waypoint-reached event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.waypoint-reached event for journey {JourneyId}", journey.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-journey.arrived event.
+    /// Publishes a transit.journey.arrived event.
     /// </summary>
     private async Task PublishJourneyArrivedEventAsync(
         TransitJourneyModel journey,
@@ -3390,19 +3390,19 @@ public partial class TransitService : ITransitService
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.arrived", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.arrived", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.arrived event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.arrived event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.arrived event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.arrived event for journey {JourneyId}", journey.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-journey.interrupted event.
+    /// Publishes a transit.journey.interrupted event.
     /// </summary>
     private async Task PublishJourneyInterruptedEventAsync(
         TransitJourneyModel journey,
@@ -3424,19 +3424,19 @@ public partial class TransitService : ITransitService
             RealmId = realmId
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.interrupted", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.interrupted", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.interrupted event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.interrupted event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.interrupted event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.interrupted event for journey {JourneyId}", journey.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-journey.resumed event.
+    /// Publishes a transit.journey.resumed event.
     /// </summary>
     private async Task PublishJourneyResumedEventAsync(
         TransitJourneyModel journey,
@@ -3464,19 +3464,19 @@ public partial class TransitService : ITransitService
             RealmId = realmId
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.resumed", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.resumed", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.resumed event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.resumed event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.resumed event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.resumed event for journey {JourneyId}", journey.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-journey.abandoned event.
+    /// Publishes a transit.journey.abandoned event.
     /// </summary>
     private async Task PublishJourneyAbandonedEventAsync(
         TransitJourneyModel journey,
@@ -3506,14 +3506,14 @@ public partial class TransitService : ITransitService
             CrossRealm = originRealmId.HasValue && destinationRealmId.HasValue && originRealmId != destinationRealmId
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-journey.abandoned", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.journey.abandoned", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-journey.abandoned event for journey {JourneyId}", journey.Id);
+            _logger.LogDebug("Published transit.journey.abandoned event for journey {JourneyId}", journey.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-journey.abandoned event for journey {JourneyId}", journey.Id);
+            _logger.LogWarning("Failed to publish transit.journey.abandoned event for journey {JourneyId}", journey.Id);
         }
     }
 
@@ -3774,7 +3774,7 @@ public partial class TransitService : ITransitService
         // Update Redis discovery cache for fast route calculation filtering
         await UpdateDiscoveryCacheAsync(body.EntityId, body.ConnectionId, cancellationToken);
 
-        // Publish transit-discovery.revealed service bus event
+        // Publish transit.discovery.revealed service bus event
         await PublishDiscoveryRevealedEventAsync(discoveryModel, connection, cancellationToken);
 
         // Publish client event to the discovering entity's session(s).
@@ -3916,13 +3916,7 @@ public partial class TransitService : ITransitService
         }
 
         var cacheKey = BuildDiscoveryCacheKey(entityId);
-        var cachedSet = await _discoveryCacheStore.GetAsync(cacheKey, cancellationToken: cancellationToken);
-
-        if (cachedSet == null)
-        {
-            cachedSet = new HashSet<Guid>();
-        }
-
+        var cachedSet = await _discoveryCacheStore.GetAsync(cacheKey, cancellationToken: cancellationToken) ?? new HashSet<Guid>();
         cachedSet.Add(connectionId);
 
         await _discoveryCacheStore.SaveAsync(cacheKey, cachedSet, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
@@ -4179,7 +4173,7 @@ public partial class TransitService : ITransitService
     #region Connection Event Publishing
 
     /// <summary>
-    /// Publishes a transit-connection.created lifecycle event with full entity data.
+    /// Publishes a transit.connection.created lifecycle event with full entity data.
     /// </summary>
     /// <param name="model">The newly created connection model.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -4219,19 +4213,19 @@ public partial class TransitService : ITransitService
             ModifiedAt = model.ModifiedAt
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-connection.created", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.connection.created", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-connection.created event for {ConnectionId}", model.Id);
+            _logger.LogDebug("Published transit.connection.created event for {ConnectionId}", model.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-connection.created event for {ConnectionId}", model.Id);
+            _logger.LogWarning("Failed to publish transit.connection.created event for {ConnectionId}", model.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-connection.updated lifecycle event with current state and changed fields.
+    /// Publishes a transit.connection.updated lifecycle event with current state and changed fields.
     /// </summary>
     /// <param name="model">The updated connection model.</param>
     /// <param name="changedFields">List of field names that changed.</param>
@@ -4277,20 +4271,20 @@ public partial class TransitService : ITransitService
             ChangedFields = changedFieldsList
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-connection.updated", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.connection.updated", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-connection.updated event for {ConnectionId} with changed fields: {ChangedFields}",
+            _logger.LogDebug("Published transit.connection.updated event for {ConnectionId} with changed fields: {ChangedFields}",
                 model.Id, string.Join(", ", changedFieldsList));
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-connection.updated event for {ConnectionId}", model.Id);
+            _logger.LogWarning("Failed to publish transit.connection.updated event for {ConnectionId}", model.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-connection.deleted lifecycle event with full entity data and deletion reason.
+    /// Publishes a transit.connection.deleted lifecycle event with full entity data and deletion reason.
     /// </summary>
     /// <param name="model">The deleted connection model (state before deletion).</param>
     /// <param name="deletedReason">Reason for deletion.</param>
@@ -4335,19 +4329,19 @@ public partial class TransitService : ITransitService
             DeletedReason = deletedReason
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-connection.deleted", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.connection.deleted", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-connection.deleted event for {ConnectionId}", model.Id);
+            _logger.LogDebug("Published transit.connection.deleted event for {ConnectionId}", model.Id);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-connection.deleted event for {ConnectionId}", model.Id);
+            _logger.LogWarning("Failed to publish transit.connection.deleted event for {ConnectionId}", model.Id);
         }
     }
 
     /// <summary>
-    /// Publishes a transit-connection.status-changed custom event (not lifecycle).
+    /// Publishes a transit.connection.status-changed custom event (not lifecycle).
     /// This event is published on any status transition, including seasonal worker updates.
     /// </summary>
     /// <param name="model">The connection after status change.</param>
@@ -4378,15 +4372,15 @@ public partial class TransitService : ITransitService
             CrossRealm = model.CrossRealm
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-connection.status-changed", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.connection.status-changed", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-connection.status-changed event for {ConnectionId}: {PreviousStatus} -> {NewStatus}",
+            _logger.LogDebug("Published transit.connection.status-changed event for {ConnectionId}: {PreviousStatus} -> {NewStatus}",
                 model.Id, previousStatus, model.Status);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-connection.status-changed event for {ConnectionId}", model.Id);
+            _logger.LogWarning("Failed to publish transit.connection.status-changed event for {ConnectionId}", model.Id);
         }
     }
 
@@ -4445,7 +4439,7 @@ public partial class TransitService : ITransitService
     #region Discovery Event Publishing
 
     /// <summary>
-    /// Publishes a transit-discovery.revealed service bus event when a connection
+    /// Publishes a transit.discovery.revealed service bus event when a connection
     /// is revealed to an entity for the first time. Consumed by Collection (unlocks),
     /// Quest (objectives), and Analytics (aggregation).
     /// </summary>
@@ -4473,15 +4467,15 @@ public partial class TransitService : ITransitService
             CrossRealm = connection.CrossRealm
         };
 
-        var published = await _messageBus.TryPublishAsync("transit-discovery.revealed", eventModel, cancellationToken: cancellationToken);
+        var published = await _messageBus.TryPublishAsync("transit.discovery.revealed", eventModel, cancellationToken: cancellationToken);
         if (published)
         {
-            _logger.LogDebug("Published transit-discovery.revealed event for entity {EntityId} connection {ConnectionId}",
+            _logger.LogDebug("Published transit.discovery.revealed event for entity {EntityId} connection {ConnectionId}",
                 discovery.EntityId, discovery.ConnectionId);
         }
         else
         {
-            _logger.LogWarning("Failed to publish transit-discovery.revealed event for entity {EntityId} connection {ConnectionId}",
+            _logger.LogWarning("Failed to publish transit.discovery.revealed event for entity {EntityId} connection {ConnectionId}",
                 discovery.EntityId, discovery.ConnectionId);
         }
     }
@@ -4636,7 +4630,7 @@ public partial class TransitService : ITransitService
         // via rerouting), so use Interrupted rather than Abandoned per design spec.
         var affectedJourneys = await _journeyArchiveStore.QueryAsync(
             j => (j.OriginLocationId == deletedLocationId || j.DestinationLocationId == deletedLocationId) &&
-                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned && j.Status != JourneyStatus.Interrupted),
+                (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned && j.Status != JourneyStatus.Interrupted),
             cancellationToken);
 
         foreach (var archivedJourney in affectedJourneys)
@@ -4668,7 +4662,7 @@ public partial class TransitService : ITransitService
                 continue;
             }
 
-            // Publish transit-journey.interrupted event per FOUNDATION TENETS (all state changes publish events)
+            // Publish transit.journey.interrupted event per FOUNDATION TENETS (all state changes publish events)
             await PublishJourneyInterruptedEventAsync(
                 new TransitJourneyModel
                 {
@@ -4750,7 +4744,7 @@ public partial class TransitService : ITransitService
         // Character deletion permanently terminates journeys (Abandoned, not Interrupted).
         var entityJourneys = await _journeyArchiveStore.QueryAsync(
             j => j.EntityId == deletedCharacterId &&
-                 (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
+                (j.Status != JourneyStatus.Arrived && j.Status != JourneyStatus.Abandoned),
             cancellationToken);
 
         foreach (var archivedJourney in entityJourneys)
@@ -4782,7 +4776,7 @@ public partial class TransitService : ITransitService
                 continue;
             }
 
-            // Publish transit-journey.abandoned event per FOUNDATION TENETS (all state changes publish events)
+            // Publish transit.journey.abandoned event per FOUNDATION TENETS (all state changes publish events)
             // Archive model has a single RealmId (origin realm); use it for all realm fields
             await PublishJourneyAbandonedEventAsync(
                 new TransitJourneyModel
@@ -4924,8 +4918,8 @@ public partial class TransitService : ITransitService
             // Check if any leg references a connection touching the deleted location,
             // or if the journey's origin/destination is the deleted location
             var referencesLocation = journey.OriginLocationId == deletedLocationId ||
-                                     journey.DestinationLocationId == deletedLocationId ||
-                                     journey.Legs.Any(l => affectedConnectionIds.Contains(l.ConnectionId));
+                                    journey.DestinationLocationId == deletedLocationId ||
+                                    journey.Legs.Any(l => affectedConnectionIds.Contains(l.ConnectionId));
 
             if (!referencesLocation) continue;
 
@@ -4937,7 +4931,7 @@ public partial class TransitService : ITransitService
             var key = BuildJourneyKey(journeyId);
             await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
 
-            // Publish transit-journey.interrupted event per FOUNDATION TENETS
+            // Publish transit.journey.interrupted event per FOUNDATION TENETS
             await PublishJourneyInterruptedEventAsync(journey, journey.RealmId, cancellationToken);
 
             // Publish client event
@@ -4997,7 +4991,7 @@ public partial class TransitService : ITransitService
             var key = BuildJourneyKey(journeyId);
             await _journeyStore.SaveAsync(key, journey, cancellationToken: cancellationToken);
 
-            // Publish transit-journey.abandoned event per FOUNDATION TENETS
+            // Publish transit.journey.abandoned event per FOUNDATION TENETS
             await PublishJourneyAbandonedEventAsync(
                 journey, journey.RealmId, journey.RealmId, journey.RealmId, cancellationToken);
 

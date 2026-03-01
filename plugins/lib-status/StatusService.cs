@@ -239,7 +239,7 @@ public partial class StatusService : IStatusService
 
         // Publish lifecycle event
         await _messageBus.TryPublishAsync(
-            "status-template.created",
+            "status.template.created",
             new StatusTemplateCreatedEvent
             {
                 StatusTemplateId = templateId,
@@ -422,7 +422,7 @@ public partial class StatusService : IStatusService
 
         // Publish lifecycle event
         await _messageBus.TryPublishAsync(
-            "status-template.updated",
+            "status.template.updated",
             new StatusTemplateUpdatedEvent
             {
                 StatusTemplateId = template.StatusTemplateId,
@@ -523,7 +523,7 @@ public partial class StatusService : IStatusService
             await TemplateStore.SaveAsync(codeKey, model, cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync(
-                "status-template.created",
+                "status.template.created",
                 new StatusTemplateCreatedEvent
                 {
                     StatusTemplateId = templateId,
@@ -1136,7 +1136,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect_changed",
+                        EventName = "status.effect-changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1199,7 +1199,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect_changed",
+                        EventName = "status.effect-changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
                         ChangeType = StatusChangeType.Stacked,
@@ -1380,7 +1380,7 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(body.EntityType, body.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect_changed",
+                EventName = "status.effect-changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = now,
                 ChangeType = StatusChangeType.Granted,
@@ -1535,7 +1535,7 @@ public partial class StatusService : IStatusService
         await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
             new StatusEffectChangedClientEvent
             {
-                EventName = "status.effect_changed",
+                EventName = "status.effect-changed",
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 ChangeType = reason == StatusRemoveReason.Cleansed
@@ -1642,7 +1642,7 @@ public partial class StatusService : IStatusService
                 await PublishStatusClientEventAsync(instance.EntityType, instance.EntityId,
                     new StatusEffectChangedClientEvent
                     {
-                        EventName = "status.effect_changed",
+                        EventName = "status.effect-changed",
                         EventId = Guid.NewGuid(),
                         Timestamp = now,
                         ChangeType = StatusChangeType.Expired,

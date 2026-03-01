@@ -110,21 +110,21 @@ The Chat service (L1 AppFoundation) provides universal typed message channel pri
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `chat-room-type.created` | `ChatRoomTypeCreatedEvent` | Room type registered |
-| `chat-room-type.updated` | `ChatRoomTypeUpdatedEvent` | Room type updated or deprecated |
-| `chat-room.created` | `ChatRoomCreatedEvent` | Room created |
-| `chat-room.updated` | `ChatRoomUpdatedEvent` | Room updated |
-| `chat-room.deleted` | `ChatRoomDeletedEvent` | Room deleted (manual, idle cleanup, or contract action) |
-| `chat-participant.joined` | `ChatParticipantJoinedEvent` | Participant joins room |
-| `chat-participant.left` | `ChatParticipantLeftEvent` | Participant leaves room |
-| `chat-participant.kicked` | `ChatParticipantKickedEvent` | Participant kicked by moderator |
-| `chat-participant.banned` | `ChatParticipantBannedEvent` | Participant banned |
-| `chat-participant.muted` | `ChatParticipantMutedEvent` | Participant muted |
-| `chat-participant.unmuted` | `ChatParticipantUnmutedEvent` | Participant unmuted (explicit or lazy auto-unmute on send) |
-| `chat-participant.role-changed` | `ChatParticipantRoleChangedEvent` | Participant role changed (manual or automatic owner promotion on leave) |
-| `chat-participant.unbanned` | `ChatParticipantUnbannedEvent` | Participant unbanned |
-| `chat-message.sent` | `ChatMessageSentEvent` | Message sent (metadata only, no text content for privacy) |
-| `chat-message.deleted` | `ChatMessageDeletedEvent` | Message deleted |
+| `chat.room-type.created` | `ChatRoomTypeCreatedEvent` | Room type registered |
+| `chat.room-type.updated` | `ChatRoomTypeUpdatedEvent` | Room type updated or deprecated |
+| `chat.room.created` | `ChatRoomCreatedEvent` | Room created |
+| `chat.room.updated` | `ChatRoomUpdatedEvent` | Room updated |
+| `chat.room.deleted` | `ChatRoomDeletedEvent` | Room deleted (manual, idle cleanup, or contract action) |
+| `chat.participant.joined` | `ChatParticipantJoinedEvent` | Participant joins room |
+| `chat.participant.left` | `ChatParticipantLeftEvent` | Participant leaves room |
+| `chat.participant.kicked` | `ChatParticipantKickedEvent` | Participant kicked by moderator |
+| `chat.participant.banned` | `ChatParticipantBannedEvent` | Participant banned |
+| `chat.participant.muted` | `ChatParticipantMutedEvent` | Participant muted |
+| `chat.participant.unmuted` | `ChatParticipantUnmutedEvent` | Participant unmuted (explicit or lazy auto-unmute on send) |
+| `chat.participant.role-changed` | `ChatParticipantRoleChangedEvent` | Participant role changed (manual or automatic owner promotion on leave) |
+| `chat.participant.unbanned` | `ChatParticipantUnbannedEvent` | Participant unbanned |
+| `chat.message.sent` | `ChatMessageSentEvent` | Message sent (metadata only, no text content for privacy) |
+| `chat.message.deleted` | `ChatMessageDeletedEvent` | Message deleted |
 | `chat.room.locked` | `ChatRoomLockedEvent` | Room locked (contract-triggered) |
 | `chat.room.archived` | `ChatRoomArchivedEvent` | Room archived via Resource service |
 

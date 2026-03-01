@@ -29,10 +29,10 @@ Compliant properties include one of these phrases in their description:
 
 | Metric | Count |
 |--------|-------|
-| Total metadata bag properties | 169 |
+| Total metadata bag properties | 170 |
 | Compliant (has marker) | 148 |
-| Non-compliant (missing marker) | 21 |
-| Compliance rate | 88% |
+| Non-compliant (missing marker) | 22 |
+| Compliance rate | 87% |
 
 ## Properties by Service
 
@@ -219,13 +219,14 @@ Compliant properties include one of these phrases in their description:
 |-------------|----------|-------------|-----------|-------------|
 | `CreateBundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the bundle (null if none). No Bannou plugin reads specifi... |
 | `CreateMetabundleRequest` | `metadata` | `asset-api.yaml` | Y | Custom metadata for the metabundle. No Bannou plugin reads specific keys from... |
+| `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | **N** | Content-type-specific processing options (opaque pass-through to processor) |
 
 #### Documentation
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
 | `CreateDocumentRequest` | `metadata` | `documentation-api.yaml` | Y | Client-provided custom metadata. No Bannou plugin reads specific keys from th... |
-| `Document` | `metadata` | `documentation-api.yaml` | Y | Client-provided custom metadata. No Bannou plugin reads specific keys from th... |
+| `Document` | `metadata` | `documentation-api.yaml` | Y | Client-provided custom metadata (null if none set). No Bannou plugin reads sp... |
 | `ImportDocument` | `metadata` | `documentation-api.yaml` | Y | Client-provided custom metadata. No Bannou plugin reads specific keys from th... |
 | `UpdateDocumentRequest` | `metadata` | `documentation-api.yaml` | Y | Updated client-provided custom metadata (null to keep unchanged). No Bannou p... |
 
@@ -373,7 +374,7 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `AssetReadyEvent` | `metadata` | `asset-client-events.yaml` | Y | Asset metadata. No Bannou plugin reads specific keys from this field by conve... |
+| `AssetReadyClientEvent` | `metadata` | `asset-client-events.yaml` | Y | Asset metadata. No Bannou plugin reads specific keys from this field by conve... |
 
 #### Common
 
@@ -391,14 +392,14 @@ Compliant properties include one of these phrases in their description:
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `SystemErrorEvent` | `details` | `common-client-events.yaml` | Y | Additional error details (service-specific). No Bannou plugin reads specific ... |
+| `SystemErrorClientEvent` | `details` | `common-client-events.yaml` | Y | Additional error details (service-specific). No Bannou plugin reads specific ... |
 
 #### Game Session Client
 
 | Schema Type | Property | Schema File | Compliant | Description |
 |-------------|----------|-------------|-----------|-------------|
-| `GameActionResultEvent` | `resultData` | `game-session-client-events.yaml` | Y | Action-specific result data. No Bannou plugin reads specific keys from this f... |
-| `GameStateUpdatedEvent` | `stateDelta` | `game-session-client-events.yaml` | Y | Partial game state changes. No Bannou plugin reads specific keys from this fi... |
+| `GameActionResultClientEvent` | `resultData` | `game-session-client-events.yaml` | Y | Action-specific result data. No Bannou plugin reads specific keys from this f... |
+| `GameStateUpdatedClientEvent` | `stateDelta` | `game-session-client-events.yaml` | Y | Partial game state changes. No Bannou plugin reads specific keys from this fi... |
 | `PlayerInfo` | `characterData` | `game-session-client-events.yaml` | Y | Game-specific character data. No Bannou plugin reads specific keys from this ... |
 | `VisibleEffect` | `effectData` | `game-session-client-events.yaml` | Y | Effect-specific parameters. No Bannou plugin reads specific keys from this fi... |
 
@@ -450,6 +451,7 @@ or is it being misused as a cross-service data contract?
 | Achievement | `CreateAchievementDefinitionRequest` | `metadata` | `achievement-api.yaml` | Additional achievement-specific metadata |
 | Achievement | `AchievementDefinitionResponse` | `metadata` | `achievement-api.yaml` | Additional metadata |
 | Analytics | `IngestEventRequest` | `metadata` | `analytics-api.yaml` | Additional event-specific data |
+| Asset | `AssetProcessingJobDispatchedEvent` | `processingOptions` | `asset-events.yaml` | Content-type-specific processing options (opaque pass-through to processor) |
 | Behavior | `CharacterContext` | `worldState` | `behavior-api.yaml` | Relevant world state information |
 | Behavior | `GoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state as key-value pairs |
 | Behavior | `ValidateGoapPlanRequest` | `worldState` | `behavior-api.yaml` | Current world state |

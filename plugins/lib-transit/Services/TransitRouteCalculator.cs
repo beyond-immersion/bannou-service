@@ -117,9 +117,9 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
         // Discover realm IDs from connections touching origin or destination
         var connectionsByLocation = await _connectionStore.QueryAsync(
             c => c.FromLocationId == request.OriginLocationId
-                 || c.ToLocationId == request.OriginLocationId
-                 || c.FromLocationId == request.DestinationLocationId
-                 || c.ToLocationId == request.DestinationLocationId,
+                || c.ToLocationId == request.OriginLocationId
+                || c.FromLocationId == request.DestinationLocationId
+                || c.ToLocationId == request.DestinationLocationId,
             ct);
 
         if (connectionsByLocation.Count == 0)
@@ -682,7 +682,7 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
         if (cargoWeightKg > threshold && mode.CargoCapacityKg > threshold)
         {
             var penaltyRate = mode.CargoSpeedPenaltyRate
-                              ?? (decimal)_configuration.DefaultCargoSpeedPenaltyRate;
+                            ?? (decimal)_configuration.DefaultCargoSpeedPenaltyRate;
             var speedReduction = (cargoWeightKg - threshold) / (mode.CargoCapacityKg - threshold) * penaltyRate;
             // Cap reduction at the penalty rate (e.g., 0.3 = max 30% speed loss at full capacity)
             speedReduction = Math.Min(speedReduction, penaltyRate);
@@ -914,7 +914,7 @@ internal sealed class TransitRouteCalculator : ITransitRouteCalculator
                         if (currentSeasonIdx >= 0 && closingIdx >= 0 && seasonOrder.Count > 0)
                         {
                             closingSeasonIndex = (closingIdx - currentSeasonIdx + seasonOrder.Count)
-                                                 % seasonOrder.Count;
+                                                % seasonOrder.Count;
                             if (closingSeasonIndex == 0)
                             {
                                 closingSeasonIndex = seasonOrder.Count;

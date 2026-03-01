@@ -428,7 +428,7 @@ public class TransitServiceTests
         Assert.False(capturedModel.IsDeprecated);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var registeredEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-mode.registered");
+        var registeredEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.registered");
         Assert.NotNull(registeredEvent.Event);
         var typedEvent = Assert.IsType<TransitModeRegisteredEvent>(registeredEvent.Event);
         Assert.Equal("horseback", typedEvent.Code);
@@ -540,7 +540,7 @@ public class TransitServiceTests
         Assert.Equal("Horses extinct", capturedModel.DeprecationReason);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var updatedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-mode.updated");
+        var updatedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.updated");
         Assert.NotNull(updatedEvent.Event);
         var typedEvent = Assert.IsType<TransitModeUpdatedEvent>(updatedEvent.Event);
         Assert.Equal("horseback", typedEvent.Code);
@@ -707,7 +707,7 @@ public class TransitServiceTests
         _mockModeStore.Verify(s => s.DeleteAsync("mode:horseback", It.IsAny<CancellationToken>()), Times.Once());
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var deletedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-mode.deleted");
+        var deletedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.mode.deleted");
         Assert.NotNull(deletedEvent.Event);
         var typedEvent = Assert.IsType<TransitModeDeletedEvent>(deletedEvent.Event);
         Assert.Equal("horseback", typedEvent.Code);
@@ -929,9 +929,9 @@ public class TransitServiceTests
         Assert.Equal("Emergency closure", capturedModel.StatusReason);
 
         // Assert event published with captured data
-        var statusEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-connection.status-changed");
+        var statusEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.connection.status-changed");
         Assert.NotNull(statusEvent.Event);
-        var typedEvent = Assert.IsType<TransitConnectionStatusChangedEvent>(statusEvent.Event);
+        var typedEvent = Assert.IsType<TransitConnectionStatusChangedClientEvent>(statusEvent.Event);
         Assert.Equal(connectionId, typedEvent.ConnectionId);
     }
 
@@ -1169,7 +1169,7 @@ public class TransitServiceTests
         Assert.Equal(JourneyLegStatus.InProgress, capturedJourney.Legs[0].Status);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var departedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.departed");
+        var departedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.departed");
         Assert.NotNull(departedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyDepartedEvent>(departedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1252,7 +1252,7 @@ public class TransitServiceTests
         Assert.False(capturedJourney.Interruptions[0].Resolved);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var interruptedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.interrupted");
+        var interruptedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.interrupted");
         Assert.NotNull(interruptedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyInterruptedEvent>(interruptedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1317,7 +1317,7 @@ public class TransitServiceTests
         Assert.All(capturedJourney.Interruptions, i => Assert.True(i.Resolved));
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var resumedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.resumed");
+        var resumedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.resumed");
         Assert.NotNull(resumedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyResumedEvent>(resumedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1398,7 +1398,7 @@ public class TransitServiceTests
         Assert.Equal("Too dangerous", capturedJourney.StatusReason);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.abandoned");
+        var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.abandoned");
         Assert.NotNull(abandonedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyAbandonedEvent>(abandonedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1467,7 +1467,7 @@ public class TransitServiceTests
         Assert.Equal(TestLocationBId, capturedJourney.CurrentLocationId);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var arrivedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.arrived");
+        var arrivedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.arrived");
         Assert.NotNull(arrivedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyArrivedEvent>(arrivedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1523,7 +1523,7 @@ public class TransitServiceTests
         Assert.Equal("Route no longer viable", capturedJourney.StatusReason);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-journey.abandoned");
+        var abandonedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.journey.abandoned");
         Assert.NotNull(abandonedEvent.Event);
         var typedEvent = Assert.IsType<TransitJourneyAbandonedEvent>(abandonedEvent.Event);
         Assert.Equal(journeyId, typedEvent.JourneyId);
@@ -1589,9 +1589,9 @@ public class TransitServiceTests
         Assert.Equal("exploration", capturedDiscovery.Source);
 
         // Assert event published with captured data per TESTING-PATTERNS capture pattern
-        var revealedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit-discovery.revealed");
+        var revealedEvent = _capturedEvents.FirstOrDefault(e => e.Topic == "transit.discovery.revealed");
         Assert.NotNull(revealedEvent.Event);
-        var typedEvent = Assert.IsType<TransitDiscoveryRevealedEvent>(revealedEvent.Event);
+        var typedEvent = Assert.IsType<TransitDiscoveryRevealedClientEvent>(revealedEvent.Event);
         Assert.Equal(entityId, typedEvent.EntityId);
         Assert.Equal(connectionId, typedEvent.ConnectionId);
     }

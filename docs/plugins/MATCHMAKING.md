@@ -76,9 +76,9 @@ Every polymorphic "type" or "kind" field in the Matchmaking domain falls into on
 | `matchmaking.match-formed` | `MatchmakingMatchFormedEvent` | Match found from ticket pool |
 | `matchmaking.match-accepted` | `MatchmakingMatchAcceptedEvent` | All players accepted; game session created |
 | `matchmaking.match-declined` | `MatchmakingMatchDeclinedEvent` | Match cancelled due to decline |
-| `matchmaking.queue-created` | `MatchmakingQueueCreatedEvent` | New queue created |
-| `matchmaking.queue-updated` | `MatchmakingQueueUpdatedEvent` | Queue configuration changed |
-| `matchmaking.queue-deleted` | `MatchmakingQueueDeletedEvent` | Queue deleted (all tickets cancelled) |
+| `matchmaking.queue.created` | `MatchmakingQueueCreatedEvent` | New queue created |
+| `matchmaking.queue.updated` | `MatchmakingQueueUpdatedEvent` | Queue configuration changed |
+| `matchmaking.queue.deleted` | `MatchmakingQueueDeletedEvent` | Queue deleted (all tickets cancelled) |
 | `matchmaking.stats` | `MatchmakingStatsEvent` | Periodic stats snapshot (every `StatsPublishIntervalSeconds`) |
 
 ### Consumed Events

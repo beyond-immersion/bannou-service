@@ -6,7 +6,7 @@ info:
     Event models for Inventory service pub/sub via MassTransit.
     Lifecycle events are auto-generated from x-lifecycle definition.
 
-    **Topic Naming**: Uses kebab-case for multi-word entities (inventory-container, inventory-item).
+    **Topic Naming**: Uses dot-separated prefix for multi-word entities (inventory.container, inventory.item).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -18,44 +18,45 @@ info:
 
   x-event-publications:
     # Container lifecycle (auto-generated from x-lifecycle)
-    - topic: inventory-container.created
+    - topic: inventory.container.created
       event: InventoryContainerCreatedEvent
       description: Published when a container is created
-    - topic: inventory-container.updated
+    - topic: inventory.container.updated
       event: InventoryContainerUpdatedEvent
       description: Published when a container is updated
-    - topic: inventory-container.deleted
+    - topic: inventory.container.deleted
       event: InventoryContainerDeletedEvent
       description: Published when a container is deleted
 
     # Item placement events
-    - topic: inventory-item.placed
+    - topic: inventory.item.placed
       event: InventoryItemPlacedEvent
       description: Published when an item is placed in a container
-    - topic: inventory-item.removed
+    - topic: inventory.item.removed
       event: InventoryItemRemovedEvent
       description: Published when an item is removed from a container
-    - topic: inventory-item.moved
+    - topic: inventory.item.moved
       event: InventoryItemMovedEvent
       description: Published when an item moves between slots or containers
-    - topic: inventory-item.transferred
+    - topic: inventory.item.transferred
       event: InventoryItemTransferredEvent
       description: Published when item ownership transfers
 
     # Stack events
-    - topic: inventory-item.stacked
+    - topic: inventory.item.stacked
       event: InventoryItemStackedEvent
       description: Published when items are stacked together
-    - topic: inventory-item.split
+    - topic: inventory.item.split
       event: InventoryItemSplitEvent
       description: Published when a stack is split
 
     # Capacity events
-    - topic: inventory-container.full
+    - topic: inventory.container.full
       event: InventoryContainerFullEvent
       description: Published when container reaches capacity
 
 x-lifecycle:
+  topic_prefix: inventory
   InventoryContainer:
     model:
       containerId: { type: string, format: uuid, primary: true, required: true, description: "Container unique identifier" }

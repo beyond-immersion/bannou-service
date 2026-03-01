@@ -9,7 +9,7 @@ namespace BeyondImmersion.Bannou.Client.Voice;
 /// In scaled mode (6+ participants), audio flows through a central RTP server instead
 /// of peer-to-peer connections. The client:
 /// <list type="number">
-///   <item>Registers with Kamailio using SIP credentials from <see cref="VoiceTierUpgradeEvent"/></item>
+///   <item>Registers with Kamailio using SIP credentials from <see cref="VoiceTierUpgradeClientEvent"/></item>
 ///   <item>Sends audio to RTPEngine, which mixes all participants</item>
 ///   <item>Receives mixed audio from RTPEngine</item>
 /// </list>
@@ -67,8 +67,8 @@ public interface IScaledVoiceConnection : IDisposable
     /// </list>
     /// </para>
     /// </summary>
-    /// <param name="sipCredentials">SIP credentials from <see cref="VoiceTierUpgradeEvent"/>.</param>
-    /// <param name="rtpServerUri">RTP server URI from <see cref="VoiceTierUpgradeEvent"/>.</param>
+    /// <param name="sipCredentials">SIP credentials from <see cref="VoiceTierUpgradeClientEvent"/>.</param>
+    /// <param name="rtpServerUri">RTP server URI from <see cref="VoiceTierUpgradeClientEvent"/>.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>True if connection succeeded, false otherwise.</returns>
     Task<bool> ConnectAsync(
@@ -214,7 +214,7 @@ public sealed class SipConnectionCredentials
     /// <summary>
     /// Creates credentials from the generated SipCredentials event model.
     /// </summary>
-    /// <param name="credentials">SipCredentials from <see cref="VoiceTierUpgradeEvent"/>.</param>
+    /// <param name="credentials">SipCredentials from <see cref="VoiceTierUpgradeClientEvent"/>.</param>
     /// <param name="conferenceUri">Conference URI from room state.</param>
     public static SipConnectionCredentials FromEvent(
         SipCredentials credentials,

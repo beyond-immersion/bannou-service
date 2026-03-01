@@ -2036,8 +2036,8 @@ public partial class RelationshipService : IRelationshipService
             SourceDeleted = sourceDeleted
         };
 
-        await _messageBus.TryPublishAsync("relationship-type.merged", eventModel);
-        _logger.LogDebug("Published relationship-type.merged event for source {SourceId} into target {TargetId}", sourceTypeId, targetTypeId);
+        await _messageBus.TryPublishAsync("relationship.type.merged", eventModel);
+        _logger.LogDebug("Published relationship.type.merged event for source {SourceId} into target {TargetId}", sourceTypeId, targetTypeId);
     }
 
     #endregion
@@ -2509,8 +2509,8 @@ public partial class RelationshipService : IRelationshipService
             ParentTypeId = model.ParentTypeId
         };
 
-        await _messageBus.TryPublishAsync("relationship-type.created", eventModel);
-        _logger.LogDebug("Published relationship-type.created event for {TypeId}", model.RelationshipTypeId);
+        await _messageBus.TryPublishAsync("relationship.type.created", eventModel);
+        _logger.LogDebug("Published relationship.type.created event for {TypeId}", model.RelationshipTypeId);
     }
 
     private async Task PublishRelationshipTypeUpdatedEventAsync(RelationshipTypeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
@@ -2537,8 +2537,8 @@ public partial class RelationshipService : IRelationshipService
             ChangedFields = changedFields.ToList()
         };
 
-        await _messageBus.TryPublishAsync("relationship-type.updated", eventModel);
-        _logger.LogDebug("Published relationship-type.updated event for {TypeId} with changed fields: {ChangedFields}",
+        await _messageBus.TryPublishAsync("relationship.type.updated", eventModel);
+        _logger.LogDebug("Published relationship.type.updated event for {TypeId} with changed fields: {ChangedFields}",
             model.RelationshipTypeId, string.Join(", ", changedFields));
     }
 
@@ -2553,8 +2553,8 @@ public partial class RelationshipService : IRelationshipService
             Code = model.Code
         };
 
-        await _messageBus.TryPublishAsync("relationship-type.deleted", eventModel);
-        _logger.LogDebug("Published relationship-type.deleted event for {TypeId}", model.RelationshipTypeId);
+        await _messageBus.TryPublishAsync("relationship.type.deleted", eventModel);
+        _logger.LogDebug("Published relationship.type.deleted event for {TypeId}", model.RelationshipTypeId);
     }
 
     #endregion

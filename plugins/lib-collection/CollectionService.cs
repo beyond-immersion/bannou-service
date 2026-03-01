@@ -671,7 +671,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.created",
+            "collection.entry-template.created",
             new CollectionEntryTemplateCreatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -859,7 +859,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.updated",
+            "collection.entry-template.updated",
             new CollectionEntryTemplateUpdatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -935,7 +935,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.deleted",
+            "collection.entry-template.deleted",
             new CollectionEntryTemplateDeletedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -1044,7 +1044,7 @@ public partial class CollectionService : ICollectionService
                 cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync(
-                "collection-entry-template.created",
+                "collection.entry-template.created",
                 new CollectionEntryTemplateCreatedEvent
                 {
                     EntryTemplateId = template.EntryTemplateId,
@@ -2066,7 +2066,7 @@ public partial class CollectionService : ICollectionService
         if (isUpdate)
         {
             await _messageBus.TryPublishAsync(
-                "collection-area-content-config.updated",
+                "collection.area-content-config.updated",
                 new CollectionAreaContentConfigUpdatedEvent
                 {
                     AreaConfigId = config.AreaConfigId,
@@ -2083,7 +2083,7 @@ public partial class CollectionService : ICollectionService
         else
         {
             await _messageBus.TryPublishAsync(
-                "collection-area-content-config.created",
+                "collection.area-content-config.created",
                 new CollectionAreaContentConfigCreatedEvent
                 {
                     AreaConfigId = config.AreaConfigId,

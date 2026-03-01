@@ -440,7 +440,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerJoinedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerJoinedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -630,7 +630,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -642,7 +642,7 @@ public class VoiceServiceTests
         // Verify peer left event was published with sessionId (not accountId for privacy)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.IsAny<IEnumerable<string>>(),
-            It.Is<VoicePeerLeftEvent>(e => e.PeerSessionId == sessionId),
+            It.Is<VoicePeerLeftClientEvent>(e => e.PeerSessionId == sessionId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -703,7 +703,7 @@ public class VoiceServiceTests
             .ReturnsAsync(participants);
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceRoomClosedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceRoomClosedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         // Act
@@ -724,7 +724,7 @@ public class VoiceServiceTests
         // Verify room closed event was published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.IsAny<VoiceRoomClosedEvent>(),
+            It.IsAny<VoiceRoomClosedClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -833,7 +833,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration> { targetParticipant, senderParticipant });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerUpdatedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerUpdatedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -845,7 +845,7 @@ public class VoiceServiceTests
         // Verify peer updated event was published to the target session with sender info
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Contains(targetSessionId.ToString())),
-            It.Is<VoicePeerUpdatedEvent>(e =>
+            It.Is<VoicePeerUpdatedClientEvent>(e =>
                 e.Peer.PeerSessionId == senderSessionId &&
                 e.Peer.DisplayName == "SenderPlayer" &&
                 e.Peer.SdpOffer == "sdp-answer-content"),
@@ -1293,7 +1293,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new VoiceRoomData { RoomId = roomId, SessionId = Guid.NewGuid() });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -1381,7 +1381,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Room is broadcasting
@@ -1563,7 +1563,7 @@ public class VoiceServiceTests
         // Verify consent request client event was published to all participants
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.IsAny<VoiceBroadcastConsentRequestEvent>(),
+            It.IsAny<VoiceBroadcastConsentRequestClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -2263,7 +2263,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(2);
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceBroadcastConsentUpdateEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceBroadcastConsentUpdateClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         // Act
@@ -2296,7 +2296,7 @@ public class ParticipantEvictionWorkerTests
         // Assert - client event was published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.Is<VoiceBroadcastConsentUpdateEvent>(e =>
+            It.Is<VoiceBroadcastConsentUpdateClientEvent>(e =>
                 e.State == BroadcastConsentState.Inactive &&
                 e.RoomId == roomId),
             It.IsAny<CancellationToken>()), Times.Once);

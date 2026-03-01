@@ -197,13 +197,13 @@ This architecture enables:
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `item-template.created` | `ItemTemplateCreatedEvent` | Template created |
-| `item-template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (including deprecation — `changedFields` contains deprecation fields) |
-| `item-instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
-| `item-instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name changed |
-| `item-instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted |
-| `item-instance.bound` | `ItemInstanceBoundEvent` | Instance bound to character |
-| `item-instance.unbound` | `ItemInstanceUnboundEvent` | Instance binding removed |
+| `item.template.created` | `ItemTemplateCreatedEvent` | Template created |
+| `item.template.updated` | `ItemTemplateUpdatedEvent` | Template fields changed (including deprecation — `changedFields` contains deprecation fields) |
+| `item.instance.created` | `ItemInstanceCreatedEvent` | Instance created from template |
+| `item.instance.modified` | `ItemInstanceModifiedEvent` | Instance durability/stats/name changed |
+| `item.instance.destroyed` | `ItemInstanceDestroyedEvent` | Instance permanently deleted |
+| `item.instance.bound` | `ItemInstanceBoundEvent` | Instance bound to character |
+| `item.instance.unbound` | `ItemInstanceUnboundEvent` | Instance binding removed |
 | `item.used` | `ItemUsedEvent` | Batched item use successes (deduped by templateId+userId) |
 | `item.use-failed` | `ItemUseFailedEvent` | Batched item use failures (deduped by templateId+userId) |
 | `item.use-step-completed` | `ItemUseStepCompletedEvent` | Multi-step use milestone completed |
@@ -259,20 +259,20 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ### Template Operations (5 endpoints)
 
-- **CreateItemTemplate** (`/item/template/create`): Validates code uniqueness per game via code index. Applies config defaults for rarity, weight precision, and soulbound type when not specified in request. Immutable fields set at creation: code, gameId, quantityModel, scope. Populates template cache after save. Updates game index and code index (optimistic concurrency with retries). Publishes `item-template.created`.
+- **CreateItemTemplate** (`/item/template/create`): Validates code uniqueness per game via code index. Applies config defaults for rarity, weight precision, and soulbound type when not specified in request. Immutable fields set at creation: code, gameId, quantityModel, scope. Populates template cache after save. Updates game index and code index (optimistic concurrency with retries). Publishes `item.template.created`.
 - **GetItemTemplate** (`/item/template/get`): Dual lookup via `ResolveTemplateAsync`: by templateId (direct) or by code+gameId (index lookup). Uses `GetTemplateWithCacheAsync` (cache → persistent store → populate cache).
 - **ListItemTemplates** (`/item/template/list`): Loads game index, fetches each template. Filters: category, subcategory, tags, rarity, scope, realm, active status, search (name/description). Pagination via offset/limit.
-- **UpdateItemTemplate** (`/item/template/update`): Updates mutable fields only. Invalidates template cache after save. Publishes `item-template.updated`.
-- **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template deprecated with triple-field model (IsDeprecated, DeprecatedAt, DeprecationReason). Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item-template.updated` with deprecation changedFields.
+- **UpdateItemTemplate** (`/item/template/update`): Updates mutable fields only. Invalidates template cache after save. Publishes `item.template.updated`.
+- **DeprecateItemTemplate** (`/item/template/deprecate`): Marks template deprecated with triple-field model (IsDeprecated, DeprecatedAt, DeprecationReason). Optional `migrationTargetId` for upgrade paths. Existing instances remain valid. Invalidates cache. Publishes `item.template.updated` with deprecation changedFields.
 
 ### Instance Operations (8 endpoints)
 
-- **CreateItemInstance** (`/item/instance/create`): Validates template exists, is active, and is not deprecated (Category B instance creation guard). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item-instance.created`.
+- **CreateItemInstance** (`/item/instance/create`): Validates template exists, is active, and is not deprecated (Category B instance creation guard). Quantity enforcement: Unique→1, Discrete→floor(value) capped at MaxStackSize, Continuous→as-is. Populates instance cache. Updates container index and template index (optimistic concurrency). Publishes `item.instance.created`.
 - **GetItemInstance** (`/item/instance/get`): Cache read-through pattern. Returns instance with template reference.
-- **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item-instance.modified`.
-- **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item-instance.bound`.
-- **UnbindItemInstance** (`/item/instance/unbind`): Admin-only. Clears `BoundToId` and `BoundAt`. Returns BadRequest if item is not bound. Publishes `item-instance.unbound` with reason and previous character ID.
-- **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item-instance.destroyed`.
+- **ModifyItemInstance** (`/item/instance/modify`): Updates durability (delta), quantityDelta, customStats, customName, instanceMetadata, container/slot position. Container changes use distributed lock via `item-lock` store to prevent race conditions on index updates. Non-container changes skip locking. Invalidates instance cache. Publishes `item.instance.modified`.
+- **BindItemInstance** (`/item/instance/bind`): Binds instance to character ID. Checks `BindingAllowAdminOverride` for rebinding. Enriches event with template code (fallback: `missing:{templateId}` if template not found). Publishes `item.instance.bound`.
+- **UnbindItemInstance** (`/item/instance/unbind`): Admin-only. Clears `BoundToId` and `BoundAt`. Returns BadRequest if item is not bound. Publishes `item.instance.unbound` with reason and previous character ID.
+- **DestroyItemInstance** (`/item/instance/destroy`): Validates template's `Destroyable` flag unless reason="admin". Removes from container and template indexes. Invalidates cache. Publishes `item.instance.destroyed`.
 - **UseItem** (`/item/use`): Executes item behavior via Contract service delegation. See detailed flow below.
 - **UseItemStep** (`/item/use-step`): Multi-step item use via session contract bindings. Creates or continues a contract session: first call creates contract instance and stores `contractInstanceId` on the item; subsequent calls complete individual milestones. Uses distributed lock (`UseStepLockTimeoutSeconds`). Supports CanUse pre-validation and OnUseFailed handlers. Consumes item when all milestones complete (based on `ItemUseBehavior`). Publishes `item.use-step-completed` or `item.use-step-failed`.
 
@@ -312,8 +312,8 @@ UseItemAsync(instanceId, userId, userType, targetId?, targetType?, context?)
     │       └── 400 if milestone fails
     │
     ├── 7. Consume item (on success only)
-    │       ├── Quantity > 1 → Decrement by 1, publish item-instance.modified
-    │       └── Quantity ≤ 1 → Destroy instance, publish item-instance.destroyed
+    │       ├── Quantity > 1 → Decrement by 1, publish item.instance.modified
+    │       └── Quantity ≤ 1 → Destroy instance, publish item.instance.destroyed
     │
     ├── 8. Record for batched event publishing
     │       ├── Key: {templateId}:{userId}
@@ -573,7 +573,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Empty container/template index cleanup**: Fixed (2026-02-26). `RemoveFromListAsync` now deletes keys when lists become empty instead of persisting empty `[]` arrays.
 - **ListItemsByTemplate in-memory filtering**: Fixed (2026-02-26). `ListItemsByTemplateAsync` now uses `IQueryableStateStore.QueryAsync()` with LINQ predicate to push TemplateId+RealmId filtering to MySQL instead of loading all instances into memory.
 - **T29 `instanceMetadata` documentation cleanup**: Audited (2026-02-26). Code audit confirmed zero T29 violations — no plugin reads `instanceMetadata` keys by convention. Removed inaccurate claim about `instanceMetadata.affixes` violations (lib-affix stores data in its own state store per T29). Added AUDIT marker pointing to systemic #308.
-- **T31 deprecation lifecycle compliance** (2026-02-26): Three changes: (1) Deprecated event replaced with `item-template.updated` + `changedFields`, (2) `DeprecationReason` field added to schema and model, (3) `CreateItemInstanceAsync` now guards against deprecated templates. Quirks #7 and #8 resolved; quirk #9 reworded as standard Category B behavior.
+- **T31 deprecation lifecycle compliance** (2026-02-26): Three changes: (1) Deprecated event replaced with `item.template.updated` + `changedFields`, (2) `DeprecationReason` field added to schema and model, (3) `CreateItemInstanceAsync` now guards against deprecated templates. Quirks #7 and #8 resolved; quirk #9 reworded as standard Category B behavior.
 
 ### Related (Cross-Service)
 - **[#153](https://github.com/beyond-immersion/bannou-service/issues/153)**: Escrow Asset Transfer Integration Broken - Affects lib-escrow's ability to use `IItemClient` for item-backed exchanges.

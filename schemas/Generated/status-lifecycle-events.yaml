@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to status-template.created when a statustemplate is created
+      description: Published to status.template.created when a statustemplate is created
       required:
       - eventName
       - eventId
@@ -29,8 +29,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status-template.created
-          description: 'Event type identifier: status-template.created'
+          default: status.template.created
+          description: 'Event type identifier: status.template.created'
         statusTemplateId: &id001
           type: string
           format: uuid
@@ -71,7 +71,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to status-template.updated when a statustemplate is updated
+      description: Published to status.template.updated when a statustemplate is updated
       required:
       - eventName
       - eventId
@@ -89,8 +89,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status-template.updated
-          description: 'Event type identifier: status-template.updated'
+          default: status.template.updated
+          description: 'Event type identifier: status.template.updated'
         statusTemplateId: *id001
         gameServiceId: *id002
         code: *id003
@@ -111,7 +111,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to status-template.deleted when a statustemplate is deleted
+      description: Published to status.template.deleted when a statustemplate is deleted
       required:
       - eventName
       - eventId
@@ -128,8 +128,8 @@ components:
       properties:
         eventName:
           type: string
-          default: status-template.deleted
-          description: 'Event type identifier: status-template.deleted'
+          default: status.template.deleted
+          description: 'Event type identifier: status.template.deleted'
         statusTemplateId: *id001
         gameServiceId: *id002
         code: *id003

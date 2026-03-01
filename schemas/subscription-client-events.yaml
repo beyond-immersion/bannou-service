@@ -56,7 +56,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "subscription.status_changed"
+          default: "subscription.status-changed"
           description: Fixed event type identifier
         accountId:
           type: string

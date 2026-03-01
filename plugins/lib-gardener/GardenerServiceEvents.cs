@@ -150,7 +150,7 @@ public partial class GardenerService
     /// <remarks>
     /// Queries the entity session registry for sessions associated with the arriving
     /// entity (by entityType + entityId), then registers each session for the location.
-    /// This enables LocationPresenceChangedEvent delivery to players at that location.
+    /// This enables LocationPresenceChangedClientEvent delivery to players at that location.
     /// Gracefully degrades if no sessions are registered for the entity (e.g., NPC
     /// entities or entities without character-to-session bindings).
     /// </remarks>

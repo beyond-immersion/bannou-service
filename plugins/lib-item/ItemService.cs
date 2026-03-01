@@ -189,7 +189,7 @@ public partial class ItemService : IItemService
         await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
 
         // Publish lifecycle event
-        await _messageBus.TryPublishAsync("item-template.created", new ItemTemplateCreatedEvent
+        await _messageBus.TryPublishAsync("item.template.created", new ItemTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -337,7 +337,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after write
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
+        await _messageBus.TryPublishAsync("item.template.updated", new ItemTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -395,7 +395,7 @@ public partial class ItemService : IItemService
         await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
 
         // Per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
-        await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
+        await _messageBus.TryPublishAsync("item.template.updated", new ItemTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -513,7 +513,7 @@ public partial class ItemService : IItemService
         // Populate instance cache
         await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
 
-        await _messageBus.TryPublishAsync("item-instance.created", new ItemInstanceCreatedEvent
+        await _messageBus.TryPublishAsync("item.instance.created", new ItemInstanceCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -671,7 +671,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after write
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
+        await _messageBus.TryPublishAsync("item.instance.modified", new ItemInstanceModifiedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -734,7 +734,7 @@ public partial class ItemService : IItemService
 
         var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
 
-        await _messageBus.TryPublishAsync("item-instance.bound", new ItemInstanceBoundEvent
+        await _messageBus.TryPublishAsync("item.instance.bound", new ItemInstanceBoundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -793,7 +793,7 @@ public partial class ItemService : IItemService
 
         var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
 
-        await _messageBus.TryPublishAsync("item-instance.unbound", new ItemInstanceUnboundEvent
+        await _messageBus.TryPublishAsync("item.instance.unbound", new ItemInstanceUnboundEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -843,7 +843,7 @@ public partial class ItemService : IItemService
         // Invalidate cache after delete
         await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
 
-        await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
+        await _messageBus.TryPublishAsync("item.instance.destroyed", new ItemInstanceDestroyedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = now,
@@ -1746,7 +1746,7 @@ public partial class ItemService : IItemService
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish destroy event
-            await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
+            await _messageBus.TryPublishAsync("item.instance.destroyed", new ItemInstanceDestroyedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1771,7 +1771,7 @@ public partial class ItemService : IItemService
             await InvalidateInstanceCacheAsync(instanceId.ToString(), cancellationToken);
 
             // Publish modify event
-            await _messageBus.TryPublishAsync("item-instance.modified", new ItemInstanceModifiedEvent
+            await _messageBus.TryPublishAsync("item.instance.modified", new ItemInstanceModifiedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,

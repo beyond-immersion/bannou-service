@@ -53,7 +53,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.device_login"
+          default: "auth.device-login"
           description: Fixed event type identifier
         loginSessionId:
           type: string
@@ -84,7 +84,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.password_changed"
+          default: "auth.password-changed"
           description: Fixed event type identifier
 
     AuthMfaEnabledClientEvent:
@@ -103,7 +103,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.mfa_enabled"
+          default: "auth.mfa-enabled"
           description: Fixed event type identifier
 
     AuthMfaDisabledClientEvent:
@@ -123,7 +123,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.mfa_disabled"
+          default: "auth.mfa-disabled"
           description: Fixed event type identifier
         disabledBy:
           $ref: 'auth-api.yaml#/components/schemas/MfaDisabledBy'
@@ -151,7 +151,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.suspicious_login"
+          default: "auth.suspicious-login"
           description: Fixed event type identifier
         ipAddress:
           type: string
@@ -183,7 +183,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.external_account_linked"
+          default: "auth.external-account-linked"
           description: Fixed event type identifier
         provider:
           $ref: 'auth-api.yaml#/components/schemas/Provider'
@@ -207,7 +207,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "auth.session_terminated"
+          default: "auth.session-terminated"
           description: Fixed event type identifier
         terminatedSessionId:
           type: string

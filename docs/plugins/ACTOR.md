@@ -223,17 +223,17 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `actor-template.created` | `ActorTemplateCreatedEvent` | Template created |
-| `actor-template.updated` | `ActorTemplateUpdatedEvent` | Template modified |
-| `actor-template.deleted` | `ActorTemplateDeletedEvent` | Template deleted |
-| `actor-instance.created` | `ActorInstanceCreatedEvent` | Actor spawned |
-| `actor-instance.started` | `ActorInstanceStartedEvent` | ActorRunner started behavior loop |
-| `actor-instance.deleted` | `ActorInstanceDeletedEvent` | Actor stopped |
-| `actor-instance.state-persisted` | `ActorStatePersistedEvent` | Periodic state save |
+| `actor.template.created` | `ActorTemplateCreatedEvent` | Template created |
+| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Template modified |
+| `actor.template.deleted` | `ActorTemplateDeletedEvent` | Template deleted |
+| `actor.instance.created` | `ActorInstanceCreatedEvent` | Actor spawned |
+| `actor.instance.started` | `ActorInstanceStartedEvent` | ActorRunner started behavior loop |
+| `actor.instance.deleted` | `ActorInstanceDeletedEvent` | Actor stopped |
+| `actor.instance.state-persisted` | `ActorStatePersistedEvent` | Periodic state save |
 | `actor.encounter.started` | `ActorEncounterStartedEvent` | Encounter begun |
 | `actor.encounter.phase-changed` | `ActorEncounterPhaseChangedEvent` | Encounter phase transition |
 | `actor.encounter.ended` | `ActorEncounterEndedEvent` | Encounter finished |
-| `character.state_update` | `CharacterStateUpdateEvent` | Actor publishes feelings/goals to character |
+| `character.state-update` | `CharacterStateUpdateEvent` | Actor publishes feelings/goals to character |
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Pool node came online |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Pool node health update |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Pool node shutting down |
@@ -252,7 +252,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
 | `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
-| `actor-template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
+| `actor.template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
 
 **Note**: `behavior.updated` handling was moved to lib-puppetmaster (L4) per issue #380. Puppetmaster owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) no longer subscribes to any L4 events.
 
@@ -387,16 +387,16 @@ Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for
 
 ### Template Management (5 endpoints)
 
-- **CreateActorTemplate** (`/actor/template/create`): Creates template with category, behaviorRef, autoSpawn config, tick interval, auto-save interval. Updates template index (optimistic concurrency). Publishes `actor-template.created`.
+- **CreateActorTemplate** (`/actor/template/create`): Creates template with category, behaviorRef, autoSpawn config, tick interval, auto-save interval. Updates template index (optimistic concurrency). Publishes `actor.template.created`.
 - **GetActorTemplate** (`/actor/template/get`): Lookup by template ID or category. Category lookup enables convention-based actor spawning.
 - **ListActorTemplates** (`/actor/template/list`): Loads all template IDs from index, fetches each. Optional category filter.
-- **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor-template.updated`.
-- **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor-template.deleted`.
+- **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor.template.updated`.
+- **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor.template.deleted`.
 
 ### Actor Lifecycle (6 endpoints)
 
-- **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor-instance.created`.
-- **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor-instance.deleted`.
+- **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor.instance.created`.
+- **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor.instance.deleted`.
 - **GetActor** (`/actor/get`): Returns actor state snapshot. If actor not running but matches an auto-spawn template (regex pattern), automatically spawns it (instantiate-on-access pattern).
 - **BindActorCharacter** (`/actor/bind-character`): Binds a running actor to a character, enabling character brain variable providers without relaunching. In bannou mode: calls `BindCharacterAsync` on the local ActorRunner directly. In pool mode: updates the actor assignment record with the new characterId, then publishes `BindActorCharacterCommand` to the assigned node's command topic. The ActorRunner sets the `CharacterId`, establishes a per-character RabbitMQ perception subscription, and publishes `ActorCharacterBoundEvent`. Returns `Conflict` if the actor is already bound to a character. Returns `NotFound` if the actor is not running. Also emits the bound event on `StartAsync` when spawned with an initial characterId.
 - **CleanupByCharacter** (`/actor/cleanup-by-character`): Called by lib-resource cleanup coordination when a character is deleted. Stops and removes all actors referencing the specified characterId. Returns count of actors cleaned up. Part of x-references cascade pattern.
@@ -507,7 +507,7 @@ ActorRunner Behavior Loop (Two-Phase Execution)
                 │    └── Execute flow: on_tick (preferred) or main
                 │
                 ├── 3. PublishStateUpdateIfNeededAsync()
-                │    └── If CharacterId set: publish character.state_update
+                │    └── If CharacterId set: publish character.state-update
                 │
                 ├── 4. PeriodicPersistence()
                 │    └── If AutoSaveInterval exceeded: save state snapshot
@@ -704,7 +704,7 @@ Actor State Model
 
 8. **Single-threaded behavior loop by design**: Each ActorRunner runs its behavior loop on a single task (sequential: perceptions → behavior tick → state publish → persistence → sleep). CPU-intensive behaviors delay tick processing but do not block other actors. `GoapPlanTimeoutMs` (50ms default) is passed to the GOAP planner as a budget hint via the behavior scope — it is NOT enforced as a hard timeout by ActorRunner. If planning exceeds the budget, the tick runs long and the sleep phase is skipped to compensate. This design simplifies state management (no concurrent access to actor state) and matches the one-brain-per-NPC model.
 
-9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state_update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
+9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state-update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
 
 10. **Per-actor RabbitMQ subscription for perceptions**: Each actor with a `CharacterId` creates a dynamic RabbitMQ subscription via `SubscribeDynamicAsync` on topic `character.{characterId}.perceptions`. This subscription is established either at `StartAsync` (when spawned with a characterId) or at `BindCharacterAsync` (when binding at runtime). Game servers and other actors publish perceptions to these character-specific topics via the ABML `emit_perception:` action. At scale (100,000+ actors), this means 100,000+ RabbitMQ subscriptions. This is intentional: targeted per-character topics enable efficient perception routing without the actor needing to filter irrelevant perceptions from a shared topic. Pool mode distributes subscriptions across nodes (e.g., 10 nodes × 10,000 subscriptions each). The `InjectPerception` API provides a direct injection alternative for testing. Subscriptions are disposed on actor stop.
 

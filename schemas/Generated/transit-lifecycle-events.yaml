@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to transit-connection.created when a transitconnection is created
+      description: Published to transit.connection.created when a transitconnection is created
       required:
       - eventName
       - eventId
@@ -36,8 +36,8 @@ components:
       properties:
         eventName:
           type: string
-          default: transit-connection.created
-          description: 'Event type identifier: transit-connection.created'
+          default: transit.connection.created
+          description: 'Event type identifier: transit.connection.created'
         id: &id001
           type: string
           format: uuid
@@ -131,7 +131,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to transit-connection.updated when a transitconnection is updated
+      description: Published to transit.connection.updated when a transitconnection is updated
       required:
       - eventName
       - eventId
@@ -156,8 +156,8 @@ components:
       properties:
         eventName:
           type: string
-          default: transit-connection.updated
-          description: 'Event type identifier: transit-connection.updated'
+          default: transit.connection.updated
+          description: 'Event type identifier: transit.connection.updated'
         id: *id001
         fromLocationId: *id002
         toLocationId: *id003
@@ -190,7 +190,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to transit-connection.deleted when a transitconnection is deleted
+      description: Published to transit.connection.deleted when a transitconnection is deleted
       required:
       - eventName
       - eventId
@@ -214,8 +214,8 @@ components:
       properties:
         eventName:
           type: string
-          default: transit-connection.deleted
-          description: 'Event type identifier: transit-connection.deleted'
+          default: transit.connection.deleted
+          description: 'Event type identifier: transit.connection.deleted'
         id: *id001
         fromLocationId: *id002
         toLocationId: *id003

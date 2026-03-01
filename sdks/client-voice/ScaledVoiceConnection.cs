@@ -7,7 +7,7 @@ namespace BeyondImmersion.Bannou.Client.Voice;
 /// <para>
 /// <b>Usage:</b><br/>
 /// <code>
-/// // When VoiceTierUpgradeEvent is received:
+/// // When VoiceTierUpgradeClientEvent is received:
 /// var connection = new ScaledVoiceConnection(roomId);
 /// connection.OnAudioFrameReceived += (samples, rate, channels) => PlayAudio(samples, rate, channels);
 /// connection.OnConnected += () => Console.WriteLine("Connected to voice conference!");

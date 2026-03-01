@@ -337,7 +337,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
 
         // Verify event published - use 3-parameter overload that service calls
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "matchmaking.queue-created",
+            "matchmaking.queue.created",
             It.IsAny<MatchmakingQueueCreatedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -458,7 +458,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
 
         // Verify event published - use 3-parameter overload that service calls
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "matchmaking.queue-deleted",
+            "matchmaking.queue.deleted",
             It.IsAny<MatchmakingQueueDeletedEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -628,7 +628,7 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
         // Verify client event sent
         _mockClientEventPublisher.Verify(p => p.PublishToSessionAsync(
             sessionId.ToString(),
-            It.IsAny<QueueJoinedEvent>(),
+            It.IsAny<QueueJoinedClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 

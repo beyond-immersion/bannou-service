@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-entry-template.created when a collectionentrytemplate is created
+      description: Published to collection.entry-template.created when a collectionentrytemplate is created
       required:
       - eventName
       - eventId
@@ -28,8 +28,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-entry-template.created
-          description: 'Event type identifier: collection-entry-template.created'
+          default: collection.entry-template.created
+          description: 'Event type identifier: collection.entry-template.created'
         entryTemplateId: &id001
           type: string
           format: uuid
@@ -72,7 +72,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-entry-template.updated when a collectionentrytemplate is updated
+      description: Published to collection.entry-template.updated when a collectionentrytemplate is updated
       required:
       - eventName
       - eventId
@@ -89,8 +89,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-entry-template.updated
-          description: 'Event type identifier: collection-entry-template.updated'
+          default: collection.entry-template.updated
+          description: 'Event type identifier: collection.entry-template.updated'
         entryTemplateId: *id001
         code: *id002
         collectionType: *id003
@@ -111,7 +111,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-entry-template.deleted when a collectionentrytemplate is deleted
+      description: Published to collection.entry-template.deleted when a collectionentrytemplate is deleted
       required:
       - eventName
       - eventId
@@ -127,8 +127,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-entry-template.deleted
-          description: 'Event type identifier: collection-entry-template.deleted'
+          default: collection.entry-template.deleted
+          description: 'Event type identifier: collection.entry-template.deleted'
         entryTemplateId: *id001
         code: *id002
         collectionType: *id003
@@ -148,7 +148,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-area-content-config.created when a collectionareacontentconfig is created
+      description: Published to collection.area-content-config.created when a collectionareacontentconfig is created
       required:
       - eventName
       - eventId
@@ -162,8 +162,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-area-content-config.created
-          description: 'Event type identifier: collection-area-content-config.created'
+          default: collection.area-content-config.created
+          description: 'Event type identifier: collection.area-content-config.created'
         areaConfigId: &id011
           type: string
           format: uuid
@@ -195,7 +195,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-area-content-config.updated when a collectionareacontentconfig is updated
+      description: Published to collection.area-content-config.updated when a collectionareacontentconfig is updated
       required:
       - eventName
       - eventId
@@ -210,8 +210,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-area-content-config.updated
-          description: 'Event type identifier: collection-area-content-config.updated'
+          default: collection.area-content-config.updated
+          description: 'Event type identifier: collection.area-content-config.updated'
         areaConfigId: *id011
         areaCode: *id012
         collectionType: *id013
@@ -229,7 +229,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to collection-area-content-config.deleted when a collectionareacontentconfig is deleted
+      description: Published to collection.area-content-config.deleted when a collectionareacontentconfig is deleted
       required:
       - eventName
       - eventId
@@ -243,8 +243,8 @@ components:
       properties:
         eventName:
           type: string
-          default: collection-area-content-config.deleted
-          description: 'Event type identifier: collection-area-content-config.deleted'
+          default: collection.area-content-config.deleted
+          description: 'Event type identifier: collection.area-content-config.deleted'
         areaConfigId: *id011
         areaCode: *id012
         collectionType: *id013

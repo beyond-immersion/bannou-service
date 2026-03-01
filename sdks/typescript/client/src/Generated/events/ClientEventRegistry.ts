@@ -30,7 +30,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.creation.complete',
     {
       eventName: 'asset.bundle.creation.complete',
-      typeName: 'BundleCreationCompleteEvent',
+      typeName: 'BundleCreationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -38,7 +38,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.validation.complete',
     {
       eventName: 'asset.bundle.validation.complete',
-      typeName: 'BundleValidationCompleteEvent',
+      typeName: 'BundleValidationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -46,7 +46,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.bundle.validation.failed',
     {
       eventName: 'asset.bundle.validation.failed',
-      typeName: 'BundleValidationFailedEvent',
+      typeName: 'BundleValidationFailedClientEvent',
       service: 'asset',
     },
   ],
@@ -54,7 +54,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.metabundle.creation.complete',
     {
       eventName: 'asset.metabundle.creation.complete',
-      typeName: 'MetabundleCreationCompleteEvent',
+      typeName: 'MetabundleCreationCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -62,7 +62,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.processing.complete',
     {
       eventName: 'asset.processing.complete',
-      typeName: 'AssetProcessingCompleteEvent',
+      typeName: 'AssetProcessingCompleteClientEvent',
       service: 'asset',
     },
   ],
@@ -70,14 +70,21 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'asset.processing.failed',
     {
       eventName: 'asset.processing.failed',
-      typeName: 'AssetProcessingFailedEvent',
+      typeName: 'AssetProcessingFailedClientEvent',
       service: 'asset',
     },
   ],
-  ['asset.ready', { eventName: 'asset.ready', typeName: 'AssetReadyEvent', service: 'asset' }],
+  [
+    'asset.ready',
+    { eventName: 'asset.ready', typeName: 'AssetReadyClientEvent', service: 'asset' },
+  ],
   [
     'asset.upload.complete',
-    { eventName: 'asset.upload.complete', typeName: 'AssetUploadCompleteEvent', service: 'asset' },
+    {
+      eventName: 'asset.upload.complete',
+      typeName: 'AssetUploadCompleteClientEvent',
+      service: 'asset',
+    },
   ],
   [
     'auth.device_login',
@@ -124,6 +131,22 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'character.realm_transferred',
+    {
+      eventName: 'character.realm_transferred',
+      typeName: 'CharacterRealmTransferredClientEvent',
+      service: 'character',
+    },
+  ],
+  [
+    'character.updated',
+    {
+      eventName: 'character.updated',
+      typeName: 'CharacterUpdatedClientEvent',
+      service: 'character',
+    },
+  ],
+  [
     'chat.message_deleted',
     {
       eventName: 'chat.message_deleted',
@@ -133,11 +156,15 @@ export const eventRegistry = new Map<string, EventMetadata>([
   ],
   [
     'chat.message_pinned',
-    { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedEvent', service: 'chat' },
+    { eventName: 'chat.message_pinned', typeName: 'ChatMessagePinnedClientEvent', service: 'chat' },
   ],
   [
     'chat.message_received',
-    { eventName: 'chat.message_received', typeName: 'ChatMessageReceivedEvent', service: 'chat' },
+    {
+      eventName: 'chat.message_received',
+      typeName: 'ChatMessageReceivedClientEvent',
+      service: 'chat',
+    },
   ],
   [
     'chat.participant_banned',
@@ -251,7 +278,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'connect.capability_manifest',
     {
       eventName: 'connect.capability_manifest',
-      typeName: 'CapabilityManifestEvent',
+      typeName: 'CapabilityManifestClientEvent',
       service: 'common',
     },
   ],
@@ -259,7 +286,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'connect.disconnect_notification',
     {
       eventName: 'connect.disconnect_notification',
-      typeName: 'DisconnectNotificationEvent',
+      typeName: 'DisconnectNotificationClientEvent',
       service: 'common',
     },
   ],
@@ -267,7 +294,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'currency.balance_changed',
     {
       eventName: 'currency.balance_changed',
-      typeName: 'CurrencyBalanceChangedEvent',
+      typeName: 'CurrencyBalanceChangedClientEvent',
       service: 'currency',
     },
   ],
@@ -275,7 +302,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'currency.wallet_frozen',
     {
       eventName: 'currency.wallet_frozen',
-      typeName: 'CurrencyWalletFrozenEvent',
+      typeName: 'CurrencyWalletFrozenClientEvent',
       service: 'currency',
     },
   ],
@@ -283,7 +310,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'currency.wallet_unfrozen',
     {
       eventName: 'currency.wallet_unfrozen',
-      typeName: 'CurrencyWalletUnfrozenEvent',
+      typeName: 'CurrencyWalletUnfrozenClientEvent',
       service: 'currency',
     },
   ],
@@ -291,7 +318,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.action_result',
     {
       eventName: 'game_session.action_result',
-      typeName: 'GameActionResultEvent',
+      typeName: 'GameActionResultClientEvent',
       service: 'game-session',
     },
   ],
@@ -299,7 +326,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.chat_received',
     {
       eventName: 'game_session.chat_received',
-      typeName: 'SessionChatReceivedEvent',
+      typeName: 'SessionChatReceivedClientEvent',
       service: 'game-session',
     },
   ],
@@ -307,7 +334,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.player_joined',
     {
       eventName: 'game_session.player_joined',
-      typeName: 'PlayerJoinedEvent',
+      typeName: 'PlayerJoinedClientEvent',
       service: 'game-session',
     },
   ],
@@ -315,19 +342,23 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.player_kicked',
     {
       eventName: 'game_session.player_kicked',
-      typeName: 'PlayerKickedEvent',
+      typeName: 'PlayerKickedClientEvent',
       service: 'game-session',
     },
   ],
   [
     'game_session.player_left',
-    { eventName: 'game_session.player_left', typeName: 'PlayerLeftEvent', service: 'game-session' },
+    {
+      eventName: 'game_session.player_left',
+      typeName: 'PlayerLeftClientEvent',
+      service: 'game-session',
+    },
   ],
   [
     'game_session.session_cancelled',
     {
       eventName: 'game_session.session_cancelled',
-      typeName: 'SessionCancelledEvent',
+      typeName: 'SessionCancelledClientEvent',
       service: 'game-session',
     },
   ],
@@ -335,7 +366,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.state_changed',
     {
       eventName: 'game_session.state_changed',
-      typeName: 'SessionStateChangedEvent',
+      typeName: 'SessionStateChangedClientEvent',
       service: 'game-session',
     },
   ],
@@ -343,7 +374,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'game_session.state_updated',
     {
       eventName: 'game_session.state_updated',
-      typeName: 'GameStateUpdatedEvent',
+      typeName: 'GameStateUpdatedClientEvent',
       service: 'game-session',
     },
   ],
@@ -372,10 +403,22 @@ export const eventRegistry = new Map<string, EventMetadata>([
     },
   ],
   [
+    'location.presence_changed',
+    {
+      eventName: 'location.presence_changed',
+      typeName: 'LocationPresenceChangedClientEvent',
+      service: 'location',
+    },
+  ],
+  [
+    'location.updated',
+    { eventName: 'location.updated', typeName: 'LocationUpdatedClientEvent', service: 'location' },
+  ],
+  [
     'matchmaking.cancelled',
     {
       eventName: 'matchmaking.cancelled',
-      typeName: 'MatchmakingCancelledEvent',
+      typeName: 'MatchmakingCancelledClientEvent',
       service: 'matchmaking',
     },
   ],
@@ -383,7 +426,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'matchmaking.match_confirmed',
     {
       eventName: 'matchmaking.match_confirmed',
-      typeName: 'MatchConfirmedEvent',
+      typeName: 'MatchConfirmedClientEvent',
       service: 'matchmaking',
     },
   ],
@@ -391,31 +434,39 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'matchmaking.match_declined',
     {
       eventName: 'matchmaking.match_declined',
-      typeName: 'MatchDeclinedEvent',
+      typeName: 'MatchDeclinedClientEvent',
       service: 'matchmaking',
     },
   ],
   [
     'matchmaking.match_found',
-    { eventName: 'matchmaking.match_found', typeName: 'MatchFoundEvent', service: 'matchmaking' },
+    {
+      eventName: 'matchmaking.match_found',
+      typeName: 'MatchFoundClientEvent',
+      service: 'matchmaking',
+    },
   ],
   [
     'matchmaking.player_accepted',
     {
       eventName: 'matchmaking.player_accepted',
-      typeName: 'MatchPlayerAcceptedEvent',
+      typeName: 'MatchPlayerAcceptedClientEvent',
       service: 'matchmaking',
     },
   ],
   [
     'matchmaking.queue_joined',
-    { eventName: 'matchmaking.queue_joined', typeName: 'QueueJoinedEvent', service: 'matchmaking' },
+    {
+      eventName: 'matchmaking.queue_joined',
+      typeName: 'QueueJoinedClientEvent',
+      service: 'matchmaking',
+    },
   ],
   [
     'matchmaking.status_update',
     {
       eventName: 'matchmaking.status_update',
-      typeName: 'MatchmakingStatusUpdateEvent',
+      typeName: 'MatchmakingStatusUpdateClientEvent',
       service: 'matchmaking',
     },
   ],
@@ -427,16 +478,31 @@ export const eventRegistry = new Map<string, EventMetadata>([
       service: 'status',
     },
   ],
-  ['system.error', { eventName: 'system.error', typeName: 'SystemErrorEvent', service: 'common' }],
+  [
+    'subscription.status_changed',
+    {
+      eventName: 'subscription.status_changed',
+      typeName: 'SubscriptionStatusChangedClientEvent',
+      service: 'subscription',
+    },
+  ],
+  [
+    'system.error',
+    { eventName: 'system.error', typeName: 'SystemErrorClientEvent', service: 'common' },
+  ],
   [
     'system.notification',
-    { eventName: 'system.notification', typeName: 'SystemNotificationEvent', service: 'common' },
+    {
+      eventName: 'system.notification',
+      typeName: 'SystemNotificationClientEvent',
+      service: 'common',
+    },
   ],
   [
     'transit.connection_status_changed',
     {
       eventName: 'transit.connection_status_changed',
-      typeName: 'TransitConnectionStatusChangedEvent',
+      typeName: 'TransitConnectionStatusChangedClientEvent',
       service: 'transit',
     },
   ],
@@ -444,7 +510,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'transit.discovery_revealed',
     {
       eventName: 'transit.discovery_revealed',
-      typeName: 'TransitDiscoveryRevealedEvent',
+      typeName: 'TransitDiscoveryRevealedClientEvent',
       service: 'transit',
     },
   ],
@@ -452,7 +518,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'transit.journey_updated',
     {
       eventName: 'transit.journey_updated',
-      typeName: 'TransitJourneyUpdatedEvent',
+      typeName: 'TransitJourneyUpdatedClientEvent',
       service: 'transit',
     },
   ],
@@ -460,7 +526,7 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'voice.broadcast_consent_request',
     {
       eventName: 'voice.broadcast_consent_request',
-      typeName: 'VoiceBroadcastConsentRequestEvent',
+      typeName: 'VoiceBroadcastConsentRequestClientEvent',
       service: 'voice',
     },
   ],
@@ -468,39 +534,39 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'voice.broadcast_consent_update',
     {
       eventName: 'voice.broadcast_consent_update',
-      typeName: 'VoiceBroadcastConsentUpdateEvent',
+      typeName: 'VoiceBroadcastConsentUpdateClientEvent',
       service: 'voice',
     },
   ],
   [
     'voice.peer_joined',
-    { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedEvent', service: 'voice' },
+    { eventName: 'voice.peer_joined', typeName: 'VoicePeerJoinedClientEvent', service: 'voice' },
   ],
   [
     'voice.peer_left',
-    { eventName: 'voice.peer_left', typeName: 'VoicePeerLeftEvent', service: 'voice' },
+    { eventName: 'voice.peer_left', typeName: 'VoicePeerLeftClientEvent', service: 'voice' },
   ],
   [
     'voice.peer_updated',
-    { eventName: 'voice.peer_updated', typeName: 'VoicePeerUpdatedEvent', service: 'voice' },
+    { eventName: 'voice.peer_updated', typeName: 'VoicePeerUpdatedClientEvent', service: 'voice' },
   ],
   [
     'voice.room_closed',
-    { eventName: 'voice.room_closed', typeName: 'VoiceRoomClosedEvent', service: 'voice' },
+    { eventName: 'voice.room_closed', typeName: 'VoiceRoomClosedClientEvent', service: 'voice' },
   ],
   [
     'voice.room_state',
-    { eventName: 'voice.room_state', typeName: 'VoiceRoomStateEvent', service: 'voice' },
+    { eventName: 'voice.room_state', typeName: 'VoiceRoomStateClientEvent', service: 'voice' },
   ],
   [
     'voice.tier_upgrade',
-    { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' },
+    { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeClientEvent', service: 'voice' },
   ],
   [
     'worldstate.time_sync',
     {
       eventName: 'worldstate.time_sync',
-      typeName: 'WorldstateTimeSyncEvent',
+      typeName: 'WorldstateTimeSyncClientEvent',
       service: 'worldstate',
     },
   ],

@@ -757,7 +757,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Publish compiled capabilities directly to the session via session-specific RabbitMQ channel.
     /// Connect service receives this via ClientEventRabbitMQSubscriber, generates client-salted GUIDs,
-    /// and sends CapabilityManifestEvent to the client.
+    /// and sends CapabilityManifestClientEvent to the client.
     /// Only publishes to sessions in activeConnections to avoid RabbitMQ exchange not_found crashes,
     /// unless skipActiveConnectionsCheck is true.
     /// </summary>

@@ -50,7 +50,7 @@ public partial class TransitService
         var realmId = evt.RealmId;
         var connectionsInRealm = await _connectionStore.QueryAsync(
             c => (c.FromRealmId == realmId || c.ToRealmId == realmId) &&
-                 c.SeasonalAvailability != null,
+                c.SeasonalAvailability != null,
             CancellationToken.None);
 
         var closedCount = 0;

@@ -155,4 +155,3 @@ internal sealed class SourceBundleReferenceInternal
     public required List<string> AssetIds { get; set; }
     public required string ContentHash { get; set; }
 }
-

@@ -115,15 +115,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_ADDITIONAL_FORBIDDEN_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional forbidden content types |
 | `ASSET_ADDITIONAL_PROCESSABLE_CONTENT_TYPES` | string | **REQUIRED** | Comma-separated list of additional processable content types... |
 | `ASSET_AUDIO_BITRATE_KBPS` | int | `192` | Default audio bitrate in kbps |
+| `ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB` | int | `100` | File size in MB above which audio processing logs a warning |
 | `ASSET_AUDIO_OUTPUT_FORMAT` | string | `mp3` | Default audio output format |
 | `ASSET_AUDIO_PRESERVE_LOSSLESS` | bool | `true` | Keep original lossless file alongside transcoded version |
 | `ASSET_AUDIO_PROCESSOR_POOL_TYPE` | string | `audio-processor` | Pool type name for audio processing |
+| `ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES` | int | `60` | Interval in minutes between bundle cleanup scans for permane... |
+| `ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `30` | Delay in seconds before the bundle cleanup worker begins its... |
 | `ASSET_BUNDLE_COMPRESSION_DEFAULT` | string | `lz4` | Default compression for bundles |
 | `ASSET_BUNDLE_CURRENT_PATH_PREFIX` | string | `bundles/current` | Path prefix for finalized bundles in storage bucket |
 | `ASSET_BUNDLE_KEY_PREFIX` | string | `bundle:` | Key prefix for bundle entries in state store |
 | `ASSET_BUNDLE_UPLOAD_PATH_PREFIX` | string | `bundles/uploads` | Path prefix for bundle upload staging in storage bucket |
 | `ASSET_BUNDLE_ZIP_CACHE_PATH_PREFIX` | string | `bundles/zip-cache` | Path prefix for ZIP conversion cache in storage bucket |
 | `ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS` | int | `24` | Default TTL in hours for bundle cache entries |
+| `ASSET_DEFAULT_LIST_LIMIT` | int | `50` | Default number of results per page when client does not spec... |
 | `ASSET_DEFAULT_PROCESSOR_POOL_TYPE` | string | `asset-processor` | Default pool type name for general asset processing |
 | `ASSET_DELETED_BUNDLE_RETENTION_DAYS` | int | `30` | Number of days to retain soft-deleted bundles before permane... |
 | `ASSET_DOWNLOAD_TOKEN_TTL_SECONDS` | int | `900` | TTL for download URLs (can be shorter than upload) |
@@ -136,6 +140,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_KEY_PREFIX` | string | `asset:` | Key prefix for asset entries in state store |
 | `ASSET_LARGE_FILE_THRESHOLD_MB` | int | `50` | File size threshold for delegating to processing pool |
 | `ASSET_MAX_BULK_GET_ASSETS` | int | `100` | Maximum number of asset IDs allowed in a single bulk get req... |
+| `ASSET_MAX_QUERY_LIMIT` | int | `1000` | Maximum number of results per query/list request |
 | `ASSET_MAX_RESOLUTION_ASSETS` | int | `500` | Maximum number of asset IDs allowed in a single bundle resol... |
 | `ASSET_MAX_UPLOAD_SIZE_MB` | int | `500` | Maximum upload size in megabytes |
 | `ASSET_METABUNDLE_ASYNC_ASSET_COUNT_THRESHOLD` | int | `50` | Total asset count that triggers async processing. Jobs with ... |
@@ -144,7 +149,13 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_METABUNDLE_JOB_KEY_PREFIX` | string | `metabundle-job:` | Key prefix for metabundle job entries in state store |
 | `ASSET_METABUNDLE_JOB_TIMEOUT_SECONDS` | int | `3600` | Maximum time for a metabundle job before marking as failed |
 | `ASSET_METABUNDLE_JOB_TTL_SECONDS` | int | `86400` | How long job status records are retained after completion (f... |
+| `ASSET_MINIO_STARTUP_MAX_RETRIES` | int | `30` | Maximum number of retries when waiting for MinIO connectivit... |
+| `ASSET_MINIO_STARTUP_RETRY_DELAY_MS` | int | `2000` | Delay in milliseconds between MinIO startup connectivity ret... |
 | `ASSET_MINIO_WEBHOOK_SECRET` | string | **REQUIRED** | Secret for validating MinIO webhook requests |
+| `ASSET_MODEL_GENERATE_LODS_DEFAULT` | bool | `true` | Default for whether to generate LOD levels during 3D model p... |
+| `ASSET_MODEL_LARGE_FILE_WARNING_THRESHOLD_MB` | int | `50` | File size in MB above which model processing logs a warning |
+| `ASSET_MODEL_LOD_LEVELS` | int | `3` | Default number of LOD levels to generate during 3D model pro... |
+| `ASSET_MODEL_OPTIMIZE_MESHES_DEFAULT` | bool | `true` | Default for whether to optimize meshes during 3D model proce... |
 | `ASSET_MODEL_PROCESSOR_POOL_TYPE` | string | `model-processor` | Pool type name for 3D model processing |
 | `ASSET_MULTIPART_PART_SIZE_MB` | int | `16` | Size of each part in multipart uploads in megabytes |
 | `ASSET_MULTIPART_THRESHOLD_MB` | int | `50` | File size threshold for multipart uploads in megabytes |
@@ -155,6 +166,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_PROCESSING_POOL_TYPE` | string | `asset-processor` | Processing pool identifier for orchestrator |
 | `ASSET_PROCESSING_QUEUE_CHECK_INTERVAL_SECONDS` | int | `30` | Interval in seconds to check processing queue when no jobs a... |
 | `ASSET_PROCESSING_RETRY_DELAY_SECONDS` | int | `30` | Delay in seconds between processing retries |
+| `ASSET_PROCESSOR_ACQUISITION_TIMEOUT_SECONDS` | int | `600` | Maximum seconds to wait when acquiring a processor from the ... |
 | `ASSET_PROCESSOR_AVAILABILITY_MAX_WAIT_SECONDS` | int | `60` | Maximum seconds to wait for processor availability |
 | `ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS` | int | `2` | Polling interval in seconds when waiting for processor |
 | `ASSET_PROCESSOR_HEARTBEAT_INTERVAL_SECONDS` | int | `30` | Heartbeat emission interval in seconds |
@@ -162,16 +174,17 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_PROCESSOR_IDLE_TIMEOUT_SECONDS` | int | `300` | Seconds of zero-load before auto-termination (0 to disable) |
 | `ASSET_PROCESSOR_MAX_CONCURRENT_JOBS` | int | `10` | Maximum concurrent jobs per processor node |
 | `ASSET_PROCESSOR_NODE_ID` | string | **REQUIRED** | Unique processor node ID (set by orchestrator when spawning ... |
+| `ASSET_PROCESSOR_NODE_TTL_SECONDS` | int | `180` | TTL in seconds for processor node state entries in the state... |
 | `ASSET_SHUTDOWN_DRAIN_INTERVAL_SECONDS` | int | `2` | Interval in seconds between shutdown drain checks |
 | `ASSET_SHUTDOWN_DRAIN_TIMEOUT_MINUTES` | int | `2` | Maximum minutes to allow queue draining during graceful shut... |
-| `ASSET_STORAGE_ACCESS_KEY` | string | `minioadmin` | Storage access key/username |
+| `ASSET_STORAGE_ACCESS_KEY` | string | **REQUIRED** | Storage access key/username. Required for production deploym... |
 | `ASSET_STORAGE_BUCKET` | string | `bannou-assets` | Primary bucket/container name for assets |
 | `ASSET_STORAGE_ENDPOINT` | string | `minio:9000` | Storage endpoint host:port for internal service connections ... |
 | `ASSET_STORAGE_FORCE_PATH_STYLE` | bool | `true` | Force path-style URLs (required for MinIO) |
 | `ASSET_STORAGE_PROVIDER` | string | `minio` | Storage backend type |
 | `ASSET_STORAGE_PUBLIC_ENDPOINT` | string | **REQUIRED** | Public endpoint for pre-signed URLs accessible by clients. I... |
 | `ASSET_STORAGE_REGION` | string | `us-east-1` | Storage region (for S3/R2) |
-| `ASSET_STORAGE_SECRET_KEY` | string | `minioadmin` | Storage secret key/password |
+| `ASSET_STORAGE_SECRET_KEY` | string | **REQUIRED** | Storage secret key/password. Required for production deploym... |
 | `ASSET_STORAGE_USE_SSL` | bool | `false` | Use SSL/TLS for storage connections |
 | `ASSET_STREAMING_COMPRESSION_BUFFER_KB` | int | `16384` | Size of compression buffer in KB for LZ4 streaming compressi... |
 | `ASSET_STREAMING_MAX_CONCURRENT_SOURCE_STREAMS` | int | `2` | Maximum number of source bundles to stream concurrently duri... |
@@ -179,10 +192,16 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ASSET_STREAMING_PART_SIZE_MB` | int | `50` | Size of each part in MB for streaming multipart uploads. S3/... |
 | `ASSET_STREAMING_PROGRESS_UPDATE_INTERVAL_ASSETS` | int | `10` | Number of assets to process before updating job progress. Lo... |
 | `ASSET_TEMP_UPLOAD_PATH_PREFIX` | string | `temp` | Path prefix for temporary upload staging in storage bucket |
+| `ASSET_TEXTURE_DEFAULT_OUTPUT_FORMAT` | string | `webp` | Default output format for texture processing when not specif... |
+| `ASSET_TEXTURE_LARGE_FILE_WARNING_THRESHOLD_MB` | int | `100` | File size in MB above which texture processing logs a warnin... |
+| `ASSET_TEXTURE_MAX_DIMENSION` | int | `4096` | Default maximum texture dimension in pixels when not specifi... |
 | `ASSET_TEXTURE_PROCESSOR_POOL_TYPE` | string | `texture-processor` | Pool type name for texture processing |
 | `ASSET_TOKEN_TTL_SECONDS` | int | `3600` | TTL for pre-signed upload/download URLs in seconds |
 | `ASSET_UPLOAD_SESSION_KEY_PREFIX` | string | `upload:` | Key prefix for upload session entries in state store |
 | `ASSET_WORKER_POOL` | string | **REQUIRED** | Worker pool identifier when running in worker mode |
+| `ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES` | int | `120` | Interval in minutes between ZIP cache cleanup scans for remo... |
+| `ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `60` | Delay in seconds before the ZIP cache cleanup worker begins ... |
+| `ASSET_ZIP_CACHE_DIRECTORY` | string | **REQUIRED** | Directory for ZIP cache files. When null, uses the system te... |
 | `ASSET_ZIP_CACHE_TTL_HOURS` | int | `24` | TTL for cached ZIP conversions in hours |
 
 ### Auth
@@ -495,6 +514,7 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `DOCUMENTATION_BULK_OPERATION_BATCH_SIZE` | int | `10` | Maximum documents processed per bulk operation |
+| `DOCUMENTATION_ESTIMATED_BYTES_PER_DOCUMENT` | int | `10000` | Estimated average document content size in bytes for stats c... |
 | `DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS` | int | `300` | Clone/pull operation timeout in seconds |
 | `DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS` | int | `24` | Hours before inactive repos are cleaned up |
 | `DOCUMENTATION_GIT_STORAGE_PATH` | string | `/tmp/bannou-git-repos` | Local path for cloned git repositories |
@@ -1171,14 +1191,23 @@ Applied when... |
 | `TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG` | double | `100.0` | Cargo weight above this threshold reduces speed. Speed reduc... |
 | `TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS` | int | `300` | TTL for cached connection graph in Redis (seconds). Graph is... |
 | `TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE` | double | `0.3` | Default cargo speed penalty rate applied when a mode's cargo... |
+| `TRANSIT_DEFAULT_FALLBACK_MODE_CODE` | string | `walking` | Default fallback mode code used when no compatible transit m... |
 | `TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR` | double | `5.0` | Default walking speed used when no mode is specified |
 | `TRANSIT_DISCOVERY_CACHE_TTL_SECONDS` | int | `600` | TTL for per-entity discovery cache in Redis (seconds). Route... |
 | `TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS` | int | `300` | Real-time interval in seconds between journey archival worke... |
+| `TRANSIT_JOURNEY_ARCHIVAL_WORKER_STARTUP_DELAY_SECONDS` | int | `10` | Startup delay in seconds before the journey archival worker ... |
 | `TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS` | double | `168.0` | Game-hours after arrival/abandonment before journey is archi... |
 | `TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS` | int | `365` | Number of real-time days to retain archived journeys in MySQ... |
+| `TRANSIT_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition on mode ... |
+| `TRANSIT_MAX_PREFERENCE_COST` | double | `2.0` | Maximum allowed preference cost after aggregating all DI cos... |
 | `TRANSIT_MAX_ROUTE_CALCULATION_LEGS` | int | `8` | Maximum number of legs to consider in route calculation (pre... |
 | `TRANSIT_MAX_ROUTE_OPTIONS` | int | `5` | Maximum number of route options to return from calculate end... |
+| `TRANSIT_MAX_SPEED_MULTIPLIER` | double | `3.0` | Maximum allowed speed multiplier after aggregating all DI co... |
+| `TRANSIT_MINIMUM_EFFECTIVE_SPEED_KM_PER_GAME_HOUR` | double | `0.01` | Minimum effective speed floor in km/game-hour applied after ... |
+| `TRANSIT_MIN_PREFERENCE_COST` | double | `0.0` | Minimum allowed preference cost after aggregating all DI cos... |
+| `TRANSIT_MIN_SPEED_MULTIPLIER` | double | `0.1` | Minimum allowed speed multiplier after aggregating all DI co... |
 | `TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS` | int | `60` | How often the background worker checks Worldstate for season... |
+| `TRANSIT_SEASONAL_WORKER_STARTUP_DELAY_SECONDS` | int | `5` | Startup delay in seconds before the seasonal connection work... |
 
 ### Voice
 
@@ -1220,15 +1249,15 @@ Applied when... |
 | `WORLDSTATE_DEFAULT_DOWNTIME_POLICY` | string | `Advance` | Default downtime handling policy for new realm clocks. Advan... |
 | `WORLDSTATE_DEFAULT_TIME_RATIO` | double | `24.0` | Default game-seconds per real-second for new realm clocks. 2... |
 | `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition during c... |
+| `WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES` | int | `100` | Maximum number of realm IDs accepted in a single BatchGetRea... |
 | `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | int | `10` | Safety limit on calendar templates per game service. |
 | `WORLDSTATE_MAX_CATCH_UP_GAME_DAYS` | int | `365` | Maximum game-days to advance during catch-up on startup. Pre... |
-| `WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS` | int | `90` | Days of ratio history to retain. Older segments are compacte... |
 
 ## Configuration Summary
 
-- **Total properties**: 930
-- **Required (no default)**: 55
-- **Optional (has default)**: 875
+- **Total properties**: 959
+- **Required (no default)**: 58
+- **Optional (has default)**: 901
 
 ## Environment Variable Naming Convention
 

@@ -35,25 +35,25 @@ public sealed class ChatEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="ChatMessagePinnedEvent"/> events.
+    /// Subscribe to <see cref="ChatMessagePinnedClientEvent"/> events.
     /// Sent to room participants when a message is pinned or unpinned.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessagePinned(Action<ChatMessagePinnedEvent> handler)
+    public IEventSubscription OnChatMessagePinnedClient(Action<ChatMessagePinnedClientEvent> handler)
     {
-        return _client.OnEvent<ChatMessagePinnedEvent>(handler);
+        return _client.OnEvent<ChatMessagePinnedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="ChatMessageReceivedEvent"/> events.
+    /// Subscribe to <see cref="ChatMessageReceivedClientEvent"/> events.
     /// Sent to room participants when a new message is received.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnChatMessageReceived(Action<ChatMessageReceivedEvent> handler)
+    public IEventSubscription OnChatMessageReceivedClient(Action<ChatMessageReceivedClientEvent> handler)
     {
-        return _client.OnEvent<ChatMessageReceivedEvent>(handler);
+        return _client.OnEvent<ChatMessageReceivedClientEvent>(handler);
     }
 
     /// <summary>

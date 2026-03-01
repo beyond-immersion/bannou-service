@@ -46,7 +46,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitUploadCompleteAsync");
-        var eventData = new AssetUploadCompleteEvent
+        var eventData = new AssetUploadCompleteClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -78,7 +78,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitProcessingCompleteAsync");
-        var eventData = new AssetProcessingCompleteEvent
+        var eventData = new AssetProcessingCompleteClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -108,7 +108,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitProcessingFailedAsync");
-        var eventData = new AssetProcessingFailedEvent
+        var eventData = new AssetProcessingFailedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -138,7 +138,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleValidationCompleteAsync");
-        var eventData = new BundleValidationCompleteEvent
+        var eventData = new BundleValidationCompleteClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -165,7 +165,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleValidationFailedAsync");
-        var eventData = new BundleValidationFailedEvent
+        var eventData = new BundleValidationFailedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -193,7 +193,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitBundleCreationCompleteAsync");
-        var eventData = new BundleCreationCompleteEvent
+        var eventData = new BundleCreationCompleteClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -261,7 +261,7 @@ public class AssetEventEmitter : IAssetEventEmitter
         CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetEventEmitter.EmitMetabundleCreationCompleteAsync");
-        var eventData = new MetabundleCreationCompleteEvent
+        var eventData = new MetabundleCreationCompleteClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

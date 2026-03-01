@@ -73,13 +73,13 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         // Verify event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.message.sent", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify client broadcast
         MockClientEventPublisher.Verify(
             p => p.PublishToSessionsAsync(
-                It.IsAny<IEnumerable<string>>(), It.IsAny<ChatMessageReceivedEvent>(), It.IsAny<CancellationToken>()),
+                It.IsAny<IEnumerable<string>>(), It.IsAny<ChatMessageReceivedClientEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -850,7 +850,7 @@ public class ChatServiceMessageTests : ChatServiceTestBase
 
         // Verify event published
         MockMessageBus.Verify(
-            m => m.TryPublishAsync("chat-message.deleted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("chat.message.deleted", It.IsAny<object>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify client broadcast

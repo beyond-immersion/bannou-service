@@ -15,9 +15,9 @@ namespace BeyondImmersion.EdgeTester.Tests;
 ///
 /// Voice Architecture:
 /// - Voice rooms are created automatically when joining GameSession with voice enabled
-/// - Peer data is delivered ONLY via VoicePeerJoinedEvent (not in API responses)
+/// - Peer data is delivered ONLY via VoicePeerJoinedClientEvent (not in API responses)
 /// - Clients use /voice/peer/answer to send SDP answers after receiving peer offers
-/// - voice:ringing state is set before VoicePeerJoinedEvent is published
+/// - voice:ringing state is set before VoicePeerJoinedClientEvent is published
 ///
 /// Voice Tests Requirements:
 /// - Set VOICE_TESTS_ENABLED=true to run voice tests (default: disabled)
@@ -54,7 +54,7 @@ public class VoiceWebSocketTestHandler : IServiceTestHandler
             new ServiceTest(TestVoiceRoomCreationViaGameSession, "Voice - Room via GameSession", "WebSocket",
                 "Test voice room creation when joining game session with voice enabled"),
             new ServiceTest(TestTwoClientVoicePeerEvents, "Voice - Peer Events (2 Clients)", "WebSocket",
-                "Test VoicePeerJoinedEvent delivery when second client joins"),
+                "Test VoicePeerJoinedClientEvent delivery when second client joins"),
             new ServiceTest(TestAnswerPeerEndpoint, "Voice - Answer Peer", "WebSocket",
                 "Test SDP answer flow via /voice/peer/answer endpoint"),
             new ServiceTest(TestP2PToScaledTierUpgrade, "Voice - P2P to Scaled Upgrade", "WebSocket",
@@ -374,7 +374,7 @@ a=rtpmap:111 opus/48000/2";
     private void TestTwoClientVoicePeerEvents(string[] args)
     {
         Console.WriteLine("=== Voice Peer Events (2 Clients) Test ===");
-        Console.WriteLine("Testing VoicePeerJoinedEvent delivery when second client joins...");
+        Console.WriteLine("Testing VoicePeerJoinedClientEvent delivery when second client joins...");
 
         try
         {
@@ -433,11 +433,11 @@ a=rtpmap:111 opus/48000/2";
                 var peerJoinedReceived = new TaskCompletionSource<bool>();
                 Guid receivedPeerSessionId = Guid.Empty;
 
-                client1.OnEvent<VoicePeerJoinedEvent>((evt) =>
+                client1.OnEvent<VoicePeerJoinedClientEvent>((evt) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice.peer_joined event");
+                    Console.WriteLine($"   Client 1 received voice.peer-joined event");
                     receivedPeerSessionId = evt.Peer.PeerSessionId;
-                    Console.WriteLine($"   Received VoicePeerJoinedEvent for peer: {receivedPeerSessionId}");
+                    Console.WriteLine($"   Received VoicePeerJoinedClientEvent for peer: {receivedPeerSessionId}");
                     peerJoinedReceived.TrySetResult(true);
                 });
 
@@ -467,8 +467,8 @@ a=rtpmap:111 opus/48000/2";
 
                 if (completedTask == timeoutTask)
                 {
-                    Console.WriteLine("   Timeout waiting for VoicePeerJoinedEvent");
-                    Console.WriteLine("   FAIL: VoicePeerJoinedEvent was not received within timeout");
+                    Console.WriteLine("   Timeout waiting for VoicePeerJoinedClientEvent");
+                    Console.WriteLine("   FAIL: VoicePeerJoinedClientEvent was not received within timeout");
                     return false;
                 }
 
@@ -588,16 +588,16 @@ a=rtpmap:111 opus/48000/2";
                 var peerUpdatedReceived = new TaskCompletionSource<bool>();
                 string? receivedSdpAnswer = null;
 
-                client1.OnEvent<VoicePeerUpdatedEvent>((evt) =>
+                client1.OnEvent<VoicePeerUpdatedClientEvent>((evt) =>
                 {
-                    Console.WriteLine($"   Client 1 received voice.peer_updated event");
+                    Console.WriteLine($"   Client 1 received voice.peer-updated event");
                     receivedSdpAnswer = evt.Peer.SdpOffer;
-                    Console.WriteLine($"   Received VoicePeerUpdatedEvent with SDP");
+                    Console.WriteLine($"   Received VoicePeerUpdatedClientEvent with SDP");
                     peerUpdatedReceived.TrySetResult(true);
                 });
 
                 // Client 2 sends SDP answer to Client 1 using typed proxy
-                // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer_joined event
+                // Note: The capability manifest with /voice/peer/answer may arrive after the voice.peer-joined event
                 // due to race condition between Permission service capability push and Voice service event publish.
                 // Retry up to 5 times (4 seconds total) for "Unknown endpoint" errors.
                 Console.WriteLine("   Client 2 sending SDP answer to Client 1...");
@@ -658,7 +658,7 @@ a=rtpmap:111 opus/48000/2";
 
                 if (completedTask == timeoutTask)
                 {
-                    Console.WriteLine("   FAIL: Timeout waiting for VoicePeerUpdatedEvent");
+                    Console.WriteLine("   FAIL: Timeout waiting for VoicePeerUpdatedClientEvent");
                     return false;
                 }
 
@@ -735,9 +735,9 @@ a=rtpmap:111 opus/48000/2";
 
                 void SetupTierUpgradeListener(BannouClient client, TaskCompletionSource<bool> tcs, string clientName)
                 {
-                    client.OnEvent<VoiceTierUpgradeEvent>((evt) =>
+                    client.OnEvent<VoiceTierUpgradeClientEvent>((evt) =>
                     {
-                        Console.WriteLine($"   {clientName} received voice.tier_upgrade event");
+                        Console.WriteLine($"   {clientName} received voice.tier-upgrade event");
                         Console.WriteLine($"   {clientName} tier upgrade: {evt.PreviousTier} -> {evt.NewTier}");
 
                         if (!string.IsNullOrEmpty(evt.RtpServerUri))
@@ -800,7 +800,7 @@ a=rtpmap:111 opus/48000/2";
 
                 // Client 3 joins (3 participants - EXCEEDS P2P limit, triggers upgrade)
                 // Client 3's join triggers the upgrade, but they join DIRECTLY into scaled mode
-                // so they don't receive a tier_upgrade event - their join response already says tier=scaled
+                // so they don't receive a tier-upgrade event - their join response already says tier=scaled
                 Console.WriteLine("   Client 3 joining session (should trigger tier upgrade)...");
                 var join3Response = await client3.GameSession.JoinGameSessionAsync(
                     new JoinGameSessionRequest { SessionId = sessionId.Value },
@@ -858,7 +858,7 @@ a=rtpmap:111 opus/48000/2";
                 }
 
                 // Verify Clients 1 & 2 received the upgrade event (Client 3 doesn't need it)
-                Console.WriteLine("   Clients 1 & 2 received voice.tier_upgrade event!");
+                Console.WriteLine("   Clients 1 & 2 received voice.tier-upgrade event!");
                 Console.WriteLine("   Client 3 joined directly into scaled tier (no upgrade event needed)");
                 Console.WriteLine($"   Tier upgraded from P2P to Scaled");
 
@@ -981,8 +981,8 @@ a=rtpmap:111 opus/48000/2";
                 // Set up tier upgrade listeners
                 var tierUpgrade1 = new TaskCompletionSource<bool>();
                 var tierUpgrade2 = new TaskCompletionSource<bool>();
-                client1.OnEvent<VoiceTierUpgradeEvent>((_) => tierUpgrade1.TrySetResult(true));
-                client2.OnEvent<VoiceTierUpgradeEvent>((_) => tierUpgrade2.TrySetResult(true));
+                client1.OnEvent<VoiceTierUpgradeClientEvent>((_) => tierUpgrade1.TrySetResult(true));
+                client2.OnEvent<VoiceTierUpgradeClientEvent>((_) => tierUpgrade2.TrySetResult(true));
 
                 // Client 3 joins (triggers upgrade) using typed proxy
                 var join3Response = await client3.GameSession.JoinGameSessionAsync(

@@ -96,7 +96,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "character.realm_transferred"
+          default: "character.realm-transferred"
           description: Fixed event type identifier
         characterId:
           type: string

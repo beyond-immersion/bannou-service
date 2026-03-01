@@ -29,7 +29,7 @@ info:
       event: BehaviorDeletedEvent
       description: Published when a behavior is deleted/invalidated
     # Cinematic streaming events
-    - topic: character.cinematic_extension
+    - topic: character.cinematic-extension
       event: CinematicExtensionAvailableEvent
       description: Published when a cinematic extension is available for injection at a continuation point
     # Compilation failure events
@@ -44,6 +44,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/behavior-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: behavior
   Behavior:
     model:
       behaviorId: { type: string, primary: true, required: true, description: "Unique identifier for the behavior" }

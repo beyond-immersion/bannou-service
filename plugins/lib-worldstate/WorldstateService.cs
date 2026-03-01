@@ -271,7 +271,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Build time sync client event with full game time snapshot
-        var syncEvent = new WorldstateTimeSyncEvent
+        var syncEvent = new WorldstateTimeSyncClientEvent
         {
             RealmId = body.RealmId,
             Year = clock.Year,
@@ -617,7 +617,7 @@ public partial class WorldstateService : IWorldstateService
         }
 
         // Publish time sync client event
-        var syncEvent = new WorldstateTimeSyncEvent
+        var syncEvent = new WorldstateTimeSyncClientEvent
         {
             RealmId = body.RealmId,
             Year = clock.Year,
@@ -783,7 +783,7 @@ public partial class WorldstateService : IWorldstateService
 
         // Publish time sync client event (populate PreviousPeriod from boundaries if available,
         // consistent with worker behavior)
-        var syncEvent = new WorldstateTimeSyncEvent
+        var syncEvent = new WorldstateTimeSyncClientEvent
         {
             RealmId = body.RealmId,
             Year = clock.Year,

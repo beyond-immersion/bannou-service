@@ -24,35 +24,35 @@ public sealed class CurrencyEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="CurrencyBalanceChangedEvent"/> events.
+    /// Subscribe to <see cref="CurrencyBalanceChangedClientEvent"/> events.
     /// Sent to the wallet owner when any balance mutation occurs: credits, debits,
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyBalanceChanged(Action<CurrencyBalanceChangedEvent> handler)
+    public IEventSubscription OnCurrencyBalanceChangedClient(Action<CurrencyBalanceChangedClientEvent> handler)
     {
-        return _client.OnEvent<CurrencyBalanceChangedEvent>(handler);
+        return _client.OnEvent<CurrencyBalanceChangedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="CurrencyWalletFrozenEvent"/> events.
+    /// Subscribe to <see cref="CurrencyWalletFrozenClientEvent"/> events.
     /// Sent to the wallet owner when their wallet is frozen (escrow dispute,
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyWalletFrozen(Action<CurrencyWalletFrozenEvent> handler)
+    public IEventSubscription OnCurrencyWalletFrozenClient(Action<CurrencyWalletFrozenClientEvent> handler)
     {
-        return _client.OnEvent<CurrencyWalletFrozenEvent>(handler);
+        return _client.OnEvent<CurrencyWalletFrozenClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="CurrencyWalletUnfrozenEvent"/> events.
+    /// Subscribe to <see cref="CurrencyWalletUnfrozenClientEvent"/> events.
     /// Sent to the wallet owner when their wallet is unfrozen and usable again.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCurrencyWalletUnfrozen(Action<CurrencyWalletUnfrozenEvent> handler)
+    public IEventSubscription OnCurrencyWalletUnfrozenClient(Action<CurrencyWalletUnfrozenClientEvent> handler)
     {
-        return _client.OnEvent<CurrencyWalletUnfrozenEvent>(handler);
+        return _client.OnEvent<CurrencyWalletUnfrozenClientEvent>(handler);
     }
 }

@@ -467,7 +467,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "character.state_update"
+          default: "character.state-update"
           description: Fixed event type identifier
         characterId:
           type: string

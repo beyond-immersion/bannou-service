@@ -27,23 +27,24 @@ info:
       event: RelationshipDeletedEvent
       description: Published when a relationship is soft-deleted
     # Relationship Type lifecycle events (auto-generated from x-lifecycle)
-    - topic: relationship-type.created
+    - topic: relationship.type.created
       event: RelationshipTypeCreatedEvent
       description: Published when a new relationship type is created
-    - topic: relationship-type.updated
+    - topic: relationship.type.updated
       event: RelationshipTypeUpdatedEvent
       description: Published when a relationship type is updated
-    - topic: relationship-type.deleted
+    - topic: relationship.type.deleted
       event: RelationshipTypeDeletedEvent
       description: Published when a relationship type is deleted
     # Manually-defined merge summary event (not a lifecycle event)
-    - topic: relationship-type.merged
+    - topic: relationship.type.merged
       event: RelationshipTypeMergedEvent
       description: Published when a relationship type merge operation completes
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/relationship-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: relationship
   Relationship:
     model:
       relationshipId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship" }
@@ -101,7 +102,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "relationship-type.merged"
+          default: "relationship.type.merged"
           description: Event type identifier
         sourceTypeId:
           type: string

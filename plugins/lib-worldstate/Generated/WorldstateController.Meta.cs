@@ -467,7 +467,8 @@ public partial class WorldstateController
             "additionalProperties": false,
             "description": "Game time snapshots for multiple realms",
             "required": [
-                "snapshots"
+                "snapshots",
+                "notFoundRealmIds"
             ],
             "properties": {
                 "snapshots": {
@@ -475,7 +476,15 @@ public partial class WorldstateController
                     "items": {
                         "$ref": "#/$defs/GameTimeSnapshot"
                     },
-                    "description": "Game time snapshots for each requested realm (omits realms without initialized clocks)"
+                    "description": "Game time snapshots for each requested realm that has an initialized clock"
+                },
+                "notFoundRealmIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "description": "Realm IDs from the request that had no initialized clock"
                 }
             }
         },
@@ -975,9 +984,8 @@ public partial class WorldstateController
         "InitializeRealmClockResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Confirmation of realm clock initialization with resolved values",
+            "description": "Resolved entity state after realm clock initialization. Caller already knows realmId from request. Shows resolved values for optional fields that may have fallen back to config defaults.",
             "required": [
-                "realmId",
                 "gameServiceId",
                 "calendarTemplateCode",
                 "timeRatio",
@@ -986,42 +994,37 @@ public partial class WorldstateController
                 "startingYear"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm the clock was initialized for"
-                },
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service the realm belongs to"
+                    "description": "Game service the realm belongs to (resolved from realm lookup)"
                 },
                 "calendarTemplateCode": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "description": "Calendar template code in use (resolved from request or config)"
+                    "description": "Calendar template code in use (resolved from request or config default)"
                 },
                 "timeRatio": {
                     "type": "number",
                     "format": "float",
                     "minimum": 0.1,
                     "maximum": 10000.0,
-                    "description": "Initial game-seconds per real-second (resolved from request or config)"
+                    "description": "Initial game-seconds per real-second (resolved from request or config default)"
                 },
                 "downtimePolicy": {
                     "$ref": "#/$defs/DowntimePolicy",
-                    "description": "Downtime handling policy (resolved from request or config)"
+                    "description": "Downtime handling policy (resolved from request or config default)"
                 },
                 "epoch": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Real-world timestamp of the realm epoch"
+                    "description": "Real-world timestamp of the realm epoch (resolved from request or current time)"
                 },
                 "startingYear": {
                     "type": "integer",
                     "minimum": 0,
-                    "description": "Game year the clock started at"
+                    "description": "Game year the clock started at (resolved from request or default 0)"
                 }
             }
         },
@@ -1149,45 +1152,17 @@ public partial class WorldstateController
         "SetTimeRatioResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Confirmation of time ratio change",
+            "description": "Result of time ratio change. Caller already knows realmId, newRatio, and reason from request.",
             "required": [
-                "realmId",
-                "previousRatio",
-                "newRatio",
-                "reason"
+                "previousRatio"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm the ratio was changed for"
-                },
                 "previousRatio": {
                     "type": "number",
                     "format": "float",
-                    "description": "Previous game-seconds per real-second"
-                },
-                "newRatio": {
-                    "type": "number",
-                    "format": "float",
-                    "description": "New game-seconds per real-second"
-                },
-                "reason": {
-                    "$ref": "#/$defs/TimeRatioChangeReason",
-                    "description": "Reason for the ratio change"
+                    "description": "Previous game-seconds per real-second before the change"
                 }
             }
-        },
-        "TimeRatioChangeReason": {
-            "type": "string",
-            "description": "Why the time ratio was changed",
-            "enum": [
-                "Initial",
-                "AdminAdjustment",
-                "Event",
-                "Pause",
-                "Resume"
-            ]
         }
     }
 }
@@ -1306,19 +1281,13 @@ public partial class WorldstateController
         "AdvanceClockResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Result of manual clock advancement",
+            "description": "Result of manual clock advancement. Caller already knows realmId from request.",
             "required": [
-                "realmId",
                 "previousTime",
                 "newTime",
                 "boundaryEventsPublished"
             ],
             "properties": {
-                "realmId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Realm the clock was advanced for"
-                },
                 "previousTime": {
                     "$ref": "#/$defs/GameTimeSnapshot",
                     "description": "Game time before advancement"
@@ -3501,9 +3470,7 @@ public partial class WorldstateController
             "description": "Paginated list of active realm clocks",
             "required": [
                 "items",
-                "totalCount",
-                "page",
-                "pageSize"
+                "totalCount"
             ],
             "properties": {
                 "items": {
@@ -3517,17 +3484,6 @@ public partial class WorldstateController
                     "type": "integer",
                     "minimum": 0,
                     "description": "Total matching realm clocks"
-                },
-                "page": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 1000,
-                    "description": "Items per page"
                 }
             }
         },
@@ -3765,17 +3721,8 @@ public partial class WorldstateController
         "CleanupByGameServiceResponse": {
             "type": "object",
             "additionalProperties": false,
-            "description": "Confirmation of game service worldstate cleanup",
-            "required": [
-                "templatesRemoved"
-            ],
-            "properties": {
-                "templatesRemoved": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "description": "Number of calendar templates removed"
-                }
-            }
+            "description": "Empty response. HTTP 200 confirms the cleanup succeeded.",
+            "properties": {}
         }
     }
 }

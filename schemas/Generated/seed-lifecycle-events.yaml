@@ -151,7 +151,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.created when a seedtype is created
+      description: Published to seed.type.created when a seedtype is created
       required:
       - eventName
       - eventId
@@ -167,8 +167,8 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.created
-          description: 'Event type identifier: seed-type.created'
+          default: seed.type.created
+          description: 'Event type identifier: seed.type.created'
         seedTypeCode: &id011
           type: string
           minLength: 1
@@ -216,7 +216,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.updated when a seedtype is updated
+      description: Published to seed.type.updated when a seedtype is updated
       required:
       - eventName
       - eventId
@@ -233,8 +233,8 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.updated
-          description: 'Event type identifier: seed-type.updated'
+          default: seed.type.updated
+          description: 'Event type identifier: seed.type.updated'
         seedTypeCode: *id011
         gameServiceId: *id012
         displayName: *id013
@@ -256,7 +256,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.deleted when a seedtype is deleted
+      description: Published to seed.type.deleted when a seedtype is deleted
       required:
       - eventName
       - eventId
@@ -272,8 +272,8 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.deleted
-          description: 'Event type identifier: seed-type.deleted'
+          default: seed.type.deleted
+          description: 'Event type identifier: seed.type.deleted'
         seedTypeCode: *id011
         gameServiceId: *id012
         displayName: *id013

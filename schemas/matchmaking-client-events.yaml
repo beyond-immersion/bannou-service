@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.queue_joined"
+          default: "matchmaking.queue-joined"
           description: Fixed event type identifier
         ticketId:
           type: string
@@ -94,7 +94,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_found"
+          default: "matchmaking.match-found"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -155,7 +155,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.player_accepted"
+          default: "matchmaking.player-accepted"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -190,7 +190,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_confirmed"
+          default: "matchmaking.match-confirmed"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -275,7 +275,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.match_declined"
+          default: "matchmaking.match-declined"
           description: Fixed event type identifier
         matchId:
           type: string
@@ -321,7 +321,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "matchmaking.status_update"
+          default: "matchmaking.status-update"
           description: Fixed event type identifier
         ticketId:
           type: string

@@ -12,7 +12,7 @@ info:
     - `map.{regionId}.{kind}.snapshot` - Full snapshot published
     - `map.{regionId}.{kind}.objects.changed` - Objects changed
     - `map.ingest.{channelId}` - High-throughput ingest (service subscribes)
-    - `map.warnings.unauthorized_publish` - Non-authority publish attempts
+    - `map.warnings.unauthorized-publish` - Non-authority publish attempts
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -52,7 +52,7 @@ info:
       description: Published when map objects are created/updated/deleted
 
     # Warning events
-    - topic: map.warnings.unauthorized_publish
+    - topic: map.warnings.unauthorized-publish
       event: MapUnauthorizedPublishWarning
       description: Published when non-authority attempts to publish
 
@@ -70,6 +70,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/mapping-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: mapping
   MappingChannel:
     model:
       channelId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the channel (region+kind)" }
@@ -429,7 +430,7 @@ components:
       type: object
       description: |
         Published when a non-authority attempts to publish.
-        Topic: map.warnings.unauthorized_publish
+        Topic: map.warnings.unauthorized-publish
       required:
         - timestamp
         - channelId

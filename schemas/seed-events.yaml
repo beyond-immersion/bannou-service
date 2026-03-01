@@ -38,13 +38,13 @@ info:
       description: Published when a seed is deleted
 
     # Seed type lifecycle events (auto-generated from x-lifecycle)
-    - topic: seed-type.created
+    - topic: seed.type.created
       event: SeedTypeCreatedEvent
       description: Published when a new seed type is registered
-    - topic: seed-type.updated
+    - topic: seed.type.updated
       event: SeedTypeUpdatedEvent
       description: Published when a seed type is updated (including deprecation)
-    - topic: seed-type.deleted
+    - topic: seed.type.deleted
       event: SeedTypeDeletedEvent
       description: Published when a seed type is deleted
 
@@ -77,6 +77,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/seed-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: seed
   Seed:
     model:
       seedId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the seed" }

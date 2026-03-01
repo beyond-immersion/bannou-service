@@ -388,7 +388,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         Assert.Equal("Fire License Board", savedTemplate.Name);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board-template.created", It.IsAny<LicenseBoardTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board-template.created", It.IsAny<LicenseBoardTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -924,7 +924,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             Times.Once);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1096,7 +1096,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Verify event published
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board.deleted", It.IsAny<LicenseBoardDeletedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board.deleted", It.IsAny<LicenseBoardDeletedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -2516,10 +2516,10 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Verify both events published
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board.cloned", It.IsAny<LicenseBoardClonedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board.cloned", It.IsAny<LicenseBoardClonedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
         // Verify character reference registered
@@ -2605,7 +2605,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
 
         // Verify no events published
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("license-board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("license.board.created", It.IsAny<LicenseBoardCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

@@ -24,35 +24,35 @@ public sealed class TransitEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="TransitConnectionStatusChangedEvent"/> events.
+    /// Subscribe to <see cref="TransitConnectionStatusChangedClientEvent"/> events.
     /// A connection's operational status changed -- pushed to sessions in the affected realm
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitConnectionStatusChanged(Action<TransitConnectionStatusChangedEvent> handler)
+    public IEventSubscription OnTransitConnectionStatusChangedClient(Action<TransitConnectionStatusChangedClientEvent> handler)
     {
-        return _client.OnEvent<TransitConnectionStatusChangedEvent>(handler);
+        return _client.OnEvent<TransitConnectionStatusChangedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="TransitDiscoveryRevealedEvent"/> events.
+    /// Subscribe to <see cref="TransitDiscoveryRevealedClientEvent"/> events.
     /// A discoverable connection was revealed -- pushed to the discovering entity's session
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitDiscoveryRevealed(Action<TransitDiscoveryRevealedEvent> handler)
+    public IEventSubscription OnTransitDiscoveryRevealedClient(Action<TransitDiscoveryRevealedClientEvent> handler)
     {
-        return _client.OnEvent<TransitDiscoveryRevealedEvent>(handler);
+        return _client.OnEvent<TransitDiscoveryRevealedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="TransitJourneyUpdatedEvent"/> events.
+    /// Subscribe to <see cref="TransitJourneyUpdatedClientEvent"/> events.
     /// Journey state changed -- pushed to the traveling entity's bound session
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnTransitJourneyUpdated(Action<TransitJourneyUpdatedEvent> handler)
+    public IEventSubscription OnTransitJourneyUpdatedClient(Action<TransitJourneyUpdatedClientEvent> handler)
     {
-        return _client.OnEvent<TransitJourneyUpdatedEvent>(handler);
+        return _client.OnEvent<TransitJourneyUpdatedClientEvent>(handler);
     }
 }

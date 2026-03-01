@@ -809,7 +809,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             // If not in initial manifest, wait for updated capability manifest
-            // Note: Connect service consumes shortcut_published events internally and sends
+            // Note: Connect service consumes shortcut-published events internally and sends
             // updated capability manifests to clients - clients never see the raw events
             while (shortcutGuidStr == null && DateTime.UtcNow < shortcutDeadline)
             {
@@ -1867,7 +1867,7 @@ public class SplitServiceRoutingTestHandler : IServiceTestHandler
             }
 
             var eventName = manifestObj["eventName"]?.GetValue<string>();
-            if (eventName != "connect.capability_manifest")
+            if (eventName != "connect.capability-manifest")
             {
                 Console.WriteLine($"   [{connectionName}] Unexpected event type: {eventName}");
                 var resultWs4 = webSocket;

@@ -148,7 +148,7 @@ public class MetaEndpointTestHandler : IServiceTestHandler
                         using var doc = JsonDocument.Parse(payloadJson);
 
                         if (doc.RootElement.TryGetProperty("eventName", out var eventName) &&
-                            eventName.GetString() == "connect.capability_manifest")
+                            eventName.GetString() == "connect.capability-manifest")
                         {
                             Console.WriteLine("✅ Received capability manifest");
 

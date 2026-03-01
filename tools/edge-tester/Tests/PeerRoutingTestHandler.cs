@@ -131,7 +131,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
 
             var payloadBytes = buffer.Array![(BinaryMessage.HeaderSize)..result.Count];
             var payloadJson = Encoding.UTF8.GetString(payloadBytes);
-            var manifest = BannouJson.Deserialize<CapabilityManifestEvent>(payloadJson);
+            var manifest = BannouJson.Deserialize<CapabilityManifestClientEvent>(payloadJson);
 
             if (manifest == null)
             {
@@ -141,7 +141,7 @@ public class PeerRoutingTestHandler : IServiceTestHandler
                 return (resultWs3, null);
             }
 
-            if (manifest.EventName != "connect.capability_manifest")
+            if (manifest.EventName != "connect.capability-manifest")
             {
                 Console.WriteLine($"   [{connectionName}] Unexpected event type: {manifest.EventName}");
                 var resultWs4 = webSocket;

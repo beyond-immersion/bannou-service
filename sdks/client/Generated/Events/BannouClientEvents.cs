@@ -16,13 +16,16 @@ public sealed class BannouClientEvents
     private readonly BannouClient _client;
     private AssetEventSubscriptions? _asset;
     private AuthEventSubscriptions? _auth;
+    private CharacterEventSubscriptions? _character;
     private ChatEventSubscriptions? _chat;
     private CollectionEventSubscriptions? _collection;
     private CurrencyEventSubscriptions? _currency;
     private GameSessionEventSubscriptions? _gamesession;
     private InventoryEventSubscriptions? _inventory;
+    private LocationEventSubscriptions? _location;
     private MatchmakingEventSubscriptions? _matchmaking;
     private StatusEventSubscriptions? _status;
+    private SubscriptionEventSubscriptions? _subscription;
     private SystemEventSubscriptions? _system;
     private TransitEventSubscriptions? _transit;
     private VoiceEventSubscriptions? _voice;
@@ -44,6 +47,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public AuthEventSubscriptions Auth =>
         _auth ??= new AuthEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Character service.
+    /// </summary>
+    public CharacterEventSubscriptions Character =>
+        _character ??= new CharacterEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for Chat service.
@@ -76,6 +85,12 @@ public sealed class BannouClientEvents
         _inventory ??= new InventoryEventSubscriptions(_client);
 
     /// <summary>
+    /// Event subscriptions for Location service.
+    /// </summary>
+    public LocationEventSubscriptions Location =>
+        _location ??= new LocationEventSubscriptions(_client);
+
+    /// <summary>
     /// Event subscriptions for Matchmaking service.
     /// </summary>
     public MatchmakingEventSubscriptions Matchmaking =>
@@ -86,6 +101,12 @@ public sealed class BannouClientEvents
     /// </summary>
     public StatusEventSubscriptions Status =>
         _status ??= new StatusEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Subscription service.
+    /// </summary>
+    public SubscriptionEventSubscriptions Subscription =>
+        _subscription ??= new SubscriptionEventSubscriptions(_client);
 
     /// <summary>
     /// Event subscriptions for System service.

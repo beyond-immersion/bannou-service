@@ -151,6 +151,7 @@ Defined in `{service}-events.yaml`, generates CRUD lifecycle events automaticall
 
 ```yaml
 x-lifecycle:
+  topic_prefix: myservice              # Optional: enables Pattern C namespaced topics
   EntityName:
     model:
       entityId: { type: string, format: uuid, primary: true, required: true }
@@ -162,6 +163,15 @@ x-lifecycle:
       resource_id_field: entityId          # Defaults to primary key field
       source_type: entity                  # Defaults to entity name in kebab-case
 ```
+
+**`topic_prefix`** controls how lifecycle event topics are derived (see [Topic Naming Convention](#topic-naming-convention)):
+- **Without `topic_prefix`**: Topics use Pattern A — `{entity-kebab}.{action}` (e.g., `account.created`)
+- **With `topic_prefix`**: Topics use Pattern C — the prefix becomes a dot-separated namespace:
+  - If entity-kebab equals the prefix: `{entity}.{action}` (Pattern A, e.g., `seed.created` with `topic_prefix: seed`)
+  - If entity-kebab starts with `{prefix}-`: strips and dot-separates (e.g., `transit.connection.created` from `TransitConnection` with `topic_prefix: transit`)
+  - Otherwise: prepends with dot (e.g., `worldstate.calendar-template.created` from `CalendarTemplate` with `topic_prefix: worldstate`)
+
+**When to use `topic_prefix`**: Required for multi-entity services (services with more than one entity type in `x-lifecycle`) and for any entity whose kebab-case name embeds the service name via hyphens (Pattern B is forbidden — see Topic Naming Convention).
 
 **Generated output** (`schemas/Generated/{service}-lifecycle-events.yaml`):
 - `EntityNameCreatedEvent` - Full entity data (sensitive fields excluded)

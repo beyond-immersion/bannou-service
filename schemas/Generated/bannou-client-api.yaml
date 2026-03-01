@@ -17289,17 +17289,13 @@ components:
     AdvanceClockResponse:
       type: object
       additionalProperties: false
-      description: Result of manual clock advancement
+      description: Result of manual clock advancement. Caller already knows 
+        realmId from request.
       required:
-      - realmId
       - previousTime
       - newTime
       - boundaryEventsPublished
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the clock was advanced for
         previousTime:
           $ref: '#/components/schemas/GameTimeSnapshot'
           description: Game time before advancement
@@ -17648,7 +17644,9 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID in Asset Service
+          nullable: true
+          description: Asset ID in Asset Service (null if bundle creation 
+            failed)
         description:
           type: string
           nullable: true
@@ -17669,8 +17667,9 @@ components:
           description: Timestamp when the archive was created
         owner:
           type: string
+          nullable: true
           description: |
-            Owner of this archive. NOT a session ID.
+            Owner of this archive. NOT a session ID (null if owner unknown).
             Contains either an accountId (UUID format) for user-initiated archives
             or a service name for service-initiated archives.
     ArchiveRoomRequest:
@@ -17816,8 +17815,11 @@ components:
           $ref: '#/components/schemas/AssetType'
           description: Type classification for the asset
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to. Null for cross-realm 
+            assets.
         tags:
           type: array
           items:
@@ -17844,16 +17846,21 @@ components:
       description: User-provided metadata for asset categorization
       properties:
         assetType:
-          $ref: '#/components/schemas/AssetType'
-          description: Type classification for the asset
+          allOf:
+          - $ref: '#/components/schemas/AssetType'
+          nullable: true
+          description: Type classification for the asset (null to omit)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm the asset belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm the asset belongs to (null for unscoped)
         tags:
           type: array
           items:
             type: string
-          description: Searchable tags for the asset
+          nullable: true
+          description: Searchable tags for the asset (null to omit)
     AssetReference:
       type: object
       description: Reference to an asset in lib-asset
@@ -17920,10 +17927,12 @@ components:
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of results to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of results to skip for pagination
     AssetSearchResult:
       description: Paginated results from an asset search query
@@ -18026,14 +18035,15 @@ components:
       type: object
       additionalProperties: false
       required:
-      - versionId
       - createdAt
       - size
       - isArchived
       properties:
         versionId:
           type: string
-          description: Unique version identifier
+          nullable: true
+          description: Unique version identifier. Null when object storage 
+            versioning is not enabled.
         createdAt:
           type: string
           format: date-time
@@ -18050,15 +18060,11 @@ components:
       type: object
       additionalProperties: false
       required:
-      - assetId
       - versions
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: Asset identifier
         versions:
           type: array
           items:
@@ -18913,13 +18919,20 @@ components:
       description: Game time snapshots for multiple realms
       required:
       - snapshots
+      - notFoundRealmIds
       properties:
         snapshots:
           type: array
           items:
             $ref: '#/components/schemas/GameTimeSnapshot'
-          description: Game time snapshots for each requested realm (omits 
-            realms without initialized clocks)
+          description: Game time snapshots for each requested realm that has an 
+            initialized clock
+        notFoundRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Realm IDs from the request that had no initialized clock
     BatchMessageEntry:
       type: object
       additionalProperties: false
@@ -19074,7 +19087,7 @@ components:
           type: object
           nullable: true
           additionalProperties:
-            type: string
+            $ref: '#/components/schemas/DocumentCategory'
           description: Map directory prefixes to categories (empty mapping if 
             not provided)
         defaultCategory:
@@ -19095,7 +19108,10 @@ components:
       required:
       - bindingId
       - namespace
+      - repositoryUrl
+      - branch
       - status
+      - createdAt
       properties:
         bindingId:
           type: string
@@ -19827,6 +19843,8 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
+          maxItems: 100
           items:
             type: string
           description: Asset IDs to retrieve (max 100)
@@ -19977,7 +19995,6 @@ components:
       - bundleType
       - version
       - metadataVersion
-      - realm
       - status
       - assetCount
       - createdAt
@@ -20009,8 +20026,11 @@ components:
           description: Owner account ID or service name (null for system-owned 
             bundles)
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm this bundle belongs to
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm this bundle belongs to. Null for cross-realm 
+            bundles.
         tags:
           type: object
           additionalProperties:
@@ -20071,6 +20091,29 @@ components:
         assetCount:
           type: integer
           description: Number of assets declared in the manifest
+    BundleSortField:
+      type: string
+      enum:
+      - created_at
+      - updated_at
+      - name
+      - size
+      description: Fields available for sorting bundle query results
+    BundleStatus:
+      type: string
+      enum:
+      - queued
+      - processing
+      - ready
+      - failed
+      - cancelled
+      description: |
+        Bundle processing status:
+        - queued: Bundle creation is queued for processing
+        - processing: Bundle is being processed
+        - ready: Bundle is ready for download
+        - failed: Bundle creation failed
+        - cancelled: Bundle creation was cancelled
     BundleSummary:
       type: object
       additionalProperties: false
@@ -20080,7 +20123,6 @@ components:
       - bundleType
       - version
       - assetCount
-      - realm
       properties:
         bundleId:
           type: string
@@ -20100,8 +20142,10 @@ components:
           nullable: true
           description: Bundle file size
         realm:
-          $ref: '#/components/schemas/GameRealm'
-          description: Game realm
+          allOf:
+          - $ref: '#/components/schemas/GameRealm'
+          nullable: true
+          description: Game realm. Null for cross-realm bundles.
         createdAt:
           type: string
           format: date-time
@@ -20472,29 +20516,15 @@ components:
       description: Result of job cancellation attempt
       required:
       - jobId
-      - cancelled
       - status
       properties:
         jobId:
           type: string
           format: uuid
           description: Job identifier
-        cancelled:
-          type: boolean
-          description: Whether the job was successfully cancelled
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: Current job status after cancellation attempt
-        message:
-          type: string
-          nullable: true
-          description: Additional context about the cancellation result
     CancelRequest:
       type: object
       description: Request to cancel escrow before fully funded
@@ -23690,6 +23720,13 @@ components:
           items:
             $ref: '#/components/schemas/ContainerItem'
           description: Items in container
+    ContentFormat:
+      type: string
+      enum:
+      - markdown
+      - html
+      - none
+      description: Format of the content field in a document response
     ContentSelectionResponse:
       type: object
       description: Selected content entry for an area
@@ -24602,7 +24639,9 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID in Asset Service
+          nullable: true
+          description: Asset ID in Asset Service (null if bundle upload failed 
+            or Asset Service unavailable)
         documentCount:
           type: integer
           description: Number of documents in the archive
@@ -24727,6 +24766,8 @@ components:
             For service-initiated bundles: the service name (e.g., "orchestrator").
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier (e.g., 
             "synty/polygon-adventure", "my-bundle-v1")
         version:
@@ -24739,9 +24780,10 @@ components:
           nullable: true
           description: |
             Game realm this bundle belongs to.
-            Defaults to 'shared' if not specified.
+            Null for realm-agnostic bundles available across all realms.
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: List of asset IDs to include in the bundle
@@ -24768,12 +24810,7 @@ components:
           description: Human-readable bundle identifier (e.g., 
             "synty/polygon-adventure", "my-bundle-v1")
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: Bundle creation status
         estimatedSize:
           type: integer
@@ -25931,12 +25968,7 @@ components:
             Use /bundles/job/status to poll for completion, or wait for
             MetabundleCreationCompleteEvent via WebSocket.
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Creation status.
             - queued: Job accepted for async processing (poll with jobId)
@@ -25963,9 +25995,11 @@ components:
           description: Total size in bytes
         sourceBundles:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/SourceBundleReference'
-          description: Provenance data for the metabundle
+          description: Provenance data for the metabundle (null when status is 
+            not ready)
         conflicts:
           type: array
           nullable: true
@@ -27385,6 +27419,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to delete
         permanent:
           type: boolean
@@ -27401,18 +27437,11 @@ components:
       additionalProperties: false
       description: Result of bundle deletion
       required:
-      - bundleId
       - status
       - deletedAt
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was deleted
         status:
-          type: string
-          enum:
-          - deleted
-          - permanently_deleted
+          $ref: '#/components/schemas/DeletionStatus'
           description: Deletion status
         deletedAt:
           type: string
@@ -27705,6 +27734,15 @@ components:
           type: integer
           format: int64
           description: Storage freed in bytes
+    DeletionStatus:
+      type: string
+      enum:
+      - deleted
+      - permanently_deleted
+      description: |
+        Result of a deletion operation:
+        - deleted: Soft-deleted (within retention period, can be restored)
+        - permanently_deleted: Permanently removed (unrecoverable)
     DeltaAlgorithm:
       type: string
       enum:
@@ -28234,7 +28272,9 @@ components:
           description: Category for organizing the document
         content:
           type: string
-          description: Full markdown content of the document
+          nullable: true
+          description: Full markdown content of the document (null if content 
+            not requested)
         summary:
           type: string
           nullable: true
@@ -28247,18 +28287,21 @@ components:
           type: array
           items:
             type: string
-          description: Tags for filtering and search
+          nullable: true
+          description: Tags for filtering and search (null if no tags)
         relatedDocuments:
           type: array
           items:
             type: string
             format: uuid
-          description: IDs of related documents
+          nullable: true
+          description: IDs of related documents (null if none linked)
         metadata:
           type: object
           additionalProperties: true
+          nullable: true
           description: >-
-            Client-provided custom metadata.
+            Client-provided custom metadata (null if none set).
             No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
@@ -28304,7 +28347,8 @@ components:
           description: Display title of the document
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: Category of the document
+          nullable: true
+          description: Category of the document (null if uncategorized)
         summary:
           type: string
           nullable: true
@@ -28325,7 +28369,9 @@ components:
           type: array
           items:
             type: string
-          description: Text snippets showing where matches occurred
+          nullable: true
+          description: Text snippets showing where matches occurred (null if not
+            computed)
     DocumentSummary:
       description: Lightweight document representation for listings and 
         references
@@ -28362,7 +28408,8 @@ components:
           type: array
           items:
             type: string
-          description: Tags associated with the document
+          nullable: true
+          description: Tags associated with the document (null if no tags)
     DomainInfluence:
       type: object
       additionalProperties: false
@@ -31050,10 +31097,11 @@ components:
             No Bannou plugin reads specific keys from this field by convention.
     GameRealm:
       type: string
+      minLength: 1
       description: |
         Realm stub name (lowercase string identifier) that this asset belongs to.
         Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
-        Use "shared" for assets that are available across all realms.
+        Null for assets that are available across all realms.
     GameSessionResponse:
       description: Complete details of a game session including players and 
         settings
@@ -31630,11 +31678,13 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier
+          minLength: 64
+          maxLength: 64
+          description: Asset identifier (SHA-256 hex string)
         version:
           type: string
-          default: latest
-          description: Version ID or 'latest'
+          nullable: true
+          description: Version ID to retrieve (null for latest version)
     GetBackstoryRequest:
       type: object
       description: Request payload for getting a character's backstory
@@ -31804,6 +31854,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to retrieve
         format:
           $ref: '#/components/schemas/BundleFormat'
@@ -32312,14 +32364,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentSummary'
-          description: List of related documents based on includeRelated depth
+          nullable: true
+          description: List of related documents based on includeRelated depth 
+            (null if not requested)
         contentFormat:
-          type: string
-          enum:
-          - markdown
-          - html
-          - none
-          description: Format of the content field in the response
+          $ref: '#/components/schemas/ContentFormat'
+          nullable: true
+          description: Format of the content field in the response (null if 
+            content not included)
     GetEffectsRequest:
       type: object
       description: Request to get unified effects for an entity
@@ -32832,13 +32884,7 @@ components:
           type: string
           description: Human-readable metabundle identifier being created
         status:
-          type: string
-          enum:
-          - queued
-          - processing
-          - ready
-          - failed
-          - cancelled
+          $ref: '#/components/schemas/BundleStatus'
           description: |
             Current job status.
             - queued: Waiting for processing resources
@@ -32877,7 +32923,8 @@ components:
             $ref: '#/components/schemas/SourceBundleReference'
           description: Provenance data (when ready)
         errorCode:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/MetabundleErrorCode'
           nullable: true
           description: Error code (when status is 'failed')
         errorMessage:
@@ -35201,10 +35248,10 @@ components:
     InitializeRealmClockResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of realm clock initialization with resolved 
-        values
+      description: Resolved entity state after realm clock initialization. 
+        Caller already knows realmId from request. Shows resolved values for 
+        optional fields that may have fallen back to config defaults.
       required:
-      - realmId
       - gameServiceId
       - calendarTemplateCode
       - timeRatio
@@ -35212,39 +35259,38 @@ components:
       - epoch
       - startingYear
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the clock was initialized for
         gameServiceId:
           type: string
           format: uuid
-          description: Game service the realm belongs to
+          description: Game service the realm belongs to (resolved from realm 
+            lookup)
         calendarTemplateCode:
           type: string
           minLength: 1
           maxLength: 128
           description: Calendar template code in use (resolved from request or 
-            config)
+            config default)
         timeRatio:
           type: number
           format: float
           minimum: 0.1
           maximum: 10000.0
           description: Initial game-seconds per real-second (resolved from 
-            request or config)
+            request or config default)
         downtimePolicy:
           $ref: '#/components/schemas/DowntimePolicy'
-          description: Downtime handling policy (resolved from request or 
-            config)
+          description: Downtime handling policy (resolved from request or config
+            default)
         epoch:
           type: string
           format: date-time
-          description: Real-world timestamp of the realm epoch
+          description: Real-world timestamp of the realm epoch (resolved from 
+            request or current time)
         startingYear:
           type: integer
           minimum: 0
-          description: Game year the clock started at
+          description: Game year the clock started at (resolved from request or 
+            default 0)
     InitiateBondRequest:
       type: object
       additionalProperties: false
@@ -36688,14 +36734,18 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to get history for
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
     ListBundleVersionsResponse:
       type: object
@@ -37154,7 +37204,8 @@ components:
           description: Documentation namespace to list documents from
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: Filter to a specific category
+          nullable: true
+          description: Filter to a specific category (null for all categories)
         tags:
           type: array
           items:
@@ -37162,28 +37213,32 @@ components:
           nullable: true
           description: Filter by tags (null to skip tag filtering)
         tagsMatch:
-          type: string
-          enum:
-          - all
-          - any
-          default: all
+          $ref: '#/components/schemas/TagMatchMode'
           description: Whether documents must match all tags or any tag
         createdAfter:
           type: string
           format: date-time
-          description: Filter to documents created after this timestamp
+          nullable: true
+          description: Filter to documents created after this timestamp (null to
+            skip)
         createdBefore:
           type: string
           format: date-time
-          description: Filter to documents created before this timestamp
+          nullable: true
+          description: Filter to documents created before this timestamp (null 
+            to skip)
         updatedAfter:
           type: string
           format: date-time
-          description: Filter to documents updated after this timestamp
+          nullable: true
+          description: Filter to documents updated after this timestamp (null to
+            skip)
         updatedBefore:
           type: string
           format: date-time
-          description: Filter to documents updated before this timestamp
+          nullable: true
+          description: Filter to documents updated before this timestamp (null 
+            to skip)
         titlesOnly:
           type: boolean
           default: false
@@ -37203,23 +37258,15 @@ components:
           $ref: '#/components/schemas/ListSortField'
           description: Field to sort results by
         sortOrder:
-          type: string
-          enum:
-          - asc
-          - desc
-          default: desc
+          $ref: '#/components/schemas/SortOrder'
           description: Sort order direction
     ListDocumentsResponse:
       description: Response containing a paginated list of documents
       type: object
       additionalProperties: false
       required:
-      - namespace
       - documents
       properties:
-        namespace:
-          type: string
-          description: The namespace that was listed
         documents:
           type: array
           items:
@@ -37228,12 +37275,6 @@ components:
         totalCount:
           type: integer
           description: Total number of documents matching filters
-        page:
-          type: integer
-          description: Current page number
-        pageSize:
-          type: integer
-          description: Number of documents per page
         totalPages:
           type: integer
           description: Total number of pages available
@@ -38178,8 +38219,6 @@ components:
       required:
       - items
       - totalCount
-      - page
-      - pageSize
       properties:
         items:
           type: array
@@ -38190,15 +38229,6 @@ components:
           type: integer
           minimum: 0
           description: Total matching realm clocks
-        page:
-          type: integer
-          minimum: 0
-          description: Current page number
-        pageSize:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: Items per page
     ListRealmsRequest:
       description: Request to list realms with optional filtering and pagination
       type: object
@@ -39225,14 +39255,19 @@ components:
       properties:
         assetId:
           type: string
-          description: Asset identifier to list versions for
+          minLength: 64
+          maxLength: 64
+          description: Asset identifier to list versions for (SHA-256 hex 
+            string)
         limit:
           type: integer
           default: 50
+          minimum: 1
           description: Maximum number of versions to return
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Number of versions to skip for pagination
     ListVersionsResponse:
       type: object
@@ -39999,6 +40034,20 @@ components:
           type: string
           nullable: true
           description: Cursor for fetching the next page
+    MetabundleErrorCode:
+      type: string
+      enum:
+      - SOURCE_BUNDLE_NOT_FOUND
+      - SOURCE_BUNDLE_NOT_READY
+      - STANDALONE_ASSET_NOT_FOUND
+      - STANDALONE_ASSET_NOT_READY
+      - REALM_MISMATCH
+      - ASSET_CONFLICT
+      - STORAGE_ERROR
+      - TIMEOUT
+      - CANCELLED
+      - INTERNAL_ERROR
+      description: Error codes for metabundle creation failures
     MetadataType:
       type: string
       description: Type of metadata to update
@@ -40712,6 +40761,10 @@ components:
       description: Configuration for multipart uploads of large files
       type: object
       additionalProperties: false
+      required:
+      - required
+      - partSize
+      - maxParts
       properties:
         required:
           type: boolean
@@ -42657,15 +42710,11 @@ components:
       additionalProperties: false
       description: Bundles containing the requested asset
       required:
-      - assetId
       - bundles
       - total
       - limit
       - offset
       properties:
-        assetId:
-          type: string
-          description: The queried asset ID
         bundles:
           type: array
           items:
@@ -42739,19 +42788,13 @@ components:
           nullable: true
           description: Filter by bundle type (source or metabundle)
         sortField:
-          type: string
-          enum:
-          - created_at
-          - updated_at
-          - name
-          - size
+          allOf:
+          - $ref: '#/components/schemas/BundleSortField'
           nullable: true
           description: Field to sort by (default created_at)
         sortOrder:
-          type: string
-          enum:
-          - asc
-          - desc
+          allOf:
+          - $ref: '#/components/schemas/SortOrder'
           nullable: true
           description: Sort order (default desc)
         limit:
@@ -43030,10 +43073,14 @@ components:
         sessionId:
           type: string
           format: uuid
-          description: Optional session ID for conversational context
+          nullable: true
+          description: Optional session ID for conversational context (null if 
+            not tracking)
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: Filter results to a specific category
+          nullable: true
+          description: Filter results to a specific category (null for all 
+            categories)
         maxResults:
           type: integer
           default: 5
@@ -43063,16 +43110,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - namespace
-      - query
       - results
       properties:
-        namespace:
-          type: string
-          description: The namespace that was searched
-        query:
-          type: string
-          description: The original query string
         results:
           type: array
           items:
@@ -43080,18 +43119,25 @@ components:
           description: List of matching documents
         totalResults:
           type: integer
-          description: Total number of matching documents
+          nullable: true
+          description: Total number of matching documents (null if count 
+            unavailable)
         voiceSummary:
           type: string
-          description: Concise spoken summary for voice AI
+          nullable: true
+          description: Concise spoken summary for voice AI (null if not 
+            generated)
         suggestedFollowups:
           type: array
           items:
             type: string
-          description: Suggested follow-up queries
+          nullable: true
+          description: Suggested follow-up queries (null if none available)
         noResultsMessage:
           type: string
-          description: User-friendly message when no results found
+          nullable: true
+          description: User-friendly message when no results found (null when 
+            results exist)
     QueryEntriesRequest:
       type: object
       description: Request to query unlocked entries
@@ -45840,7 +45886,10 @@ components:
       - bindingId
       - namespace
       - repositoryUrl
+      - branch
       - status
+      - createdAt
+      - owner
       properties:
         bindingId:
           type: string
@@ -45897,10 +45946,14 @@ components:
       properties:
         binding:
           $ref: '#/components/schemas/RepositoryBindingInfo'
-          description: Current binding configuration and status
+          nullable: true
+          description: Current binding configuration and status (null if no 
+            binding exists)
         lastSync:
           $ref: '#/components/schemas/SyncInfo'
-          description: Information about the most recent sync
+          nullable: true
+          description: Information about the most recent sync (null if no sync 
+            has occurred)
     RequestSnapshotRequest:
       type: object
       description: Request for full snapshot
@@ -45979,6 +46032,7 @@ components:
       properties:
         assetIds:
           type: array
+          minItems: 1
           items:
             type: string
           description: Platform asset IDs to resolve
@@ -46346,6 +46400,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to restore
         reason:
           type: string
@@ -46357,21 +46413,13 @@ components:
       additionalProperties: false
       description: Result of bundle restoration
       required:
-      - bundleId
       - status
-      - restoredAt
       - restoredFromVersion
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was restored
         status:
-          type: string
-          description: Current bundle status (should be "active")
-        restoredAt:
-          type: string
-          format: date-time
-          description: When the bundle was restored
+          $ref: '#/components/schemas/BundleLifecycle'
+          description: Current bundle lifecycle status after restoration (should
+            be "active")
         restoredFromVersion:
           type: integer
           description: Version number the bundle was restored from
@@ -47769,12 +47817,7 @@ components:
           nullable: true
           description: Fields to search within (null for default fields)
         sortBy:
-          type: string
-          enum:
-          - relevance
-          - recency
-          - alphabetical
-          default: relevance
+          $ref: '#/components/schemas/SearchSortBy'
           description: How to sort the search results
         includeContent:
           type: boolean
@@ -47785,12 +47828,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - namespace
       - results
       properties:
-        namespace:
-          type: string
-          description: The namespace that was searched
         results:
           type: array
           items:
@@ -47798,10 +47837,9 @@ components:
           description: List of matching documents
         totalResults:
           type: integer
-          description: Total number of matching documents
-        searchTerm:
-          type: string
-          description: The original search term
+          nullable: true
+          description: Total number of matching documents (null if count 
+            unavailable)
     SearchField:
       type: string
       enum:
@@ -47916,6 +47954,14 @@ components:
         total:
           type: integer
           description: Total matches
+    SearchSortBy:
+      type: string
+      enum:
+      - relevance
+      - recency
+      - alphabetical
+      default: relevance
+      description: How to sort search results
     SeasonDefinition:
       type: object
       additionalProperties: false
@@ -48815,28 +48861,15 @@ components:
     SetTimeRatioResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of time ratio change
+      description: Result of time ratio change. Caller already knows realmId, 
+        newRatio, and reason from request.
       required:
-      - realmId
       - previousRatio
-      - newRatio
-      - reason
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the ratio was changed for
         previousRatio:
           type: number
           format: float
-          description: Previous game-seconds per real-second
-        newRatio:
-          type: number
-          format: float
-          description: New game-seconds per real-second
-        reason:
-          $ref: '#/components/schemas/TimeRatioChangeReason'
-          description: Reason for the ratio change
+          description: Previous game-seconds per real-second before the change
     SettableConnectionStatus:
       type: string
       description: Connection statuses that can be set via the update-status 
@@ -49004,10 +49037,10 @@ components:
           description: Custom key-value metadata
     SortOrder:
       type: string
-      description: How scores are sorted
       enum:
-      - descending
-      - ascending
+      - asc
+      - desc
+      description: Sort direction for query results
     SoulboundType:
       type: string
       description: When item becomes bound to a character
@@ -50188,12 +50221,15 @@ components:
           description: Type of source to base suggestions on
         sourceValue:
           type: string
+          nullable: true
           description: The value for the suggestion source (document ID, slug, 
-            topic, or category)
+            topic, or category; null if source is context-based)
         sessionId:
           type: string
           format: uuid
-          description: Optional session ID for personalized suggestions
+          nullable: true
+          description: Optional session ID for personalized suggestions (null if
+            not tracking)
         maxSuggestions:
           type: integer
           default: 5
@@ -50223,7 +50259,9 @@ components:
           description: List of suggested related topics
         voicePrompt:
           type: string
-          description: Voice-friendly prompt for presenting suggestions
+          nullable: true
+          description: Voice-friendly prompt for presenting suggestions (null if
+            not generated)
         sessionInfluenced:
           type: boolean
           description: Whether suggestions were influenced by session history
@@ -50243,21 +50281,29 @@ components:
         syncId:
           type: string
           format: uuid
-          description: Unique identifier of the sync operation
+          nullable: true
+          description: Unique identifier of the sync operation (null if no sync 
+            has occurred)
         status:
           $ref: '#/components/schemas/SyncStatus'
-          description: Result status of the sync
+          nullable: true
+          description: Result status of the sync (null if no sync has occurred)
         triggeredBy:
           $ref: '#/components/schemas/SyncTrigger'
-          description: What triggered the sync
+          nullable: true
+          description: What triggered the sync (null if no sync has occurred)
         startedAt:
           type: string
           format: date-time
-          description: Timestamp when sync started
+          nullable: true
+          description: Timestamp when sync started (null if no sync has 
+            occurred)
         completedAt:
           type: string
           format: date-time
-          description: Timestamp when sync completed
+          nullable: true
+          description: Timestamp when sync completed (null if sync is in 
+            progress or none occurred)
         commitHash:
           type: string
           nullable: true
@@ -50335,6 +50381,13 @@ components:
       - manual
       - scheduled
       description: What triggered the sync operation
+    TagMatchMode:
+      type: string
+      enum:
+      - all
+      - any
+      default: all
+      description: Whether documents must match all specified tags or any tag
     TemplateStatus:
       type: string
       enum:
@@ -50663,16 +50716,22 @@ components:
           description: Unique identifier of the suggested document
         slug:
           type: string
-          description: URL-friendly slug of the suggested document
+          nullable: true
+          description: URL-friendly slug of the suggested document (null if 
+            unavailable)
         title:
           type: string
           description: Title of the suggested document
         category:
           $ref: '#/components/schemas/DocumentCategory'
-          description: Category of the suggested document
+          nullable: true
+          description: Category of the suggested document (null if 
+            uncategorized)
         relevanceReason:
           type: string
-          description: Explanation of why this document is relevant
+          nullable: true
+          description: Explanation of why this document is relevant (null if not
+            computed)
     TraitAxis:
       type: string
       description: |
@@ -52234,6 +52293,8 @@ components:
       properties:
         bundleId:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Human-readable bundle identifier to update
         name:
           type: string
@@ -52271,14 +52332,10 @@ components:
       additionalProperties: false
       description: Result of bundle update operation
       required:
-      - bundleId
       - version
       - previousVersion
       - changes
       properties:
-        bundleId:
-          type: string
-          description: Human-readable bundle identifier that was updated
         version:
           type: integer
           description: New version number after update
@@ -53322,13 +53379,15 @@ components:
         categoryMapping:
           type: object
           additionalProperties:
-            type: string
+            $ref: '#/components/schemas/DocumentCategory'
           nullable: true
           description: New directory-to-category mapping (null to keep 
             unchanged)
         defaultCategory:
           $ref: '#/components/schemas/DocumentCategory'
-          description: New default category for unmapped documents
+          nullable: true
+          description: New default category for unmapped documents (null to keep
+            unchanged)
         archiveEnabled:
           type: boolean
           description: Enable or disable archive functionality
@@ -53729,23 +53788,30 @@ components:
       properties:
         owner:
           type: string
+          minLength: 1
           description: |
             Owner of this asset operation. NOT a session ID.
             For user-initiated uploads: the accountId (UUID format).
             For service-initiated uploads: the service name (e.g., "behavior", "orchestrator").
         filename:
           type: string
+          minLength: 1
+          maxLength: 255
           description: Original filename with extension
         size:
           type: integer
           format: int64
+          minimum: 1
           description: File size in bytes
         contentType:
           type: string
+          minLength: 1
           description: MIME content type (e.g., image/png, model/gltf-binary)
         metadata:
-          $ref: '#/components/schemas/AssetMetadataInput'
-          description: Optional metadata for asset categorization
+          allOf:
+          - $ref: '#/components/schemas/AssetMetadataInput'
+          nullable: true
+          description: Optional metadata for asset categorization (null to skip)
     UploadResponse:
       description: Response containing pre-signed URL and configuration for 
         uploading an asset
@@ -53776,8 +53842,9 @@ components:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Headers the client must include when uploading to the 
-            pre-signed URL
+            pre-signed URL (null if no special headers needed)
     UseItemRequest:
       type: object
       description: Request to use an item instance by executing its behavior 

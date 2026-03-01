@@ -55,7 +55,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "location.presence_changed"
+          default: "location.presence-changed"
           description: Fixed event type identifier
         locationId:
           type: string

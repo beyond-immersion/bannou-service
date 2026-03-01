@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to matchmaking-queue.created when a matchmakingqueue is created
+      description: Published to matchmaking.queue.created when a matchmakingqueue is created
       required:
       - eventName
       - eventId
@@ -27,8 +27,8 @@ components:
       properties:
         eventName:
           type: string
-          default: matchmaking-queue.created
-          description: 'Event type identifier: matchmaking-queue.created'
+          default: matchmaking.queue.created
+          description: 'Event type identifier: matchmaking.queue.created'
         queueId: &id001
           type: string
           description: "Unique identifier for the matchmaking queue"
@@ -56,7 +56,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to matchmaking-queue.updated when a matchmakingqueue is updated
+      description: Published to matchmaking.queue.updated when a matchmakingqueue is updated
       required:
       - eventName
       - eventId
@@ -72,8 +72,8 @@ components:
       properties:
         eventName:
           type: string
-          default: matchmaking-queue.updated
-          description: 'Event type identifier: matchmaking-queue.updated'
+          default: matchmaking.queue.updated
+          description: 'Event type identifier: matchmaking.queue.updated'
         queueId: *id001
         gameId: *id002
         displayName: *id003
@@ -91,7 +91,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to matchmaking-queue.deleted when a matchmakingqueue is deleted
+      description: Published to matchmaking.queue.deleted when a matchmakingqueue is deleted
       required:
       - eventName
       - eventId
@@ -106,8 +106,8 @@ components:
       properties:
         eventName:
           type: string
-          default: matchmaking-queue.deleted
-          description: 'Event type identifier: matchmaking-queue.deleted'
+          default: matchmaking.queue.deleted
+          description: 'Event type identifier: matchmaking.queue.deleted'
         queueId: *id001
         gameId: *id002
         displayName: *id003

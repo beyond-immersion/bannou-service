@@ -588,7 +588,7 @@ public class ActorRunnerTests
         // Assert - should not publish character state updates
         messageBusMock.Verify(
             m => m.TryPublishAsync(
-                "character.state_update",
+                "character.state-update",
                 It.IsAny<CharacterStateUpdateEvent>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);

@@ -222,7 +222,7 @@ public partial class MatchmakingService : IMatchmakingService
         await AddToQueueListAsync(queue.QueueId, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue-created", new MatchmakingQueueCreatedEvent
+        await _messageBus.TryPublishAsync("matchmaking.queue.created", new MatchmakingQueueCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -289,7 +289,7 @@ public partial class MatchmakingService : IMatchmakingService
         }
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue-updated", new MatchmakingQueueUpdatedEvent
+        await _messageBus.TryPublishAsync("matchmaking.queue.updated", new MatchmakingQueueUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -336,7 +336,7 @@ public partial class MatchmakingService : IMatchmakingService
         await RemoveFromQueueListAsync(body.QueueId, cancellationToken);
 
         // Publish event
-        await _messageBus.TryPublishAsync("matchmaking.queue-deleted", new MatchmakingQueueDeletedEvent
+        await _messageBus.TryPublishAsync("matchmaking.queue.deleted", new MatchmakingQueueDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

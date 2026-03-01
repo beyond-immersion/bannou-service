@@ -394,7 +394,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             Times.Exactly(2));
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.created", It.IsAny<CollectionEntryTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.created", It.IsAny<CollectionEntryTemplateCreatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -590,7 +590,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response.UpdatedAt);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -618,7 +618,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
         Assert.NotNull(response);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.updated", It.IsAny<CollectionEntryTemplateUpdatedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -677,7 +677,7 @@ public class CollectionServiceTests : ServiceTestBase<CollectionServiceConfigura
             Times.Once);
 
         _mockMessageBus.Verify(
-            m => m.TryPublishAsync("collection-entry-template.deleted", It.IsAny<CollectionEntryTemplateDeletedEvent>(), It.IsAny<CancellationToken>()),
+            m => m.TryPublishAsync("collection.entry-template.deleted", It.IsAny<CollectionEntryTemplateDeletedEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

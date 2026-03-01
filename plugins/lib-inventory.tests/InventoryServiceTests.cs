@@ -209,7 +209,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-container.created",
+            "inventory.container.created",
             It.Is<InventoryContainerCreatedEvent>(e =>
                 e.OwnerId == request.OwnerId &&
                 e.ContainerType == request.ContainerType &&
@@ -724,7 +724,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-container.updated",
+            "inventory.container.updated",
             It.Is<InventoryContainerUpdatedEvent>(e => e.ContainerId == containerId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -1423,7 +1423,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-item.placed",
+            "inventory.item.placed",
             It.Is<InventoryItemPlacedEvent>(e =>
                 e.InstanceId == instanceId &&
                 e.ContainerId == containerId &&
@@ -1509,7 +1509,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-container.full",
+            "inventory.container.full",
             It.Is<InventoryContainerFullEvent>(e =>
                 e.ContainerId == containerId &&
                 e.ConstraintType == ConstraintLimitType.Slots),
@@ -1550,7 +1550,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert - container full event should NOT be published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-container.full",
+            "inventory.container.full",
             It.IsAny<InventoryContainerFullEvent>(),
             It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -1592,7 +1592,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Assert
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-container.full",
+            "inventory.container.full",
             It.Is<InventoryContainerFullEvent>(e =>
                 e.ContainerId == containerId &&
                 e.ConstraintType == ConstraintLimitType.Weight),
@@ -1647,7 +1647,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Verify event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-item.removed",
+            "inventory.item.removed",
             It.Is<InventoryItemRemovedEvent>(e =>
                 e.InstanceId == instanceId &&
                 e.ContainerId == containerId),
@@ -1830,7 +1830,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Move event published for same-container slot change
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-item.moved",
+            "inventory.item.moved",
             It.Is<InventoryItemMovedEvent>(e =>
                 e.InstanceId == instanceId &&
                 e.SourceContainerId == containerId &&
@@ -1891,7 +1891,7 @@ public class InventoryServiceTests : ServiceTestBase<InventoryServiceConfigurati
 
         // Move event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "inventory-item.moved",
+            "inventory.item.moved",
             It.Is<InventoryItemMovedEvent>(e =>
                 e.InstanceId == instanceId &&
                 e.SourceContainerId == sourceContainerId &&

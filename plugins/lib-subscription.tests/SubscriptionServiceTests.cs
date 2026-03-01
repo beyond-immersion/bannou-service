@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Subscription.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
@@ -6,7 +7,6 @@ using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.Bannou.Subscription.ClientEvents;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -693,7 +693,7 @@ public class SubscriptionServiceTests
         _mockEntitySessionRegistry.Verify(r => r.PublishToEntitySessionsAsync(
             "account",
             accountId,
-            It.Is<SubscriptionStatusChangedEvent>(e =>
+            It.Is<SubscriptionStatusChangedClientEvent>(e =>
                 e.AccountId == accountId &&
                 e.ServiceId == serviceId &&
                 e.Action == SubscriptionAction.Created &&

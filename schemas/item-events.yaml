@@ -10,7 +10,7 @@ info:
     - Instance lifecycle: created, modified, destroyed
     - Binding events: bound, unbound
 
-    **Topic Naming**: Uses kebab-case for multi-word entities (item-template, item-instance).
+    **Topic Naming**: Uses `item.` prefix with dot-separated entity names (item.template, item.instance).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -21,29 +21,29 @@ info:
   x-event-subscriptions: []
   x-event-publications:
     # Template lifecycle events (auto-generated from x-lifecycle)
-    - topic: item-template.created
+    - topic: item.template.created
       event: ItemTemplateCreatedEvent
       description: Published when a new item template is created
-    - topic: item-template.updated
+    - topic: item.template.updated
       event: ItemTemplateUpdatedEvent
       description: Published when an item template is updated (including deprecation via changedFields)
 
     # Instance lifecycle events (auto-generated from x-lifecycle)
-    - topic: item-instance.created
+    - topic: item.instance.created
       event: ItemInstanceCreatedEvent
       description: Published when a new item instance is created
-    - topic: item-instance.modified
+    - topic: item.instance.modified
       event: ItemInstanceModifiedEvent
       description: Published when an item instance is modified (durability, stats, etc.)
-    - topic: item-instance.destroyed
+    - topic: item.instance.destroyed
       event: ItemInstanceDestroyedEvent
       description: Published when an item instance is destroyed
 
     # Binding events (non-lifecycle)
-    - topic: item-instance.bound
+    - topic: item.instance.bound
       event: ItemInstanceBoundEvent
       description: Published when an item is bound to a character (soulbound)
-    - topic: item-instance.unbound
+    - topic: item.instance.unbound
       event: ItemInstanceUnboundEvent
       description: Published when an item binding is removed (admin action, expiration)
 
@@ -71,6 +71,7 @@ info:
 # The custom events are defined in components/schemas below and listed in x-event-publications.
 # The auto-generated Updated/Deleted variants exist in Generated/ but are not published.
 x-lifecycle:
+  topic_prefix: item
   ItemTemplate:
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the item template" }

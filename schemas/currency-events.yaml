@@ -8,9 +8,9 @@ info:
     **Event Categories**:
     - Balance events: credited, debited, transferred
     - Autogain events: calculated
-    - Cap events: earn_cap.reached, wallet_cap.reached
+    - Cap events: earn-cap.reached, wallet-cap.reached
     - Expiration events: expired
-    - Exchange rate events: exchange_rate.updated
+    - Exchange rate events: exchange-rate.updated
     - Lifecycle events (auto-generated): definition.created/updated, wallet.created/frozen/unfrozen/closed
     - Hold events: hold.created, hold.captured, hold.released, hold.expired
 
@@ -39,10 +39,10 @@ info:
       description: Published when autogain is calculated (lazy or task mode)
 
     # Cap events
-    - topic: currency.earn_cap.reached
+    - topic: currency.earn-cap.reached
       event: CurrencyEarnCapReachedEvent
       description: Published when a credit is limited by earn cap
-    - topic: currency.wallet_cap.reached
+    - topic: currency.wallet-cap.reached
       event: CurrencyWalletCapReachedEvent
       description: Published when a credit hits the wallet cap
 
@@ -52,28 +52,28 @@ info:
       description: Published when currency expires
 
     # Exchange rate events
-    - topic: currency.exchange_rate.updated
+    - topic: currency.exchange-rate.updated
       event: CurrencyExchangeRateUpdatedEvent
       description: Published when an exchange rate is updated
 
     # Lifecycle events (auto-generated from x-lifecycle)
-    - topic: currency-definition.created
+    - topic: currency.definition.created
       event: CurrencyDefinitionCreatedEvent
       description: Published when a new currency definition is created
-    - topic: currency-definition.updated
+    - topic: currency.definition.updated
       event: CurrencyDefinitionUpdatedEvent
       description: Published when a currency definition is updated
 
-    - topic: currency-wallet.created
+    - topic: currency.wallet.created
       event: CurrencyWalletCreatedEvent
       description: Published when a new wallet is created
-    - topic: currency-wallet.frozen
+    - topic: currency.wallet.frozen
       event: CurrencyWalletFrozenEvent
       description: Published when a wallet is frozen
-    - topic: currency-wallet.unfrozen
+    - topic: currency.wallet.unfrozen
       event: CurrencyWalletUnfrozenEvent
       description: Published when a wallet is unfrozen
-    - topic: currency-wallet.closed
+    - topic: currency.wallet.closed
       event: CurrencyWalletClosedEvent
       description: Published when a wallet is permanently closed
 
@@ -93,6 +93,7 @@ info:
 
 # Lifecycle events auto-generated from this definition
 x-lifecycle:
+  topic_prefix: currency
   CurrencyDefinition:
     model:
       definitionId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the currency definition" }

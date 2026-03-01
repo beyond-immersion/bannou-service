@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to inventory-container.created when a inventorycontainer is created
+      description: Published to inventory.container.created when a inventorycontainer is created
       required:
       - eventName
       - eventId
@@ -34,8 +34,8 @@ components:
       properties:
         eventName:
           type: string
-          default: inventory-container.created
-          description: 'Event type identifier: inventory-container.created'
+          default: inventory.container.created
+          description: 'Event type identifier: inventory.container.created'
         containerId: &id001
           type: string
           format: uuid
@@ -180,7 +180,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to inventory-container.updated when a inventorycontainer is updated
+      description: Published to inventory.container.updated when a inventorycontainer is updated
       required:
       - eventName
       - eventId
@@ -203,8 +203,8 @@ components:
       properties:
         eventName:
           type: string
-          default: inventory-container.updated
-          description: 'Event type identifier: inventory-container.updated'
+          default: inventory.container.updated
+          description: 'Event type identifier: inventory.container.updated'
         containerId: *id001
         ownerId: *id002
         ownerType: *id003
@@ -249,7 +249,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to inventory-container.deleted when a inventorycontainer is deleted
+      description: Published to inventory.container.deleted when a inventorycontainer is deleted
       required:
       - eventName
       - eventId
@@ -271,8 +271,8 @@ components:
       properties:
         eventName:
           type: string
-          default: inventory-container.deleted
-          description: 'Event type identifier: inventory-container.deleted'
+          default: inventory.container.deleted
+          description: 'Event type identifier: inventory.container.deleted'
         containerId: *id001
         ownerId: *id002
         ownerType: *id003

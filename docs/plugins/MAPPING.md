@@ -66,7 +66,7 @@ Spatial data management service (L4 GameFeatures) for Arcadia game worlds. Provi
 | `mapping.authority.expired` | `MappingAuthorityExpiredEvent` | Authority expiry detected during validation (fire-and-forget) |
 | `map.{regionId}.{kind}.updated` | `MapUpdatedEvent` | Map data published (RPC publish or ingest) |
 | `map.{regionId}.{kind}.objects.changed` | `MapObjectsChangedEvent` | Objects created/updated/deleted (subject to event aggregation window) |
-| `map.warnings.unauthorized_publish` | `MapUnauthorizedPublishWarning` | Non-authority publish attempt in reject_and_alert or accept_and_alert mode |
+| `map.warnings.unauthorized-publish` | `MapUnauthorizedPublishWarning` | Non-authority publish attempt in reject_and_alert or accept_and_alert mode |
 
 ### Consumed Events (Dynamic)
 

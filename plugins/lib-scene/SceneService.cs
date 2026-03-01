@@ -57,11 +57,11 @@ public partial class SceneService : ISceneService
     private const string SCENE_DELETED_TOPIC = "scene.deleted";
     private const string SCENE_INSTANTIATED_TOPIC = "scene.instantiated";
     private const string SCENE_DESTROYED_TOPIC = "scene.destroyed";
-    private const string SCENE_CHECKED_OUT_TOPIC = "scene.checked_out";
+    private const string SCENE_CHECKED_OUT_TOPIC = "scene.checked-out";
     private const string SCENE_COMMITTED_TOPIC = "scene.committed";
     private const string SCENE_CHECKOUT_DISCARDED_TOPIC = "scene.checkout.discarded";
     private const string SCENE_CHECKOUT_EXPIRED_TOPIC = "scene.checkout.expired";
-    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation_rules.updated";
+    private const string VALIDATION_RULES_UPDATED_TOPIC = "scene.validation-rules.updated";
     private const string SCENE_REFERENCE_BROKEN_TOPIC = "scene.reference.broken";
 
     // YAML serializer/deserializer

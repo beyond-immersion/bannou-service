@@ -70,7 +70,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "connect.capability_manifest"
+          default: "connect.capability-manifest"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -138,7 +138,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "connect.disconnect_notification"
+          default: "connect.disconnect-notification"
           description: Fixed event type identifier
         reconnectionToken:
           type: string
@@ -211,7 +211,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "permission.session_capabilities"
+          default: "permission.session-capabilities"
           description: Fixed event type identifier (internal, not forwarded to client)
         sessionId:
           type: string
@@ -292,7 +292,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "session.shortcut_published"
+          default: "session.shortcut-published"
           description: Fixed event type identifier.
         sessionId:
           type: string
@@ -325,7 +325,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "session.shortcut_revoked"
+          default: "session.shortcut-revoked"
           description: Fixed event type identifier.
         sessionId:
           type: string

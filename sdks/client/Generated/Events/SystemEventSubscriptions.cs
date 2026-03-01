@@ -24,46 +24,46 @@ public sealed class SystemEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="CapabilityManifestEvent"/> events.
+    /// Subscribe to <see cref="CapabilityManifestClientEvent"/> events.
     /// Sent to client when their available API capabilities change.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnCapabilityManifest(Action<CapabilityManifestEvent> handler)
+    public IEventSubscription OnCapabilityManifestClient(Action<CapabilityManifestClientEvent> handler)
     {
-        return _client.OnEvent<CapabilityManifestEvent>(handler);
+        return _client.OnEvent<CapabilityManifestClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="DisconnectNotificationEvent"/> events.
+    /// Subscribe to <see cref="DisconnectNotificationClientEvent"/> events.
     /// Sent to client before WebSocket connection is closed.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnDisconnectNotification(Action<DisconnectNotificationEvent> handler)
+    public IEventSubscription OnDisconnectNotificationClient(Action<DisconnectNotificationClientEvent> handler)
     {
-        return _client.OnEvent<DisconnectNotificationEvent>(handler);
+        return _client.OnEvent<DisconnectNotificationClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="SystemErrorEvent"/> events.
+    /// Subscribe to <see cref="SystemErrorClientEvent"/> events.
     /// Generic error notification sent to client.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSystemError(Action<SystemErrorEvent> handler)
+    public IEventSubscription OnSystemErrorClient(Action<SystemErrorClientEvent> handler)
     {
-        return _client.OnEvent<SystemErrorEvent>(handler);
+        return _client.OnEvent<SystemErrorClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="SystemNotificationEvent"/> events.
+    /// Subscribe to <see cref="SystemNotificationClientEvent"/> events.
     /// Generic notification event for system-level messages.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSystemNotification(Action<SystemNotificationEvent> handler)
+    public IEventSubscription OnSystemNotificationClient(Action<SystemNotificationClientEvent> handler)
     {
-        return _client.OnEvent<SystemNotificationEvent>(handler);
+        return _client.OnEvent<SystemNotificationClientEvent>(handler);
     }
 }

@@ -52,7 +52,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "currency.balance_changed"
+          default: "currency.balance-changed"
           description: Fixed event type identifier
         walletId:
           type: string
@@ -100,7 +100,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "currency.wallet_frozen"
+          default: "currency.wallet-frozen"
           description: Fixed event type identifier
         walletId:
           type: string
@@ -132,7 +132,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "currency.wallet_unfrozen"
+          default: "currency.wallet-unfrozen"
           description: Fixed event type identifier
         walletId:
           type: string

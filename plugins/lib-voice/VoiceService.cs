@@ -656,7 +656,7 @@ public partial class VoiceService : IVoiceService
         var senderParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.SenderSessionId, cancellationToken);
         var senderDisplayName = senderParticipant?.DisplayName ?? "Unknown";
 
-        var peerUpdatedEvent = new VoicePeerUpdatedEvent
+        var peerUpdatedEvent = new VoicePeerUpdatedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -741,7 +741,7 @@ public partial class VoiceService : IVoiceService
         var requester = participants.FirstOrDefault(p => p.SessionId == body.RequestingSessionId);
 
         // Publish client event to all participants
-        var consentRequestEvent = new VoiceBroadcastConsentRequestEvent
+        var consentRequestEvent = new VoiceBroadcastConsentRequestClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1024,7 +1024,7 @@ public partial class VoiceService : IVoiceService
     }
 
     /// <summary>
-    /// Publishes a VoiceBroadcastConsentUpdateEvent to all participants.
+    /// Publishes a VoiceBroadcastConsentUpdateClientEvent to all participants.
     /// </summary>
     private async Task PublishBroadcastConsentUpdateAsync(
         Guid roomId,
@@ -1036,7 +1036,7 @@ public partial class VoiceService : IVoiceService
         CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.voice", "VoiceService.PublishBroadcastConsentUpdateAsync");
-        var updateEvent = new VoiceBroadcastConsentUpdateEvent
+        var updateEvent = new VoiceBroadcastConsentUpdateClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1099,7 +1099,7 @@ public partial class VoiceService : IVoiceService
             }
         }
 
-        var peerJoinedEvent = new VoicePeerJoinedEvent
+        var peerJoinedEvent = new VoicePeerJoinedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1117,7 +1117,7 @@ public partial class VoiceService : IVoiceService
 
         var sessionIdStrings = otherParticipants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerJoinedEvent, cancellationToken);
-        _logger.LogDebug("Published peer_joined event to {Count} sessions", publishedCount);
+        _logger.LogDebug("Published peer-joined event to {Count} sessions", publishedCount);
     }
 
     /// <summary>
@@ -1138,7 +1138,7 @@ public partial class VoiceService : IVoiceService
             return;
         }
 
-        var peerLeftEvent = new VoicePeerLeftEvent
+        var peerLeftEvent = new VoicePeerLeftClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1150,7 +1150,7 @@ public partial class VoiceService : IVoiceService
 
         var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerLeftEvent, cancellationToken);
-        _logger.LogDebug("Published peer_left event to {Count} sessions", publishedCount);
+        _logger.LogDebug("Published peer-left event to {Count} sessions", publishedCount);
     }
 
     /// <summary>
@@ -1168,7 +1168,7 @@ public partial class VoiceService : IVoiceService
             return;
         }
 
-        var roomClosedEvent = new VoiceRoomClosedEvent
+        var roomClosedEvent = new VoiceRoomClosedClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1178,7 +1178,7 @@ public partial class VoiceService : IVoiceService
 
         var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, roomClosedEvent, cancellationToken);
-        _logger.LogDebug("Published room_closed event to {Count} sessions", publishedCount);
+        _logger.LogDebug("Published room-closed event to {Count} sessions", publishedCount);
     }
 
     /// <summary>
@@ -1211,7 +1211,7 @@ public partial class VoiceService : IVoiceService
                 ExpiresAt = null
             };
 
-            var tierUpgradeEvent = new VoiceTierUpgradeEvent
+            var tierUpgradeEvent = new VoiceTierUpgradeClientEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -1230,7 +1230,7 @@ public partial class VoiceService : IVoiceService
             }
         }
 
-        _logger.LogInformation("Published tier_upgrade event to {Count} sessions for room {RoomId}", publishedCount, roomId);
+        _logger.LogInformation("Published tier-upgrade event to {Count} sessions for room {RoomId}", publishedCount, roomId);
     }
 
     #endregion

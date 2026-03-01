@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "collection.entry_unlocked"
+          default: "collection.entry-unlocked"
           description: Fixed event type identifier
         collectionId:
           type: string
@@ -96,7 +96,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "collection.milestone_reached"
+          default: "collection.milestone-reached"
           description: Fixed event type identifier
         collectionId:
           type: string
@@ -136,7 +136,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "collection.discovery_advanced"
+          default: "collection.discovery-advanced"
           description: Fixed event type identifier
         collectionId:
           type: string

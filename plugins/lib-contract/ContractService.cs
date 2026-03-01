@@ -2568,7 +2568,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateCreatedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.created", new ContractTemplateCreatedEvent
+        await _messageBus.TryPublishAsync("contract.template.created", new ContractTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2589,7 +2589,7 @@ public partial class ContractService : IContractService
     private async Task PublishTemplateUpdatedEventAsync(
         ContractTemplateModel model, List<string> changedFields, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.updated", new ContractTemplateUpdatedEvent
+        await _messageBus.TryPublishAsync("contract.template.updated", new ContractTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2611,7 +2611,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateDeletedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.deleted", new ContractTemplateDeletedEvent
+        await _messageBus.TryPublishAsync("contract.template.deleted", new ContractTemplateDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2633,7 +2633,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishInstanceCreatedEventAsync(ContractInstanceModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-instance.created", new ContractInstanceCreatedEvent
+        await _messageBus.TryPublishAsync("contract.instance.created", new ContractInstanceCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

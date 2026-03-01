@@ -262,7 +262,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.CreateItemTemplateAsync(request);
 
         // Assert
-        Assert.Equal("item-template.created", capturedTopic);
+        Assert.Equal("item.template.created", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemTemplateCreatedEvent>(capturedEvent);
         Assert.Equal(request.Code, typedEvent.Code);
@@ -599,7 +599,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.UpdateItemTemplateAsync(request);
 
         // Assert
-        Assert.Equal("item-template.updated", capturedTopic);
+        Assert.Equal("item.template.updated", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
         Assert.Equal(templateId, typedEvent.TemplateId);
@@ -686,7 +686,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.DeprecateItemTemplateAsync(request);
 
         // Assert — per IMPLEMENTATION TENETS: deprecation published as *.updated with changedFields
-        Assert.Equal("item-template.updated", capturedTopic);
+        Assert.Equal("item.template.updated", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemTemplateUpdatedEvent>(capturedEvent);
         Assert.Equal(templateId, typedEvent.TemplateId);
@@ -969,7 +969,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.CreateItemInstanceAsync(request);
 
         // Assert
-        Assert.Equal("item-instance.created", capturedTopic);
+        Assert.Equal("item.instance.created", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemInstanceCreatedEvent>(capturedEvent);
         Assert.Equal(templateId, typedEvent.TemplateId);
@@ -1231,7 +1231,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.BindItemInstanceAsync(request);
 
         // Assert
-        Assert.Equal("item-instance.bound", capturedTopic);
+        Assert.Equal("item.instance.bound", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemInstanceBoundEvent>(capturedEvent);
         Assert.Equal(instanceId, typedEvent.InstanceId);
@@ -1475,7 +1475,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         await service.UnbindItemInstanceAsync(request);
 
         // Assert
-        Assert.Equal("item-instance.unbound", capturedTopic);
+        Assert.Equal("item.instance.unbound", capturedTopic);
         Assert.NotNull(capturedEvent);
         var typedEvent = Assert.IsType<ItemInstanceUnboundEvent>(capturedEvent);
         Assert.Equal(instanceId, typedEvent.InstanceId);
@@ -2251,7 +2251,7 @@ public class ItemServiceTests : ServiceTestBase<ItemServiceConfiguration>
         Assert.Equal(contractInstanceId, response.ContractInstanceId);
 
         var destroyEvent = capturedEvents
-            .Where(e => e.Topic == "item-instance.destroyed")
+            .Where(e => e.Topic == "item.instance.destroyed")
             .Select(e => e.Event)
             .SingleOrDefault();
         Assert.NotNull(destroyEvent);

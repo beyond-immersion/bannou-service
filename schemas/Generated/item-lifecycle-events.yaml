@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.created when a itemtemplate is created
+      description: Published to item.template.created when a itemtemplate is created
       required:
       - eventName
       - eventId
@@ -36,8 +36,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.created
-          description: 'Event type identifier: item-template.created'
+          default: item.template.created
+          description: 'Event type identifier: item.template.created'
         templateId: &id001
           type: string
           format: uuid
@@ -120,7 +120,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.updated when a itemtemplate is updated
+      description: Published to item.template.updated when a itemtemplate is updated
       required:
       - eventName
       - eventId
@@ -145,8 +145,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.updated
-          description: 'Event type identifier: item-template.updated'
+          default: item.template.updated
+          description: 'Event type identifier: item.template.updated'
         templateId: *id001
         code: *id002
         gameId: *id003
@@ -179,7 +179,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.deleted when a itemtemplate is deleted
+      description: Published to item.template.deleted when a itemtemplate is deleted
       required:
       - eventName
       - eventId
@@ -203,8 +203,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.deleted
-          description: 'Event type identifier: item-template.deleted'
+          default: item.template.deleted
+          description: 'Event type identifier: item.template.deleted'
         templateId: *id001
         code: *id002
         gameId: *id003
@@ -236,7 +236,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.created when a iteminstance is created
+      description: Published to item.instance.created when a iteminstance is created
       required:
       - eventName
       - eventId
@@ -251,8 +251,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.created
-          description: 'Event type identifier: item-instance.created'
+          default: item.instance.created
+          description: 'Event type identifier: item.instance.created'
         instanceId: &id023
           type: string
           format: uuid
@@ -329,7 +329,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.updated when a iteminstance is updated
+      description: Published to item.instance.updated when a iteminstance is updated
       required:
       - eventName
       - eventId
@@ -345,8 +345,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.updated
-          description: 'Event type identifier: item-instance.updated'
+          default: item.instance.updated
+          description: 'Event type identifier: item.instance.updated'
         instanceId: *id023
         templateId: *id024
         containerId: *id025
@@ -374,7 +374,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.deleted when a iteminstance is deleted
+      description: Published to item.instance.deleted when a iteminstance is deleted
       required:
       - eventName
       - eventId
@@ -389,8 +389,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.deleted
-          description: 'Event type identifier: item-instance.deleted'
+          default: item.instance.deleted
+          description: 'Event type identifier: item.instance.deleted'
         instanceId: *id023
         templateId: *id024
         containerId: *id025

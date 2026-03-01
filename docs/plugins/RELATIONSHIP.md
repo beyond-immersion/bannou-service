@@ -83,10 +83,10 @@ No services subscribe to relationship events.
 | `relationship.created` | `RelationshipCreatedEvent` | New relationship established |
 | `relationship.updated` | `RelationshipUpdatedEvent` | Metadata or relationship type changed (includes `changedFields`) |
 | `relationship.deleted` | `RelationshipDeletedEvent` | Relationship ended (soft-delete) |
-| `relationship-type.created` | `RelationshipTypeCreatedEvent` | New type created |
-| `relationship-type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
-| `relationship-type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
-| `relationship-type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
+| `relationship.type.created` | `RelationshipTypeCreatedEvent` | New type created |
+| `relationship.type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
+| `relationship.type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
+| `relationship.type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
 
 Lifecycle events are auto-generated from `x-lifecycle` in `relationship-events.yaml`. The `RelationshipTypeMergedEvent` is manually defined in the same schema's `components/schemas` section.
 
@@ -154,9 +154,9 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 #### Write Operations (7 endpoints)
 
-- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship-type.created`.
+- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship.type.created`.
 - **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
-- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
+- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship.type.deleted`.
 - **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Idempotent — returns OK with current state if already deprecated.
 - **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Idempotent — returns OK with current state if not deprecated.
 - **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Acquires distributed locks on both source and target type indexes (source first for deterministic ordering). Reads both type indexes directly from state store, bulk-loads all source relationships via `GetBulkAsync`. Per-relationship migration under individual lock: deletes old composite key, checks for target composite key collision (ends relationship as duplicate if collision detected), creates new composite key for active relationships. Batch-updates both type indexes after all migrations. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Publishes single `RelationshipTypeMergedEvent` summary event. Optional `deleteAfterMerge` deletes source if all migrations succeed.

@@ -58,7 +58,7 @@ public partial class RelationshipTypeMergedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "relationship-type.merged";
+    public override string EventName { get; set; } = "relationship.type.merged";
 
     /// <summary>
     /// ID of the deprecated source type that was merged

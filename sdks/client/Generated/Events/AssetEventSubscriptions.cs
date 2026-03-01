@@ -24,90 +24,90 @@ public sealed class AssetEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="AssetProcessingCompleteEvent"/> events.
+    /// Subscribe to <see cref="AssetProcessingCompleteClientEvent"/> events.
     /// Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetProcessingComplete(Action<AssetProcessingCompleteEvent> handler)
+    public IEventSubscription OnAssetProcessingCompleteClient(Action<AssetProcessingCompleteClientEvent> handler)
     {
-        return _client.OnEvent<AssetProcessingCompleteEvent>(handler);
+        return _client.OnEvent<AssetProcessingCompleteClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="AssetProcessingFailedEvent"/> events.
+    /// Subscribe to <see cref="AssetProcessingFailedClientEvent"/> events.
     /// Sent when asset processing fails. Includes retry information.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetProcessingFailed(Action<AssetProcessingFailedEvent> handler)
+    public IEventSubscription OnAssetProcessingFailedClient(Action<AssetProcessingFailedClientEvent> handler)
     {
-        return _client.OnEvent<AssetProcessingFailedEvent>(handler);
+        return _client.OnEvent<AssetProcessingFailedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="AssetReadyEvent"/> events.
+    /// Subscribe to <see cref="AssetReadyClientEvent"/> events.
     /// Final notification that an asset is ready for use.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetReady(Action<AssetReadyEvent> handler)
+    public IEventSubscription OnAssetReadyClient(Action<AssetReadyClientEvent> handler)
     {
-        return _client.OnEvent<AssetReadyEvent>(handler);
+        return _client.OnEvent<AssetReadyClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="AssetUploadCompleteEvent"/> events.
+    /// Subscribe to <see cref="AssetUploadCompleteClientEvent"/> events.
     /// Sent when an asset upload has completed (success or failure).
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnAssetUploadComplete(Action<AssetUploadCompleteEvent> handler)
+    public IEventSubscription OnAssetUploadCompleteClient(Action<AssetUploadCompleteClientEvent> handler)
     {
-        return _client.OnEvent<AssetUploadCompleteEvent>(handler);
+        return _client.OnEvent<AssetUploadCompleteClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="BundleCreationCompleteEvent"/> events.
+    /// Subscribe to <see cref="BundleCreationCompleteClientEvent"/> events.
     /// Sent when bundle creation from asset_ids completes.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleCreationComplete(Action<BundleCreationCompleteEvent> handler)
+    public IEventSubscription OnBundleCreationCompleteClient(Action<BundleCreationCompleteClientEvent> handler)
     {
-        return _client.OnEvent<BundleCreationCompleteEvent>(handler);
+        return _client.OnEvent<BundleCreationCompleteClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="BundleValidationCompleteEvent"/> events.
+    /// Subscribe to <see cref="BundleValidationCompleteClientEvent"/> events.
     /// Sent when a bundle upload has been validated and processed.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleValidationComplete(Action<BundleValidationCompleteEvent> handler)
+    public IEventSubscription OnBundleValidationCompleteClient(Action<BundleValidationCompleteClientEvent> handler)
     {
-        return _client.OnEvent<BundleValidationCompleteEvent>(handler);
+        return _client.OnEvent<BundleValidationCompleteClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="BundleValidationFailedEvent"/> events.
+    /// Subscribe to <see cref="BundleValidationFailedClientEvent"/> events.
     /// Sent when bundle validation fails. Includes detailed error information.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnBundleValidationFailed(Action<BundleValidationFailedEvent> handler)
+    public IEventSubscription OnBundleValidationFailedClient(Action<BundleValidationFailedClientEvent> handler)
     {
-        return _client.OnEvent<BundleValidationFailedEvent>(handler);
+        return _client.OnEvent<BundleValidationFailedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="MetabundleCreationCompleteEvent"/> events.
+    /// Subscribe to <see cref="MetabundleCreationCompleteClientEvent"/> events.
     /// Sent when async metabundle creation job completes (success or failure).
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnMetabundleCreationComplete(Action<MetabundleCreationCompleteEvent> handler)
+    public IEventSubscription OnMetabundleCreationCompleteClient(Action<MetabundleCreationCompleteClientEvent> handler)
     {
-        return _client.OnEvent<MetabundleCreationCompleteEvent>(handler);
+        return _client.OnEvent<MetabundleCreationCompleteClientEvent>(handler);
     }
 }

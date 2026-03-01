@@ -24,13 +24,13 @@ public sealed class WorldstateEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="WorldstateTimeSyncEvent"/> events.
-    /// Published on period-changed boundaries, ratio changes, admin clock
+    /// Subscribe to <see cref="WorldstateTimeSyncClientEvent"/> events.
+    /// Published on period-changed boundaries, ratio changes, admin clock advancement, and on-demand via TriggerTimeSync. Contains a full game time snapshot for client time rendering and interpolation. Routed via Entity Session Registry.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnWorldstateTimeSync(Action<WorldstateTimeSyncEvent> handler)
+    public IEventSubscription OnWorldstateTimeSyncClient(Action<WorldstateTimeSyncClientEvent> handler)
     {
-        return _client.OnEvent<WorldstateTimeSyncEvent>(handler);
+        return _client.OnEvent<WorldstateTimeSyncClientEvent>(handler);
     }
 }

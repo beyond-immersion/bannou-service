@@ -98,16 +98,16 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | `currency.debited` | `CurrencyDebitedEvent` | Currency debited from wallet |
 | `currency.transferred` | `CurrencyTransferredEvent` | Currency transferred between wallets |
 | `currency.autogain.calculated` | `CurrencyAutogainCalculatedEvent` | Autogain applied (lazy or task mode) |
-| `currency.earn_cap.reached` | `CurrencyEarnCapReachedEvent` | Credit limited by daily/weekly earn cap |
-| `currency.wallet_cap.reached` | `CurrencyWalletCapReachedEvent` | Credit hit wallet cap with cap_and_lose behavior |
+| `currency.earn-cap.reached` | `CurrencyEarnCapReachedEvent` | Credit limited by daily/weekly earn cap |
+| `currency.wallet-cap.reached` | `CurrencyWalletCapReachedEvent` | Credit hit wallet cap with cap_and_lose behavior |
 | `currency.expired` | `CurrencyExpiredEvent` | Currency expired (schema-defined, not yet implemented) |
-| `currency.exchange_rate.updated` | `CurrencyExchangeRateUpdatedEvent` | Exchange rate changed |
-| `currency-definition.created` | `CurrencyDefinitionCreatedEvent` | New currency definition created |
-| `currency-definition.updated` | `CurrencyDefinitionUpdatedEvent` | Currency definition updated |
-| `currency-wallet.created` | `CurrencyWalletCreatedEvent` | New wallet created |
-| `currency-wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
-| `currency-wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
-| `currency-wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
+| `currency.exchange-rate.updated` | `CurrencyExchangeRateUpdatedEvent` | Exchange rate changed |
+| `currency.definition.created` | `CurrencyDefinitionCreatedEvent` | New currency definition created |
+| `currency.definition.updated` | `CurrencyDefinitionUpdatedEvent` | Currency definition updated |
+| `currency.wallet.created` | `CurrencyWalletCreatedEvent` | New wallet created |
+| `currency.wallet.frozen` | `CurrencyWalletFrozenEvent` | Wallet frozen |
+| `currency.wallet.unfrozen` | `CurrencyWalletUnfrozenEvent` | Wallet unfrozen |
+| `currency.wallet.closed` | `CurrencyWalletClosedEvent` | Wallet permanently closed |
 | `currency.hold.created` | `CurrencyHoldCreatedEvent` | Authorization hold created |
 | `currency.hold.captured` | `CurrencyHoldCapturedEvent` | Hold captured (funds debited) |
 | `currency.hold.released` | `CurrencyHoldReleasedEvent` | Hold released (funds available again) |
@@ -178,14 +178,14 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 
 ### Currency Definition Operations (4 endpoints)
 
-- **CreateCurrencyDefinition** (`/currency/definition/create`): Validates code uniqueness via `def-code:` index. If `isBaseCurrency=true`, iterates all definitions to ensure only one base per scope. Generates UUID, saves model with all autogain/expiration/linkage/exchange-rate fields. Creates code-to-ID index. Adds to `all-defs` list. Publishes `currency-definition.created`.
+- **CreateCurrencyDefinition** (`/currency/definition/create`): Validates code uniqueness via `def-code:` index. If `isBaseCurrency=true`, iterates all definitions to ensure only one base per scope. Generates UUID, saves model with all autogain/expiration/linkage/exchange-rate fields. Creates code-to-ID index. Adds to `all-defs` list. Publishes `currency.definition.created`.
 - **GetCurrencyDefinition** (`/currency/definition/get`): Resolves by ID (direct lookup) or code (via `def-code:` index). Returns full definition response with all fields.
 - **ListCurrencyDefinitions** (`/currency/definition/list`): Loads all definition IDs from `all-defs`. Iterates and loads each. Filters by `scope`, `isBaseCurrency`, `realmId` (global currencies always pass realm filter), and `includeInactive`. No pagination - returns all matching definitions.
-- **UpdateCurrencyDefinition** (`/currency/definition/update`): Loads by ID. Applies partial updates to mutable fields (name, description, transferable, tradeable, allowNegative, caps, autogain settings, exchange rate, icon, displayFormat, isActive). Exchange rate update also sets `ExchangeRateUpdatedAt`. Publishes `currency-definition.updated`.
+- **UpdateCurrencyDefinition** (`/currency/definition/update`): Loads by ID. Applies partial updates to mutable fields (name, description, transferable, tradeable, allowNegative, caps, autogain settings, exchange rate, icon, displayFormat, isActive). Exchange rate update also sets `ExchangeRateUpdatedAt`. Publishes `currency.definition.updated`.
 
 ### Wallet Operations (6 endpoints)
 
-- **CreateWallet** (`/currency/wallet/create`): Builds owner key from `ownerId:ownerType[:realmId]`. Checks uniqueness via owner index. Creates wallet with Active status. Saves wallet and owner-to-wallet index. Publishes `currency-wallet.created`. Returns Conflict if owner already has wallet.
+- **CreateWallet** (`/currency/wallet/create`): Builds owner key from `ownerId:ownerType[:realmId]`. Checks uniqueness via owner index. Creates wallet with Active status. Saves wallet and owner-to-wallet index. Publishes `currency.wallet.created`. Returns Conflict if owner already has wallet.
 - **GetWallet** (`/currency/wallet/get`): Resolves by walletId (direct) or by ownerId+ownerType+realmId (via owner index). Loads all balance summaries for the wallet including locked amounts from active holds. Returns wallet with balances.
 - **GetOrCreateWallet** (`/currency/wallet/get-or-create`): Attempts owner index lookup first. If found, returns existing wallet with balances and `created=false`. If not found, delegates to CreateWallet and returns with `created=true` and empty balances.
 - **FreezeWallet** (`/currency/wallet/freeze`): Uses ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`). Sets status to Frozen with reason and timestamp. Returns Conflict if already frozen or on concurrent modification. Publishes `currency.wallet.frozen`.
@@ -196,7 +196,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 
 - **GetBalance** (`/currency/balance/get`): Validates wallet and definition exist. Gets or creates balance record. Applies lazy autogain if currency is autogain-enabled (acquires `currency-autogain` lock on `{walletId}:{currencyDefId}`, skips if lock unavailable). Resets daily/weekly earn caps if periods elapsed. Calculates locked amount from active holds. Returns amount, lockedAmount, effectiveAmount, earnCapInfo, and autogainInfo.
 - **BatchGetBalances** (`/currency/balance/batch-get`): Iterates query list. For each, gets balance, applies lazy autogain, calculates locked amounts. Returns list of balance results. No locking between items - individual consistency per balance.
-- **CreditCurrency** (`/currency/credit`): Validates amount > 0. Checks idempotency. Validates wallet exists and is not frozen (returns 422 if frozen). Acquires distributed lock on `walletId:currencyDefId`. Resets earn caps. Enforces daily/weekly earn caps (publishes `earn_cap.reached` when limited). Enforces per-wallet cap with configurable overflow behavior (reject returns 422, cap_and_lose truncates and publishes `wallet_cap.reached`). Updates balance and earn-tracking counters. Records transaction. Records idempotency key. Publishes `currency.credited`. Returns transaction record and cap-applied info.
+- **CreditCurrency** (`/currency/credit`): Validates amount > 0. Checks idempotency. Validates wallet exists and is not frozen (returns 422 if frozen). Acquires distributed lock on `walletId:currencyDefId`. Resets earn caps. Enforces daily/weekly earn caps (publishes `earn-cap.reached` when limited). Enforces per-wallet cap with configurable overflow behavior (reject returns 422, cap_and_lose truncates and publishes `wallet-cap.reached`). Updates balance and earn-tracking counters. Records transaction. Records idempotency key. Publishes `currency.credited`. Returns transaction record and cap-applied info.
 - **DebitCurrency** (`/currency/debit`): Validates amount > 0. Checks idempotency. Validates wallet not frozen. Acquires distributed lock. Checks sufficient funds (negative allowed if definition or transaction-level override permits). Debits balance. Records transaction. Publishes `currency.debited`. Returns 422 for insufficient funds.
 - **TransferCurrency** (`/currency/transfer`): Validates both wallets exist and are not frozen. Validates currency is transferable. Acquires two distributed locks in deterministic order (string comparison of lock keys) to prevent deadlock. Checks source has sufficient funds. Applies wallet cap on target (reject or cap_and_lose). Updates both balances. Records single transaction with both source/target balance snapshots. Publishes `currency.transferred`.
 - **BatchCreditCurrency** (`/currency/batch-credit`): Checks batch-level idempotency. Iterates operations sequentially, delegating each to CreditCurrencyAsync with sub-key `{batchKey}:{index}`. Collects per-operation success/failure results. Records batch-level idempotency key. Returns partial success results.
@@ -207,7 +207,7 @@ Service lifetime is **Scoped** (per-request). Background service is a hosted sin
 - **CalculateConversion** (`/currency/convert/calculate`): Looks up both currency definitions. Calculates effective rate via base-currency pivot: `fromRate / toRate` where each rate is `ExchangeRateToBase` (1.0 for base currency itself). Returns calculated amount rounded to 8 decimal places, effective rate, and two-step conversion path. Returns 422 if exchange rates are missing.
 - **ExecuteConversion** (`/currency/convert/execute`): Checks idempotency. Validates wallet not frozen. Calculates rate. Pre-validates target currency wallet cap (if `PerWalletCap` set with `CapOverflowBehavior.Reject`, checks whether `toAmount` would exceed cap before debiting source). Debits source currency (transaction type `Conversion_debit`). Credits target currency (transaction type `Conversion_credit`) with `BypassEarnCap=true` (conversions are exchanges, not earnings). If credit fails after successful debit, issues a compensating credit to the source currency (idempotency key `{key}:compensate`, `BypassEarnCap=true`) to reverse the debit. Uses sub-keys for idempotency on debit/credit legs. Returns both transaction records and effective rate.
 - **GetExchangeRate** (`/currency/exchange-rate/get`): Looks up both definitions. Calculates effective rate and inverse rate. Returns both rates plus individual rates-to-base. Returns 422 if rates undefined.
-- **UpdateExchangeRate** (`/currency/exchange-rate/update`): Validates currency is not the base currency (returns BadRequest). Updates `ExchangeRateToBase` and `ExchangeRateUpdatedAt`. Publishes `currency.exchange_rate.updated` with previous and new rates. Returns updated definition.
+- **UpdateExchangeRate** (`/currency/exchange-rate/update`): Validates currency is not the base currency (returns BadRequest). Updates `ExchangeRateToBase` and `ExchangeRateUpdatedAt`. Publishes `currency.exchange-rate.updated` with previous and new rates. Returns updated definition.
 
 ### Transaction History Operations (3 endpoints)
 
@@ -283,13 +283,13 @@ Transaction Flow (Credit with Cap Enforcement)
        +--- Earn Cap Check (if !bypassEarnCap):
        |    +-- DailyEarnCap: remaining = cap - dailyEarned
        |    +-- WeeklyEarnCap: remaining = cap - weeklyEarned
-       |    +-- Limited? -> publish earn_cap.reached, reduce amount
+       |    +-- Limited? -> publish earn-cap.reached, reduce amount
        |    +-- Amount=0 after cap? -> return 422
        |
        +--- Wallet Cap Check (if perWalletCap set):
        |    +-- newBalance > cap?
        |         +-- Behavior=Reject -> return 422
-       |         +-- Behavior=CapAndLose -> truncate, publish wallet_cap.reached
+       |         +-- Behavior=CapAndLose -> truncate, publish wallet-cap.reached
        |
        +--- balance.Amount += creditAmount
        +--- balance.DailyEarned += creditAmount

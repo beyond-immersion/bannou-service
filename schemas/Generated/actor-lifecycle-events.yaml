@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-template.created when a actortemplate is created
+      description: Published to actor.template.created when a actortemplate is created
       required:
       - eventName
       - eventId
@@ -24,8 +24,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-template.created
-          description: 'Event type identifier: actor-template.created'
+          default: actor.template.created
+          description: 'Event type identifier: actor.template.created'
         templateId: &id001
           type: string
           format: uuid
@@ -45,7 +45,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-template.updated when a actortemplate is updated
+      description: Published to actor.template.updated when a actortemplate is updated
       required:
       - eventName
       - eventId
@@ -58,8 +58,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-template.updated
-          description: 'Event type identifier: actor-template.updated'
+          default: actor.template.updated
+          description: 'Event type identifier: actor.template.updated'
         templateId: *id001
         category: *id002
         behaviorRef: *id003
@@ -74,7 +74,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-template.deleted when a actortemplate is deleted
+      description: Published to actor.template.deleted when a actortemplate is deleted
       required:
       - eventName
       - eventId
@@ -86,8 +86,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-template.deleted
-          description: 'Event type identifier: actor-template.deleted'
+          default: actor.template.deleted
+          description: 'Event type identifier: actor.template.deleted'
         templateId: *id001
         category: *id002
         behaviorRef: *id003
@@ -101,7 +101,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-instance.created when a actorinstance is created
+      description: Published to actor.instance.created when a actorinstance is created
       required:
       - eventName
       - eventId
@@ -113,8 +113,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-instance.created
-          description: 'Event type identifier: actor-instance.created'
+          default: actor.instance.created
+          description: 'Event type identifier: actor.instance.created'
         actorId: &id005
           type: string
           description: Unique identifier for the actor instance
@@ -143,7 +143,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-instance.updated when a actorinstance is updated
+      description: Published to actor.instance.updated when a actorinstance is updated
       required:
       - eventName
       - eventId
@@ -156,8 +156,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-instance.updated
-          description: 'Event type identifier: actor-instance.updated'
+          default: actor.instance.updated
+          description: 'Event type identifier: actor.instance.updated'
         actorId: *id005
         templateId: *id006
         characterId: *id007
@@ -174,7 +174,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to actor-instance.deleted when a actorinstance is deleted
+      description: Published to actor.instance.deleted when a actorinstance is deleted
       required:
       - eventName
       - eventId
@@ -186,8 +186,8 @@ components:
       properties:
         eventName:
           type: string
-          default: actor-instance.deleted
-          description: 'Event type identifier: actor-instance.deleted'
+          default: actor.instance.deleted
+          description: 'Event type identifier: actor.instance.deleted'
         actorId: *id005
         templateId: *id006
         characterId: *id007

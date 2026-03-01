@@ -297,4 +297,3 @@ public class MinioObjectInfo
     [JsonPropertyName("sequencer")]
     public string? Sequencer { get; set; }
 }
-

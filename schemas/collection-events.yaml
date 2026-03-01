@@ -32,13 +32,13 @@ info:
       handler: HandleAccountDeleted
   x-event-publications:
     # Entry template lifecycle events (auto-generated from x-lifecycle)
-    - topic: collection-entry-template.created
+    - topic: collection.entry-template.created
       event: CollectionEntryTemplateCreatedEvent
       description: Published when a new entry template is created
-    - topic: collection-entry-template.updated
+    - topic: collection.entry-template.updated
       event: CollectionEntryTemplateUpdatedEvent
       description: Published when an entry template is updated
-    - topic: collection-entry-template.deleted
+    - topic: collection.entry-template.deleted
       event: CollectionEntryTemplateDeletedEvent
       description: Published when an entry template is deleted
 
@@ -51,13 +51,13 @@ info:
       description: Published when a collection instance is deleted
 
     # Area content config lifecycle events (auto-generated from x-lifecycle)
-    - topic: collection-area-content-config.created
+    - topic: collection.area-content-config.created
       event: CollectionAreaContentConfigCreatedEvent
       description: Published when an area content config is created
-    - topic: collection-area-content-config.updated
+    - topic: collection.area-content-config.updated
       event: CollectionAreaContentConfigUpdatedEvent
       description: Published when an area content config is updated
-    - topic: collection-area-content-config.deleted
+    - topic: collection.area-content-config.deleted
       event: CollectionAreaContentConfigDeletedEvent
       description: Published when an area content config is deleted
 
@@ -78,6 +78,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/collection-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: collection
   CollectionEntryTemplate:
     model:
       entryTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique entry template identifier" }

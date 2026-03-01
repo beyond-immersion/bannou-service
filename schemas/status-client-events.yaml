@@ -55,7 +55,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "status.effect_changed"
+          default: "status.effect-changed"
           description: Fixed event type identifier
         changeType:
           $ref: 'status-api.yaml#/components/schemas/StatusChangeType'

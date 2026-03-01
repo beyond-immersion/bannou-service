@@ -47,7 +47,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.state_changed"
+          default: "game-session.state-changed"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -90,7 +90,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_joined"
+          default: "game-session.player-joined"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -125,7 +125,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_left"
+          default: "game-session.player-left"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -168,7 +168,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.player_kicked"
+          default: "game-session.player-kicked"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -209,7 +209,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.session_cancelled"
+          default: "game-session.session-cancelled"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -244,7 +244,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.chat_received"
+          default: "game-session.chat-received"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -295,7 +295,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.state_updated"
+          default: "game-session.state-updated"
           description: Fixed event type identifier
         sessionId:
           type: string
@@ -339,7 +339,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "game_session.action_result"
+          default: "game-session.action-result"
           description: Fixed event type identifier
         sessionId:
           type: string

@@ -668,7 +668,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed-type.created", new SeedTypeCreatedEvent
+        await _messageBus.TryPublishAsync("seed.type.created", new SeedTypeCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -801,7 +801,7 @@ public partial class SeedService : ISeedService
         if (body.GrowthDecayRatePerDay.HasValue) changedFields.Add("growthDecayRatePerDay");
         if (body.SameOwnerGrowthMultiplier.HasValue) changedFields.Add("sameOwnerGrowthMultiplier");
 
-        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -853,7 +853,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -905,7 +905,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed-type.updated", new SeedTypeUpdatedEvent
+        await _messageBus.TryPublishAsync("seed.type.updated", new SeedTypeUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -979,7 +979,7 @@ public partial class SeedService : ISeedService
 
         await _typeStore.DeleteAsync(key, cancellationToken);
 
-        await _messageBus.TryPublishAsync("seed-type.deleted", new SeedTypeDeletedEvent
+        await _messageBus.TryPublishAsync("seed.type.deleted", new SeedTypeDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

@@ -108,9 +108,9 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `seed.phase.changed` | `SeedPhaseChangedEvent` | Seed crossed a phase threshold during growth recording or decay; includes `Direction` (`Progressed` or `Regressed`) |
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Capability manifest recomputed and cached; includes manifest version and unlocked count |
 | `seed.bond.formed` | `SeedBondFormedEvent` | Bond transitions to Active after all participants confirm |
-| `seed-type.created` | `SeedTypeCreatedEvent` | New seed type registered via `RegisterSeedTypeAsync` |
-| `seed-type.updated` | `SeedTypeUpdatedEvent` | Seed type updated, deprecated, or undeprecated; includes `ChangedFields` list |
-| `seed-type.deleted` | `SeedTypeDeletedEvent` | Seed type hard-deleted via `DeleteSeedTypeAsync` |
+| `seed.type.created` | `SeedTypeCreatedEvent` | New seed type registered via `RegisterSeedTypeAsync` |
+| `seed.type.updated` | `SeedTypeUpdatedEvent` | Seed type updated, deprecated, or undeprecated; includes `ChangedFields` list |
+| `seed.type.deleted` | `SeedTypeDeletedEvent` | Seed type hard-deleted via `DeleteSeedTypeAsync` |
 
 ### Consumed Events
 
@@ -187,17 +187,17 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Seed Type Definitions (7 endpoints)
 
-`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings. Publishes `seed-type.created` lifecycle event.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings. Publishes `seed.type.created` lifecycle event.
 
-`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change. Publishes `seed-type.updated` with `changedFields`.
+`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change. Publishes `seed.type.updated` with `changedFields`.
 
 `ListSeedTypesAsync` supports `includeDeprecated` filter (default: false) to control visibility of deprecated types.
 
-`DeprecateSeedTypeAsync` marks a seed type as deprecated, preventing creation of new seeds of this type. Existing seeds are unaffected. Publishes `seed-type.updated` with `changedFields = ["isDeprecated", "deprecatedAt", "deprecationReason"]`. No distributed lock needed (simple flag flip).
+`DeprecateSeedTypeAsync` marks a seed type as deprecated, preventing creation of new seeds of this type. Existing seeds are unaffected. Publishes `seed.type.updated` with `changedFields = ["isDeprecated", "deprecatedAt", "deprecationReason"]`. No distributed lock needed (simple flag flip).
 
-`UndeprecateSeedTypeAsync` restores a deprecated seed type to active status. Publishes `seed-type.updated` with the same changed fields.
+`UndeprecateSeedTypeAsync` restores a deprecated seed type to active status. Publishes `seed.type.updated` with the same changed fields.
 
-`DeleteSeedTypeAsync` hard-deletes a deprecated seed type. Requires deprecation first (`BadRequest` if not deprecated) and zero non-archived seeds (`Conflict` if any exist, checked via same-service JSON query). Acquires a distributed lock to prevent concurrent deletes. Publishes `seed-type.deleted`. `CreateSeedAsync` checks the `IsDeprecated` flag to prevent seed creation for deprecated types. No merge endpoint exists -- see [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
+`DeleteSeedTypeAsync` hard-deletes a deprecated seed type. Requires deprecation first (`BadRequest` if not deprecated) and zero non-archived seeds (`Conflict` if any exist, checked via same-service JSON query). Acquires a distributed lock to prevent concurrent deletes. Publishes `seed.type.deleted`. `CreateSeedAsync` checks the `IsDeprecated` flag to prevent seed creation for deprecated types. No merge endpoint exists -- see [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
 
 ### Bonds (5 endpoints)
 

@@ -78,16 +78,16 @@ Container and item placement management (L2 GameFoundation) for games. Handles c
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `inventory-container.created` | `InventoryContainerCreatedEvent` | Container created |
-| `inventory-container.updated` | `InventoryContainerUpdatedEvent` | Container properties changed |
-| `inventory-container.deleted` | `InventoryContainerDeletedEvent` | Container deleted |
-| `inventory-container.full` | `InventoryContainerFullEvent` | Container reached capacity |
-| `inventory-item.placed` | `InventoryItemPlacedEvent` | Item added to container |
-| `inventory-item.removed` | `InventoryItemRemovedEvent` | Item removed from container |
-| `inventory-item.moved` | `InventoryItemMovedEvent` | Item moved between containers/slots |
-| `inventory-item.transferred` | `InventoryItemTransferredEvent` | Item transferred between owners |
-| `inventory-item.split` | `InventoryItemSplitEvent` | Stack split into two |
-| `inventory-item.stacked` | `InventoryItemStackedEvent` | Stacks merged together |
+| `inventory.container.created` | `InventoryContainerCreatedEvent` | Container created |
+| `inventory.container.updated` | `InventoryContainerUpdatedEvent` | Container properties changed |
+| `inventory.container.deleted` | `InventoryContainerDeletedEvent` | Container deleted |
+| `inventory.container.full` | `InventoryContainerFullEvent` | Container reached capacity |
+| `inventory.item.placed` | `InventoryItemPlacedEvent` | Item added to container |
+| `inventory.item.removed` | `InventoryItemRemovedEvent` | Item removed from container |
+| `inventory.item.moved` | `InventoryItemMovedEvent` | Item moved between containers/slots |
+| `inventory.item.transferred` | `InventoryItemTransferredEvent` | Item transferred between owners |
+| `inventory.item.split` | `InventoryItemSplitEvent` | Stack split into two |
+| `inventory.item.stacked` | `InventoryItemStackedEvent` | Stacks merged together |
 
 ### Consumed Events
 
@@ -145,7 +145,7 @@ Service lifetime is **Scoped** (per-request). No background services. No helper 
 
 ### Container Operations (6 endpoints)
 
-- **CreateContainer** (`/inventory/container/create`): Validates capacity parameters per constraint model (rejects <= 0 for slots, weight, volume, grid dimensions). Checks nesting depth against parent's `MaxNestingDepth` (if specified). Resolves weight contribution from config default when `WeightContribution.None`. Saves to MySQL, updates Redis cache. Updates owner and type indexes with separate list locks. Publishes `inventory-container.created`.
+- **CreateContainer** (`/inventory/container/create`): Validates capacity parameters per constraint model (rejects <= 0 for slots, weight, volume, grid dimensions). Checks nesting depth against parent's `MaxNestingDepth` (if specified). Resolves weight contribution from config default when `WeightContribution.None`. Saves to MySQL, updates Redis cache. Updates owner and type indexes with separate list locks. Publishes `inventory.container.created`.
 
 - **GetContainer** (`/inventory/container/get`): Cache read-through pattern (Redis -> MySQL -> populate cache). If `includeContents=true`, calls `IItemClient.ListItemsByContainerAsync()`.
 
@@ -153,23 +153,23 @@ Service lifetime is **Scoped** (per-request). No background services. No helper 
 
 - **ListContainers** (`/inventory/container/list`): Lists containers from owner index. Filters by container type, realm, equipment slot status. No pagination support.
 
-- **UpdateContainer** (`/inventory/container/update`): Acquires distributed lock before modification. Updates: maxSlots, maxWeight, gridDimensions, maxVolume, categories, tags, metadata. Publishes `inventory-container.updated`.
+- **UpdateContainer** (`/inventory/container/update`): Acquires distributed lock before modification. Updates: maxSlots, maxWeight, gridDimensions, maxVolume, categories, tags, metadata. Publishes `inventory.container.updated`.
 
-- **DeleteContainer** (`/inventory/container/delete`): Returns `ServiceUnavailable` if item service unreachable (prevents orphaning items). Three strategies for item handling: `destroy` (calls DestroyItemInstance per item), `transfer` (moves items to target container), `error` (returns 400 if not empty). Cleans up indexes and cache. Publishes `inventory-container.deleted`.
+- **DeleteContainer** (`/inventory/container/delete`): Returns `ServiceUnavailable` if item service unreachable (prevents orphaning items). Three strategies for item handling: `destroy` (calls DestroyItemInstance per item), `transfer` (moves items to target container), `error` (returns 400 if not empty). Cleans up indexes and cache. Publishes `inventory.container.deleted`.
 
 ### Inventory Operations (6 endpoints)
 
-- **AddItemToContainer** (`/inventory/add`): Acquires lock. Gets item instance and template from lib-item. Validates category constraints (allowed/forbidden lists, case-insensitive). Checks capacity per constraint model. Increments UsedSlots, ContentsWeight, CurrentVolume. Updates item's ContainerId via lib-item. Publishes `inventory-item.placed`. Emits `inventory-container.full` if capacity reached.
+- **AddItemToContainer** (`/inventory/add`): Acquires lock. Gets item instance and template from lib-item. Validates category constraints (allowed/forbidden lists, case-insensitive). Checks capacity per constraint model. Increments UsedSlots, ContentsWeight, CurrentVolume. Updates item's ContainerId via lib-item. Publishes `inventory.item.placed`. Emits `inventory.container.full` if capacity reached.
 
-- **RemoveItemFromContainer** (`/inventory/remove`): Gets item's current container via lib-item. Acquires lock. Decrements counters. Weight/volume decrement fails gracefully if template lookup fails (warning logged). Clears item's ContainerId in lib-item via `ModifyItemInstance(NewContainerId = null)` — failure is non-fatal (warning logged). Publishes `inventory-item.removed`.
+- **RemoveItemFromContainer** (`/inventory/remove`): Gets item's current container via lib-item. Acquires lock. Decrements counters. Weight/volume decrement fails gracefully if template lookup fails (warning logged). Clears item's ContainerId in lib-item via `ModifyItemInstance(NewContainerId = null)` — failure is non-fatal (warning logged). Publishes `inventory.item.removed`.
 
-- **MoveItem** (`/inventory/move`): Same-container: acquires distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), publishes `inventory-item.moved` with previous and new slot data (no container counter changes needed). Different-container: validates destination constraints, internally calls RemoveItemFromContainer + AddItemToContainer. Publishes `inventory-item.moved`.
+- **MoveItem** (`/inventory/move`): Same-container: acquires distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), publishes `inventory.item.moved` with previous and new slot data (no container counter changes needed). Different-container: validates destination constraints, internally calls RemoveItemFromContainer + AddItemToContainer. Publishes `inventory.item.moved`.
 
-- **TransferItem** (`/inventory/transfer`): Checks item is tradeable (`template.Tradeable`) and not bound (`item.BoundToId`). Acquires lock on source container. Calls MoveItem internally. Publishes `inventory-item.transferred` with source/target owner info.
+- **TransferItem** (`/inventory/transfer`): Checks item is tradeable (`template.Tradeable`) and not bound (`item.BoundToId`). Acquires lock on source container. Calls MoveItem internally. Publishes `inventory.item.transferred` with source/target owner info.
 
-- **SplitStack** (`/inventory/split`): Validates quantity < original (not <=). Validates not `QuantityModel.Unique`. Acquires container lock. Updates original quantity via `QuantityDelta = -body.Quantity`. Creates new instance via lib-item. Increments container UsedSlots. Publishes `inventory-item.split`. On failure to create new item, attempts to restore original quantity.
+- **SplitStack** (`/inventory/split`): Validates quantity < original (not <=). Validates not `QuantityModel.Unique`. Acquires container lock. Updates original quantity via `QuantityDelta = -body.Quantity`. Creates new instance via lib-item. Increments container UsedSlots. Publishes `inventory.item.split`. On failure to create new item, attempts to restore original quantity.
 
-- **MergeStacks** (`/inventory/merge`): Validates templates match. Gets template for MaxStackSize. Calculates overflow (source keeps excess). Acquires lock on source container only. Updates target quantity first, then destroys or reduces source. Decrements container UsedSlots on full merge. Publishes `inventory-item.stacked`.
+- **MergeStacks** (`/inventory/merge`): Validates templates match. Gets template for MaxStackSize. Calculates overflow (source keeps excess). Acquires lock on source container only. Updates target quantity first, then destroys or reduces source. Decrements container UsedSlots on full merge. Publishes `inventory.item.stacked`.
 
 ### Query Operations (4 endpoints)
 
@@ -303,7 +303,7 @@ Stack Operations
 1. **True grid collision**: Track occupied cells in grid containers. Validate item GridWidth/GridHeight fits at proposed SlotX/SlotY with optional rotation. Would require a separate grid state store per container.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/196 -->
 
-2. **Weight propagation events**: Subscribe to `inventory-item.placed` and `inventory-item.removed` to update parent container weight recursively up the nesting chain.
+2. **Weight propagation events**: Subscribe to `inventory.item.placed` and `inventory.item.removed` to update parent container weight recursively up the nesting chain.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-25:https://github.com/beyond-immersion/bannou-service/issues/226 -->
 
 3. **Container templates**: Define reusable container configurations (slot count, constraints, categories) that can be instantiated, similar to item templates.
@@ -329,7 +329,7 @@ Stack Operations
 
 ### Bugs (Fix Immediately)
 
-1. ~~**MoveItem same-container shortcut doesn't update item slot position**~~: **FIXED** (2026-02-25) - Same-container MoveItem now acquires a distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), and publishes `inventory-item.moved` event with previous and new slot positions. The event includes PreviousSlotIndex/PreviousSlotX/PreviousSlotY for consumers that need to track slot changes.
+1. ~~**MoveItem same-container shortcut doesn't update item slot position**~~: **FIXED** (2026-02-25) - Same-container MoveItem now acquires a distributed lock, calls `ModifyItemInstanceAsync` to persist slot position (NewSlotIndex/NewSlotX/NewSlotY), and publishes `inventory.item.moved` event with previous and new slot positions. The event includes PreviousSlotIndex/PreviousSlotX/PreviousSlotY for consumers that need to track slot changes.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -353,7 +353,7 @@ Stack Operations
 
 10. **DeleteContainer returns ServiceUnavailable on item service failure**: This is intentional to prevent orphaning items, but callers must handle this gracefully.
 
-11. **MoveItem/TransferItem generate multiple events per operation**: Cross-container MoveItem internally calls RemoveItemFromContainer (publishes `inventory-item.removed`) then AddItemToContainer (publishes `inventory-item.placed`), then publishes `inventory-item.moved` — 3 events total. TransferItem adds a 4th (`inventory-item.transferred`). Same-container MoveItem publishes only `inventory-item.moved` (1 event). Consumers should handle idempotently and be aware of the event sequence.
+11. **MoveItem/TransferItem generate multiple events per operation**: Cross-container MoveItem internally calls RemoveItemFromContainer (publishes `inventory.item.removed`) then AddItemToContainer (publishes `inventory.item.placed`), then publishes `inventory.item.moved` — 3 events total. TransferItem adds a 4th (`inventory.item.transferred`). Same-container MoveItem publishes only `inventory.item.moved` (1 event). Consumers should handle idempotently and be aware of the event sequence.
 
 12. **GetOrCreateContainer and ListContainers bypass Redis cache**: These methods read containers directly from MySQL via `containerStore.GetAsync()` instead of using `GetContainerWithCacheAsync()`. Only GetContainer, AddItemToContainer, RemoveItemFromContainer, and other single-container operations use the Redis cache read-through. For high-frequency GetOrCreateContainer calls (e.g., lazy creation pattern), this means every call hits MySQL.
 
@@ -403,7 +403,7 @@ Stack Operations
 - **2026-02-27**: Issue #495 - Added 3 client events (`inventory.item_changed`, `inventory.container_full`, `inventory.item_transferred`) via `IEntitySessionRegistry.PublishToEntitySessionsAsync` with composite operation suppression for cross-container moves and transfers
 - **2026-02-25**: Added `DeleteLockTimeoutSeconds` config property (default 120s) for container deletion; fixed DestroyReason string-to-enum for T25 compliance
 - **2026-02-25**: Reclassified "Category constraints are client-side only" from Design Considerations to Intentional Quirks (#13) — intentional architectural boundary (Inventory is placement layer, Item is data layer, no circular dependency)
-- **2026-02-25**: Fixed MoveItem same-container bug — now persists slot position via ModifyItemInstanceAsync, acquires distributed lock, and publishes inventory-item.moved event with previous/new slot data
+- **2026-02-25**: Fixed MoveItem same-container bug — now persists slot position via ModifyItemInstanceAsync, acquires distributed lock, and publishes inventory.item.moved event with previous/new slot data
 - **2026-02-24**: L3 hardening pass - NRT fix, T8 filler removal from 7 responses, T29 metadata disclaimers, event schema additionalProperties, x-lifecycle model completion, validation keywords, T26 sentinel fix, T30 telemetry spans, 24 new tests (93 total)
 - **2026-02-24**: Closed #310 (silent failure patterns) - IItemClient now constructor-injected (hard dependency)
 - **2026-02-24**: Closed #317 (quest ITEM_OWNED prerequisite) - QuestService calls HasItemsAsync()

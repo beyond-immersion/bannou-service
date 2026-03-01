@@ -1765,15 +1765,16 @@ paths:
         \        \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the created archive\"\n\
         \                },\n                \"namespace\": {\n                    \"type\": \"string\",\n               \
         \     \"description\": \"Namespace that was archived\"\n                },\n                \"bundleAssetId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Asset ID in Asset Service\"\n                },\n                \"documentCount\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Number of documents in the archive\"\n              \
-        \  },\n                \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Total size of the archive in bytes\"\n                },\n                \"createdAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the archive was created\"\n                },\n                \"commitHash\": {\n                \
-        \    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Git commit
-        hash if namespace is bound\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Asset ID in Asset Service (null if bundle upload failed or Asset Service
+        unavailable)\"\n                },\n                \"documentCount\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of documents in the archive\"\n                },\n             \
+        \   \"sizeBytes\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Total size
+        of the archive in bytes\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the
+        archive was created\"\n                },\n                \"commitHash\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Git commit hash if namespace is
+        bound\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create documentation archive\",\n    \"description\": \"Create a .bannou
         bundle archive of all documents in a namespace.\\nArchives are stored via Asset Service.\\n\",\n    \"tags\": [\n\
         \        \"Archive\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createDocumentationArchive\"\n}"
@@ -3605,7 +3606,8 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID in Asset Service
+          nullable: true
+          description: Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)
         documentCount:
           type: integer
           description: Number of documents in the archive

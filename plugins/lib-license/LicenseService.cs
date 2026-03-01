@@ -27,7 +27,7 @@ public static class LicenseTopics
     /// <summary>License unlock failed event topic.</summary>
     public const string LicenseUnlockFailed = "license.unlock-failed";
     /// <summary>License board cloned event topic.</summary>
-    public const string LicenseBoardCloned = "license-board.cloned";
+    public const string LicenseBoardCloned = "license.board.cloned";
 }
 
 /// <summary>
@@ -401,7 +401,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Created board template {BoardTemplateId}", template.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.created",
+            "license.board-template.created",
             new LicenseBoardTemplateCreatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -523,7 +523,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Updated board template {BoardTemplateId}", template.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.updated",
+            "license.board-template.updated",
             new LicenseBoardTemplateUpdatedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -590,7 +590,7 @@ public partial class LicenseService : ILicenseService
         _logger.LogInformation("Deleted board template {BoardTemplateId}", body.BoardTemplateId);
 
         await _messageBus.TryPublishAsync(
-            "license-board-template.deleted",
+            "license.board-template.deleted",
             new LicenseBoardTemplateDeletedEvent
             {
                 BoardTemplateId = template.BoardTemplateId,
@@ -1035,7 +1035,7 @@ public partial class LicenseService : ILicenseService
             board.BoardId, board.OwnerType, board.OwnerId, board.ContainerId);
 
         await _messageBus.TryPublishAsync(
-            "license-board.created",
+            "license.board.created",
             new LicenseBoardCreatedEvent
             {
                 BoardId = board.BoardId,
@@ -1152,7 +1152,7 @@ public partial class LicenseService : ILicenseService
             board.BoardId, board.OwnerType, board.OwnerId);
 
         await _messageBus.TryPublishAsync(
-            "license-board.deleted",
+            "license.board.deleted",
             new LicenseBoardDeletedEvent
             {
                 BoardId = board.BoardId,
@@ -1887,7 +1887,7 @@ public partial class LicenseService : ILicenseService
     /// Reads unlock state from the source board, creates a new board for the target owner,
     /// and bulk-creates item instances for all unlocked licenses. Skips contract execution
     /// entirely (admin tooling, not gameplay). Publishes both a lifecycle event and a
-    /// custom <c>license-board.cloned</c> event.
+    /// custom <c>license.board.cloned</c> event.
     /// </summary>
     /// <remarks>
     /// Implements saga compensation: if item creation fails mid-clone, the already-created
@@ -2166,9 +2166,9 @@ public partial class LicenseService : ILicenseService
                 cancellationToken);
         }
 
-        // 16. Publish license-board.created lifecycle event
+        // 16. Publish license.board.created lifecycle event
         await _messageBus.TryPublishAsync(
-            "license-board.created",
+            "license.board.created",
             new LicenseBoardCreatedEvent
             {
                 BoardId = newBoard.BoardId,
@@ -2182,7 +2182,7 @@ public partial class LicenseService : ILicenseService
             },
             cancellationToken: cancellationToken);
 
-        // 17. Publish license-board.cloned custom event
+        // 17. Publish license.board.cloned custom event
         await _messageBus.TryPublishAsync(
             LicenseTopics.LicenseBoardCloned,
             new LicenseBoardClonedEvent

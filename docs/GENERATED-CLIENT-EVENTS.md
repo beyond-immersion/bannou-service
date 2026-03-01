@@ -9,14 +9,14 @@ This document lists all typed events available for subscription in the Bannou Cl
 
 | Event Type | Event Name | Description |
 |------------|------------|-------------|
-| `BundleCreationCompleteEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
-| `BundleValidationCompleteEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
-| `BundleValidationFailedEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
-| `MetabundleCreationCompleteEvent` | `asset.metabundle.creation.complete` | Sent when async metabundle creation job completes (success o... |
-| `AssetProcessingCompleteEvent` | `asset.processing.complete` | Sent when asset processing (e.g., texture mipmaps, model LOD... |
-| `AssetProcessingFailedEvent` | `asset.processing.failed` | Sent when asset processing fails. Includes retry information... |
-| `AssetReadyEvent` | `asset.ready` | Final notification that an asset is ready for use. |
-| `AssetUploadCompleteEvent` | `asset.upload.complete` | Sent when an asset upload has completed (success or failure)... |
+| `BundleCreationCompleteClientEvent` | `asset.bundle.creation.complete` | Sent when bundle creation from asset_ids completes. |
+| `BundleValidationCompleteClientEvent` | `asset.bundle.validation.complete` | Sent when a bundle upload has been validated and processed. |
+| `BundleValidationFailedClientEvent` | `asset.bundle.validation.failed` | Sent when bundle validation fails. Includes detailed error i... |
+| `MetabundleCreationCompleteClientEvent` | `asset.metabundle.creation.complete` | Sent when async metabundle creation job completes (success o... |
+| `AssetProcessingCompleteClientEvent` | `asset.processing.complete` | Sent when asset processing (e.g., texture mipmaps, model LOD... |
+| `AssetProcessingFailedClientEvent` | `asset.processing.failed` | Sent when asset processing fails. Includes retry information... |
+| `AssetReadyClientEvent` | `asset.ready` | Final notification that an asset is ready for use. |
+| `AssetUploadCompleteClientEvent` | `asset.upload.complete` | Sent when an asset upload has completed (success or failure)... |
 | `AuthDeviceLoginClientEvent` | `auth.device_login` | Sent to all existing sessions when a new login occurs on the... |
 | `AuthExternalAccountLinkedClientEvent` | `auth.external_account_linked` | Sent to all sessions when a new OAuth provider is linked to ... |
 | `AuthMfaDisabledClientEvent` | `auth.mfa_disabled` | Sent to all sessions when MFA is disabled on the account. |
@@ -24,9 +24,11 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `AuthPasswordChangedClientEvent` | `auth.password_changed` | Sent to all sessions when the account's password is reset. |
 | `AuthSessionTerminatedClientEvent` | `auth.session_terminated` | Sent to remaining sessions when a session is remotely termin... |
 | `AuthSuspiciousLoginClientEvent` | `auth.suspicious_login` | Sent to all sessions when a failed login attempt occurs with... |
+| `CharacterRealmTransferredClientEvent` | `character.realm_transferred` | Published when a character is transferred to a different rea... |
+| `CharacterUpdatedClientEvent` | `character.updated` | Published when a character's state changes (death, name chan... |
 | `ChatMessageDeletedClientEvent` | `chat.message_deleted` | Sent to room participants when a message is deleted. |
-| `ChatMessagePinnedEvent` | `chat.message_pinned` | Sent to room participants when a message is pinned or unpinn... |
-| `ChatMessageReceivedEvent` | `chat.message_received` | Sent to room participants when a new message is received. |
+| `ChatMessagePinnedClientEvent` | `chat.message_pinned` | Sent to room participants when a message is pinned or unpinn... |
+| `ChatMessageReceivedClientEvent` | `chat.message_received` | Sent to room participants when a new message is received. |
 | `ChatParticipantBannedClientEvent` | `chat.participant_banned` | Sent to all room participants when someone is banned. |
 | `ChatParticipantJoinedClientEvent` | `chat.participant_joined` | Sent to room participants when someone joins the room. |
 | `ChatParticipantKickedClientEvent` | `chat.participant_kicked` | Sent to all room participants when someone is kicked. |
@@ -43,44 +45,47 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CollectionDiscoveryAdvancedClientEvent` | `collection.discovery_advanced` | Sent to the collection owner when progressive discovery adva... |
 | `CollectionEntryUnlockedClientEvent` | `collection.entry_unlocked` | Sent to the collection owner when an entry is unlocked in th... |
 | `CollectionMilestoneReachedClientEvent` | `collection.milestone_reached` | Sent to the collection owner when a completion milestone is ... |
-| `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
-| `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
-| `CurrencyBalanceChangedEvent` | `currency.balance_changed` | Sent to the wallet owner when any balance mutation occurs: c... |
-| `CurrencyWalletFrozenEvent` | `currency.wallet_frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
-| `CurrencyWalletUnfrozenEvent` | `currency.wallet_unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
-| `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
-| `SessionChatReceivedEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
-| `PlayerJoinedEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
-| `PlayerKickedEvent` | `game_session.player_kicked` | Sent to all session participants when a player is kicked. |
-| `PlayerLeftEvent` | `game_session.player_left` | Sent to all session participants when a player leaves volunt... |
-| `SessionCancelledEvent` | `game_session.session_cancelled` | Sent to players who claimed their reservation when a matchma... |
-| `SessionStateChangedEvent` | `game_session.state_changed` | Sent to all session participants when the session state chan... |
-| `GameStateUpdatedEvent` | `game_session.state_updated` | Sent when game state changes that all players should see. |
+| `CapabilityManifestClientEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
+| `DisconnectNotificationClientEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
+| `CurrencyBalanceChangedClientEvent` | `currency.balance_changed` | Sent to the wallet owner when any balance mutation occurs: c... |
+| `CurrencyWalletFrozenClientEvent` | `currency.wallet_frozen` | Sent to the wallet owner when their wallet is frozen (escrow... |
+| `CurrencyWalletUnfrozenClientEvent` | `currency.wallet_unfrozen` | Sent to the wallet owner when their wallet is unfrozen and u... |
+| `GameActionResultClientEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
+| `SessionChatReceivedClientEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
+| `PlayerJoinedClientEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
+| `PlayerKickedClientEvent` | `game_session.player_kicked` | Sent to all session participants when a player is kicked. |
+| `PlayerLeftClientEvent` | `game_session.player_left` | Sent to all session participants when a player leaves volunt... |
+| `SessionCancelledClientEvent` | `game_session.session_cancelled` | Sent to players who claimed their reservation when a matchma... |
+| `SessionStateChangedClientEvent` | `game_session.state_changed` | Sent to all session participants when the session state chan... |
+| `GameStateUpdatedClientEvent` | `game_session.state_updated` | Sent when game state changes that all players should see. |
 | `InventoryContainerFullClientEvent` | `inventory.container_full` | Sent to sessions observing a container owner when one of the... |
 | `InventoryItemChangedClientEvent` | `inventory.item_changed` | Sent to sessions observing a container owner when an item is... |
 | `InventoryItemTransferredClientEvent` | `inventory.item_transferred` | Sent to sessions observing either the source or target conta... |
-| `MatchmakingCancelledEvent` | `matchmaking.cancelled` | Sent when matchmaking is cancelled for any reason. |
-| `MatchConfirmedEvent` | `matchmaking.match_confirmed` | Sent to all match participants when all players have accepte... |
-| `MatchDeclinedEvent` | `matchmaking.match_declined` | Sent to all match participants when someone declines. |
-| `MatchFoundEvent` | `matchmaking.match_found` | Sent to all matched players when a match is formed. |
-| `MatchPlayerAcceptedEvent` | `matchmaking.player_accepted` | Sent to all match participants when a player accepts. |
-| `QueueJoinedEvent` | `matchmaking.queue_joined` | Sent to the player when they successfully join a matchmaking... |
-| `MatchmakingStatusUpdateEvent` | `matchmaking.status_update` | Periodic status update sent to players in queue. |
+| `LocationPresenceChangedClientEvent` | `location.presence_changed` | Sent to sessions observing a location when an entity arrives... |
+| `LocationUpdatedClientEvent` | `location.updated` | Sent to sessions observing a location when location properti... |
+| `MatchmakingCancelledClientEvent` | `matchmaking.cancelled` | Sent when matchmaking is cancelled for any reason. |
+| `MatchConfirmedClientEvent` | `matchmaking.match_confirmed` | Sent to all match participants when all players have accepte... |
+| `MatchDeclinedClientEvent` | `matchmaking.match_declined` | Sent to all match participants when someone declines. |
+| `MatchFoundClientEvent` | `matchmaking.match_found` | Sent to all matched players when a match is formed. |
+| `MatchPlayerAcceptedClientEvent` | `matchmaking.player_accepted` | Sent to all match participants when a player accepts. |
+| `QueueJoinedClientEvent` | `matchmaking.queue_joined` | Sent to the player when they successfully join a matchmaking... |
+| `MatchmakingStatusUpdateClientEvent` | `matchmaking.status_update` | Periodic status update sent to players in queue. |
 | `StatusEffectChangedClientEvent` | `status.effect_changed` | Sent to sessions observing an entity when a status effect is... |
-| `SystemErrorEvent` | `system.error` | Generic error notification sent to client. |
-| `SystemNotificationEvent` | `system.notification` | Generic notification event for system-level messages. |
-| `TransitConnectionStatusChangedEvent` | `transit.connection_status_changed` | A connection's operational status changed -- pushed to sessi... |
-| `TransitDiscoveryRevealedEvent` | `transit.discovery_revealed` | A discoverable connection was revealed -- pushed to the disc... |
-| `TransitJourneyUpdatedEvent` | `transit.journey_updated` | Journey state changed -- pushed to the traveling entity's bo... |
-| `VoiceBroadcastConsentRequestEvent` | `voice.broadcast_consent_request` | Sent to all room participants when someone requests broadcas... |
-| `VoiceBroadcastConsentUpdateEvent` | `voice.broadcast_consent_update` | Sent to all room participants when the broadcast consent sta... |
-| `VoicePeerJoinedEvent` | `voice.peer_joined` | Sent to existing room participants when a new peer joins. |
-| `VoicePeerLeftEvent` | `voice.peer_left` | Sent to remaining room participants when a peer leaves. |
-| `VoicePeerUpdatedEvent` | `voice.peer_updated` | Sent when a peer updates their SIP endpoint (e.g., ICE candi... |
-| `VoiceRoomClosedEvent` | `voice.room_closed` | Sent to all room participants when the voice room is closed. |
-| `VoiceRoomStateEvent` | `voice.room_state` | Sent to a client when they join a voice room. |
-| `VoiceTierUpgradeEvent` | `voice.tier_upgrade` | Sent to all room participants when the voice tier upgrades. |
-| `WorldstateTimeSyncEvent` | `worldstate.time_sync` | Published on period-changed boundaries, ratio changes, admin... |
+| `SubscriptionStatusChangedClientEvent` | `subscription.status_changed` | Sent to all sessions for the affected account when a subscri... |
+| `SystemErrorClientEvent` | `system.error` | Generic error notification sent to client. |
+| `SystemNotificationClientEvent` | `system.notification` | Generic notification event for system-level messages. |
+| `TransitConnectionStatusChangedClientEvent` | `transit.connection_status_changed` | A connection's operational status changed -- pushed to sessi... |
+| `TransitDiscoveryRevealedClientEvent` | `transit.discovery_revealed` | A discoverable connection was revealed -- pushed to the disc... |
+| `TransitJourneyUpdatedClientEvent` | `transit.journey_updated` | Journey state changed -- pushed to the traveling entity's bo... |
+| `VoiceBroadcastConsentRequestClientEvent` | `voice.broadcast_consent_request` | Sent to all room participants when someone requests broadcas... |
+| `VoiceBroadcastConsentUpdateClientEvent` | `voice.broadcast_consent_update` | Sent to all room participants when the broadcast consent sta... |
+| `VoicePeerJoinedClientEvent` | `voice.peer_joined` | Sent to existing room participants when a new peer joins. |
+| `VoicePeerLeftClientEvent` | `voice.peer_left` | Sent to remaining room participants when a peer leaves. |
+| `VoicePeerUpdatedClientEvent` | `voice.peer_updated` | Sent when a peer updates their SIP endpoint (e.g., ICE candi... |
+| `VoiceRoomClosedClientEvent` | `voice.room_closed` | Sent to all room participants when the voice room is closed. |
+| `VoiceRoomStateClientEvent` | `voice.room_state` | Sent to a client when they join a voice room. |
+| `VoiceTierUpgradeClientEvent` | `voice.tier_upgrade` | Sent to all room participants when the voice tier upgrades. |
+| `WorldstateTimeSyncClientEvent` | `worldstate.time_sync` | Published on period-changed boundaries, ratio changes, admin... |
 
 ---
 
@@ -115,7 +120,7 @@ var eventName = ClientEventRegistry.GetEventName<ChatMessageReceivedEvent>();
 
 Server-to-client push events for the Asset service. These events notify clients of upload completions, processing results, bundle validations, and asset availability delivered via WebSocket.
 
-### `BundleCreationCompleteEvent`
+### `BundleCreationCompleteClientEvent`
 
 **Event Name**: `asset.bundle.creation.complete`
 
@@ -133,7 +138,7 @@ Sent when bundle creation from asset_ids completes.
 | `size` | Bundle file size in bytes |
 | `success` | Whether creation completed successfully |
 
-### `BundleValidationCompleteEvent`
+### `BundleValidationCompleteClientEvent`
 
 **Event Name**: `asset.bundle.validation.complete`
 
@@ -150,7 +155,7 @@ Sent when a bundle upload has been validated and processed.
 | `uploadId` | Correlates with the bundle upload request |
 | `warnings` | Non-fatal warnings encountered during validation |
 
-### `BundleValidationFailedEvent`
+### `BundleValidationFailedClientEvent`
 
 **Event Name**: `asset.bundle.validation.failed`
 
@@ -163,7 +168,7 @@ Sent when bundle validation fails. Includes detailed error information.
 | `errors` | List of validation errors that caused the failure |
 | `uploadId` | Correlates with the bundle upload request |
 
-### `MetabundleCreationCompleteEvent`
+### `MetabundleCreationCompleteClientEvent`
 
 **Event Name**: `asset.metabundle.creation.complete`
 
@@ -185,7 +190,7 @@ Sent when async metabundle creation job completes (success or failure).
 | `status` | Final job status |
 | `success` | Whether creation completed successfully |
 
-### `AssetProcessingCompleteEvent`
+### `AssetProcessingCompleteClientEvent`
 
 **Event Name**: `asset.processing.complete`
 
@@ -202,7 +207,7 @@ Sent when asset processing (e.g., texture mipmaps, model LODs) completes.
 | `processingType` | Type of processing that was performed on the asset |
 | `success` | Whether processing completed successfully |
 
-### `AssetProcessingFailedEvent`
+### `AssetProcessingFailedClientEvent`
 
 **Event Name**: `asset.processing.failed`
 
@@ -218,7 +223,7 @@ Sent when asset processing fails. Includes retry information.
 | `retryAfterMs` | Suggested retry delay in milliseconds |
 | `retryAvailable` | Whether the operation can be retried |
 
-### `AssetReadyEvent`
+### `AssetReadyClientEvent`
 
 **Event Name**: `asset.ready`
 
@@ -235,7 +240,7 @@ Final notification that an asset is ready for use.
 | `size` | File size in bytes |
 | `versionId` | Version ID of this asset |
 
-### `AssetUploadCompleteEvent`
+### `AssetUploadCompleteClientEvent`
 
 **Event Name**: `asset.upload.complete`
 
@@ -338,6 +343,42 @@ Sent to all sessions when a failed login attempt occurs with a known account.
 
 ---
 
+## Character Client Events
+
+Server-to-client push events for the Character service. Published via IClientEventPublisher to connected WebSocket sessions through the Entity Session Registry pattern.
+
+### `CharacterRealmTransferredClientEvent`
+
+**Event Name**: `character.realm_transferred`
+
+Published when a character is transferred to a different realm.
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `characterId` | Character being transferred |
+| `newRealmId` | Realm the character is joining |
+| `previousRealmId` | Realm the character is leaving |
+
+### `CharacterUpdatedClientEvent`
+
+**Event Name**: `character.updated`
+
+Published when a character's state changes (death, name change, status
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changedFields` | List of field names that changed (e.g., ["status", |
+| `characterId` | Character whose state changed |
+| `deathDate` | Death timestamp (included only when deathDate chan |
+| `name` | New character name (included only when name change |
+| `status` | New character status (included only when status ch |
+
+---
+
 ## Chat Client Events API
 
 Server-to-client push events for the Chat service. These events notify connected clients of real-time chat activity: messages received, participant changes, and room state updates. Delivered via We...
@@ -356,7 +397,7 @@ Sent to room participants when a message is deleted.
 | `messageId` | Unique identifier of the deleted message |
 | `roomId` | Room the message was deleted from |
 
-### `ChatMessagePinnedEvent`
+### `ChatMessagePinnedClientEvent`
 
 **Event Name**: `chat.message_pinned`
 
@@ -370,7 +411,7 @@ Sent to room participants when a message is pinned or unpinned.
 | `messageId` | Unique identifier of the pinned/unpinned message |
 | `roomId` | Room containing the message |
 
-### `ChatMessageReceivedEvent`
+### `ChatMessageReceivedClientEvent`
 
 **Event Name**: `chat.message_received`
 
@@ -649,7 +690,7 @@ Sent to the collection owner when a completion milestone is crossed.
 
 Base schemas for server-to-client push events delivered via WebSocket. All client events inherit from BaseClientEvent and are routed through session-specific RabbitMQ channels (CONNECT_SESSION_{ses...
 
-### `CapabilityManifestEvent`
+### `CapabilityManifestClientEvent`
 
 **Event Name**: `connect.capability_manifest`
 
@@ -665,7 +706,7 @@ Sent to client when their available API capabilities change.
 | `sessionId` | Session ID this manifest applies to |
 | `version` | Manifest version number (incremented on each chang |
 
-### `DisconnectNotificationEvent`
+### `DisconnectNotificationClientEvent`
 
 **Event Name**: `connect.disconnect_notification`
 
@@ -680,7 +721,7 @@ Sent to client before WebSocket connection is closed.
 | `reconnectable` | Whether this session can be reconnected |
 | `reconnectionToken` | Token for reconnecting to the same session (valid  |
 
-### `SystemErrorEvent`
+### `SystemErrorClientEvent`
 
 **Event Name**: `system.error`
 
@@ -695,7 +736,7 @@ Generic error notification sent to client.
 | `message` | Human-readable error message |
 | `recoverable` | Whether the client can retry the operation |
 
-### `SystemNotificationEvent`
+### `SystemNotificationClientEvent`
 
 **Event Name**: `system.notification`
 
@@ -717,7 +758,7 @@ Generic notification event for system-level messages.
 
 Server-to-client push events for the Currency service. These events notify clients of real-time wallet balance changes and wallet lifecycle state transitions delivered via WebSocket.
 
-### `CurrencyBalanceChangedEvent`
+### `CurrencyBalanceChangedClientEvent`
 
 **Event Name**: `currency.balance_changed`
 
@@ -734,7 +775,7 @@ Sent to the wallet owner when any balance mutation occurs: credits, debits,
 | `transactionType` | Semantic classification of the balance change sour |
 | `walletId` | The wallet whose balance changed |
 
-### `CurrencyWalletFrozenEvent`
+### `CurrencyWalletFrozenClientEvent`
 
 **Event Name**: `currency.wallet_frozen`
 
@@ -747,7 +788,7 @@ Sent to the wallet owner when their wallet is frozen (escrow dispute,
 | `reason` | Human-readable reason for the freeze |
 | `walletId` | The wallet that was frozen |
 
-### `CurrencyWalletUnfrozenEvent`
+### `CurrencyWalletUnfrozenClientEvent`
 
 **Event Name**: `currency.wallet_unfrozen`
 
@@ -765,7 +806,7 @@ Sent to the wallet owner when their wallet is unfrozen and usable again.
 
 Server-to-client push events for the Game Session service. These events notify clients of game session state changes, player actions, chat messages, and game state updates delivered via WebSocket.
 
-### `GameActionResultEvent`
+### `GameActionResultClientEvent`
 
 **Event Name**: `game_session.action_result`
 
@@ -783,7 +824,7 @@ Sent to relevant players when a game action produces results.
 | `success` | Whether the action succeeded |
 | `visibleEffects` | Visual/audio effects other players should see |
 
-### `SessionChatReceivedEvent`
+### `SessionChatReceivedClientEvent`
 
 **Event Name**: `game_session.chat_received`
 
@@ -801,7 +842,7 @@ Sent to recipients when a chat message is posted in the session.
 | `senderName` | Display name of sender |
 | `sessionId` | ID of the game session |
 
-### `PlayerJoinedEvent`
+### `PlayerJoinedClientEvent`
 
 **Event Name**: `game_session.player_joined`
 
@@ -816,7 +857,7 @@ Sent to all session participants when a new player joins.
 | `player` | Information about the player who joined the sessio |
 | `sessionId` | ID of the game session |
 
-### `PlayerKickedEvent`
+### `PlayerKickedClientEvent`
 
 **Event Name**: `game_session.player_kicked`
 
@@ -832,7 +873,7 @@ Sent to all session participants when a player is kicked.
 | `reason` | Reason provided for the kick |
 | `sessionId` | ID of the game session |
 
-### `PlayerLeftEvent`
+### `PlayerLeftClientEvent`
 
 **Event Name**: `game_session.player_left`
 
@@ -848,7 +889,7 @@ Sent to all session participants when a player leaves voluntarily.
 | `playerId` | Account ID of player who left |
 | `sessionId` | ID of the game session |
 
-### `SessionCancelledEvent`
+### `SessionCancelledClientEvent`
 
 **Event Name**: `game_session.session_cancelled`
 
@@ -861,7 +902,7 @@ Sent to players who claimed their reservation when a matchmade session
 | `reason` | Reason for cancellation |
 | `sessionId` | ID of the cancelled game session |
 
-### `SessionStateChangedEvent`
+### `SessionStateChangedClientEvent`
 
 **Event Name**: `game_session.state_changed`
 
@@ -877,7 +918,7 @@ Sent to all session participants when the session state changes.
 | `reason` | Reason for state change (e.g., "host_started", "ti |
 | `sessionId` | ID of the game session |
 
-### `GameStateUpdatedEvent`
+### `GameStateUpdatedClientEvent`
 
 **Event Name**: `game_session.state_updated`
 
@@ -953,11 +994,51 @@ Sent to sessions observing either the source or target container owner
 
 ---
 
+## Location Client Events API
+
+Server-to-client push events for the Location service. These events notify clients of real-time entity presence changes and location updates delivered via WebSocket through the Entity Session Regis...
+
+### `LocationPresenceChangedClientEvent`
+
+**Event Name**: `location.presence_changed`
+
+Sent to sessions observing a location when an entity arrives at or
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changeType` | Whether the entity arrived or departed |
+| `entityId` | Entity that arrived or departed |
+| `entityType` | Type of entity (opaque string - character, actor,  |
+| `locationId` | Location where the presence change occurred |
+| `realmId` | Realm the location belongs to |
+
+### `LocationUpdatedClientEvent`
+
+**Event Name**: `location.updated`
+
+Sent to sessions observing a location when location properties change
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `changedFields` | List of field names that changed in this update |
+| `description` | Current description of the location |
+| `isDeprecated` | Whether the location is deprecated (included when  |
+| `locationId` | Location that was updated |
+| `locationType` | Type classification of the location |
+| `name` | Current name of the location |
+| `realmId` | Realm the location belongs to |
+
+---
+
 ## Matchmaking Client Events API
 
 Server-to-client push events for the Matchmaking service. These events notify clients of matchmaking status changes, match formation, and cancellation delivered via WebSocket.
 
-### `MatchmakingCancelledEvent`
+### `MatchmakingCancelledClientEvent`
 
 **Event Name**: `matchmaking.cancelled`
 
@@ -974,7 +1055,7 @@ Sent when matchmaking is cancelled for any reason.
 | `ticketId` | Ticket that was cancelled |
 | `waitTimeSeconds` | How long the player was waiting before cancellatio |
 
-### `MatchConfirmedEvent`
+### `MatchConfirmedClientEvent`
 
 **Event Name**: `matchmaking.match_confirmed`
 
@@ -989,7 +1070,7 @@ Sent to all match participants when all players have accepted.
 | `matchId` | Match identifier |
 | `reservationToken` | Token to claim reservation when joining session (n |
 
-### `MatchDeclinedEvent`
+### `MatchDeclinedClientEvent`
 
 **Event Name**: `matchmaking.match_declined`
 
@@ -1005,7 +1086,7 @@ Sent to all match participants when someone declines.
 | `newTicketId` | New ticket ID if auto-requeued |
 | `queueId` | Queue the match was from |
 
-### `MatchFoundEvent`
+### `MatchFoundClientEvent`
 
 **Event Name**: `matchmaking.match_found`
 
@@ -1025,7 +1106,7 @@ Sent to all matched players when a match is formed.
 | `queueId` | Queue the match was formed from |
 | `teamAssignment` | Team number the player is assigned to (for team ga |
 
-### `MatchPlayerAcceptedEvent`
+### `MatchPlayerAcceptedClientEvent`
 
 **Event Name**: `matchmaking.player_accepted`
 
@@ -1040,7 +1121,7 @@ Sent to all match participants when a player accepts.
 | `matchId` | Match identifier |
 | `totalCount` | Total players who need to accept |
 
-### `QueueJoinedEvent`
+### `QueueJoinedClientEvent`
 
 **Event Name**: `matchmaking.queue_joined`
 
@@ -1056,7 +1137,7 @@ Sent to the player when they successfully join a matchmaking queue.
 | `queueId` | ID of the queue joined |
 | `ticketId` | Unique identifier for the matchmaking ticket |
 
-### `MatchmakingStatusUpdateEvent`
+### `MatchmakingStatusUpdateClientEvent`
 
 **Event Name**: `matchmaking.status_update`
 
@@ -1102,11 +1183,34 @@ Sent to sessions observing an entity when a status effect is granted,
 
 ---
 
+## Subscription Client Events API
+
+Server-to-client push events for the Subscription service. These events notify clients of real-time subscription status changes delivered via WebSocket through account-session routing.
+
+### `SubscriptionStatusChangedClientEvent`
+
+**Event Name**: `subscription.status_changed`
+
+Sent to all sessions for the affected account when a subscription
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `accountId` | Account whose subscription changed |
+| `action` | Type of subscription change that occurred |
+| `expiresAt` | When the subscription expires (null for cancelled/ |
+| `isActive` | Whether the subscription is currently active after |
+| `serviceId` | Game service the subscription is for |
+| `serviceName` | Display name of the service for client-side notifi |
+
+---
+
 ## Transit Client Events
 
 Server-to-client WebSocket push events for the Transit service
 
-### `TransitConnectionStatusChangedEvent`
+### `TransitConnectionStatusChangedClientEvent`
 
 **Event Name**: `transit.connection_status_changed`
 
@@ -1123,7 +1227,7 @@ A connection's operational status changed -- pushed to sessions in the affected 
 | `reason` | Reason for the status change |
 | `toLocationId` | Destination location of the connection |
 
-### `TransitDiscoveryRevealedEvent`
+### `TransitDiscoveryRevealedClientEvent`
 
 **Event Name**: `transit.discovery_revealed`
 
@@ -1139,7 +1243,7 @@ A discoverable connection was revealed -- pushed to the discovering entity's ses
 | `source` | How the connection was discovered (e.g., travel, g |
 | `toLocationId` | Destination location of the discovered connection |
 
-### `TransitJourneyUpdatedEvent`
+### `TransitJourneyUpdatedClientEvent`
 
 **Event Name**: `transit.journey_updated`
 
@@ -1165,7 +1269,7 @@ Journey state changed -- pushed to the traveling entity's bound session
 
 Server-to-client push events for the Voice service. These events notify clients of voice room state changes, peer connections, and tier upgrades delivered via WebSocket.
 
-### `VoiceBroadcastConsentRequestEvent`
+### `VoiceBroadcastConsentRequestClientEvent`
 
 **Event Name**: `voice.broadcast_consent_request`
 
@@ -1179,7 +1283,7 @@ Sent to all room participants when someone requests broadcast consent. Each part
 | `requestedBySessionId` | Who initiated the broadcast request (null if serve |
 | `roomId` | Voice room ID |
 
-### `VoiceBroadcastConsentUpdateEvent`
+### `VoiceBroadcastConsentUpdateClientEvent`
 
 **Event Name**: `voice.broadcast_consent_update`
 
@@ -1195,7 +1299,7 @@ Sent to all room participants when the broadcast consent state changes (someone 
 | `state` | Current broadcast consent state |
 | `totalCount` | Total participants who need to consent |
 
-### `VoicePeerJoinedEvent`
+### `VoicePeerJoinedClientEvent`
 
 **Event Name**: `voice.peer_joined`
 
@@ -1209,7 +1313,7 @@ Sent to existing room participants when a new peer joins.
 | `peer` | New peer's connection details |
 | `roomId` | Voice room ID |
 
-### `VoicePeerLeftEvent`
+### `VoicePeerLeftClientEvent`
 
 **Event Name**: `voice.peer_left`
 
@@ -1224,7 +1328,7 @@ Sent to remaining room participants when a peer leaves.
 | `remainingParticipantCount` | Participants remaining after departure |
 | `roomId` | Voice room ID |
 
-### `VoicePeerUpdatedEvent`
+### `VoicePeerUpdatedClientEvent`
 
 **Event Name**: `voice.peer_updated`
 
@@ -1237,7 +1341,7 @@ Sent when a peer updates their SIP endpoint (e.g., ICE candidate change).
 | `peer` | Updated peer connection details |
 | `roomId` | Voice room ID |
 
-### `VoiceRoomClosedEvent`
+### `VoiceRoomClosedClientEvent`
 
 **Event Name**: `voice.room_closed`
 
@@ -1250,7 +1354,7 @@ Sent to all room participants when the voice room is closed.
 | `reason` | Reason the room was closed |
 | `roomId` | Voice room ID that was closed |
 
-### `VoiceRoomStateEvent`
+### `VoiceRoomStateClientEvent`
 
 **Event Name**: `voice.room_state`
 
@@ -1268,7 +1372,7 @@ Sent to a client when they join a voice room.
 | `stunServers` | STUN server URIs for NAT traversal |
 | `tier` | Current voice tier |
 
-### `VoiceTierUpgradeEvent`
+### `VoiceTierUpgradeClientEvent`
 
 **Event Name**: `voice.tier_upgrade`
 
@@ -1291,11 +1395,11 @@ Sent to all room participants when the voice tier upgrades.
 
 Server-to-client push events for the Worldstate service. Published via IClientEventPublisher to connected WebSocket sessions through the Entity Session Registry pattern.
 
-### `WorldstateTimeSyncEvent`
+### `WorldstateTimeSyncClientEvent`
 
 **Event Name**: `worldstate.time_sync`
 
-Published on period-changed boundaries, ratio changes, admin clock
+Published on period-changed boundaries, ratio changes, admin clock advancement, and on-demand via...
 
 **Properties**:
 
@@ -1323,8 +1427,8 @@ Published on period-changed boundaries, ratio changes, admin clock
 
 ## Summary
 
-- **Total event types**: 72
-- **Services with events**: 13
+- **Total event types**: 77
+- **Services with events**: 16
 
 ---
 
