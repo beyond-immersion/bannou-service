@@ -266,6 +266,13 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public int BundleCleanupIntervalMinutes { get; set; } = 60;
 
     /// <summary>
+    /// Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
+    /// Environment variable: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ZipCacheCleanupIntervalMinutes { get; set; } = 120;
+
+    /// <summary>
     /// Secret for validating MinIO webhook requests
     /// Environment variable: ASSET_MINIO_WEBHOOK_SECRET
     /// </summary>

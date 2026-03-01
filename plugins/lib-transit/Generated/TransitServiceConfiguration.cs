@@ -134,4 +134,39 @@ public class TransitServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     public bool AutoUpdateLocationOnTransition { get; set; } = true;
 
+    /// <summary>
+    /// Minimum allowed preference cost after aggregating all DI cost modifier providers. PreferenceCostDelta values are summed across providers and clamped to [MinPreferenceCost, MaxPreferenceCost].
+    /// Environment variable: TRANSIT_MIN_PREFERENCE_COST
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public double MinPreferenceCost { get; set; } = 0.0;
+
+    /// <summary>
+    /// Maximum allowed preference cost after aggregating all DI cost modifier providers. PreferenceCostDelta values are summed across providers and clamped to [MinPreferenceCost, MaxPreferenceCost].
+    /// Environment variable: TRANSIT_MAX_PREFERENCE_COST
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public double MaxPreferenceCost { get; set; } = 2.0;
+
+    /// <summary>
+    /// Minimum allowed speed multiplier after aggregating all DI cost modifier providers. SpeedMultiplier values are multiplied across providers and clamped to [MinSpeedMultiplier, MaxSpeedMultiplier].
+    /// Environment variable: TRANSIT_MIN_SPEED_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.01)]
+    public double MinSpeedMultiplier { get; set; } = 0.1;
+
+    /// <summary>
+    /// Maximum allowed speed multiplier after aggregating all DI cost modifier providers. SpeedMultiplier values are multiplied across providers and clamped to [MinSpeedMultiplier, MaxSpeedMultiplier].
+    /// Environment variable: TRANSIT_MAX_SPEED_MULTIPLIER
+    /// </summary>
+    [ConfigRange(Minimum = 0.01)]
+    public double MaxSpeedMultiplier { get; set; } = 3.0;
+
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition on mode registration uniqueness checks and mode mutation operations.
+    /// Environment variable: TRANSIT_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 60)]
+    public int LockTimeoutSeconds { get; set; } = 10;
+
 }

@@ -246,13 +246,60 @@ public partial class WorldstateService : IWorldstateService
     }
 
     /// <summary>
-    /// Implementation of TriggerTimeSync operation.
+    /// Triggers an on-demand time synchronization for all sessions observing a specific entity
+    /// within a realm. Builds a full game time snapshot and publishes it to the entity's
+    /// connected sessions via the entity session registry.
     /// </summary>
+    /// <param name="body">The request containing the realm ID and entity ID to sync.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The number of sessions notified, or NotFound if no clock is initialized.</returns>
     public async Task<(StatusCodes, TriggerTimeSyncResponse?)> TriggerTimeSyncAsync(TriggerTimeSyncRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement TriggerTimeSync
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method TriggerTimeSync not yet implemented");
+        _logger.LogDebug("Triggering time sync for realm {RealmId}, entity {EntityId}",
+            body.RealmId, body.EntityId);
+
+        // Load current clock state
+        var clockKey = $"realm:{body.RealmId}";
+        var clock = await _clockStore.GetAsync(clockKey, cancellationToken);
+        if (clock == null)
+        {
+            _logger.LogDebug("No clock initialized for realm {RealmId}", body.RealmId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Build time sync client event with full game time snapshot
+        var syncEvent = new WorldstateTimeSyncEvent
+        {
+            RealmId = body.RealmId,
+            Year = clock.Year,
+            MonthIndex = clock.MonthIndex,
+            MonthCode = clock.MonthCode,
+            DayOfMonth = clock.DayOfMonth,
+            DayOfYear = clock.DayOfYear,
+            Hour = clock.Hour,
+            Minute = clock.Minute,
+            Period = clock.Period,
+            IsDaylight = clock.IsDaylight,
+            Season = clock.Season,
+            SeasonIndex = clock.SeasonIndex,
+            SeasonProgress = clock.SeasonProgress,
+            TotalGameSecondsSinceEpoch = clock.TotalGameSecondsSinceEpoch,
+            TimeRatio = clock.TimeRatio,
+            PreviousPeriod = null,
+            SyncReason = TimeSyncReason.TriggerSync
+        };
+
+        // Publish to all sessions observing this entity within the realm
+        var sessionsNotified = await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "realm", body.EntityId, syncEvent, cancellationToken);
+
+        _logger.LogInformation("Time sync triggered for realm {RealmId}, entity {EntityId}: {SessionsNotified} session(s) notified",
+            body.RealmId, body.EntityId, sessionsNotified);
+
+        return (StatusCodes.OK, new TriggerTimeSyncResponse
+        {
+            SessionsNotified = sessionsNotified
+        });
     }
 
     /// <summary>
@@ -1383,23 +1430,129 @@ public partial class WorldstateService : IWorldstateService
     }
 
     /// <summary>
-    /// Implementation of CleanupByRealm operation.
+    /// Cleans up all worldstate data for a realm. Deletes the clock, ratio history,
+    /// and realm config from their respective stores, unregisters the realm reference,
+    /// publishes a realm config deleted event, and invalidates local caches.
+    /// Called by lib-resource cleanup callbacks when a realm is deleted.
     /// </summary>
+    /// <param name="body">The request containing the realm ID to clean up.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An empty response on success.</returns>
     public async Task<(StatusCodes, CleanupByRealmResponse?)> CleanupByRealmAsync(CleanupByRealmRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CleanupByRealm
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CleanupByRealm not yet implemented");
+        _logger.LogDebug("Cleaning up worldstate data for realm {RealmId}", body.RealmId);
+
+        // Load realm config before deletion for the lifecycle event
+        var configKey = $"realm-config:{body.RealmId}";
+        var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
+        if (realmConfig == null)
+        {
+            _logger.LogWarning("Realm config not found for realm {RealmId} during cleanup (partially initialized or already cleaned up)",
+                body.RealmId);
+        }
+
+        // Delete clock from Redis
+        var clockKey = $"realm:{body.RealmId}";
+        await _clockStore.DeleteAsync(clockKey, cancellationToken);
+
+        // Delete ratio history from MySQL
+        var ratioKey = $"ratio:{body.RealmId}";
+        await _ratioHistoryStore.DeleteAsync(ratioKey, cancellationToken);
+
+        // Delete realm config from MySQL
+        await _realmConfigStore.DeleteAsync(configKey, cancellationToken);
+
+        // Unregister realm reference for cleanup tracking
+        await UnregisterRealmReferenceAsync($"clock:{body.RealmId}", body.RealmId, cancellationToken);
+
+        // Publish realm config deleted lifecycle event only when config existed.
+        // When realmConfig is null (partially initialized or already cleaned up), we skip
+        // the event rather than populating it with sentinel values (per IMPLEMENTATION TENETS:
+        // no sentinel values for absence).
+        if (realmConfig != null)
+        {
+            await _messageBus.TryPublishAsync("worldstate.realm-config.deleted", new RealmConfigDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RealmId = body.RealmId,
+                GameServiceId = realmConfig.GameServiceId,
+                CalendarTemplateCode = realmConfig.CalendarTemplateCode,
+                CurrentTimeRatio = realmConfig.TimeRatio,
+                DowntimePolicy = realmConfig.DowntimePolicy,
+                RealmEpoch = realmConfig.RealmEpoch
+            }, cancellationToken: cancellationToken);
+        }
+
+        // Invalidate local caches
+        _realmClockCache.Invalidate(body.RealmId);
+        if (realmConfig != null)
+        {
+            _calendarTemplateCache.Invalidate(realmConfig.GameServiceId, realmConfig.CalendarTemplateCode);
+        }
+
+        _logger.LogInformation("Cleaned up worldstate data for realm {RealmId}", body.RealmId);
+
+        return (StatusCodes.OK, new CleanupByRealmResponse());
     }
 
     /// <summary>
-    /// Implementation of CleanupByGameService operation.
+    /// Cleans up all calendar templates for a game service. Queries all calendars belonging
+    /// to the game service, deletes each one, unregisters game-service references, and
+    /// publishes deletion events. Called by lib-resource cleanup callbacks when a game
+    /// service is deleted.
     /// </summary>
+    /// <param name="body">The request containing the game service ID to clean up.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The count of templates removed.</returns>
     public async Task<(StatusCodes, CleanupByGameServiceResponse?)> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, CancellationToken cancellationToken)
     {
-        // TODO: Implement CleanupByGameService
-        await Task.CompletedTask;
-        throw new NotImplementedException("Method CleanupByGameService not yet implemented");
+        _logger.LogDebug("Cleaning up worldstate calendars for game service {GameServiceId}", body.GameServiceId);
+
+        // Query all calendars for this game service
+        var calendars = await _queryableCalendarStore.QueryAsync(
+            x => x.GameServiceId == body.GameServiceId, cancellationToken);
+
+        // Delete each calendar template
+        foreach (var template in calendars)
+        {
+            var calendarKey = $"calendar:{body.GameServiceId}:{template.TemplateCode}";
+
+            // Delete from store
+            await _calendarStore.DeleteAsync(calendarKey, cancellationToken);
+
+            // Unregister game-service reference
+            await UnregisterGameServiceReferenceAsync(
+                $"calendar:{body.GameServiceId}:{template.TemplateCode}", body.GameServiceId, cancellationToken);
+
+            // Publish lifecycle event for each deleted template
+            await _messageBus.TryPublishAsync("worldstate.calendar-template.deleted", new CalendarTemplateDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                TemplateCode = template.TemplateCode,
+                GameServiceId = template.GameServiceId,
+                GameHoursPerDay = template.GameHoursPerDay,
+                DayPeriods = template.DayPeriods,
+                Months = template.Months,
+                Seasons = template.Seasons,
+                DaysPerYear = template.DaysPerYear,
+                MonthsPerYear = template.MonthsPerYear,
+                SeasonsPerYear = template.SeasonsPerYear,
+                EraLabels = template.EraLabels
+            }, cancellationToken: cancellationToken);
+
+            // Invalidate calendar cache for this template
+            _calendarTemplateCache.Invalidate(template.GameServiceId, template.TemplateCode);
+        }
+
+        _logger.LogInformation("Cleaned up {Count} calendar template(s) for game service {GameServiceId}",
+            calendars.Count, body.GameServiceId);
+
+        return (StatusCodes.OK, new CleanupByGameServiceResponse
+        {
+            TemplatesRemoved = calendars.Count
+        });
     }
 
     #region Private Helpers

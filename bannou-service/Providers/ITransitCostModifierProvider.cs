@@ -58,7 +58,7 @@ namespace BeyondImmersion.BannouService.Providers;
 ///
 ///     public async Task&lt;TransitCostModifier&gt; GetModifierAsync(
 ///         Guid entityId, string entityType, string modeCode,
-///         Guid connectionId, CancellationToken ct)
+///         Guid? connectionId, CancellationToken ct)
 ///     {
 ///         var dread = await _dispositionClient.GetFeelingAsync(entityId, modeCode, ct);
 ///         return new TransitCostModifier(
@@ -89,7 +89,7 @@ public interface ITransitCostModifierProvider
     /// <param name="entityId">The entity requesting cost data (e.g., character ID).</param>
     /// <param name="entityType">The entity type discriminator (e.g., "character", "caravan").</param>
     /// <param name="modeCode">The transit mode code being evaluated (e.g., "horseback").</param>
-    /// <param name="connectionId">The specific connection being evaluated.</param>
+    /// <param name="connectionId">The specific connection being evaluated, or null when evaluating mode availability without a specific connection context.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// A cost modifier. Implementations should return neutral values
@@ -100,7 +100,7 @@ public interface ITransitCostModifierProvider
         Guid entityId,
         string entityType,
         string modeCode,
-        Guid connectionId,
+        Guid? connectionId,
         CancellationToken ct);
 }
 

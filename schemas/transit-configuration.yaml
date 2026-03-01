@@ -85,3 +85,39 @@ x-service-configuration:
       default: true
       env: TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION
       description: When true, Transit automatically calls Location's /location/report-entity-position endpoint to update the entity's current location on journey departure, waypoint arrival, and final arrival. Location's presence system uses ephemeral Redis storage with 30s TTL, so Transit must re-report on each state transition. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events.
+
+    MinPreferenceCost:
+      type: number
+      default: 0.0
+      minimum: 0
+      env: TRANSIT_MIN_PREFERENCE_COST
+      description: Minimum allowed preference cost after aggregating all DI cost modifier providers. PreferenceCostDelta values are summed across providers and clamped to [MinPreferenceCost, MaxPreferenceCost].
+
+    MaxPreferenceCost:
+      type: number
+      default: 2.0
+      minimum: 0
+      env: TRANSIT_MAX_PREFERENCE_COST
+      description: Maximum allowed preference cost after aggregating all DI cost modifier providers. PreferenceCostDelta values are summed across providers and clamped to [MinPreferenceCost, MaxPreferenceCost].
+
+    MinSpeedMultiplier:
+      type: number
+      default: 0.1
+      minimum: 0.01
+      env: TRANSIT_MIN_SPEED_MULTIPLIER
+      description: Minimum allowed speed multiplier after aggregating all DI cost modifier providers. SpeedMultiplier values are multiplied across providers and clamped to [MinSpeedMultiplier, MaxSpeedMultiplier].
+
+    MaxSpeedMultiplier:
+      type: number
+      default: 3.0
+      minimum: 0.01
+      env: TRANSIT_MAX_SPEED_MULTIPLIER
+      description: Maximum allowed speed multiplier after aggregating all DI cost modifier providers. SpeedMultiplier values are multiplied across providers and clamped to [MinSpeedMultiplier, MaxSpeedMultiplier].
+
+    LockTimeoutSeconds:
+      type: integer
+      default: 10
+      minimum: 1
+      maximum: 60
+      env: TRANSIT_LOCK_TIMEOUT_SECONDS
+      description: Timeout in seconds for distributed lock acquisition on mode registration uniqueness checks and mode mutation operations.

@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Seed;
 using Microsoft.Extensions.Logging;
 
@@ -37,6 +38,15 @@ public partial class GardenerService
         eventConsumer.RegisterHandler<IGardenerService, GameSessionDeletedEvent>(
             "game-session.deleted",
             async (svc, evt) => await ((GardenerService)svc).HandleGameSessionDeletedAsync(evt));
+
+        // Location entity presence events for entity session registry bindings
+        eventConsumer.RegisterHandler<IGardenerService, LocationEntityArrivedEvent>(
+            "location.entity-arrived",
+            async (svc, evt) => await ((GardenerService)svc).HandleLocationEntityArrivedAsync(evt));
+
+        eventConsumer.RegisterHandler<IGardenerService, LocationEntityDepartedEvent>(
+            "location.entity-departed",
+            async (svc, evt) => await ((GardenerService)svc).HandleLocationEntityDepartedAsync(evt));
     }
 
     #region Event Handlers
@@ -121,6 +131,82 @@ public partial class GardenerService
             evt.SessionId);
 
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles location.entity-arrived events.
+    /// Registers entity session bindings for the location so that all sessions
+    /// observing the arriving entity also receive location client events.
+    /// </summary>
+    /// <remarks>
+    /// Queries the entity session registry for sessions associated with the arriving
+    /// entity (by entityType + entityId), then registers each session for the location.
+    /// This enables LocationPresenceChangedEvent delivery to players at that location.
+    /// Gracefully degrades if no sessions are registered for the entity (e.g., NPC
+    /// entities or entities without character-to-session bindings).
+    /// </remarks>
+    public async Task HandleLocationEntityArrivedAsync(LocationEntityArrivedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleLocationEntityArrived");
+
+        var sessions = await _entitySessionRegistry.GetSessionsForEntityAsync(
+            evt.EntityType, evt.EntityId, CancellationToken.None);
+
+        if (sessions.Count == 0)
+        {
+            _logger.LogDebug(
+                "No sessions registered for entity {EntityType}:{EntityId}, skipping location registration for {LocationId}",
+                evt.EntityType, evt.EntityId, evt.LocationId);
+            return;
+        }
+
+        foreach (var sessionId in sessions)
+        {
+            await _entitySessionRegistry.RegisterAsync(
+                "location", evt.LocationId, sessionId, CancellationToken.None);
+        }
+
+        _logger.LogDebug(
+            "Registered {SessionCount} session(s) for location {LocationId} from entity {EntityType}:{EntityId}",
+            sessions.Count, evt.LocationId, evt.EntityType, evt.EntityId);
+    }
+
+    /// <summary>
+    /// Handles location.entity-departed events.
+    /// Unregisters entity session bindings for the location so that sessions
+    /// no longer receive client events for the departed location.
+    /// </summary>
+    /// <remarks>
+    /// Queries the entity session registry for sessions associated with the departing
+    /// entity, then unregisters each session from the location. Gracefully degrades
+    /// if no sessions are registered for the entity.
+    /// </remarks>
+    public async Task HandleLocationEntityDepartedAsync(LocationEntityDepartedEvent evt)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.gardener", "GardenerService.HandleLocationEntityDeparted");
+
+        var sessions = await _entitySessionRegistry.GetSessionsForEntityAsync(
+            evt.EntityType, evt.EntityId, CancellationToken.None);
+
+        if (sessions.Count == 0)
+        {
+            _logger.LogDebug(
+                "No sessions registered for entity {EntityType}:{EntityId}, skipping location unregistration for {LocationId}",
+                evt.EntityType, evt.EntityId, evt.LocationId);
+            return;
+        }
+
+        foreach (var sessionId in sessions)
+        {
+            await _entitySessionRegistry.UnregisterAsync(
+                "location", evt.LocationId, sessionId, CancellationToken.None);
+        }
+
+        _logger.LogDebug(
+            "Unregistered {SessionCount} session(s) from location {LocationId} for entity {EntityType}:{EntityId}",
+            sessions.Count, evt.LocationId, evt.EntityType, evt.EntityId);
     }
 
     #endregion

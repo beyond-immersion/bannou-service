@@ -1722,7 +1722,9 @@ public partial class AssetService : IAssetService
                     }
                 }
 
-                if (bundleMeta == null || bundleMeta.Status != Models.BundleStatus.Ready)
+                if (bundleMeta == null ||
+                    bundleMeta.Status != Models.BundleStatus.Ready ||
+                    bundleMeta.LifecycleStatus != Models.BundleLifecycleStatus.Active)
                 {
                     continue;
                 }
@@ -2826,7 +2828,7 @@ public partial class AssetService : IAssetService
             await bundleStore.DeleteAsync(bundleKey, cancellationToken);
 
             // Remove from asset-bundle index
-            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, cancellationToken);
+            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
 
             _logger.LogInformation("DeleteBundle: Permanently deleted bundle {BundleId}", body.BundleId);
         }
@@ -2871,6 +2873,10 @@ public partial class AssetService : IAssetService
             // Add to deleted bundles index for cleanup worker to scan (set operations require cacheable store)
             var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
             await cacheableBundleStore.AddToSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
+
+            // Remove from per-asset reverse indexes so ResolveBundles skips this bundle immediately
+            // (defensive: ResolveBundles also checks LifecycleStatus, but removing from indexes prevents wasted lookups)
+            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
 
             _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
                 body.BundleId, retentionUntil);
@@ -2968,6 +2974,9 @@ public partial class AssetService : IAssetService
         // Remove from deleted bundles index (set operations require cacheable store)
         var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
         await cacheableBundleStore.RemoveFromSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
+
+        // Re-add to per-asset reverse indexes (removed during soft-delete)
+        await IndexBundleAssetsAsync(bundle, cancellationToken);
 
         // Publish event
         await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent
@@ -3218,16 +3227,18 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
-    /// Helper to remove bundle from asset-bundle reverse index.
+    /// Helper to remove bundle from per-asset reverse indexes.
+    /// Key format matches IndexBundleAssetsAsync: {realmPrefix}:asset-bundles:{assetId}
     /// </summary>
-    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
+    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, string? realm, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.RemoveFromBundleIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
+        var realmPrefix = (realm ?? "cross-realm").ToLowerInvariant();
 
         foreach (var assetId in assetIds)
         {
-            var indexKey = $"asset-bundle:{assetId}";
+            var indexKey = $"{realmPrefix}:asset-bundles:{assetId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
             if (index != null && index.BundleIds.Contains(bundleId))

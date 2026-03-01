@@ -244,6 +244,13 @@ x-service-configuration:
       env: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
       default: 60
 
+    ZipCacheCleanupIntervalMinutes:
+      type: integer
+      minimum: 1
+      description: Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
+      env: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
+      default: 120
+
     # Webhook Configuration
     MinioWebhookSecret:
       type: string

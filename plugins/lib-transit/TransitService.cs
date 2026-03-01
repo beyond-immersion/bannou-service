@@ -197,12 +197,26 @@ public partial class TransitService : ITransitService
 
         _logger.LogDebug("Registering transit mode with code {ModeCode}", body.Code);
 
-        // Check if mode code already exists via queryable store
-        var existing = await _modeStore.QueryAsync(
-            m => m.Code == body.Code,
+        // Distributed lock on mode code to prevent duplicate registrations per IMPLEMENTATION TENETS (multi-instance safety)
+        var lockOwner = $"register-mode-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.TransitLock,
+            $"mode:{body.Code}",
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
             cancellationToken);
 
-        if (existing.Count > 0)
+        if (!lockResponse.Success)
+        {
+            _logger.LogDebug("Could not acquire lock for mode registration {ModeCode}, returning Conflict", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check if mode code already exists via direct key lookup (within lock)
+        var key = BuildModeKey(body.Code);
+        var existingMode = await _modeStore.GetAsync(key, cancellationToken: cancellationToken);
+
+        if (existingMode != null)
         {
             _logger.LogDebug("Transit mode code already exists: {ModeCode}", body.Code);
             return (StatusCodes.Conflict, null);
@@ -242,7 +256,6 @@ public partial class TransitService : ITransitService
             ModifiedAt = now
         };
 
-        var key = BuildModeKey(body.Code);
         await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
 
         // Publish transit-mode.registered event
@@ -342,7 +355,7 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Updating transit mode: {ModeCode}", body.Code);
 
         var key = BuildModeKey(body.Code);
-        var model = await _modeStore.GetAsync(key, cancellationToken: cancellationToken);
+        var (model, etag) = await _modeStore.GetWithETagAsync(key, cancellationToken);
 
         if (model == null)
         {
@@ -355,14 +368,24 @@ public partial class TransitService : ITransitService
         if (changedFields.Count > 0)
         {
             model.ModifiedAt = DateTimeOffset.UtcNow;
-            await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+            var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+            if (savedEtag == null)
+            {
+                _logger.LogDebug("Concurrent modification detected for transit mode {ModeCode}", body.Code);
+                return (StatusCodes.Conflict, null);
+            }
 
             // Publish transit-mode.updated event with changedFields
             await PublishModeUpdatedEventAsync(model, changedFields, cancellationToken);
+
+            _logger.LogInformation("Updated transit mode {ModeCode}, changed fields: {ChangedFields}",
+                body.Code, string.Join(", ", changedFields));
+        }
+        else
+        {
+            _logger.LogDebug("No fields changed for transit mode {ModeCode}, skipping update", body.Code);
         }
 
-        _logger.LogInformation("Updated transit mode {ModeCode}, changed fields: {ChangedFields}",
-            body.Code, string.Join(", ", changedFields));
         return (StatusCodes.OK, new ModeResponse { Mode = MapModeToApi(model) });
     }
 
@@ -380,7 +403,7 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Deprecating transit mode: {ModeCode}", body.Code);
 
         var key = BuildModeKey(body.Code);
-        var model = await _modeStore.GetAsync(key, cancellationToken: cancellationToken);
+        var (model, etag) = await _modeStore.GetWithETagAsync(key, cancellationToken);
 
         if (model == null)
         {
@@ -400,7 +423,12 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = body.Reason;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogDebug("Concurrent modification detected during deprecation of transit mode {ModeCode}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
 
         // Publish transit-mode.updated event with deprecation fields
         await PublishModeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -422,7 +450,7 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Undeprecating transit mode: {ModeCode}", body.Code);
 
         var key = BuildModeKey(body.Code);
-        var model = await _modeStore.GetAsync(key, cancellationToken: cancellationToken);
+        var (model, etag) = await _modeStore.GetWithETagAsync(key, cancellationToken);
 
         if (model == null)
         {
@@ -442,7 +470,12 @@ public partial class TransitService : ITransitService
         model.DeprecationReason = null;
         model.ModifiedAt = DateTimeOffset.UtcNow;
 
-        await _modeStore.SaveAsync(key, model, cancellationToken: cancellationToken);
+        var savedEtag = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogDebug("Concurrent modification detected during undeprecation of transit mode {ModeCode}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
 
         // Publish transit-mode.updated event with deprecation fields cleared
         await PublishModeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -465,7 +498,7 @@ public partial class TransitService : ITransitService
         _logger.LogDebug("Deleting transit mode: {ModeCode}", body.Code);
 
         var key = BuildModeKey(body.Code);
-        var model = await _modeStore.GetAsync(key, cancellationToken: cancellationToken);
+        var (model, etag) = await _modeStore.GetWithETagAsync(key, cancellationToken);
 
         if (model == null)
         {
@@ -492,7 +525,12 @@ public partial class TransitService : ITransitService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Check no active journeys use this mode
+        // Check no active journeys use this mode.
+        // NOTE: Active journeys live in _journeyStore (Redis, not queryable via LINQ).
+        // When journey endpoints are implemented (Phase 6), this check must be revisited
+        // to scan active Redis journeys. The archive store only holds completed/abandoned
+        // journeys, so this query currently returns 0 for in-progress journeys.
+        // Phase 6 should add a helper that scans both stores or maintains a mode->journey index.
         var journeysUsingMode = await _journeyArchiveStore.QueryAsync(
             j => j.PrimaryModeCode == body.Code && (j.Status == JourneyStatus.Preparing || j.Status == JourneyStatus.In_transit || j.Status == JourneyStatus.At_waypoint || j.Status == JourneyStatus.Interrupted),
             cancellationToken);
@@ -504,7 +542,15 @@ public partial class TransitService : ITransitService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Delete from store
+        // Use ETag to ensure no concurrent modification occurred between read and delete
+        var deleteResult = await _modeStore.TrySaveAsync(key, model, etag, cancellationToken);
+        if (deleteResult == null)
+        {
+            _logger.LogDebug("Concurrent modification detected during deletion of transit mode {ModeCode}", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Delete from store (ETag check confirmed state hasn't changed)
         await _modeStore.DeleteAsync(key, cancellationToken);
 
         // Publish transit-mode.deleted event
@@ -636,7 +682,7 @@ public partial class TransitService : ITransitService
         // Check item requirements via IInventoryClient
         if (!string.IsNullOrEmpty(mode.Requirements.RequiredItemTag))
         {
-            var hasItem = await CheckEntityHasItemTagAsync(entityId, mode.Requirements.RequiredItemTag, cancellationToken);
+            var hasItem = await CheckEntityHasItemTagAsync(entityId, entityType, mode.Requirements.RequiredItemTag, cancellationToken);
             if (!hasItem)
             {
                 return new ModeAvailabilityResult
@@ -662,7 +708,7 @@ public partial class TransitService : ITransitService
             try
             {
                 var modifier = await provider.GetModifierAsync(
-                    entityId, entityType, mode.Code, Guid.Empty, cancellationToken);
+                    entityId, entityType, mode.Code, null, cancellationToken);
 
                 aggregatedPreferenceCost += modifier.PreferenceCostDelta;
                 aggregatedSpeedMultiplier *= modifier.SpeedMultiplier;
@@ -675,9 +721,9 @@ public partial class TransitService : ITransitService
             }
         }
 
-        // Clamp aggregated values per deep dive specification
-        aggregatedPreferenceCost = Math.Clamp(aggregatedPreferenceCost, 0m, 2m);
-        aggregatedSpeedMultiplier = Math.Clamp(aggregatedSpeedMultiplier, 0.1m, 3m);
+        // Clamp aggregated values to configured bounds per IMPLEMENTATION TENETS (configuration-first)
+        aggregatedPreferenceCost = Math.Clamp(aggregatedPreferenceCost, (decimal)_configuration.MinPreferenceCost, (decimal)_configuration.MaxPreferenceCost);
+        aggregatedSpeedMultiplier = Math.Clamp(aggregatedSpeedMultiplier, (decimal)_configuration.MinSpeedMultiplier, (decimal)_configuration.MaxSpeedMultiplier);
 
         effectiveSpeed *= aggregatedSpeedMultiplier;
 
@@ -704,11 +750,6 @@ public partial class TransitService : ITransitService
                 new Character.GetCharacterRequest { CharacterId = entityId },
                 cancellationToken);
 
-            if (characterResponse.SpeciesId == null || characterResponse.SpeciesId == Guid.Empty)
-            {
-                return null;
-            }
-
             var speciesResponse = await _speciesClient.GetSpeciesAsync(
                 new Species.GetSpeciesRequest { SpeciesId = characterResponse.SpeciesId },
                 cancellationToken);
@@ -724,51 +765,33 @@ public partial class TransitService : ITransitService
 
     /// <summary>
     /// Checks whether the entity has an item with the required tag in any of their inventories.
+    /// Uses QueryItems with tag filtering for a single API call instead of iterating containers.
     /// </summary>
-    private async Task<bool> CheckEntityHasItemTagAsync(Guid entityId, string requiredItemTag, CancellationToken cancellationToken)
+    private async Task<bool> CheckEntityHasItemTagAsync(Guid entityId, string entityType, string requiredItemTag, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.CheckEntityHasItemTagAsync");
+
+        // Map entity type string to ContainerOwnerType for inventory query
+        if (!Enum.TryParse<Inventory.ContainerOwnerType>(entityType, ignoreCase: true, out var ownerType))
+        {
+            // Entity type doesn't map to an inventory owner type -- cannot have items
+            _logger.LogDebug("Entity type {EntityType} has no inventory mapping, skipping item tag check", entityType);
+            return false;
+        }
+
         try
         {
-            var inventoryResponse = await _inventoryClient.ListContainersAsync(
-                new Inventory.ListContainersRequest
+            var queryResponse = await _inventoryClient.QueryItemsAsync(
+                new Inventory.QueryItemsRequest
                 {
                     OwnerId = entityId,
-                    Page = 1,
-                    PageSize = 50
+                    OwnerType = ownerType,
+                    Tags = new[] { requiredItemTag },
+                    Limit = 1
                 },
                 cancellationToken);
 
-            if (inventoryResponse.Containers == null || inventoryResponse.Containers.Count == 0)
-            {
-                return false;
-            }
-
-            // Check each container for items with the required tag
-            foreach (var container in inventoryResponse.Containers)
-            {
-                var itemsResponse = await _inventoryClient.ListContainerItemsAsync(
-                    new Inventory.ListContainerItemsRequest
-                    {
-                        ContainerId = container.ContainerId,
-                        Page = 1,
-                        PageSize = 100
-                    },
-                    cancellationToken);
-
-                if (itemsResponse.Items != null)
-                {
-                    foreach (var item in itemsResponse.Items)
-                    {
-                        if (item.Tags != null && item.Tags.Contains(requiredItemTag))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            return queryResponse.TotalCount > 0;
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
@@ -934,51 +957,52 @@ public partial class TransitService : ITransitService
     private async Task PublishModeRegisteredEventAsync(TransitModeModel model, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeRegisteredEventAsync");
-        try
-        {
-            var eventModel = new TransitModeRegisteredEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Code = model.Code,
-                Name = model.Name,
-                Description = model.Description,
-                BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
-                TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
-                {
-                    TerrainType = t.TerrainType,
-                    Multiplier = t.Multiplier
-                }).ToList(),
-                PassengerCapacity = model.PassengerCapacity,
-                CargoCapacityKg = model.CargoCapacityKg,
-                CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
-                CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
-                ValidEntityTypes = model.ValidEntityTypes?.ToList(),
-                Requirements = new TransitModeRequirements
-                {
-                    RequiredItemTag = model.Requirements.RequiredItemTag,
-                    AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
-                    ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
-                    MinimumPartySize = model.Requirements.MinimumPartySize,
-                    MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
-                },
-                FatigueRatePerGameHour = model.FatigueRatePerGameHour,
-                NoiseLevelNormalized = model.NoiseLevelNormalized,
-                RealmRestrictions = model.RealmRestrictions?.ToList(),
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                Tags = model.Tags?.ToList(),
-                CreatedAt = model.CreatedAt,
-                ModifiedAt = model.ModifiedAt
-            };
 
-            await _messageBus.TryPublishAsync("transit-mode.registered", eventModel, cancellationToken: cancellationToken);
+        var eventModel = new TransitModeRegisteredEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Code = model.Code,
+            Name = model.Name,
+            Description = model.Description,
+            BaseSpeedKmPerGameHour = model.BaseSpeedKmPerGameHour,
+            TerrainSpeedModifiers = model.TerrainSpeedModifiers?.Select(t => new TerrainSpeedModifier
+            {
+                TerrainType = t.TerrainType,
+                Multiplier = t.Multiplier
+            }).ToList(),
+            PassengerCapacity = model.PassengerCapacity,
+            CargoCapacityKg = model.CargoCapacityKg,
+            CargoSpeedPenaltyRate = model.CargoSpeedPenaltyRate,
+            CompatibleTerrainTypes = model.CompatibleTerrainTypes.ToList(),
+            ValidEntityTypes = model.ValidEntityTypes?.ToList(),
+            Requirements = new TransitModeRequirements
+            {
+                RequiredItemTag = model.Requirements.RequiredItemTag,
+                AllowedSpeciesCodes = model.Requirements.AllowedSpeciesCodes?.ToList(),
+                ExcludedSpeciesCodes = model.Requirements.ExcludedSpeciesCodes?.ToList(),
+                MinimumPartySize = model.Requirements.MinimumPartySize,
+                MaximumEntitySizeCategory = model.Requirements.MaximumEntitySizeCategory
+            },
+            FatigueRatePerGameHour = model.FatigueRatePerGameHour,
+            NoiseLevelNormalized = model.NoiseLevelNormalized,
+            RealmRestrictions = model.RealmRestrictions?.ToList(),
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Tags = model.Tags?.ToList(),
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = model.ModifiedAt
+        };
+
+        var published = await _messageBus.TryPublishAsync("transit-mode.registered", eventModel, cancellationToken: cancellationToken);
+        if (published)
+        {
             _logger.LogDebug("Published transit-mode.registered event for {ModeCode}", model.Code);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogWarning(ex, "Failed to publish transit-mode.registered event for {ModeCode}", model.Code);
+            _logger.LogWarning("Failed to publish transit-mode.registered event for {ModeCode}", model.Code);
         }
     }
 
@@ -989,23 +1013,25 @@ public partial class TransitService : ITransitService
     private async Task PublishModeUpdatedEventAsync(TransitModeModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeUpdatedEventAsync");
-        try
-        {
-            var eventModel = new TransitModeUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Mode = MapModeToApi(model),
-                ChangedFields = changedFields.ToList()
-            };
 
-            await _messageBus.TryPublishAsync("transit-mode.updated", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published transit-mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
-                model.Code, string.Join(", ", changedFields));
-        }
-        catch (Exception ex)
+        var changedFieldsList = changedFields.ToList();
+        var eventModel = new TransitModeUpdatedEvent
         {
-            _logger.LogWarning(ex, "Failed to publish transit-mode.updated event for {ModeCode}", model.Code);
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Mode = MapModeToApi(model),
+            ChangedFields = changedFieldsList
+        };
+
+        var published = await _messageBus.TryPublishAsync("transit-mode.updated", eventModel, cancellationToken: cancellationToken);
+        if (published)
+        {
+            _logger.LogDebug("Published transit-mode.updated event for {ModeCode} with changed fields: {ChangedFields}",
+                model.Code, string.Join(", ", changedFieldsList));
+        }
+        else
+        {
+            _logger.LogWarning("Failed to publish transit-mode.updated event for {ModeCode}", model.Code);
         }
     }
 
@@ -1015,22 +1041,23 @@ public partial class TransitService : ITransitService
     private async Task PublishModeDeletedEventAsync(string code, string deletedReason, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.transit", "TransitService.PublishModeDeletedEventAsync");
-        try
-        {
-            var eventModel = new TransitModeDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                Code = code,
-                DeletedReason = deletedReason
-            };
 
-            await _messageBus.TryPublishAsync("transit-mode.deleted", eventModel, cancellationToken: cancellationToken);
+        var eventModel = new TransitModeDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            Code = code,
+            DeletedReason = deletedReason
+        };
+
+        var published = await _messageBus.TryPublishAsync("transit-mode.deleted", eventModel, cancellationToken: cancellationToken);
+        if (published)
+        {
             _logger.LogDebug("Published transit-mode.deleted event for {ModeCode}", code);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogWarning(ex, "Failed to publish transit-mode.deleted event for {ModeCode}", code);
+            _logger.LogWarning("Failed to publish transit-mode.deleted event for {ModeCode}", code);
         }
     }
 

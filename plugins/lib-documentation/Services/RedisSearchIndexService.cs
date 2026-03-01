@@ -184,7 +184,7 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, string category, IEnumerable<string>? tags)
+    public void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, DocumentCategory category, IEnumerable<string>? tags)
     {
         // Redis Search automatically indexes documents stored via ISearchableStateStore
         // when they match the index prefix. No explicit indexing needed - just ensure index exists.
@@ -214,7 +214,7 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, DocumentCategory? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.SearchAsync");
         try
@@ -242,9 +242,11 @@ public class RedisSearchIndexService : ISearchIndexService
             queryParts.Add($"({escapedTerm}* | @title:({escapedTerm}*) | @content:({escapedTerm}*) | @summary:({escapedTerm}*))");
 
             // Add category filter if specified
-            if (!string.IsNullOrEmpty(category))
+            if (category.HasValue)
             {
-                queryParts.Add($"@category:{{{EscapeTagValue(category)}}}");
+                // Use BannouJson-compatible enum serialization (EnumMember value)
+                var categoryValue = BannouJson.Serialize(category.Value).Trim('"');
+                queryParts.Add($"@category:{{{EscapeTagValue(categoryValue)}}}");
             }
 
             var query = string.Join(" ", queryParts);
@@ -290,7 +292,7 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, DocumentCategory? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.QueryAsync");
         var results = await SearchAsync(namespaceId, query, category, maxResults * 2, cancellationToken);
@@ -323,7 +325,7 @@ public class RedisSearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, DocumentCategory? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "RedisSearchIndexService.ListDocumentIdsAsync");
         try
@@ -344,9 +346,10 @@ public class RedisSearchIndexService : ISearchIndexService
             // 0 results in Redis 8 JSON indexes. Use "*" (match all) as the base query.
             // For category filtering, combine with a TAG filter on the category field.
             string query;
-            if (!string.IsNullOrEmpty(category))
+            if (category.HasValue)
             {
-                query = $"@category:{{{EscapeTagValue(category)}}}";
+                var categoryValue = BannouJson.Serialize(category.Value).Trim('"');
+                query = $"@category:{{{EscapeTagValue(categoryValue)}}}";
             }
             else
             {
@@ -383,7 +386,7 @@ public class RedisSearchIndexService : ISearchIndexService
 
             if (!_stateStoreFactory.SupportsSearch(StateStoreDefinitions.Documentation))
             {
-                return new NamespaceStats(0, new Dictionary<string, int>(), 0);
+                return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);
             }
 
             var searchStore = _stateStoreFactory.GetSearchableStore<DocumentIndexData>(StateStoreDefinitions.Documentation);
@@ -392,12 +395,12 @@ public class RedisSearchIndexService : ISearchIndexService
             var indexInfo = await searchStore.GetIndexInfoAsync(indexName, cancellationToken);
             if (indexInfo == null)
             {
-                return new NamespaceStats(0, new Dictionary<string, int>(), 0);
+                return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);
             }
 
             // TODO: Get category counts - would require aggregation queries
             // For now, return total count with empty category breakdown
-            var categoryCounts = new Dictionary<string, int>();
+            var categoryCounts = new Dictionary<DocumentCategory, int>();
 
             return new NamespaceStats(
                 (int)indexInfo.DocumentCount,
@@ -408,7 +411,7 @@ public class RedisSearchIndexService : ISearchIndexService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to get namespace stats for '{Namespace}'", namespaceId);
-            return new NamespaceStats(0, new Dictionary<string, int>(), 0);
+            return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);
         }
     }
 
@@ -479,7 +482,7 @@ public class RedisSearchIndexService : ISearchIndexService
         public string Slug { get; set; } = string.Empty;
         public string? Content { get; set; }
         public string? Summary { get; set; }
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public List<string>? Tags { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
     }

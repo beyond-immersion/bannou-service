@@ -159,6 +159,9 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Register background worker for expired deleted bundle cleanup
         services.AddHostedService<Bundles.BundleCleanupWorker>();
 
+        // Register background worker for expired ZIP cache cleanup
+        services.AddHostedService<Bundles.ZipCacheCleanupWorker>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 

@@ -166,7 +166,7 @@ public partial class DocumentationService : IDocumentationService
 <body>
     <h1>{System.Web.HttpUtility.HtmlEncode(storedDoc.Title)}</h1>
     <div class=""meta"">
-        <span>Category: {System.Web.HttpUtility.HtmlEncode(storedDoc.Category)}</span> |
+        <span>Category: {System.Web.HttpUtility.HtmlEncode(storedDoc.Category.ToString())}</span> |
         <span>Updated: {storedDoc.UpdatedAt:yyyy-MM-dd HH:mm}</span>
     </div>
     {(string.IsNullOrEmpty(storedDoc.Summary) ? "" : $"<p><em>{System.Web.HttpUtility.HtmlEncode(storedDoc.Summary)}</em></p>")}
@@ -204,7 +204,7 @@ public partial class DocumentationService : IDocumentationService
 
         // Perform natural language query using search index
         // Pass category as string for filtering (or null if default enum value)
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
         var searchResults = await _searchIndexService.QueryAsync(
             namespaceId,
             body.Query,
@@ -228,7 +228,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     RelevanceScore = (float)result.RelevanceScore
@@ -306,7 +306,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = storedDoc.Namespace,
             Slug = storedDoc.Slug,
             Title = storedDoc.Title,
-            Category = ParseDocumentCategory(storedDoc.Category),
+            Category = storedDoc.Category,
             Summary = storedDoc.Summary,
             VoiceSummary = storedDoc.VoiceSummary,
             Tags = storedDoc.Tags,
@@ -379,7 +379,7 @@ public partial class DocumentationService : IDocumentationService
 
         var namespaceId = body.Namespace;
         var maxResults = Math.Min(body.MaxResults, _configuration.MaxSearchResults);
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
 
         // Check search cache
         var cacheKey = SearchResultCache.BuildKey(namespaceId, body.SearchTerm, categoryFilter, maxResults);
@@ -412,7 +412,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     RelevanceScore = (float)result.RelevanceScore,
@@ -481,7 +481,7 @@ public partial class DocumentationService : IDocumentationService
 
         // If filtering by tags or sorting, we need to fetch all documents first, then filter/sort/paginate
         // Otherwise, use the optimized path
-        var categoryFilter = body.Category == default ? null : body.Category.ToString();
+        var categoryFilter = body.Category;
         var docStore = _stateStoreFactory.GetStore<StoredDocument>(StateStoreDefinitions.Documentation);
 
         // Fetch more documents if we need to filter/sort (configurable max to prevent memory issues)
@@ -509,7 +509,7 @@ public partial class DocumentationService : IDocumentationService
                         DocumentId = doc.DocumentId,
                         Slug = doc.Slug,
                         Title = doc.Title,
-                        Category = ParseDocumentCategory(doc.Category),
+                        Category = doc.Category,
                         Summary = doc.Summary,
                         VoiceSummary = doc.VoiceSummary,
                         Tags = doc.Tags
@@ -604,7 +604,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     RelevanceReason = DetermineRelevanceReason(body.SuggestionSource, body.SourceValue, doc)
                 });
             }
@@ -684,7 +684,7 @@ public partial class DocumentationService : IDocumentationService
             Namespace = namespaceId,
             Slug = slug,
             Title = body.Title,
-            Category = body.Category.ToString(),
+            Category = body.Category,
             Content = body.Content,
             Summary = body.Summary,
             VoiceSummary = TruncateVoiceSummary(body.VoiceSummary),
@@ -792,7 +792,7 @@ public partial class DocumentationService : IDocumentationService
 
         if (body.Category.HasValue && body.Category.Value.ToString() != storedDoc.Category)
         {
-            storedDoc.Category = body.Category.Value.ToString();
+            storedDoc.Category = body.Category.Value;
             changedFields.Add("category");
         }
 
@@ -1091,7 +1091,7 @@ public partial class DocumentationService : IDocumentationService
                 // Apply category update if specified
                 if (body.Category != null)
                 {
-                    storedDoc.Category = body.Category.Value.ToString();
+                    storedDoc.Category = body.Category.Value;
                     changedFields.Add("category");
                 }
 
@@ -1303,7 +1303,7 @@ public partial class DocumentationService : IDocumentationService
                             if (existingDoc != null)
                             {
                                 existingDoc.Title = importDoc.Title;
-                                existingDoc.Category = importDoc.Category.ToString();
+                                existingDoc.Category = importDoc.Category;
                                 existingDoc.Content = importDoc.Content;
                                 existingDoc.Summary = importDoc.Summary;
                                 existingDoc.VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary);
@@ -1329,7 +1329,7 @@ public partial class DocumentationService : IDocumentationService
                     Namespace = namespaceId,
                     Slug = importDoc.Slug,
                     Title = importDoc.Title,
-                    Category = importDoc.Category.ToString(),
+                    Category = importDoc.Category,
                     Content = importDoc.Content,
                     Summary = importDoc.Summary,
                     VoiceSummary = TruncateVoiceSummary(importDoc.VoiceSummary),
@@ -1424,7 +1424,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = trashedDoc.Document.DocumentId,
                     Slug = trashedDoc.Document.Slug,
                     Title = trashedDoc.Document.Title,
-                    Category = ParseDocumentCategory(trashedDoc.Document.Category),
+                    Category = trashedDoc.Document.Category,
                     DeletedAt = trashedDoc.DeletedAt,
                     ExpiresAt = trashedDoc.ExpiresAt
                 });
@@ -1761,17 +1761,6 @@ public partial class DocumentationService : IDocumentationService
     /// <summary>
     /// Parses a string category value to DocumentCategory enum.
     /// </summary>
-    private static DocumentCategory ParseDocumentCategory(string? category)
-    {
-        if (string.IsNullOrEmpty(category))
-        {
-            return DocumentCategory.Other;
-        }
-
-        return Enum.TryParse<DocumentCategory>(category, ignoreCase: true, out var result)
-            ? result
-            : DocumentCategory.Other;
-    }
 
     /// <summary>
     /// Markdig pipeline configured for safe HTML rendering with common extensions.
@@ -1868,7 +1857,7 @@ public partial class DocumentationService : IDocumentationService
                     DocumentId = doc.DocumentId,
                     Slug = doc.Slug,
                     Title = doc.Title,
-                    Category = ParseDocumentCategory(doc.Category),
+                    Category = doc.Category,
                     Summary = doc.Summary,
                     VoiceSummary = doc.VoiceSummary,
                     Tags = doc.Tags
@@ -1899,7 +1888,7 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = doc.Namespace,
                 Slug = doc.Slug,
                 Title = doc.Title,
-                Category = doc.Category,
+                Category = doc.Category.ToString(),
                 Tags = doc.Tags,
                 CreatedAt = doc.CreatedAt,
                 UpdatedAt = doc.UpdatedAt
@@ -1931,7 +1920,7 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = doc.Namespace,
                 Slug = doc.Slug,
                 Title = doc.Title,
-                Category = doc.Category,
+                Category = doc.Category.ToString(),
                 Tags = doc.Tags,
                 CreatedAt = doc.CreatedAt,
                 UpdatedAt = doc.UpdatedAt,
@@ -1964,7 +1953,7 @@ public partial class DocumentationService : IDocumentationService
                 Namespace = doc.Namespace,
                 Slug = doc.Slug,
                 Title = doc.Title,
-                Category = doc.Category,
+                Category = doc.Category.ToString(),
                 Tags = doc.Tags,
                 CreatedAt = doc.CreatedAt,
                 UpdatedAt = doc.UpdatedAt,
@@ -3525,7 +3514,7 @@ public partial class DocumentationService : IDocumentationService
         public string Slug { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public string? Summary { get; set; }
         public string? VoiceSummary { get; set; }
         public List<string>? Tags { get; set; }
@@ -3543,7 +3532,7 @@ public partial class DocumentationService : IDocumentationService
         public string Namespace { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public string? Content { get; set; }
         public string? Summary { get; set; }
         public string? VoiceSummary { get; set; }

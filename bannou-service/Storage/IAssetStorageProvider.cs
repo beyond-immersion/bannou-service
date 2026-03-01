@@ -109,6 +109,17 @@ public interface IAssetStorageProvider
         string? versionId = null);
 
     /// <summary>
+    /// List objects by key prefix. Returns object keys and metadata
+    /// suitable for background cleanup (cache expiry, orphan detection).
+    /// </summary>
+    /// <param name="bucket">Bucket name</param>
+    /// <param name="prefix">Key prefix to list</param>
+    /// <returns>List of object summaries with key, size, and last modified time</returns>
+    Task<IList<ObjectSummary>> ListObjectsByPrefixAsync(
+        string bucket,
+        string prefix);
+
+    /// <summary>
     /// List all versions of an object.
     /// </summary>
     /// <param name="bucket">Bucket name</param>

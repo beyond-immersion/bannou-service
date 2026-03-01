@@ -103,7 +103,7 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, string category, IEnumerable<string>? tags)
+    public void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, DocumentCategory category, IEnumerable<string>? tags)
     {
         var nsIndex = _indices.GetOrAdd(namespaceId, _ => new NamespaceIndex());
         nsIndex.AddDocument(documentId, title, slug, content, category, tags);
@@ -122,7 +122,7 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, DocumentCategory? category = null, int maxResults = 20, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.SearchAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
@@ -136,7 +136,7 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, DocumentCategory? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.QueryAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
@@ -167,7 +167,7 @@ public partial class SearchIndexService : ISearchIndexService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, DocumentCategory? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexService.ListDocumentIdsAsync");
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
@@ -187,7 +187,7 @@ public partial class SearchIndexService : ISearchIndexService
         if (!_indices.TryGetValue(namespaceId, out var nsIndex))
         {
             await Task.CompletedTask;
-            return new NamespaceStats(0, new Dictionary<string, int>(), 0);
+            return new NamespaceStats(0, new Dictionary<DocumentCategory, int>(), 0);
         }
 
         await Task.CompletedTask;
@@ -202,7 +202,7 @@ public partial class SearchIndexService : ISearchIndexService
         public string Title { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
         public string? Content { get; set; }
-        public string Category { get; set; } = string.Empty;
+        public DocumentCategory Category { get; set; }
         public List<string>? Tags { get; set; }
     }
 
@@ -226,7 +226,7 @@ public partial class SearchIndexService : ISearchIndexService
             _tagCounts.Clear();
         }
 
-        public void AddDocument(Guid id, string title, string slug, string? content, string category, IEnumerable<string>? tags)
+        public void AddDocument(Guid id, string title, string slug, string? content, DocumentCategory category, IEnumerable<string>? tags)
         {
             var doc = new IndexedDocument(id, title, slug, category, tags?.ToList() ?? new List<string>());
             _documents[id] = doc;
@@ -243,13 +243,11 @@ public partial class SearchIndexService : ISearchIndexService
             }
 
             // Index by category
-            if (!string.IsNullOrEmpty(category))
+            var categoryKey = category.ToString().ToLowerInvariant();
+            var catBag = _categoryIndex.GetOrAdd(categoryKey, _ => new ConcurrentBag<Guid>());
+            if (!catBag.Contains(id))
             {
-                var catBag = _categoryIndex.GetOrAdd(category.ToLowerInvariant(), _ => new ConcurrentBag<Guid>());
-                if (!catBag.Contains(id))
-                {
-                    catBag.Add(id);
-                }
+                catBag.Add(id);
             }
 
             // Track tags
@@ -277,7 +275,7 @@ public partial class SearchIndexService : ISearchIndexService
             }
         }
 
-        public IReadOnlyList<SearchResult> Search(string searchTerm, string? category, int maxResults)
+        public IReadOnlyList<SearchResult> Search(string searchTerm, DocumentCategory? category, int maxResults)
         {
             var searchTerms = ExtractTerms(searchTerm, null, null);
             var matchScores = new ConcurrentDictionary<Guid, double>();
@@ -313,8 +311,7 @@ public partial class SearchIndexService : ISearchIndexService
             var results = matchScores
                 .Where(kvp => _documents.ContainsKey(kvp.Key))
                 .Select(kvp => (DocId: kvp.Key, Score: kvp.Value, Doc: _documents[kvp.Key]))
-                .Where(x => string.IsNullOrEmpty(category) ||
-                            x.Doc.Category.Equals(category, StringComparison.OrdinalIgnoreCase))
+                .Where(x => !category.HasValue || x.Doc.Category == category.Value)
                 .OrderByDescending(x => x.Score)
                 .Take(maxResults)
                 .Select(x => new SearchResult(
@@ -359,13 +356,13 @@ public partial class SearchIndexService : ISearchIndexService
             return related;
         }
 
-        public IReadOnlyList<Guid> ListDocuments(string? category, int skip, int take)
+        public IReadOnlyList<Guid> ListDocuments(DocumentCategory? category, int skip, int take)
         {
             IEnumerable<IndexedDocument> docs = _documents.Values;
 
-            if (!string.IsNullOrEmpty(category))
+            if (category.HasValue)
             {
-                docs = docs.Where(d => d.Category.Equals(category, StringComparison.OrdinalIgnoreCase));
+                docs = docs.Where(d => d.Category == category.Value);
             }
 
             return docs
@@ -392,7 +389,7 @@ public partial class SearchIndexService : ISearchIndexService
             double score = 0;
 
             // Same category
-            if (source.Category.Equals(target.Category, StringComparison.OrdinalIgnoreCase))
+            if (source.Category == target.Category)
             {
                 score += 1.0;
             }
@@ -436,6 +433,6 @@ public partial class SearchIndexService : ISearchIndexService
             "that", "these", "those", "it", "its", "what", "which", "who", "whom"
         };
 
-        private sealed record IndexedDocument(Guid Id, string Title, string Slug, string Category, List<string> Tags);
+        private sealed record IndexedDocument(Guid Id, string Title, string Slug, DocumentCategory Category, List<string> Tags);
     }
 }

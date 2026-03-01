@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
@@ -41,6 +42,8 @@ public partial class GardenerService : IGardenerService
     private readonly ISeedClient _seedClient;
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// POI interaction result values are now the generated PoiInteractionResult enum
@@ -59,7 +62,9 @@ public partial class GardenerService : IGardenerService
         IEventConsumer eventConsumer,
         ISeedClient seedClient,
         IGameSessionClient gameSessionClient,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -69,6 +74,8 @@ public partial class GardenerService : IGardenerService
         _seedClient = seedClient;
         _gameSessionClient = gameSessionClient;
         _serviceProvider = serviceProvider;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }

@@ -466,6 +466,32 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
     }
 
     /// <inheritdoc />
+    public async Task<IList<StorageModels.ObjectSummary>> ListObjectsByPrefixAsync(
+        string bucket,
+        string prefix)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioStorageProvider.ListObjectsByPrefixAsync");
+        _logger.LogDebug("Listing objects by prefix {Bucket}/{Prefix}", bucket, prefix);
+
+        var results = new List<StorageModels.ObjectSummary>();
+
+        var args = new ListObjectsArgs()
+            .WithBucket(bucket)
+            .WithPrefix(prefix)
+            .WithRecursive(true);
+
+        await foreach (var item in _minioClient.ListObjectsEnumAsync(args))
+        {
+            results.Add(new StorageModels.ObjectSummary(
+                item.Key,
+                (long)item.Size,
+                item.LastModifiedDateTime ?? DateTime.MinValue));
+        }
+
+        return results;
+    }
+
+    /// <inheritdoc />
     public async Task<IList<StorageModels.ObjectVersionInfo>> ListVersionsAsync(
         string bucket,
         string keyPrefix)

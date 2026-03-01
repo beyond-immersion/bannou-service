@@ -14,6 +14,9 @@ info:
     - Subscribes to seed.bond.formed and seed.activated broadcast events for bond
       and activation tracking.
     - Subscribes to game-session.deleted lifecycle event for scenario cleanup.
+    - Subscribes to location.entity-arrived and location.entity-departed for
+      entity session registry location bindings (registers/unregisters sessions
+      observing locations for client event delivery).
 
     **Topic Naming**: Uses dot-separated format (gardener.garden.entered).
 
@@ -35,6 +38,13 @@ info:
     - topic: game-session.deleted
       event: GameSessionDeletedEvent
       handler: HandleGameSessionDeleted
+    # Location entity presence events for entity session registry bindings
+    - topic: location.entity-arrived
+      event: LocationEntityArrivedEvent
+      handler: HandleLocationEntityArrived
+    - topic: location.entity-departed
+      event: LocationEntityDepartedEvent
+      handler: HandleLocationEntityDeparted
   x-event-publications:
     # Scenario template lifecycle events (auto-generated from x-lifecycle)
     - topic: scenario-template.created

@@ -59,21 +59,31 @@ public sealed class WorldProvider : IVariableProvider
         if (path.Length == 0) return GetRootValue();
         if (_clock == null) return null;
 
-        return path[0].ToLowerInvariant() switch
-        {
-            "time" => path.Length > 1 ? GetTimeValue(path.Slice(1)) : GetTimeRoot(),
-            "day" => _clock.DayOfMonth,
-            "day_of_year" => _clock.DayOfYear,
-            "month" => _clock.MonthCode,
-            "month_index" => _clock.MonthIndex,
-            "season" => _clock.Season,
-            "season_index" => _clock.SeasonIndex,
-            "year" => _clock.Year,
-            "season_progress" => _clock.SeasonProgress,
-            "year_progress" => ComputeYearProgress(),
-            "time_ratio" => _clock.TimeRatio,
-            _ => null
-        };
+        var segment = path[0];
+        if (segment.Equals("time", StringComparison.OrdinalIgnoreCase))
+            return path.Length > 1 ? GetTimeValue(path.Slice(1)) : GetTimeRoot();
+        if (segment.Equals("day", StringComparison.OrdinalIgnoreCase))
+            return _clock.DayOfMonth;
+        if (segment.Equals("day_of_year", StringComparison.OrdinalIgnoreCase))
+            return _clock.DayOfYear;
+        if (segment.Equals("month", StringComparison.OrdinalIgnoreCase))
+            return _clock.MonthCode;
+        if (segment.Equals("month_index", StringComparison.OrdinalIgnoreCase))
+            return _clock.MonthIndex;
+        if (segment.Equals("season", StringComparison.OrdinalIgnoreCase))
+            return _clock.Season;
+        if (segment.Equals("season_index", StringComparison.OrdinalIgnoreCase))
+            return _clock.SeasonIndex;
+        if (segment.Equals("year", StringComparison.OrdinalIgnoreCase))
+            return _clock.Year;
+        if (segment.Equals("season_progress", StringComparison.OrdinalIgnoreCase))
+            return _clock.SeasonProgress;
+        if (segment.Equals("year_progress", StringComparison.OrdinalIgnoreCase))
+            return ComputeYearProgress();
+        if (segment.Equals("time_ratio", StringComparison.OrdinalIgnoreCase))
+            return _clock.TimeRatio;
+
+        return null;
     }
 
     /// <inheritdoc/>
@@ -103,14 +113,22 @@ public sealed class WorldProvider : IVariableProvider
         if (_clock == null) return false;
         if (path.Length == 0) return true;
 
-        return path[0].ToLowerInvariant() switch
-        {
-            "time" => path.Length == 1 || (path.Length == 2 && IsValidTimePath(path[1])),
-            "day" or "day_of_year" or "month" or "month_index"
-                or "season" or "season_index" or "year"
-                or "season_progress" or "year_progress" or "time_ratio" => path.Length == 1,
-            _ => false
-        };
+        var segment = path[0];
+        if (segment.Equals("time", StringComparison.OrdinalIgnoreCase))
+            return path.Length == 1 || (path.Length == 2 && IsValidTimePath(path[1]));
+        if (segment.Equals("day", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("day_of_year", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("month", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("month_index", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("season", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("season_index", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("year", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("season_progress", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("year_progress", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("time_ratio", StringComparison.OrdinalIgnoreCase))
+            return path.Length == 1;
+
+        return false;
     }
 
     /// <summary>
@@ -120,25 +138,29 @@ public sealed class WorldProvider : IVariableProvider
     {
         if (_clock == null || path.Length == 0) return null;
 
-        return path[0].ToLowerInvariant() switch
-        {
-            "hour" => _clock.Hour,
-            "minute" => _clock.Minute,
-            "period" => _clock.Period,
-            "is_day" => _clock.IsDaylight,
-            "is_night" => !_clock.IsDaylight,
-            _ => null
-        };
+        var segment = path[0];
+        if (segment.Equals("hour", StringComparison.OrdinalIgnoreCase))
+            return _clock.Hour;
+        if (segment.Equals("minute", StringComparison.OrdinalIgnoreCase))
+            return _clock.Minute;
+        if (segment.Equals("period", StringComparison.OrdinalIgnoreCase))
+            return _clock.Period;
+        if (segment.Equals("is_day", StringComparison.OrdinalIgnoreCase))
+            return _clock.IsDaylight;
+        if (segment.Equals("is_night", StringComparison.OrdinalIgnoreCase))
+            return !_clock.IsDaylight;
+
+        return null;
     }
 
     /// <summary>
-    /// Gets all time sub-variables as a dictionary.
+    /// Gets all time sub-variables as a dictionary, or null if the clock is not initialized.
     /// </summary>
-    private Dictionary<string, object?> GetTimeRoot()
+    private Dictionary<string, object?>? GetTimeRoot()
     {
         if (_clock == null)
         {
-            return new Dictionary<string, object?>();
+            return null;
         }
 
         return new Dictionary<string, object?>
@@ -154,12 +176,13 @@ public sealed class WorldProvider : IVariableProvider
     /// <summary>
     /// Computes the year progress as a float from 0.0 to 1.0 based on the
     /// current day of year and total days per year from the calendar template.
+    /// Returns null if clock or calendar data is unavailable (per IMPLEMENTATION TENETS: no sentinel values).
     /// </summary>
-    private float ComputeYearProgress()
+    private float? ComputeYearProgress()
     {
         if (_clock == null || _calendar == null || _calendar.DaysPerYear <= 0)
         {
-            return 0.0f;
+            return null;
         }
 
         // DayOfYear is 1-based, so subtract 1 for 0-based progress
@@ -171,10 +194,10 @@ public sealed class WorldProvider : IVariableProvider
     /// </summary>
     private static bool IsValidTimePath(string segment)
     {
-        return segment.ToLowerInvariant() switch
-        {
-            "hour" or "minute" or "period" or "is_day" or "is_night" => true,
-            _ => false
-        };
+        return segment.Equals("hour", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("minute", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("period", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("is_day", StringComparison.OrdinalIgnoreCase)
+            || segment.Equals("is_night", StringComparison.OrdinalIgnoreCase);
     }
 }
