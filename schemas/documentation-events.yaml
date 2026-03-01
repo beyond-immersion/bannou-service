@@ -282,10 +282,7 @@ components:
           format: uuid
           description: Unique identifier for this sync operation
         triggeredBy:
-          type: string
-          enum:
-            - manual
-            - scheduled
+          $ref: 'documentation-api.yaml#/components/schemas/SyncTrigger'
           description: How the sync was triggered (manual user action or scheduled job)
 
     DocumentationSyncCompletedEvent:
@@ -320,11 +317,7 @@ components:
           format: uuid
           description: Unique identifier for this sync operation
         status:
-          type: string
-          enum:
-            - success
-            - partial
-            - failed
+          $ref: 'documentation-api.yaml#/components/schemas/SyncStatus'
           description: Final status of the sync operation
         commitHash:
           type: string
@@ -380,7 +373,8 @@ components:
         bundleAssetId:
           type: string
           format: uuid
-          description: Asset ID of the archive bundle in the asset storage system
+          nullable: true
+          description: Asset ID of the archive bundle in the asset storage system (null if bundle creation failed)
         documentCount:
           type: integer
           nullable: true  # NRT: Optional property MUST be nullable

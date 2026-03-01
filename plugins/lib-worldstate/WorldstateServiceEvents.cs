@@ -25,6 +25,8 @@ public partial class WorldstateService
     /// <summary>
     /// Handles worldstate.calendar-template.updated events.
     /// Invalidates local calendar template cache for cross-node consistency.
+    /// When Node A updates a calendar template, Node B receives this event
+    /// via RabbitMQ and clears its stale local cache entry.
     /// </summary>
     /// <param name="evt">The event data.</param>
     public async Task HandleCalendarTemplateUpdatedAsync(CalendarTemplateUpdatedEvent evt)
@@ -32,8 +34,9 @@ public partial class WorldstateService
         using var activity = _telemetryProvider.StartActivity(
             "bannou.worldstate", "WorldstateServiceEvents.HandleCalendarTemplateUpdated");
 
-        // TODO: Implement cross-node cache invalidation when CalendarTemplateCache is built
-        _logger.LogDebug("Received calendar template updated event for {TemplateCode}", evt.TemplateCode);
+        _calendarTemplateCache.Invalidate(evt.GameServiceId, evt.TemplateCode);
+        _logger.LogDebug("Invalidated calendar template cache for {TemplateCode} (game service {GameServiceId})",
+            evt.TemplateCode, evt.GameServiceId);
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
     }
 }

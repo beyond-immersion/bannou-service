@@ -671,7 +671,7 @@ public sealed class AssetProcessingWorker : BackgroundService
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
                     AssetId = job.AssetId,
-                    Bucket = metadata?.Bucket ?? _configuration.StorageBucket,
+                    Bucket = _configuration.StorageBucket,
                     Key = result.ProcessedStorageKey ?? job.StorageKey,
                     ContentHash = metadata?.ContentHash ?? string.Empty,
                     Size = result.ProcessedSizeBytes,

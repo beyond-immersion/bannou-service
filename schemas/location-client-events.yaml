@@ -1,0 +1,138 @@
+openapi: 3.0.4
+info:
+  title: Location Client Events API
+  description: |
+    Server-to-client push events for the Location service.
+    These events notify clients of real-time entity presence changes
+    and location updates delivered via WebSocket through the Entity Session Registry.
+
+    Entity routing uses ("location", locationId) — sessions observing a location
+    receive all presence and update events for that location. Gardener manages
+    the location-to-session binding when a player's character enters/leaves a location.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "location.{event_type}" naming convention.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Location Presence Changed Client Event
+    # ============================================
+
+    LocationPresenceChangedEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing a location when an entity arrives at or
+        departs from that location. Uses a changeType discriminator to indicate
+        the nature of the change. Triggered by the existing location.entity-arrived
+        and location.entity-departed service events.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - locationId
+        - realmId
+        - entityType
+        - entityId
+        - changeType
+      properties:
+        eventName:
+          type: string
+          default: "location.presence_changed"
+          description: Fixed event type identifier
+        locationId:
+          type: string
+          format: uuid
+          description: Location where the presence change occurred
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the location belongs to
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that arrived or departed
+        changeType:
+          $ref: 'location-api.yaml#/components/schemas/PresenceChangeType'
+          description: Whether the entity arrived or departed
+        entityName:
+          type: string
+          nullable: true
+          description: Display name of the entity for client-side rendering (avoids lookup round-trip)
+
+    # ============================================
+    # Location Updated Client Event
+    # ============================================
+
+    LocationUpdatedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing a location when location properties change
+        (name, description, metadata, deprecation status, etc.). Includes the
+        changed fields list for efficient client-side UI updates. Lower frequency
+        than presence events — location metadata changes are infrequent.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - locationId
+        - realmId
+        - name
+        - locationType
+        - changedFields
+      properties:
+        eventName:
+          type: string
+          default: "location.updated"
+          description: Fixed event type identifier
+        locationId:
+          type: string
+          format: uuid
+          description: Location that was updated
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the location belongs to
+        name:
+          type: string
+          description: Current name of the location
+        description:
+          type: string
+          nullable: true
+          description: Current description of the location
+        locationType:
+          $ref: 'location-api.yaml#/components/schemas/LocationType'
+          description: Type classification of the location
+        isDeprecated:
+          type: boolean
+          nullable: true
+          description: Whether the location is deprecated (included when deprecation state changes)
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that changed in this update

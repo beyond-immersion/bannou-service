@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Documentation;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -319,7 +320,7 @@ public partial class DocumentationSyncStartedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentationSyncStartedEventTriggeredBy TriggeredBy { get; set; } = default!;
+    public SyncTrigger TriggeredBy { get; set; } = default!;
 
 }
 
@@ -377,7 +378,7 @@ public partial class DocumentationSyncCompletedEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DocumentationSyncCompletedEventStatus Status { get; set; } = default!;
+    public SyncStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Git commit hash that was synced (null if sync failed or repo is empty)
@@ -457,10 +458,10 @@ public partial class DocumentationArchiveCreatedEvent
     public System.Guid ArchiveId { get; set; } = default!;
 
     /// <summary>
-    /// Asset ID of the archive bundle in the asset storage system
+    /// Asset ID of the archive bundle in the asset storage system (null if bundle creation failed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleAssetId")]
-    public System.Guid BundleAssetId { get; set; } = default!;
+    public System.Guid? BundleAssetId { get; set; } = default!;
 
     /// <summary>
     /// Number of documents included in the archive
@@ -481,37 +482,6 @@ public partial class DocumentationArchiveCreatedEvent
     public string? CommitHash { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DocumentationSyncStartedEventTriggeredBy
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"manual")]
-    Manual = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"scheduled")]
-    Scheduled = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DocumentationSyncCompletedEventStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"success")]
-    Success = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"partial")]
-    Partial = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 2,
-
-}
-#pragma warning restore CS1591
 
 
 

@@ -423,7 +423,7 @@ public class ConnectionGraphEntry
     public Guid ConnectionId { get; set; }
 
     /// <summary>Distance in kilometers.</summary>
-    public double DistanceKm { get; set; }
+    public decimal DistanceKm { get; set; }
 
     /// <summary>Terrain type of this connection.</summary>
     public string TerrainType { get; set; } = string.Empty;
@@ -432,7 +432,7 @@ public class ConnectionGraphEntry
     public List<string> CompatibleModes { get; set; } = new();
 
     /// <summary>Base risk level (0-1).</summary>
-    public double BaseRiskLevel { get; set; }
+    public decimal BaseRiskLevel { get; set; }
 
     /// <summary>Current connection status.</summary>
     public ConnectionStatus Status { get; set; }
@@ -450,7 +450,7 @@ public class ConnectionGraphEntry
     public List<SeasonalAvailabilityModel>? SeasonalAvailability { get; set; }
 
     /// <summary>Waypoint transfer time in game-hours at the destination of this edge. Null = no transfer time.</summary>
-    public double? WaypointTransferTimeGameHours { get; set; }
+    public decimal? WaypointTransferTimeGameHours { get; set; }
 }
 
 /// <summary>

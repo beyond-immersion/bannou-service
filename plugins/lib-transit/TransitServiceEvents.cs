@@ -27,10 +27,10 @@ public partial class TransitService
     /// TODO: Implement event handling logic.
     /// </summary>
     /// <param name="evt">The event data.</param>
-    public Task HandleSeasonChangedAsync(WorldstateSeasonChangedEvent evt)
+    public async Task HandleSeasonChangedAsync(WorldstateSeasonChangedEvent evt)
     {
         // TODO: Implement worldstate.season-changed event handling
         _logger.LogInformation("Received {Topic} event", "worldstate.season-changed");
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 }

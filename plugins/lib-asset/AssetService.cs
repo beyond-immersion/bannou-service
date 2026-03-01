@@ -2868,6 +2868,10 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Add to deleted bundles index for cleanup worker to scan (set operations require cacheable store)
+            var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            await cacheableBundleStore.AddToSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
+
             _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
                 body.BundleId, retentionUntil);
         }
@@ -2960,6 +2964,10 @@ public partial class AssetService : IAssetService
             _logger.LogWarning("Concurrent modification detected for bundle {BundleId} during restore", body.BundleId);
             return (StatusCodes.Conflict, null);
         }
+
+        // Remove from deleted bundles index (set operations require cacheable store)
+        var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+        await cacheableBundleStore.RemoveFromSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
 
         // Publish event
         await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent

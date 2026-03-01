@@ -1,4 +1,6 @@
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Worldstate.Providers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BeyondImmersion.BannouService.Worldstate;
@@ -18,6 +20,9 @@ public class WorldstateServicePlugin : StandardServicePlugin<IWorldstateService>
     public override void ConfigureServices(IServiceCollection services)
     {
         services.AddSingleton<IWorldstateTimeCalculator, WorldstateTimeCalculator>();
+        services.AddSingleton<IRealmClockCache, RealmClockCache>();
+        services.AddSingleton<ICalendarTemplateCache, CalendarTemplateCache>();
+        services.AddSingleton<IVariableProviderFactory, WorldProviderFactory>();
         services.AddHostedService<WorldstateClockWorkerService>();
     }
 }

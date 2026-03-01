@@ -1,7 +1,9 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Location.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -27,6 +29,7 @@ public partial class LocationService : ILocationService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IResourceClient _resourceClient;
     private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
 
     private const string LOCATION_KEY_PREFIX = "location:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -42,7 +45,8 @@ public partial class LocationService : ILocationService
         IRealmClient realmClient,
         IDistributedLockProvider lockProvider,
         IResourceClient resourceClient,
-        ITelemetryProvider telemetryProvider)
+        ITelemetryProvider telemetryProvider,
+        IEntitySessionRegistry entitySessionRegistry)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
@@ -52,6 +56,7 @@ public partial class LocationService : ILocationService
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
         _telemetryProvider = telemetryProvider;
+        _entitySessionRegistry = entitySessionRegistry;
     }
 
     #region Key Building Helpers
@@ -2072,6 +2077,43 @@ public partial class LocationService : ILocationService
         };
 
         await _messageBus.TryPublishAsync("location.updated", eventData, cancellationToken: cancellationToken);
+
+        // Publish client event to sessions observing this location
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "location", model.LocationId,
+            new LocationUpdatedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                LocationId = model.LocationId,
+                RealmId = model.RealmId,
+                Name = model.Name,
+                Description = model.Description,
+                LocationType = model.LocationType,
+                IsDeprecated = model.IsDeprecated,
+                ChangedFields = changedFields.ToList()
+            }, cancellationToken);
+    }
+
+    private async Task PublishPresenceClientEventAsync(
+        Guid locationId, Guid realmId, string entityType, Guid entityId,
+        PresenceChangeType changeType, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.location", "LocationService.PublishPresenceClientEvent");
+
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            "location", locationId,
+            new LocationPresenceChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                LocationId = locationId,
+                RealmId = realmId,
+                EntityType = entityType,
+                EntityId = entityId,
+                ChangeType = changeType
+            }, cancellationToken);
     }
 
     private async Task PublishLocationDeletedEventAsync(LocationModel model, CancellationToken cancellationToken)
@@ -2122,6 +2164,9 @@ public partial class LocationService : ILocationService
         };
 
         await _messageBus.TryPublishAsync("location.entity-arrived", eventData, cancellationToken: cancellationToken);
+
+        // Publish client event to sessions observing this location
+        await PublishPresenceClientEventAsync(locationId, realmId, entityType, entityId, PresenceChangeType.Arrived, cancellationToken);
     }
 
     private async Task PublishEntityDepartedEventAsync(
@@ -2142,6 +2187,9 @@ public partial class LocationService : ILocationService
         };
 
         await _messageBus.TryPublishAsync("location.entity-departed", eventData, cancellationToken: cancellationToken);
+
+        // Publish client event to sessions observing this location
+        await PublishPresenceClientEventAsync(locationId, realmId, entityType, entityId, PresenceChangeType.Departed, cancellationToken);
     }
 
     #endregion

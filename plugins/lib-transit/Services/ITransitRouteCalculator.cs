@@ -59,10 +59,10 @@ public record RouteCalculationRequest(
     RouteSortBy SortBy,
     Guid? EntityId,
     bool IncludeSeasonalClosed,
-    double CargoWeightKg,
+    decimal CargoWeightKg,
     int MaxLegs,
     int MaxOptions,
-    double CurrentTimeRatio);
+    decimal CurrentTimeRatio);
 
 /// <summary>
 /// Result of a single route option from the calculator.
@@ -81,11 +81,11 @@ public record RouteCalculationResult(
     List<Guid> Waypoints,
     List<Guid> Connections,
     List<string> LegModes,
-    double TotalDistanceKm,
-    double TotalGameHours,
-    double TotalRealMinutes,
-    double AverageRisk,
-    double MaxLegRisk,
+    decimal TotalDistanceKm,
+    decimal TotalGameHours,
+    decimal TotalRealMinutes,
+    decimal AverageRisk,
+    decimal MaxLegRisk,
     bool AllLegsOpen,
     List<SeasonalWarningResult>? SeasonalWarnings);
 

@@ -20,6 +20,8 @@ x-service-configuration:
       description: Delay in seconds before search index rebuild starts (allows services to initialize)
       env: DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS
       default: 5
+      minimum: 0
+      maximum: 300
     SearchIndexRebuildOnStartup:
       type: boolean
       description: Whether to rebuild search index on service startup
@@ -32,6 +34,8 @@ x-service-configuration:
       description: Maximum document content size in bytes (500KB default)
       env: DOCUMENTATION_MAX_CONTENT_SIZE_BYTES
       default: 524288
+      minimum: 1024
+      maximum: 52428800
 
     # Trashcan Configuration
     TrashcanTtlDays:
@@ -39,6 +43,8 @@ x-service-configuration:
       description: Days before trashcan items are auto-purged
       env: DOCUMENTATION_TRASHCAN_TTL_DAYS
       default: 7
+      minimum: 1
+      maximum: 365
 
     # Voice Summary Configuration
     VoiceSummaryMaxLength:
@@ -46,6 +52,8 @@ x-service-configuration:
       description: Maximum characters for voice summaries
       env: DOCUMENTATION_VOICE_SUMMARY_MAX_LENGTH
       default: 200
+      minimum: 50
+      maximum: 1000
 
     # Search Configuration
     SearchCacheTtlSeconds:
@@ -53,16 +61,22 @@ x-service-configuration:
       description: TTL for search result caching
       env: DOCUMENTATION_SEARCH_CACHE_TTL_SECONDS
       default: 300
+      minimum: 0
+      maximum: 86400
     MinRelevanceScore:
       type: number
       description: Default minimum relevance score for search results
       env: DOCUMENTATION_MIN_RELEVANCE_SCORE
       default: 0.3
+      minimum: 0.0
+      maximum: 1.0
     MaxSearchResults:
       type: integer
       description: Maximum search results to return
       env: DOCUMENTATION_MAX_SEARCH_RESULTS
       default: 20
+      minimum: 1
+      maximum: 100
 
     # Import Configuration
     MaxImportDocuments:
@@ -70,6 +84,8 @@ x-service-configuration:
       description: Maximum documents per import (0 = unlimited)
       env: DOCUMENTATION_MAX_IMPORT_DOCUMENTS
       default: 0
+      minimum: 0
+      maximum: 10000
 
     # Git Repository Binding Configuration
     GitStoragePath:
@@ -82,11 +98,15 @@ x-service-configuration:
       description: Hours before inactive repos are cleaned up
       env: DOCUMENTATION_GIT_STORAGE_CLEANUP_HOURS
       default: 24
+      minimum: 1
+      maximum: 720
     GitCloneTimeoutSeconds:
       type: integer
       description: Clone/pull operation timeout in seconds
       env: DOCUMENTATION_GIT_CLONE_TIMEOUT_SECONDS
       default: 300
+      minimum: 10
+      maximum: 3600
     SyncSchedulerEnabled:
       type: boolean
       description: Enable background sync scheduler
@@ -97,16 +117,22 @@ x-service-configuration:
       description: How often to check for repos needing sync
       env: DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES
       default: 5
+      minimum: 1
+      maximum: 1440
     MaxConcurrentSyncs:
       type: integer
       description: Maximum concurrent sync operations
       env: DOCUMENTATION_MAX_CONCURRENT_SYNCS
       default: 3
+      minimum: 1
+      maximum: 20
     MaxDocumentsPerSync:
       type: integer
       description: Maximum documents per sync operation
       env: DOCUMENTATION_MAX_DOCUMENTS_PER_SYNC
       default: 1000
+      minimum: 1
+      maximum: 100000
 
     # Background Service Configuration
     RepositorySyncCheckIntervalSeconds:
@@ -114,12 +140,16 @@ x-service-configuration:
       description: Interval in seconds between repository sync opportunity checks
       env: DOCUMENTATION_REPOSITORY_SYNC_CHECK_INTERVAL_SECONDS
       default: 30
+      minimum: 5
+      maximum: 3600
     # Bulk Operation Limits
     BulkOperationBatchSize:
       type: integer
       description: Maximum documents processed per bulk operation
       env: DOCUMENTATION_BULK_OPERATION_BATCH_SIZE
       default: 10
+      minimum: 1
+      maximum: 1000
 
     # Related Documents Configuration
     MaxRelatedDocuments:
@@ -127,11 +157,15 @@ x-service-configuration:
       description: Maximum related documents to return for standard depth
       env: DOCUMENTATION_MAX_RELATED_DOCUMENTS
       default: 5
+      minimum: 1
+      maximum: 50
     MaxRelatedDocumentsExtended:
       type: integer
       description: Maximum related documents to return for extended depth
       env: DOCUMENTATION_MAX_RELATED_DOCUMENTS_EXTENDED
       default: 10
+      minimum: 1
+      maximum: 100
 
     # Sync Configuration
     SyncLockTtlSeconds:
@@ -139,6 +173,8 @@ x-service-configuration:
       description: TTL in seconds for repository sync distributed lock
       env: DOCUMENTATION_SYNC_LOCK_TTL_SECONDS
       default: 1800
+      minimum: 60
+      maximum: 7200
 
     # Query Limits
     MaxFetchLimit:
@@ -146,13 +182,19 @@ x-service-configuration:
       description: Maximum documents to fetch when filtering/sorting in memory
       env: DOCUMENTATION_MAX_FETCH_LIMIT
       default: 1000
+      minimum: 1
+      maximum: 100000
     StatsSampleSize:
       type: integer
       description: Number of documents to sample for namespace statistics
       env: DOCUMENTATION_STATS_SAMPLE_SIZE
       default: 10
+      minimum: 1
+      maximum: 1000
     SearchSnippetLength:
       type: integer
       description: Length in characters for search result snippets
       env: DOCUMENTATION_SEARCH_SNIPPET_LENGTH
       default: 200
+      minimum: 50
+      maximum: 1000

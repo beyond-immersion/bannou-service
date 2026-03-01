@@ -259,6 +259,13 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public int DeletedBundleRetentionDays { get; set; } = 30;
 
     /// <summary>
+    /// Interval in minutes between bundle cleanup scans for permanently removing expired soft-deleted bundles.
+    /// Environment variable: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int BundleCleanupIntervalMinutes { get; set; } = 60;
+
+    /// <summary>
     /// Secret for validating MinIO webhook requests
     /// Environment variable: ASSET_MINIO_WEBHOOK_SECRET
     /// </summary>

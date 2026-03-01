@@ -23,14 +23,19 @@ public class TransitServicePlugin : StandardServicePlugin<ITransitService>
     public override void ConfigureServices(IServiceCollection services)
     {
         // Helper services (singleton for shared state across scoped service instances)
-        services.AddSingleton<ITransitConnectionGraphCache, TransitConnectionGraphCache>();
-        services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
+        // TODO: Uncomment when TransitConnectionGraphCache is created (Phase 3)
+        // services.AddSingleton<ITransitConnectionGraphCache, TransitConnectionGraphCache>();
+        // TODO: Uncomment when TransitRouteCalculator is created (Phase 4)
+        // services.AddSingleton<ITransitRouteCalculator, TransitRouteCalculator>();
 
         // Background workers
-        services.AddHostedService<SeasonalConnectionWorker>();
-        services.AddHostedService<JourneyArchivalWorker>();
+        // TODO: Uncomment when SeasonalConnectionWorker is created (Phase 8)
+        // services.AddHostedService<SeasonalConnectionWorker>();
+        // TODO: Uncomment when JourneyArchivalWorker is created (Phase 8)
+        // services.AddHostedService<JourneyArchivalWorker>();
 
         // Variable provider for ${transit.*} ABML expressions
-        services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>();
+        // TODO: Uncomment when TransitVariableProviderFactory is created (Phase 9)
+        // services.AddSingleton<IVariableProviderFactory, TransitVariableProviderFactory>();
     }
 }

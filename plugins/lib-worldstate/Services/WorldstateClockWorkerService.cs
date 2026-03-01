@@ -122,6 +122,8 @@ public class WorldstateClockWorkerService : BackgroundService
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
         var timeCalculator = scope.ServiceProvider.GetRequiredService<IWorldstateTimeCalculator>();
         var entitySessionRegistry = scope.ServiceProvider.GetRequiredService<IEntitySessionRegistry>();
+        var clockCache = scope.ServiceProvider.GetRequiredService<IRealmClockCache>();
+        var calendarCache = scope.ServiceProvider.GetRequiredService<ICalendarTemplateCache>();
 
         // Enumerate all realm configs from MySQL (authoritative list of initialized realms)
         var queryableRealmConfigStore = stateStoreFactory.GetQueryableStore<RealmWorldstateConfigModel>(
@@ -136,7 +138,6 @@ public class WorldstateClockWorkerService : BackgroundService
         }
 
         var clockStore = stateStoreFactory.GetStore<RealmClockModel>(StateStoreDefinitions.WorldstateRealmClock);
-        var calendarStore = stateStoreFactory.GetStore<CalendarTemplateModel>(StateStoreDefinitions.WorldstateCalendar);
         var now = DateTimeOffset.UtcNow;
 
         _logger.LogDebug("Processing clock tick for {Count} realm(s)", realmConfigs.Count);
@@ -146,7 +147,7 @@ public class WorldstateClockWorkerService : BackgroundService
             try
             {
                 await ProcessRealmTickAsync(
-                    config, clockStore, calendarStore, lockProvider,
+                    config, clockStore, calendarCache, clockCache, lockProvider,
                     messageBus, timeCalculator, entitySessionRegistry, now, cancellationToken);
             }
             catch (Exception ex)
@@ -175,11 +176,12 @@ public class WorldstateClockWorkerService : BackgroundService
     /// <summary>
     /// Processes a single realm's clock tick: acquires lock, fetches clock from Redis,
     /// computes elapsed game time, handles catch-up if needed, advances clock, publishes
-    /// boundary events, and updates Redis.
+    /// boundary events, and updates Redis and clock cache.
     /// </summary>
     /// <param name="config">The realm's durable configuration from MySQL.</param>
     /// <param name="clockStore">Redis store for clock state.</param>
-    /// <param name="calendarStore">MySQL store for calendar templates.</param>
+    /// <param name="calendarCache">Calendar template cache for cached MySQL lookups.</param>
+    /// <param name="clockCache">Realm clock cache for post-advancement updates.</param>
     /// <param name="lockProvider">Distributed lock provider.</param>
     /// <param name="messageBus">Message bus for event publishing.</param>
     /// <param name="timeCalculator">Time calculator for clock advancement.</param>
@@ -189,7 +191,8 @@ public class WorldstateClockWorkerService : BackgroundService
     private async Task ProcessRealmTickAsync(
         RealmWorldstateConfigModel config,
         IStateStore<RealmClockModel> clockStore,
-        IStateStore<CalendarTemplateModel> calendarStore,
+        ICalendarTemplateCache calendarCache,
+        IRealmClockCache clockCache,
         IDistributedLockProvider lockProvider,
         IMessageBus messageBus,
         IWorldstateTimeCalculator timeCalculator,
@@ -227,9 +230,9 @@ public class WorldstateClockWorkerService : BackgroundService
             return;
         }
 
-        // Load calendar template
-        var calendarKey = $"calendar:{config.GameServiceId}:{config.CalendarTemplateCode}";
-        var calendar = await calendarStore.GetAsync(calendarKey, cancellationToken);
+        // Load calendar template via cache (avoids MySQL round-trip on each tick)
+        var calendar = await calendarCache.GetOrLoadAsync(
+            config.GameServiceId, config.CalendarTemplateCode, cancellationToken);
         if (calendar == null)
         {
             _logger.LogWarning("Calendar template {TemplateCode} not found for realm {RealmId} during clock tick",
@@ -350,6 +353,9 @@ public class WorldstateClockWorkerService : BackgroundService
         // Update Redis clock with new state
         clock.LastAdvancedRealTime = now;
         await clockStore.SaveAsync(clockKey, clock, cancellationToken: cancellationToken);
+
+        // Update in-memory clock cache to keep variable provider reads warm
+        clockCache.Update(config.RealmId, clock);
     }
 
 }

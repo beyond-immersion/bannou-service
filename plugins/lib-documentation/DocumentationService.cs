@@ -246,9 +246,7 @@ public partial class DocumentationService : IDocumentationService
         return (StatusCodes.OK, new QueryDocumentationResponse
         {
             Results = results,
-            TotalResults = results.Count,
-            Query = body.Query,
-            Namespace = namespaceId
+            TotalResults = results.Count
         });
     }
 
@@ -343,8 +341,8 @@ public partial class DocumentationService : IDocumentationService
         {
             Document = doc,
             ContentFormat = body.IncludeContent
-                ? (body.RenderHtml ? GetDocumentResponseContentFormat.Html : GetDocumentResponseContentFormat.Markdown)
-                : GetDocumentResponseContentFormat.None
+                ? (body.RenderHtml ? ContentFormat.Html : ContentFormat.Markdown)
+                : ContentFormat.None
         };
 
         // Include related documents if requested
@@ -434,9 +432,9 @@ public partial class DocumentationService : IDocumentationService
         // Apply sorting based on request
         IEnumerable<(DocumentResult Result, DateTimeOffset CreatedAt)> sortedResults = body.SortBy switch
         {
-            SearchDocumentationRequestSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
-            SearchDocumentationRequestSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
-            SearchDocumentationRequestSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
+            SearchSortBy.Relevance => resultsWithMetadata, // Already sorted by relevance from search engine
+            SearchSortBy.Recency => resultsWithMetadata.OrderByDescending(r => r.CreatedAt),
+            SearchSortBy.Alphabetical => resultsWithMetadata.OrderBy(r => r.Result.Title, StringComparer.OrdinalIgnoreCase),
             _ => resultsWithMetadata
         };
 
@@ -451,9 +449,7 @@ public partial class DocumentationService : IDocumentationService
         var response = new SearchDocumentationResponse
         {
             Results = finalResults,
-            TotalResults = finalResults.Count,
-            SearchTerm = body.SearchTerm,
-            Namespace = namespaceId
+            TotalResults = finalResults.Count
         };
 
         // Cache results
@@ -527,10 +523,10 @@ public partial class DocumentationService : IDocumentationService
         {
             documentsWithMetadata = body.TagsMatch switch
             {
-                ListDocumentsRequestTagsMatch.All => documentsWithMetadata
+                TagMatchMode.All => documentsWithMetadata
                     .Where(d => requestedTags.All(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
                     .ToList(),
-                ListDocumentsRequestTagsMatch.Any => documentsWithMetadata
+                TagMatchMode.Any => documentsWithMetadata
                     .Where(d => requestedTags.Any(t => d.Doc.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)))
                     .ToList(),
                 _ => documentsWithMetadata
@@ -540,13 +536,13 @@ public partial class DocumentationService : IDocumentationService
         // Apply sorting
         IEnumerable<(DocumentSummary Summary, StoredDocument Doc)> sortedDocuments = body.SortBy switch
         {
-            ListSortField.CreatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.CreatedAt => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.CreatedAt)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.CreatedAt),
-            ListSortField.UpdatedAt => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.UpdatedAt => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.UpdatedAt)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.UpdatedAt),
-            ListSortField.Title => body.SortOrder == ListDocumentsRequestSortOrder.Asc
+            ListSortField.Title => body.SortOrder == SortOrder.Asc
                 ? documentsWithMetadata.OrderBy(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase)
                 : documentsWithMetadata.OrderByDescending(d => d.Doc.Title, StringComparer.OrdinalIgnoreCase),
             _ => documentsWithMetadata // Default: no additional sorting
@@ -570,10 +566,7 @@ public partial class DocumentationService : IDocumentationService
         {
             Documents = documents,
             TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize,
-            TotalPages = totalPages,
-            Namespace = namespaceId
+            TotalPages = totalPages
         });
     }
 
@@ -583,6 +576,11 @@ public partial class DocumentationService : IDocumentationService
         _logger.LogDebug("SuggestRelatedTopics: namespace={Namespace}, source={SourceValue}", body.Namespace, body.SourceValue);
         var namespaceId = body.Namespace;
         var maxSuggestions = body.MaxSuggestions;
+
+        if (string.IsNullOrEmpty(body.SourceValue))
+        {
+            return (StatusCodes.BadRequest, null);
+        }
 
         // Get related document IDs from search index
         var relatedIds = await _searchIndexService.GetRelatedSuggestionsAsync(
@@ -1090,10 +1088,10 @@ public partial class DocumentationService : IDocumentationService
 
                 var changedFields = new List<string>();
 
-                // Apply category update if specified (non-default value)
-                if (body.Category != default)
+                // Apply category update if specified
+                if (body.Category != null)
                 {
-                    storedDoc.Category = body.Category.ToString();
+                    storedDoc.Category = body.Category.Value.ToString();
                     changedFields.Add("category");
                 }
 
@@ -1290,15 +1288,15 @@ public partial class DocumentationService : IDocumentationService
                     // Handle conflict based on policy
                     switch (body.OnConflict)
                     {
-                        case ImportDocumentationRequestOnConflict.Skip:
+                        case ConflictResolution.Skip:
                             skipped++;
                             continue;
 
-                        case ImportDocumentationRequestOnConflict.Fail:
+                        case ConflictResolution.Fail:
                             failed.Add(new ImportFailure { Slug = importDoc.Slug, Error = "Document already exists" });
                             continue;
 
-                        case ImportDocumentationRequestOnConflict.Update:
+                        case ConflictResolution.Update:
                             // Update existing document
                             var existingDocKey = $"{DOC_KEY_PREFIX}{namespaceId}:{existingDocId}";
                             var existingDoc = await docStore.GetAsync(existingDocKey, cancellationToken);
@@ -2300,9 +2298,9 @@ public partial class DocumentationService : IDocumentationService
             binding.CategoryMapping = body.CategoryMapping.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
-        if (body.DefaultCategory != default)
+        if (body.DefaultCategory != null)
         {
-            binding.DefaultCategory = body.DefaultCategory.ToString();
+            binding.DefaultCategory = body.DefaultCategory.Value.ToString();
         }
 
         binding.ArchiveEnabled = body.ArchiveEnabled;
@@ -2531,10 +2529,7 @@ public partial class DocumentationService : IDocumentationService
         // Note: We don't delete the bundle from Asset Service as it may be used for other purposes
         // or the Asset Service may have its own retention policies
 
-        return (StatusCodes.OK, new DeleteArchiveResponse
-        {
-            Deleted = true
-        });
+        return (StatusCodes.OK, new DeleteArchiveResponse());
     }
 
     #region Repository Binding Helpers
@@ -3138,9 +3133,9 @@ public partial class DocumentationService : IDocumentationService
         {
             var triggeredBy = trigger switch
             {
-                SyncTrigger.Manual => DocumentationSyncStartedEventTriggeredBy.Manual,
-                SyncTrigger.Scheduled => DocumentationSyncStartedEventTriggeredBy.Scheduled,
-                _ => DocumentationSyncStartedEventTriggeredBy.Manual
+                SyncTrigger.Manual => SyncTrigger.Manual,
+                SyncTrigger.Scheduled => SyncTrigger.Scheduled,
+                _ => SyncTrigger.Manual
             };
             var eventModel = new DocumentationSyncStartedEvent
             {
@@ -3169,10 +3164,10 @@ public partial class DocumentationService : IDocumentationService
         {
             var status = result.Status switch
             {
-                Models.SyncStatusInternal.Success => DocumentationSyncCompletedEventStatus.Success,
-                Models.SyncStatusInternal.Partial => DocumentationSyncCompletedEventStatus.Partial,
-                Models.SyncStatusInternal.Failed => DocumentationSyncCompletedEventStatus.Failed,
-                _ => DocumentationSyncCompletedEventStatus.Failed
+                Models.SyncStatusInternal.Success => SyncStatus.Success,
+                Models.SyncStatusInternal.Partial => SyncStatus.Partial,
+                Models.SyncStatusInternal.Failed => SyncStatus.Failed,
+                _ => SyncStatus.Failed
             };
             var eventModel = new DocumentationSyncCompletedEvent
             {

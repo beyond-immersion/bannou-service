@@ -41,6 +41,8 @@ public partial class WorldstateService : IWorldstateService
     private readonly ITelemetryProvider _telemetryProvider;
     private readonly WorldstateServiceConfiguration _configuration;
     private readonly IWorldstateTimeCalculator _timeCalculator;
+    private readonly ICalendarTemplateCache _calendarTemplateCache;
+    private readonly IRealmClockCache _realmClockCache;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorldstateService"/> class.
@@ -57,7 +59,9 @@ public partial class WorldstateService : IWorldstateService
         ITelemetryProvider telemetryProvider,
         WorldstateServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IWorldstateTimeCalculator timeCalculator)
+        IWorldstateTimeCalculator timeCalculator,
+        ICalendarTemplateCache calendarTemplateCache,
+        IRealmClockCache realmClockCache)
     {
         _messageBus = messageBus;
         _clockStore = stateStoreFactory.GetStore<RealmClockModel>(StateStoreDefinitions.WorldstateRealmClock);
@@ -75,6 +79,8 @@ public partial class WorldstateService : IWorldstateService
         _telemetryProvider = telemetryProvider;
         _configuration = configuration;
         _timeCalculator = timeCalculator;
+        _calendarTemplateCache = calendarTemplateCache;
+        _realmClockCache = realmClockCache;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -503,6 +509,9 @@ public partial class WorldstateService : IWorldstateService
         clock.LastAdvancedRealTime = now;
         await _clockStore.SaveAsync(clockKey, clock, cancellationToken: cancellationToken);
 
+        // Invalidate clock cache so variable provider reads fresh data
+        _realmClockCache.Invalidate(body.RealmId);
+
         // Update realm config
         var configKey = $"realm-config:{body.RealmId}";
         var realmConfig = await _realmConfigStore.GetAsync(configKey, cancellationToken);
@@ -707,6 +716,9 @@ public partial class WorldstateService : IWorldstateService
         // Update clock store with new state
         clock.LastAdvancedRealTime = DateTimeOffset.UtcNow;
         await _clockStore.SaveAsync(clockKey, clock, cancellationToken: cancellationToken);
+
+        // Invalidate clock cache so variable provider reads fresh data
+        _realmClockCache.Invalidate(body.RealmId);
 
         // Publish time sync client event (populate PreviousPeriod from boundaries if available,
         // consistent with worker behavior)

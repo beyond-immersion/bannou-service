@@ -237,6 +237,13 @@ x-service-configuration:
       env: ASSET_DELETED_BUNDLE_RETENTION_DAYS
       default: 30
 
+    BundleCleanupIntervalMinutes:
+      type: integer
+      minimum: 1
+      description: Interval in minutes between bundle cleanup scans for permanently removing expired soft-deleted bundles.
+      env: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
+      default: 60
+
     # Webhook Configuration
     MinioWebhookSecret:
       type: string
