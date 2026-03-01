@@ -1294,14 +1294,14 @@ components:
       additionalProperties: false
       # NRT: Response properties server always sets (Rule 4)
       required:
-      - versionId
       - createdAt
       - size
       - isArchived
       properties:
         versionId:
           type: string
-          description: Unique version identifier
+          nullable: true
+          description: Unique version identifier. Null when object storage versioning is not enabled.
         createdAt:
           type: string
           format: date-time

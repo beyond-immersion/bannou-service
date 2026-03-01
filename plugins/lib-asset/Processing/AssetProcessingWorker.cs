@@ -665,6 +665,14 @@ public sealed class AssetProcessingWorker : BackgroundService
             var stateKey = $"{_configuration.AssetKeyPrefix}{job.AssetId}";
             var metadata = await _stateStore.GetAsync(stateKey, cancellationToken);
 
+            if (metadata == null)
+            {
+                _logger.LogError(
+                    "Asset metadata not found after processing for asset {AssetId} - cannot emit asset.ready event",
+                    job.AssetId);
+                return;
+            }
+
             await _messageBus.TryPublishAsync(
                 "asset.ready",
                 new AssetReadyEvent
@@ -674,11 +682,11 @@ public sealed class AssetProcessingWorker : BackgroundService
                     AssetId = job.AssetId,
                     Bucket = _configuration.StorageBucket,
                     Key = result.ProcessedStorageKey ?? job.StorageKey,
-                    ContentHash = metadata?.ContentHash ?? string.Empty,
+                    ContentHash = metadata.ContentHash,
                     Size = result.ProcessedSizeBytes,
                     ContentType = result.ProcessedContentType ?? job.ContentType,
-                    AssetType = metadata?.AssetType ?? AssetType.Other,
-                    Realm = metadata?.Realm
+                    AssetType = metadata.AssetType,
+                    Realm = metadata.Realm
                 });
         }
         catch (Exception ex)

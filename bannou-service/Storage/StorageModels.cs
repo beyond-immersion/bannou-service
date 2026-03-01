@@ -105,7 +105,7 @@ public record ObjectSummary(
 /// <param name="IsDeleteMarker">Whether this version is a delete marker</param>
 /// <param name="StorageClass">Storage tier (e.g., STANDARD, GLACIER, DEEP_ARCHIVE)</param>
 public record ObjectVersionInfo(
-    string VersionId,
+    string? VersionId,
     bool IsLatest,
     DateTime LastModified,
     long Size,

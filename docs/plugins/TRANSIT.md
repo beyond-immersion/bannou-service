@@ -262,7 +262,7 @@ Sub-model: `terrainType` (Category B content code), `multiplier` (min 0.01 — s
 | lib-trade (L4) | Calls route/calculate for shipment cost estimation; creates transit journeys for carrier entities; queries journey archives for velocity calculations |
 | lib-actor (L2) | Reads `${transit.*}` variables for NPC travel decisions via Variable Provider Factory |
 | lib-quest (L2) | Subscribes to journey departed/arrived/discovery events for travel-based quest objectives |
-| lib-collection (L2) | Subscribes to `transit.discovery.revealed` for route discovery collection unlocks |
+| lib-collection (L2) | Subscribes to `transit-discovery.revealed` for route discovery collection unlocks |
 | lib-character-history (L4) | Subscribes to journey arrived/abandoned events for travel backstory generation |
 | lib-analytics (L4) | Subscribes to all journey events for travel pattern aggregation |
 | lib-puppetmaster (L4) | Subscribes to connection status-changed events for regional watcher awareness |
@@ -324,13 +324,13 @@ Full event schemas in `schemas/transit-events.yaml` and `schemas/transit-client-
 | Topic | Type | Key Payload | Consumers |
 |-------|------|-------------|-----------|
 | `transit-connection.status-changed` | Custom | connectionId, from/to LocationId, previousStatus, newStatus, reason, forceUpdated, realm fields, crossRealm | Trade (route viability), Actor (NPC replan), Puppetmaster (watcher awareness), Quest (objectives) |
-| `transit.journey.departed` | Custom | journeyId, entity, origin/dest, primaryModeCode, ETA, partySize, realm fields, crossRealm | Trade (shipment), Analytics, Puppetmaster, Character History, Quest |
-| `transit.journey.waypoint-reached` | Custom | journeyId, entity, waypointLocationId, nextLocationId, legIndex, remainingLegs, connectionId, realmId, crossedRealmBoundary | Trade (border checks), Location (presence), Quest (waypoint objectives) |
-| `transit.journey.arrived` | Custom | journeyId, entity, origin/dest, primaryModeCode, totalGameHours, totalDistanceKm, interruptionCount, legsCompleted, realm fields, crossRealm | Trade (delivery), Location (presence), Analytics, Character History, Quest |
-| `transit.journey.interrupted` | Custom | journeyId, entity, currentLocationId, currentLegIndex, reason, realmId | Trade (delay), Puppetmaster (rescue/encounter), Analytics (hotspots) |
-| `transit.journey.resumed` | Custom | journeyId, entity, current/dest LocationId, currentLegIndex, remainingLegs, modeCode, realmId | Trade, Analytics |
-| `transit.journey.abandoned` | Custom | journeyId, entity, origin/dest, abandonedAtLocationId, reason, completed/total legs, realm fields, crossRealm | Trade (stranded), Character History, Analytics |
-| `transit.discovery.revealed` | Custom | entityId, connectionId, from/to LocationId, source, realm fields, crossRealm | Collection (unlocks), Quest (objectives), Analytics |
+| `transit-journey.departed` | Custom | journeyId, entity, origin/dest, primaryModeCode, ETA, partySize, realm fields, crossRealm | Trade (shipment), Analytics, Puppetmaster, Character History, Quest |
+| `transit-journey.waypoint-reached` | Custom | journeyId, entity, waypointLocationId, nextLocationId, legIndex, remainingLegs, connectionId, realmId, crossedRealmBoundary | Trade (border checks), Location (presence), Quest (waypoint objectives) |
+| `transit-journey.arrived` | Custom | journeyId, entity, origin/dest, primaryModeCode, totalGameHours, totalDistanceKm, interruptionCount, legsCompleted, realm fields, crossRealm | Trade (delivery), Location (presence), Analytics, Character History, Quest |
+| `transit-journey.interrupted` | Custom | journeyId, entity, currentLocationId, currentLegIndex, reason, realmId | Trade (delay), Puppetmaster (rescue/encounter), Analytics (hotspots) |
+| `transit-journey.resumed` | Custom | journeyId, entity, current/dest LocationId, currentLegIndex, remainingLegs, modeCode, realmId | Trade, Analytics |
+| `transit-journey.abandoned` | Custom | journeyId, entity, origin/dest, abandonedAtLocationId, reason, completed/total legs, realm fields, crossRealm | Trade (stranded), Character History, Analytics |
+| `transit-discovery.revealed` | Custom | entityId, connectionId, from/to LocationId, source, realm fields, crossRealm | Collection (unlocks), Quest (objectives), Analytics |
 | `transit-mode.registered` | Custom | Full TransitMode entity data | — |
 | `transit-mode.updated` | Custom | Full TransitMode + `changedFields` (deprecation includes isDeprecated, deprecatedAt, deprecationReason) | — |
 | `transit-mode.deleted` | Custom | code, deletedReason (full entity no longer exists) | — |
@@ -466,13 +466,13 @@ Full request/response schemas in `schemas/transit-api.yaml`. Use `make print-mod
 | Endpoint | Access | Description | Errors | Events |
 |----------|--------|-------------|--------|--------|
 | `/transit/journey/create` | user | Plan a journey (status: preparing) | `ORIGIN_NOT_FOUND`, `DESTINATION_NOT_FOUND`, `MODE_NOT_FOUND`, `MODE_DEPRECATED`, `NO_ROUTE_AVAILABLE`, `MODE_REQUIREMENTS_NOT_MET`, `ENTITY_TYPE_NOT_ALLOWED` | — |
-| `/transit/journey/depart` | user | Start travel (preparing → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit.journey.departed` |
-| `/transit/journey/resume` | user | Resume interrupted journey (interrupted → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit.journey.resumed` |
-| `/transit/journey/advance` | user | Mark waypoint reached (completes leg, starts next or arrives) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `NO_CURRENT_LEG` | `transit.journey.waypoint-reached` or `transit.journey.arrived` |
+| `/transit/journey/depart` | user | Start travel (preparing → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit-journey.departed` |
+| `/transit/journey/resume` | user | Resume interrupted journey (interrupted → in_transit) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `CONNECTION_CLOSED` | `transit-journey.resumed` |
+| `/transit/journey/advance` | user | Mark waypoint reached (completes leg, starts next or arrives) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS`, `NO_CURRENT_LEG` | `transit-journey.waypoint-reached` or `transit-journey.arrived` |
 | `/transit/journey/advance-batch` | user | Batch advance for NPC scale | `PARTIAL_FAILURE` | Per-journey events |
-| `/transit/journey/arrive` | user | Force-arrive at destination (skip remaining legs) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.arrived` |
-| `/transit/journey/interrupt` | user | Interrupt journey (combat, event, breakdown) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.interrupted` |
-| `/transit/journey/abandon` | user | Abandon journey (entity stays at current location) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit.journey.abandoned` |
+| `/transit/journey/arrive` | user | Force-arrive at destination (skip remaining legs) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit-journey.arrived` |
+| `/transit/journey/interrupt` | user | Interrupt journey (combat, event, breakdown) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit-journey.interrupted` |
+| `/transit/journey/abandon` | user | Abandon journey (entity stays at current location) | `JOURNEY_NOT_FOUND`, `INVALID_STATUS` | `transit-journey.abandoned` |
 | `/transit/journey/get` | user | Get a journey by ID | `JOURNEY_NOT_FOUND` | — |
 | `/transit/journey/query-by-connection` | user | List active journeys traversing a specific connection | `CONNECTION_NOT_FOUND` | — |
 | `/transit/journey/list` | user | List journeys by entity, realm, status | — | — |
@@ -481,7 +481,7 @@ Full request/response schemas in `schemas/transit-api.yaml`. Use `make print-mod
 **Key behaviors**:
 - **create**: Internally calls route/calculate to find the best path and populate legs. Checks mode compatibility via check-availability. Does NOT start the journey — call depart for that. When `preferMultiModal` is true, each leg gets the fastest compatible mode the entity can use on that connection; `primaryModeCode` is set to the mode used for the most legs (plurality).
 - **depart vs resume**: Distinct endpoints — depart is for initial departure (preparing → in_transit), resume is for continuing after interruption (interrupted → in_transit). Consumers (Trade, Analytics) can distinguish "started" from "resumed" via different events.
-- **advance**: Takes `arrivedAtGameTime` and optional `incidents` array (reason, durationGameHours, description). If this completes the final leg, journey transitions to "arrived" and emits `transit.journey.arrived` instead of `waypoint-reached`. Also auto-reveals discoverable connections traversed during the completed leg.
+- **advance**: Takes `arrivedAtGameTime` and optional `incidents` array (reason, durationGameHours, description). If this completes the final leg, journey transitions to "arrived" and emits `transit-journey.arrived` instead of `waypoint-reached`. Also auto-reveals discoverable connections traversed during the completed leg.
 - **advance-batch**: Batch version for game SDK efficiency at NPC scale (10,000+ concurrent journeys). Each advance processed independently — failure of one does not roll back others. Results include per-journey success/failure (null/non-null journey indicates success per IMPLEMENTATION TENETS). Ordering within batch preserved for same-journeyId multiple advances (advancing through multiple waypoints in a single tick). Events emitted per-journey.
 - **arrive (force)**: Marks remaining legs as "skipped" rather than "completed". Used for narrative fast-travel, teleportation, or game-driven skip. Valid from `in_transit` or `at_waypoint`.
 - **abandon**: Valid from `preparing`, `in_transit`, `at_waypoint`, or `interrupted`.
@@ -508,7 +508,7 @@ Full request/response schemas in `schemas/transit-api.yaml`. Use `make print-mod
 
 | Endpoint | Access | Description | Errors | Events |
 |----------|--------|-------------|--------|--------|
-| `/transit/discovery/reveal` | user | Reveal a discoverable connection to an entity | `CONNECTION_NOT_FOUND`, `NOT_DISCOVERABLE` | `transit.discovery.revealed` |
+| `/transit/discovery/reveal` | user | Reveal a discoverable connection to an entity | `CONNECTION_NOT_FOUND`, `NOT_DISCOVERABLE` | `transit-discovery.revealed` |
 | `/transit/discovery/list` | user | List connections an entity has discovered (filter: realmId) | — | — |
 | `/transit/discovery/check` | user | Check if entity has discovered specific connections | — | — |
 
@@ -798,14 +798,14 @@ Trade uses Transit for:
 ### Quest (L2) -- Consumer
 
 Quest consumes transit events for travel-based objectives:
-- **Departure objectives**: `transit.journey.departed` can fulfill "leave the village" milestones
-- **Arrival objectives**: `transit.journey.arrived` can fulfill "reach the Iron Mines" milestones
-- **Discovery objectives**: `transit.discovery.revealed` can fulfill "discover the hidden pass" milestones
+- **Departure objectives**: `transit-journey.departed` can fulfill "leave the village" milestones
+- **Arrival objectives**: `transit-journey.arrived` can fulfill "reach the Iron Mines" milestones
+- **Discovery objectives**: `transit-discovery.revealed` can fulfill "discover the hidden pass" milestones
 - Quest uses Contract infrastructure for milestone tracking; transit events report condition fulfillment
 
 ### Collection (L2) -- Consumer
 
-Collection consumes `transit.discovery.revealed` for route discovery unlocks:
+Collection consumes `transit-discovery.revealed` for route discovery unlocks:
 - An "Explorer's Atlas" collection type could grant entries for discovered connections
 - A "Realm Cartographer" collection tracks percentage of realm connections discovered
 - Collection is a consumer only -- Transit publishes, Collection subscribes

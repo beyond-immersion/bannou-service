@@ -124,8 +124,8 @@ public sealed class TextureProcessor : IAssetProcessor
 
             // Get processing options
             var compressionEnabled = GetProcessingOption(context, "compression_enabled", true);
-            var maxDimension = GetProcessingOption(context, "max_dimension", 4096);
-            var targetFormat = GetProcessingOption(context, "target_format", "webp");
+            var maxDimension = GetProcessingOption(context, "max_dimension", _configuration.TextureMaxDimension);
+            var targetFormat = GetProcessingOption(context, "target_format", _configuration.TextureDefaultOutputFormat);
 
             // Pass-through processing: copy asset unchanged to processed location.
             // Processing options are recorded in metadata for future implementation.

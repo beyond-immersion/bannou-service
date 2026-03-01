@@ -115,7 +115,8 @@ var result = await _service.GetAccountAsync(null);  // null is allowed by type s
 | Async methods | `{Action}Async` | `GetAccountAsync` |
 | Request models | `{Action}Request` | `CreateAccountRequest` |
 | Response models | `{Entity}Response` | `AccountResponse` |
-| Event models | `{Entity}{Action}Event` | `AccountCreatedEvent` |
+| Event models (service) | `{Entity}{Action}Event` | `AccountCreatedEvent` |
+| Event models (client) | `{Entity}{Action}ClientEvent` | `CharacterUpdatedClientEvent` |
 | Event topics | `{entity}.{action}` | `account.created`, `game-session.deleted`, `chat-room-type.updated` (entity uses hyphens for multi-word names; dot separates entity from action only) |
 | State keys | `{entity-prefix}{id}` | `account-{guid}` |
 | Config properties | PascalCase + units | `TimeoutSeconds` |

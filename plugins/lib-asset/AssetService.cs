@@ -2847,7 +2847,7 @@ public partial class AssetService : IAssetService
         else
         {
             // Soft delete - mark as deleted with retention period
-            var retentionDays = _configuration.DeletedBundleRetentionDays > 0 ? _configuration.DeletedBundleRetentionDays : 30;
+            var retentionDays = _configuration.DeletedBundleRetentionDays;
             retentionUntil = deletedAt.AddDays(retentionDays);
 
             bundle.LifecycleStatus = Models.BundleLifecycleStatus.Deleted;
@@ -3200,7 +3200,7 @@ public partial class AssetService : IAssetService
             .ToList();
 
         var totalCount = sortedVersionNumbers.Count;
-        var limit = body.Limit > 0 ? body.Limit : 50;
+        var limit = body.Limit > 0 ? body.Limit : _configuration.DefaultListLimit;
         var offset = body.Offset;
 
         // Apply pagination to version numbers first

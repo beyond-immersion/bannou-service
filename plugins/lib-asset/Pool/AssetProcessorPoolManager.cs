@@ -90,8 +90,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         };
 
         // Save with TTL for automatic cleanup if node crashes
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         // Update pool index
         await UpdatePoolIndexAsync(poolType, nodeId, add: true, cancellationToken);
@@ -146,8 +145,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         }
 
         // Save with refreshed TTL
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         _logger.LogDebug(
             "Heartbeat from processor {NodeId}: load {PreviousLoad} -> {CurrentLoad}, idle count: {IdleCount}",
@@ -211,8 +209,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         state.Status = ProcessorNodeStatus.Draining;
 
         // Save with TTL (keep alive while draining)
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         _logger.LogInformation(
             "Processor node {NodeId} in pool {PoolType} marked as draining (current load: {Load})",

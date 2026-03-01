@@ -519,7 +519,7 @@ public class MinioStorageProvider : StorageModels.IAssetStorageProvider
             // MinIO SDK v7 Item: IsDeleteMarker and StorageClass may not be available
             // MinIO uses "STANDARD" for all objects by default; tier transitions require ILM rules
             versions.Add(new StorageModels.ObjectVersionInfo(
-                item.VersionId ?? "null",
+                item.VersionId,
                 item.IsLatest,
                 item.LastModifiedDateTime ?? DateTime.MinValue,
                 (long)item.Size,

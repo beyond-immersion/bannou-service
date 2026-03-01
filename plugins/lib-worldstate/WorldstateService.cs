@@ -776,6 +776,8 @@ public partial class WorldstateService : IWorldstateService
         // Publish clock-advanced service event for cross-node cache invalidation
         await _messageBus.TryPublishAsync("worldstate.clock-advanced", new WorldstateClockAdvancedEvent
         {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
             RealmId = body.RealmId
         }, cancellationToken: cancellationToken);
 

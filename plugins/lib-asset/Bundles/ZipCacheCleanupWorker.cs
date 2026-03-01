@@ -44,7 +44,7 @@ public sealed class ZipCacheCleanupWorker : BackgroundService
         // Startup delay to allow other services to initialize
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.ZipCacheCleanupStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -110,8 +110,7 @@ public sealed class ZipCacheCleanupWorker : BackgroundService
 
         var bucket = _configuration.StorageBucket;
         var prefix = _configuration.BundleZipCachePathPrefix;
-        var ttlHours = _configuration.ZipCacheTtlHours > 0 ? _configuration.ZipCacheTtlHours : 24;
-        var cutoff = DateTime.UtcNow.AddHours(-ttlHours);
+        var cutoff = DateTime.UtcNow.AddHours(-_configuration.ZipCacheTtlHours);
 
         var objects = await storageProvider.ListObjectsByPrefixAsync(bucket, prefix);
         if (objects.Count == 0)

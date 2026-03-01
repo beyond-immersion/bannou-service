@@ -13,6 +13,9 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
 
+  # Self-subscriptions: Worldstate subscribes to its OWN events for cross-node
+  # cache invalidation in multi-instance deployments. When Node A mutates state,
+  # Node B receives the event via RabbitMQ and clears its stale local cache entry.
   x-event-subscriptions:
     - topic: worldstate.calendar-template.updated
       event: CalendarTemplateUpdatedEvent
@@ -78,7 +81,7 @@ info:
     - topic: worldstate.clock-advanced
       event: WorldstateClockAdvancedEvent
       description: Published when a realm clock is advanced, for cross-node cache invalidation
-    - topic: worldstate.realm-clock.initialized
+    - topic: realm-clock.initialized
       event: WorldstateRealmClockInitializedEvent
       description: Published when a realm clock is initialized for the first time
 
@@ -175,6 +178,10 @@ x-lifecycle:
         format: date-time
         required: true
         description: Real-world timestamp marking the start of this realm's game time
+      isActive:
+        type: boolean
+        required: true
+        description: Whether the realm clock is initialized and active
 
 components:
   schemas:

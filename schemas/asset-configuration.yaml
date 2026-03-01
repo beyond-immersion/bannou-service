@@ -197,6 +197,13 @@ x-service-configuration:
       env: ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS
       default: 90
 
+    ProcessorNodeTtlSeconds:
+      type: integer
+      minimum: 1
+      description: TTL in seconds for processor node state entries in the state store. Should be larger than ProcessorHeartbeatTimeoutSeconds to allow for heartbeat delays.
+      env: ASSET_PROCESSOR_NODE_TTL_SECONDS
+      default: 180
+
     # FFmpeg Configuration
     FfmpegPath:
       type: string
@@ -232,6 +239,40 @@ x-service-configuration:
       env: ASSET_AUDIO_PRESERVE_LOSSLESS
       default: true
 
+    # Texture Processing Configuration
+    TextureMaxDimension:
+      type: integer
+      minimum: 1
+      description: Default maximum texture dimension in pixels when not specified in processing options
+      env: ASSET_TEXTURE_MAX_DIMENSION
+      default: 4096
+
+    TextureDefaultOutputFormat:
+      type: string
+      description: Default output format for texture processing when not specified in processing options
+      env: ASSET_TEXTURE_DEFAULT_OUTPUT_FORMAT
+      default: webp
+
+    # 3D Model Processing Configuration
+    ModelOptimizeMeshesDefault:
+      type: boolean
+      description: Default for whether to optimize meshes during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_OPTIMIZE_MESHES_DEFAULT
+      default: true
+
+    ModelGenerateLodsDefault:
+      type: boolean
+      description: Default for whether to generate LOD levels during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_GENERATE_LODS_DEFAULT
+      default: true
+
+    ModelLodLevels:
+      type: integer
+      minimum: 1
+      description: Default number of LOD levels to generate during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_LOD_LEVELS
+      default: 3
+
     # Bundle Configuration
     BundleCompressionDefault:
       $ref: 'asset-api.yaml#/components/schemas/CompressionType'
@@ -241,9 +282,16 @@ x-service-configuration:
 
     ZipCacheTtlHours:
       type: integer
+      minimum: 1
       description: TTL for cached ZIP conversions in hours
       env: ASSET_ZIP_CACHE_TTL_HOURS
       default: 24
+
+    ZipCacheDirectory:
+      type: string
+      nullable: true
+      description: Directory for ZIP cache files. When null, uses the system temp directory with a 'bannou-zip-cache' subdirectory.
+      env: ASSET_ZIP_CACHE_DIRECTORY
 
     DeletedBundleRetentionDays:
       type: integer
@@ -259,12 +307,26 @@ x-service-configuration:
       env: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
       default: 60
 
+    BundleCleanupStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      description: Delay in seconds before the bundle cleanup worker begins its first scan after startup, allowing other services to initialize.
+      env: ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 30
+
     ZipCacheCleanupIntervalMinutes:
       type: integer
       minimum: 1
       description: Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
       env: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
       default: 120
+
+    ZipCacheCleanupStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      description: Delay in seconds before the ZIP cache cleanup worker begins its first scan after startup, allowing other services to initialize.
+      env: ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 60
 
     # Webhook Configuration
     MinioWebhookSecret:
@@ -520,6 +582,13 @@ x-service-configuration:
       env: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
 
     # === Query Limits ===
+    DefaultListLimit:
+      type: integer
+      minimum: 1
+      description: Default number of results per page when client does not specify a limit
+      default: 50
+      env: ASSET_DEFAULT_LIST_LIMIT
+
     MaxQueryLimit:
       type: integer
       description: Maximum number of results per query/list request

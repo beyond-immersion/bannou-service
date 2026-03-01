@@ -45,7 +45,7 @@ public sealed class BundleCleanupWorker : BackgroundService
         // Startup delay to allow other services to initialize
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_configuration.BundleCleanupStartupDelaySeconds), stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -118,9 +118,7 @@ public sealed class BundleCleanupWorker : BackgroundService
         _logger.LogInformation("BundleCleanup: Scanning {Count} deleted bundles for expiry", deletedBundleIds.Count);
 
         var now = DateTimeOffset.UtcNow;
-        var retentionDays = _configuration.DeletedBundleRetentionDays > 0
-            ? _configuration.DeletedBundleRetentionDays
-            : 30;
+        var retentionDays = _configuration.DeletedBundleRetentionDays;
         var purgedCount = 0;
 
         foreach (var bundleId in deletedBundleIds)

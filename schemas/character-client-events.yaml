@@ -1,0 +1,112 @@
+openapi: 3.0.4
+info:
+  title: Character Client Events
+  version: 1.0.0
+  description: |
+    Server-to-client push events for the Character service.
+    Published via IClientEventPublisher to connected WebSocket sessions
+    through the Entity Session Registry pattern.
+
+    Entity mapping: ("character", characterId) — registered by Gardener when
+    a player's character enters gameplay. Multiple sessions may observe the
+    same character (party members, nearby players).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    CharacterUpdatedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Published when a character's state changes (death, name change, status
+        transitions, species migration). Includes changedFields list so the
+        client can determine what to re-render without a full model fetch.
+        Only the values of changed fields are included as optional properties.
+        Routed via Entity Session Registry: query
+        IEntitySessionRegistry.PublishToEntitySessionsAsync("character", characterId).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+        - changedFields
+      properties:
+        eventName:
+          type: string
+          default: "character.updated"
+          description: Fixed event type identifier
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose state changed
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that changed (e.g., ["status", "deathDate"])
+        name:
+          type: string
+          nullable: true
+          description: New character name (included only when name changed)
+        status:
+          allOf:
+            - $ref: 'character-api.yaml#/components/schemas/CharacterStatus'
+          nullable: true
+          description: New character status (included only when status changed)
+        deathDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Death timestamp (included only when deathDate changed)
+
+    CharacterRealmTransferredClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Published when a character is transferred to a different realm.
+        Distinct from CharacterUpdatedClientEvent because realm transfer is a
+        complete context change requiring loading screen, realm assets, and UI
+        reconfiguration on the client. Only published for transfers (when
+        previousRealmId is set on the character.realm.joined service event),
+        not for initial realm joins.
+        Routed via Entity Session Registry: query
+        IEntitySessionRegistry.PublishToEntitySessionsAsync("character", characterId).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - characterId
+        - previousRealmId
+        - newRealmId
+      properties:
+        eventName:
+          type: string
+          default: "character.realm_transferred"
+          description: Fixed event type identifier
+        characterId:
+          type: string
+          format: uuid
+          description: Character being transferred
+        previousRealmId:
+          type: string
+          format: uuid
+          description: Realm the character is leaving
+        newRealmId:
+          type: string
+          format: uuid
+          description: Realm the character is joining

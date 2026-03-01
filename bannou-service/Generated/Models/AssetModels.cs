@@ -1025,12 +1025,10 @@ public partial class AssetVersion
 {
 
     /// <summary>
-    /// Unique version identifier
+    /// Unique version identifier. Null when object storage versioning is not enabled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string VersionId { get; set; } = default!;
+    public string? VersionId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when this version was created

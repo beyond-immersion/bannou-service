@@ -153,9 +153,9 @@ public sealed class ModelProcessor : IAssetProcessor
             }
 
             // Get processing options
-            var optimizeMeshes = GetProcessingOption(context, "optimize_meshes", true);
-            var generateLods = GetProcessingOption(context, "generate_lods", true);
-            var lodLevels = GetProcessingOption(context, "lod_levels", 3);
+            var optimizeMeshes = GetProcessingOption(context, "optimize_meshes", _configuration.ModelOptimizeMeshesDefault);
+            var generateLods = GetProcessingOption(context, "generate_lods", _configuration.ModelGenerateLodsDefault);
+            var lodLevels = GetProcessingOption(context, "lod_levels", _configuration.ModelLodLevels);
 
             // Pass-through processing: copy asset unchanged to processed location.
             // Processing options are recorded in metadata for future implementation.

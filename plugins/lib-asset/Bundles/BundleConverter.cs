@@ -22,19 +22,19 @@ public sealed class BundleConverter : IBundleConverter
     /// </summary>
     /// <param name="logger">Logger instance.</param>
     /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
-    /// <param name="cacheDirectory">Directory for ZIP cache files.</param>
+    /// <param name="cacheDirectory">Directory for ZIP cache files. When null, uses system temp directory.</param>
     /// <param name="cacheTtl">Time-to-live for cached ZIP files.</param>
     public BundleConverter(
         ILogger<BundleConverter> logger,
         ITelemetryProvider telemetryProvider,
-        string? cacheDirectory = null,
-        TimeSpan? cacheTtl = null)
+        string? cacheDirectory,
+        TimeSpan cacheTtl)
     {
         _logger = logger;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
         _cacheDirectory = cacheDirectory ?? Path.Combine(Path.GetTempPath(), "bannou-zip-cache");
-        _cacheTtl = cacheTtl ?? TimeSpan.FromHours(24);
+        _cacheTtl = cacheTtl;
 
         // Ensure cache directory exists
         Directory.CreateDirectory(_cacheDirectory);

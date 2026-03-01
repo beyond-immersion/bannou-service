@@ -87,6 +87,30 @@ public enum DocumentCategory
 #pragma warning restore CS1591
 
 /// <summary>
+/// Document count for a specific category
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CategoryCount
+{
+
+    /// <summary>
+    /// The document category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentCategory Category { get; set; } = default!;
+
+    /// <summary>
+    /// Number of documents in this category
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("count")]
+    public int Count { get; set; } = default!;
+
+}
+
+/// <summary>
 /// How deep to traverse related document links:
 /// <br/>- none: No related documents included
 /// <br/>- direct: Only directly linked documents (depth 1)
@@ -1681,7 +1705,7 @@ public partial class NamespaceStatsResponse
     /// Document count per category (null if not computed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("categoryCounts")]
-    public System.Collections.Generic.IDictionary<string, int>? CategoryCounts { get; set; } = default!;
+    public System.Collections.Generic.ICollection<CategoryCount>? CategoryCounts { get; set; } = default!;
 
     /// <summary>
     /// Number of documents in the trashcan

@@ -28,27 +28,27 @@ info:
     description: Published when a connection's operational status changes
 
     # Journey lifecycle events (custom)
-  - topic: transit.journey.departed
+  - topic: transit-journey.departed
     event: TransitJourneyDepartedEvent
     description: Published when an entity begins traveling
-  - topic: transit.journey.waypoint-reached
+  - topic: transit-journey.waypoint-reached
     event: TransitJourneyWaypointReachedEvent
     description: Published when a traveling entity reaches an intermediate waypoint
-  - topic: transit.journey.arrived
+  - topic: transit-journey.arrived
     event: TransitJourneyArrivedEvent
     description: Published when a traveling entity reaches its destination
-  - topic: transit.journey.interrupted
+  - topic: transit-journey.interrupted
     event: TransitJourneyInterruptedEvent
     description: Published when a journey is interrupted
-  - topic: transit.journey.resumed
+  - topic: transit-journey.resumed
     event: TransitJourneyResumedEvent
     description: Published when an interrupted journey is resumed
-  - topic: transit.journey.abandoned
+  - topic: transit-journey.abandoned
     event: TransitJourneyAbandonedEvent
     description: Published when a journey is abandoned before reaching destination
 
     # Discovery event (custom)
-  - topic: transit.discovery.revealed
+  - topic: transit-discovery.revealed
     event: TransitDiscoveryRevealedEvent
     description: Published when a discoverable connection is revealed to an entity
 

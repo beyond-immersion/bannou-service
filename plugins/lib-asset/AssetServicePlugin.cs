@@ -57,6 +57,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
                 options.UseSSL = config.StorageUseSsl;
                 options.DefaultBucket = config.StorageBucket;
                 options.Region = config.StorageRegion;
+                options.DefaultUrlExpiration = TimeSpan.FromSeconds(config.TokenTtlSeconds);
             });
 
         // Register IMinioClient using the configured options
@@ -132,7 +133,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             return new BundleConverter(
                 bundleLogger,
                 telemetryProvider,
-                cacheDirectory: null,
+                cacheDirectory: assetConf.ZipCacheDirectory,
                 cacheTtl: TimeSpan.FromHours(assetConf.ZipCacheTtlHours));
         });
         services.AddSingleton<BundleValidator>();

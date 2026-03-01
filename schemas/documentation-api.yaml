@@ -794,6 +794,21 @@ components:
       - other
       description: Fixed categories for type-safe filtering
 
+    CategoryCount:
+      description: Document count for a specific category
+      type: object
+      additionalProperties: false
+      required:
+      - category
+      - count
+      properties:
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+          description: The document category
+        count:
+          type: integer
+          description: Number of documents in this category
+
     RelatedDepth:
       type: string
       enum:
@@ -1871,9 +1886,9 @@ components:
           type: integer
           description: Total number of documents in the namespace
         categoryCounts:
-          type: object
-          additionalProperties:
-            type: integer
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryCount'
           nullable: true
           description: Document count per category (null if not computed)
         trashcanCount:

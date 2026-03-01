@@ -223,6 +223,13 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public int ProcessorHeartbeatTimeoutSeconds { get; set; } = 90;
 
     /// <summary>
+    /// TTL in seconds for processor node state entries in the state store. Should be larger than ProcessorHeartbeatTimeoutSeconds to allow for heartbeat delays.
+    /// Environment variable: ASSET_PROCESSOR_NODE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ProcessorNodeTtlSeconds { get; set; } = 180;
+
+    /// <summary>
     /// Path to FFmpeg binary (empty = use system PATH)
     /// Environment variable: ASSET_FFMPEG_PATH
     /// </summary>
@@ -254,6 +261,38 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public bool AudioPreserveLossless { get; set; } = true;
 
     /// <summary>
+    /// Default maximum texture dimension in pixels when not specified in processing options
+    /// Environment variable: ASSET_TEXTURE_MAX_DIMENSION
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int TextureMaxDimension { get; set; } = 4096;
+
+    /// <summary>
+    /// Default output format for texture processing when not specified in processing options
+    /// Environment variable: ASSET_TEXTURE_DEFAULT_OUTPUT_FORMAT
+    /// </summary>
+    public string TextureDefaultOutputFormat { get; set; } = "webp";
+
+    /// <summary>
+    /// Default for whether to optimize meshes during 3D model processing when not specified in processing options
+    /// Environment variable: ASSET_MODEL_OPTIMIZE_MESHES_DEFAULT
+    /// </summary>
+    public bool ModelOptimizeMeshesDefault { get; set; } = true;
+
+    /// <summary>
+    /// Default for whether to generate LOD levels during 3D model processing when not specified in processing options
+    /// Environment variable: ASSET_MODEL_GENERATE_LODS_DEFAULT
+    /// </summary>
+    public bool ModelGenerateLodsDefault { get; set; } = true;
+
+    /// <summary>
+    /// Default number of LOD levels to generate during 3D model processing when not specified in processing options
+    /// Environment variable: ASSET_MODEL_LOD_LEVELS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int ModelLodLevels { get; set; } = 3;
+
+    /// <summary>
     /// Default compression for bundles
     /// Environment variable: ASSET_BUNDLE_COMPRESSION_DEFAULT
     /// </summary>
@@ -263,7 +302,14 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// TTL for cached ZIP conversions in hours
     /// Environment variable: ASSET_ZIP_CACHE_TTL_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ZipCacheTtlHours { get; set; } = 24;
+
+    /// <summary>
+    /// Directory for ZIP cache files. When null, uses the system temp directory with a 'bannou-zip-cache' subdirectory.
+    /// Environment variable: ASSET_ZIP_CACHE_DIRECTORY
+    /// </summary>
+    public string? ZipCacheDirectory { get; set; }
 
     /// <summary>
     /// Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
@@ -280,11 +326,25 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     public int BundleCleanupIntervalMinutes { get; set; } = 60;
 
     /// <summary>
+    /// Delay in seconds before the bundle cleanup worker begins its first scan after startup, allowing other services to initialize.
+    /// Environment variable: ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int BundleCleanupStartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
     /// Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
     /// Environment variable: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
     /// </summary>
     [ConfigRange(Minimum = 1)]
     public int ZipCacheCleanupIntervalMinutes { get; set; } = 120;
+
+    /// <summary>
+    /// Delay in seconds before the ZIP cache cleanup worker begins its first scan after startup, allowing other services to initialize.
+    /// Environment variable: ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0)]
+    public int ZipCacheCleanupStartupDelaySeconds { get; set; } = 60;
 
     /// <summary>
     /// Secret for validating MinIO webhook requests
@@ -532,6 +592,13 @@ public class AssetServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
     /// </summary>
     public int DefaultBundleCacheTtlHours { get; set; } = 24;
+
+    /// <summary>
+    /// Default number of results per page when client does not specify a limit
+    /// Environment variable: ASSET_DEFAULT_LIST_LIMIT
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int DefaultListLimit { get; set; } = 50;
 
     /// <summary>
     /// Maximum number of results per query/list request
