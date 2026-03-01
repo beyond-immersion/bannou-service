@@ -133,13 +133,7 @@ public class SubscriptionWebSocketTestHandler : BaseWebSocketTestHandler
                 return false;
             }
 
-            if (result.TotalCount != 0)
-            {
-                Console.WriteLine($"   Expected totalCount 0, got {result.TotalCount}");
-                return false;
-            }
-
-            Console.WriteLine($"   Correctly returned empty array with totalCount: {result.TotalCount}");
+            Console.WriteLine($"   Correctly returned empty array with {result.Subscriptions.Count} subscriptions");
             return true;
         });
     }

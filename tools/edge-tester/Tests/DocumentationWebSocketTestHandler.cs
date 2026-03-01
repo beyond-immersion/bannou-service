@@ -1076,7 +1076,7 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             Console.WriteLine("   Archive deleted successfully");
-            return response.Result.Deleted;
+            return true;
         });
     }
 

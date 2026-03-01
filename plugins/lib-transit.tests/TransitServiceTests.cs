@@ -202,10 +202,20 @@ public class TransitServiceTests
             .ReturnsAsync("etag-1");
 
         // Default message bus: always succeed and capture published events for assertion
+        // Full overload (5 params)
         _mockMessageBus.Setup(m => m.TryPublishAsync(
             It.IsAny<string>(), It.IsAny<object>(),
             It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .Callback<string, object, PublishOptions?, Guid?, CancellationToken>((topic, evt, _, _, _) =>
+            {
+                _capturedEvents.Add((topic, evt));
+            })
+            .ReturnsAsync(true);
+        // Convenience overload (3 params) - the one services actually call
+        _mockMessageBus.Setup(m => m.TryPublishAsync(
+            It.IsAny<string>(), It.IsAny<object>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<string, object, CancellationToken>((topic, evt, _) =>
             {
                 _capturedEvents.Add((topic, evt));
             })

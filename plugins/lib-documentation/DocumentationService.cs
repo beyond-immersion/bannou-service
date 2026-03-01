@@ -288,6 +288,11 @@ public partial class DocumentationService : IDocumentationService
         // Resolve document ID from slug if provided
         if (body.DocumentId.HasValue)
         {
+            if (body.DocumentId.Value == Guid.Empty)
+            {
+                _logger.LogWarning("GetDocument failed: DocumentId cannot be Guid.Empty");
+                return (StatusCodes.BadRequest, null);
+            }
             documentId = body.DocumentId.Value;
         }
         else
@@ -920,6 +925,11 @@ public partial class DocumentationService : IDocumentationService
         // Resolve document ID from slug if provided
         if (body.DocumentId.HasValue)
         {
+            if (body.DocumentId.Value == Guid.Empty)
+            {
+                _logger.LogWarning("DeleteDocument failed: DocumentId cannot be Guid.Empty");
+                return (StatusCodes.BadRequest, null);
+            }
             documentId = body.DocumentId.Value;
         }
         else
