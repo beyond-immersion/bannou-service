@@ -31,7 +31,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listQueuesAsync(
+  async matchmakingListQueuesAsync(
     request: Schemas['ListQueuesRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getQueueAsync(
+  async matchmakingGetQueueAsync(
     request: Schemas['GetQueueRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async joinMatchmakingAsync(
+  async matchmakingJoinMatchmakingAsync(
     request: Schemas['JoinMatchmakingRequest'],
     channel: number = 0,
     timeout?: number
@@ -88,7 +88,7 @@ export class MatchmakingProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async leaveMatchmakingEventAsync(
+  async matchmakingLeaveMatchmakingEventAsync(
     request: Schemas['LeaveMatchmakingRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -106,7 +106,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getMatchmakingStatusAsync(
+  async matchmakingGetMatchmakingStatusAsync(
     request: Schemas['GetMatchmakingStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -124,7 +124,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async acceptMatchAsync(
+  async matchmakingAcceptMatchAsync(
     request: Schemas['AcceptMatchRequest'],
     channel: number = 0,
     timeout?: number
@@ -143,7 +143,7 @@ export class MatchmakingProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async declineMatchEventAsync(
+  async matchmakingDeclineMatchEventAsync(
     request: Schemas['DeclineMatchRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -161,7 +161,7 @@ export class MatchmakingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getMatchmakingStatsAsync(
+  async matchmakingGetMatchmakingStatsAsync(
     request: Schemas['GetMatchmakingStatsRequest'],
     channel: number = 0,
     timeout?: number

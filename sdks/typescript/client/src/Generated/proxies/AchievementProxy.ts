@@ -31,7 +31,7 @@ export class AchievementProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createAchievementDefinitionAsync(
+  async achievementCreateAchievementDefinitionAsync(
     request: Schemas['CreateAchievementDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class AchievementProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listAchievementDefinitionsAsync(
+  async achievementListAchievementDefinitionsAsync(
     request: Schemas['ListAchievementDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class AchievementProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateAchievementDefinitionAsync(
+  async achievementUpdateAchievementDefinitionAsync(
     request: Schemas['UpdateAchievementDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -84,7 +84,7 @@ export class AchievementProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteAchievementDefinitionEventAsync(
+  async achievementDeleteAchievementDefinitionEventAsync(
     request: Schemas['DeleteAchievementDefinitionRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -102,7 +102,7 @@ export class AchievementProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAchievementProgressAsync(
+  async achievementGetAchievementProgressAsync(
     request: Schemas['GetAchievementProgressRequest'],
     channel: number = 0,
     timeout?: number
@@ -120,7 +120,7 @@ export class AchievementProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listUnlockedAchievementsAsync(
+  async achievementListUnlockedAchievementsAsync(
     request: Schemas['ListUnlockedAchievementsRequest'],
     channel: number = 0,
     timeout?: number

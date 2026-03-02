@@ -31,7 +31,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCurrencyDefinitionAsync(
+  async currencyGetCurrencyDefinitionAsync(
     request: Schemas['GetCurrencyDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCurrencyDefinitionsAsync(
+  async currencyListCurrencyDefinitionsAsync(
     request: Schemas['ListCurrencyDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createWalletAsync(
+  async currencyCreateWalletAsync(
     request: Schemas['CreateWalletRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getWalletAsync(
+  async currencyGetWalletAsync(
     request: Schemas['GetWalletRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getOrCreateWalletAsync(
+  async currencyGetOrCreateWalletAsync(
     request: Schemas['GetOrCreateWalletRequest'],
     channel: number = 0,
     timeout?: number
@@ -123,7 +123,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBalanceAsync(
+  async currencyGetBalanceAsync(
     request: Schemas['GetBalanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -143,7 +143,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async batchGetBalancesAsync(
+  async currencyBatchGetBalancesAsync(
     request: Schemas['BatchGetBalancesRequest'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async creditCurrencyAsync(
+  async currencyCreditCurrencyAsync(
     request: Schemas['CreditCurrencyRequest'],
     channel: number = 0,
     timeout?: number
@@ -179,7 +179,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async debitCurrencyAsync(
+  async currencyDebitCurrencyAsync(
     request: Schemas['DebitCurrencyRequest'],
     channel: number = 0,
     timeout?: number
@@ -197,7 +197,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async transferCurrencyAsync(
+  async currencyTransferCurrencyAsync(
     request: Schemas['TransferCurrencyRequest'],
     channel: number = 0,
     timeout?: number
@@ -215,7 +215,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async batchCreditCurrencyAsync(
+  async currencyBatchCreditCurrencyAsync(
     request: Schemas['BatchCreditRequest'],
     channel: number = 0,
     timeout?: number
@@ -235,7 +235,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async batchDebitCurrencyAsync(
+  async currencyBatchDebitCurrencyAsync(
     request: Schemas['BatchDebitRequest'],
     channel: number = 0,
     timeout?: number
@@ -255,7 +255,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async calculateConversionAsync(
+  async currencyCalculateConversionAsync(
     request: Schemas['CalculateConversionRequest'],
     channel: number = 0,
     timeout?: number
@@ -273,7 +273,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async executeConversionAsync(
+  async currencyExecuteConversionAsync(
     request: Schemas['ExecuteConversionRequest'],
     channel: number = 0,
     timeout?: number
@@ -291,7 +291,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getExchangeRateAsync(
+  async currencyGetExchangeRateAsync(
     request: Schemas['GetExchangeRateRequest'],
     channel: number = 0,
     timeout?: number
@@ -309,7 +309,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTransactionAsync(
+  async currencyGetTransactionAsync(
     request: Schemas['GetTransactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -327,7 +327,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTransactionHistoryAsync(
+  async currencyGetTransactionHistoryAsync(
     request: Schemas['GetTransactionHistoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getTransactionsByReferenceAsync(
+  async currencyGetTransactionsByReferenceAsync(
     request: Schemas['GetTransactionsByReferenceRequest'],
     channel: number = 0,
     timeout?: number
@@ -363,7 +363,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getGlobalSupplyAsync(
+  async currencyGetGlobalSupplyAsync(
     request: Schemas['GetGlobalSupplyRequest'],
     channel: number = 0,
     timeout?: number
@@ -381,7 +381,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async escrowDepositAsync(
+  async currencyEscrowDepositAsync(
     request: Schemas['EscrowDepositRequest'],
     channel: number = 0,
     timeout?: number
@@ -399,7 +399,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async escrowReleaseAsync(
+  async currencyEscrowReleaseAsync(
     request: Schemas['EscrowReleaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -417,7 +417,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async escrowRefundAsync(
+  async currencyEscrowRefundAsync(
     request: Schemas['EscrowRefundRequest'],
     channel: number = 0,
     timeout?: number
@@ -437,7 +437,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createHoldAsync(
+  async currencyCreateHoldAsync(
     request: Schemas['CreateHoldRequest'],
     channel: number = 0,
     timeout?: number
@@ -457,7 +457,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async captureHoldAsync(
+  async currencyCaptureHoldAsync(
     request: Schemas['CaptureHoldRequest'],
     channel: number = 0,
     timeout?: number
@@ -477,7 +477,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async releaseHoldAsync(
+  async currencyReleaseHoldAsync(
     request: Schemas['ReleaseHoldRequest'],
     channel: number = 0,
     timeout?: number
@@ -497,7 +497,7 @@ export class CurrencyProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getHoldAsync(
+  async currencyGetHoldAsync(
     request: Schemas['GetHoldRequest'],
     channel: number = 0,
     timeout?: number

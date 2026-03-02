@@ -31,7 +31,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createBundleAsync(
+  async assetCreateBundleAsync(
     request: Schemas['CreateBundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBundleAsync(
+  async assetGetBundleAsync(
     request: Schemas['GetBundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async requestBundleUploadAsync(
+  async assetRequestBundleUploadAsync(
     request: Schemas['BundleUploadRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createMetabundleAsync(
+  async assetCreateMetabundleAsync(
     request: Schemas['CreateMetabundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -109,7 +109,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getJobStatusAsync(
+  async assetGetJobStatusAsync(
     request: Schemas['GetJobStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -129,7 +129,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cancelJobAsync(
+  async assetCancelJobAsync(
     request: Schemas['CancelJobRequest'],
     channel: number = 0,
     timeout?: number
@@ -149,7 +149,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async resolveBundlesAsync(
+  async assetResolveBundlesAsync(
     request: Schemas['ResolveBundlesRequest'],
     channel: number = 0,
     timeout?: number
@@ -167,7 +167,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryBundlesByAssetAsync(
+  async assetQueryBundlesByAssetAsync(
     request: Schemas['QueryBundlesByAssetRequest'],
     channel: number = 0,
     timeout?: number
@@ -185,7 +185,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateBundleAsync(
+  async assetUpdateBundleAsync(
     request: Schemas['UpdateBundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -205,7 +205,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteBundleAsync(
+  async assetDeleteBundleAsync(
     request: Schemas['DeleteBundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -225,7 +225,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async restoreBundleAsync(
+  async assetRestoreBundleAsync(
     request: Schemas['RestoreBundleRequest'],
     channel: number = 0,
     timeout?: number
@@ -243,7 +243,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryBundlesAsync(
+  async assetQueryBundlesAsync(
     request: Schemas['QueryBundlesRequest'],
     channel: number = 0,
     timeout?: number
@@ -263,7 +263,7 @@ export class BundlesProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listBundleVersionsAsync(
+  async assetListBundleVersionsAsync(
     request: Schemas['ListBundleVersionsRequest'],
     channel: number = 0,
     timeout?: number

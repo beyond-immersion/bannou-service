@@ -31,7 +31,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCharacterAsync(
+  async characterGetCharacterAsync(
     request: Schemas['GetCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCharactersAsync(
+  async characterListCharactersAsync(
     request: Schemas['ListCharactersRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEnrichedCharacterAsync(
+  async characterGetEnrichedCharacterAsync(
     request: Schemas['GetEnrichedCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCharacterArchiveAsync(
+  async characterGetCharacterArchiveAsync(
     request: Schemas['GetCharacterArchiveRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCharactersByRealmAsync(
+  async characterGetCharactersByRealmAsync(
     request: Schemas['GetCharactersByRealmRequest'],
     channel: number = 0,
     timeout?: number
@@ -123,7 +123,7 @@ export class CharacterProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async characterGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

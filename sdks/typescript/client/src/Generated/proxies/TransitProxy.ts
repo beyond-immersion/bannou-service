@@ -31,7 +31,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerModeAsync(
+  async transitRegisterModeAsync(
     request: Schemas['RegisterModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getModeAsync(
+  async transitGetModeAsync(
     request: Schemas['GetModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listModesAsync(
+  async transitListModesAsync(
     request: Schemas['ListModesRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateModeAsync(
+  async transitUpdateModeAsync(
     request: Schemas['UpdateModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateModeAsync(
+  async transitDeprecateModeAsync(
     request: Schemas['DeprecateModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async undeprecateModeAsync(
+  async transitUndeprecateModeAsync(
     request: Schemas['UndeprecateModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteModeAsync(
+  async transitDeleteModeAsync(
     request: Schemas['DeleteModeRequest'],
     channel: number = 0,
     timeout?: number
@@ -171,7 +171,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkModeAvailabilityAsync(
+  async transitCheckModeAvailabilityAsync(
     request: Schemas['CheckModeAvailabilityRequest'],
     channel: number = 0,
     timeout?: number
@@ -189,7 +189,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createConnectionAsync(
+  async transitCreateConnectionAsync(
     request: Schemas['CreateConnectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -207,7 +207,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getConnectionAsync(
+  async transitGetConnectionAsync(
     request: Schemas['GetConnectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -227,7 +227,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryConnectionsAsync(
+  async transitQueryConnectionsAsync(
     request: Schemas['QueryConnectionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -245,7 +245,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateConnectionAsync(
+  async transitUpdateConnectionAsync(
     request: Schemas['UpdateConnectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -263,7 +263,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateConnectionStatusAsync(
+  async transitUpdateConnectionStatusAsync(
     request: Schemas['UpdateConnectionStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -281,7 +281,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteConnectionAsync(
+  async transitDeleteConnectionAsync(
     request: Schemas['DeleteConnectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -299,7 +299,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async bulkSeedConnectionsAsync(
+  async transitBulkSeedConnectionsAsync(
     request: Schemas['BulkSeedConnectionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -317,7 +317,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createJourneyAsync(
+  async transitCreateJourneyAsync(
     request: Schemas['CreateJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -337,7 +337,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async departJourneyAsync(
+  async transitDepartJourneyAsync(
     request: Schemas['DepartJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -357,7 +357,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async resumeJourneyAsync(
+  async transitResumeJourneyAsync(
     request: Schemas['ResumeJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -377,7 +377,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async advanceJourneyAsync(
+  async transitAdvanceJourneyAsync(
     request: Schemas['AdvanceJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -397,7 +397,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async advanceBatchJourneysAsync(
+  async transitAdvanceBatchJourneysAsync(
     request: Schemas['AdvanceBatchRequest'],
     channel: number = 0,
     timeout?: number
@@ -417,7 +417,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async arriveJourneyAsync(
+  async transitArriveJourneyAsync(
     request: Schemas['ArriveJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -437,7 +437,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async interruptJourneyAsync(
+  async transitInterruptJourneyAsync(
     request: Schemas['InterruptJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -457,7 +457,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async abandonJourneyAsync(
+  async transitAbandonJourneyAsync(
     request: Schemas['AbandonJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -477,7 +477,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getJourneyAsync(
+  async transitGetJourneyAsync(
     request: Schemas['GetJourneyRequest'],
     channel: number = 0,
     timeout?: number
@@ -497,7 +497,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryJourneysByConnectionAsync(
+  async transitQueryJourneysByConnectionAsync(
     request: Schemas['QueryJourneysByConnectionRequest'],
     channel: number = 0,
     timeout?: number
@@ -515,7 +515,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listJourneysAsync(
+  async transitListJourneysAsync(
     request: Schemas['ListJourneysRequest'],
     channel: number = 0,
     timeout?: number
@@ -535,7 +535,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryJourneyArchiveAsync(
+  async transitQueryJourneyArchiveAsync(
     request: Schemas['QueryJourneyArchiveRequest'],
     channel: number = 0,
     timeout?: number
@@ -553,7 +553,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async calculateRouteAsync(
+  async transitCalculateRouteAsync(
     request: Schemas['CalculateRouteRequest'],
     channel: number = 0,
     timeout?: number
@@ -571,7 +571,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async revealDiscoveryAsync(
+  async transitRevealDiscoveryAsync(
     request: Schemas['RevealDiscoveryRequest'],
     channel: number = 0,
     timeout?: number
@@ -589,7 +589,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listDiscoveriesAsync(
+  async transitListDiscoveriesAsync(
     request: Schemas['ListDiscoveriesRequest'],
     channel: number = 0,
     timeout?: number
@@ -607,7 +607,7 @@ export class TransitProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkDiscoveriesAsync(
+  async transitCheckDiscoveriesAsync(
     request: Schemas['CheckDiscoveriesRequest'],
     channel: number = 0,
     timeout?: number

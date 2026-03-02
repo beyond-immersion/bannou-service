@@ -31,7 +31,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createQuestDefinitionAsync(
+  async questCreateQuestDefinitionAsync(
     request: Schemas['CreateQuestDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getQuestDefinitionAsync(
+  async questGetQuestDefinitionAsync(
     request: Schemas['GetQuestDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listQuestDefinitionsAsync(
+  async questListQuestDefinitionsAsync(
     request: Schemas['ListQuestDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateQuestDefinitionAsync(
+  async questUpdateQuestDefinitionAsync(
     request: Schemas['UpdateQuestDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateQuestDefinitionAsync(
+  async questDeprecateQuestDefinitionAsync(
     request: Schemas['DeprecateQuestDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async acceptQuestAsync(
+  async questAcceptQuestAsync(
     request: Schemas['AcceptQuestRequest'],
     channel: number = 0,
     timeout?: number
@@ -141,7 +141,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async abandonQuestAsync(
+  async questAbandonQuestAsync(
     request: Schemas['AbandonQuestRequest'],
     channel: number = 0,
     timeout?: number
@@ -159,7 +159,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getQuestAsync(
+  async questGetQuestAsync(
     request: Schemas['GetQuestRequest'],
     channel: number = 0,
     timeout?: number
@@ -179,7 +179,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listQuestsAsync(
+  async questListQuestsAsync(
     request: Schemas['ListQuestsRequest'],
     channel: number = 0,
     timeout?: number
@@ -199,7 +199,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listAvailableQuestsAsync(
+  async questListAvailableQuestsAsync(
     request: Schemas['ListAvailableQuestsRequest'],
     channel: number = 0,
     timeout?: number
@@ -217,7 +217,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getQuestLogAsync(
+  async questGetQuestLogAsync(
     request: Schemas['GetQuestLogRequest'],
     channel: number = 0,
     timeout?: number
@@ -237,7 +237,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async reportObjectiveProgressAsync(
+  async questReportObjectiveProgressAsync(
     request: Schemas['ReportProgressRequest'],
     channel: number = 0,
     timeout?: number
@@ -255,7 +255,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getObjectiveProgressAsync(
+  async questGetObjectiveProgressAsync(
     request: Schemas['GetObjectiveProgressRequest'],
     channel: number = 0,
     timeout?: number
@@ -273,7 +273,7 @@ export class QuestProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async questGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

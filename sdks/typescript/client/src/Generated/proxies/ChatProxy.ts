@@ -31,7 +31,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerRoomTypeAsync(
+  async chatRegisterRoomTypeAsync(
     request: Schemas['RegisterRoomTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRoomTypeAsync(
+  async chatGetRoomTypeAsync(
     request: Schemas['GetRoomTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRoomTypesAsync(
+  async chatListRoomTypesAsync(
     request: Schemas['ListRoomTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -89,7 +89,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateRoomTypeAsync(
+  async chatUpdateRoomTypeAsync(
     request: Schemas['UpdateRoomTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -109,7 +109,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateRoomTypeAsync(
+  async chatDeprecateRoomTypeAsync(
     request: Schemas['DeprecateRoomTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -127,7 +127,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createRoomAsync(
+  async chatCreateRoomAsync(
     request: Schemas['CreateRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -147,7 +147,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRoomAsync(
+  async chatGetRoomAsync(
     request: Schemas['GetRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -167,7 +167,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRoomsAsync(
+  async chatListRoomsAsync(
     request: Schemas['ListRoomsRequest'],
     channel: number = 0,
     timeout?: number
@@ -187,7 +187,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateRoomAsync(
+  async chatUpdateRoomAsync(
     request: Schemas['UpdateRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -207,7 +207,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteRoomAsync(
+  async chatDeleteRoomAsync(
     request: Schemas['DeleteRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -227,7 +227,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async archiveRoomAsync(
+  async chatArchiveRoomAsync(
     request: Schemas['ArchiveRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -247,7 +247,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async joinRoomAsync(
+  async chatJoinRoomAsync(
     request: Schemas['JoinRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -267,7 +267,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async leaveRoomAsync(
+  async chatLeaveRoomAsync(
     request: Schemas['LeaveRoomRequest'],
     channel: number = 0,
     timeout?: number
@@ -287,7 +287,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listParticipantsAsync(
+  async chatListParticipantsAsync(
     request: Schemas['ListParticipantsRequest'],
     channel: number = 0,
     timeout?: number
@@ -305,7 +305,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async kickParticipantAsync(
+  async chatKickParticipantAsync(
     request: Schemas['KickParticipantRequest'],
     channel: number = 0,
     timeout?: number
@@ -325,7 +325,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async banParticipantAsync(
+  async chatBanParticipantAsync(
     request: Schemas['BanParticipantRequest'],
     channel: number = 0,
     timeout?: number
@@ -345,7 +345,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unbanParticipantAsync(
+  async chatUnbanParticipantAsync(
     request: Schemas['UnbanParticipantRequest'],
     channel: number = 0,
     timeout?: number
@@ -365,7 +365,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async muteParticipantAsync(
+  async chatMuteParticipantAsync(
     request: Schemas['MuteParticipantRequest'],
     channel: number = 0,
     timeout?: number
@@ -385,7 +385,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unmuteParticipantAsync(
+  async chatUnmuteParticipantAsync(
     request: Schemas['UnmuteParticipantRequest'],
     channel: number = 0,
     timeout?: number
@@ -403,7 +403,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async changeParticipantRoleAsync(
+  async chatChangeParticipantRoleAsync(
     request: Schemas['ChangeParticipantRoleRequest'],
     channel: number = 0,
     timeout?: number
@@ -421,7 +421,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async sendMessageAsync(
+  async chatSendMessageAsync(
     request: Schemas['SendMessageRequest'],
     channel: number = 0,
     timeout?: number
@@ -441,7 +441,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async sendMessageBatchAsync(
+  async chatSendMessageBatchAsync(
     request: Schemas['SendMessageBatchRequest'],
     channel: number = 0,
     timeout?: number
@@ -459,7 +459,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getMessageHistoryAsync(
+  async chatGetMessageHistoryAsync(
     request: Schemas['MessageHistoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -477,7 +477,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteMessageAsync(
+  async chatDeleteMessageAsync(
     request: Schemas['DeleteMessageRequest'],
     channel: number = 0,
     timeout?: number
@@ -497,7 +497,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async pinMessageAsync(
+  async chatPinMessageAsync(
     request: Schemas['PinMessageRequest'],
     channel: number = 0,
     timeout?: number
@@ -517,7 +517,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unpinMessageAsync(
+  async chatUnpinMessageAsync(
     request: Schemas['UnpinMessageRequest'],
     channel: number = 0,
     timeout?: number
@@ -537,7 +537,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async searchMessagesAsync(
+  async chatSearchMessagesAsync(
     request: Schemas['SearchMessagesRequest'],
     channel: number = 0,
     timeout?: number
@@ -555,7 +555,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async adminListRoomsAsync(
+  async chatAdminListRoomsAsync(
     request: Schemas['AdminListRoomsRequest'],
     channel: number = 0,
     timeout?: number
@@ -575,7 +575,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async adminGetStatsAsync(
+  async chatAdminGetStatsAsync(
     request: Schemas['AdminGetStatsRequest'],
     channel: number = 0,
     timeout?: number
@@ -595,7 +595,7 @@ export class ChatProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async adminForceCleanupAsync(
+  async chatAdminForceCleanupAsync(
     request: Schemas['AdminForceCleanupRequest'],
     channel: number = 0,
     timeout?: number
