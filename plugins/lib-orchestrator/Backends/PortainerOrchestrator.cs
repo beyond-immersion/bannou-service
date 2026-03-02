@@ -31,9 +31,10 @@ public class PortainerOrchestrator : IContainerOrchestrator
     /// </summary>
     private const string BANNOU_APP_ID_LABEL = "bannou.app-id";
 
-    // NOTE: Portainer/Docker API uses camelCase - intentionally NOT using BannouJson.Options
-    // which is designed for internal Bannou service communication
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    // Portainer/Docker API uses camelCase and its own conventions. Isolated from BannouJson.Options
+    // so that changes to internal Bannou serialization (enum format, null handling, number handling)
+    // cannot break external API communication.
+    private static readonly JsonSerializerOptions PortainerJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true
@@ -85,7 +86,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
                 return (false, $"Portainer returned {response.StatusCode}");
             }
 
-            var status = await response.Content.ReadFromJsonAsync<PortainerStatus>(JsonOptions, cancellationToken);
+            var status = await response.Content.ReadFromJsonAsync<PortainerStatus>(PortainerJsonOptions, cancellationToken);
             return (true, $"Portainer {status?.Version ?? "unknown"}");
         }
         catch (Exception ex)
@@ -217,7 +218,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var containers = await response.Content.ReadFromJsonAsync<List<PortainerContainer>>(
-                JsonOptions,
+                PortainerJsonOptions,
                 cancellationToken) ?? new List<PortainerContainer>();
 
             // Filter to containers with app-id label
@@ -295,7 +296,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
         }
 
         var containers = await response.Content.ReadFromJsonAsync<List<PortainerContainer>>(
-            JsonOptions,
+            PortainerJsonOptions,
             cancellationToken) ?? new List<PortainerContainer>();
 
         return containers.FirstOrDefault(c =>
@@ -408,7 +409,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var createResult = await createResponse.Content.ReadFromJsonAsync<PortainerCreateContainerResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             // Start the container
             var startUrl = $"/api/endpoints/{_endpointId}/docker/containers/{createResult?.Id}/start";
@@ -602,7 +603,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerNetworksPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedNetworks = result?.NetworksDeleted ?? new List<string>();
 
@@ -655,7 +656,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerVolumesPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedVolumes = result?.VolumesDeleted ?? new List<string>();
             var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);
@@ -710,7 +711,7 @@ public class PortainerOrchestrator : IContainerOrchestrator
             }
 
             var result = await response.Content.ReadFromJsonAsync<PortainerImagesPruneResponse>(
-                JsonOptions, cancellationToken);
+                PortainerJsonOptions, cancellationToken);
 
             var deletedImages = result?.ImagesDeleted ?? new List<PortainerImageDeleteResponse>();
             var reclaimedBytes = (long)(result?.SpaceReclaimed ?? 0);
