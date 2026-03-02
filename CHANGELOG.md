@@ -9,6 +9,118 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.16.0] - 2026-03-02
+
+### Added
+
+#### New Services
+
+- **Transit Service (L2)**: Full implementation of the geographic connectivity and movement primitive — 33 endpoints, 8 state stores, Dijkstra-based route calculation with risk assessment, multi-modal journey tracking, discovery management, seasonal connection availability, `${transit.*}` variable provider for ABML, two background workers (journey archival, seasonal connection updates), and DI-based `ITransitCostModifierProvider` for L4 cost enrichment
+- **Worldstate Service (L2)**: Full implementation of per-realm game-time authority and calendar system — 18 endpoints, configurable time ratios, calendar templates with period/season/month structures, clock advancement worker with boundary event publishing, downtime catch-up, `${world.*}` variable provider (14 variables), client events for time sync, cross-node cache invalidation, and `GetElapsedGameTime` API for lazy evaluation patterns
+
+#### Cross-Cutting: Client Events
+
+- **9 new client event schemas**: Auth, Character, Collection, Currency, Inventory, Location, Status, Subscription, Transit — enabling real-time WebSocket push notifications for state changes across the platform
+- **Collection client events**: `collection.entry.unlocked`, `collection.milestone-reached`, `collection.discovery-advanced`
+- **Currency client events**: Balance changes, transfer notifications, hold lifecycle
+- **Subscription client events**: `SubscriptionStatusChanged` for background expiration awareness
+- **Inventory client events**: Item movement and container change notifications
+- **Location client events**: Presence and location state updates
+
+#### Cross-Cutting: Telemetry Instrumentation
+
+- **T30 compliance across L2-L4**: Added `ITelemetryProvider` with `StartActivity` spans to all async methods in Transit, Worldstate, Quest, Asset, Voice, Orchestrator, Game Session, Collection, Subscription, Seed, Location, Realm, Relationship, Currency, Inventory, Item, and first six L4 plugins
+
+#### Cross-Cutting: Production Hardening
+
+- **StateStore reference normalization**: Migrated all services to use generated `StateStoreDefinitions` constant properties instead of string literals
+- **Deprecation lifecycle normalization**: Standardized deprecation patterns (T31) across all services with triple-field model (`IsDeprecated`, `DeprecatedAt`, `DeprecationReason`)
+- **Sentinel value elimination**: Replaced `Guid.Empty` and empty string sentinels with nullable types (T26) across Quest, Game Session, Inventory, Item, Currency, and others
+- **Type safety enforcement**: Replaced string fields with proper enum/Guid types (T25) in Currency, Inventory, Item, Game Session, and Collection
+
+#### Game Session (L2) Hardening
+
+- **Hierarchy violation fix**: Removed `IVoiceClient` dependency (L2→L3 violation); voice lifecycle now managed by L4 services
+- **Lifecycle event publishing**: Implemented `game-session.updated` (with `changedFields`) and `game-session.deleted` (with `deletedReason`) events
+- **Player membership validation**: `PerformGameActionAsync` now validates player membership before allowing actions
+- **`autoLobbyEnabled` gating**: Respects GameService `autoLobbyEnabled` flag before publishing lobby shortcuts
+- **Distributed locks**: Added lock coverage for session-list read-modify-write operations
+
+#### Collection (L2) Hardening
+
+- **Global first-unlock tracking**: Redis set operations for atomic first-unlock detection per game service + collection type; `IsFirstGlobal` now reports correctly
+- **Resource cleanup migration**: Migrated character-owned collection cleanup from event-based to lib-resource `x-references` pattern
+- **ICollectionUnlockListener**: DI-based unlock notification dispatch for in-process delivery (Seed growth pipeline, Faction integration)
+- **ETag concurrency**: Added optimistic concurrency control
+
+#### Quest (L2) Hardening
+
+- **CHARACTER_LEVEL prerequisite**: Migrated from stub to dynamic `IPrerequisiteProviderFactory` with graceful degradation
+- **Quest log category filtering**: Added `category` filter parameter to `GetQuestLogRequest`
+- **ETag-based concurrency**: Retry loop for all CharacterIndex mutations (accept, complete, abandon, expire)
+- **Configuration bounds**: Added min/max constraints to all 12 integer config properties
+
+#### Asset (L3) Hardening
+
+- **BundleCleanupWorker**: New background service auto-purging soft-deleted bundles past retention window
+- **ZipCacheCleanupWorker**: New background service purging expired ZIP cache entries
+- **Event publishing fix**: `asset.processing.queued` and `asset.ready` events now actually published (were declared but unused)
+- **Index failure observability**: Upgraded retry exhaustion from silent logging to error events via `TryPublishErrorAsync`
+- **23 new configuration properties**: MinIO retry behavior, processing defaults, cleanup intervals, cache management
+
+#### Voice (L3) Hardening
+
+- **Distributed locks**: Added `IDistributedLockProvider` for broadcast consent flow atomicity
+- **Kamailio code removal**: Deleted orphaned `IKamailioClient` and `KamailioClient` infrastructure
+- **Event topic normalization**: Renamed 5 event topics per naming conventions (`voice.room.broadcast.*` → `voice.broadcast.*`)
+
+#### Orchestrator (L3) Hardening
+
+- **Pool state store**: New isolated Redis store for processing pool data
+- **Background lease cleanup**: Timer-based `ServiceHealthMonitor` for proactive expired lease reclamation
+- **Multi-version config rollback**: Optional `targetVersion` field for rolling back to any historical version
+- **Log timestamp parsing fix**: Continuation lines inherit preceding line's parsed timestamp
+- **8 new configuration properties**: Pool management, timeouts, cleanup intervals
+
+#### Other L2 Service Improvements
+
+- **Subscription**: Distributed locks, telemetry spans, constructor caching, type safety, worker delegation (88%→95%)
+- **Seed**: Constructor caching, telemetry spans, sentinel elimination, schema validation (88%→95%)
+- **Location**: `${location.*}` variable provider, presence tracking, hardened to L3 (92%→97%)
+- **Character**: Schema NRT compliance, telemetry spans, MySQL JSON queries (90%→97%)
+- **Realm**: ETag concurrency, distributed merge lock, full event coverage (95%→100%)
+- **Game Service**: Resource cleanup on delete, T9/T21/T26/T28/T30 compliant (93%→100%)
+- **Relationship**: Telemetry, constructor caching, deprecation lifecycle, sentinel elimination (90%→95%)
+- **Inventory**: T8/T25/T26/T29/T30 compliant, 93 tests (80%→85%)
+- **Item**: T7/T8/T25/T29/T30 compliant, 70 tests (88%→92%)
+- **Currency**: 7 bugs fixed, T25/T30 compliant (78%→85%)
+- **Actor**: Transit and Worldstate variable providers integrated, event topic normalization (65%→90%)
+
+#### Documentation
+
+- **Director deep dive**: New L4 GameFeatures service for human-in-the-loop orchestration
+- **Bannou Aspirations**: New aspirational architecture document
+- **Planning documents**: Bannou Embedded, Cryptic Trails, Logos Resonance Items
+- **Tenet reorganization**: Split implementation tenets into IMPLEMENTATION-BEHAVIOR.md and IMPLEMENTATION-DATA.md
+
+#### SDKs & Tooling
+
+- **TypeScript SDK regeneration**: Updated generated clients for all schema changes
+- **Game-service attribute fix**: Fixed `x-service-layer` attribute bug in game-service schema
+- **TypeScript operationId conflict resolution**: Fixed generation script for conflicting operationIds across services
+
+### Fixed
+
+- **Collection**: `GrantEntryAsync` bypassing `MaxCollectionsPerOwner`, cleanup handlers not publishing `collection.deleted`, `UpdateEntryTemplateAsync` ignoring `hideWhenLocked`/`discoveryLevels`, `ListEntryTemplatesAsync` ignoring `pageSize`
+- **Game Session**: Voice hierarchy violation (L2→L3), missing lifecycle events, session-list cleanup lacking distributed lock, actions endpoint not validating player membership
+- **Asset**: Schema-code event mismatch (`asset.processing.queued`/`asset.ready` never published), silent index retry exhaustion, model initialization safety
+- **Voice**: Dead `IKamailioClient` infrastructure, `VoiceRoomStateEvent` never published (removed), event topic naming violations
+- **Quest**: `Guid.Empty` sentinel for quest giver, hardcoded reward container slots, layer classification comments
+- **Orchestrator**: Expired lease lazy-only reclamation, dead TTL-based cache invalidation logic, log timestamp continuation lines
+- **Currency**: 7 bugs fixed during production hardening pass
+
+---
+
 ## [0.15.0] - 2026-02-23
 
 ### Added
@@ -653,7 +765,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/beyond-immersion/bannou-service/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/beyond-immersion/bannou-service/compare/v0.12.0...v0.13.0
