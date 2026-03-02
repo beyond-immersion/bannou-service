@@ -256,6 +256,13 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     public int PoolLockTimeoutSeconds { get; set; } = 15;
 
     /// <summary>
+    /// Interval in seconds for background timer that reclaims expired processing pool leases
+    /// Environment variable: ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10)]
+    public int LeaseCleanupIntervalSeconds { get; set; } = 60;
+
+    /// <summary>
     /// Default HTTP port for discovered service instances used in health checks and mesh registration
     /// Environment variable: ORCHESTRATOR_DEFAULT_SERVICE_PORT
     /// </summary>

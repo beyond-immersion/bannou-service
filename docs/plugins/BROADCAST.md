@@ -149,6 +149,7 @@ lib-broadcast delivers value independently. It can broadcast game content to Twi
 |-----------|-------------|
 | lib-showtime (L4) | Subscribes to `broadcast.audience.pulse` for real audience blending with simulated audiences |
 | lib-showtime (L4) | Subscribes to `x-lifecycle` platform-session and broadcast-output events for session/broadcast awareness |
+| lib-director *(planned)* | During directed events, Director coordinates broadcast output: signaling priority levels for camera/source selection, associating platform sessions with directed events for metrics capture, and timing broadcast start/stop around event lifecycle phases. See [DIRECTOR.md](DIRECTOR.md) Broadcast & Showtime Integration |
 
 ---
 
@@ -545,6 +546,8 @@ Broadcast pushes real-time status updates to connected WebSocket clients via `IC
 6. **Broadcast recording**: FFmpeg can simultaneously output to both RTMP and a local file. Recorded broadcasts could be uploaded to the Asset service for archival. Useful for highlight reels and content flywheel integration.
 
 7. **Custom sentiment models**: Per-game-service sentiment processing rules (different games care about different emotional categories). Configurable via a sentiment model store rather than hardcoded categories.
+
+8. **Director-coordinated broadcast priority**: During directed events, Director signals broadcast priority levels indicating event importance (0 = no broadcast, 1-10 = priority). Broadcast uses this to prioritize camera selection, source quality, and RTMP output allocation when multiple events compete for broadcast resources. Requires a priority-aware source selection mechanism and potentially a broadcast scheduling API that Director can call to reserve broadcast capacity ahead of planned events. See [DIRECTOR.md](DIRECTOR.md).
 
 ---
 

@@ -22,6 +22,7 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private readonly IOrchestratorStateManager _stateManager;
     private readonly IOrchestratorEventManager _eventManager;
     private readonly IControlPlaneServiceProvider _controlPlaneProvider;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ITelemetryProvider _telemetryProvider;
 
     // Cache of current service routings to detect changes
@@ -36,6 +37,10 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
     private Timer? _fullMappingsTimer;
     private readonly TimeSpan _fullMappingsInterval;
 
+    // Periodic lease cleanup timer
+    private Timer? _leaseCleanupTimer;
+    private readonly TimeSpan _leaseCleanupInterval;
+
     // Periodic timer always publishes — no in-memory routing-change flag needed (IMPLEMENTATION TENETS)
 
     public ServiceHealthMonitor(
@@ -46,16 +51,19 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         IOrchestratorEventManager eventManager,
         IControlPlaneServiceProvider controlPlaneProvider,
         IMeshInstanceIdentifier instanceIdentifier,
+        IDistributedLockProvider lockProvider,
         ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
         _fullMappingsInterval = TimeSpan.FromSeconds(configuration.FullMappingsIntervalSeconds);
+        _leaseCleanupInterval = TimeSpan.FromSeconds(configuration.LeaseCleanupIntervalSeconds);
         _appConfiguration = appConfiguration;
         _stateManager = stateManager;
         _eventManager = eventManager;
         _controlPlaneProvider = controlPlaneProvider;
         _instanceId = instanceIdentifier.InstanceId;
+        _lockProvider = lockProvider;
         ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
         _telemetryProvider = telemetryProvider;
 
@@ -69,9 +77,17 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
             dueTime: _fullMappingsInterval,
             period: _fullMappingsInterval);
 
+        // Start periodic lease cleanup for processing pools
+        _leaseCleanupTimer = new Timer(
+            callback: _ => _ = ReclaimExpiredLeasesForAllPoolsAsync(),
+            state: null,
+            dueTime: _leaseCleanupInterval,
+            period: _leaseCleanupInterval);
+
         _logger.LogInformation(
-            "ServiceHealthMonitor started with {Interval}s full mappings publication interval",
-            _fullMappingsInterval.TotalSeconds);
+            "ServiceHealthMonitor started with {MappingsInterval}s full mappings and {LeaseInterval}s lease cleanup intervals",
+            _fullMappingsInterval.TotalSeconds,
+            _leaseCleanupInterval.TotalSeconds);
     }
 
     /// <summary>
@@ -625,8 +641,104 @@ public class ServiceHealthMonitor : IServiceHealthMonitor, IAsyncDisposable
         return await _stateManager.GetServiceHeartbeatAsync(serviceId, appId);
     }
 
+    /// <summary>
+    /// Periodically reclaims expired processing pool leases across all known pool types.
+    /// Returns expired processors to the available list so pools do not appear artificially exhausted.
+    /// Uses distributed locks to prevent concurrent modification with AcquireProcessor/ReleaseProcessor.
+    /// </summary>
+    private async Task ReclaimExpiredLeasesForAllPoolsAsync()
+    {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.orchestrator", "ServiceHealthMonitor.ReclaimExpiredLeasesForAllPools");
+
+        var knownPools = await _stateManager.GetKnownPoolTypesAsync();
+        if (knownPools == null || knownPools.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var poolType in knownPools)
+        {
+            try
+            {
+                await using var poolLock = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.OrchestratorLock,
+                    poolType,
+                    Guid.NewGuid().ToString(),
+                    _configuration.PoolLockTimeoutSeconds);
+
+                if (!poolLock.Success)
+                {
+                    _logger.LogDebug(
+                        "Skipping lease cleanup for pool {PoolType}: could not acquire lock",
+                        poolType);
+                    continue;
+                }
+
+                var leases = await _stateManager.GetLeasesAsync(poolType);
+                if (leases == null || leases.Count == 0)
+                {
+                    continue;
+                }
+
+                var expiredLeaseIds = new List<string>();
+                foreach (var kvp in leases)
+                {
+                    if (kvp.Value.ExpiresAt < now)
+                    {
+                        expiredLeaseIds.Add(kvp.Key);
+                    }
+                }
+
+                if (expiredLeaseIds.Count == 0)
+                {
+                    continue;
+                }
+
+                var availableProcessors = await _stateManager.GetAvailableProcessorsAsync(poolType)
+                    ?? new List<ProcessorInstance>();
+
+                foreach (var leaseId in expiredLeaseIds)
+                {
+                    var expiredLease = leases[leaseId];
+
+                    availableProcessors.Add(new ProcessorInstance
+                    {
+                        ProcessorId = expiredLease.ProcessorId,
+                        AppId = expiredLease.AppId,
+                        PoolType = poolType,
+                        Status = ProcessorStatus.Available,
+                        LastUpdated = now
+                    });
+
+                    leases.Remove(leaseId);
+
+                    _logger.LogInformation(
+                        "Background reclaimed expired lease {LeaseId} for processor {ProcessorId} in pool {PoolType} (expired at {ExpiresAt})",
+                        leaseId, expiredLease.ProcessorId, poolType, expiredLease.ExpiresAt);
+                }
+
+                await _stateManager.SetAvailableProcessorsAsync(poolType, availableProcessors);
+                await _stateManager.SetLeasesAsync(poolType, leases);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to reclaim expired leases for pool {PoolType}", poolType);
+            }
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
+        if (_leaseCleanupTimer != null)
+        {
+            await _leaseCleanupTimer.DisposeAsync();
+            _leaseCleanupTimer = null;
+        }
+
         if (_fullMappingsTimer != null)
         {
             await _fullMappingsTimer.DisposeAsync();

@@ -128,6 +128,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `IndexUpdateMaxRetries` | `ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES` | `3` | Max retries for state index update operations |
 | `DefaultPoolLeaseTimeoutSeconds` | `ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS` | `300` | Default lease timeout for acquired pool instances |
 | `PoolLockTimeoutSeconds` | `ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for distributed locks on pool operations |
+| `LeaseCleanupIntervalSeconds` | `ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS` | `60` | Background timer interval for reclaiming expired pool leases |
 | `PortainerRequestTimeoutSeconds` | `ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS` | `30` | HTTP request timeout for Portainer API calls |
 | `DefaultServicePort` | `ORCHESTRATOR_DEFAULT_SERVICE_PORT` | `80` | Default HTTP port for discovered service instances used in health checks and mesh registration |
 | `RedisConnectionString` | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis connection string |
@@ -148,7 +149,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `IHttpClientFactory` | Singleton | HTTP client for OpenResty cache invalidation |
 | `IOrchestratorStateManager` | Singleton | State operations: heartbeats, routings, config versions, pool data |
 | `IOrchestratorEventManager` | Singleton | Deployment/health event publishing |
-| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports (injects IControlPlaneServiceProvider) |
+| `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports, periodic lease cleanup (injects IControlPlaneServiceProvider + IDistributedLockProvider) |
 | `ISmartRestartManager` | Singleton | Configuration-based restart determination |
 | `ITelemetryProvider` | Singleton | Span instrumentation for all async operations |
 | `IContainerOrchestrator` | (resolved at runtime) | Backend-specific container operations |
@@ -442,7 +443,8 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 - **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/553 -->
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
-- **Lease expiry enforcement**: Background timer to reclaim expired leases and return processors to available pool.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/554 -->
+- ~~**Lease expiry enforcement**~~: **FIXED** (2026-03-02) - Added periodic lease cleanup timer to ServiceHealthMonitor (60-second default interval, configurable via `ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS`). Timer iterates all known pool types under distributed lock and reclaims expired leases by returning processors to the available list. Lazy reclamation in AcquireProcessor still runs as fast-path; the background timer prevents metric inflation and resource leaks when no acquire requests arrive.
 
 ---
 
@@ -460,7 +462,7 @@ None currently active.
 
 3. **Pool metrics window reset is lazy**: `JobsCompleted1h` and `JobsFailed1h` counters reset when the first operation occurs after the 1-hour window has elapsed. There is no background timer - the reset happens inline during `UpdatePoolMetricsAsync`.
 
-4. **Expired lease reclamation is lazy**: When a processor lease expires, it is reclaimed during the next `AcquireProcessorAsync` call. There is no background timer proactively scanning for expired leases. Pools with no acquire traffic will not reclaim expired processors until the next request arrives.
+4. **Expired lease reclamation has dual paths**: Expired leases are reclaimed both lazily (during `AcquireProcessorAsync` as a fast-path) and proactively (via background timer in `ServiceHealthMonitor` every `LeaseCleanupIntervalSeconds`, default 60s). The lazy path ensures immediate availability during acquire; the background path prevents metric inflation when no acquire requests arrive.
 
 5. **OpenResty cache invalidation is non-blocking**: If OpenResty is unavailable (common in local dev), the deployment proceeds normally. Cache will eventually expire based on OpenResty's own TTL.
 
@@ -490,6 +492,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Log timestamp parsing**: Fixed (2026-03-02). Continuation lines now inherit preceding line's timestamp instead of UtcNow.
 - **Design Consideration #4 (GetOrchestratorAsync TTL dead code)**: Fixed (2026-03-02). Removed dead TTL-based cache invalidation logic, `_orchestratorCachedAt` field, and `CacheTtlMinutes` config property. Method simplified to within-request reuse only.
 - **Multi-version rollback**: Fixed (2026-03-02). Added optional `targetVersion` field to `ConfigRollbackRequest` schema. Service validates target is >= 1 and < current version.
+- **Lease expiry enforcement**: Fixed (2026-03-02). Added background lease cleanup timer to ServiceHealthMonitor with configurable interval (`LeaseCleanupIntervalSeconds`, default 60s). Iterates all known pool types under distributed lock and returns expired processors to available list.
 
 ---
 

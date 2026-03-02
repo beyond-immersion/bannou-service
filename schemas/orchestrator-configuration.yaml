@@ -218,6 +218,12 @@ x-service-configuration:
       env: ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS
       default: 15
       minimum: 1
+    LeaseCleanupIntervalSeconds:
+      type: integer
+      description: Interval in seconds for background timer that reclaims expired processing pool leases
+      env: ORCHESTRATOR_LEASE_CLEANUP_INTERVAL_SECONDS
+      default: 60
+      minimum: 10
 
     # Service Discovery Configuration
     DefaultServicePort:

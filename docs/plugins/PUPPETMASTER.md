@@ -35,6 +35,7 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 |-----------|-------------|
 | lib-actor | Consumes `IBehaviorDocumentProvider` (priority 100) for dynamic behavior loading |
 | *(future)* | Other services may subscribe to `puppetmaster.watcher.*` events |
+| lib-director *(planned)* | During directed events, Director queries watcher state (active regional watchers, their behavior documents, assigned realms) and manages watcher lifecycle for event-related actors via `IPuppetmasterClient`. Director also queries the behavior document cache for ABML document metadata when developers inspect actors. See [DIRECTOR.md](DIRECTOR.md) |
 
 ---
 

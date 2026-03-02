@@ -176,6 +176,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-puppetmaster | Calls `IActorClient.InjectPerceptionAsync` to inject perceptions into running actors; calls `IActorClient.ListActorsAsync` to enumerate actors for behavior cache invalidation after asset updates |
+| lib-director *(planned)* | Observes actor state via tap mechanism (perception streams, variable snapshots, GOAP plans); steers actors via `InjectPerception` and GOAP cost overrides via `IVariableProviderFactory`; drives actors by pausing ABML execution and issuing commands through the `IActionHandler` pipeline. See [DIRECTOR.md](DIRECTOR.md) |
 
 ---
 
@@ -673,6 +674,12 @@ Actor State Model
 6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
 7. ~~**Worldstate variable provider**~~: **FIXED** (2026-03-02) — lib-worldstate now implements `WorldProviderFactory` providing 14 `${world.*}` variables (time, calendar, season, derived). See [WORLDSTATE.md](WORLDSTATE.md) Variable Provider section.
+
+8. **Director tap mechanism**: Actor publishes per-tick state snapshots (perceptions, variable provider outputs, GOAP plans, behavior position) to a `director.tap.{actorId}` RabbitMQ topic when a tap is active. Tap registration uses special perception types (`director_tap_start`/`director_tap_stop`) injected via `InjectPerception` that Actor recognizes as side-channel control signals (no-op for cognition, activate/deactivate tap publishing). Enables real-time developer observation without modifying the behavior loop. See [DIRECTOR.md](DIRECTOR.md) Tier 1.
+
+9. **ABML execution pause/resume for drive sessions**: The existing `paused` `ActorStatus` value (currently unused) would be activated by Director's drive mechanism. When a developer binds to an actor, the behavior loop pauses at the current checkpoint; the developer issues commands through the same `IActionHandler` pipeline that ABML bytecode uses. On release, the behavior loop resumes from `on_tick` with all developer-made state changes (feelings, goals, memories) preserved. Requires new endpoints or command types for pause/resume control. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
+
+10. **External action handler pipeline access**: Expose the actor's `IActionHandler` pipeline to external callers (not just ABML bytecode execution) for developer-driven command execution during drive sessions. The developer issues the same action YAML syntax that ABML documents use (`call:`, `load_snapshot:`, `watch:`, `emit_perception:`, etc.) routed through the same handlers, producing identical results. This makes drive sessions simultaneously a production orchestration tool and an integration test for the entire actor action system. See [DIRECTOR.md](DIRECTOR.md) Tier 3.
 
 ---
 

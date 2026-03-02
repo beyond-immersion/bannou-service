@@ -211,6 +211,7 @@ Some services that list characters may want to exclude system realms by default.
 | Dependent | Relationship |
 |-----------|-------------|
 | *(none yet)* | Divine is a new L4 service with no current consumers. Future dependents may include Variable Provider Factory implementations for ABML behavior expressions (`${divine.*}`) |
+| lib-director *(planned)* | During directed events, Director queries deity state (domain power, active blessings, follower counts) for divine actor observation context, and coordinates divine actors during god-driven events. Director interacts with divine actors primarily through Actor APIs (tap, steer, drive), but calls Divine APIs for deity-specific state enrichment. See [DIRECTOR.md](DIRECTOR.md) |
 
 ## Type Field Classification
 

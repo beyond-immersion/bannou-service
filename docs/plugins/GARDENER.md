@@ -187,6 +187,7 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 | Dependent | Relationship |
 |-----------|-------------|
 | *(none discovered)* | No other plugins currently reference `IGardenerClient` or subscribe to gardener events |
+| lib-director *(planned)* | During directed events, Director calls Gardener APIs to amplify player targeting: boosting POI scoring weights for event-targeted players, spawning event-themed scenario templates with elevated priority, and adjusting garden orchestration to draw players toward event regions. Director also subscribes to `gardener.scenario.completed` for event participation metrics. See [DIRECTOR.md](DIRECTOR.md) Player Targeting Methods |
 
 ## State Storage
 
@@ -573,6 +574,8 @@ Player connects → Gardener triggers divine actor for garden-tending
 9. **Gardener-to-Gardener communication for co-op gardens**: When multiple players share a cooperative garden, their gardener behaviors need to coordinate. This could use the existing pair bond mechanism for bonded players, but ad-hoc multiplayer gardens (matchmade groups, guild activities) need a coordination pattern. Possible approaches: shared garden state in Redis, inter-actor messaging via the Actor runtime, or a dedicated co-op coordination layer.
 
 10. **Location → session registration** ([#499](https://github.com/beyond-immersion/bannou-service/issues/499)): Add `("location", locationId)` entity session registration when a player's character enters a location, enabling Location (L2) to push entity presence change client events to all players at a location. Registration updated atomically (unregister old location, register new) when the character moves between locations. Part of the broader L1/L2 client event rollout ([#502](https://github.com/beyond-immersion/bannou-service/issues/502)).
+
+11. **Director-driven player targeting APIs**: Director needs to externally influence Gardener's scenario selection and POI spawning for directed events. Options: (A) Director calls Gardener APIs directly (spawn POI, create temporary template, boost scoring weights per-player) -- simpler but tighter coupling; (B) Director publishes targeting intents and Gardener has a consumer that implements them -- cleaner but requires Gardener to understand Director targeting concepts. Either approach requires new endpoints or event handlers beyond what Gardener currently exposes. The `GardenerAmplificationMultiplier` configuration in Director provides the scoring weight boost factor. See [DIRECTOR.md](DIRECTOR.md).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/499 -->
 
 ## Known Quirks & Caveats
