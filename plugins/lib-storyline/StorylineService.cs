@@ -63,6 +63,7 @@ public partial class StorylineService : IStorylineService
     private readonly IRelationshipClient _relationshipClient;
     private readonly IServiceProvider _serviceProvider;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<StorylineService> _logger;
     private readonly StorylineServiceConfiguration _configuration;
 
@@ -91,6 +92,7 @@ public partial class StorylineService : IStorylineService
         IRelationshipClient relationshipClient,
         IServiceProvider serviceProvider,
         IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<StorylineService> logger,
         StorylineServiceConfiguration configuration)
     {
@@ -101,6 +103,7 @@ public partial class StorylineService : IStorylineService
         ArgumentNullException.ThrowIfNull(relationshipClient);
         ArgumentNullException.ThrowIfNull(serviceProvider);
         ArgumentNullException.ThrowIfNull(lockProvider);
+        ArgumentNullException.ThrowIfNull(telemetryProvider);
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -110,6 +113,7 @@ public partial class StorylineService : IStorylineService
         _relationshipClient = relationshipClient;
         _serviceProvider = serviceProvider;
         _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
 
@@ -1258,6 +1262,7 @@ public partial class StorylineService : IStorylineService
     private async Task<(ArchiveBundle bundle, List<Guid> archiveIds, List<Guid> snapshotIds, string? error)>
         FetchSeedDataAsync(ICollection<SeedSource> seedSources, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.FetchSeedDataAsync");
         var bundle = new ArchiveBundle();
         var archiveIds = new List<Guid>();
         var snapshotIds = new List<Guid>();
@@ -1700,6 +1705,7 @@ public partial class StorylineService : IStorylineService
         CachedPlan plan,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.UpdatePlanIndexAsync");
         var indexKey = $"realm:{realmId}";
         var score = plan.CreatedAt.ToUnixTimeSeconds();
 
@@ -1722,6 +1728,7 @@ public partial class StorylineService : IStorylineService
         int generationTimeMs,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.PublishComposedEventAsync");
         var composedEvent = new StorylineComposedEvent
         {
             PlanId = planId,
@@ -1758,6 +1765,7 @@ public partial class StorylineService : IStorylineService
         Guid scenarioId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.GetScenarioDefinitionWithCacheAsync");
         var key = scenarioId.ToString();
 
         // Try cache first
@@ -1791,6 +1799,7 @@ public partial class StorylineService : IStorylineService
         Guid? gameServiceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.FindScenarioByCodeAsync");
         var normalizedCode = code.ToUpperInvariant();
 
         // Query with code filter (MySQL handles case-insensitive comparison)
@@ -2067,6 +2076,7 @@ public partial class StorylineService : IStorylineService
         IDictionary<string, Guid>? additionalParticipants,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.ApplyMutationAsync");
         try
         {
             switch (mutation.MutationType)
@@ -2296,6 +2306,7 @@ public partial class StorylineService : IStorylineService
         Guid characterId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.storyline", "StorylineService.SpawnQuestAsync");
         try
         {
             // Soft L4 dependency - graceful degradation

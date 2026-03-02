@@ -117,7 +117,8 @@ public class MatchmakingServiceTests : ServiceTestBase<MatchmakingServiceConfigu
             _mockClientEventPublisher.Object,
             _mockGameSessionClient.Object,
             _mockPermissionClient.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            Mock.Of<ITelemetryProvider>());
     }
 
     /// <summary>

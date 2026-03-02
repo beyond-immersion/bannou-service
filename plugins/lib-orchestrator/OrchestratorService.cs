@@ -38,13 +38,9 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Cached orchestrator instance for container operations.
+    /// Provides within-request reuse (service is Scoped, field resets per request).
     /// </summary>
     private IContainerOrchestrator? _orchestrator;
-
-    /// <summary>
-    /// Timestamp when the orchestrator was cached. Used for TTL-based invalidation.
-    /// </summary>
-    private DateTimeOffset _orchestratorCachedAt;
 
     /// <summary>
     /// Last known deployment configuration. Loaded on startup for awareness mode.
@@ -164,55 +160,17 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Gets or creates the container orchestrator for the best available backend.
-    /// Implements TTL-based cache invalidation to handle connection staleness.
+    /// Provides within-request reuse only (service is Scoped, instance resets per request).
     /// </summary>
     private async Task<IContainerOrchestrator> GetOrchestratorAsync(CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.GetOrchestratorAsync");
         if (_orchestrator != null)
         {
-            // Check if TTL has expired (0 = caching disabled)
-            var ttlMinutes = _configuration.CacheTtlMinutes;
-            if (ttlMinutes > 0)
-            {
-                var cacheAge = DateTimeOffset.UtcNow - _orchestratorCachedAt;
-                if (cacheAge.TotalMinutes >= ttlMinutes)
-                {
-                    _logger.LogDebug(
-                        "Orchestrator cache TTL expired ({Age:F1}min >= {Ttl}min), re-validating connection",
-                        cacheAge.TotalMinutes, ttlMinutes);
-
-                    // Re-validate the connection using CheckAvailabilityAsync
-                    var (isAvailable, message) = await _orchestrator.CheckAvailabilityAsync(cancellationToken);
-
-                    if (isAvailable)
-                    {
-                        // Connection still valid - refresh the cache timestamp
-                        _orchestratorCachedAt = DateTimeOffset.UtcNow;
-                        _logger.LogDebug(
-                            "Orchestrator connection re-validated successfully: {Message}",
-                            message);
-                    }
-                    else
-                    {
-                        // Connection invalid - dispose and re-detect
-                        _logger.LogWarning(
-                            "Orchestrator connection invalid after TTL expiry: {Message}. Re-detecting backend.",
-                            message);
-                        _orchestrator.Dispose();
-                        _orchestrator = null;
-                    }
-                }
-            }
-
-            if (_orchestrator != null)
-            {
-                return _orchestrator;
-            }
+            return _orchestrator;
         }
 
         _orchestrator = await _backendDetector.CreateBestOrchestratorAsync(cancellationToken);
-        _orchestratorCachedAt = DateTimeOffset.UtcNow;
         return _orchestrator;
     }
 
@@ -1620,6 +1578,7 @@ public partial class OrchestratorService : IOrchestratorService
         // Stderr section is appended after a "[STDERR]" marker by ReadDockerLogStreamAsync
         var logEntries = new List<LogEntry>();
         var currentStream = LogStreamType.Stdout;
+        var lastTimestamp = DateTimeOffset.UtcNow;
 
         foreach (var line in logsText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
@@ -1629,14 +1588,16 @@ public partial class OrchestratorService : IOrchestratorService
                 continue;
             }
 
-            var timestamp = DateTimeOffset.UtcNow;
+            var timestamp = lastTimestamp;
             var message = line;
 
-            // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds)
+            // Try to parse Docker timestamp prefix (ISO 8601 with nanoseconds).
+            // Continuation lines (e.g., stack traces) inherit the preceding line's timestamp.
             var spaceIndex = line.IndexOf(' ');
             if (spaceIndex > 0 && DateTimeOffset.TryParse(line[..spaceIndex], out var parsed))
             {
                 timestamp = parsed;
+                lastTimestamp = parsed;
                 message = line[(spaceIndex + 1)..];
             }
 

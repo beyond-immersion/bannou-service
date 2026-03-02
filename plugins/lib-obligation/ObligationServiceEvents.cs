@@ -48,6 +48,7 @@ public partial class ObligationService
     /// <param name="evt">The contract activated event.</param>
     public async Task HandleContractActivatedAsync(ContractActivatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.HandleContractActivatedAsync");
         _logger.LogDebug("Handling contract.activated for contract {ContractId}", evt.ContractId);
 
         var characterIds = ExtractCharacterPartyIds(evt.Parties);
@@ -83,6 +84,7 @@ public partial class ObligationService
     /// <param name="evt">The contract terminated event.</param>
     public async Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.HandleContractTerminatedAsync");
         _logger.LogDebug("Handling contract.terminated for contract {ContractId}", evt.ContractId);
 
         var characterIds = await GetCharacterPartiesFromContractAsync(evt.ContractId);
@@ -114,6 +116,7 @@ public partial class ObligationService
     /// <param name="evt">The contract fulfilled event.</param>
     public async Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.HandleContractFulfilledAsync");
         _logger.LogDebug("Handling contract.fulfilled for contract {ContractId}", evt.ContractId);
 
         var characterIds = ExtractCharacterPartyIds(evt.Parties);
@@ -149,6 +152,7 @@ public partial class ObligationService
     /// <param name="evt">The contract expired event.</param>
     public async Task HandleContractExpiredAsync(ContractExpiredEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.HandleContractExpiredAsync");
         _logger.LogDebug("Handling contract.expired for contract {ContractId}", evt.ContractId);
 
         var characterIds = await GetCharacterPartiesFromContractAsync(evt.ContractId);
@@ -195,6 +199,7 @@ public partial class ObligationService
     /// </summary>
     private async Task<List<Guid>> GetCharacterPartiesFromContractAsync(Guid contractId)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.GetCharacterPartiesFromContractAsync");
         try
         {
             var contractInstance = await _contractClient.GetContractInstanceAsync(

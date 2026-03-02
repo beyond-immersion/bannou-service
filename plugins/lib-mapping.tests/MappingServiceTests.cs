@@ -147,7 +147,8 @@ public class MappingServiceTests
             _mockEventConsumer.Object,
             _mockAssetClient.Object,
             _mockHttpClientFactory.Object,
-            _mockAffordanceScorer.Object);
+            _mockAffordanceScorer.Object,
+            Mock.Of<ITelemetryProvider>());
     }
 
     #region Constructor Validation

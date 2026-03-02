@@ -21,14 +21,6 @@ x-service-configuration:
       env: ORCHESTRATOR_SECURE_WEBSOCKET
       default: true
 
-    # Cache Configuration
-    CacheTtlMinutes:
-      type: integer
-      description: Cache TTL in minutes for orchestrator data
-      env: ORCHESTRATOR_CACHE_TTL_MINUTES
-      default: 5
-      minimum: 1
-
     # Backend Configuration
     DefaultBackend:
       $ref: 'orchestrator-api.yaml#/components/schemas/BackendType'

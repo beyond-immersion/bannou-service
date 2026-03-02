@@ -22,6 +22,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
     private readonly IMessageBus _messageBus;
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly ILogger<VersionCleanupManager> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionCleanupManager"/> class.
@@ -32,7 +33,8 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         IAssetClient assetClient,
         IMessageBus messageBus,
         IVersionDataLoader versionDataLoader,
-        ILogger<VersionCleanupManager> logger)
+        ILogger<VersionCleanupManager> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
@@ -40,6 +42,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         _messageBus = messageBus;
         _versionDataLoader = versionDataLoader;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -49,6 +52,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         IStateStore<HotSaveEntry> hotCacheStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionCleanupManager.PerformRollingCleanupAsync");
         if (slot.VersionCount <= slot.MaxVersions)
         {
             return 0;
@@ -110,6 +114,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         SaveSlotMetadata slot,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionCleanupManager.CleanupOldVersionsAsync");
         if (slot.VersionCount <= slot.MaxVersions)
         {
             return;
@@ -208,6 +213,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         int maxChainLength,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionCleanupManager.CollapseExcessiveDeltaChainsAsync");
         if (deltaVersions.Count == 0)
         {
             return 0;
@@ -371,6 +377,7 @@ public sealed class VersionCleanupManager : IVersionCleanupManager
         IStateStore<SaveVersionManifest> versionStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionCleanupManager.CalculateChainLengthAsync");
         var chainLength = 0;
         var current = deltaVersion;
 

@@ -45,6 +45,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     private readonly WatchRegistry _watchRegistry;
     private readonly ResourceEventMapping _resourceEventMapping;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Registry of active watchers indexed by watcher ID.
@@ -69,6 +70,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     /// <param name="watchRegistry">Watch registry for resource subscriptions.</param>
     /// <param name="resourceEventMapping">Resource event topic mapping.</param>
     /// <param name="scopeFactory">Service scope factory for IActorClient access.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub fan-out.</param>
     public PuppetmasterService(
         IMessageBus messageBus,
@@ -79,6 +81,7 @@ public partial class PuppetmasterService : IPuppetmasterService
         WatchRegistry watchRegistry,
         ResourceEventMapping resourceEventMapping,
         IServiceScopeFactory scopeFactory,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _messageBus = messageBus;
@@ -89,6 +92,7 @@ public partial class PuppetmasterService : IPuppetmasterService
         _watchRegistry = watchRegistry;
         _resourceEventMapping = resourceEventMapping;
         _scopeFactory = scopeFactory;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class (PuppetmasterServiceEvents.cs)
         RegisterEventConsumers(eventConsumer);

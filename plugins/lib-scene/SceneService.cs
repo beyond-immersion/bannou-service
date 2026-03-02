@@ -36,6 +36,7 @@ public partial class SceneService : ISceneService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IEventConsumer _eventConsumer;
     private readonly ISceneValidationService _validationService;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes
     private const string SCENE_INDEX_PREFIX = "scene:index:";
@@ -84,7 +85,8 @@ public partial class SceneService : ISceneService
         SceneServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
-        ISceneValidationService validationService)
+        ISceneValidationService validationService,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -93,6 +95,7 @@ public partial class SceneService : ISceneService
         _lockProvider = lockProvider;
         _eventConsumer = eventConsumer;
         _validationService = validationService;
+        _telemetryProvider = telemetryProvider;
 
         // Register event consumers via partial class
         RegisterEventConsumers(_eventConsumer);
@@ -1180,6 +1183,7 @@ public partial class SceneService : ISceneService
     /// <returns>The asset ID (scene ID) for the stored content.</returns>
     private async Task<Guid> StoreSceneAssetAsync(Scene scene, CancellationToken cancellationToken, Guid? existingAssetId = null)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.StoreSceneAssetAsync");
         var yaml = YamlSerializer.Serialize(scene);
         var sceneId = scene.SceneId;
         var contentKey = $"{SCENE_CONTENT_PREFIX}{sceneId}";
@@ -1208,6 +1212,7 @@ public partial class SceneService : ISceneService
     /// <returns>The deserialized scene, or null if not found.</returns>
     private async Task<Scene?> LoadSceneAssetAsync(Guid assetId, string? version, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.LoadSceneAssetAsync");
         var contentKey = $"{SCENE_CONTENT_PREFIX}{assetId}";
         var contentStore = _stateStoreFactory.GetStore<SceneContentEntry>(StateStoreDefinitions.Scene);
 
@@ -1230,6 +1235,7 @@ public partial class SceneService : ISceneService
     /// <returns>List of version info entries, newest first.</returns>
     private async Task<List<VersionInfo>> GetAssetVersionHistoryAsync(Guid sceneId, int limit, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.GetAssetVersionHistoryAsync");
         var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
 
@@ -1257,6 +1263,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task AddVersionHistoryEntryAsync(string sceneId, string version, string? editorId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.AddVersionHistoryEntryAsync");
         var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
 
@@ -1287,6 +1294,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task DeleteVersionHistoryAsync(string sceneId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.DeleteVersionHistoryAsync");
         var historyStore = _stateStoreFactory.GetStore<List<VersionHistoryEntry>>(StateStoreDefinitions.Scene);
         var historyKey = $"{SCENE_VERSION_HISTORY_PREFIX}{sceneId}";
         await historyStore.DeleteAsync(historyKey, cancellationToken);
@@ -1294,6 +1302,7 @@ public partial class SceneService : ISceneService
 
     private async Task UpdateSceneIndexesAsync(Scene newScene, Scene? oldScene, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.UpdateSceneIndexesAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
         // Remove from old game/type indexes if changed
@@ -1382,6 +1391,7 @@ public partial class SceneService : ISceneService
 
     private async Task RemoveFromIndexesAsync(SceneIndexEntry indexEntry, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.RemoveFromIndexesAsync");
         var guidSetStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
 
         // Remove from game index
@@ -1410,6 +1420,7 @@ public partial class SceneService : ISceneService
     /// <returns>Set of all scene IDs.</returns>
     private async Task<HashSet<Guid>> GetAllSceneIdsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.GetAllSceneIdsAsync");
         var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
         return globalIndex ?? new HashSet<Guid>();
@@ -1420,6 +1431,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task AddToGlobalSceneIndexAsync(Guid sceneId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.AddToGlobalSceneIndexAsync");
         var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken) ?? new HashSet<Guid>();
         globalIndex.Add(sceneId);
@@ -1431,6 +1443,7 @@ public partial class SceneService : ISceneService
     /// </summary>
     private async Task RemoveFromGlobalSceneIndexAsync(Guid sceneId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.RemoveFromGlobalSceneIndexAsync");
         var globalIndexStore = _stateStoreFactory.GetStore<HashSet<Guid>>(StateStoreDefinitions.Scene);
         var globalIndex = await globalIndexStore.GetAsync(SCENE_GLOBAL_INDEX_KEY, cancellationToken);
         if (globalIndex != null)
@@ -1443,6 +1456,7 @@ public partial class SceneService : ISceneService
     private async Task<(List<ResolvedReference>, List<UnresolvedReference>, List<string>)> ResolveReferencesAsync(
         Scene scene, int maxDepth, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.ResolveReferencesAsync");
         var resolved = new List<ResolvedReference>();
         var unresolved = new List<UnresolvedReference>();
         var errors = new List<string>();
@@ -1458,6 +1472,7 @@ public partial class SceneService : ISceneService
         List<ResolvedReference> resolved, List<UnresolvedReference> unresolved, List<string> errors,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.ResolveReferencesRecursiveAsync");
         if (node.NodeType == NodeType.Reference)
         {
             var referencedSceneId = GetReferenceSceneId(node);
@@ -1789,6 +1804,7 @@ public partial class SceneService : ISceneService
 
     private async Task PublishSceneCreatedEventAsync(Scene scene, int nodeCount, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.PublishSceneCreatedEventAsync");
         var eventModel = new SceneCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1810,6 +1826,7 @@ public partial class SceneService : ISceneService
 
     private async Task PublishSceneUpdatedEventAsync(Scene scene, string previousVersion, int nodeCount, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.PublishSceneUpdatedEventAsync");
         var eventModel = new SceneUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1831,6 +1848,7 @@ public partial class SceneService : ISceneService
 
     private async Task PublishSceneDeletedEventAsync(Scene scene, int nodeCount, string? reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.scene", "SceneService.PublishSceneDeletedEventAsync");
         var eventModel = new SceneDeletedEvent
         {
             EventId = Guid.NewGuid(),

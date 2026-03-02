@@ -1698,6 +1698,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             mockStoreFactory.Object,
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         Assert.Contains("guardian", listener.InterestedSeedTypes);
@@ -1744,6 +1745,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             mockStoreFactory.Object,
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         await listener.OnPhaseChangedAsync(
@@ -1771,6 +1773,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var listener = new GardenerSeedEvolutionListener(
             Mock.Of<IStateStoreFactory>(),
             Configuration,
+            Mock.Of<ITelemetryProvider>(),
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         Assert.Contains("custom-type", listener.InterestedSeedTypes);

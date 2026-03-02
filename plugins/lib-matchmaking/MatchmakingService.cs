@@ -43,6 +43,7 @@ public partial class MatchmakingService : IMatchmakingService
     private readonly IPermissionClient _permissionClient;
     private readonly IMatchmakingAlgorithm _algorithm;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string QUEUE_KEY_PREFIX = "queue:";
     private const string QUEUE_LIST_KEY = "queue-list";
@@ -73,7 +74,8 @@ public partial class MatchmakingService : IMatchmakingService
         IClientEventPublisher clientEventPublisher,
         IGameSessionClient gameSessionClient,
         IPermissionClient permissionClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -83,6 +85,7 @@ public partial class MatchmakingService : IMatchmakingService
         _gameSessionClient = gameSessionClient;
         _permissionClient = permissionClient;
         _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
         // Instantiate directly since internal types are used
         // Tests can access via InternalsVisibleTo
         _algorithm = new MatchmakingAlgorithm();
@@ -793,6 +796,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task TryImmediateMatchAsync(TicketModel ticket, QueueModel queue, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.TryImmediateMatchAsync");
         try
         {
             // Get all tickets in queue
@@ -832,6 +836,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task FormMatchAsync(List<TicketModel> tickets, QueueModel queue, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.FormMatchAsync");
         var matchId = Guid.NewGuid();
         var acceptDeadline = DateTimeOffset.UtcNow.AddSeconds(queue.MatchAcceptTimeoutSeconds);
 
@@ -943,6 +948,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task FinalizeMatchAsync(MatchModel match, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.FinalizeMatchAsync");
         _logger.LogInformation("Finalizing match {MatchId}", match.MatchId);
 
         // Create game session via RPC to lib-game-session
@@ -1066,6 +1072,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task CancelMatchAsync(MatchModel match, Guid? declinedBy, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.CancelMatchAsync");
         _logger.LogInformation("Cancelling match {MatchId}, declined by {DeclinedBy}",
             match.MatchId, declinedBy);
 
@@ -1159,6 +1166,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task CancelTicketInternalAsync(Guid ticketId, CancelReason reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.CancelTicketInternalAsync");
         var ticket = await LoadTicketAsync(ticketId, cancellationToken);
         if (ticket == null) return;
 
@@ -1229,6 +1237,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task CleanupTicketAsync(Guid ticketId, Guid accountId, string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.CleanupTicketAsync");
         await DeleteTicketAsync(ticketId, cancellationToken);
         await RemoveFromPlayerTicketsAsync(accountId, ticketId, cancellationToken);
         await RemoveFromQueueTicketsAsync(queueId, ticketId, cancellationToken);
@@ -1243,6 +1252,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task PublishMatchmakingShortcutsAsync(Guid sessionId, Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.PublishMatchmakingShortcutsAsync");
         try
         {
             var sessionIdStr = sessionId.ToString();
@@ -1324,6 +1334,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task PublishMatchShortcutsAsync(Guid sessionId, Guid accountId, Guid matchId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.PublishMatchShortcutsAsync");
         try
         {
             var sessionIdStr = sessionId.ToString();
@@ -1406,12 +1417,14 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<string>> GetQueueIdsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.GetQueueIdsAsync");
         return await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_LIST_KEY, cancellationToken) ?? new List<string>();
     }
 
     private async Task AddToQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToQueueListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
@@ -1431,6 +1444,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueListAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromQueueListAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, QUEUE_LIST_KEY, Guid.NewGuid().ToString(), 15, cancellationToken);
         if (!lockResponse.Success)
@@ -1449,60 +1463,70 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<QueueModel?> LoadQueueAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.LoadQueueAsync");
         return await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_KEY_PREFIX + queueId, cancellationToken);
     }
 
     private async Task SaveQueueAsync(QueueModel queue, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.SaveQueueAsync");
         await _stateStoreFactory.GetStore<QueueModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(QUEUE_KEY_PREFIX + queue.QueueId, queue, cancellationToken: cancellationToken);
     }
 
     private async Task<TicketModel?> LoadTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.LoadTicketAsync");
         return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task SaveTicketAsync(TicketModel ticket, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.SaveTicketAsync");
         await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(TICKET_KEY_PREFIX + ticket.TicketId, ticket, cancellationToken: cancellationToken);
     }
 
     private async Task<bool> DeleteTicketAsync(Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.DeleteTicketAsync");
         return await _stateStoreFactory.GetStore<TicketModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(TICKET_KEY_PREFIX + ticketId, cancellationToken);
     }
 
     private async Task<MatchModel?> LoadMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.LoadMatchAsync");
         return await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .GetAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task SaveMatchAsync(MatchModel match, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.SaveMatchAsync");
         await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .SaveAsync(MATCH_KEY_PREFIX + match.MatchId, match, cancellationToken: cancellationToken);
     }
 
     private async Task DeleteMatchAsync(Guid matchId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.DeleteMatchAsync");
         await _stateStoreFactory.GetStore<MatchModel>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(MATCH_KEY_PREFIX + matchId, cancellationToken);
     }
 
     private async Task<List<Guid>> GetPlayerTicketsAsync(Guid accountId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.GetPlayerTicketsAsync");
         return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PLAYER_TICKETS_PREFIX + accountId, cancellationToken) ?? new List<Guid>();
     }
 
     private async Task AddToPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToPlayerTicketsAsync");
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
@@ -1523,6 +1547,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromPlayerTicketsAsync(Guid accountId, Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromPlayerTicketsAsync");
         var key = PLAYER_TICKETS_PREFIX + accountId;
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
@@ -1542,18 +1567,21 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<List<Guid>> GetQueueTicketIdsAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.GetQueueTicketIdsAsync");
         return await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Matchmaking)
             .GetAsync(QUEUE_TICKETS_PREFIX + queueId, cancellationToken) ?? new List<Guid>();
     }
 
     private async Task<int> GetQueueTicketCountAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.GetQueueTicketCountAsync");
         var ids = await GetQueueTicketIdsAsync(queueId, cancellationToken);
         return ids.Count;
     }
 
     private async Task AddToQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.AddToQueueTicketsAsync");
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
@@ -1574,6 +1602,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task RemoveFromQueueTicketsAsync(string queueId, Guid ticketId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.RemoveFromQueueTicketsAsync");
         var key = QUEUE_TICKETS_PREFIX + queueId;
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.MatchmakingLock, key, Guid.NewGuid().ToString(), 15, cancellationToken);
@@ -1593,6 +1622,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task StorePendingMatchAsync(Guid accountId, Guid matchId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.StorePendingMatchAsync");
         var wrapper = new PendingMatchWrapper { MatchId = matchId };
         var options = new StateOptions { Ttl = _configuration.PendingMatchRedisKeyTtlSeconds };
         await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
@@ -1601,6 +1631,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task<Guid?> GetPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.GetPendingMatchAsync");
         var wrapper = await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .GetAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
         return wrapper?.MatchId;
@@ -1608,6 +1639,7 @@ public partial class MatchmakingService : IMatchmakingService
 
     private async Task ClearPendingMatchAsync(Guid accountId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.ClearPendingMatchAsync");
         await _stateStoreFactory.GetStore<PendingMatchWrapper>(StateStoreDefinitions.Matchmaking)
             .DeleteAsync(PENDING_MATCH_PREFIX + accountId, cancellationToken);
     }
@@ -1662,6 +1694,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     internal async Task ProcessAllQueuesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.ProcessAllQueuesAsync");
         var queueIds = await GetQueueIdsAsync(cancellationToken);
         _logger.LogDebug("Processing {Count} queues for interval matching", queueIds.Count);
 
@@ -1684,6 +1717,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     private async Task ProcessQueueIntervalAsync(string queueId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.ProcessQueueIntervalAsync");
         var queue = await LoadQueueAsync(queueId, cancellationToken);
         if (queue == null || !queue.Enabled)
         {
@@ -1792,6 +1826,7 @@ public partial class MatchmakingService : IMatchmakingService
     /// </summary>
     internal async Task PublishStatsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingService.PublishStatsAsync");
         try
         {
             var queueIds = await GetQueueIdsAsync(cancellationToken);

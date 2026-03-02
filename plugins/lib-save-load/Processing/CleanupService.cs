@@ -23,6 +23,7 @@ public class CleanupService : BackgroundService
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly AppConfiguration _appConfiguration;
     private readonly ILogger<CleanupService> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new CleanupService instance.
@@ -31,12 +32,14 @@ public class CleanupService : BackgroundService
         IServiceProvider serviceProvider,
         SaveLoadServiceConfiguration configuration,
         AppConfiguration appConfiguration,
-        ILogger<CleanupService> logger)
+        ILogger<CleanupService> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _configuration = configuration;
         _appConfiguration = appConfiguration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -100,6 +103,7 @@ public class CleanupService : BackgroundService
 
     private async Task RunScheduledCleanupAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "CleanupService.RunScheduledCleanupAsync");
         _logger.LogDebug("Running scheduled cleanup");
 
         var stateStoreFactory = serviceProvider.GetRequiredService<IStateStoreFactory>();
@@ -193,6 +197,7 @@ public class CleanupService : BackgroundService
         IAssetClient assetClient,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "CleanupService.CleanupSlotAsync");
         // Get versions for this slot
         // SaveSlotMetadata.SlotId and SaveVersionManifest.SlotId are both Guid - compare directly
         var versions = await versionStore.QueryAsync(v => v.SlotId == slot.SlotId, cancellationToken);

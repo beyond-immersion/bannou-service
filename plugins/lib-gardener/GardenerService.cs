@@ -1632,6 +1632,7 @@ public partial class GardenerService : IGardenerService
     private async Task<IReadOnlyList<PoiModel>> LoadActivePoisAsync(
         GardenInstanceModel garden, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.LoadActivePoisAsync");
         var pois = new List<PoiModel>();
         foreach (var poiId in garden.ActivePoiIds)
         {
@@ -1648,6 +1649,7 @@ public partial class GardenerService : IGardenerService
     internal async Task<DeploymentPhaseConfigModel> GetOrCreatePhaseConfigAsync(
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.GetOrCreatePhaseConfigAsync");
         var config = await PhaseStore.GetAsync(PhaseConfigKey, ct);
         if (config != null)
             return config;
@@ -1676,6 +1678,7 @@ public partial class GardenerService : IGardenerService
         bool fullCompletion,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.CalculateAndAwardGrowthAsync");
         var growthAwarded = GardenerGrowthCalculation.CalculateGrowth(
             scenario, template, _configuration.GrowthAwardMultiplier, fullCompletion,
             (float)_configuration.GrowthFullCompletionMaxRatio,
@@ -1741,6 +1744,7 @@ public partial class GardenerService : IGardenerService
         ScenarioTemplateModel? template,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.WriteScenarioHistoryAsync");
         var primaryParticipant = scenario.Participants.FirstOrDefault();
         if (primaryParticipant == null) return;
 
@@ -1770,6 +1774,7 @@ public partial class GardenerService : IGardenerService
     private async Task TryCleanupGameSessionAsync(
         ScenarioInstanceModel scenario, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.TryCleanupGameSessionAsync");
         foreach (var participant in scenario.Participants)
         {
             try

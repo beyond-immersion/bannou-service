@@ -62,6 +62,7 @@ public partial class SaveLoadService : ISaveLoadService
     private readonly IVersionCleanupManager _versionCleanupManager;
     private readonly ISaveExportImportManager _saveExportImportManager;
     private readonly ISaveMigrationHandler _saveMigrationHandler;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     public SaveLoadService(
         IMessageBus messageBus,
@@ -74,7 +75,8 @@ public partial class SaveLoadService : ISaveLoadService
         IVersionDataLoader versionDataLoader,
         IVersionCleanupManager versionCleanupManager,
         ISaveExportImportManager saveExportImportManager,
-        ISaveMigrationHandler saveMigrationHandler)
+        ISaveMigrationHandler saveMigrationHandler,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -87,6 +89,7 @@ public partial class SaveLoadService : ISaveLoadService
         _versionCleanupManager = versionCleanupManager;
         _saveExportImportManager = saveExportImportManager;
         _saveMigrationHandler = saveMigrationHandler;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -2587,6 +2590,7 @@ public partial class SaveLoadService : ISaveLoadService
         string slotName,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.FindSlotByOwnerAndNameAsync");
         var slotQueryStore = _stateStoreFactory.GetQueryableStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
         var matchingSlots = await slotQueryStore.QueryAsync(
             s => s.OwnerId == ownerId &&
@@ -2639,6 +2643,7 @@ public partial class SaveLoadService : ISaveLoadService
 
     private async Task PublishSaveSlotCreatedEventAsync(SaveSlotMetadata slot, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotCreatedEventAsync");
         var eventModel = new SaveSlotCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2665,6 +2670,7 @@ public partial class SaveLoadService : ISaveLoadService
 
     private async Task PublishSaveSlotUpdatedEventAsync(SaveSlotMetadata slot, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotUpdatedEventAsync");
         var eventModel = new SaveSlotUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -2692,6 +2698,7 @@ public partial class SaveLoadService : ISaveLoadService
 
     private async Task PublishSaveSlotDeletedEventAsync(SaveSlotMetadata slot, string? deletedReason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveLoadService.PublishSaveSlotDeletedEventAsync");
         var eventModel = new SaveSlotDeletedEvent
         {
             EventId = Guid.NewGuid(),

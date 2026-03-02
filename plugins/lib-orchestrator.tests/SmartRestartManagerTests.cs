@@ -82,8 +82,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = false,
-                ServiceName = serviceName,
-                CurrentStatus = "healthy",
+                CurrentStatus = InstanceHealthStatus.Healthy,
                 Reason = "Service is running normally"
             });
 
@@ -97,10 +96,9 @@ public class SmartRestartManagerTests : IAsyncLifetime
         var result = await manager.RestartServiceAsync(request);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal(serviceName, result.ServiceName);
-        Assert.Contains("Restart not needed", result.Message);
-        Assert.Equal("healthy", result.CurrentStatus);
+        Assert.False(result.Succeeded);
+        Assert.Contains("Restart not needed", result.DeclineReason);
+        Assert.Equal(InstanceHealthStatus.Healthy, result.CurrentStatus);
     }
 
     [Fact]
@@ -114,8 +112,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = true,
-                ServiceName = serviceName,
-                CurrentStatus = "degraded",
+                CurrentStatus = InstanceHealthStatus.Degraded,
                 Reason = "No heartbeat for 5 minutes"
             });
 
@@ -129,10 +126,10 @@ public class SmartRestartManagerTests : IAsyncLifetime
         var result = await manager.RestartServiceAsync(request);
 
         // Assert - Should fail at Docker step
-        Assert.False(result.Success);
-        Assert.Equal(serviceName, result.ServiceName);
+        Assert.False(result.Succeeded);
         // Error message indicates Docker-related failure
-        Assert.Contains("failed", result.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(result.DeclineReason);
+        Assert.Contains("failed", result.DeclineReason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -147,8 +144,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = false,
-                ServiceName = serviceName,
-                CurrentStatus = "healthy"
+                CurrentStatus = InstanceHealthStatus.Healthy
             });
 
         var request = new ServiceRestartRequest
@@ -162,8 +158,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
 
         // Assert - Health check was called only for status, not for restart decision
         // The restart should have been attempted despite health saying no
-        Assert.False(result.Success); // Fails at Docker step
-        Assert.Equal(serviceName, result.ServiceName);
+        Assert.False(result.Succeeded); // Fails at Docker step
     }
 
     [Fact]
@@ -177,8 +172,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = true,
-                ServiceName = serviceName,
-                CurrentStatus = "degraded"
+                CurrentStatus = InstanceHealthStatus.Degraded
             });
 
         var request = new ServiceRestartRequest
@@ -196,8 +190,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
 
         // Assert - Should still attempt restart even with env vars
         // Will fail at Docker step since client is not initialized
-        Assert.False(result.Success);
-        Assert.Equal(serviceName, result.ServiceName);
+        Assert.False(result.Succeeded);
         // Verify health check was still used to get previous status
         _mockHealthMonitor.Verify(x => x.ShouldRestartServiceAsync(serviceName), Times.AtLeastOnce);
     }
@@ -217,8 +210,7 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = true,
-                ServiceName = serviceName,
-                CurrentStatus = "degraded"
+                CurrentStatus = InstanceHealthStatus.Degraded
             });
 
         var request = new ServiceRestartRequest
@@ -231,10 +223,10 @@ public class SmartRestartManagerTests : IAsyncLifetime
         var result = await manager.RestartServiceAsync(request);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal(serviceName, result.ServiceName);
-        Assert.Equal("error", result.CurrentStatus);
-        Assert.Contains("failed", result.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(result.Succeeded);
+        Assert.Null(result.CurrentStatus);
+        Assert.NotNull(result.DeclineReason);
+        Assert.Contains("failed", result.DeclineReason, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -257,9 +249,9 @@ public class SmartRestartManagerTests : IAsyncLifetime
         var result = await manager.RestartServiceAsync(request);
 
         // Assert
-        Assert.False(result.Success);
-        Assert.Equal(serviceName, result.ServiceName);
-        Assert.Contains("Health monitor connection failed", result.Message);
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.DeclineReason);
+        Assert.Contains("Health monitor connection failed", result.DeclineReason);
     }
 
     #endregion
@@ -319,8 +311,8 @@ public class SmartRestartManagerTests : IAsyncLifetime
             .ReturnsAsync(new RestartRecommendation
             {
                 ShouldRestart = false,
-                ServiceName = serviceName,
-                CurrentStatus = "healthy"
+                CurrentStatus = InstanceHealthStatus.Healthy,
+                Reason = "Service is healthy"
             });
 
         var request = new ServiceRestartRequest

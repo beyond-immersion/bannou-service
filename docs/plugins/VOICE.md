@@ -4,8 +4,7 @@
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
 > **Layer**: AppFeatures
-> **State Store**: voice-statestore (Redis), voice-lock (Redis)
-> **Planning**: N/A
+> **State Stores**: voice-statestore (Redis), voice-lock (Redis)
 
 ## Overview
 
@@ -450,15 +449,13 @@ SHOWTIME_SERVICE_ENABLED=true
 3. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
 
-4. ~~**Game-agnostic API descriptions**~~: **FIXED** (2026-03-01) - Updated `voice-client-events.yaml` to change "game session ID" to "WebSocket session ID" in VoiceRoomStateClientEvent.sessionId description. Updated `voice-api.yaml` to change "lib-stream" references to "lib-broadcast" in broadcast consent endpoint and BroadcastConsentStatus.rtpAudioEndpoint descriptions. Regenerated voice service.
-
-5. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed; blocked on lib-broadcast service implementation.
+4. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.broadcast.approved` and `voice.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration. **Voice's integration surface is complete** — all three broadcast events (`approved`, `declined`, `stopped`) are published with correct typed models. No voice code changes needed; blocked on lib-broadcast service implementation.
 <!-- AUDIT:BLOCKED:2026-03-01 -->
 
-6. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2). **Voice's integration surface is complete** — all four lifecycle events (`voice.room.created`, `voice.room.deleted`, `voice.peer.joined`, `voice.peer.left`) are published with correct typed models. No voice code changes needed; blocked on lib-showtime service implementation.
+5. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2). **Voice's integration surface is complete** — all four lifecycle events (`voice.room.created`, `voice.room.deleted`, `voice.peer.joined`, `voice.peer.left`) are published with correct typed models. No voice code changes needed; blocked on lib-showtime service implementation.
 <!-- AUDIT:BLOCKED:2026-03-01 -->
 
-7. **Session lifecycle event cleanup**: Voice service does not subscribe to `session.disconnected` or `session.reconnected` events. When a WebSocket session disconnects, the participant remains in the voice room until their heartbeat times out (eviction worker). The eviction worker is the safety net, not the primary cleanup mechanism.
+6. **Session lifecycle event cleanup**: Voice service does not subscribe to `session.disconnected` or `session.reconnected` events. When a WebSocket session disconnects, the participant remains in the voice room until their heartbeat times out (eviction worker). The eviction worker is the safety net, not the primary cleanup mechanism.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/154 -->
 
 ---
@@ -516,10 +513,6 @@ None identified.
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
-3. ~~**Realm-specific voice manifestation**~~: **FIXED** (2026-03-01) - Resolved: Voice is L3 and contains zero realm references. Realm-specific manifestation (e.g., "bard performing" in Arcadia vs explicit voice rooms in Omega) is entirely a client rendering and lib-showtime (L4) concern. Voice provides the audio primitive; it never knows about realms. Moved to Intentional Quirks #8.
-
-4. ~~**Voice room capacity and the streaming metagame**~~: **FIXED** (2026-03-01) - Resolved: Voice room capacity counts only real registered participants (sessions with SIP/SDP endpoints via `ISipEndpointRegistry`). Showtime's audience members are completely separate lightweight data objects stored in `showtime-audience-pool` (Redis), not voice room participants. When Showtime creates a voice room for a game session (`AutoVoiceOnGameSession`), the `maxParticipants` reflects real player count, not audience size. The separation is architectural: Voice has no concept of audiences, and Showtime maintains independent data stores for audience pools (`showtime-audience-pool`) and voice room associations (`showtime-session-voice`).
-
 ---
 
 ## Work Tracking
@@ -544,8 +537,4 @@ None identified.
 
 ### Completed
 
-| Date | Gap | Fix |
-|------|-----|-----|
-| 2026-03-01 | Game-agnostic API descriptions (Stubs #4) | Fixed "game session ID" → "WebSocket session ID" in client events schema, "lib-stream" → "lib-broadcast" in API schema descriptions |
-| 2026-03-01 | Realm-specific voice manifestation (Design #3) | Resolved as Intentional Quirk #8: Voice is L3 with zero realm references. Realm-specific manifestation is a client/lib-showtime concern. |
-| 2026-03-01 | Voice room capacity and the streaming metagame (Design #4) | Resolved: Voice capacity counts real participants only; Showtime audience members are separate data objects in independent stores. No code change needed. |
+*No completed items.*

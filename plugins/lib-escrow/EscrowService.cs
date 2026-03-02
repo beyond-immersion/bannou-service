@@ -89,6 +89,7 @@ public partial class EscrowService : IEscrowService
     private readonly ILogger<EscrowService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
     private readonly IEventConsumer _eventConsumer;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Keys
 
@@ -197,18 +198,21 @@ public partial class EscrowService : IEscrowService
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Service configuration.</param>
     /// <param name="eventConsumer">Event consumer for subscription registration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public EscrowService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<EscrowService> logger,
         EscrowServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
         _eventConsumer = eventConsumer;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -383,6 +387,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="cancellationToken">Cancellation token.</param>
     internal async Task IncrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.IncrementPartyPendingCountAsync");
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
@@ -422,6 +427,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="cancellationToken">Cancellation token.</param>
     internal async Task DecrementPartyPendingCountAsync(Guid partyId, EntityType partyType, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.DecrementPartyPendingCountAsync");
         var partyKey = GetPartyPendingKey(partyId, partyType);
         var now = DateTimeOffset.UtcNow;
 
@@ -661,6 +667,7 @@ public partial class EscrowService : IEscrowService
     /// <param name="cancellationToken">Cancellation token.</param>
     private async Task EmitErrorAsync(string operation, string error, object? context = null, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.EmitErrorAsync");
         _logger.LogError("Escrow operation {Operation} failed: {Error}", operation, error);
         await _messageBus.TryPublishErrorAsync(
             "escrow",

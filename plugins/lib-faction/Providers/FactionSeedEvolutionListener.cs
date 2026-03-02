@@ -34,6 +34,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<FactionSeedEvolutionListener> _logger;
 
     /// <summary>
@@ -42,15 +43,18 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// <param name="stateStoreFactory">State store factory for faction data access.</param>
     /// <param name="configuration">Faction configuration for seed type code.</param>
     /// <param name="messageBus">Message bus for event publishing.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public FactionSeedEvolutionListener(
         IStateStoreFactory stateStoreFactory,
         FactionServiceConfiguration configuration,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         ILogger<FactionSeedEvolutionListener> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         InterestedSeedTypes = new HashSet<string> { configuration.SeedTypeCode };
     }
@@ -64,6 +68,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionSeedEvolutionListener.OnGrowthRecordedAsync");
+
         // Faction seeds are owned by factions (ownerType = "faction")
         if (notification.OwnerType != EntityType.Faction)
         {
@@ -83,6 +89,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionSeedEvolutionListener.OnPhaseChangedAsync");
+
         if (notification.OwnerType != EntityType.Faction)
         {
             return;
@@ -140,6 +148,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionSeedEvolutionListener.OnCapabilitiesChangedAsync");
+
         if (notification.OwnerType != EntityType.Faction)
         {
             return;

@@ -13,11 +13,13 @@ public class SchemaMigratorTests
 {
     private readonly Mock<ILogger<SchemaMigrator>> _loggerMock;
     private readonly Mock<IQueryableStateStore<SaveSchemaDefinition>> _schemaStoreMock;
+    private readonly Mock<ITelemetryProvider> _telemetryProviderMock;
 
     public SchemaMigratorTests()
     {
         _loggerMock = new Mock<ILogger<SchemaMigrator>>();
         _schemaStoreMock = new Mock<IQueryableStateStore<SaveSchemaDefinition>>();
+        _telemetryProviderMock = new Mock<ITelemetryProvider>();
     }
 
     #region Constructor Tests
@@ -26,7 +28,7 @@ public class SchemaMigratorTests
     public void SchemaMigrator_CanBeInstantiated()
     {
         // Arrange & Act
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Assert
         Assert.NotNull(migrator);
@@ -40,7 +42,7 @@ public class SchemaMigratorTests
     public async Task FindMigrationPath_SameVersion_ReturnsSingleElementPath()
     {
         // Arrange
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v1.0", CancellationToken.None);
@@ -60,7 +62,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<SaveSchemaDefinition>());
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", CancellationToken.None);
@@ -99,7 +101,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schemas);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v2.0", CancellationToken.None);
@@ -148,7 +150,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schemas);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", CancellationToken.None);
@@ -190,7 +192,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schemas);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v3.0", CancellationToken.None);
@@ -218,7 +220,7 @@ public class SchemaMigratorTests
             .ReturnsAsync(schemas);
 
         // Use low max steps
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, maxMigrationSteps: 5);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object, maxMigrationSteps: 5);
 
         // Act
         var path = await migrator.FindMigrationPathAsync("game", "v1.0", "v15.0", CancellationToken.None);
@@ -236,7 +238,7 @@ public class SchemaMigratorTests
     {
         // Arrange
         var data = Encoding.UTF8.GetBytes("""{"field":"value"}""");
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
@@ -268,7 +270,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schema);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
@@ -293,7 +295,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((SaveSchemaDefinition?)null);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
@@ -323,7 +325,7 @@ public class SchemaMigratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(schema);
 
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = await migrator.ApplyMigrationPathAsync(
@@ -344,7 +346,7 @@ public class SchemaMigratorTests
     {
         // Arrange
         var data = Encoding.UTF8.GetBytes("""{"field":"value","number":42}""");
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = migrator.ValidateAgainstSchema(data, "{}");
@@ -358,7 +360,7 @@ public class SchemaMigratorTests
     {
         // Arrange
         var data = Encoding.UTF8.GetBytes("not valid json");
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = migrator.ValidateAgainstSchema(data, "{}");
@@ -372,7 +374,7 @@ public class SchemaMigratorTests
     {
         // Arrange
         var data = Encoding.UTF8.GetBytes("{}");
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = migrator.ValidateAgainstSchema(data, "{}");
@@ -386,7 +388,7 @@ public class SchemaMigratorTests
     {
         // Arrange
         var data = Encoding.UTF8.GetBytes("""[1,2,3]""");
-        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object);
+        var migrator = new SchemaMigrator(_loggerMock.Object, _schemaStoreMock.Object, _telemetryProviderMock.Object);
 
         // Act
         var result = migrator.ValidateAgainstSchema(data, "{}");

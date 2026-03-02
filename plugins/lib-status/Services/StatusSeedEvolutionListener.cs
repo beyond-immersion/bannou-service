@@ -22,6 +22,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
 {
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly StatusServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<StatusSeedEvolutionListener> _logger;
 
     private IStateStore<SeedEffectsCacheModel>? _seedEffectsCacheStore;
@@ -40,14 +41,17 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     /// <param name="stateStoreFactory">Factory for accessing state stores.</param>
     /// <param name="configuration">Status service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public StatusSeedEvolutionListener(
         IStateStoreFactory stateStoreFactory,
         StatusServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
         ILogger<StatusSeedEvolutionListener> logger)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -56,6 +60,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusSeedEvolutionListener.OnGrowthRecordedAsync");
         await Task.CompletedTask;
     }
 
@@ -64,6 +69,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusSeedEvolutionListener.OnPhaseChangedAsync");
         if (!_configuration.SeedEffectsEnabled)
         {
             return;
@@ -77,6 +83,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusSeedEvolutionListener.OnCapabilitiesChangedAsync");
         if (!_configuration.SeedEffectsEnabled)
         {
             return;
@@ -87,6 +94,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
 
     private async Task InvalidateSeedEffectsCacheAsync(Guid ownerId, EntityType ownerType)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusSeedEvolutionListener.InvalidateSeedEffectsCacheAsync");
         // Use lowercase to match cache key format from StatusService.SeedEffectsCacheKey
         var ownerTypeStr = ownerType.ToString().ToLowerInvariant();
         var cacheKey = $"seed:{ownerId}:{ownerTypeStr}";

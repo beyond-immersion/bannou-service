@@ -27,7 +27,8 @@ public class StorytellerIntegrationTests
             _mockMessageBus.Object,
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            Mock.Of<ITelemetryProvider>());
     }
 
     #region Narrative Metadata Tests

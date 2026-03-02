@@ -171,7 +171,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockCurrencyClient.Object,
         _mockGameServiceClient.Object,
         _mockLockProvider.Object,
-        _mockResourceClient.Object);
+        _mockResourceClient.Object,
+        Mock.Of<ITelemetryProvider>());
 
     private static BoardTemplateModel CreateTestTemplate(
         Guid? boardTemplateId = null,

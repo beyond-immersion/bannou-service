@@ -29,6 +29,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `IOrchestratorEventManager` (internal) | Encapsulates event publishing logic (deployment events, health pings) |
 | `IServiceHealthMonitor` (internal) | Manages service routing tables and heartbeat-based health status; consumes `IControlPlaneServiceProvider` for control plane introspection |
 | `ISmartRestartManager` (internal) | Evaluates whether services need restart based on configuration changes |
+| `ITelemetryProvider` (lib-telemetry) | Span instrumentation for all async methods (StartActivity) |
 | `PresetLoader` (internal) | Loads deployment preset YAML files from filesystem |
 
 ---
@@ -78,7 +79,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `orchestrator-health` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
+| `orchestrator.health-ping` | `OrchestratorHealthPingEvent` | Infrastructure health check verifies pub/sub path |
 | `bannou.full-service-mappings` | `FullServiceMappingsEvent` | After any routing change (deploy, teardown, topology update, reset) |
 | `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
 | `bannou.service-lifecycle` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
@@ -89,7 +90,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeat`: Writes heartbeat to state store, updates index |
+| `bannou.service-heartbeat` | `ServiceHeartbeatEvent` | `HandleServiceHeartbeat`: Routes to `OrchestratorEventManager.ReceiveHeartbeat` which raises `HeartbeatReceived` event; `ServiceHealthMonitor` subscribes to write heartbeat to state store, update routing, and publish full mappings |
 
 ---
 
@@ -98,7 +99,6 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `SecureWebsocket` | `ORCHESTRATOR_SECURE_WEBSOCKET` | `true` | When true, publishes blank permission registration (no WebSocket access) |
-| `CacheTtlMinutes` | `ORCHESTRATOR_CACHE_TTL_MINUTES` | `5` | Cache TTL for orchestrator data |
 | `DefaultBackend` | `ORCHESTRATOR_DEFAULT_BACKEND` | `Compose` | Default container backend (enum: Compose, Swarm, Portainer, Kubernetes) |
 | `HeartbeatTimeoutSeconds` | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | `90` | Heartbeat staleness threshold |
 | `DegradationThresholdMinutes` | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | `5` | Time before marking service degraded |
@@ -129,6 +129,7 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `DefaultPoolLeaseTimeoutSeconds` | `ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS` | `300` | Default lease timeout for acquired pool instances |
 | `PoolLockTimeoutSeconds` | `ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS` | `15` | Timeout for distributed locks on pool operations |
 | `PortainerRequestTimeoutSeconds` | `ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS` | `30` | HTTP request timeout for Portainer API calls |
+| `DefaultServicePort` | `ORCHESTRATOR_DEFAULT_SERVICE_PORT` | `80` | Default HTTP port for discovered service instances used in health checks and mesh registration |
 | `RedisConnectionString` | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | `"bannou-redis:6379"` | Redis connection string |
 
 ---
@@ -149,9 +150,10 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `IOrchestratorEventManager` | Singleton | Deployment/health event publishing |
 | `IServiceHealthMonitor` | Singleton | Routing table management, heartbeat evaluation, source-filtered health reports (injects IControlPlaneServiceProvider) |
 | `ISmartRestartManager` | Singleton | Configuration-based restart determination |
+| `ITelemetryProvider` | Singleton | Span instrumentation for all async operations |
 | `IContainerOrchestrator` | (resolved at runtime) | Backend-specific container operations |
 | `IBackendDetector` | Singleton | Backend availability detection |
-| `PresetLoader` | (created in ctor) | Filesystem preset YAML loading |
+| `PresetLoader` | (created in ctor) | Filesystem preset YAML loading (receives logger + telemetry provider) |
 
 Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
@@ -167,7 +169,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 - **GetStatus** (`/orchestrator/status`): Gets orchestrator backend, lists all containers, gets service heartbeats from state manager, gets routing mappings, derives environment status (running/degraded/stopped) from container health. Returns `EnvironmentStatus` with services, heartbeats, current deployment config, and topology metadata.
 
-- **Clean** (`/orchestrator/clean`): Accepts target types (containers, networks, volumes, images, all). For containers: lists stopped containers, checks `IsOrphanedContainer` (must have `bannou.orchestrator-managed` label, be stopped for 24+ hours). Tears down orphaned containers. Network/volume/image pruning is logged as unsupported (not yet implemented in IContainerOrchestrator). Returns `CleanResponse` with counts and reclaimed space.
+- **Clean** (`/orchestrator/clean`): Accepts target types (containers, networks, volumes, images, all). For containers: lists stopped containers, checks `IsOrphanedContainer` (must have `bannou.orchestrator-managed` label, be stopped for 24+ hours). Tears down orphaned containers. Network/volume/image pruning delegates to `IContainerOrchestrator.PruneNetworksAsync/PruneVolumesAsync/PruneImagesAsync` (Docker backends use Docker.DotNet SDK; Kubernetes returns unsupported/managed messages). Returns `CleanResponse` with counts and reclaimed space.
 
 ### Service & Container Management (4 endpoints)
 
@@ -416,21 +418,22 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| ~~Network pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneNetworksAsync()` - delegates to Docker.DotNet SDK for Docker backends, returns CNI-managed message for Kubernetes |
-| ~~Volume pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneVolumesAsync()` - CAUTION: Can cause data loss. Kubernetes returns unsupported (PVCs require explicit management) |
-| ~~Image pruning (Clean)~~ | **FIXED** (2026-02-01) | Implemented via `IContainerOrchestrator.PruneImagesAsync()` - prunes dangling images, reports reclaimed bytes. Kubernetes returns kubelet-managed message |
 | Queue depth tracking (pool status) | Hardcoded 0 | Comment: "We don't have a queue yet" |
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/252 -->
 | Auto-scaling (pool) | No trigger | Thresholds are stored but no background job evaluates them |
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 | Idle timeout cleanup (pool) | No trigger | `IdleTimeoutMinutes` stored but no background timer |
-| Log timestamp parsing | Partial | Attempts to parse timestamps from log lines but falls back to UtcNow |
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
+| ~~**Log timestamp parsing**~~ | **FIXED** (2026-03-02) | Continuation lines (e.g., stack traces) now inherit the preceding line's parsed timestamp instead of falling back to `DateTimeOffset.UtcNow`. Lines before any successfully parsed timestamp still use UtcNow as the initial default. |
 
 ---
 
 ## Potential Extensions
 
 - **Auto-scaling background service**: A timer-based service that evaluates pool utilization against `ScaleUpThreshold`/`ScaleDownThreshold` and automatically scales pools.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 - **Multi-version rollback**: Currently only rolls back to version N-1. Could support rollback to arbitrary historical versions.
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
@@ -444,29 +447,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Bugs
 
-None currently active. The following were identified and fixed during the 2026-03-02 tenet audit:
-
-1. **[FIXED] T16/T1: Event topic mismatch** — `RESTART_TOPIC` was `bannou.service-restart` but schema declared `bannou.service-lifecycle`. Fixed to match schema.
-
-2. **[FIXED] T21: Hardcoded `_fullMappingsInterval`** — Periodic broadcast interval was hardcoded to 30 seconds, ignoring `FullMappingsIntervalSeconds` configuration property. Fixed to read from config.
-
-3. **[FIXED] T21: Hardcoded Portainer HTTP timeout** — `PortainerOrchestrator` used hardcoded 30-second timeout instead of `PortainerRequestTimeoutSeconds` config property. Fixed to read from config.
-
-4. **[FIXED] T9: Non-atomic `IncrementMappingsVersionAsync`** — Read-then-write on mappings version counter without distributed lock. Race condition could lose version increments under concurrent deploys. Fixed with `IDistributedLockProvider` lock.
-
-5. **[FIXED] T9: Non-atomic `ReclaimExpiredLeasesAsync`** — Read-then-write on lease/available lists without lock protection. Fixed by moving to typed state manager methods called within the existing pool lock scope.
-
-6. **[FIXED] T9: Non-thread-safe `_initialized` bool in Singleton** — `OrchestratorStateManager` (Singleton) used plain `bool` for initialization guard. Race under concurrent first requests. Fixed with `volatile` + double-check locking.
-
-7. **[FIXED] T23/T30: Parameterless `GetServiceHealthReportAsync`** — Non-async `Task`-returning method without `StartActivity` span. Fixed with `async` keyword and telemetry span.
-
-8. **[FIXED] T23: `OrchestratorEventManager.DisposeAsync`** — Non-async `ValueTask`-returning method. Fixed with `async` keyword and `await Task.CompletedTask`.
-
-9. **[FIXED] T4: `LoggerFactory.Create` in `BackendDetector`** — Bypassed DI container by creating logger via static factory method. Fixed to inject `ILoggerFactory` through constructor.
-
-10. **[FIXED] T8: Schema success booleans** — `ReleaseProcessorResponse.Released`, `CleanupPoolResponse.CleanedUp`, and `TopologyUpdateResponse.Success` were echoing success status already conveyed by HTTP 200. Removed from schema and regenerated.
-
-11. **[FIXED] T4/T6/T21: Raw-key generic state methods for processing pools** — Pool data was stored via generic `GetListAsync<T>(string key)` / `SetListAsync<T>(...)` methods with inline `string.Format` key construction, bypassing the typed state store pattern. Six generic methods replaced with 12 typed methods on `IOrchestratorStateManager` using `orchestrator-statestore` (which was defined in `state-stores.yaml` but never used — a T21 violation).
+None currently active.
 
 ### Intentional Quirks
 
@@ -490,9 +471,9 @@ None currently active. The following were identified and fixed during the 2026-0
 
 3. **Backend detection at request time**: `GetOrchestratorAsync` is called per-request, not at startup. This allows the backend to change dynamically (e.g., Docker socket becomes available after orchestrator starts).
 
-4. **GetOrchestratorAsync TTL check is ineffective for scoped service**: Since `OrchestratorService` is scoped (per-request), the `_orchestrator` field starts null every request. The TTL-based cache invalidation logic can never trigger - the caching only provides within-request reuse.
+4. ~~**GetOrchestratorAsync TTL check is ineffective for scoped service**~~: **FIXED** (2026-03-02) - Removed dead TTL-based cache invalidation logic and `_orchestratorCachedAt` field from `GetOrchestratorAsync`. Method now provides simple within-request reuse only. Removed `CacheTtlMinutes` config property (was dead config per IMPLEMENTATION TENETS).
 
-5. **`_lastKnownDeployment` in-memory state**: Orchestrator is typically single-instance, but this field could diverge across instances if multiple were ever deployed. Should read from Redis state manager.
+5. ~~**`_lastKnownDeployment` in-memory state divergence concern**~~: **FIXED** (2026-03-02) - Not an issue. `OrchestratorService` is Scoped (per-request), so `_lastKnownDeployment` starts null each request and is lazily loaded from Redis via `_stateManager.GetCurrentConfigurationAsync()`. The field already reads from distributed state; within-request caching cannot diverge across instances. Same pattern as Design Consideration #4 (`_orchestrator` TTL).
 
 ---
 
@@ -502,9 +483,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-- **2026-03-02**: Full tenet compliance audit (11 violations fixed). T16/T1 event topic mismatch; T21 hardcoded intervals (full mappings broadcast, Portainer timeout); T9 race conditions (mappings version increment, lease reclamation, state manager initialization); T23/T30 non-async methods (health report, event manager dispose); T4 DI bypass (BackendDetector logger); T8 success booleans (3 response fields removed from schema); T4/T6/T21 raw-key generic state methods replaced with 12 typed methods on `IOrchestratorStateManager` using previously-unused `orchestrator-statestore`. 7 missing configuration properties added to deep dive documentation.
-
-- **2026-02-01**: Implemented network/volume/image pruning via `IContainerOrchestrator` interface. Added `PruneNetworksAsync()`, `PruneVolumesAsync()`, and `PruneImagesAsync()` methods to all four orchestrator backends (DockerCompose, DockerSwarm, Kubernetes, Portainer). Updated `CleanAsync` in OrchestratorService to use the new prune methods.
+- **Design Consideration #5 (`_lastKnownDeployment` divergence)**: Resolved as false concern (2026-03-02). Service is Scoped; field already reads from Redis per-request.
+- **Log timestamp parsing**: Fixed (2026-03-02). Continuation lines now inherit preceding line's timestamp instead of UtcNow.
+- **Design Consideration #4 (GetOrchestratorAsync TTL dead code)**: Fixed (2026-03-02). Removed dead TTL-based cache invalidation logic, `_orchestratorCachedAt` field, and `CacheTtlMinutes` config property. Method simplified to within-request reuse only.
 
 ---
 

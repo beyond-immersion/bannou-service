@@ -15,6 +15,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EscrowConfirmationTimeoutService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between timeout checks, from configuration.
@@ -34,15 +35,18 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     public EscrowConfirmationTimeoutService(
         IServiceProvider serviceProvider,
         ILogger<EscrowConfirmationTimeoutService> logger,
-        EscrowServiceConfiguration configuration)
+        EscrowServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.ExecuteAsync");
         _logger.LogInformation("Escrow confirmation timeout service starting, check interval: {Interval}s",
             _configuration.ConfirmationTimeoutCheckIntervalSeconds);
 
@@ -107,6 +111,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
     /// </summary>
     private async Task CheckAndProcessExpiredConfirmationsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.CheckAndProcessExpiredConfirmationsAsync");
         _logger.LogDebug("Checking for expired confirmation deadlines");
 
         using var scope = _serviceProvider.CreateScope();
@@ -173,6 +178,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.ProcessExpiredEscrowAsync");
         var agreementKey = $"agreement:{agreement.EscrowId}";
         var previousStatus = agreement.Status;
 
@@ -240,6 +246,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.HandleAutoConfirmAsync");
         var allServicesConfirmed = agreement.ReleaseConfirmations?.All(c => c.ServiceConfirmed) ?? true;
 
         if (allServicesConfirmed)
@@ -274,6 +281,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.HandleDisputeAsync");
         _logger.LogInformation("Escalating escrow {EscrowId} to Disputed after timeout", agreement.EscrowId);
 
         return await TransitionToDisputedAsync(
@@ -293,6 +301,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.HandleRefundAsync");
         _logger.LogInformation("Initiating refund for escrow {EscrowId} after timeout", agreement.EscrowId);
 
         var previousStatus = agreement.Status;
@@ -348,6 +357,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.CompleteEscrowAsync");
         var previousStatus = agreement.Status;
         var agreementKey = $"agreement:{agreement.EscrowId}";
         EscrowStatus targetStatus;
@@ -440,6 +450,7 @@ public class EscrowConfirmationTimeoutService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowConfirmationTimeoutService.TransitionToDisputedAsync");
         var previousStatus = agreement.Status;
         var agreementKey = $"agreement:{agreement.EscrowId}";
 

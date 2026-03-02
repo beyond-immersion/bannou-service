@@ -58,13 +58,6 @@ public class OrchestratorServiceConfiguration : BaseServiceConfiguration
     public bool SecureWebsocket { get; set; } = true;
 
     /// <summary>
-    /// Cache TTL in minutes for orchestrator data
-    /// Environment variable: ORCHESTRATOR_CACHE_TTL_MINUTES
-    /// </summary>
-    [ConfigRange(Minimum = 1)]
-    public int CacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
     /// Default container orchestration backend when not specified in deploy request
     /// Environment variable: ORCHESTRATOR_DEFAULT_BACKEND
     /// </summary>

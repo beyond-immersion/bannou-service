@@ -128,7 +128,7 @@ public class OrchestratorServiceTests
         // Pub/sub healthy via IMessageBus
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                "orchestrator-health",
+                "orchestrator.health-ping",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
                 It.IsAny<Guid?>(),
@@ -157,7 +157,7 @@ public class OrchestratorServiceTests
         // Pub/sub failure via IMessageBus
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                "orchestrator-health",
+                "orchestrator.health-ping",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
                 It.IsAny<Guid?>(),
@@ -189,7 +189,7 @@ public class OrchestratorServiceTests
         // Pub/sub unhealthy via IMessageBus publish failure
         _mockMessageBus
             .Setup(x => x.TryPublishAsync(
-                "orchestrator-health",
+                "orchestrator.health-ping",
                 It.IsAny<object>(),
                 It.IsAny<PublishOptions?>(),
                 It.IsAny<Guid?>(),
@@ -225,13 +225,13 @@ public class OrchestratorServiceTests
             ControlPlaneAppId = "bannou",
             TotalServices = 3,
             HealthPercentage = 100.0f,
-            HealthyServices = new List<ServiceHealthStatus>
+            HealthyServices = new List<ServiceHealthEntry>
             {
-                new() { ServiceId = "account", Status = "healthy" },
-                new() { ServiceId = "auth", Status = "healthy" },
-                new() { ServiceId = "connect", Status = "healthy" }
+                new() { ServiceId = "account", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+                new() { ServiceId = "auth", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+                new() { ServiceId = "connect", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow }
             },
-            UnhealthyServices = new List<ServiceHealthStatus>()
+            UnhealthyServices = new List<ServiceHealthEntry>()
         };
 
         _mockHealthMonitor
@@ -268,19 +268,16 @@ public class OrchestratorServiceTests
             Force = false
         };
 
-        var expectedResult = new ServiceRestartResult
-        {
-            Success = true,
-            ServiceName = "account",
-            Duration = "00:00:05",
-            PreviousStatus = "degraded",
-            CurrentStatus = "healthy",
-            Message = "Service restarted successfully"
-        };
+        var expectedOutcome = new RestartOutcome(
+            Succeeded: true,
+            DeclineReason: null,
+            Duration: "00:00:05",
+            PreviousStatus: InstanceHealthStatus.Degraded,
+            CurrentStatus: InstanceHealthStatus.Healthy);
 
         _mockRestartManager
             .Setup(x => x.RestartServiceAsync(It.IsAny<ServiceRestartRequest>()))
-            .ReturnsAsync(expectedResult);
+            .ReturnsAsync(expectedOutcome);
 
         var service = CreateService();
 
@@ -290,8 +287,8 @@ public class OrchestratorServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
-        Assert.True(response.Success);
-        Assert.Equal("account", response.ServiceName);
+        Assert.Equal("00:00:05", response.Duration);
+        Assert.Equal(InstanceHealthStatus.Healthy, response.CurrentStatus);
     }
 
     [Fact]
@@ -304,26 +301,25 @@ public class OrchestratorServiceTests
             Force = false
         };
 
-        var expectedResult = new ServiceRestartResult
-        {
-            Success = false,
-            ServiceName = "account",
-            Message = "Restart not needed: service is healthy"
-        };
+        var expectedOutcome = new RestartOutcome(
+            Succeeded: false,
+            DeclineReason: "Restart not needed: service is healthy",
+            Duration: "00:00:00",
+            PreviousStatus: InstanceHealthStatus.Healthy,
+            CurrentStatus: InstanceHealthStatus.Healthy);
 
         _mockRestartManager
             .Setup(x => x.RestartServiceAsync(It.IsAny<ServiceRestartRequest>()))
-            .ReturnsAsync(expectedResult);
+            .ReturnsAsync(expectedOutcome);
 
         var service = CreateService();
 
         // Act
         var (statusCode, response) = await service.RestartServiceAsync(request, CancellationToken.None);
 
-        // Assert
+        // Assert - Service returns (Conflict, null) when restart is declined
         Assert.Equal(StatusCodes.Conflict, statusCode);
-        Assert.NotNull(response);
-        Assert.False(response.Success);
+        Assert.Null(response);
     }
 
     #endregion
@@ -338,8 +334,7 @@ public class OrchestratorServiceTests
         var expectedRecommendation = new RestartRecommendation
         {
             ShouldRestart = false,
-            ServiceName = "account",
-            CurrentStatus = "healthy",
+            CurrentStatus = InstanceHealthStatus.Healthy,
             Reason = "Service is healthy - no restart needed"
         };
 
@@ -356,7 +351,7 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.False(response.ShouldRestart);
-        Assert.Equal("healthy", response.CurrentStatus);
+        Assert.Equal(InstanceHealthStatus.Healthy, response.CurrentStatus);
     }
 
     #endregion
@@ -407,8 +402,8 @@ public class OrchestratorServiceTests
             .Setup(x => x.ListContainersAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<ContainerStatus>
             {
-                new() { AppName = "bannou", Status = ContainerStatusStatus.Running, Instances = 1 },
-                new() { AppName = "redis", Status = ContainerStatusStatus.Running, Instances = 1 }
+                new() { AppName = "bannou", Status = ContainerStatusType.Running, Instances = 1 },
+                new() { AppName = "redis", Status = ContainerStatusType.Running, Instances = 1 }
             });
         mockOrchestrator
             .Setup(x => x.BackendType)
@@ -428,6 +423,7 @@ public class OrchestratorServiceTests
         Assert.NotNull(response);
         Assert.True(response.Deployed);
         Assert.Equal(BackendType.Compose, response.Backend);
+        Assert.NotNull(response.Services);
         Assert.Equal(2, response.Services.Count);
     }
 
@@ -456,6 +452,7 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.False(response.Deployed);
+        Assert.NotNull(response.Services);
         Assert.Empty(response.Services);
     }
 
@@ -473,7 +470,7 @@ public class OrchestratorServiceTests
             .ReturnsAsync(new ContainerStatus
             {
                 AppName = "bannou",
-                Status = ContainerStatusStatus.Running,
+                Status = ContainerStatusType.Running,
                 Instances = 1,
                 Timestamp = DateTimeOffset.UtcNow
             });
@@ -491,7 +488,7 @@ public class OrchestratorServiceTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.Equal("bannou", response.AppName);
-        Assert.Equal(ContainerStatusStatus.Running, response.Status);
+        Assert.Equal(ContainerStatusType.Running, response.Status);
     }
 
     [Fact]
@@ -504,7 +501,7 @@ public class OrchestratorServiceTests
             .ReturnsAsync(new ContainerStatus
             {
                 AppName = "unknown-app",
-                Status = ContainerStatusStatus.Stopped,
+                Status = ContainerStatusType.Stopped,
                 Instances = 0
             });
 
@@ -688,7 +685,7 @@ public class ServiceHealthMonitorTests
 
         // Default setup for control plane provider
         _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
-        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthEntry>());
         _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
@@ -709,11 +706,11 @@ public class ServiceHealthMonitorTests
     public async Task GetServiceHealthReportAsync_WithHealthyServices_ShouldReturnHighPercentage()
     {
         // Arrange
-        var heartbeats = new List<ServiceHealthStatus>
+        var heartbeats = new List<ServiceHealthEntry>
         {
-            new() { ServiceId = "service1", Status = "healthy", LastSeen = DateTimeOffset.UtcNow },
-            new() { ServiceId = "service2", Status = "healthy", LastSeen = DateTimeOffset.UtcNow },
-            new() { ServiceId = "service3", Status = "healthy", LastSeen = DateTimeOffset.UtcNow }
+            new() { ServiceId = "service1", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+            new() { ServiceId = "service2", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+            new() { ServiceId = "service3", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow }
         };
 
         _mockStateManager
@@ -736,12 +733,12 @@ public class ServiceHealthMonitorTests
     public async Task GetServiceHealthReportAsync_WithMixedHealth_ShouldCalculateCorrectPercentage()
     {
         // Arrange
-        var heartbeats = new List<ServiceHealthStatus>
+        var heartbeats = new List<ServiceHealthEntry>
         {
-            new() { ServiceId = "service1", Status = "healthy", LastSeen = DateTimeOffset.UtcNow },
-            new() { ServiceId = "service2", Status = "unavailable", LastSeen = DateTimeOffset.UtcNow },
-            new() { ServiceId = "service3", Status = "healthy", LastSeen = DateTimeOffset.UtcNow },
-            new() { ServiceId = "service4", Status = "shutting_down", LastSeen = DateTimeOffset.UtcNow }
+            new() { ServiceId = "service1", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+            new() { ServiceId = "service2", AppId = "bannou", Status = InstanceHealthStatus.Unavailable, LastSeen = DateTimeOffset.UtcNow },
+            new() { ServiceId = "service3", AppId = "bannou", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow },
+            new() { ServiceId = "service4", AppId = "bannou", Status = InstanceHealthStatus.Unavailable, LastSeen = DateTimeOffset.UtcNow }
         };
 
         _mockStateManager
@@ -766,7 +763,7 @@ public class ServiceHealthMonitorTests
         // Arrange
         _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
-            .ReturnsAsync(new List<ServiceHealthStatus>());
+            .ReturnsAsync(new List<ServiceHealthEntry>());
 
         var monitor = CreateMonitor();
 
@@ -775,7 +772,7 @@ public class ServiceHealthMonitorTests
 
         // Assert
         Assert.True(recommendation.ShouldRestart);
-        Assert.Equal("unavailable", recommendation.CurrentStatus);
+        Assert.Equal(InstanceHealthStatus.Unavailable, recommendation.CurrentStatus);
         Assert.Contains("No heartbeat data found", recommendation.Reason);
     }
 
@@ -783,13 +780,13 @@ public class ServiceHealthMonitorTests
     public async Task ShouldRestartServiceAsync_WhenHealthy_ShouldNotRecommendRestart()
     {
         // Arrange
-        var heartbeats = new List<ServiceHealthStatus>
+        var heartbeats = new List<ServiceHealthEntry>
         {
             new()
             {
                 ServiceId = "healthy-service",
                 AppId = "bannou",
-                Status = "healthy",
+                Status = InstanceHealthStatus.Healthy,
                 LastSeen = DateTimeOffset.UtcNow
             }
         };
@@ -805,20 +802,20 @@ public class ServiceHealthMonitorTests
 
         // Assert
         Assert.False(recommendation.ShouldRestart);
-        Assert.Equal("healthy", recommendation.CurrentStatus);
+        Assert.Equal(InstanceHealthStatus.Healthy, recommendation.CurrentStatus);
     }
 
     [Fact]
     public async Task ShouldRestartServiceAsync_WhenUnavailable_ShouldRecommendRestart()
     {
         // Arrange
-        var heartbeats = new List<ServiceHealthStatus>
+        var heartbeats = new List<ServiceHealthEntry>
         {
             new()
             {
                 ServiceId = "unavailable-service",
                 AppId = "bannou",
-                Status = "unavailable",
+                Status = InstanceHealthStatus.Unavailable,
                 LastSeen = DateTimeOffset.UtcNow
             }
         };
@@ -834,7 +831,7 @@ public class ServiceHealthMonitorTests
 
         // Assert
         Assert.True(recommendation.ShouldRestart);
-        Assert.Equal("unavailable", recommendation.CurrentStatus);
+        Assert.Equal(InstanceHealthStatus.Unavailable, recommendation.CurrentStatus);
     }
 }
 
@@ -872,7 +869,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
 
         // Default setup for control plane provider
         _mockControlPlaneProvider.Setup(x => x.ControlPlaneAppId).Returns("bannou");
-        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthStatus>());
+        _mockControlPlaneProvider.Setup(x => x.GetControlPlaneServiceHealth()).Returns(new List<ServiceHealthEntry>());
         _mockControlPlaneProvider.Setup(x => x.GetEnabledServiceNames()).Returns(new List<string>());
     }
 
@@ -1020,7 +1017,7 @@ public class ServiceHealthMonitorRoutingProtectionTests
         // Assert - routing should be updated (health status changed)
         Assert.NotNull(lastCapturedRouting);
         Assert.Equal("bannou-auth", lastCapturedRouting.AppId);
-        Assert.Equal("degraded", lastCapturedRouting.Status);
+        Assert.Equal(ServiceHealthStatus.Degraded, lastCapturedRouting.Status);
     }
 
     [Fact]
@@ -1525,7 +1522,6 @@ public class OrchestratorResetToDefaultTests
         Assert.NotNull(response);
         Assert.True(response.Success);
         Assert.Equal("default", response.Preset);
-        Assert.Contains("default topology", response.Message, StringComparison.OrdinalIgnoreCase);
 
         _mockHealthMonitor.Verify(x => x.ResetAllMappingsToDefaultAsync(), Times.Once(),
             "ResetAllMappingsToDefaultAsync should be called for reset-to-default requests");
@@ -1653,9 +1649,9 @@ public class OrchestratorResetToDefaultTests
 
         _mockStateManager
             .Setup(x => x.GetServiceHeartbeatsAsync())
-            .ReturnsAsync(new List<ServiceHealthStatus>
+            .ReturnsAsync(new List<ServiceHealthEntry>
             {
-                new() { AppId = "bannou-auth", ServiceId = "auth", Status = "healthy", LastSeen = DateTimeOffset.UtcNow }
+                new() { AppId = "bannou-auth", ServiceId = "auth", Status = InstanceHealthStatus.Healthy, LastSeen = DateTimeOffset.UtcNow }
             });
 
         _mockStateManager
@@ -1767,7 +1763,7 @@ public class OrchestratorResetToDefaultTests
         Assert.Equal(StatusCodes.OK, statusCode);
         Assert.NotNull(response);
         Assert.True(response.Success);
-        Assert.Contains("'bannou'", response.Message);
+        Assert.Equal("default", response.Preset);
 
         // Should NOT tear down any containers (all on "bannou")
         mockOrchestrator.Verify(

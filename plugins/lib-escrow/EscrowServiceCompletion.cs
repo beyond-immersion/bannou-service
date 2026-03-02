@@ -1028,6 +1028,7 @@ public partial class EscrowService
     /// </summary>
     private async Task PublishReleasedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.PublishReleasedEventAsync");
         var releaseEvent = new EscrowReleasedEvent
         {
             EventId = Guid.NewGuid(),
@@ -1050,6 +1051,7 @@ public partial class EscrowService
     /// </summary>
     private async Task PublishRefundedEventAsync(EscrowAgreementModel agreementModel, DateTimeOffset timestamp, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowService.PublishRefundedEventAsync");
         var refundEvent = new EscrowRefundedEvent
         {
             EventId = Guid.NewGuid(),

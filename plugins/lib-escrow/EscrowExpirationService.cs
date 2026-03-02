@@ -16,6 +16,7 @@ public class EscrowExpirationService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EscrowExpirationService> _logger;
     private readonly EscrowServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between expiration checks, from configuration (ISO 8601 duration).
@@ -54,11 +55,13 @@ public class EscrowExpirationService : BackgroundService
     public EscrowExpirationService(
         IServiceProvider serviceProvider,
         ILogger<EscrowExpirationService> logger,
-        EscrowServiceConfiguration configuration)
+        EscrowServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -128,6 +131,7 @@ public class EscrowExpirationService : BackgroundService
     /// </summary>
     private async Task CheckAndProcessExpiredEscrowsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.CheckAndProcessExpiredEscrowsAsync");
         _logger.LogDebug("Checking for expired escrows");
 
         using var scope = _serviceProvider.CreateScope();
@@ -195,6 +199,7 @@ public class EscrowExpirationService : BackgroundService
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.ProcessExpiredEscrowAsync");
         var agreementKey = $"agreement:{agreement.EscrowId}";
         var previousStatus = agreement.Status;
 
@@ -335,6 +340,7 @@ public class EscrowExpirationService : BackgroundService
         EntityType partyType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.escrow", "EscrowExpirationService.DecrementPartyPendingCountAsync");
         var partyKey = $"party:{partyType}:{partyId}";
         var now = DateTimeOffset.UtcNow;
 

@@ -1,6 +1,6 @@
 # Plugin Production Readiness Status
 
-> **Last Updated**: 2026-03-01
+> **Last Updated**: 2026-03-02
 > **Scope**: All Bannou service plugins
 
 ---
@@ -53,9 +53,9 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Contract](#contract-status) | L1 | 98% | 0 | L3-hardened. All 25 endpoints, 0 stubs. Expiration, payment schedules, clause execution all done. Only extensions remain. |
 | [Permission](#permission-status) | L1 | 95% | 0 | L3-hardened RBAC. Heartbeat-driven session TTL, distributed locks, in-memory cache removed. 27 tests. Feature-complete. |
 | [Resource](#resource-status) | L1 | 93% | 0 | Feature-complete lifecycle management. Reference tracking, cleanup, compression all done. |
-| [Actor](#actor-status) | L2 | 65% | 0 | Solid core architecture. Auto-scale stubbed, many production features TODO. |
-| [Character](#character-status) | L2 | 90% | 0 | All 12 endpoints done. Smart field tracking, resource compression. Only batch ops pending. |
-| [Collection](#collection-status) | L2 | 78% | 4 | All 20 endpoints done. 4 bugs: grant bypasses limits, cleanup missing events, update ignores fields. |
+| [Actor](#actor-status) | L2 | 90% | 2 | L3-hardened. Two-phase tick, dynamic character binding, pool mode, ~80 telemetry spans. 2 T29 bugs. Auto-scale stubbed. |
+| [Character](#character-status) | L2 | 97% | 0 | L3-hardened. All 12 endpoints, schema NRT, telemetry spans, client events, MySQL JSON queries. Only extensions remain. |
+| [Collection](#collection-status) | L2 | 93% | 0 | Production-hardened. All 20 endpoints, global first-unlock, client events, ETag concurrency, lib-resource cleanup. 0 bugs, 0 stubs. Only design extensions remain (#475, #476). |
 | [Currency](#currency-status) | L2 | 85% | 0 | Production-hardened (7 bugs fixed, T25/T30 compliant). 8 stubs remain: hold expiration, currency expiration, analytics, pruning. |
 | [Game Service](#game-service-status) | L2 | 100% | 0 | Production-hardened registry. All 5 endpoints done. T9/T21/T26/T28/T30 compliant. Resource cleanup on delete. |
 | [Game Session](#game-session-status) | L2 | 92% | 0 | Production-hardened. Voice removed, lifecycle events live, T25/T26/T30 compliant. Distributed locks. |
@@ -68,8 +68,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Seed](#seed-status) | L2 | 95% | 0 | Production-hardened (T6/T26/T30 compliant). Constructor caching, telemetry spans, sentinel elimination, schema validation. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
 | [Subscription](#subscription-status) | L2 | 95% | 0 | L3-hardened. Distributed locks, telemetry spans, constructor caching, type safety, worker delegation. 33 tests, 0 warnings. |
-| [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Deep dive audited to L3. 32 endpoints, 13 events, 3 client events, 8 state stores, 1 variable provider, 1 DI enrichment interface. No schema, no code. |
-| [Worldstate](#worldstate-status) | L2 | 5% | 0 | Stub. Schemas complete, code generated, all 18 endpoints throw NotImplementedException. 3 schema issues (T8 success booleans, missing lock store). Deep dive audited to L3. |
+| [Transit](#transit-status) | L2 | 95% | 0 | Fully implemented. All 33 endpoints, 8 state stores, 2 background workers, variable provider, DI cost enrichment. Only extensions remain. |
+| [Worldstate](#worldstate-status) | L2 | 95% | 0 | Fully implemented. All 18 endpoints, clock worker, variable provider, client events, cross-node cache invalidation. Only extensions remain. |
 | [Orchestrator](#orchestrator-status) | L3 | 65% | 0 | L3-hardened. Schema/code tenet audit complete: enum consolidation, NRT, T8 filler removal, T30 spans (27 methods), T9 Redis-backed counters, T26 sentinels. Compose backend solid. 3/4 backends stubbed. Pool auto-scale missing. |
 | [Asset](#asset-status) | L3 | 92% | 0 | L3-hardened. Schema/enum consolidation, background workers (bundle cleanup, ZIP cache), transactional indexes, all events published. 117 tests. |
 | [Documentation](#documentation-status) | L3 | 92% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Full TENET audit complete. Semantic search pending. |
@@ -549,27 +549,25 @@ gh issue list --search "Character:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [COLLECTION.md](plugins/COLLECTION.md)
 
-### Production Readiness: 78%
+### Production Readiness: 93%
 
-All 20 endpoints implemented with working integration with lib-inventory and lib-item for the "items in inventories" pattern, DI-based unlock listener dispatch to Seed, and area content selection with weighted random themes. However, the plugin has 4 active bugs (template update ignoring fields, list ignoring request pageSize, grant bypassing max-collections limit, cleanup not publishing delete events) and 1 stub (isFirstGlobal always false). These bugs affect data integrity and schema contract adherence.
+Production-hardened. All 20 endpoints implemented with working integration with lib-inventory and lib-item for the "items in inventories" pattern, DI-based unlock listener dispatch (Seed, Faction), area content selection with weighted random themes, global first-unlock tracking via Redis SADD, real-time client events via IEntitySessionRegistry, ETag-based optimistic concurrency on cache updates, lib-resource cleanup for character-owned collections, and distributed locking on all mutation paths. All previously reported bugs fixed (grant limit bypass, cleanup events, template update fields, list pageSize). Cache invalidation bounded by TTL (intentional quirk). Only two design extensions remain: expiring/seasonal collections (#475) and collection sharing/trading (#476).
 
-### Bug Count: 4
+### Bug Count: 0
+
+No known bugs. 4 previously reported bugs all fixed in prior audits.
 
 ### Top 3 Bugs
 
-| # | Bug | Description | Issue |
-|---|-----|-------------|-------|
-| 1 | **GrantEntryAsync bypasses MaxCollectionsPerOwner** | When auto-creating a collection during grant, the max-collections check is skipped, allowing unlimited collections via the grant path. | No issue |
-| 2 | **Cleanup handlers don't publish collection.deleted** | Cascading deletions triggered by character.deleted / account.deleted never publish collection.deleted events, causing downstream consumers to miss cleanup signals. | No issue |
-| 3 | **UpdateEntryTemplateAsync ignores fields** | `hideWhenLocked` and `discoveryLevels` fields are defined on the update request but never processed, making them immutable after creation despite the API contract. | No issue |
+*(None -- 4 fixed in prior audits)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Global first-unlock tracking** | `isFirstGlobal` field on unlock events is always false. Requires a global set of unlocked entry codes per game service. Important for achievement triggers. | No issue |
-| 2 | **Client events for real-time unlock notifications** | Define collection-client-events.yaml to push unlock and milestone events to connected WebSocket clients. | No issue |
-| 3 | **Event-driven entry template cache invalidation** | When templates are updated or deleted, existing collection caches are not invalidated, serving stale data until TTL expires. | No issue |
+| 1 | **Expiring/seasonal collections** | Support time-limited collection types that expire or rotate on a schedule. Requires design decisions on temporal mechanics and Worldstate integration. | [#475](https://github.com/beyond-immersion/bannou-service/issues/475) |
+| 2 | **Collection sharing/trading** | Allow owners to share or trade unlocked entries between collections. Requires design decisions on ownership transfer and Escrow integration. | [#476](https://github.com/beyond-immersion/bannou-service/issues/476) |
+| 3 | *(No further enhancements identified)* | | |
 
 ### GH Issues
 
@@ -966,25 +964,25 @@ gh issue list --search "Subscription:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [TRANSIT.md](plugins/TRANSIT.md)
 
-### Production Readiness: 0%
+### Production Readiness: 95%
 
-Aspirational/planned only. Deep dive audited to L3 quality. No schema, no code, no generated infrastructure. Specifies 32 planned endpoints, 8 state stores (3 MySQL, 4 Redis, 1 lock), 13 published events (7 journey lifecycle, 3 mode lifecycle, 3 connection lifecycle), 1 consumed event, 3 client events, 2 background workers, 1 variable provider namespace (`${transit.*}`), and 1 DI enrichment interface (`ITransitCostModifierProvider`). Audit findings applied: T8 filler removal, T25 string→enum, T31 Category A deprecation lifecycle (deprecate/undeprecate/delete with dedicated `transit-mode.deleted` event), NRT compliance on all nullable fields, validation keywords on all numeric properties (model and config), `seasonalWarnings` promoted from `[string]` to typed `SeasonalRouteWarning` sub-model, `ISeededResourceProvider` terminology corrected to `x-references`, Type Field Classification table completed with `source`/`entityType`/`maximumEntitySizeCategory`/`resolved` rationales, schema requirement notes added (x-service-layer, servers URL, x-event-publications).
+Fully implemented. All 33 endpoints complete with no stubs: mode management (8 endpoints with Category A deprecation lifecycle), connection management (7 endpoints with optimistic concurrency status transitions, seasonal availability, bulk seeding), journey lifecycle (12 endpoints with full state machine — preparing/in_transit/at_waypoint/arrived/interrupted/abandoned — including batch advance for NPC scale), route calculation (Dijkstra with multi-modal, seasonal, and discovery filtering), and connection discovery (3 endpoints with automatic reveal on travel). 8 state stores (3 MySQL: modes, connections, journeys-archive; 4 Redis: journeys, connection-graph, discovery-cache, discovery; 1 lock). 14 published events (7 journey lifecycle, 3 mode lifecycle, 3 connection lifecycle via x-lifecycle, 1 discovery), 1 consumed event (worldstate.season-changed), 3 client events via IEntitySessionRegistry. 2 background workers (Seasonal Connection Worker for auto open/close, Journey Archival Worker for Redis→MySQL migration with retention enforcement). Variable provider (`${transit.*}` namespace with 13+ variables for NPC GOAP travel decisions). DI enrichment interface (`ITransitCostModifierProvider`) defined in bannou-service for L4 cost modifiers with aggregation and clamping. Telemetry spans on all async methods. Distributed locks on all mutations. Resource cleanup callbacks for location and character deletion. 20 configuration properties all wired. 0 bugs, 4 intentional quirks documented.
 
 ### Bug Count: 0
 
-No implementation exists to have bugs.
+No known bugs.
 
 ### Top 3 Bugs
 
-*(None -- pre-implementation)*
+*(None)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Core connectivity graph** | Create schemas, generate code, implement mode registry (CRUD with string codes), connection management (CRUD with terrain types, seasonal availability, bidirectionality), and connection graph caching in Redis for route calculation. | No issue |
-| 2 | **Route calculation engine** | Implement Dijkstra-based route calculation over connection graph with mode filtering, seasonal availability, multi-mode journeys, and DI-based cost enrichment via `ITransitCostModifierProvider` for L4 behavioral modifiers. | No issue |
-| 3 | **Variable provider (`${transit.*}`)** | Implement `TransitProviderFactory` for the `${transit.*}` ABML namespace, enabling NPC travel decisions in GOAP -- available modes, travel times to known locations, current journey status, and mode preference costs. | No issue |
+| 1 | **Caravan formations (Phase 2)** | Multiple entities traveling as a group with group speed = slowest member. Data model accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs `partyMembers` tracking, batch departure/advance, and party leader concept. | [#524](https://github.com/beyond-immersion/bannou-service/issues/524) |
+| 2 | **Fatigue and rest** | Long journeys accumulate fatigue with configurable thresholds. Auto-pause at next waypoint, rest duration based on mode and stamina. Creates natural stopping points at inns/camps. | [#527](https://github.com/beyond-immersion/bannou-service/issues/527) |
+| 3 | **Transit fares** | Monetary cost for certain modes/connections (ferries, toll roads, teleportation). Open design question: Transit stores fares and calls Currency (both L2), or fares are an L4 Trade overlay. | [#535](https://github.com/beyond-immersion/bannou-service/issues/535) |
 
 ### GH Issues
 
@@ -998,27 +996,25 @@ gh issue list --search "Transit:" --state open
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
 
-### Production Readiness: 5%
+### Production Readiness: 95%
 
-Complete stub. Schemas are complete and well-designed (4 schema files: api, events, configuration, client-events). Code generation has been run — all generated files exist (controller, interface, models, client, events, configuration, permission registration, reference tracking, client events). The service class exists with all 18 endpoint methods scaffolded, but every method throws `NotImplementedException`. No business logic, no state store initialization, no background worker, no variable provider, no internal models. 2 tests (constructor validation + config instantiation). Deep dive audited to L3 (2026-02-28): comprehensive specification covering 18 endpoints (4 clock queries, 1 client sync, 3 clock admin, 5 calendar management, 3 realm config, 2 cleanup), 14 published events (6 boundary + 6 lifecycle + 2 administrative), 1 consumed event (self-subscription for cache invalidation), 1 client event (`WorldstateTimeSyncEvent`), 3 state stores (Redis clock, MySQL calendar, MySQL ratio-history), 12 configuration properties, 1 background worker (clock advancement), 1 variable provider (`${world.*}` namespace with 14 variables), and a 6-phase implementation plan. Fills the "ghost clock" gap referenced by dozens of services.
-
-**Schema audit findings**: 3 FAIL (T8 success booleans on `DeleteCalendarResponse.deleted` and `CleanupByRealmResponse.cleaned`, missing `worldstate-lock` state store in `state-stores.yaml`), 12 WARN (missing `minLength`/`minimum` on `GameTimeSnapshot` response fields, `WorldstateTimeSyncEvent` duplicates `GameTimeSnapshot` fields inline, inconsistent `isCatchUp` across boundary events). **Code audit findings**: 3 violations in scaffolding (T6/T3: missing `IEventConsumer` in constructor, T23: non-async event handler, T30: missing `ITelemetryProvider`). Missing `IDistributedLockProvider` injection.
+Fully implemented. All 18 endpoints complete with no stubs: clock queries (4 endpoints including batch and elapsed game-time computation with piecewise integration over ratio history), client sync (1 endpoint for on-demand time sync via IEntitySessionRegistry), clock administration (3 endpoints — initialize, set ratio, advance with boundary event batching), calendar management (5 endpoints with structural validation — day period gap/overlap detection, month-season consistency, per-game-service limits), realm configuration (3 endpoints with partial update and distributed locking), and cleanup (2 endpoints via lib-resource callbacks for realm and game-service deletion). Background clock worker advances realm clocks every `ClockTickIntervalSeconds` (default 5s) with per-realm distributed locks, boundary event detection and publishing (hour/period/day/month/season/year), downtime catch-up with configurable policy (Advance/Pause), and `MaxCatchUpGameDays` safety cap. Variable provider (`WorldProviderFactory`) implements `IVariableProviderFactory` providing 14 `${world.*}` variables to Actor (L2) via in-memory TTL cache. Client events (`WorldstateTimeSyncEvent`) pushed to realm-bound sessions on period boundaries, ratio changes, and admin advances. 5 self-subscriptions for cross-node cache invalidation (calendar template, ratio, realm config, clock advance). 12 configuration properties all wired with validation. Reference registration with lib-resource for realm and game-service targets. Telemetry spans on all async methods. 0 bugs. Cross-service integration with lib-realm implemented (optional auto-initialize clock on realm creation).
 
 ### Bug Count: 0
 
-No business logic exists to have bugs. 3 schema-level issues and 3 scaffolding violations are tracked above.
+No known bugs.
 
 ### Top 3 Bugs
 
-*(None — stub implementation has no business logic bugs)*
+*(None)*
 
 ### Top 3 Enhancements
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Full implementation (Phases 1-5)** | Calendar CRUD with structural validation, realm clock background worker, boundary event publishing, elapsed game-time computation with piecewise integration, ratio management, downtime catch-up. 18 endpoints, 3 state stores, 1 background worker. | No master issue |
-| 2 | **Variable Provider (Phase 4)** | Implement `WorldProviderFactory` for `${world.*}` namespace (14 variables). Fills the ghost clock gap for ABML behaviors, Storyline, encounters, and trade routes. | [#477](https://github.com/beyond-immersion/bannou-service/issues/477) |
-| 3 | **Cross-service game-time migration (Phase 6)** | Currency autogain (#433), Seed decay (#434), and Character-Encounter memory decay need transition from real-time to game-time via `GetElapsedGameTime`. | [#433](https://github.com/beyond-immersion/bannou-service/issues/433), [#434](https://github.com/beyond-immersion/bannou-service/issues/434) |
+| 1 | **Ratio history compaction** | Ratio history segments accumulate indefinitely. `RatioHistoryRetentionDays` config was planned but not implemented. Long-running servers could see unbounded growth. | [#529](https://github.com/beyond-immersion/bannou-service/issues/529) |
+| 2 | **Calendar events/holidays** | Named dates that repeat annually (harvest festival, winter solstice). Publishable as events when the date is reached. | [#538](https://github.com/beyond-immersion/bannou-service/issues/538) |
+| 3 | **Cross-service game-time migration** | Currency autogain (#433), Seed decay (#434), and Character-Encounter memory decay need transition from real-time to game-time via `GetElapsedGameTime`. | [#433](https://github.com/beyond-immersion/bannou-service/issues/433), [#434](https://github.com/beyond-immersion/bannou-service/issues/434) |
 
 ### GH Issues
 

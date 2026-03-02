@@ -97,6 +97,7 @@ Actor is L2 (GameFoundation) but needs data from L3/L4 services (personality, en
 | `SeedProviderFactory` | `seed` | lib-seed | L2 |
 | `LocationContextProviderFactory` | `location` | lib-location | L2 |
 | `TransitVariableProviderFactory` | `transit` | lib-transit | L2 |
+| `WorldProviderFactory` | `world` | lib-worldstate | L2 |
 
 **Character Brain vs Event Brain Data Access**
 
@@ -144,7 +145,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit (see Registered Provider Factories table above). The `world` provider namespace is defined in `variable-providers.yaml` (for `${world.*}` expressions) but lib-worldstate does not yet implement `IVariableProviderFactory`. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
+Current providers: personality, combat, backstory, encounters, obligations, faction, quest, seed, location, transit, world (see Registered Provider Factories table above). Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL).
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 
@@ -671,8 +672,7 @@ Actor State Model
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
 6. **Additional variable providers (currency, inventory, relationships)**: Extend the Variable Provider Factory pattern with providers for currency balance (30s TTL), inventory contents (1m TTL), and relationship data (5m TTL).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/147 -->
-7. **Worldstate variable provider**: `world` provider namespace is defined in `variable-providers.yaml` but lib-worldstate does not yet implement `IVariableProviderFactory` to provide `${world.*}` expressions (game time, calendar, season data).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-24:https://github.com/beyond-immersion/bannou-service/issues/477 -->
+7. ~~**Worldstate variable provider**~~: **FIXED** (2026-03-02) — lib-worldstate now implements `WorldProviderFactory` providing 14 `${world.*}` variables (time, calendar, season, derived). See [WORLDSTATE.md](WORLDSTATE.md) Variable Provider section.
 
 ---
 

@@ -1095,6 +1095,7 @@ public partial class StatusService : IStatusService
         List<StatusInstanceModel> existingInstances,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.HandleStackingAsync");
         var effectiveMaxStacks = Math.Min(template.MaxStacks, _configuration.MaxStacksPerStatus);
         var existing = existingInstances[0];
 
@@ -1250,6 +1251,7 @@ public partial class StatusService : IStatusService
         StatusTemplateModel template,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.CreateNewStatusInstanceAsync");
         // Get or create container for this entity
         var container = await GetOrCreateContainerAsync(
             body.EntityId, body.EntityType, body.GameServiceId, cancellationToken);
@@ -1417,6 +1419,7 @@ public partial class StatusService : IStatusService
     private async Task<StatusContainerModel?> GetOrCreateContainerAsync(
         Guid entityId, EntityType entityType, Guid gameServiceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrCreateContainerAsync");
         var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
         var existing = await ContainerStore.GetAsync(entityKey, cancellationToken);
         if (existing != null)
@@ -1473,6 +1476,7 @@ public partial class StatusService : IStatusService
     private async Task RemoveInstanceInternalAsync(
         StatusInstanceModel instance, StatusRemoveReason reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.RemoveInstanceInternalAsync");
         // Delete backing item
         try
         {
@@ -1598,6 +1602,7 @@ public partial class StatusService : IStatusService
     private async Task<ActiveStatusCacheModel> GetOrBuildActiveCacheAsync(
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildActiveCacheAsync");
         var cacheKey = ActiveCacheKey(entityId, entityType);
         var cached = await ActiveCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
@@ -1692,6 +1697,7 @@ public partial class StatusService : IStatusService
     private async Task<SeedEffectsCacheModel> GetOrBuildSeedEffectsCacheAsync(
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.GetOrBuildSeedEffectsCacheAsync");
         var cacheKey = SeedEffectsCacheKey(entityId, entityType);
         var cached = await SeedEffectsCacheStore.GetAsync(cacheKey, cancellationToken);
         if (cached != null)
@@ -1764,6 +1770,7 @@ public partial class StatusService : IStatusService
     private async Task InvalidateActiveCacheAsync(
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateActiveCacheAsync");
         try
         {
             await ActiveCacheStore.DeleteAsync(
@@ -1790,6 +1797,7 @@ public partial class StatusService : IStatusService
     private async Task InvalidateSeedEffectsCacheAsync(
         Guid entityId, EntityType entityType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.InvalidateSeedEffectsCacheAsync");
         try
         {
             await SeedEffectsCacheStore.DeleteAsync(
@@ -1817,6 +1825,7 @@ public partial class StatusService : IStatusService
         GrantStatusRequest body, GrantFailureReason reason,
         Guid? existingStatusInstanceId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.status", "StatusService.PublishGrantFailedEventAsync");
         await _messageBus.TryPublishAsync(
             "status.grant-failed",
             new StatusGrantFailedEvent

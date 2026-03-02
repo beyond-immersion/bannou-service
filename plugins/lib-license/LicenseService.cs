@@ -62,6 +62,7 @@ public partial class LicenseService : ILicenseService
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     #region State Store Accessors
 
@@ -139,6 +140,7 @@ public partial class LicenseService : ILicenseService
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     public LicenseService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -151,7 +153,8 @@ public partial class LicenseService : ILicenseService
         ICurrencyClient currencyClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -165,6 +168,7 @@ public partial class LicenseService : ILicenseService
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
         _resourceClient = resourceClient;
+        _telemetryProvider = telemetryProvider;
     }
 
     #region Adjacency Helper
@@ -256,6 +260,7 @@ public partial class LicenseService : ILicenseService
         IReadOnlyList<LicenseDefinitionModel> definitions,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.LoadOrRebuildBoardCacheAsync");
         // Try cache first
         var cache = await BoardCache.GetAsync(BuildBoardCacheKey(board.BoardId), cancellationToken);
         if (cache != null)
@@ -1514,6 +1519,7 @@ public partial class LicenseService : ILicenseService
     private async Task CompensateItemCreationAsync(
         Guid itemInstanceId, Guid boardId, string licenseCode, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.CompensateItemCreationAsync");
         try
         {
             await _itemClient.DestroyItemInstanceAsync(
@@ -1545,6 +1551,7 @@ public partial class LicenseService : ILicenseService
         Guid boardId, EntityType ownerType, Guid ownerId, string licenseCode,
         UnlockFailureReason reason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.license", "LicenseService.PublishUnlockFailedAsync");
         await _messageBus.TryPublishAsync(
             LicenseTopics.LicenseUnlockFailed,
             new LicenseUnlockFailedEvent
