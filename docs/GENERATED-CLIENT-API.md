@@ -1702,7 +1702,7 @@ Central intelligence for Bannou environment management and service orchestration
 | `UpdateTopologyAsync` | `TopologyUpdateRequest` | `TopologyUpdateResponse` | Update service topology without full redeploy |
 | `RequestcontainerrestartAsync` | `ContainerRestartRequestBody` | `ContainerRestartResponse` | Request container restart (self-service pattern) |
 | `GetContainerstatusAsync` | `GetContainerStatusRequest` | `ContainerStatus` | Get container health and restart history |
-| `RollbackconfigurationAsync` | `ConfigRollbackRequest` | `ConfigRollbackResponse` | Rollback to previous configuration |
+| `RollbackconfigurationAsync` | `ConfigRollbackRequest` | `ConfigRollbackResponse` | Rollback to a previous configuration version |
 | `GetConfigversionAsync` | `GetConfigVersionRequest` | `ConfigVersionResponse` | Get current configuration version and metadata |
 | `AcquireprocessorAsync` | `AcquireProcessorRequest` | `AcquireProcessorResponse` | Acquire a processor from a pool |
 | `ReleaseprocessorAsync` | `ReleaseProcessorRequest` | `ReleaseProcessorResponse` | Release a processor back to the pool |

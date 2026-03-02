@@ -297,7 +297,7 @@ public sealed class OrchestratorProxy
     }
 
     /// <summary>
-    /// Rollback to previous configuration
+    /// Rollback to a previous configuration version
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>

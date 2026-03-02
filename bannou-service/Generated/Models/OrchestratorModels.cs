@@ -2370,7 +2370,7 @@ public partial class RestartHistoryEntry
 }
 
 /// <summary>
-/// Request to rollback configuration to the previous version
+/// Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to version N-1.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ConfigRollbackRequest
@@ -2383,6 +2383,13 @@ public partial class ConfigRollbackRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string Reason { get; set; } = default!;
+
+    /// <summary>
+    /// Specific historical version to rollback to. If omitted, defaults to the previous version (currentVersion - 1).
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetVersion")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? TargetVersion { get; set; } = default!;
 
 }
 

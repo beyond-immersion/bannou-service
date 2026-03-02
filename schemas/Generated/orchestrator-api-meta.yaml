@@ -1749,11 +1749,11 @@ paths:
         n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetContainerStatus\"\n}"
   /orchestrator/config/rollback:
     post:
-      summary: Rollback to previous configuration
+      summary: Rollback to a previous configuration version
       description: |
-        Quickly rollback to the previous configuration without waiting for CI.
-        Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-        with the reverted keys so services can request restart.
+        Rollback to a previous configuration version. If targetVersion is specified,
+        rolls back to that specific version. Otherwise rolls back to version N-1.
+        Creates a new version (N+1) containing the restored config to preserve audit trail.
 
         **Note**: This is a quick fix. GitHub secrets should still be corrected
         to prevent re-breaking on next orchestrator deploy.
@@ -1780,11 +1780,14 @@ paths:
           description: Rollback failed
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfigRollbackRequest\"\
         ,\n    \"$defs\": {\n        \"ConfigRollbackRequest\": {\n            \"description\": \"Request to rollback configuration
-        to the previous version\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
-        \        \"required\": [\n                \"reason\"\n            ],\n            \"properties\": {\n            \
-        \    \"reason\": {\n                    \"type\": \"string\",\n                    \"description\": \"Why rollback
-        is needed (for auditing)\",\n                    \"example\": \"auth.jwt_secret broke authentication\"\n         \
-        \       }\n            }\n        }\n    }\n}"
+        to a previous version. If targetVersion is omitted, rolls back to version N-1.\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"reason\"\n       \
+        \     ],\n            \"properties\": {\n                \"reason\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Why rollback is needed (for auditing)\",\n                    \"example\"\
+        : \"auth.jwt_secret broke authentication\"\n                },\n                \"targetVersion\": {\n           \
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n \
+        \                   \"description\": \"Specific historical version to rollback to. If omitted, defaults to the previous
+        version (currentVersion - 1).\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ConfigRollbackResponse\"\
         ,\n    \"$defs\": {\n        \"ConfigRollbackResponse\": {\n            \"description\": \"Result of a configuration
         rollback including version changes and affected keys\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1796,11 +1799,12 @@ paths:
         \             \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n  \
         \                      \"type\": \"string\"\n                    },\n                    \"description\": \"Keys that
         were reverted\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Rollback to previous configuration\",\n    \"description\": \"Quickly rollback
-        to the previous configuration without waiting for CI.\\nSwaps currentConfig with previousConfig and publishes ConfigurationChangedEvent\\
-        nwith the reverted keys so services can request restart.\\n\\n**Note**: This is a quick fix. GitHub secrets should
-        still be corrected\\nto prevent re-breaking on next orchestrator deploy.\\n\",\n    \"tags\": [],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"RollbackConfiguration\"\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Rollback to a previous configuration version\",\n    \"description\": \"\
+        Rollback to a previous configuration version. If targetVersion is specified,\\nrolls back to that specific version.
+        Otherwise rolls back to version N-1.\\nCreates a new version (N+1) containing the restored config to preserve audit
+        trail.\\n\\n**Note**: This is a quick fix. GitHub secrets should still be corrected\\nto prevent re-breaking on next
+        orchestrator deploy.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"RollbackConfiguration\"\
+        \n}"
   /orchestrator/config/version:
     post:
       summary: Get current configuration version and metadata
@@ -3561,7 +3565,8 @@ components:
           nullable: true
           description: Error message if restart failed (null on success)
     ConfigRollbackRequest:
-      description: Request to rollback configuration to the previous version
+      description: Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to 
+        version N-1.
       type: object
       additionalProperties: false
       required:
@@ -3571,6 +3576,12 @@ components:
           type: string
           description: Why rollback is needed (for auditing)
           example: "auth.jwt_secret broke authentication"
+        targetVersion:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Specific historical version to rollback to. If omitted, defaults to the previous version 
+            (currentVersion - 1).
     ConfigRollbackResponse:
       description: Result of a configuration rollback including version changes and affected keys
       type: object

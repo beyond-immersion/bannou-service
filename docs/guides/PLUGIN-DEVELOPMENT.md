@@ -34,7 +34,7 @@ Schema-first development means you write **18-35% of the code** for a typical se
 
 **Key stats across 41 services:**
 - **~65%** of service code is auto-generated
-- Schema-to-code amplification: **~4x** (1 YAML line → 4 C# lines)
+- Schema-to-code amplification: **~5x** (1 maintained YAML line → ~5 generated output lines)
 - Simple CRUD services: 65-85% generated
 - Complex services (Auth, Connect): 35-50% generated
 

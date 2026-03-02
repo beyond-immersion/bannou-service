@@ -325,12 +325,12 @@ public partial interface IOrchestratorClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Rollback to previous configuration
+    /// Rollback to a previous configuration version
     /// </summary>
     /// <remarks>
-    /// Quickly rollback to the previous configuration without waiting for CI.
-    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-    /// <br/>with the reverted keys so services can request restart.
+    /// Rollback to a previous configuration version. If targetVersion is specified,
+    /// <br/>rolls back to that specific version. Otherwise rolls back to version N-1.
+    /// <br/>Creates a new version (N+1) containing the restored config to preserve audit trail.
     /// <br/>
     /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
     /// <br/>to prevent re-breaking on next orchestrator deploy.
@@ -2010,12 +2010,12 @@ public partial class OrchestratorClient : IOrchestratorClient, BeyondImmersion.B
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Rollback to previous configuration
+    /// Rollback to a previous configuration version
     /// </summary>
     /// <remarks>
-    /// Quickly rollback to the previous configuration without waiting for CI.
-    /// <br/>Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-    /// <br/>with the reverted keys so services can request restart.
+    /// Rollback to a previous configuration version. If targetVersion is specified,
+    /// <br/>rolls back to that specific version. Otherwise rolls back to version N-1.
+    /// <br/>Creates a new version (N+1) containing the restored config to preserve audit trail.
     /// <br/>
     /// <br/>**Note**: This is a quick fix. GitHub secrets should still be corrected
     /// <br/>to prevent re-breaking on next orchestrator deploy.

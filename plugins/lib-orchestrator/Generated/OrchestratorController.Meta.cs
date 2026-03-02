@@ -4150,7 +4150,7 @@ public partial class OrchestratorController
     "$ref": "#/$defs/ConfigRollbackRequest",
     "$defs": {
         "ConfigRollbackRequest": {
-            "description": "Request to rollback configuration to the previous version",
+            "description": "Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to version N-1.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -4161,6 +4161,12 @@ public partial class OrchestratorController
                     "type": "string",
                     "description": "Why rollback is needed (for auditing)",
                     "example": "auth.jwt_secret broke authentication"
+                },
+                "targetVersion": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
+                    "description": "Specific historical version to rollback to. If omitted, defaults to the previous version (currentVersion - 1)."
                 }
             }
         }
@@ -4206,8 +4212,8 @@ public partial class OrchestratorController
 
     private static readonly string _RollbackConfiguration_Info = """
 {
-    "summary": "Rollback to previous configuration",
-    "description": "Quickly rollback to the previous configuration without waiting for CI.\nSwaps currentConfig with previousConfig and publishes ConfigurationChangedEvent\ nwith the reverted keys so services can request restart.\n\n**Note**: This is a quick fix. GitHub secrets should still be corrected\nto prevent re-breaking on next orchestrator deploy.\n",
+    "summary": "Rollback to a previous configuration version",
+    "description": "Rollback to a previous configuration version. If targetVersion is specified,\nrolls back to that specific version. Otherwise rolls back to version N-1.\nCreates a new version (N+1) containing the restored config to preserve audit trail.\n\n**Note**: This is a quick fix. GitHub secrets should still be corrected\nto prevent re-breaking on next orchestrator deploy.\n",
     "tags": [],
     "deprecated": false,
     "operationId": "RollbackConfiguration"

@@ -194,7 +194,7 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 
 ### Configuration Versioning (2 endpoints)
 
-- **RollbackConfiguration** (`/orchestrator/config/rollback`): Gets current version, validates version > 1 (needs previous). Retrieves previous config from history. Calls `RestoreConfigurationVersionAsync` which creates a NEW version (currentVersion+1) containing the old config (preserves audit trail). Computes changed keys (services and env vars that differ). Returns `ConfigRollbackResponse` with version numbers and changed keys list.
+- **RollbackConfiguration** (`/orchestrator/config/rollback`): Supports rolling back to any historical version. If `targetVersion` is specified, rolls back to that version; otherwise defaults to version N-1. Validates target version is >= 1 and < current version. Retrieves target config from history. Calls `RestoreConfigurationVersionAsync` which creates a NEW version (currentVersion+1) containing the old config (preserves audit trail). Computes changed keys (services and env vars that differ). Returns `ConfigRollbackResponse` with version numbers and changed keys list.
 
 - **GetConfigVersion** (`/orchestrator/config/version`): Gets current version number and configuration from Redis. Checks if previous version exists in history. Extracts key prefixes from current config (service names, env var prefixes). Returns `ConfigVersionResponse` with version, timestamp, hasPreviousConfig, keyCount, keyPrefixes.
 
@@ -434,9 +434,11 @@ Service lifetime is **Scoped** (per-request). Internal helpers are Singleton.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
 - **Idle timeout enforcement**: Background cleanup for pool workers that have been available beyond `IdleTimeoutMinutes`.
 <!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/550 -->
-- **Multi-version rollback**: Currently only rolls back to version N-1. Could support rollback to arbitrary historical versions.
+- ~~**Multi-version rollback**~~: **FIXED** (2026-03-02) - Added optional `targetVersion` field to `ConfigRollbackRequest`. When omitted, rolls back to N-1 (preserving backward compatibility). When specified, rolls back to the requested historical version with validation (must be >= 1 and < current version). Returns 404 if the target version has expired from history.
 - **Deploy validation**: Pre-flight checks before deployment (disk space, network reachability, image pull verification).
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/551 -->
 - **Blue-green deployment**: Deploy new topology alongside old, switch routing atomically, then teardown old.
+<!-- AUDIT:NEEDS_DESIGN:2026-03-02:https://github.com/beyond-immersion/bannou-service/issues/552 -->
 - **Canary deployments**: Route percentage of traffic to new version, monitor health, then promote or rollback.
 - **Processing pool priority queue**: Currently FIFO; could use priority field from acquire requests.
 - **Lease expiry enforcement**: Background timer to reclaim expired leases and return processors to available pool.
@@ -486,6 +488,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Design Consideration #5 (`_lastKnownDeployment` divergence)**: Resolved as false concern (2026-03-02). Service is Scoped; field already reads from Redis per-request.
 - **Log timestamp parsing**: Fixed (2026-03-02). Continuation lines now inherit preceding line's timestamp instead of UtcNow.
 - **Design Consideration #4 (GetOrchestratorAsync TTL dead code)**: Fixed (2026-03-02). Removed dead TTL-based cache invalidation logic, `_orchestratorCachedAt` field, and `CacheTtlMinutes` config property. Method simplified to within-request reuse only.
+- **Multi-version rollback**: Fixed (2026-03-02). Added optional `targetVersion` field to `ConfigRollbackRequest` schema. Service validates target is >= 1 and < current version.
 
 ---
 

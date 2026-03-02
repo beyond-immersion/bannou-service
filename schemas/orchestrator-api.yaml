@@ -534,11 +534,11 @@ paths:
 
   /orchestrator/config/rollback:
     post:
-      summary: Rollback to previous configuration
+      summary: Rollback to a previous configuration version
       description: |
-        Quickly rollback to the previous configuration without waiting for CI.
-        Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-        with the reverted keys so services can request restart.
+        Rollback to a previous configuration version. If targetVersion is specified,
+        rolls back to that specific version. Otherwise rolls back to version N-1.
+        Creates a new version (N+1) containing the restored config to preserve audit trail.
 
         **Note**: This is a quick fix. GitHub secrets should still be corrected
         to prevent re-breaking on next orchestrator deploy.
@@ -2187,7 +2187,7 @@ components:
     # ==========================================================================
 
     ConfigRollbackRequest:
-      description: Request to rollback configuration to the previous version
+      description: Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to version N-1.
       type: object
       additionalProperties: false
       required:
@@ -2197,6 +2197,11 @@ components:
           type: string
           description: Why rollback is needed (for auditing)
           example: "auth.jwt_secret broke authentication"
+        targetVersion:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Specific historical version to rollback to. If omitted, defaults to the previous version (currentVersion - 1).
 
     ConfigRollbackResponse:
       description: Result of a configuration rollback including version changes and affected keys

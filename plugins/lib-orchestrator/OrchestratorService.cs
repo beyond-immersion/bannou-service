@@ -1996,7 +1996,8 @@ public partial class OrchestratorService : IOrchestratorService
     public async Task<(StatusCodes, ConfigRollbackResponse?)> RollbackConfigurationAsync(ConfigRollbackRequest body, CancellationToken cancellationToken)
     {
         using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.RollbackConfigurationAsync");
-        _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}", body.Reason);
+        _logger.LogDebug("Executing RollbackConfiguration operation: reason={Reason}, targetVersion={TargetVersion}",
+            body.Reason, body.TargetVersion);
 
         // Get current configuration
         var currentConfig = await _stateManager.GetCurrentConfigurationAsync();
@@ -2009,13 +2010,21 @@ public partial class OrchestratorService : IOrchestratorService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Get the previous version (currentVersion - 1)
-        var targetVersion = currentVersion - 1;
+        // Use specified target version or default to N-1
+        var targetVersion = body.TargetVersion ?? currentVersion - 1;
+
+        if (targetVersion < 1 || targetVersion >= currentVersion)
+        {
+            _logger.LogWarning("Invalid target version {TargetVersion} (current version: {CurrentVersion})",
+                targetVersion, currentVersion);
+            return (StatusCodes.BadRequest, null);
+        }
+
         var previousConfig = await _stateManager.GetConfigurationVersionAsync(targetVersion);
 
         if (previousConfig == null)
         {
-            _logger.LogWarning("Previous configuration version {Version} not found in history (may have expired)", targetVersion);
+            _logger.LogWarning("Configuration version {Version} not found in history (may have expired)", targetVersion);
             return (StatusCodes.NotFound, null);
         }
 

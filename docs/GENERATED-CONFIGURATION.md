@@ -895,7 +895,6 @@ Final ... |
 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
-| `ORCHESTRATOR_CACHE_TTL_MINUTES` | int | `5` | Cache TTL in minutes for orchestrator data |
 | `ORCHESTRATOR_CERTIFICATES_HOST_PATH` | string | `/app/provisioning/certificates` | Host path for TLS certificates |
 | `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | int | `30` | TTL in days for configuration history entries in state store |
 | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds for polling container status during depl... |
@@ -1264,9 +1263,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 968
+- **Total properties**: 967
 - **Required (no default)**: 59
-- **Optional (has default)**: 909
+- **Optional (has default)**: 908
 
 ## Environment Variable Naming Convention
 
