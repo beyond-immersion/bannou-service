@@ -532,7 +532,6 @@ This document lists all configuration options defined in Bannou's configuration 
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_ON_STARTUP` | bool | `true` | Whether to rebuild search index on service startup |
 | `DOCUMENTATION_SEARCH_INDEX_REBUILD_STARTUP_DELAY_SECONDS` | int | `5` | Delay in seconds before search index rebuild starts (allows ... |
 | `DOCUMENTATION_SEARCH_SNIPPET_LENGTH` | int | `200` | Length in characters for search result snippets |
-| `DOCUMENTATION_STATS_SAMPLE_SIZE` | int | `10` | Number of documents to sample for namespace statistics |
 | `DOCUMENTATION_SYNC_LOCK_TTL_SECONDS` | int | `1800` | TTL in seconds for repository sync distributed lock |
 | `DOCUMENTATION_SYNC_SCHEDULER_CHECK_INTERVAL_MINUTES` | int | `5` | How often to check for repos needing sync |
 | `DOCUMENTATION_SYNC_SCHEDULER_ENABLED` | bool | `true` | Enable background sync scheduler |
@@ -901,22 +900,29 @@ Final ... |
 | `ORCHESTRATOR_CONFIG_HISTORY_TTL_DAYS` | int | `30` | TTL in days for configuration history entries in state store |
 | `ORCHESTRATOR_CONTAINER_STATUS_POLL_INTERVAL_SECONDS` | int | `2` | Interval in seconds for polling container status during depl... |
 | `ORCHESTRATOR_DEFAULT_BACKEND` | string | `compose` | Default container orchestration backend when not specified i... |
+| `ORCHESTRATOR_DEFAULT_POOL_LEASE_TIMEOUT_SECONDS` | int | `300` | Default lease timeout in seconds for acquired processing poo... |
+| `ORCHESTRATOR_DEFAULT_SERVICE_PORT` | int | `80` | Default HTTP port for discovered service instances used in h... |
 | `ORCHESTRATOR_DEFAULT_WAIT_BEFORE_KILL_SECONDS` | int | `30` | Default seconds to wait before killing a container during st... |
 | `ORCHESTRATOR_DEGRADATION_THRESHOLD_MINUTES` | int | `5` | Time in minutes before a service is marked as degraded |
 | `ORCHESTRATOR_DOCKER_HOST` | string | `unix:///var/run/docker.sock` | Docker host for direct Docker API access |
 | `ORCHESTRATOR_DOCKER_IMAGE_NAME` | string | `bannou:latest` | Docker image name for deployed Bannou containers |
 | `ORCHESTRATOR_DOCKER_NETWORK` | string | `bannou_default` | Docker network name for deployed containers |
+| `ORCHESTRATOR_FULL_MAPPINGS_INTERVAL_SECONDS` | int | `30` | Interval in seconds for publishing full service-to-appId map... |
 | `ORCHESTRATOR_HEALTH_CHECK_INTERVAL_MS` | int | `2000` | Interval in milliseconds between health checks during restar... |
 | `ORCHESTRATOR_HEARTBEAT_TIMEOUT_SECONDS` | int | `90` | Service heartbeat timeout in seconds |
 | `ORCHESTRATOR_HEARTBEAT_TTL_SECONDS` | int | `90` | TTL in seconds for service heartbeat entries in state store |
+| `ORCHESTRATOR_INDEX_UPDATE_MAX_RETRIES` | int | `3` | Maximum number of retry attempts for state index update oper... |
 | `ORCHESTRATOR_KUBECONFIG_PATH` | string | **REQUIRED** | Path to kubeconfig file (null uses default ~/.kube/config) |
 | `ORCHESTRATOR_KUBERNETES_NAMESPACE` | string | `default` | Kubernetes namespace for deployments |
 | `ORCHESTRATOR_LOGS_VOLUME` | string | `logs-data` | Docker volume name for logs |
 | `ORCHESTRATOR_OPENRESTY_HOST` | string | `openresty` | OpenResty hostname for cache invalidation calls |
 | `ORCHESTRATOR_OPENRESTY_PORT` | int | `80` | OpenResty port for cache invalidation calls |
 | `ORCHESTRATOR_OPENRESTY_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for OpenResty HTTP requests |
+| `ORCHESTRATOR_ORPHAN_CONTAINER_THRESHOLD_HOURS` | int | `24` | Hours since last heartbeat before a container is considered ... |
+| `ORCHESTRATOR_POOL_LOCK_TIMEOUT_SECONDS` | int | `15` | Timeout in seconds for acquiring distributed locks on proces... |
 | `ORCHESTRATOR_PORTAINER_API_KEY` | string | **REQUIRED** | Portainer API key |
 | `ORCHESTRATOR_PORTAINER_ENDPOINT_ID` | int | `1` | Portainer endpoint ID |
+| `ORCHESTRATOR_PORTAINER_REQUEST_TIMEOUT_SECONDS` | int | `30` | HTTP request timeout in seconds for Portainer API calls |
 | `ORCHESTRATOR_PORTAINER_URL` | string | **REQUIRED** | Portainer API URL |
 | `ORCHESTRATOR_PRESETS_HOST_PATH` | string | `/app/provisioning/orchestrator/presets` | Host path for orchestrator deployment presets |
 | `ORCHESTRATOR_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string for orchestrator state. |
@@ -1222,9 +1228,8 @@ Applied when... |
 | `VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS` | int | `300` | Seconds an empty autoCleanup room persists before auto-delet... |
 | `VOICE_EVICTION_WORKER_INITIAL_DELAY_SECONDS` | int | `10` | Seconds to wait after startup before the first eviction cycl... |
 | `VOICE_KAMAILIO_HOST` | string | `localhost` | Kamailio SIP server host |
-| `VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS` | int | `5` | Timeout in seconds for Kamailio service requests |
-| `VOICE_KAMAILIO_RPC_PORT` | int | `5080` | Kamailio JSON-RPC port (typically 5080, not SIP port 5060) |
 | `VOICE_KAMAILIO_SIP_PORT` | int | `5060` | Kamailio SIP signaling port for client registration |
+| `VOICE_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition |
 | `VOICE_P2P_MAX_PARTICIPANTS` | int | `8` | Maximum participants in P2P voice sessions |
 | `VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS` | int | `15` | How often the background worker checks for stale participant... |
 | `VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS` | int | `60` | Seconds of missed heartbeats before participant is evicted |
@@ -1259,9 +1264,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 963
+- **Total properties**: 968
 - **Required (no default)**: 59
-- **Optional (has default)**: 904
+- **Optional (has default)**: 909
 
 ## Environment Variable Naming Convention
 

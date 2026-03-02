@@ -727,12 +727,12 @@ paths:
         including status and deployed service information\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"success\",\n                \"deploymentId\",\n         \
         \       \"backend\",\n                \"duration\"\n            ],\n            \"properties\": {\n              \
-        \  \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether all
-        nodes were deployed successfully (false indicates partial failure)\"\n                },\n                \"deploymentId\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique deployment identifier
-        for tracking\"\n                },\n                \"backend\": {\n                    \"$ref\": \"#/$defs/BackendType\"\
-        ,\n                    \"description\": \"Container orchestration backend used for deployment\"\n                },\n\
-        \                \"preset\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \  \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        deployment completed successfully without errors\"\n                },\n                \"deploymentId\": {\n    \
+        \                \"type\": \"string\",\n                    \"description\": \"Unique deployment identifier for tracking\"\
+        \n                },\n                \"backend\": {\n                    \"$ref\": \"#/$defs/BackendType\",\n   \
+        \                 \"description\": \"Container orchestration backend used for deployment\"\n                },\n \
+        \               \"preset\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Preset used (if applicable)\"\n                },\n                \"duration\"\
         : {\n                    \"type\": \"string\",\n                    \"description\": \"Time taken to deploy\"\n  \
         \              },\n                \"topology\": {\n                    \"$ref\": \"#/$defs/ServiceTopology\",\n \
@@ -1187,27 +1187,25 @@ paths:
         remove containers\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TeardownResponse\"\
         ,\n    \"$defs\": {\n        \"TeardownResponse\": {\n            \"description\": \"Result of an environment teardown
-        including removed resources and any errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"duration\"\n            ],\n\
-        \            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether all containers were torn down successfully (false indicates partial failure)\"\
-        \n                },\n                \"duration\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Time taken to complete teardown\"\n                },\n                \"stoppedContainers\"\
+        including removed resources and any errors. Check errors array for partial failures.\",\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"duration\"\
+        \n            ],\n            \"properties\": {\n                \"duration\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Time taken to complete teardown\"\n                },\n        \
+        \        \"stoppedContainers\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Container IDs that were stopped\"\n                },\n                \"removedVolumes\"\
         : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Container IDs that were stopped\"\n                },\n                \"removedVolumes\": {\n                   \
-        \ \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n              \
-        \          \"type\": \"string\"\n                    },\n                    \"description\": \"Volumes that were
-        removed\"\n                },\n                \"removedNetworks\": {\n                    \"type\": \"array\",\n\
-        \                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Networks that were removed\"\n                },\n\
-        \                \"removedInfrastructure\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
-        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"description\": \"Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)\"\
-        \n                },\n                \"errors\": {\n                    \"type\": \"array\",\n                  \
-        \  \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n         \
-        \           },\n                    \"description\": \"Non-fatal errors during teardown\"\n                }\n   \
-        \         }\n        }\n    }\n}"
+        Volumes that were removed\"\n                },\n                \"removedNetworks\": {\n                    \"type\"\
+        : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Networks that were removed\"\n\
+        \                },\n                \"removedInfrastructure\": {\n                    \"type\": \"array\",\n    \
+        \                \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"Infrastructure services that were removed (Redis,
+        RabbitMQ, MySQL, etc.)\"\n                },\n                \"errors\": {\n                    \"type\": \"array\"\
+        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"\
+        string\"\n                    },\n                    \"description\": \"Non-fatal errors during teardown\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Tear down the current environment\",\n    \"description\": \"Tears down
         all containers and services in the current deployment.\\nOptionally preserves volumes and networks for faster redeployment.\\
         n\\n**Teardown Modes**:\\n- `graceful`: Signal shutdown and wait for clean exit\\n- `force`: Immediately stop all
@@ -1266,21 +1264,19 @@ paths:
         description\": \"Type of resource to clean\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanResponse\"\
         ,\n    \"$defs\": {\n        \"CleanResponse\": {\n            \"description\": \"Result of a cleanup operation including
-        reclaimed space and removed resource counts\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\"\n            ],\n            \"properties\": {\n\
-        \                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether all requested cleanup operations completed (false indicates partial failure)\"\n                },\n   \
-        \             \"reclaimedSpaceMb\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Disk space reclaimed (MB)\"\n                },\n                \"removedContainers\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"description\": \"Number of containers removed\"\n               \
-        \ },\n                \"removedNetworks\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of networks removed\"\n                },\n                \"removedVolumes\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Number of volumes removed\"\n                },\n   \
-        \             \"removedImages\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Number of images removed\"\n                },\n                \"errors\": {\n                    \"type\": \"\
-        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\"\
-        : \"string\"\n                    },\n                    \"description\": \"Non-fatal errors during cleanup\"\n \
-        \               }\n            }\n        }\n    }\n}"
+        reclaimed space and removed resource counts. Check errors array for partial failures.\",\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"properties\": {\n                \"reclaimedSpaceMb\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Disk space reclaimed (MB)\"\
+        \n                },\n                \"removedContainers\": {\n                    \"type\": \"integer\",\n     \
+        \               \"description\": \"Number of containers removed\"\n                },\n                \"removedNetworks\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of networks removed\"\
+        \n                },\n                \"removedVolumes\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Number of volumes removed\"\n                },\n                \"removedImages\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of images removed\"\
+        \n                },\n                \"errors\": {\n                    \"type\": \"array\",\n                  \
+        \  \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"string\"\n         \
+        \           },\n                    \"description\": \"Non-fatal errors during cleanup\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Clean up unused resources\",\n    \"description\": \"Prunes unused Docker
         resources to reclaim disk space and clean up\\norphaned containers, networks, volumes, and images.\\n\\nEquivalent
         to running various `docker system prune` commands.\\n\\n**Clean Targets**:\\n- `containers`: Remove stopped containers\\
@@ -1465,55 +1461,53 @@ paths:
         connections to drain\\n- force: Apply immediately\\n- clean: Tear down and rebuild\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TopologyUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"TopologyUpdateResponse\": {\n            \"description\": \"Result of a topology update
-        including applied changes and the new topology state\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"success\",\n                \"appliedChanges\"\n        \
-        \    ],\n            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether all topology changes were applied successfully (false indicates
-        partial failure)\"\n                },\n                \"appliedChanges\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/AppliedChange\"\n               \
-        \     },\n                    \"description\": \"Details of each applied change\"\n                },\n          \
-        \      \"topology\": {\n                    \"$ref\": \"#/$defs/ServiceTopology\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New topology after changes\"\n                },\n               \
-        \ \"duration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n          \
-        \          \"description\": \"Time taken to apply topology changes\"\n                },\n                \"warnings\"\
-        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
-        : {\n                        \"type\": \"string\"\n                    },\n                    \"description\": \"\
-        Non-fatal warnings during topology update\"\n                }\n            }\n        },\n        \"AppliedChange\"\
-        : {\n            \"description\": \"Details of a single topology change that was applied, including success status\"\
+        including applied changes and the new topology state. Check individual appliedChanges for per-change success status.\"\
         ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
-        \                \"action\",\n                \"success\"\n            ],\n            \"properties\": {\n       \
-        \         \"action\": {\n                    \"type\": \"string\",\n                    \"description\": \"Type of
-        topology change that was applied\"\n                },\n                \"target\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Node or service affected\"\
-        \n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n               \
-        \     \"description\": \"Whether this specific change was applied successfully\"\n                },\n           \
-        \     \"error\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n         \
-        \           \"description\": \"Error message if failed (null on success)\"\n                }\n            }\n   \
-        \     },\n        \"ServiceTopology\": {\n            \"description\": \"Service distribution topology defining which
-        services run on which nodes\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"nodes\"\n            ],\n            \"properties\": {\n         \
-        \       \"nodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n               \
-        \         \"$ref\": \"#/$defs/TopologyNode\"\n                    },\n                    \"description\": \"Container/pod
-        definitions with service assignments\"\n                },\n                \"infrastructure\": {\n              \
-        \      \"$ref\": \"#/$defs/InfrastructureConfig\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Infrastructure service configuration\"\n                }\n            }\n        },\n        \"\
-        TopologyNode\": {\n            \"description\": \"A container or pod in the service topology with its assigned services
-        and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
-        \  \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n                \"name\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container name (e.g.,
-        \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n                 \
-        \   \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n            \
-        \            \"$ref\": \"#/$defs/ServiceLayerType\"\n                    },\n                    \"description\":
-        \"Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from
-        container environment.\"\n                },\n                \"services\": {\n                    \"type\": \"array\"\
-        ,\n                    \"nullable\": true,\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"description\": \"Individual services to enable on this node.
-        Acts as overrides for services outside enabled layers.\"\n                },\n                \"replicas\": {\n  \
-        \                  \"type\": \"integer\",\n                    \"default\": 1,\n                    \"minimum\": 1,\n\
-        \                    \"description\": \"Number of replicas for this node\"\n                },\n                \"\
-        resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Resource limits and requests for this node\"\n                },\n       \
-        \         \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        \                \"appliedChanges\"\n            ],\n            \"properties\": {\n                \"appliedChanges\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/AppliedChange\"\n                    },\n                    \"description\": \"Details of each applied
+        change\"\n                },\n                \"topology\": {\n                    \"$ref\": \"#/$defs/ServiceTopology\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"New topology after changes\"\n\
+        \                },\n                \"duration\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Time taken to apply topology changes\"\n        \
+        \        },\n                \"warnings\": {\n                    \"type\": \"array\",\n                    \"nullable\"\
+        : true,\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
+        \                    \"description\": \"Non-fatal warnings during topology update\"\n                }\n         \
+        \   }\n        },\n        \"AppliedChange\": {\n            \"description\": \"Details of a single topology change
+        that was applied\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"success\",\n                \"action\"\n            ],\n            \"properties\"\
+        : {\n                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether this specific change was applied successfully\"\n                },\n                \"action\": {\n \
+        \                   \"type\": \"string\",\n                    \"description\": \"Type of topology change that was
+        applied\"\n                },\n                \"target\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Node or service affected\"\n            \
+        \    },\n                \"error\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Error message if failed (null on success)\"\n                }\n \
+        \           }\n        },\n        \"ServiceTopology\": {\n            \"description\": \"Service distribution topology
+        defining which services run on which nodes\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"nodes\"\n            ],\n            \"properties\": {\n\
+        \                \"nodes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"$ref\": \"#/$defs/TopologyNode\"\n                    },\n                    \"description\"\
+        : \"Container/pod definitions with service assignments\"\n                },\n                \"infrastructure\":
+        {\n                    \"$ref\": \"#/$defs/InfrastructureConfig\",\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Infrastructure service configuration\"\n                }\n            }\n   \
+        \     },\n        \"TopologyNode\": {\n            \"description\": \"A container or pod in the service topology with
+        its assigned services and configuration\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"name\"\n            ],\n            \"properties\": {\n \
+        \               \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Node/container
+        name (e.g., \\\"bannou-main\\\", \\\"bannou-auth\\\")\"\n                },\n                \"layers\": {\n     \
+        \               \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/ServiceLayerType\"\n                    },\n                    \"description\"\
+        : \"Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited
+        from container environment.\"\n                },\n                \"services\": {\n                    \"type\":
+        \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
+        type\": \"string\"\n                    },\n                    \"description\": \"Individual services to enable on
+        this node. Acts as overrides for services outside enabled layers.\"\n                },\n                \"replicas\"\
+        : {\n                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Number of replicas for this node\"\n                },\n            \
+        \    \"resources\": {\n                    \"$ref\": \"#/$defs/ResourceLimits\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Resource limits and requests for this node\"\n                },\n\
+        \                \"environment\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
         \                    \"description\": \"Node-specific environment overrides\"\n                },\n              \
         \  \"meshEnabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n      \
@@ -2918,7 +2912,7 @@ components:
       properties:
         success:
           type: boolean
-          description: Whether all nodes were deployed successfully (false indicates partial failure)
+          description: Whether the deployment completed successfully without errors
         deploymentId:
           type: string
           description: Unique deployment identifier for tracking
@@ -3104,16 +3098,13 @@ components:
             Docker swarm/Kubernetes namespace as bannou services. USE WITH EXTREME CAUTION -
             this will destroy all data and require a full re-deployment.
     TeardownResponse:
-      description: Result of an environment teardown including removed resources and any errors
+      description: Result of an environment teardown including removed resources and any errors. Check errors array for 
+        partial failures.
       type: object
       additionalProperties: false
       required:
-      - success
       - duration
       properties:
-        success:
-          type: boolean
-          description: Whether all containers were torn down successfully (false indicates partial failure)
         duration:
           type: string
           description: Time taken to complete teardown
@@ -3183,15 +3174,11 @@ components:
           nullable: true
           description: Only clean resources matching labels
     CleanResponse:
-      description: Result of a cleanup operation including reclaimed space and removed resource counts
+      description: Result of a cleanup operation including reclaimed space and removed resource counts. Check errors 
+        array for partial failures.
       type: object
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether all requested cleanup operations completed (false indicates partial failure)
         reclaimedSpaceMb:
           type: integer
           description: Disk space reclaimed (MB)
@@ -3311,16 +3298,13 @@ components:
           nullable: true
           description: Full node config (for add-node action)
     TopologyUpdateResponse:
-      description: Result of a topology update including applied changes and the new topology state
+      description: Result of a topology update including applied changes and the new topology state. Check individual 
+        appliedChanges for per-change success status.
       type: object
       additionalProperties: false
       required:
-      - success
       - appliedChanges
       properties:
-        success:
-          type: boolean
-          description: Whether all topology changes were applied successfully (false indicates partial failure)
         appliedChanges:
           type: array
           items:
@@ -3341,13 +3325,16 @@ components:
             type: string
           description: Non-fatal warnings during topology update
     AppliedChange:
-      description: Details of a single topology change that was applied, including success status
+      description: Details of a single topology change that was applied
       type: object
       additionalProperties: false
       required:
-      - action
       - success
+      - action
       properties:
+        success:
+          type: boolean
+          description: Whether this specific change was applied successfully
         action:
           type: string
           description: Type of topology change that was applied
@@ -3355,9 +3342,6 @@ components:
           type: string
           nullable: true
           description: Node or service affected
-        success:
-          type: boolean
-          description: Whether this specific change was applied successfully
         error:
           type: string
           nullable: true

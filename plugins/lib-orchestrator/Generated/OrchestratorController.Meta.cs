@@ -1604,7 +1604,7 @@ public partial class OrchestratorController
             "properties": {
                 "success": {
                     "type": "boolean",
-                    "description": "Whether all nodes were deployed successfully (false indicates partial failure)"
+                    "description": "Whether the deployment completed successfully without errors"
                 },
                 "deploymentId": {
                     "type": "string",
@@ -2754,18 +2754,13 @@ public partial class OrchestratorController
     "$ref": "#/$defs/TeardownResponse",
     "$defs": {
         "TeardownResponse": {
-            "description": "Result of an environment teardown including removed resources and any errors",
+            "description": "Result of an environment teardown including removed resources and any errors. Check errors array for partial failures.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "duration"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all containers were torn down successfully (false indicates partial failure)"
-                },
                 "duration": {
                     "type": "string",
                     "description": "Time taken to complete teardown"
@@ -2931,17 +2926,10 @@ public partial class OrchestratorController
     "$ref": "#/$defs/CleanResponse",
     "$defs": {
         "CleanResponse": {
-            "description": "Result of a cleanup operation including reclaimed space and removed resource counts",
+            "description": "Result of a cleanup operation including reclaimed space and removed resource counts. Check errors array for partial failures.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "success"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all requested cleanup operations completed (false indicates partial failure)"
-                },
                 "reclaimedSpaceMb": {
                     "type": "integer",
                     "description": "Disk space reclaimed (MB)"
@@ -3409,18 +3397,13 @@ public partial class OrchestratorController
     "$ref": "#/$defs/TopologyUpdateResponse",
     "$defs": {
         "TopologyUpdateResponse": {
-            "description": "Result of a topology update including applied changes and the new topology state",
+            "description": "Result of a topology update including applied changes and the new topology state. Check individual appliedChanges for per-change success status.",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "success",
                 "appliedChanges"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether all topology changes were applied successfully (false indicates partial failure)"
-                },
                 "appliedChanges": {
                     "type": "array",
                     "items": {
@@ -3449,14 +3432,18 @@ public partial class OrchestratorController
             }
         },
         "AppliedChange": {
-            "description": "Details of a single topology change that was applied, including success status",
+            "description": "Details of a single topology change that was applied",
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "action",
-                "success"
+                "success",
+                "action"
             ],
             "properties": {
+                "success": {
+                    "type": "boolean",
+                    "description": "Whether this specific change was applied successfully"
+                },
                 "action": {
                     "type": "string",
                     "description": "Type of topology change that was applied"
@@ -3465,10 +3452,6 @@ public partial class OrchestratorController
                     "type": "string",
                     "nullable": true,
                     "description": "Node or service affected"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether this specific change was applied successfully"
                 },
                 "error": {
                     "type": "string",

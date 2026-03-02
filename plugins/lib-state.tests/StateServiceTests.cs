@@ -1245,6 +1245,61 @@ public class StateServiceTests
         await Assert.ThrowsAsync<Exception>(() => service.ListStoresAsync(null, CancellationToken.None));
     }
 
+    [Fact]
+    public async Task ListStoresAsync_WithIncludeStats_ReturnsKeyCountsForEachStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListStoresRequest { IncludeStats = true };
+
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(new[] { "store-a", "store-b" });
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-a")).Returns(StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-b")).Returns(StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetKeyCountAsync("store-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42L);
+        _mockStateStoreFactory.Setup(f => f.GetKeyCountAsync("store-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(100L);
+
+        // Act
+        var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Stores.Count);
+
+        var storeA = response.Stores.First(s => s.Name == "store-a");
+        Assert.Equal(42, storeA.KeyCount);
+
+        var storeB = response.Stores.First(s => s.Name == "store-b");
+        Assert.Equal(100, storeB.KeyCount);
+    }
+
+    [Fact]
+    public async Task ListStoresAsync_WithoutIncludeStats_ReturnsNullKeyCounts()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(new[] { "store-a" });
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-a")).Returns(StateBackend.Redis);
+
+        // Act
+        var (status, response) = await service.ListStoresAsync(
+            new ListStoresRequest { IncludeStats = false }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Stores);
+        Assert.Null(response.Stores.First().KeyCount);
+
+        // GetKeyCountAsync should NOT have been called
+        _mockStateStoreFactory.Verify(
+            f => f.GetKeyCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     #endregion
 }
 

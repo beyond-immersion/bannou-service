@@ -627,7 +627,7 @@ public partial class VoiceService : IVoiceService
                 var freshRoomData = await _roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
                 if (freshRoomData != null &&
                     (freshRoomData.BroadcastState == BroadcastConsentState.Approved ||
-                     freshRoomData.BroadcastState == BroadcastConsentState.Pending))
+                    freshRoomData.BroadcastState == BroadcastConsentState.Pending))
                 {
                     await StopBroadcastInternalAsync(body.RoomId, freshRoomData, VoiceBroadcastStoppedReason.RoomClosed, cancellationToken);
                     // Update local reference so downstream deletion uses correct state

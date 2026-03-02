@@ -1368,7 +1368,7 @@ Sent to a client when they join a voice room.
 | `peers` | List of peers to connect to (P2P mode) |
 | `roomId` | Voice room ID |
 | `rtpServerUri` | RTP server URI (scaled mode only) |
-| `sessionId` | Associated game session ID |
+| `sessionId` | Associated WebSocket session ID |
 | `stunServers` | STUN server URIs for NAT traversal |
 | `tier` | Current voice tier |
 

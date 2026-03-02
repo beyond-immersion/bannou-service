@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Transit.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Character;
@@ -15,7 +16,6 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using BeyondImmersion.Bannou.Transit.ClientEvents;
 
 namespace BeyondImmersion.BannouService.Transit;
 

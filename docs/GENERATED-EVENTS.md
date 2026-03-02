@@ -520,7 +520,11 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `ConfigurationChangedEvent` | Custom | `configuration-changed` | Published when configuration or secrets change. Al... |
+| `DeploymentEvent` | Custom | `deployment` | Published when deployment state changes. Topic ban... |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
+| `ProcessorReleasedEvent` | Custom | `processor-released` | Published when a processor is released back to the... |
+| `ServiceRestartEvent` | Custom | `service-restart` | Published when a service is restarted. Topic banno... |
 
 ### Puppetmaster
 
@@ -691,11 +695,11 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a room |
-| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a room |
-| `VoiceRoomBroadcastApprovedEvent` | Custom | `voice-room-broadcast-approved` | All participants consented to broadcasting. lib-st... |
-| `VoiceRoomBroadcastDeclinedEvent` | Custom | `voice-room-broadcast-declined` | A participant declined broadcast consent |
-| `VoiceRoomBroadcastStoppedEvent` | Custom | `voice-room-broadcast-stopped` | Broadcasting stopped |
+| `VoiceBroadcastApprovedEvent` | Custom | `voice-broadcast-approved` | All participants consented to broadcasting. lib-st... |
+| `VoiceBroadcastDeclinedEvent` | Custom | `voice-broadcast-declined` | A participant declined broadcast consent |
+| `VoiceBroadcastStoppedEvent` | Custom | `voice-broadcast-stopped` | Broadcasting stopped |
+| `VoicePeerJoinedEvent` | Custom | `voice-peer-joined` | Published when a peer joins a room |
+| `VoicePeerLeftEvent` | Custom | `voice-peer-left` | Published when a peer leaves a room |
 | `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a voice room is created |
 | `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted |
 | `VoiceRoomTierUpgradedEvent` | Custom | `voice-room-tier-upgraded` | Published when a room upgrades from P2P to scaled ... |

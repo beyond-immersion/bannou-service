@@ -399,4 +399,3 @@ public sealed class PoolMetricsData
     /// <summary>Start of the current metrics aggregation window.</summary>
     public DateTimeOffset WindowStart { get; set; }
 }
-

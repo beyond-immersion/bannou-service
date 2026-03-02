@@ -237,7 +237,7 @@ Compliant properties include one of these phrases in their description:
 | `AcquireProcessorRequest` | `metadata` | `orchestrator-api.yaml` | Y | Client-provided processing job metadata. No Bannou plugin reads specific keys... |
 | `ComponentHealth` | `metrics` | `orchestrator-api.yaml` | Y | Component-specific metrics reported by the service. No Bannou plugin reads sp... |
 | `ReleaseProcessorRequest` | `metrics` | `orchestrator-api.yaml` | Y | Client-provided processing metrics (duration, items processed, etc.). No Bann... |
-| `ServiceHealthStatus` | `metadata` | `orchestrator-api.yaml` | Y | Client-provided service metadata. No Bannou plugin reads specific keys from t... |
+| `ServiceHealthEntry` | `metadata` | `orchestrator-api.yaml` | Y | Client-provided service metadata. No Bannou plugin reads specific keys from t... |
 
 #### Website
 

@@ -677,13 +677,23 @@ public class MeshServiceTests
         // Arrange - one heavily loaded, one lightly loaded
         var lightEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
-            Host = "light", Port = 3500, LoadPercent = 10, CurrentConnections = 5
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou",
+            Status = EndpointStatus.Healthy,
+            Host = "light",
+            Port = 3500,
+            LoadPercent = 10,
+            CurrentConnections = 5
         };
         var heavyEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
-            Host = "heavy", Port = 3500, LoadPercent = 90, CurrentConnections = 500
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou",
+            Status = EndpointStatus.Healthy,
+            Host = "heavy",
+            Port = 3500,
+            LoadPercent = 90,
+            CurrentConnections = 500
         };
 
         _mockStateManager
@@ -717,13 +727,19 @@ public class MeshServiceTests
         // Arrange
         var endpoint1 = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou-rr", Status = EndpointStatus.Healthy,
-            Host = "host1", Port = 3500
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou-rr",
+            Status = EndpointStatus.Healthy,
+            Host = "host1",
+            Port = 3500
         };
         var endpoint2 = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou-rr", Status = EndpointStatus.Healthy,
-            Host = "host2", Port = 3500
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou-rr",
+            Status = EndpointStatus.Healthy,
+            Host = "host2",
+            Port = 3500
         };
 
         _mockStateManager
@@ -776,13 +792,21 @@ public class MeshServiceTests
         // Arrange
         var lightEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou-wrr", Status = EndpointStatus.Healthy,
-            Host = "light", Port = 3500, LoadPercent = 10
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou-wrr",
+            Status = EndpointStatus.Healthy,
+            Host = "light",
+            Port = 3500,
+            LoadPercent = 10
         };
         var heavyEndpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou-wrr", Status = EndpointStatus.Healthy,
-            Host = "heavy", Port = 3500, LoadPercent = 90
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou-wrr",
+            Status = EndpointStatus.Healthy,
+            Host = "heavy",
+            Port = 3500,
+            LoadPercent = 90
         };
 
         _mockStateManager
@@ -815,8 +839,11 @@ public class MeshServiceTests
         // Arrange
         var endpoint = new MeshEndpoint
         {
-            InstanceId = Guid.NewGuid(), AppId = "bannou", Status = EndpointStatus.Healthy,
-            Host = "only-one", Port = 3500
+            InstanceId = Guid.NewGuid(),
+            AppId = "bannou",
+            Status = EndpointStatus.Healthy,
+            Host = "only-one",
+            Port = 3500
         };
 
         _mockStateManager
@@ -828,7 +855,7 @@ public class MeshServiceTests
 
         // Act - try each algorithm with single endpoint
         foreach (var algo in new[] { LoadBalancerAlgorithm.RoundRobin, LoadBalancerAlgorithm.LeastConnections,
-                                     LoadBalancerAlgorithm.Weighted, LoadBalancerAlgorithm.Random })
+                                    LoadBalancerAlgorithm.Weighted, LoadBalancerAlgorithm.Random })
         {
             var (statusCode, response) = await service.GetRouteAsync(
                 new GetRouteRequest { AppId = "bannou", Algorithm = algo },

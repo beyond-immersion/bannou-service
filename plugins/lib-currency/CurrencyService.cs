@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Currency.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.ClientEvents;
@@ -11,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Xml;
 using static BeyondImmersion.BannouService.Currency.CurrencyKeys;
-using BeyondImmersion.Bannou.Currency.ClientEvents;
 
 namespace BeyondImmersion.BannouService.Currency;
 
