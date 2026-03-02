@@ -53,7 +53,6 @@ public partial class DivineService : IDivineService
     private readonly ILogger<DivineService> _logger;
     private readonly DivineServiceConfiguration _configuration;
 
-    private const string STATE_STORE = "divine-statestore";
 
     public DivineService(
         IMessageBus messageBus,

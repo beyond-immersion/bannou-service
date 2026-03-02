@@ -22,6 +22,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<SaveMigrationHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SaveMigrationHandler"/> class.
@@ -33,7 +34,8 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         IHttpClientFactory httpClientFactory,
         IVersionDataLoader versionDataLoader,
         IMessageBus messageBus,
-        ILogger<SaveMigrationHandler> logger)
+        ILogger<SaveMigrationHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
@@ -42,6 +44,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         _versionDataLoader = versionDataLoader;
         _messageBus = messageBus;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -49,6 +52,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         RegisterSchemaRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveMigrationHandler.RegisterSchemaAsync");
         _logger.LogDebug(
             "Registering schema {Namespace}:{Version}",
             body.Namespace, body.SchemaVersion);
@@ -138,6 +142,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         ListSchemasRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveMigrationHandler.ListSchemasAsync");
         _logger.LogDebug("Listing schemas for namespace {Namespace}", body.Namespace);
 
         try
@@ -216,6 +221,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
         MigrateSaveRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveMigrationHandler.MigrateSaveAsync");
         if (!_configuration.MigrationsEnabled)
         {
             _logger.LogWarning("Schema migrations are disabled by configuration");
@@ -247,7 +253,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
                 return (StatusCodes.NotFound, null);
             }
 
-            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString(), body.OwnerId.ToString(), body.SlotName);
+            var slotKey = SaveSlotMetadata.GetStateKey(slot.GameId, body.OwnerType.ToString().ToLowerInvariant(), body.OwnerId.ToString(), body.SlotName);
 
             // Get source version
             var versionNumber = body.VersionNumber > 0 ? body.VersionNumber : (slot.LatestVersion ?? 0);
@@ -287,7 +293,7 @@ public sealed class SaveMigrationHandler : ISaveMigrationHandler
             }
 
             // Create migrator and find migration path (default max 10 steps)
-            var migrator = new SchemaMigrator(_logger, schemaStore, maxMigrationSteps: 10);
+            var migrator = new SchemaMigrator(_logger, schemaStore, _telemetryProvider, maxMigrationSteps: 10);
             var migrationPath = await migrator.FindMigrationPathAsync(
                 slot.GameId,
                 currentSchemaVersion,

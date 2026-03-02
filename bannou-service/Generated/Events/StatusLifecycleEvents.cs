@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to status-template.created when a statustemplate is created
+/// Published to status.template.created when a statustemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StatusTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status-template.created
+    /// Event type identifier: status.template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status-template.created";
+    public override string EventName { get; set; } = "status.template.created";
 
     /// <summary>
     /// Unique status template identifier
@@ -125,19 +125,19 @@ public partial class StatusTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to status-template.updated when a statustemplate is updated
+/// Published to status.template.updated when a statustemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StatusTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status-template.updated
+    /// Event type identifier: status.template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status-template.updated";
+    public override string EventName { get; set; } = "status.template.updated";
 
     /// <summary>
     /// Unique status template identifier
@@ -226,19 +226,19 @@ public partial class StatusTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to status-template.deleted when a statustemplate is deleted
+/// Published to status.template.deleted when a statustemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class StatusTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: status-template.deleted
+    /// Event type identifier: status.template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "status-template.deleted";
+    public override string EventName { get; set; } = "status.template.deleted";
 
     /// <summary>
     /// Unique status template identifier

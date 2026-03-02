@@ -15,6 +15,7 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using StorageModels = BeyondImmersion.BannouService.Storage;
@@ -37,6 +38,7 @@ public partial class AssetService : IAssetService
     private readonly IOrchestratorClient _orchestratorClient;
     private readonly IAssetProcessorPoolManager _processorPoolManager;
     private readonly IBundleConverter _bundleConverter;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Marker used to identify standalone assets (not from any bundle) in conflict reports.
@@ -59,6 +61,7 @@ public partial class AssetService : IAssetService
     /// <param name="orchestratorClient">Orchestrator client for processor pool management.</param>
     /// <param name="processorPoolManager">Pool manager for tracking processor node state.</param>
     /// <param name="bundleConverter">Bundle format converter (.bannou ↔ .zip).</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="eventConsumer">Event consumer for pub/sub event handling.</param>
     public AssetService(
         IStateStoreFactory stateStoreFactory,
@@ -70,6 +73,7 @@ public partial class AssetService : IAssetService
         IOrchestratorClient orchestratorClient,
         IAssetProcessorPoolManager processorPoolManager,
         IBundleConverter bundleConverter,
+        ITelemetryProvider telemetryProvider,
         IEventConsumer eventConsumer)
     {
         _stateStoreFactory = stateStoreFactory;
@@ -81,6 +85,7 @@ public partial class AssetService : IAssetService
         _orchestratorClient = orchestratorClient;
         _processorPoolManager = processorPoolManager;
         _bundleConverter = bundleConverter;
+        _telemetryProvider = telemetryProvider;
 
         // Register event handlers via partial class
         RegisterEventConsumers(eventConsumer);
@@ -380,7 +385,7 @@ public partial class AssetService : IAssetService
             ContentType = session.ContentType,
             Size = assetRef.Size,
             AssetType = session.Metadata?.AssetType ?? AssetType.Other,
-            Realm = session.Metadata?.Realm ?? "shared",
+            Realm = session.Metadata?.Realm,
             Tags = session.Metadata?.Tags ?? new List<string>(),
             ProcessingStatus = requiresProcessing ? ProcessingStatus.Pending : ProcessingStatus.Complete,
             StorageKey = finalKey,
@@ -430,6 +435,25 @@ public partial class AssetService : IAssetService
         if (requiresProcessing)
         {
             await DelegateToProcessingPoolAsync(assetId, assetMetadata, finalKey, cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            // Asset is immediately ready (no processing needed)
+            await _messageBus.TryPublishAsync(
+                "asset.ready",
+                new BeyondImmersion.BannouService.Events.AssetReadyEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = now,
+                    AssetId = assetId,
+                    Bucket = _configuration.StorageBucket,
+                    Key = finalKey,
+                    ContentHash = contentHash,
+                    Size = assetRef.Size,
+                    ContentType = session.ContentType,
+                    AssetType = session.Metadata?.AssetType ?? AssetType.Other,
+                    Realm = session.Metadata?.Realm
+                }).ConfigureAwait(false);
         }
 
         return (StatusCodes.OK, assetMetadata);
@@ -555,7 +579,6 @@ public partial class AssetService : IAssetService
 
         var response = new DeleteAssetResponse
         {
-            AssetId = body.AssetId,
             VersionsDeleted = versionsDeleted
         };
 
@@ -601,7 +624,6 @@ public partial class AssetService : IAssetService
 
         var response = new AssetVersionList
         {
-            AssetId = body.AssetId,
             Versions = paginatedVersions,
             Total = total,
             Limit = body.Limit,
@@ -660,7 +682,7 @@ public partial class AssetService : IAssetService
                 new SearchQueryOptions
                 {
                     Offset = 0, // Get all matching to filter tags in-memory
-                    Limit = body.Limit + body.Offset + 1000, // Get enough to paginate after tag filter
+                    Limit = body.Limit + body.Offset + _configuration.MaxQueryLimit, // Get enough to paginate after tag filter
                     SortBy = "created_at",
                     SortDescending = true
                 },
@@ -716,6 +738,7 @@ public partial class AssetService : IAssetService
         AssetSearchRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.SearchAssetsIndexFallbackAsync");
         var matchingAssets = new List<AssetMetadata>();
 
         // Search by asset type index
@@ -848,7 +871,16 @@ public partial class AssetService : IAssetService
             await jobStore.SaveAsync(jobKey, job, cancellationToken: cancellationToken);
 
             // Publish job event for processing pool
-            await _messageBus.TryPublishAsync("asset.bundle.create", job);
+            await _messageBus.TryPublishAsync("asset.bundle.create", new BundleCreationJobQueuedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                JobId = jobId,
+                BundleId = body.BundleId,
+                Version = body.Version ?? "1.0.0",
+                AssetIds = body.AssetIds.ToList(),
+                Compression = body.Compression
+            });
 
             _logger.LogInformation(
                 "CreateBundle: Queued bundle creation job {JobId} for bundle {BundleId}",
@@ -859,7 +891,7 @@ public partial class AssetService : IAssetService
             return (StatusCodes.OK, new CreateBundleResponse
             {
                 BundleId = body.BundleId,
-                Status = CreateBundleResponseStatus.Queued,
+                Status = BundleStatus.Queued,
                 EstimatedSize = totalSize
             });
         }
@@ -921,14 +953,14 @@ public partial class AssetService : IAssetService
             BundleId = body.BundleId,
             Version = body.Version ?? "1.0.0",
             BundleType = BundleType.Source,
-            Realm = body.Realm ?? "shared",
+            Realm = body.Realm,
             AssetIds = body.AssetIds.ToList(),
             Assets = bundleAssetEntries,
             StorageKey = bundlePath,
             Bucket = bucket,
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = body.Owner
         };
 
@@ -966,7 +998,7 @@ public partial class AssetService : IAssetService
         return (StatusCodes.OK, new CreateBundleResponse
         {
             BundleId = body.BundleId,
-            Status = CreateBundleResponseStatus.Ready,
+            Status = BundleStatus.Ready,
             EstimatedSize = bundleStream.Length
         });
     }
@@ -998,7 +1030,7 @@ public partial class AssetService : IAssetService
         }
 
         // Check if bundle is ready
-        if (bundleMetadata.Status != Models.BundleStatus.Ready)
+        if (bundleMetadata.Status != BundleStatus.Ready)
         {
             _logger.LogWarning("GetBundle: Bundle not ready: {BundleId}, status={Status}",
                 body.BundleId, bundleMetadata.Status);
@@ -1280,15 +1312,15 @@ public partial class AssetService : IAssetService
                     return (StatusCodes.NotFound, null);
                 }
 
-                if (sourceBundle.Status != Models.BundleStatus.Ready)
+                if (sourceBundle.Status != BundleStatus.Ready)
                 {
                     _logger.LogWarning("CreateMetabundle: Source bundle {BundleId} not ready (status={Status})",
                         sourceBundleId, sourceBundle.Status);
                     return (StatusCodes.BadRequest, null);
                 }
 
-                // Validate realm consistency (all must be same realm or 'shared')
-                if (sourceBundle.Realm != body.Realm && sourceBundle.Realm != "shared")
+                // Validate realm consistency (null realm = cross-realm asset, always compatible)
+                if (sourceBundle.Realm != null && sourceBundle.Realm != body.Realm)
                 {
                     _logger.LogWarning("CreateMetabundle: Realm mismatch - bundle {BundleId} is {BundleRealm}, expected {ExpectedRealm}",
                         sourceBundleId, sourceBundle.Realm, body.Realm);
@@ -1322,12 +1354,11 @@ public partial class AssetService : IAssetService
                     return (StatusCodes.BadRequest, null);
                 }
 
-                // Validate realm consistency
-                var assetRealm = asset.Realm ?? "shared";
-                if (assetRealm != body.Realm && assetRealm != "shared")
+                // Validate realm consistency (null realm = cross-realm asset, always compatible)
+                if (asset.Realm != null && asset.Realm != body.Realm)
                 {
                     _logger.LogWarning("CreateMetabundle: Realm mismatch - asset {AssetId} is {AssetRealm}, expected {ExpectedRealm}",
-                        assetId, assetRealm, body.Realm);
+                        assetId, asset.Realm, body.Realm);
                     return (StatusCodes.BadRequest, null);
                 }
 
@@ -1594,7 +1625,7 @@ public partial class AssetService : IAssetService
             Bucket = bucket,
             SizeBytes = bundleStream.Length,
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Models.BundleStatus.Ready,
+            Status = BundleStatus.Ready,
             Owner = body.Owner,
             SourceBundles = sourceBundleRefs,
             StandaloneAssetIds = standaloneAssetIds.Count > 0 ? standaloneAssetIds : null,
@@ -1636,7 +1667,7 @@ public partial class AssetService : IAssetService
         return (StatusCodes.OK, new CreateMetabundleResponse
         {
             MetabundleId = body.MetabundleId,
-            Status = CreateMetabundleResponseStatus.Ready,
+            Status = BundleStatus.Ready,
             AssetCount = metabundleAssets.Count,
             SizeBytes = bundleStream.Length,
             SourceBundles = sourceBundleRefs.Select(r => r.ToApiModel()).ToList(),
@@ -1700,7 +1731,9 @@ public partial class AssetService : IAssetService
                     }
                 }
 
-                if (bundleMeta == null || bundleMeta.Status != Models.BundleStatus.Ready)
+                if (bundleMeta == null ||
+                    bundleMeta.Status != BundleStatus.Ready ||
+                    bundleMeta.LifecycleStatus != Models.BundleLifecycleStatus.Active)
                 {
                     continue;
                 }
@@ -1869,32 +1902,21 @@ public partial class AssetService : IAssetService
             return (StatusCodes.NotFound, null);
         }
 
-        // Convert internal status to API status
-        var apiStatus = job.Status switch
-        {
-            InternalJobStatus.Queued => GetJobStatusResponseStatus.Queued,
-            InternalJobStatus.Processing => GetJobStatusResponseStatus.Processing,
-            InternalJobStatus.Ready => GetJobStatusResponseStatus.Ready,
-            InternalJobStatus.Failed => GetJobStatusResponseStatus.Failed,
-            InternalJobStatus.Cancelled => GetJobStatusResponseStatus.Cancelled,
-            _ => GetJobStatusResponseStatus.Failed
-        };
-
         var response = new GetJobStatusResponse
         {
             JobId = job.JobId,
             MetabundleId = job.MetabundleId,
-            Status = apiStatus,
+            Status = job.Status,
             Progress = job.Progress,
             CreatedAt = job.CreatedAt,
             UpdatedAt = job.UpdatedAt,
             ProcessingTimeMs = job.ProcessingTimeMs,
-            ErrorCode = job.ErrorCode?.ToString(),  // Convert enum to string for API response
+            ErrorCode = job.ErrorCode,
             ErrorMessage = job.ErrorMessage
         };
 
         // If job is complete, include result data and generate download URL
-        if (job.Status == InternalJobStatus.Ready && job.Result != null)
+        if (job.Status == BundleStatus.Ready && job.Result != null)
         {
             response.AssetCount = job.Result.AssetCount;
             response.StandaloneAssetCount = job.Result.StandaloneAssetCount;
@@ -1954,37 +1976,33 @@ public partial class AssetService : IAssetService
         }
 
         // Check if job can be cancelled
-        if (job.Status == InternalJobStatus.Ready || job.Status == InternalJobStatus.Failed)
+        if (job.Status == BundleStatus.Ready || job.Status == BundleStatus.Failed)
         {
             // Job already completed - cannot cancel
-            var completedStatus = job.Status == InternalJobStatus.Ready
-                ? CancelJobResponseStatus.Ready
-                : CancelJobResponseStatus.Failed;
+            var completedStatus = job.Status == BundleStatus.Ready
+                ? BundleStatus.Ready
+                : BundleStatus.Failed;
 
             return (StatusCodes.Conflict, new CancelJobResponse
             {
                 JobId = body.JobId,
-                Cancelled = false,
-                Status = completedStatus,
-                Message = $"Job already completed with status '{job.Status}'"
+                Status = completedStatus
             });
         }
 
-        if (job.Status == InternalJobStatus.Cancelled)
+        if (job.Status == BundleStatus.Cancelled)
         {
             // Already cancelled
             return (StatusCodes.OK, new CancelJobResponse
             {
                 JobId = body.JobId,
-                Cancelled = true,
-                Status = CancelJobResponseStatus.Cancelled,
-                Message = "Job was already cancelled"
+                Status = BundleStatus.Cancelled
             });
         }
 
         // Cancel the job
         var previousStatus = job.Status;
-        job.Status = InternalJobStatus.Cancelled;
+        job.Status = BundleStatus.Cancelled;
         job.UpdatedAt = DateTimeOffset.UtcNow;
         job.CompletedAt = DateTimeOffset.UtcNow;
         job.ErrorCode = MetabundleErrorCode.CANCELLED;
@@ -2003,7 +2021,7 @@ public partial class AssetService : IAssetService
                 job.JobId,
                 job.MetabundleId,
                 success: false,
-                MetabundleJobStatus.Cancelled,
+                BundleStatus.Cancelled,
                 downloadUrl: null,
                 sizeBytes: null,
                 assetCount: null,
@@ -2017,9 +2035,7 @@ public partial class AssetService : IAssetService
         return (StatusCodes.OK, new CancelJobResponse
         {
             JobId = body.JobId,
-            Cancelled = true,
-            Status = CancelJobResponseStatus.Cancelled,
-            Message = $"Job cancelled successfully (was {previousStatus})"
+            Status = BundleStatus.Cancelled
         });
     }
 
@@ -2047,7 +2063,6 @@ public partial class AssetService : IAssetService
         {
             return (StatusCodes.OK, new QueryBundlesByAssetResponse
             {
-                AssetId = body.AssetId,
                 Bundles = new List<BundleSummary>(),
                 Total = 0,
                 Limit = body.Limit,
@@ -2085,7 +2100,6 @@ public partial class AssetService : IAssetService
 
         return (StatusCodes.OK, new QueryBundlesByAssetResponse
         {
-            AssetId = body.AssetId,
             Bundles = paginatedBundles,
             Total = total,
             Limit = body.Limit,
@@ -2194,13 +2208,17 @@ public partial class AssetService : IAssetService
 
     private async Task IndexAssetAsync(AssetMetadata asset, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.IndexAssetAsync");
         // Index by asset type
         var typeIndexKey = $"{_configuration.AssetIndexKeyPrefix}type:{asset.AssetType.ToString().ToLowerInvariant()}";
         await AddToIndexWithOptimisticConcurrencyAsync(typeIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
 
-        // Index by realm
-        var realmIndexKey = $"{_configuration.AssetIndexKeyPrefix}realm:{asset.Realm.ToString().ToLowerInvariant()}";
-        await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
+        // Index by realm (skip if cross-realm asset with no realm)
+        if (asset.Realm != null)
+        {
+            var realmIndexKey = $"{_configuration.AssetIndexKeyPrefix}realm:{asset.Realm.ToLowerInvariant()}";
+            await AddToIndexWithOptimisticConcurrencyAsync(realmIndexKey, asset.AssetId, cancellationToken).ConfigureAwait(false);
+        }
 
         // Index by tags
         if (asset.Tags != null)
@@ -2222,6 +2240,7 @@ public partial class AssetService : IAssetService
         string assetId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.AddToIndexWithOptimisticConcurrencyAsync");
         var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Asset);
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
@@ -2263,9 +2282,18 @@ public partial class AssetService : IAssetService
             await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.LogWarning(
-            "Failed to update index {IndexKey} after {MaxRetries} attempts due to concurrent modifications",
-            indexKey, maxRetries);
+        _logger.LogError(
+            "Failed to update index {IndexKey} for asset {AssetId} after {MaxRetries} attempts due to concurrent modifications — asset will not appear in search results for this index",
+            indexKey, assetId, maxRetries);
+
+        await _messageBus.TryPublishErrorAsync(
+            "asset",
+            "AddToIndexWithOptimisticConcurrency",
+            "IndexRetryExhausted",
+            $"Failed to update index {indexKey} for asset {assetId} after {maxRetries} attempts",
+            dependency: "state",
+            endpoint: $"redis:{indexKey}",
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -2273,8 +2301,9 @@ public partial class AssetService : IAssetService
     /// </summary>
     private async Task IndexBundleAssetsAsync(BundleMetadata bundle, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.IndexBundleAssetsAsync");
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
-        var realmPrefix = bundle.Realm.ToString().ToLowerInvariant();
+        var realmPrefix = (bundle.Realm ?? "cross-realm").ToLowerInvariant();
 
         foreach (var assetId in bundle.AssetIds)
         {
@@ -2295,6 +2324,7 @@ public partial class AssetService : IAssetService
         string bundleId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.AddBundleToAssetIndexAsync");
         var maxRetries = _configuration.IndexOptimisticRetryMaxAttempts;
 
         for (var attempt = 0; attempt < maxRetries; attempt++)
@@ -2327,9 +2357,18 @@ public partial class AssetService : IAssetService
             await Task.Delay(TimeSpan.FromMilliseconds(_configuration.IndexOptimisticRetryBaseDelayMs * (attempt + 1)), cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.LogWarning(
-            "Failed to update asset-bundle index {IndexKey} after {MaxRetries} attempts",
-            indexKey, maxRetries);
+        _logger.LogError(
+            "Failed to update asset-bundle index {IndexKey} for bundle {BundleId} after {MaxRetries} attempts — bundle will not appear in reverse lookup for this asset",
+            indexKey, bundleId, maxRetries);
+
+        await _messageBus.TryPublishErrorAsync(
+            "asset",
+            "AddBundleToAssetIndex",
+            "IndexRetryExhausted",
+            $"Failed to update asset-bundle index {indexKey} for bundle {bundleId} after {maxRetries} attempts",
+            dependency: "state",
+            endpoint: $"redis:{indexKey}",
+            cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
     #endregion
@@ -2396,6 +2435,20 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
+    /// Maps a MIME content type to a processing type for event publishing.
+    /// </summary>
+    private static ProcessingType MapProcessingType(string contentType)
+    {
+        return contentType switch
+        {
+            var ct when ct.StartsWith("image/") => ProcessingType.Mipmaps,
+            var ct when ct.StartsWith("audio/") => ProcessingType.Transcode,
+            var ct when ct.StartsWith("model/") || ct.Contains("gltf") => ProcessingType.LodGeneration,
+            _ => ProcessingType.Validation
+        };
+    }
+
+    /// <summary>
     /// Ensures at least one processor is available for the given pool type.
     /// If no processors are available, spawns a new one via the orchestrator.
     /// </summary>
@@ -2406,6 +2459,7 @@ public partial class AssetService : IAssetService
         string poolType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.EnsureProcessorAvailableAsync");
         try
         {
             // Check if any processors are available in the pool
@@ -2484,6 +2538,7 @@ public partial class AssetService : IAssetService
         string storageKey,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.DelegateToProcessingPoolAsync");
         var poolType = GetProcessorPoolType(metadata.ContentType);
         var assetStore = _stateStoreFactory.GetStore<AssetMetadata>(StateStoreDefinitions.Asset);
 
@@ -2498,8 +2553,10 @@ public partial class AssetService : IAssetService
                     poolType, assetId);
 
                 // Publish delayed retry event
-                var retryEvent = new AssetProcessingRetryEvent
+                await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
                 {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     AssetId = assetId,
                     StorageKey = storageKey,
                     ContentType = metadata.ContentType,
@@ -2507,9 +2564,7 @@ public partial class AssetService : IAssetService
                     RetryCount = 0,
                     MaxRetries = _configuration.ProcessingMaxRetries,
                     RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
-                };
-
-                await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+                }).ConfigureAwait(false);
                 return;
             }
 
@@ -2523,7 +2578,7 @@ public partial class AssetService : IAssetService
                 {
                     PoolType = poolType,
                     Priority = 0,
-                    TimeoutSeconds = 600, // 10 minutes for processing
+                    TimeoutSeconds = _configuration.ProcessorAcquisitionTimeoutSeconds,
                     Metadata = new { AssetId = assetId, StorageKey = storageKey }
                 },
                 cancellationToken).ConfigureAwait(false);
@@ -2537,18 +2592,33 @@ public partial class AssetService : IAssetService
                 processorResponse.ProcessorId, poolType, assetId, processorResponse.ExpiresAt);
 
             // Publish processing job event for the processor to pick up
-            var processingJob = new AssetProcessingJobEvent
+            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", new AssetProcessingJobDispatchedEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
+                SizeBytes = metadata.Size,
+                Filename = metadata.Filename,
+                PoolType = poolType,
                 ProcessorId = processorResponse.ProcessorId,
                 AppId = processorResponse.AppId,
                 LeaseId = processorResponse.LeaseId,
                 ExpiresAt = processorResponse.ExpiresAt
-            };
+            }).ConfigureAwait(false);
 
-            await _messageBus.TryPublishAsync($"asset.processing.job.{poolType}", processingJob).ConfigureAwait(false);
+            // Publish asset.processing.queued event for service-level tracking
+            await _messageBus.TryPublishAsync(
+                "asset.processing.queued",
+                new BeyondImmersion.BannouService.Events.AssetProcessingQueuedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    AssetId = assetId,
+                    ProcessingType = MapProcessingType(metadata.ContentType),
+                    ProcessorAppId = processorResponse.AppId
+                }).ConfigureAwait(false);
         }
         catch (ApiException ex) when (ex.StatusCode == 429)
         {
@@ -2558,8 +2628,10 @@ public partial class AssetService : IAssetService
                 poolType, assetId);
 
             // Publish delayed retry event
-            var retryEvent = new AssetProcessingRetryEvent
+            await _messageBus.TryPublishAsync("asset.processing.retry", new AssetProcessingRetryEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AssetId = assetId,
                 StorageKey = storageKey,
                 ContentType = metadata.ContentType,
@@ -2567,9 +2639,7 @@ public partial class AssetService : IAssetService
                 RetryCount = 0,
                 MaxRetries = _configuration.ProcessingMaxRetries,
                 RetryDelaySeconds = _configuration.ProcessingRetryDelaySeconds
-            };
-
-            await _messageBus.TryPublishAsync("asset.processing.retry", retryEvent).ConfigureAwait(false);
+            }).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -2673,7 +2743,6 @@ public partial class AssetService : IAssetService
             // No changes made
             return (StatusCodes.OK, new UpdateBundleResponse
             {
-                BundleId = body.BundleId,
                 Version = bundle.MetadataVersion,
                 PreviousVersion = bundle.MetadataVersion,
                 Changes = new List<string> { "no changes" },
@@ -2732,7 +2801,6 @@ public partial class AssetService : IAssetService
 
         return (StatusCodes.OK, new UpdateBundleResponse
         {
-            BundleId = body.BundleId,
             Version = bundle.MetadataVersion,
             PreviousVersion = previousVersion,
             Changes = changes,
@@ -2790,14 +2858,14 @@ public partial class AssetService : IAssetService
             await bundleStore.DeleteAsync(bundleKey, cancellationToken);
 
             // Remove from asset-bundle index
-            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, cancellationToken);
+            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
 
             _logger.LogInformation("DeleteBundle: Permanently deleted bundle {BundleId}", body.BundleId);
         }
         else
         {
             // Soft delete - mark as deleted with retention period
-            var retentionDays = _configuration.DeletedBundleRetentionDays > 0 ? _configuration.DeletedBundleRetentionDays : 30;
+            var retentionDays = _configuration.DeletedBundleRetentionDays;
             retentionUntil = deletedAt.AddDays(retentionDays);
 
             bundle.LifecycleStatus = Models.BundleLifecycleStatus.Deleted;
@@ -2832,6 +2900,14 @@ public partial class AssetService : IAssetService
                 return (StatusCodes.Conflict, null);
             }
 
+            // Add to deleted bundles index for cleanup worker to scan (set operations require cacheable store)
+            var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+            await cacheableBundleStore.AddToSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
+
+            // Remove from per-asset reverse indexes so ResolveBundles skips this bundle immediately
+            // (defensive: ResolveBundles also checks LifecycleStatus, but removing from indexes prevents wasted lookups)
+            await RemoveFromBundleIndexAsync(bundle.BundleId, bundle.AssetIds, bundle.Realm, cancellationToken);
+
             _logger.LogInformation("DeleteBundle: Soft-deleted bundle {BundleId}, retention until {RetentionUntil}",
                 body.BundleId, retentionUntil);
         }
@@ -2851,10 +2927,9 @@ public partial class AssetService : IAssetService
 
         return (StatusCodes.OK, new DeleteBundleResponse
         {
-            BundleId = body.BundleId,
             Status = body.Permanent == true
-                ? DeleteBundleResponseStatus.PermanentlyDeleted
-                : DeleteBundleResponseStatus.Deleted,
+                ? DeletionStatus.PermanentlyDeleted
+                : DeletionStatus.Deleted,
             DeletedAt = deletedAt,
             RetentionUntil = retentionUntil
         });
@@ -2926,6 +3001,13 @@ public partial class AssetService : IAssetService
             return (StatusCodes.Conflict, null);
         }
 
+        // Remove from deleted bundles index (set operations require cacheable store)
+        var cacheableBundleStore = _stateStoreFactory.GetCacheableStore<Models.BundleMetadata>(StateStoreDefinitions.Asset);
+        await cacheableBundleStore.RemoveFromSetAsync("deleted-bundles-index", body.BundleId, cancellationToken: cancellationToken);
+
+        // Re-add to per-asset reverse indexes (removed during soft-delete)
+        await IndexBundleAssetsAsync(bundle, cancellationToken);
+
         // Publish event
         await _messageBus.TryPublishAsync("asset.bundle.restored", new BeyondImmersion.BannouService.Events.BundleRestoredEvent
         {
@@ -2943,9 +3025,7 @@ public partial class AssetService : IAssetService
 
         return (StatusCodes.OK, new RestoreBundleResponse
         {
-            BundleId = body.BundleId,
-            Status = "active",
-            RestoredAt = restoredAt,
+            Status = BundleLifecycle.Active,
             RestoredFromVersion = restoredFromVersion
         });
     }
@@ -3063,18 +3143,18 @@ public partial class AssetService : IAssetService
         var totalCount = bundleList.Count;
 
         // Apply sorting
-        var sortField = body.SortField ?? QueryBundlesRequestSortField.CreatedAt;
-        var sortDesc = body.SortOrder != QueryBundlesRequestSortOrder.Asc;
+        var sortField = body.SortField ?? BundleSortField.CreatedAt;
+        var sortDesc = body.SortOrder != SortOrder.Asc;
 
         bundleList = sortField switch
         {
-            QueryBundlesRequestSortField.Name => sortDesc
+            BundleSortField.Name => sortDesc
                 ? bundleList.OrderByDescending(b => b.Name).ToList()
                 : bundleList.OrderBy(b => b.Name).ToList(),
-            QueryBundlesRequestSortField.UpdatedAt => sortDesc
+            BundleSortField.UpdatedAt => sortDesc
                 ? bundleList.OrderByDescending(b => b.UpdatedAt ?? b.CreatedAt).ToList()
                 : bundleList.OrderBy(b => b.UpdatedAt ?? b.CreatedAt).ToList(),
-            QueryBundlesRequestSortField.Size => sortDesc
+            BundleSortField.Size => sortDesc
                 ? bundleList.OrderByDescending(b => b.SizeBytes).ToList()
                 : bundleList.OrderBy(b => b.SizeBytes).ToList(),
             _ => sortDesc
@@ -3083,7 +3163,7 @@ public partial class AssetService : IAssetService
         };
 
         // Apply pagination
-        var limit = Math.Min(body.Limit, 1000);
+        var limit = Math.Min(body.Limit, _configuration.MaxQueryLimit);
         var offset = body.Offset;
 
         var pagedBundles = bundleList
@@ -3138,7 +3218,7 @@ public partial class AssetService : IAssetService
             .ToList();
 
         var totalCount = sortedVersionNumbers.Count;
-        var limit = body.Limit > 0 ? body.Limit : 50;
+        var limit = body.Limit > 0 ? body.Limit : _configuration.DefaultListLimit;
         var offset = body.Offset;
 
         // Apply pagination to version numbers first
@@ -3177,15 +3257,18 @@ public partial class AssetService : IAssetService
     }
 
     /// <summary>
-    /// Helper to remove bundle from asset-bundle reverse index.
+    /// Helper to remove bundle from per-asset reverse indexes.
+    /// Key format matches IndexBundleAssetsAsync: {realmPrefix}:asset-bundles:{assetId}
     /// </summary>
-    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, CancellationToken cancellationToken)
+    private async Task RemoveFromBundleIndexAsync(string bundleId, List<string> assetIds, string? realm, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.RemoveFromBundleIndexAsync");
         var indexStore = _stateStoreFactory.GetStore<AssetBundleIndex>(StateStoreDefinitions.Asset);
+        var realmPrefix = (realm ?? "cross-realm").ToLowerInvariant();
 
         foreach (var assetId in assetIds)
         {
-            var indexKey = $"asset-bundle:{assetId}";
+            var indexKey = $"{realmPrefix}:asset-bundles:{assetId}";
             var index = await indexStore.GetAsync(indexKey, cancellationToken);
 
             if (index != null && index.BundleIds.Contains(bundleId))
@@ -3257,6 +3340,7 @@ public partial class AssetService : IAssetService
         long totalSizeBytes,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetService.CreateMetabundleJobAsync");
         var jobId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
 
@@ -3268,7 +3352,7 @@ public partial class AssetService : IAssetService
         {
             JobId = jobId,
             MetabundleId = request.MetabundleId,
-            Status = InternalJobStatus.Queued,
+            Status = BundleStatus.Queued,
             Request = request,
             RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null,
             CreatedAt = now,
@@ -3291,12 +3375,14 @@ public partial class AssetService : IAssetService
             "asset.metabundle.job.queued",
             new MetabundleJobQueuedEvent
             {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 JobId = jobId,
                 MetabundleId = request.MetabundleId,
                 SourceBundleCount = sourceBundles.Count,
                 AssetCount = totalAssetCount,
                 EstimatedSizeBytes = totalSizeBytes,
-                RequesterSessionId = requesterSessionId
+                RequesterSessionId = !string.IsNullOrEmpty(requesterSessionId) ? Guid.Parse(requesterSessionId) : null
             }).ConfigureAwait(false);
 
         // Build provenance data for response
@@ -3315,7 +3401,7 @@ public partial class AssetService : IAssetService
         {
             MetabundleId = request.MetabundleId,
             JobId = jobId,
-            Status = CreateMetabundleResponseStatus.Queued,
+            Status = BundleStatus.Queued,
             AssetCount = totalAssetCount,
             StandaloneAssetCount = standalonesToInclude.Count,
             SizeBytes = totalSizeBytes,

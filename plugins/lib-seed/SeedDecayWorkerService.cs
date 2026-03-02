@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -28,6 +29,7 @@ namespace BeyondImmersion.BannouService.Seed;
 public class SeedDecayWorkerService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<SeedDecayWorkerService> _logger;
     private readonly SeedServiceConfiguration _configuration;
     private readonly IReadOnlyList<ISeedEvolutionListener> _evolutionListeners;
@@ -46,16 +48,19 @@ public class SeedDecayWorkerService : BackgroundService
     /// Initializes the seed decay worker with required dependencies.
     /// </summary>
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with decay settings.</param>
     /// <param name="evolutionListeners">Registered evolution listeners for phase change notifications.</param>
     public SeedDecayWorkerService(
         IServiceProvider serviceProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<SeedDecayWorkerService> logger,
         SeedServiceConfiguration configuration,
         IEnumerable<ISeedEvolutionListener> evolutionListeners)
     {
         _serviceProvider = serviceProvider;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
         _evolutionListeners = evolutionListeners.ToList();
@@ -132,6 +137,9 @@ public class SeedDecayWorkerService : BackgroundService
     /// </summary>
     private async Task ProcessDecayCycleAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedDecayWorker.ProcessDecayCycle");
+
         _logger.LogDebug("Starting seed decay cycle");
 
         using var scope = _serviceProvider.CreateScope();
@@ -145,37 +153,47 @@ public class SeedDecayWorkerService : BackgroundService
         var growthStore = stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
         var cacheStore = stateStoreFactory.GetStore<CapabilityManifestModel>(StateStoreDefinitions.SeedCapabilitiesCache);
 
-        // Query all seed type definitions
+        // Query all seed type definitions (paginated)
         var typeConditions = new List<QueryCondition>
         {
             new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
         };
-        var typeResult = await typeStore.JsonQueryPagedAsync(typeConditions, 0, 500, null, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
         var totalSeedsProcessed = 0;
         var totalDomainsDecayed = 0;
         var totalPhasesRegressed = 0;
+        var typePageSize = _configuration.DefaultQueryPageSize;
+        var typeOffset = 0;
 
-        foreach (var typeItem in typeResult.Items)
+        while (!cancellationToken.IsCancellationRequested)
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            var typeResult = await typeStore.JsonQueryPagedAsync(typeConditions, typeOffset, typePageSize, null, cancellationToken);
 
-            var seedType = typeItem.Value;
-            var (decayEnabled, ratePerDay) = SeedService.ResolveDecayConfig(seedType, _configuration);
+            foreach (var typeItem in typeResult.Items)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
 
-            if (!decayEnabled || ratePerDay <= 0f)
-                continue;
+                var seedType = typeItem.Value;
+                var (decayEnabled, ratePerDay) = SeedService.ResolveDecayConfig(seedType, _configuration);
 
-            // Process all non-archived seeds of this type (paginated)
-            var (processed, decayed, regressed) = await ProcessSeedsForTypeAsync(
-                seedType, ratePerDay, now,
-                seedQueryStore, seedStore, growthStore, cacheStore, lockProvider, messageBus,
-                cancellationToken);
+                if (!decayEnabled || ratePerDay <= 0f)
+                    continue;
 
-            totalSeedsProcessed += processed;
-            totalDomainsDecayed += decayed;
-            totalPhasesRegressed += regressed;
+                // Process all non-archived seeds of this type (paginated)
+                var (processed, decayed, regressed) = await ProcessSeedsForTypeAsync(
+                    seedType, ratePerDay, now,
+                    seedQueryStore, seedStore, growthStore, cacheStore, lockProvider, messageBus,
+                    cancellationToken);
+
+                totalSeedsProcessed += processed;
+                totalDomainsDecayed += decayed;
+                totalPhasesRegressed += regressed;
+            }
+
+            typeOffset += typePageSize;
+            if (typeResult.Items.Count < typePageSize)
+                break;
         }
 
         _logger.LogInformation(
@@ -201,9 +219,14 @@ public class SeedDecayWorkerService : BackgroundService
         IMessageBus messageBus,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedDecayWorker.ProcessSeedsForType");
+
         var conditions = new List<QueryCondition>
         {
-            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seedType.GameServiceId.ToString() },
+            seedType.GameServiceId.HasValue
+                ? new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = seedType.GameServiceId.Value.ToString() }
+                : new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.NotExists, Value = true },
             new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = seedType.SeedTypeCode },
             new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
             new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
@@ -265,6 +288,9 @@ public class SeedDecayWorkerService : BackgroundService
         IMessageBus messageBus,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedDecayWorker.ProcessSeedDecay");
+
         var lockOwner = $"decay-{Guid.NewGuid():N}";
         await using var lockResponse = await lockProvider.LockAsync(
             StateStoreDefinitions.SeedLock, seed.SeedId.ToString(), lockOwner, 10, cancellationToken);
@@ -363,7 +389,7 @@ public class SeedDecayWorkerService : BackgroundService
                 new SeedPhaseNotification(
                     seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
                     previousPhase, seed.GrowthPhase, newTotalGrowth, Progressed: false),
-                _logger, cancellationToken);
+                _telemetryProvider, _logger, cancellationToken);
         }
 
         // Invalidate capability cache

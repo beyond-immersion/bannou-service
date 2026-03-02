@@ -4,6 +4,7 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
@@ -30,6 +31,7 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
     private readonly TimeSpan _defaultTimeout;
     private readonly Func<Guid, object?>? _behaviorDefaultResolver;
     private readonly ILogger<InputWindowManager>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
     private readonly CancellationTokenSource _disposeCts;
     private int _windowIdCounter;
     private bool _disposed;
@@ -40,14 +42,17 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
     /// <param name="defaultTimeout">Default timeout for windows.</param>
     /// <param name="behaviorDefaultResolver">Optional function to get behavior defaults.</param>
     /// <param name="logger">Optional logger.</param>
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
     public InputWindowManager(
         TimeSpan defaultTimeout,
         Func<Guid, object?>? behaviorDefaultResolver = null,
-        ILogger<InputWindowManager>? logger = null)
+        ILogger<InputWindowManager>? logger = null,
+        ITelemetryProvider? telemetryProvider = null)
     {
         _defaultTimeout = defaultTimeout;
         _behaviorDefaultResolver = behaviorDefaultResolver;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _windows = new ConcurrentDictionary<string, InputWindowImpl>(StringComparer.OrdinalIgnoreCase);
         _disposeCts = new CancellationTokenSource();
     }
@@ -71,6 +76,7 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
         InputWindowOptions options,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "InputWindowManager.CreateAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var windowId = options.WindowId ?? GenerateWindowId();
@@ -132,6 +138,7 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
         object input,
         CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "InputWindowManager.SubmitAsync");
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrEmpty(windowId);
 
@@ -292,6 +299,7 @@ public sealed class InputWindowManager : IInputWindowManager, IDisposable
         TimeSpan timeout,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "InputWindowManager.StartTimeoutTimerAsync");
         try
         {
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _disposeCts.Token);

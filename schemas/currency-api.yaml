@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Currency Service API
   version: 1.0.0
@@ -508,6 +508,32 @@ paths:
       - role: developer
         states: {}
 
+  /currency/batch-debit:
+    post:
+      operationId: batchDebitCurrency
+      tags:
+      - Balance
+      summary: Debit multiple wallets in one call
+      description: |
+        Debits currency from multiple wallets in one call. Each operation is independent;
+        failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDebitRequest'
+      responses:
+        '200':
+          description: Batch debit processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchDebitResponse'
+      x-permissions:
+      - role: developer
+        states: {}
+
   # ===========================================================================
   # Conversion (4 endpoints)
   # ===========================================================================
@@ -1012,18 +1038,6 @@ components:
       - decimal_full
       - big_integer
 
-    WalletOwnerType:
-      type: string
-      description: Type of entity that owns a wallet
-      enum:
-      - account
-      - character
-      - npc
-      - guild
-      - faction
-      - location
-      - system
-
     WalletStatus:
       type: string
       description: Current status of a wallet
@@ -1173,7 +1187,8 @@ components:
           description: Maximum amount a single wallet can hold (null for no cap)
         capOverflowBehavior:
           $ref: '#/components/schemas/CapOverflowBehavior'
-          description: What happens when credit exceeds wallet cap
+          nullable: true
+          description: What happens when credit exceeds wallet cap (null defaults to reject)
         globalSupplyCap:
           type: number
           format: double
@@ -1191,6 +1206,7 @@ components:
           description: Maximum amount earnable per week (null for unlimited)
         earnCapResetTime:
           type: string
+          maxLength: 20
           nullable: true
           description: When earn caps reset (UTC time string, e.g. '00:00:00')
         autogainEnabled:
@@ -1199,7 +1215,8 @@ components:
           description: Whether passive autogain is enabled
         autogainMode:
           $ref: '#/components/schemas/AutogainMode'
-          description: How autogain is calculated (simple flat or compound percentage)
+          nullable: true
+          description: How autogain is calculated (simple flat or compound percentage, null when autogainEnabled is false)
         autogainAmount:
           type: number
           format: double
@@ -1207,6 +1224,7 @@ components:
           description: Autogain amount per interval (flat for simple, rate for compound)
         autogainInterval:
           type: string
+          maxLength: 50
           nullable: true
           description: ISO 8601 duration between autogain applications (e.g. PT5M, PT1H)
         autogainCap:
@@ -1229,6 +1247,7 @@ components:
           description: Fixed expiration date (for fixed_date policy)
         expirationDuration:
           type: string
+          maxLength: 50
           nullable: true
           description: Duration until expiration after earning (for duration_from_earn policy)
         seasonId:
@@ -1247,7 +1266,8 @@ components:
           description: Item template ID if linked to inventory
         linkageMode:
           $ref: '#/components/schemas/ItemLinkageMode'
-          description: How the item linkage works
+          nullable: true
+          description: How the item linkage works (null when linkedToItem is false)
         isBaseCurrency:
           type: boolean
           default: false
@@ -1264,6 +1284,7 @@ components:
           description: Asset ID for currency icon
         displayFormat:
           type: string
+          maxLength: 200
           nullable: true
           description: Format string for display (e.g. '{amount} gold', '${amount}')
 
@@ -1279,6 +1300,7 @@ components:
           description: Definition ID (provide this or code)
         code:
           type: string
+          maxLength: 32
           nullable: true
           description: Currency code (provide this or definitionId)
 
@@ -1357,6 +1379,11 @@ components:
           format: double
           nullable: true
           description: New weekly earn cap
+        earnCapResetTime:
+          type: string
+          maxLength: 20
+          nullable: true
+          description: New earn cap reset time (e.g. "14:00:00" for 2pm UTC)
         autogainEnabled:
           type: boolean
           nullable: true
@@ -1372,6 +1399,7 @@ components:
           description: New autogain amount
         autogainInterval:
           type: string
+          maxLength: 50
           nullable: true
           description: New autogain interval
         autogainCap:
@@ -1391,6 +1419,7 @@ components:
           description: New icon asset ID
         displayFormat:
           type: string
+          maxLength: 200
           nullable: true
           description: New display format
         isActive:
@@ -1601,7 +1630,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -1625,7 +1654,7 @@ components:
           nullable: true
           description: Owner ID (requires ownerType)
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Owner type (requires ownerId)
         realmId:
@@ -1647,7 +1676,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of owner entity
         realmId:
           type: string
@@ -1669,6 +1698,7 @@ components:
           description: Wallet ID to freeze
         reason:
           type: string
+          minLength: 1
           maxLength: 500
           description: Reason for freezing
 
@@ -1721,7 +1751,7 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          $ref: '#/components/schemas/WalletOwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner type
         realmId:
           type: string
@@ -1885,6 +1915,7 @@ components:
       required:
       - walletId
       - currencyDefinitionId
+      - currencyCode
       - amount
       - lockedAmount
       - effectiveAmount
@@ -2083,12 +2114,15 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to credit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Must be a faucet type (mint, quest_reward, loot_drop, etc.)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction (quest, admin, etc.)
         referenceId:
@@ -2098,6 +2132,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         bypassEarnCap:
@@ -2166,12 +2201,15 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to debit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Must be a sink type (burn, vendor_purchase, fee, etc.)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction
         referenceId:
@@ -2181,6 +2219,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         allowNegative:
@@ -2236,12 +2275,15 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to transfer (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Must be a transfer type (transfer, trade, gift)
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transfer
         referenceId:
@@ -2251,6 +2293,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key to prevent duplicate processing
         metadata:
@@ -2306,6 +2349,7 @@ components:
           description: Credit operations to execute
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key covering the entire batch
 
@@ -2330,12 +2374,15 @@ components:
         amount:
           type: number
           format: double
-          description: Amount to credit
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to credit (must be positive)
         transactionType:
           $ref: '#/components/schemas/TransactionType'
           description: Faucet transaction type
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type
         referenceId:
@@ -2360,6 +2407,110 @@ components:
     BatchCreditResult:
       type: object
       description: Result of a single credit in a batch
+      additionalProperties: false
+      required:
+      - index
+      - success
+      properties:
+        index:
+          type: integer
+          description: Index in the operations array
+        success:
+          type: boolean
+          description: Whether the operation succeeded
+        transaction:
+          $ref: '#/components/schemas/CurrencyTransactionRecord'
+          nullable: true
+          description: Transaction record if successful
+        error:
+          type: string
+          nullable: true
+          description: Error code if failed
+
+    BatchDebitRequest:
+      type: object
+      description: Request to debit multiple wallets
+      additionalProperties: false
+      required:
+      - operations
+      - idempotencyKey
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitOperation'
+          minItems: 1
+          maxItems: 100
+          description: Debit operations to execute
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique key covering the entire batch
+
+    BatchDebitOperation:
+      type: object
+      description: A single debit operation in a batch
+      additionalProperties: false
+      required:
+      - walletId
+      - currencyDefinitionId
+      - amount
+      - transactionType
+      properties:
+        walletId:
+          type: string
+          format: uuid
+          description: Source wallet ID
+        currencyDefinitionId:
+          type: string
+          format: uuid
+          description: Currency to debit
+        amount:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to debit (must be positive)
+        transactionType:
+          $ref: '#/components/schemas/TransactionType'
+          description: Sink transaction type (burn, vendor_purchase, fee, etc.)
+        referenceType:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: What triggered this transaction
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference entity ID
+        allowNegative:
+          type: boolean
+          nullable: true
+          description: Override negative balance allowance for this transaction
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention.
+
+    BatchDebitResponse:
+      type: object
+      description: Results of batch debit operations
+      additionalProperties: false
+      required:
+      - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchDebitResult'
+          description: Results for each operation
+
+    BatchDebitResult:
+      type: object
+      description: Result of a single debit in a batch
       additionalProperties: false
       required:
       - index
@@ -2423,6 +2574,7 @@ components:
           description: Transaction classification
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: What triggered this transaction
         referenceId:
@@ -2437,6 +2589,8 @@ components:
           description: Associated escrow ID
         idempotencyKey:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Idempotency key
         timestamp:
           type: string
@@ -2506,7 +2660,9 @@ components:
         fromAmount:
           type: number
           format: double
-          description: Amount to convert
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to convert (must be positive)
 
     CalculateConversionResponse:
       type: object
@@ -2516,6 +2672,7 @@ components:
       - toAmount
       - effectiveRate
       - baseCurrency
+      - conversionPath
       properties:
         toAmount:
           type: number
@@ -2580,9 +2737,12 @@ components:
         fromAmount:
           type: number
           format: double
-          description: Amount to convert
+          minimum: 0
+          exclusiveMinimum: true
+          description: Amount to convert (must be positive)
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Unique key for idempotency
 
@@ -2679,7 +2839,9 @@ components:
         exchangeRateToBase:
           type: number
           format: double
-          description: New exchange rate to base currency
+          minimum: 0
+          exclusiveMinimum: true
+          description: New exchange rate to base currency (must be positive)
 
     UpdateExchangeRateResponse:
       type: object
@@ -2795,6 +2957,8 @@ components:
       properties:
         referenceType:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Reference type
         referenceId:
           type: string
@@ -2986,6 +3150,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to debit for escrow
         escrowId:
           type: string
@@ -2993,6 +3159,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
 
@@ -3034,6 +3201,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to credit
         escrowId:
           type: string
@@ -3041,6 +3210,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
 
@@ -3082,6 +3252,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to refund
         escrowId:
           type: string
@@ -3089,6 +3261,7 @@ components:
           description: Associated escrow agreement ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
 
@@ -3134,6 +3307,8 @@ components:
         amount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Amount to reserve
         expiresAt:
           type: string
@@ -3141,6 +3316,7 @@ components:
           description: When the hold auto-releases
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type (e.g. dining, hotel, gas)
         referenceId:
@@ -3150,6 +3326,7 @@ components:
           description: Reference entity ID
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
 
@@ -3169,9 +3346,12 @@ components:
         captureAmount:
           type: number
           format: double
+          minimum: 0
+          exclusiveMinimum: true
           description: Final amount to debit (may be less than hold amount)
         idempotencyKey:
           type: string
+          minLength: 1
           maxLength: 128
           description: Idempotency key
 
@@ -3277,6 +3457,7 @@ components:
           description: When hold auto-releases
         referenceType:
           type: string
+          maxLength: 100
           nullable: true
           description: Reference type
         referenceId:

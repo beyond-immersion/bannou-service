@@ -187,11 +187,11 @@ public partial class TestingService : ITestingService
 
         _logger.LogInformation("Publishing test notification event to session {SessionId}", sessionId);
 
-        var testEvent = new SystemNotificationEvent
+        var testEvent = new SystemNotificationClientEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
-            NotificationType = SystemNotificationEventNotificationType.Info,
+            NotificationType = SystemNotificationClientEventNotificationType.Info,
             Title = "Test Notification",
             Message = message ?? "This is a test notification from the Testing service"
         };

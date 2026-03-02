@@ -18,22 +18,31 @@ public sealed class VersionDataLoader : IVersionDataLoader
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<VersionDataLoader> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VersionDataLoader"/> class.
     /// </summary>
+    /// <param name="stateStoreFactory">State store factory for hot cache and version data access.</param>
+    /// <param name="configuration">Save-load service configuration.</param>
+    /// <param name="assetClient">Asset client for download URL retrieval.</param>
+    /// <param name="httpClientFactory">HTTP client factory for presigned URL downloads.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public VersionDataLoader(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory,
-        ILogger<VersionDataLoader> logger)
+        ILogger<VersionDataLoader> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -42,6 +51,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         SaveVersionManifest version,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.LoadVersionDataAsync");
         // Try hot cache first
         var hotCacheStore = _stateStoreFactory.GetStore<HotSaveEntry>(StateStoreDefinitions.SaveLoadCache);
         var hotKey = HotSaveEntry.GetStateKey(slotId, version.VersionNumber);
@@ -101,6 +111,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         IStateStore<SaveVersionManifest> versionStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.ReconstructFromDeltaChainAsync");
         // Build the chain from target back to base snapshot
         var chain = new List<SaveVersionManifest>();
         var current = targetVersion;
@@ -169,6 +180,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         string assetId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.LoadFromAssetServiceAsync");
         try
         {
             var getRequest = new GetAssetRequest
@@ -206,6 +218,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         IStateStore<HotSaveEntry> hotCacheStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.CacheInHotStoreAsync");
         try
         {
             // Re-compress for storage efficiency
@@ -253,6 +266,7 @@ public sealed class VersionDataLoader : IVersionDataLoader
         IStateStore<SaveVersionManifest> versionStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "VersionDataLoader.FindVersionByCheckpointAsync");
         // Search through versions from newest to oldest
         // SaveSlotMetadata.SlotId is now Guid - convert to string for state key
         for (var v = slot.LatestVersion ?? 0; v >= 1; v--)

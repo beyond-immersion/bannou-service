@@ -18,7 +18,7 @@ public interface IControlPlaneServiceProvider
     /// Each entry represents a service running locally on the control plane instance.
     /// </summary>
     /// <returns>Collection of health status entries for control plane services</returns>
-    IReadOnlyList<ServiceHealthStatus> GetControlPlaneServiceHealth();
+    IReadOnlyList<ServiceHealthEntry> GetControlPlaneServiceHealth();
 
     /// <summary>
     /// Gets the names of all services enabled on the control plane.

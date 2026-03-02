@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Relationship Service API
   version: 2.0.0
@@ -543,8 +543,6 @@ paths:
                 $ref: '#/components/schemas/RelationshipTypeResponse'
         '404':
           description: Relationship type not found
-        '409':
-          description: Relationship type is already deprecated
 
   /relationship-type/undeprecate:
     post:
@@ -573,8 +571,6 @@ paths:
                 $ref: '#/components/schemas/RelationshipTypeResponse'
         '404':
           description: Relationship type not found
-        '400':
-          description: Relationship type is not deprecated
 
   /relationship-type/merge:
     post:
@@ -865,7 +861,8 @@ components:
         endedAt:
           type: string
           format: date-time
-          description: In-game timestamp when relationship ended (defaults to now)
+          nullable: true
+          description: In-game timestamp when relationship ended (null defaults to now)
         reason:
           type: string
           nullable: true
@@ -889,12 +886,12 @@ components:
           description: Type of the deleted entity (e.g., Character, Realm)
 
     CleanupByEntityResponse:
-      description: Response summarizing the results of a cascading relationship cleanup operation
+      description: Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success.
       type: object
       additionalProperties: false
       required:
       - relationshipsEnded
-      - success
+      - alreadyEnded
       properties:
         relationshipsEnded:
           type: integer
@@ -902,9 +899,6 @@ components:
         alreadyEnded:
           type: integer
           description: Number of relationships that were already ended (skipped)
-        success:
-          type: boolean
-          description: Whether the cleanup completed without errors
 
     # Response Models
     RelationshipResponse:
@@ -978,6 +972,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         relationships:
           type: array
@@ -1283,24 +1279,33 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique code for the relationship type
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Display name for the relationship type
         description:
           type: string
+          maxLength: 500
           nullable: true
           description: Human-readable description of the relationship type (null if not provided)
         category:
           type: string
+          maxLength: 50
           nullable: true
           description: Category for grouping relationship types (null if not categorized)
         parentTypeCode:
           type: string
+          maxLength: 50
           nullable: true
           description: Code of the parent type (resolved during seeding) (null for root types)
         inverseTypeCode:
           type: string
+          maxLength: 50
           nullable: true
           description: Code of the inverse relationship (null if not applicable)
         isBidirectional:
@@ -1429,7 +1434,8 @@ components:
           description: True if typeId equals or descends from ancestorTypeId
         depth:
           type: integer
-          description: Number of levels between the types (0 if same, -1 if no match)
+          nullable: true
+          description: Number of levels between the types (0 if same type, null if no match)
 
     SeedRelationshipTypesResponse:
       description: Response summarizing the results of a bulk seed operation with counts of created, updated, and skipped types
@@ -1461,20 +1467,10 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sourceTypeId
-      - targetTypeId
       - relationshipsMigrated
       - relationshipsFailed
       - sourceDeleted
       properties:
-        sourceTypeId:
-          type: string
-          format: uuid
-          description: ID of the deprecated type that was merged from
-        targetTypeId:
-          type: string
-          format: uuid
-          description: ID of the type that relationships were merged into
         relationshipsMigrated:
           type: integer
           description: Number of relationships successfully updated to use the target type
@@ -1486,9 +1482,10 @@ components:
           description: Whether the source type was hard-deleted after merge
         migrationErrors:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/MigrationError'
-          description: Details of individual migration failures (limited to first 100)
+          description: Details of individual migration failures (limited to first 100), null when no failures
 
     MigrationError:
       description: Details of a single relationship that failed to migrate

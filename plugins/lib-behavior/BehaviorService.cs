@@ -51,6 +51,7 @@ public partial class BehaviorService : IBehaviorService
     private readonly IAssetClient _assetClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IBehaviorBundleManager _bundleManager;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new instance of the BehaviorService.
@@ -64,6 +65,7 @@ public partial class BehaviorService : IBehaviorService
     /// <param name="assetClient">Asset service client for storing compiled models.</param>
     /// <param name="httpClientFactory">HTTP client factory for asset uploads.</param>
     /// <param name="bundleManager">Bundle manager for efficient behavior grouping.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public BehaviorService(
         ILogger<BehaviorService> logger,
         BehaviorServiceConfiguration configuration,
@@ -73,7 +75,8 @@ public partial class BehaviorService : IBehaviorService
         BehaviorCompiler compiler,
         IAssetClient assetClient,
         IHttpClientFactory httpClientFactory,
-        IBehaviorBundleManager bundleManager)
+        IBehaviorBundleManager bundleManager,
+        ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _configuration = configuration;
@@ -83,6 +86,8 @@ public partial class BehaviorService : IBehaviorService
         _assetClient = assetClient;
         _httpClientFactory = httpClientFactory;
         _bundleManager = bundleManager;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Initialize cognition constants from configuration (idempotent - first call wins)
         // IMPLEMENTATION TENETS - Configuration-First
@@ -241,6 +246,7 @@ public partial class BehaviorService : IBehaviorService
         bool isUpdate,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorService.PublishBehaviorEventAsync");
         var now = DateTimeOffset.UtcNow;
 
         if (isUpdate)
@@ -324,6 +330,7 @@ public partial class BehaviorService : IBehaviorService
         string abmlContent,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorService.ExtractAndCacheGoapMetadataAsync");
         try
         {
             // Parse ABML to get the document with GOAP metadata
@@ -415,6 +422,7 @@ public partial class BehaviorService : IBehaviorService
         byte[] bytecode,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorService.StoreCompiledModelAsync");
         try
         {
             // Request an upload URL from the asset service
@@ -689,6 +697,7 @@ public partial class BehaviorService : IBehaviorService
         BehaviorMetadata metadata,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.behavior", "BehaviorService.PublishBehaviorDeletedEventAsync");
         var now = DateTimeOffset.UtcNow;
 
         var deleteEvent = new Events.BehaviorDeletedEvent

@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Faction.Providers;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
@@ -82,7 +83,7 @@ public class FactionServicePlugin : StandardServicePlugin<IFactionService>
                 DisplayName = "Faction Spirit",
                 Description = "Faction growth seed that unlocks governance capabilities through member activities",
                 MaxPerOwner = 1,
-                AllowedOwnerTypes = new List<string> { "faction" },
+                AllowedOwnerTypes = new List<EntityType> { EntityType.Faction },
                 GrowthPhases = new List<GrowthPhaseDefinition>
                 {
                     new() { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },

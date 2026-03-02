@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Orchestrator API
   version: 3.0.0
@@ -534,11 +534,11 @@ paths:
 
   /orchestrator/config/rollback:
     post:
-      summary: Rollback to previous configuration
+      summary: Rollback to a previous configuration version
       description: |
-        Quickly rollback to the previous configuration without waiting for CI.
-        Swaps currentConfig with previousConfig and publishes ConfigurationChangedEvent
-        with the reverted keys so services can request restart.
+        Rollback to a previous configuration version. If targetVersion is specified,
+        rolls back to that specific version. Otherwise rolls back to version N-1.
+        Creates a new version (N+1) containing the restored config to preserve audit trail.
 
         **Note**: This is a quick fix. GitHub secrets should still be corrected
         to prevent re-breaking on next orchestrator deploy.
@@ -824,8 +824,7 @@ components:
       description: Request to list available presets (empty body allowed)
       properties:
         category:
-          type: string
-          enum: [development, testing, production, custom]
+          $ref: '#/components/schemas/PresetCategory'
           description: Optional filter by category
           nullable: true
 
@@ -863,6 +862,7 @@ components:
         tail:
           type: integer
           default: 100
+          minimum: 1
           description: Number of lines from end of logs
         follow:
           type: boolean
@@ -886,10 +886,12 @@ components:
           example: "configuration_change"
         priority:
           $ref: '#/components/schemas/RestartPriority'
+          nullable: true
           description: Urgency level for the restart
         shutdownGracePeriod:
           type: integer
           default: 30
+          minimum: 1
           description: Seconds to allow graceful shutdown before force-kill
 
     GetContainerStatusRequest:
@@ -948,8 +950,7 @@ components:
           type: string
           description: Component name (redis, rabbitmq, placement)
         status:
-          type: string
-          enum: [healthy, degraded, unavailable]
+          $ref: '#/components/schemas/ComponentHealthStatus'
           description: Component health status
         lastSeen:
           type: string
@@ -962,6 +963,7 @@ components:
         metrics:
           type: object
           additionalProperties: true
+          nullable: true
           description: >-
             Component-specific metrics reported by the service.
             No Bannou plugin reads specific keys from this field by convention.
@@ -994,10 +996,12 @@ components:
         lastCheck:
           type: string
           format: date-time
-          description: When the last health check was performed
+          nullable: true
+          description: When the last health check was performed (null if no checks yet)
         status:
-          type: string
-          description: Result of the last health check
+          $ref: 'common-api.yaml#/components/schemas/ServiceHealthStatus'
+          nullable: true  # NRT: null when no health checks performed yet
+          description: Result of the last health check (null if no checks performed yet)
         consecutiveFailures:
           type: integer
           description: Number of consecutive health check failures
@@ -1041,20 +1045,18 @@ components:
         healthyServices:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceHealthStatus'
+            $ref: '#/components/schemas/ServiceHealthEntry'
           description: Services with recent heartbeats (status healthy/degraded)
         unhealthyServices:
           type: array
           items:
-            $ref: '#/components/schemas/ServiceHealthStatus'
+            $ref: '#/components/schemas/ServiceHealthEntry'
           description: Services with expired heartbeats or unhealthy status
 
-    ServiceHealthStatus:
+    ServiceHealthEntry:
       type: object
       additionalProperties: false
-      description: |
-        Service health status from heartbeat monitoring.
-        Uses ServiceHeartbeatEvent schema from common-events.yaml.
+      description: Individual service health entry from heartbeat monitoring. Uses InstanceHealthStatus enum from common-api.yaml for status classification.
       required:
       - serviceId
       - appId
@@ -1068,16 +1070,16 @@ components:
           type: string
           description: App-id for mesh routing (e.g., "bannou", "npc-pool-01")
         status:
-          type: string
-          description: Service status from heartbeat
+          $ref: 'common-api.yaml#/components/schemas/InstanceHealthStatus'
+          description: Instance health status from heartbeat
         lastSeen:
           type: string
           format: date-time
           description: Last heartbeat timestamp
         capacity:
-          description: Current capacity metrics including load and available slots
           $ref: '#/components/schemas/Capacity'
-          nullable: true
+          nullable: true  # NRT: null when capacity data not available
+          description: Current capacity metrics including load and available slots
         metadata:
           type: object
           additionalProperties: true
@@ -1102,41 +1104,36 @@ components:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Optional environment variable updates
         force:
           type: boolean
-          description: Force restart even if healthy (default false)
+          default: false
+          description: Force restart even if healthy
         timeout:
           type: integer
-          description: Timeout for service to become healthy (seconds, default 120)
+          default: 120
+          minimum: 1
+          description: Timeout in seconds for service to become healthy after restart
 
     ServiceRestartResult:
       description: Result of a service restart operation including timing and status information
       type: object
       additionalProperties: false
       required:
-      - success
-      - serviceName
       - duration
       properties:
-        success:
-          type: boolean
-          description: Restart success status
-        serviceName:
-          type: string
-          description: Service that was restarted
         duration:
           type: string
           description: Time taken to restart and become healthy
         previousStatus:
-          type: string
-          description: Service status before restart
+          $ref: 'common-api.yaml#/components/schemas/InstanceHealthStatus'
+          nullable: true  # NRT: null if status was not known before restart
+          description: Instance health status before restart
         currentStatus:
-          type: string
-          description: Service status after restart
-        message:
-          type: string
-          description: Restart result message
+          $ref: 'common-api.yaml#/components/schemas/InstanceHealthStatus'
+          nullable: true  # NRT: null if status is not yet known after restart
+          description: Instance health status after restart
 
     ShouldRestartServiceRequest:
       description: Request to evaluate whether a service should be restarted based on health metrics
@@ -1155,23 +1152,20 @@ components:
       additionalProperties: false
       required:
       - shouldRestart
-      - serviceName
-      - currentStatus
       - reason
       properties:
         shouldRestart:
           type: boolean
           description: Whether restart is recommended
-        serviceName:
-          type: string
-          description: Service being evaluated
         currentStatus:
-          type: string
-          description: Current service health status
+          $ref: 'common-api.yaml#/components/schemas/InstanceHealthStatus'
+          nullable: true  # NRT: null when service has never been seen (no heartbeat received)
+          description: Current instance health status (null if service never seen)
         lastSeen:
           type: string
           format: date-time
-          description: Last heartbeat timestamp
+          nullable: true
+          description: Last heartbeat timestamp (null if service never seen)
         degradedDuration:
           type: string
           nullable: true
@@ -1211,24 +1205,21 @@ components:
           description: Selection priority (1 = highest)
         version:
           type: string
+          nullable: true
           description: Backend version (e.g., "1.28.0" for Docker)
         endpoint:
           type: string
+          nullable: true
           description: Backend API endpoint (if applicable)
         capabilities:
           type: array
+          nullable: true
           items:
             type: string
-          description: |
-            Supported capabilities for this backend:
-            - live-topology: Can change service distribution without restart
-            - scaling: Can scale services horizontally
-            - rolling-update: Supports rolling deployments
-            - secrets: Native secrets management
-            - volumes: Persistent volume support
-            - networks: Custom network creation
+          description: Supported capabilities for this backend (live-topology, scaling, rolling-update, secrets, volumes, networks)
         error:
           type: string
+          nullable: true
           description: Error message if detection failed
 
     BackendsResponse:
@@ -1254,7 +1245,8 @@ components:
           description: Highest priority available backend
         activeBackend:
           $ref: '#/components/schemas/BackendType'
-          description: Currently active backend (if environment deployed)
+          nullable: true
+          description: Currently active backend (null if no environment deployed)
 
     DeploymentPreset:
       description: Predefined deployment configuration defining service topology and environment settings
@@ -1272,9 +1264,9 @@ components:
           type: string
           description: Human-readable preset description
         category:
-          type: string
-          enum: [development, testing, production, custom]
-          description: Preset category
+          $ref: '#/components/schemas/PresetCategory'
+          nullable: true
+          description: Preset category (null if uncategorized)
         topology:
           $ref: '#/components/schemas/ServiceTopology'
           description: Service topology defined by this preset
@@ -1282,17 +1274,20 @@ components:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Default environment variables for this preset
         requiredBackends:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/BackendType'
-          description: Backends that support this preset (empty = all)
+          description: Backends that support this preset (null or empty = all)
         builtIn:
           type: boolean
           description: Whether this is a built-in preset
         filePath:
           type: string
+          nullable: true
           description: Path to preset configuration file
 
     PresetsResponse:
@@ -1309,7 +1304,8 @@ components:
           description: Available deployment presets
         activePreset:
           type: string
-          description: Currently active preset name (if any)
+          nullable: true
+          description: Currently active preset name (null if no preset active)
 
     ServiceTopology:
       description: Service distribution topology defining which services run on which nodes
@@ -1325,6 +1321,7 @@ components:
           description: Container/pod definitions with service assignments
         infrastructure:
           $ref: '#/components/schemas/InfrastructureConfig'
+          nullable: true
           description: Infrastructure service configuration
 
     TopologyNode:
@@ -1339,40 +1336,30 @@ components:
           description: Node/container name (e.g., "bannou-main", "bannou-auth")
         layers:
           type: array
+          nullable: true
           items:
-            type: string
-            enum:
-            - AppFoundation
-            - GameFoundation
-            - AppFeatures
-            - GameFeatures
-            - Extensions
-          description: |
-            Service layers to enable on this node. Listed layers are enabled,
-            unlisted layers are disabled. When omitted, layer enablement is
-            inherited from the container's environment.
-            Individual services in the 'services' list override layer settings.
+            $ref: '#/components/schemas/ServiceLayerType'
+          description: Service layers to enable on this node. Listed layers are enabled, unlisted are disabled. When null, inherited from container environment.
         services:
           type: array
+          nullable: true
           items:
             type: string
-          description: |
-            Individual services to enable on this node.
-            When used with 'layers', these act as overrides for services
-            outside the enabled layers.
-            When used without 'layers', uses BANNOU_SERVICES_ENABLED=false
-            with per-service {SERVICE}_SERVICE_ENABLED=true pattern.
+          description: Individual services to enable on this node. Acts as overrides for services outside enabled layers.
         replicas:
           type: integer
           default: 1
+          minimum: 1
           description: Number of replicas for this node
         resources:
           $ref: '#/components/schemas/ResourceLimits'
+          nullable: true
           description: Resource limits and requests for this node
         environment:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Node-specific environment overrides
         meshEnabled:
           type: boolean
@@ -1380,7 +1367,8 @@ components:
           description: Whether mesh routing is enabled
         appId:
           type: string
-          description: App-id override for mesh routing (default derives from node name)
+          nullable: true
+          description: App-id override for mesh routing (null derives from node name)
 
     InfrastructureConfig:
       type: object
@@ -1389,15 +1377,19 @@ components:
       properties:
         redis:
           $ref: '#/components/schemas/InfraServiceConfig'
+          nullable: true
           description: Redis configuration
         rabbitmq:
           $ref: '#/components/schemas/InfraServiceConfig'
+          nullable: true
           description: RabbitMQ configuration
         mysql:
           $ref: '#/components/schemas/InfraServiceConfig'
+          nullable: true
           description: MySQL configuration
         ingress:
           $ref: '#/components/schemas/IngressConfig'
+          nullable: true
           description: Ingress/reverse proxy configuration
 
     InfraServiceConfig:
@@ -1411,17 +1403,21 @@ components:
           description: Whether this infrastructure service is enabled
         image:
           type: string
-          description: Docker image override
+          nullable: true
+          description: Docker image override (null uses default)
         resources:
           $ref: '#/components/schemas/ResourceLimits'
+          nullable: true
           description: Resource limits and requests
         environment:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Environment variables for this service
         volumes:
           type: array
+          nullable: true
           items:
             type: string
           description: Volume mounts
@@ -1436,13 +1432,13 @@ components:
           default: true
           description: Whether ingress is enabled
         type:
-          type: string
-          enum: [openresty, nginx, traefik, none]
+          $ref: '#/components/schemas/IngressType'
           default: openresty
-          description: Type of ingress/reverse proxy to use
+          description: Type of ingress or reverse proxy to use
         ports:
-          description: Port configuration for HTTP and HTTPS traffic
           $ref: '#/components/schemas/Ports'
+          nullable: true
+          description: Port configuration for HTTP and HTTPS traffic
         ssl:
           type: boolean
           default: false
@@ -1456,10 +1452,14 @@ components:
         http:
           type: integer
           default: 80
+          minimum: 1
+          maximum: 65535
           description: HTTP port number
         https:
           type: integer
           default: 443
+          minimum: 1
+          maximum: 65535
           description: HTTPS port number
 
     ResourceLimits:
@@ -1469,15 +1469,19 @@ components:
       properties:
         cpuLimit:
           type: string
+          nullable: true
           description: CPU limit (e.g., "0.5", "2")
         memoryLimit:
           type: string
+          nullable: true
           description: Memory limit (e.g., "512m", "2g")
         cpuRequest:
           type: string
+          nullable: true
           description: CPU request (Kubernetes)
         memoryRequest:
           type: string
+          nullable: true
           description: Memory request (Kubernetes)
 
     DeploymentMode:
@@ -1521,6 +1525,7 @@ components:
         timeout:
           type: integer
           default: 300
+          minimum: 1
           description: Deployment timeout in seconds
         waitForHealthy:
           type: boolean
@@ -1543,7 +1548,7 @@ components:
       properties:
         success:
           type: boolean
-          description: Whether all nodes were deployed successfully (false indicates partial failure)
+          description: Whether the deployment completed successfully without errors
         deploymentId:
           type: string
           description: Unique deployment identifier for tracking
@@ -1552,26 +1557,27 @@ components:
           description: Container orchestration backend used for deployment
         preset:
           type: string
+          nullable: true
           description: Preset used (if applicable)
         duration:
           type: string
           description: Time taken to deploy
         topology:
           $ref: '#/components/schemas/ServiceTopology'
+          nullable: true
           description: Final applied topology
         services:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/DeployedService'
           description: Status of deployed services
         warnings:
           type: array
+          nullable: true
           items:
             type: string
           description: Non-fatal warnings during deployment
-        message:
-          type: string
-          description: Human-readable deployment summary
 
     DeployedService:
       description: Status information for a single deployed service instance
@@ -1586,20 +1592,22 @@ components:
           type: string
           description: Service name
         status:
-          type: string
-          enum: [starting, running, healthy, unhealthy, stopped]
+          $ref: '#/components/schemas/DeployedServiceStatus'
           description: Current status of the deployed service
         node:
           type: string
           description: Node/container hosting this service
         containerId:
           type: string
-          description: Container ID (Compose/Swarm)
+          nullable: true
+          description: Container ID (Compose/Swarm, null for Kubernetes)
         podName:
           type: string
-          description: Pod name (Kubernetes)
+          nullable: true
+          description: Pod name (Kubernetes, null for Compose/Swarm)
         endpoints:
           type: array
+          nullable: true
           items:
             type: string
           description: Exposed endpoints
@@ -1621,30 +1629,38 @@ components:
           description: When this status was generated
         deploymentId:
           type: string
-          description: Current deployment identifier
+          nullable: true
+          description: Current deployment identifier (null if not deployed)
         backend:
           $ref: '#/components/schemas/BackendType'
-          description: Container orchestration backend in use
+          nullable: true
+          description: Container orchestration backend in use (null if not deployed)
         preset:
           type: string
-          description: Active preset name
+          nullable: true
+          description: Active preset name (null if no preset active)
         topology:
           $ref: '#/components/schemas/ServiceTopology'
-          description: Current topology configuration
+          nullable: true
+          description: Current topology configuration (null if not deployed)
         services:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/DeployedService'
-          description: All deployed services with status
+          description: All deployed services with status (null if not deployed)
         infrastructure:
           $ref: '#/components/schemas/InfrastructureHealthResponse'
-          description: Infrastructure component health
+          nullable: true
+          description: Infrastructure component health (null if not checked)
         resources:
           $ref: '#/components/schemas/ResourceUsage'
-          description: Overall resource usage
+          nullable: true
+          description: Overall resource usage (null if not collected)
         uptime:
           type: string
-          description: Time since deployment
+          nullable: true
+          description: Time since deployment (null if not deployed)
 
     ResourceUsage:
       description: System resource utilization metrics including CPU, memory, disk, and network
@@ -1701,6 +1717,7 @@ components:
         timeout:
           type: integer
           default: 60
+          minimum: 1
           description: Graceful shutdown timeout in seconds
         removeVolumes:
           type: boolean
@@ -1720,47 +1737,45 @@ components:
             this will destroy all data and require a full re-deployment.
 
     TeardownResponse:
-      description: Result of an environment teardown including removed resources and any errors
+      description: Result of an environment teardown including removed resources and any errors. Check errors array for partial failures.
       type: object
       additionalProperties: false
       required:
-      - success
       - duration
       properties:
-        success:
-          type: boolean
-          description: Whether all containers were torn down successfully (false indicates partial failure)
         duration:
           type: string
           description: Time taken to complete teardown
         stoppedContainers:
           type: array
+          nullable: true
           items:
             type: string
           description: Container IDs that were stopped
         removedVolumes:
           type: array
+          nullable: true
           items:
             type: string
           description: Volumes that were removed
         removedNetworks:
           type: array
+          nullable: true
           items:
             type: string
           description: Networks that were removed
         removedInfrastructure:
           type: array
+          nullable: true
           items:
             type: string
           description: Infrastructure services that were removed (Redis, RabbitMQ, MySQL, etc.)
         errors:
           type: array
+          nullable: true
           items:
             type: string
           description: Non-fatal errors during teardown
-        message:
-          type: string
-          description: Human-readable teardown summary
 
     CleanTarget:
       type: string
@@ -1795,15 +1810,10 @@ components:
           description: Only clean resources matching labels
 
     CleanResponse:
-      description: Result of a cleanup operation including reclaimed space and removed resource counts
+      description: Result of a cleanup operation including reclaimed space and removed resource counts. Check errors array for partial failures.
       type: object
       additionalProperties: false
-      required:
-      - success
       properties:
-        success:
-          type: boolean
-          description: Whether all requested cleanup operations completed (false indicates partial failure)
         reclaimedSpaceMb:
           type: integer
           description: Disk space reclaimed (MB)
@@ -1821,12 +1831,10 @@ components:
           description: Number of images removed
         errors:
           type: array
+          nullable: true
           items:
             type: string
           description: Non-fatal errors during cleanup
-        message:
-          type: string
-          description: Human-readable cleanup summary
 
     LogsResponse:
       description: Response containing log entries from a service or container
@@ -1837,10 +1845,12 @@ components:
       properties:
         service:
           type: string
-          description: Service name (if queried by service)
+          nullable: true
+          description: Service name (null if queried by container)
         container:
           type: string
-          description: Container ID/name
+          nullable: true
+          description: Container ID/name (null if queried by service)
         logs:
           type: array
           items:
@@ -1863,8 +1873,8 @@ components:
           format: date-time
           description: When this log entry was recorded
         stream:
-          type: string
-          enum: [stdout, stderr]
+          $ref: '#/components/schemas/LogStreamType'
+          nullable: true
           description: Output stream type (stdout or stderr)
         message:
           type: string
@@ -1889,6 +1899,7 @@ components:
         timeout:
           type: integer
           default: 120
+          minimum: 1
           description: Timeout for topology update
 
     TopologyChange:
@@ -1899,40 +1910,40 @@ components:
       - action
       properties:
         action:
-          type: string
-          enum: [add-node, remove-node, move-service, scale, update-env]
+          $ref: '#/components/schemas/TopologyChangeAction'
           description: Type of topology change
         nodeName:
           type: string
-          description: Target node name
+          nullable: true
+          description: Target node name (null for actions that don't target a specific node)
         services:
           type: array
+          nullable: true
           items:
             type: string
           description: Services affected by this change
         replicas:
           type: integer
+          nullable: true
           description: New replica count (for scale action)
         environment:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Environment updates (for update-env action)
         nodeConfig:
           $ref: '#/components/schemas/TopologyNode'
+          nullable: true
           description: Full node config (for add-node action)
 
     TopologyUpdateResponse:
-      description: Result of a topology update including applied changes and the new topology state
+      description: Result of a topology update including applied changes and the new topology state. Check individual appliedChanges for per-change success status.
       type: object
       additionalProperties: false
       required:
-      - success
       - appliedChanges
       properties:
-        success:
-          type: boolean
-          description: Whether all topology changes were applied successfully (false indicates partial failure)
         appliedChanges:
           type: array
           items:
@@ -1940,151 +1951,95 @@ components:
           description: Details of each applied change
         topology:
           $ref: '#/components/schemas/ServiceTopology'
+          nullable: true
           description: New topology after changes
         duration:
           type: string
+          nullable: true
           description: Time taken to apply topology changes
         warnings:
           type: array
+          nullable: true
           items:
             type: string
           description: Non-fatal warnings during topology update
-        message:
-          type: string
-          description: Human-readable update summary
 
     AppliedChange:
-      description: Details of a single topology change that was applied, including success status
+      description: Details of a single topology change that was applied
       type: object
       additionalProperties: false
       required:
-      - action
       - success
+      - action
       properties:
+        success:
+          type: boolean
+          description: Whether this specific change was applied successfully
         action:
           type: string
           description: Type of topology change that was applied
         target:
           type: string
+          nullable: true
           description: Node or service affected
-        success:
-          type: boolean
-          description: Whether this specific change was applied successfully
-        error:
-          type: string
-          description: Error message if failed
-
-    # ==========================================================================
-    # EVENT SCHEMAS (for RabbitMQ pub/sub)
-    # ==========================================================================
-
-    DeploymentEvent:
-      type: object
-      additionalProperties: false
-      description: |
-        Published when deployment state changes.
-        Topic: bannou.deployment-events
-      required:
-      - eventId
-      - timestamp
-      - action
-      - deploymentId
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When this event occurred
-        action:
-          type: string
-          enum: [started, completed, failed, topology-changed]
-          description: Type of deployment action that triggered this event
-        deploymentId:
-          type: string
-          description: Unique identifier for the deployment
-        preset:
-          type: string
-          nullable: true
-          description: Preset name used for deployment (if applicable)
-        backend:
-          $ref: '#/components/schemas/BackendType'
-          description: Container orchestration backend used
-        changes:
-          type: array
-          items:
-            type: string
-          description: Summary of changes made
         error:
           type: string
           nullable: true
-          description: Error message if failed
+          description: Error message if failed (null on success)
 
-    ServiceRestartEvent:
-      type: object
-      additionalProperties: false
-      description: |
-        Published when a service is restarted.
-        Topic: bannou.service-lifecycle
-      required:
-      - eventId
-      - serviceName
-      - reason
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event
-        serviceName:
-          type: string
-          description: Name of the service that was restarted
-        reason:
-          type: string
-          description: Reason for the restart
-        forced:
-          type: boolean
-          description: Whether restart was forced without waiting for graceful shutdown
-        newEnvironment:
-          type: object
-          additionalProperties:
-            type: string
-          description: Environment variables updated during restart
+    # ==========================================================================
+    # NAMED ENUMS (referenced by events and API schemas)
+    # ==========================================================================
 
-    ConfigurationChangedEvent:
-      type: object
-      additionalProperties: false
-      description: |
-        Published by orchestrator when configuration or secrets change.
-        All containers receive this event via RabbitMQ. Plugins decide if they care
-        based on the changedKeys prefixes and request restart if needed.
-        Topic: bannou.configuration-events
-      required:
-      - eventId
-      - timestamp
-      - configVersion
-      - changedKeys
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this event instance
-        timestamp:
-          type: string
-          format: date-time
-          description: When this configuration change occurred
-        configVersion:
-          type: integer
-          description: Monotonically increasing version number
-        changedKeys:
-          type: array
-          items:
-            type: string
-          description: |
-            Configuration keys that changed (not values for security).
-            Key prefixes indicate scope:
-            - "auth.*" - Authentication-related
-            - "database.*" - Database connections
-            - "mesh.*" - Mesh components (typically global impact)
-            - "connect.*" - WebSocket/connection settings
+    DeploymentAction:
+      type: string
+      enum: [started, completed, failed, topology-changed]
+      description: Type of deployment action that triggered an event
+
+    PresetCategory:
+      type: string
+      enum: [development, testing, production, custom]
+      description: Category classification for deployment presets
+
+    ServiceLayerType:
+      type: string
+      enum: [AppFoundation, GameFoundation, AppFeatures, GameFeatures, Extensions]
+      description: Service hierarchy layer type for topology node configuration
+
+    ContainerStatusType:
+      type: string
+      enum: [running, starting, stopping, stopped, unhealthy]
+      description: Current runtime status of a container
+
+    DeployedServiceStatus:
+      type: string
+      enum: [starting, running, healthy, unhealthy, stopped]
+      description: Current status of a deployed service instance
+
+    TopologyChangeAction:
+      type: string
+      enum: [add-node, remove-node, move-service, scale, update-env]
+      description: Type of topology modification to apply
+
+    LogStreamType:
+      type: string
+      enum: [stdout, stderr]
+      description: Output stream type for log entries
+
+    IngressType:
+      type: string
+      enum: [openresty, nginx, traefik, none]
+      description: Type of ingress or reverse proxy to use
+
+    RestartStrategy:
+      type: string
+      enum: [rolling, simultaneous]
+      description: Strategy for performing container restarts
+
+    ComponentHealthStatus:
+      type: string
+      enum: [healthy, degraded, unavailable]
+      description: Health status for an individual infrastructure component
 
     # ==========================================================================
     # CONTAINER MANAGEMENT SCHEMAS
@@ -2117,6 +2072,7 @@ components:
         shutdownGracePeriod:
           type: integer
           default: 30
+          minimum: 1
           description: Seconds to allow graceful shutdown before force-kill
 
     ContainerRestartResponse:
@@ -2125,28 +2081,22 @@ components:
       additionalProperties: false
       required:
       - accepted
-      - appName
       properties:
         accepted:
           type: boolean
-          description: Whether the restart request was accepted
-        appName:
-          type: string
-          description: Container that will be restarted
+          description: Whether the restart request was accepted (may be queued)
         scheduledFor:
           type: string
           format: date-time
-          description: When restart is scheduled (may be queued)
+          nullable: true
+          description: When restart is scheduled (null if immediate)
         currentInstances:
           type: integer
           description: Number of running instances
         restartStrategy:
-          type: string
-          enum: [rolling, simultaneous]
+          $ref: '#/components/schemas/RestartStrategy'
+          nullable: true
           description: How restart will be performed
-        message:
-          type: string
-          description: Additional information
 
     ContainerStatus:
       description: Current status of a container including health, restart history, and running plugins
@@ -2161,8 +2111,7 @@ components:
           type: string
           description: Container's app-id for mesh routing
         status:
-          type: string
-          enum: [running, starting, stopping, stopped, unhealthy]
+          $ref: '#/components/schemas/ContainerStatusType'
           description: Current container status
         timestamp:
           type: string
@@ -2173,28 +2122,33 @@ components:
           description: Number of running instances
         plugins:
           type: array
+          nullable: true
           items:
             type: string
           description: Plugins running in this container
         lastRestart:
           type: string
           format: date-time
-          description: When container was last restarted
+          nullable: true
+          description: When container was last restarted (null if never restarted)
         restartCount:
           type: integer
           description: Number of restarts in last 24 hours
         restartHistory:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/RestartHistoryEntry'
           description: Recent restart history
         healthChecks:
-          description: Health check configuration and current health status results
           $ref: '#/components/schemas/HealthChecks'
+          nullable: true
+          description: Health check configuration and current health status results
         labels:
           type: object
           additionalProperties:
             type: string
+          nullable: true
           description: Container labels for metadata and management
 
     RestartHistoryEntry:
@@ -2214,23 +2168,26 @@ components:
           description: Why the restart was triggered
         priority:
           $ref: '#/components/schemas/RestartPriority'
+          nullable: true
           description: Priority level used for the restart
         duration:
           type: string
+          nullable: true
           description: Time taken to restart
         success:
           type: boolean
           description: Whether the restart completed successfully
         error:
           type: string
-          description: Error message if restart failed
+          nullable: true
+          description: Error message if restart failed (null on success)
 
     # ==========================================================================
     # CONFIGURATION MANAGEMENT SCHEMAS
     # ==========================================================================
 
     ConfigRollbackRequest:
-      description: Request to rollback configuration to the previous version
+      description: Request to rollback configuration to a previous version. If targetVersion is omitted, rolls back to version N-1.
       type: object
       additionalProperties: false
       required:
@@ -2240,6 +2197,11 @@ components:
           type: string
           description: Why rollback is needed (for auditing)
           example: "auth.jwt_secret broke authentication"
+        targetVersion:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Specific historical version to rollback to. If omitted, defaults to the previous version (currentVersion - 1).
 
     ConfigRollbackResponse:
       description: Result of a configuration rollback including version changes and affected keys
@@ -2257,12 +2219,10 @@ components:
           description: Config version after rollback (now active)
         changedKeys:
           type: array
+          nullable: true
           items:
             type: string
           description: Keys that were reverted
-        message:
-          type: string
-          description: Human-readable rollback summary
 
     ConfigVersionResponse:
       description: Current configuration version information with metadata about available keys
@@ -2287,9 +2247,10 @@ components:
           description: Number of configuration keys (not values for security)
         keyPrefixes:
           type: array
+          nullable: true
           items:
             type: string
-          description: Configuration key prefixes present (e.g., "auth", "database")
+          description: Configuration key prefixes present (e.g., "auth", "database"). Null if not requested.
 
     # ============================================================
     # PROCESSING POOL MODELS
@@ -2308,10 +2269,12 @@ components:
         priority:
           type: integer
           default: 0
+          minimum: 0
           description: Request priority (higher = more urgent)
         timeoutSeconds:
           type: integer
           default: 300
+          minimum: 1
           description: How long the lease is valid for
         metadata:
           type: object
@@ -2364,6 +2327,7 @@ components:
         metrics:
           type: object
           additionalProperties: true
+          nullable: true
           description: >-
             Client-provided processing metrics (duration, items processed, etc.).
             No Bannou plugin reads specific keys from this field by convention.
@@ -2373,11 +2337,8 @@ components:
       type: object
       additionalProperties: false
       required:
-      - released
+      - processorId
       properties:
-        released:
-          type: boolean
-          description: Whether the processor was successfully released
         processorId:
           type: string
           description: ID of the released processor
@@ -2402,15 +2363,11 @@ components:
       type: object
       additionalProperties: false
       required:
-      - poolType
       - totalInstances
       - availableInstances
       - busyInstances
       - utilization
       properties:
-        poolType:
-          type: string
-          description: Pool type
         totalInstances:
           type: integer
           description: Total processor instances in the pool
@@ -2439,7 +2396,8 @@ components:
           description: Utilization threshold for auto-scale-up
         recentMetrics:
           $ref: '#/components/schemas/PoolMetrics'
-          description: Recent processing statistics
+          nullable: true
+          description: Recent processing statistics (null if metrics not requested)
 
     PoolMetrics:
       type: object
@@ -2458,7 +2416,8 @@ components:
         lastScaleEvent:
           type: string
           format: date-time
-          description: When the pool was last scaled
+          nullable: true
+          description: When the pool was last scaled (null if never scaled)
 
     ScalePoolRequest:
       description: Request to scale a processing pool to a target number of instances
@@ -2485,13 +2444,9 @@ components:
       type: object
       additionalProperties: false
       required:
-      - poolType
       - previousInstances
       - currentInstances
       properties:
-        poolType:
-          type: string
-          description: Pool type that was scaled
         previousInstances:
           type: integer
           description: Instance count before scaling
@@ -2504,9 +2459,6 @@ components:
         scaledDown:
           type: integer
           description: Number of instances removed
-        message:
-          type: string
-          description: Status message
 
     CleanupPoolRequest:
       description: Request to clean up idle processor instances from a pool
@@ -2528,19 +2480,12 @@ components:
       type: object
       additionalProperties: false
       required:
-      - poolType
       - instancesRemoved
       properties:
-        poolType:
-          type: string
-          description: Pool type that was cleaned up
         instancesRemoved:
           type: integer
           description: Number of idle instances removed
         currentInstances:
           type: integer
           description: Instance count after cleanup
-        message:
-          type: string
-          description: Status message
 

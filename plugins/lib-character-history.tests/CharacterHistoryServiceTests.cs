@@ -29,6 +29,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     private const string STATE_STORE = "character-history-statestore";
 
@@ -44,6 +45,7 @@ public class CharacterHistoryServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Default: lock provider succeeds
         var successLock = new Mock<ILockResponse>();
@@ -78,7 +80,8 @@ public class CharacterHistoryServiceTests
             _mockEventConsumer.Object,
             configuration ?? new CharacterHistoryServiceConfiguration(),
             _mockLockProvider.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Validation

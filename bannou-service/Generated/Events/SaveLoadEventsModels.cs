@@ -81,7 +81,7 @@ public partial class SaveCreatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Save category
@@ -166,7 +166,7 @@ public partial class SaveLoadedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
 }
 
@@ -238,7 +238,7 @@ public partial class SaveMigratedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
 }
 
@@ -294,7 +294,7 @@ public partial class VersionPinnedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
 }
 
@@ -350,7 +350,7 @@ public partial class VersionUnpinnedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
 }
 
@@ -406,7 +406,7 @@ public partial class VersionDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
 }
 
@@ -503,7 +503,7 @@ public partial class SaveQueuedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Size of the queued save data in bytes
@@ -624,7 +624,7 @@ public partial class SaveUploadFailedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Last error message

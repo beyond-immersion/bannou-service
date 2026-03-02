@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Account;
 using BeyondImmersion.BannouService.Achievement;
 using BeyondImmersion.BannouService.Achievement.Sync;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -20,6 +21,7 @@ public class SteamAchievementSyncTests : IDisposable
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
     private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
     private readonly Mock<ILogger<SteamAchievementSync>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly AchievementServiceConfiguration _configuration;
     private readonly HttpClient _httpClient;
 
@@ -29,6 +31,7 @@ public class SteamAchievementSyncTests : IDisposable
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         _mockLogger = new Mock<ILogger<SteamAchievementSync>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _configuration = new AchievementServiceConfiguration
         {
@@ -57,7 +60,8 @@ public class SteamAchievementSyncTests : IDisposable
             _configuration,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
     }
 
     private void SetupHttpResponse(HttpStatusCode statusCode, string content)
@@ -84,7 +88,8 @@ public class SteamAchievementSyncTests : IDisposable
             null!,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object));
     }
 
     [Fact]
@@ -94,7 +99,8 @@ public class SteamAchievementSyncTests : IDisposable
             _configuration,
             null!,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object));
     }
 
     [Fact]
@@ -104,7 +110,8 @@ public class SteamAchievementSyncTests : IDisposable
             _configuration,
             _mockAccountClient.Object,
             null!,
-            _mockLogger.Object));
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object));
     }
 
     [Fact]
@@ -114,7 +121,8 @@ public class SteamAchievementSyncTests : IDisposable
             _configuration,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            null!));
+            null!,
+            _mockTelemetryProvider.Object));
     }
 
     [Fact]
@@ -376,7 +384,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Assert
         Assert.False(sync.IsConfigured);
@@ -396,7 +405,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Assert
         Assert.False(sync.IsConfigured);
@@ -416,7 +426,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Assert
         Assert.False(sync.IsConfigured);
@@ -440,7 +451,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
@@ -464,7 +476,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Act
         var result = await sync.UnlockAsync("76561198012345678", "TEST_ACHIEVEMENT");
@@ -616,7 +629,8 @@ public class SteamAchievementSyncTests : IDisposable
             config,
             _mockAccountClient.Object,
             _mockHttpClientFactory.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockTelemetryProvider.Object);
 
         // Act
         var result = await sync.SetProgressAsync("76561198012345678", "STAT_KILLS", 50, 100);

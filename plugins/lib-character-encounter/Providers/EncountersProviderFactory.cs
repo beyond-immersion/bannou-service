@@ -8,6 +8,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 
@@ -18,13 +19,16 @@ namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 public sealed class EncountersProviderFactory : IVariableProviderFactory
 {
     private readonly IEncounterDataCache _cache;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new encounters provider factory.
     /// </summary>
-    public EncountersProviderFactory(IEncounterDataCache cache)
+    public EncountersProviderFactory(IEncounterDataCache cache, ITelemetryProvider telemetryProvider)
     {
         _cache = cache;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -33,6 +37,7 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncountersProviderFactory.CreateAsync");
         if (!characterId.HasValue)
         {
             return EncountersProvider.Empty;

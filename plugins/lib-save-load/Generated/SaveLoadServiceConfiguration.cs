@@ -55,13 +55,13 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum size for a single save in bytes (default 100MB)
     /// Environment variable: SAVE_LOAD_MAX_SAVE_SIZE_BYTES
     /// </summary>
-    public int MaxSaveSizeBytes { get; set; } = 104857600;
+    public long MaxSaveSizeBytes { get; set; } = 104857600L;
 
     /// <summary>
     /// Auto-compress saves larger than this (default 1MB)
     /// Environment variable: SAVE_LOAD_AUTO_COMPRESS_THRESHOLD_BYTES
     /// </summary>
-    public int AutoCompressThresholdBytes { get; set; } = 1048576;
+    public long AutoCompressThresholdBytes { get; set; } = 1048576L;
 
     /// <summary>
     /// Default compression algorithm
@@ -163,7 +163,7 @@ public class SaveLoadServiceConfiguration : BaseServiceConfiguration
     /// Maximum total storage per owner (default 1GB)
     /// Environment variable: SAVE_LOAD_MAX_TOTAL_SIZE_BYTES_PER_OWNER
     /// </summary>
-    public int MaxTotalSizeBytesPerOwner { get; set; } = 1073741824;
+    public long MaxTotalSizeBytesPerOwner { get; set; } = 1073741824L;
 
     /// <summary>
     /// Brotli compression level (0-11, higher = better compression, slower)

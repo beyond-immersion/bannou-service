@@ -59,7 +59,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(), // Synthetic game session ID for testing
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -69,7 +69,7 @@ a=sendrecv";
             if (response.RoomId == Guid.Empty)
                 return TestResult.Failed("Voice room creation returned empty room ID");
 
-            if (response.Tier != VoiceTier.P2p)
+            if (response.Tier != VoiceTier.P2P)
                 return TestResult.Failed($"Tier mismatch: expected 'p2p', got '{response.Tier}'");
 
             return TestResult.Successful($"Voice room created successfully: ID={response.RoomId}, Tier={response.Tier}");
@@ -84,7 +84,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -112,7 +112,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -153,7 +153,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -195,7 +195,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -237,7 +237,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -250,7 +250,7 @@ a=sendrecv";
             var deleteRequest = new DeleteVoiceRoomRequest
             {
                 RoomId = createResponse.RoomId,
-                Reason = "test_cleanup"
+                Reason = VoiceRoomDeletedReason.Manual
             };
             await voiceClient.DeleteVoiceRoomAsync(deleteRequest);
 
@@ -292,7 +292,7 @@ a=sendrecv";
             var createRequest = new CreateVoiceRoomRequest
             {
                 SessionId = Guid.NewGuid(),
-                PreferredTier = VoiceTier.P2p,
+                PreferredTier = VoiceTier.P2P,
                 MaxParticipants = 6,
                 Codec = VoiceCodec.Opus
             };
@@ -338,7 +338,7 @@ a=sendrecv";
             var deleteRequest = new DeleteVoiceRoomRequest
             {
                 RoomId = createResponse.RoomId,
-                Reason = "lifecycle_test_complete"
+                Reason = VoiceRoomDeletedReason.Manual
             };
             await voiceClient.DeleteVoiceRoomAsync(deleteRequest);
             Console.WriteLine($"  Step 5: Room deleted");

@@ -31,7 +31,7 @@ export class GameServiceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listServicesAsync(
+  async gameServiceListServicesAsync(
     request: Schemas['ListServicesRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class GameServiceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getServiceAsync(
+  async gameServiceGetServiceAsync(
     request: Schemas['GetServiceRequest'],
     channel: number = 0,
     timeout?: number

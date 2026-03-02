@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class TextureProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<TextureProcessor> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -37,10 +39,13 @@ public sealed class TextureProcessor : IAssetProcessor
     /// </summary>
     public TextureProcessor(
         IAssetStorageProvider storageProvider,
+        ITelemetryProvider telemetryProvider,
         ILogger<TextureProcessor> logger,
         AssetServiceConfiguration configuration)
     {
         _storageProvider = storageProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -56,6 +61,7 @@ public sealed class TextureProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "TextureProcessor.ValidateAsync");
         await Task.CompletedTask;
         var warnings = new List<string>();
 
@@ -64,7 +70,7 @@ public sealed class TextureProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported content type: {context.ContentType}",
-                ProcessingErrorCode.UnsupportedContentType);
+                ProcessorError.UnsupportedContentType);
         }
 
         // Check file size limits
@@ -73,11 +79,11 @@ public sealed class TextureProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                ProcessingErrorCode.FileTooLarge);
+                ProcessorError.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
-        if (context.SizeBytes > 100 * 1024 * 1024) // > 100MB
+        if (context.SizeBytes > _configuration.TextureLargeFileWarningThresholdMb * 1024L * 1024L)
         {
             warnings.Add("Large texture file may take significant time to process");
         }
@@ -95,6 +101,7 @@ public sealed class TextureProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "TextureProcessor.ProcessAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -117,8 +124,8 @@ public sealed class TextureProcessor : IAssetProcessor
 
             // Get processing options
             var compressionEnabled = GetProcessingOption(context, "compression_enabled", true);
-            var maxDimension = GetProcessingOption(context, "max_dimension", 4096);
-            var targetFormat = GetProcessingOption(context, "target_format", "webp");
+            var maxDimension = GetProcessingOption(context, "max_dimension", _configuration.TextureMaxDimension);
+            var targetFormat = GetProcessingOption(context, "target_format", _configuration.TextureDefaultOutputFormat);
 
             // Pass-through processing: copy asset unchanged to processed location.
             // Processing options are recorded in metadata for future implementation.
@@ -169,7 +176,7 @@ public sealed class TextureProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                ProcessingErrorCode.ProcessingError,
+                ProcessorError.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

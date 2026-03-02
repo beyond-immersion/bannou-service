@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Asset.Processing;
 using BeyondImmersion.BannouService.Asset.Storage;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -56,6 +57,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
                 options.UseSSL = config.StorageUseSsl;
                 options.DefaultBucket = config.StorageBucket;
                 options.Region = config.StorageRegion;
+                options.DefaultUrlExpiration = TimeSpan.FromSeconds(config.TokenTtlSeconds);
             });
 
         // Register IMinioClient using the configured options
@@ -126,10 +128,12 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         services.AddSingleton<IBundleConverter>(sp =>
         {
             var bundleLogger = sp.GetRequiredService<ILogger<BundleConverter>>();
+            var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
             var assetConf = sp.GetRequiredService<AssetServiceConfiguration>();
             return new BundleConverter(
                 bundleLogger,
-                cacheDirectory: null,
+                telemetryProvider,
+                cacheDirectory: assetConf.ZipCacheDirectory,
                 cacheTtl: TimeSpan.FromHours(assetConf.ZipCacheTtlHours));
         });
         services.AddSingleton<BundleValidator>();
@@ -153,6 +157,12 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         // Worker checks ProcessingMode from configuration at startup and exits early if mode is "api"
         services.AddHostedService<AssetProcessingWorker>();
 
+        // Register background worker for expired deleted bundle cleanup
+        services.AddHostedService<Bundles.BundleCleanupWorker>();
+
+        // Register background worker for expired ZIP cache cleanup
+        services.AddHostedService<Bundles.ZipCacheCleanupWorker>();
+
         Logger?.LogDebug("Service dependencies configured");
     }
 
@@ -161,7 +171,10 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
         Logger?.LogInformation("Starting Asset service");
 
         // Wait for MinIO connectivity before resolving services that depend on it
-        if (!await WaitForMinioConnectivityAsync(maxRetries: 30, retryDelayMs: 2000))
+        var assetConfiguration = ServiceProvider!.GetRequiredService<AssetServiceConfiguration>();
+        if (!await WaitForMinioConnectivityAsync(
+            maxRetries: assetConfiguration.MinioStartupMaxRetries,
+            retryDelayMs: assetConfiguration.MinioStartupRetryDelayMs))
         {
             Logger?.LogError("MinIO connectivity check failed - Asset service cannot start");
             return false;
@@ -174,7 +187,7 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
     /// <summary>
     /// Wait for MinIO storage to be available before starting services that depend on it.
     /// </summary>
-    private async Task<bool> WaitForMinioConnectivityAsync(int maxRetries = 30, int retryDelayMs = 2000)
+    private async Task<bool> WaitForMinioConnectivityAsync(int maxRetries, int retryDelayMs)
     {
         if (ServiceProvider == null)
         {

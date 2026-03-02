@@ -65,28 +65,33 @@ public partial class InventoryController
                 "maxSlots": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Maximum slots for slot-based containers"
                 },
                 "maxWeight": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Maximum weight capacity"
                 },
                 "gridWidth": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Internal grid width for grid containers"
                 },
                 "gridHeight": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Internal grid height for grid containers"
                 },
                 "maxVolume": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Maximum volume for volumetric containers"
                 },
                 "parentContainerId": {
@@ -103,12 +108,14 @@ public partial class InventoryController
                 "maxNestingDepth": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Maximum nesting depth (null uses global default)"
                 },
                 "selfWeight": {
                     "type": "number",
                     "format": "double",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Empty container weight"
                 },
                 "weightContribution": {
@@ -118,22 +125,26 @@ public partial class InventoryController
                 "slotCost": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 0,
                     "description": "Slots used in slot-based parent"
                 },
                 "parentGridWidth": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Width footprint in grid-based parent"
                 },
                 "parentGridHeight": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Height footprint in grid-based parent"
                 },
                 "parentVolume": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Volume footprint in volumetric parent"
                 },
                 "allowedCategories": {
@@ -176,8 +187,9 @@ public partial class InventoryController
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific container data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -408,12 +420,14 @@ public partial class InventoryController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container tags"
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -762,12 +776,14 @@ public partial class InventoryController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container tags"
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -960,22 +976,26 @@ public partial class InventoryController
                 "maxSlots": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Default max slots if creating"
                 },
                 "maxWeight": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Default max weight if creating"
                 },
                 "gridWidth": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Default grid width if creating"
                 },
                 "gridHeight": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Default grid height if creating"
                 },
                 "realmId": {
@@ -1204,12 +1224,14 @@ public partial class InventoryController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container tags"
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1588,12 +1610,14 @@ public partial class InventoryController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container tags"
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1724,28 +1748,33 @@ public partial class InventoryController
                 "maxSlots": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "New max slots"
                 },
                 "maxWeight": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "New max weight"
                 },
                 "gridWidth": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "New grid width"
                 },
                 "gridHeight": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "New grid height"
                 },
                 "maxVolume": {
                     "type": "number",
                     "format": "double",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "New max volume"
                 },
                 "allowedCategories": {
@@ -1782,8 +1811,9 @@ public partial class InventoryController
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "New metadata"
+                    "description": "New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1979,12 +2009,14 @@ public partial class InventoryController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Container tags"
                 },
                 "metadata": {
                     "type": "object",
+                    "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific data"
+                    "description": "Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2145,26 +2177,15 @@ public partial class InventoryController
     "$defs": {
         "DeleteContainerResponse": {
             "type": "object",
-            "description": "Response after deleting container",
+            "description": "Response after deleting container. HTTP 200 confirms deletion.",
             "additionalProperties": false,
             "required": [
-                "deleted",
-                "containerId",
                 "itemsHandled"
             ],
             "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether deletion succeeded"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Deleted container ID"
-                },
                 "itemsHandled": {
                     "type": "integer",
-                    "description": "Number of items handled"
+                    "description": "Number of items handled during deletion"
                 }
             }
         }
@@ -2255,16 +2276,19 @@ public partial class InventoryController
                 "slotIndex": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Specific slot (auto-assign if null)"
                 },
                 "slotX": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Grid X position"
                 },
                 "slotY": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Grid Y position"
                 },
                 "rotated": {
@@ -2290,28 +2314,9 @@ public partial class InventoryController
     "$defs": {
         "AddItemResponse": {
             "type": "object",
-            "description": "Response after adding item",
+            "description": "Response after adding item. HTTP 200 confirms placement.",
             "additionalProperties": false,
-            "required": [
-                "success",
-                "instanceId",
-                "containerId"
-            ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether add succeeded"
-                },
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Added item ID"
-                },
-                "containerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Container ID"
-                },
                 "slotIndex": {
                     "type": "integer",
                     "nullable": true,
@@ -2426,27 +2431,16 @@ public partial class InventoryController
     "$defs": {
         "RemoveItemResponse": {
             "type": "object",
-            "description": "Response after removing item",
+            "description": "Response after removing item. HTTP 200 confirms removal.",
             "additionalProperties": false,
             "required": [
-                "success",
-                "instanceId",
                 "previousContainerId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether remove succeeded"
-                },
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Removed item ID"
-                },
                 "previousContainerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container removed from"
+                    "description": "Container the item was removed from"
                 }
             }
         }
@@ -2537,16 +2531,19 @@ public partial class InventoryController
                 "targetSlotIndex": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Target slot"
                 },
                 "targetSlotX": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Target grid X"
                 },
                 "targetSlotY": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Target grid Y"
                 },
                 "rotated": {
@@ -2567,33 +2564,16 @@ public partial class InventoryController
     "$defs": {
         "MoveItemResponse": {
             "type": "object",
-            "description": "Response after moving item",
+            "description": "Response after moving item. HTTP 200 confirms move.",
             "additionalProperties": false,
             "required": [
-                "success",
-                "instanceId",
-                "sourceContainerId",
-                "targetContainerId"
+                "sourceContainerId"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether move succeeded"
-                },
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Moved item ID"
-                },
                 "sourceContainerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Previous container"
-                },
-                "targetContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "New container"
+                    "description": "Container the item was moved from"
                 },
                 "slotIndex": {
                     "type": "integer",
@@ -2715,34 +2695,23 @@ public partial class InventoryController
     "$defs": {
         "TransferItemResponse": {
             "type": "object",
-            "description": "Response after transfer",
+            "description": "Response after transfer. HTTP 200 confirms transfer.",
             "additionalProperties": false,
             "required": [
-                "success",
                 "instanceId",
                 "sourceContainerId",
-                "targetContainerId",
                 "quantityTransferred"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether transfer succeeded"
-                },
                 "instanceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Transferred item ID"
+                    "description": "Transferred item ID (for partial transfers, this is the new split item)"
                 },
                 "sourceContainerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Previous container"
-                },
-                "targetContainerId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "New container"
+                    "description": "Container the item was transferred from"
                 },
                 "quantityTransferred": {
                     "type": "number",
@@ -2839,16 +2808,19 @@ public partial class InventoryController
                 "targetSlotIndex": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Slot for new stack"
                 },
                 "targetSlotX": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Grid X for new stack"
                 },
                 "targetSlotY": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 0,
                     "description": "Grid Y for new stack"
                 }
             }
@@ -2864,25 +2836,14 @@ public partial class InventoryController
     "$defs": {
         "SplitStackResponse": {
             "type": "object",
-            "description": "Response after splitting",
+            "description": "Response after splitting. HTTP 200 confirms split.",
             "additionalProperties": false,
             "required": [
-                "success",
-                "originalInstanceId",
                 "newInstanceId",
                 "originalQuantity",
                 "newQuantity"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether split succeeded"
-                },
-                "originalInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Original stack ID"
-                },
                 "newInstanceId": {
                     "type": "string",
                     "format": "uuid",
@@ -2997,24 +2958,13 @@ public partial class InventoryController
     "$defs": {
         "MergeStacksResponse": {
             "type": "object",
-            "description": "Response after merging",
+            "description": "Response after merging. HTTP 200 confirms merge.",
             "additionalProperties": false,
             "required": [
-                "success",
-                "targetInstanceId",
                 "newQuantity",
                 "sourceDestroyed"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether merge succeeded"
-                },
-                "targetInstanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Merged stack ID"
-                },
                 "newQuantity": {
                     "type": "number",
                     "format": "double",
@@ -3147,11 +3097,13 @@ public partial class InventoryController
                 "offset": {
                     "type": "integer",
                     "default": 0,
+                    "minimum": 0,
                     "description": "Pagination offset"
                 },
                 "limit": {
                     "type": "integer",
                     "default": 50,
+                    "minimum": 1,
                     "maximum": 200,
                     "description": "Max results"
                 }

@@ -29,7 +29,7 @@ namespace BeyondImmersion.BannouService.Mapping;
 ///   <item>map.{regionId}.{kind}.updated - When map data is updated</item>
 ///   <item>map.{regionId}.{kind}.snapshot - When a full snapshot is published</item>
 ///   <item>map.{regionId}.{kind}.objects.changed - When objects are changed</item>
-///   <item>map.warnings.unauthorized_publish - When non-authority publish detected</item>
+///   <item>map.warnings.unauthorized-publish - When non-authority publish detected</item>
 /// </list>
 /// </para>
 /// </remarks>

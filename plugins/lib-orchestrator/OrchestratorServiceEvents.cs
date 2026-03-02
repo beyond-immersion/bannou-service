@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Orchestrator;
 
@@ -30,6 +32,7 @@ public partial class OrchestratorService
     /// <param name="evt">The service heartbeat event data.</param>
     public async Task HandleServiceHeartbeatAsync(ServiceHeartbeatEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "OrchestratorService.HandleServiceHeartbeatAsync");
         _logger.LogDebug(
             "Received heartbeat from {AppId} (ServiceId: {ServiceId}, Status: {Status})",
             evt.AppId, evt.ServiceId, evt.Status);

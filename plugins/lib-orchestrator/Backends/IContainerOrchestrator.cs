@@ -144,8 +144,8 @@ public class DeployServiceResult
     /// <summary>Container ID of the deployed service (if applicable).</summary>
     public string? ContainerId { get; set; }
 
-    /// <summary>Human-readable message describing the result.</summary>
-    public string Message { get; set; } = string.Empty;
+    /// <summary>Human-readable message describing the result (null if no additional context).</summary>
+    public string? Message { get; set; }
 }
 
 /// <summary>
@@ -165,8 +165,8 @@ public class TeardownServiceResult
     /// <summary>Volumes that were removed (if requested).</summary>
     public List<string> RemovedVolumes { get; set; } = new();
 
-    /// <summary>Human-readable message describing the result.</summary>
-    public string Message { get; set; } = string.Empty;
+    /// <summary>Human-readable message describing the result (null if no additional context).</summary>
+    public string? Message { get; set; }
 }
 
 /// <summary>
@@ -186,8 +186,8 @@ public class ScaleServiceResult
     /// <summary>Current number of instances after scaling.</summary>
     public int CurrentReplicas { get; set; }
 
-    /// <summary>Human-readable message describing the result.</summary>
-    public string Message { get; set; } = string.Empty;
+    /// <summary>Human-readable message describing the result (null if no additional context).</summary>
+    public string? Message { get; set; }
 }
 
 /// <summary>
@@ -207,6 +207,6 @@ public class PruneResult
     /// <summary>Bytes of disk space reclaimed (for volumes and images).</summary>
     public long ReclaimedBytes { get; set; }
 
-    /// <summary>Human-readable message describing the result.</summary>
-    public string Message { get; set; } = string.Empty;
+    /// <summary>Human-readable message describing the result (null if no additional context).</summary>
+    public string? Message { get; set; }
 }

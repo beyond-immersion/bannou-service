@@ -31,7 +31,7 @@ export class CharacterPersonalityProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPersonalityAsync(
+  async characterPersonalityGetPersonalityAsync(
     request: Schemas['GetPersonalityRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class CharacterPersonalityProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCombatPreferencesAsync(
+  async characterPersonalityGetCombatPreferencesAsync(
     request: Schemas['GetCombatPreferencesRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class CharacterPersonalityProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async characterPersonalityGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class CharacterPersonalityProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByCharacterAsync(
+  async characterPersonalityCleanupByCharacterAsync(
     request: Schemas['CleanupByCharacterRequest'],
     channel: number = 0,
     timeout?: number

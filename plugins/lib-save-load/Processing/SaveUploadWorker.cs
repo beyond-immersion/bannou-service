@@ -27,6 +27,7 @@ public class SaveUploadWorker : BackgroundService
     private readonly SaveLoadServiceConfiguration _configuration;
     private readonly ILogger<SaveUploadWorker> _logger;
     private readonly SemaphoreSlim _uploadSemaphore;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new SaveUploadWorker instance.
@@ -34,12 +35,14 @@ public class SaveUploadWorker : BackgroundService
     public SaveUploadWorker(
         IServiceProvider serviceProvider,
         SaveLoadServiceConfiguration configuration,
-        ILogger<SaveUploadWorker> logger)
+        ILogger<SaveUploadWorker> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _configuration = configuration;
         _logger = logger;
         _uploadSemaphore = new SemaphoreSlim(_configuration.MaxConcurrentUploads);
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -94,6 +97,7 @@ public class SaveUploadWorker : BackgroundService
 
     private async Task ProcessPendingUploadsAsync(IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveUploadWorker.ProcessPendingUploadsAsync");
         var stateStoreFactory = serviceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = serviceProvider.GetRequiredService<IMessageBus>();
         var assetClient = serviceProvider.GetRequiredService<IAssetClient>();
@@ -103,7 +107,8 @@ public class SaveUploadWorker : BackgroundService
             stateStoreFactory,
             messageBus,
             _configuration,
-            serviceProvider.GetRequiredService<ILogger<StorageCircuitBreaker>>());
+            serviceProvider.GetRequiredService<ILogger<StorageCircuitBreaker>>(),
+            _telemetryProvider);
 
         // Check circuit breaker (only when enabled)
         if (_configuration.StorageCircuitBreakerEnabled && !await circuitBreaker.IsAllowedAsync(cancellationToken))
@@ -182,6 +187,7 @@ public class SaveUploadWorker : BackgroundService
         IHttpClientFactory httpClientFactory,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveUploadWorker.ProcessUploadAsync");
         _logger.LogDebug(
             "Processing upload {UploadId} for slot {SlotId} version {Version}",
             entry.UploadId, entry.SlotId, entry.VersionNumber);
@@ -280,6 +286,7 @@ public class SaveUploadWorker : BackgroundService
         StorageCircuitBreaker circuitBreaker,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveUploadWorker.RecordUploadFailureAsync");
         entry.LastError = errorMessage;
         entry.LastAttemptAt = DateTimeOffset.UtcNow;
 

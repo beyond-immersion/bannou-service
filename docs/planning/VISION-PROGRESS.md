@@ -1,7 +1,7 @@
 # Vision Progress: Cross-Service Architectural Audit
 
-> **Version**: 1.1
-> **Last Updated**: 2026-02-15
+> **Version**: 1.2
+> **Last Updated**: 2026-03-02
 > **Scope**: High-level alignment between VISION.md, PLAYER-VISION.md, BEHAVIORAL-BOOTSTRAP.md, and the 75-service plugin architecture
 > **Purpose**: Capture disconnects, resolved patterns, and open questions before proceeding to aspirational plugin specification
 
@@ -47,8 +47,9 @@ When an entity exists as a Character in a system realm, the entire L2/L4 entity 
 |---|---|---|
 | **PANTHEON** | God characters, divine genealogy, deity personality, domain power | Documented in DIVINE.md (Extension #0 -- core pattern) |
 | **NEXIUS** | Guardian spirit characters, pair bonds, spirit evolution, spirit personality | Documented in DIVINE.md (Extension #13) |
+| **DUNGEON_CORES** | Dungeon entity characters, cognitive progression, spatial personality | Documented in DUNGEON.md |
+| **SENTIENT_ARMS** | Living weapon characters, wielder bonds, memory manifestation | Documented in ACTOR-BOUND-ENTITIES.md |
 | **UNDERWORLD** | Dead characters post-mortem, afterlife gameplay, cross-boundary narrative | Documented in DIVINE.md (Extension #12) |
-| **VOID** | Already exists as seeding convention; could house void-specific entities | Mentioned in DIVINE.md |
 
 ### Why This Matters
 
@@ -233,6 +234,21 @@ The key architectural property: **DocumentExecutor is in `bannou-service/`** (sh
 
 The documentation gap is real (Actor's deep dive should describe this pattern), but the implementation architecture is sound. Event Brain = character brain + global event perception + load_snapshot + CinematicInterpreter for choreographic output. No new actor type needed.
 
+### R11. Transit and Location Variable Providers
+
+**Original concern** (formerly part of O3): NPCs cannot make spatially aware decisions -- no `${transit.*}` or `${location.*}` providers existed for movement reasoning or location context.
+
+**Resolution**: Both providers are now fully implemented and registered via DI:
+
+| Provider | Plugin | Namespace | Backing State | Status |
+|---|---|---|---|---|
+| `TransitVariableProviderFactory` | lib-transit (L2) | `${transit.*}` | Redis + MySQL stores | Functional |
+| `LocationContextProviderFactory` | lib-location (L2) | `${location.*}` | ILocationDataCache | Functional |
+
+Transit provides journey data, route discovery, and movement cost calculations. Location provides hierarchy context, presence data, and location metadata. Both are discovered by Actor via `IEnumerable<IVariableProviderFactory>`. Transit also defines `ITransitCostModifierProvider` for L4 services to enrich movement costs, though no implementations exist yet (see O8).
+
+NPCs can now reason about "Can I get from A to B? How long will it take?" and "Where am I? What's nearby?" The environmental half (weather, temperature) remains open as O3.
+
 ---
 
 ## Open Issues
@@ -244,6 +260,8 @@ The documentation gap is real (Actor's deep dive should describe this pattern), 
 **Details**: All 22 Divine endpoints return `NotImplemented`. The behavioral bootstrap requires Divine for deity creation (Phase 3), divinity economy, blessing orchestration, and avatar manifestation. The system realm pattern (which resolves R1, R2, R3) depends on Divine's implementation proving out the concept that other system realms (Nexius, Underworld) can follow.
 
 **Impact**: Blocks North Star #1 (Living Game Worlds), #2 (Content Flywheel), and #5 (Emergent Over Authored). The entire god-actor orchestration layer is non-functional without it.
+
+**Status (2026-03-02)**: Unchanged. Schema complete (22 endpoints, 5 state stores, 11 events, 18 config properties), but all 22 endpoints still return `NotImplemented`. Zero implementation logic. Score remains 25% (schema quality, not code). Note: the first-order blocker is actually Puppetmaster watcher-actor integration (watchers can't spawn actors), which gates Phase 2 of the behavioral bootstrap. Divine is the second-order blocker (Phase 3). See "Behavioral Bootstrap Critical Path" section below.
 
 **Question**: What is the implementation timeline for Divine? Should it be the next major implementation target given how many systems depend on it?
 
@@ -262,22 +280,17 @@ This is the exact anti-pattern the tenets exist to prevent: cross-service data s
 
 **Question**: Which resolution approach should Affix follow?
 
-### O3. Transit and Environment Lack Variable Providers [MODERATE]
+### O3. Environment Lacks Variable Provider [MODERATE]
 
-**Priority**: P2 -- NPCs cannot make spatially or environmentally aware decisions
+**Priority**: P2 -- NPCs cannot make environmentally aware decisions
 
-**Details**: NPCs need to reason about:
-- **Movement**: "Can I get from A to B? How long? Is the route safe?" -- requires `${transit.*}`
-- **Weather/Environment**: "Is it raining? Too cold? Are resources available?" -- requires `${environment.*}`
+**Details**: NPCs need to reason about weather and ecological conditions: "Is it raining? Too cold? Are resources available?" -- requires `${environment.*}`. Environment (L4) is at 0% pre-implementation with no variable provider designed.
 
-Neither Transit nor Environment describe a Variable Provider Factory implementation. Yet:
-- The Vision's NPC intelligence stack depends on autonomous movement decisions
-- The Behavioral Bootstrap shows god-actors orchestrating environmental changes
-- Workshop and Trade both reference environmental conditions affecting production/routes
+**Partially resolved (2026-03-02)**: Transit and Location variable providers are now fully implemented (see R11). NPCs can reason about movement, routes, and spatial context. The remaining gap is environmental awareness only.
 
-**Impact**: Without these providers, NPC behavior can't react to geography or weather. The "living world" feels indoor and static. NPCs can't decide "it's too dangerous to travel in this storm" or "the mountain pass is faster but harder."
+**Impact**: Without `${environment.*}`, NPC behavior can't react to weather or ecological conditions. Workshop and Trade both reference environmental conditions affecting production/routes. God-actors (Behavioral Bootstrap) orchestrate environmental changes that NPCs should perceive. A merchant NPC can't decide "it's too dangerous to travel in this storm" -- they can plan routes (Transit), but can't factor in weather.
 
-**Question**: Should Transit and Environment add `${transit.*}` and `${environment.*}` variable provider implementations to their designs?
+**Question**: Should Environment add `${environment.*}` variable provider implementation to its design? What variables should it expose (temperature, precipitation, wind, ecological resource availability)?
 
 ### O4. Organization Lacks Economic GOAP Integration [MODERATE]
 
@@ -306,46 +319,160 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 
 **Priority**: P3 -- performance concern, not a correctness issue
 
-**Details**: The NPC cognition pipeline now has 13+ confirmed variable provider namespaces:
+**Details**: The NPC cognition pipeline has 19 confirmed variable provider namespaces, of which **11 are fully implemented** (verified 2026-03-02 via codebase audit of `IVariableProviderFactory` implementations):
 
 | Namespace | Service | Status |
 |---|---|---|
-| `${personality.*}` | Character-Personality (L4) | Implemented |
-| `${encounters.*}` | Character-Encounter (L4) | Implemented |
-| `${backstory.*}` | Character-History (L4) | Implemented |
-| `${quest.*}` | Quest (L2) | Implemented |
-| `${world.*}` | Worldstate (L2) | Implemented |
-| `${obligations.*}` | Obligation (L4) | Implemented |
-| `${disposition.*}` | Disposition (L4) | Pre-implementation |
-| `${nature.*}` | Ethology (L4) | Pre-implementation |
-| `${hearsay.*}` | Hearsay (L4) | Pre-implementation |
-| `${lexicon.*}` | Lexicon (L4) | Pre-implementation |
-| `${spirit.*}` | Agency (L4) | Pre-implementation |
-| `${craft.*}` | Craft (L4) | Pre-implementation |
-| `${market.*}` | Market (L4) | Pre-implementation |
+| `${personality.*}` | Character-Personality (L4) | Implemented — PersonalityProviderFactory, backed by IPersonalityDataCache |
+| `${combat.*}` | Character-Personality (L4) | Implemented — CombatPreferencesProviderFactory, backed by IPersonalityDataCache |
+| `${encounters.*}` | Character-Encounter (L4) | Implemented — EncountersProviderFactory, backed by IEncounterDataCache |
+| `${backstory.*}` | Character-History (L4) | Implemented — BackstoryProviderFactory, backed by IBackstoryCache |
+| `${quest.*}` | Quest (L2) | Implemented — QuestProviderFactory, backed by IQuestDataCache |
+| `${world.*}` | Worldstate (L2) | Implemented — WorldProviderFactory, backed by IRealmClockCache + ICalendarTemplateCache |
+| `${seed.*}` | Seed (L2) | Implemented — SeedProviderFactory, backed by ISeedDataCache |
+| `${obligations.*}` | Obligation (L4) | Implemented — ObligationProviderFactory, backed by Redis obligation cache store |
+| `${faction.*}` | Faction (L4) | Implemented — FactionProviderFactory, backed by Redis/MySQL stores |
+| `${transit.*}` | Transit (L2) | Implemented — TransitVariableProviderFactory, backed by Redis + MySQL stores |
+| `${location.*}` | Location (L2) | Implemented — LocationContextProviderFactory, backed by ILocationDataCache |
+| `${disposition.*}` | Disposition (L4) | Pre-implementation (service at 0%) |
+| `${nature.*}` | Ethology (L4) | Pre-implementation (service at 0%) |
+| `${hearsay.*}` | Hearsay (L4) | Pre-implementation (service at 0%) |
+| `${lexicon.*}` | Lexicon (L4) | Pre-implementation (service at 0%) |
+| `${spirit.*}` | Agency (L4) | Pre-implementation (service at 0%) |
+| `${social.*}` | Lexicon/Chat bridge (L4/L1) | Pre-implementation — described in CHARACTER-COMMUNICATION.md; reads recent Lexicon-typed Chat messages for social cognition |
+| `${craft.*}` | Craft (L4) | Pre-implementation (service at 0%) |
+| `${market.*}` | Market (L4) | Pre-implementation (service at 0%) |
 
-At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 13+ provider data sources per tick is significant. Each provider caches data per-character, but the cache invalidation story (pub/sub events per provider per character state change across 100K characters) needs explicit capacity planning.
+At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 19 provider data sources per tick is significant. Each provider caches data per-character, but the cache invalidation story (pub/sub events per provider per character state change across 100K characters) needs explicit capacity planning.
 
 **Mitigating factors**: Not all NPCs need all providers. A blacksmith NPC needs `${craft.*}` and `${market.*}` but probably not `${hearsay.*}`. Behavior documents only reference the providers they use, so the Actor runtime can lazy-load only the required providers per actor. This is an optimization concern, not an architectural problem.
 
 **Question**: Should the Variable Provider Factory pattern document a lazy-loading strategy, or is the current "load all registered providers" approach sufficient for the target scale?
+
+### O7. Social Variable Provider Not Yet Designed [MODERATE]
+
+**Priority**: P2 -- NPCs cannot perceive or react to social communication without it
+
+**Details**: [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) describes a `${social.*}` variable provider namespace that would read recent Chat messages from joined Lexicon rooms and expose them to Actor cognition. This is the missing bridge between NPC social interaction (Chat L1 + Lexicon L4) and NPC behavioral response (Actor L2). Without it, NPCs can send structured messages but cannot perceive or react to messages sent by others.
+
+**Proposed variables**:
+
+| Variable | Type | Description |
+|---|---|---|
+| `${social.message_count}` | int | Messages in joined Lexicon rooms within cache window |
+| `${social.recent.N.intent}` | string | Intent code of Nth most recent message (WARN, REQUEST, OFFER, etc.) |
+| `${social.recent.N.elements}` | string[] | Lexicon entry codes in Nth message |
+| `${social.recent.N.sender_id}` | Guid | Character who sent Nth message |
+| `${social.has_warnings}` | bool | Any recent WARNING-intent messages in range |
+| `${social.has_requests}` | bool | Any recent REQUEST-intent messages in range |
+| `${social.topic_frequency}` | dict | Most-discussed Lexicon entries by frequency |
+| `${social.ambient_mood}` | float | Aggregate sentiment of recent social messages |
+| `${social.unanswered_questions}` | int | QUESTION-intent messages without ANSWER follow-ups |
+
+**Implementation path**: The provider would be registered by whichever service owns the Lexicon room type integration (likely lib-lexicon L4 or a dedicated social bridge service). It reads from Chat (L1) state stores using the character's joined Lexicon rooms, with a configurable TTL cache window (30-60s per CHARACTER-COMMUNICATION.md). The provider infrastructure (`IVariableProviderFactory`) is fully operational with 11 existing implementations -- this is a domain-specific implementation gap, not an architectural one.
+
+**Dependencies**: Requires Lexicon (L4, 0%) for concept ontology and the Lexicon room type registration with Chat (L1). Chat itself is production-ready (97%) and already supports custom room types.
+
+**Impact on North Star #1 (Living Game Worlds)**: Without `${social.*}`, NPC ABML behaviors cannot reference social context. NPCs can't respond to warnings ("a villager just shouted about wolves"), answer questions ("someone asked where the blacksmith is"), react to ambient social mood ("the market is buzzing with excitement"), or notice unanswered pleas ("a child has been calling for help"). The social communication layer described in CHARACTER-COMMUNICATION.md is structurally complete but cognitively disconnected from behavior until this provider exists.
+
+**Question**: Should this provider live in lib-lexicon (which owns the concept ontology and room type), or in a dedicated social-bridge helper service? lib-lexicon is the natural owner since it registers the Lexicon room type with Chat and understands message structure, but the provider reads Chat state stores directly (L4 reading L1 state -- architecturally valid but worth noting).
+
+### O8. ITransitCostModifierProvider Has Zero Implementations [MINOR]
+
+**Priority**: P3 -- movement cost enrichment is optional but valuable for NPC spatial reasoning
+
+**Details**: Transit's `TransitVariableProviderFactory` injects `IEnumerable<ITransitCostModifierProvider>` to allow L4 services to enrich movement cost calculations with dynamic, context-sensitive modifiers. The interface exists and the injection is wired, but the codebase audit (2026-03-02) found **zero implementations** registered anywhere. Transit gracefully degrades -- uses base connection costs without dynamic modifiers -- so the system is functional but spatially naive.
+
+**The interface pattern** (defined in `bannou-service/Providers/`):
+
+```csharp
+public interface ITransitCostModifierProvider
+{
+    string ProviderName { get; }
+    Task<TransitCostModification> GetCostModifierAsync(
+        Guid connectionId, Guid characterId, CancellationToken ct);
+}
+```
+
+**Candidate implementations by L4 service**:
+
+| Service | Provider Name | Modifier Logic | Example |
+|---|---|---|---|
+| **Environment** (L4, 0%) | `weather` | Weather conditions affect travel speed/safety | "Mountain pass in blizzard: cost × 3.0, danger × 5.0" |
+| **Faction** (L4, 80%) | `territory` | Faction control and hostility affect perceived danger | "Enemy faction territory: danger × 2.0, stealth cost + 50%" |
+| **Hearsay** (L4, 0%) | `rumors` | Belief-based modifiers from rumored threats | "NPC heard bandits on this road: perceived danger × 1.5 (may be outdated)" |
+| **Status** (L4, 78%) | `effects` | Active status effects that modify movement | "Cursed: all travel costs × 1.2" |
+| **Obligation** (L4, 85%) | `contracts` | Contractual restrictions on movement | "Guild charter forbids entering rival territory: cost = ∞ (soft block)" |
+
+**Impact on NPC behavior**: Without cost modifiers, NPC GOAP pathfinding always picks the geometrically shortest/cheapest route regardless of conditions. A merchant NPC can't choose the longer but safer route to avoid a storm. A soldier can't prefer routes through allied territory. A superstitious NPC can't avoid the "haunted forest" based on rumors. Route decisions are mechanically correct but contextually flat.
+
+**Impact on North Star #5 (Emergent Over Authored)**: Dynamic route selection is a key emergent behavior driver. When storms redirect trade, factions block passes, and rumors reshape travel patterns, the economy and social dynamics shift organically. Without cost modifiers, these cascading effects don't emerge.
+
+**Question**: Should `ITransitCostModifierProvider` implementations be specified as part of the Environment, Faction, Hearsay, Status, and Obligation service designs? This is a cross-cutting concern that touches 5+ services -- should it be tracked as individual service enhancements or as a single cross-service initiative?
+
+---
+
+## Behavioral Bootstrap Critical Path
+
+The behavioral bootstrap sequence (documented in [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md) and [ORCHESTRATION-PATTERNS.md](../reference/ORCHESTRATION-PATTERNS.md)) is the mechanism that activates the content flywheel: god-actors running ABML behaviors orchestrate the macro-level gameplay loop. The bootstrap is currently **blocked at Phase 2**.
+
+### The Blocking Chain
+
+VISION-PROGRESS previously identified Divine (O1) as the critical blocker, but the actual dependency chain reveals Puppetmaster is the **first-order** blocker:
+
+```
+Puppetmaster watcher-actor integration (55%, core actor spawn stubbed)
+  → Phase 2 blocked: Manager actors can't be spawned as actual Actor instances
+    → Phase 3 blocked: Managers can't call Divine API (even if Divine were implemented)
+      → Phase 4 blocked: God-actors can't be spawned per realm
+        → Phase 5 blocked: Content flywheel orchestration non-functional
+```
+
+This distinction matters: Puppetmaster's gap is arguably smaller (integrate `IActorClient.SpawnAsync`, track ActorId) while Divine's gap is larger (all 22 endpoints, 5 state stores, background workers).
+
+### Current State Per Service
+
+| Service | Score | What Works | What's Blocked |
+|---|---|---|---|
+| **Puppetmaster** (L4, 55%) | Behavior document cache (TTL-based via IAssetClient), watch system (dual-indexed WatchRegistry), event handlers (realm lifecycle, behavior hot-reload, actor cleanup), resource snapshot cache, ABML action handlers (LoadSnapshot, PrefetchSnapshots, SpawnWatcher, StopWatcher, ListWatchers) | **Watcher-actor spawning**: `ActorId` on `WatcherInfo` is always null (TODO at line 213). Watchers are data structures only — `StartWatcherAsync` creates in-memory `ConcurrentDictionary` entries but spawns no actors and executes no behavior. All watcher state is in-memory (lost on restart, no multi-instance coordination). |
+| **Divine** (L4, 25%) | Complete schema (22 endpoints), 5 state store definitions (MySQL + Redis), configuration class (18 properties), event schema (11 lifecycle/domain events), type field classification (T25 compliant), resource cleanup endpoints defined | **ALL 22 endpoints return `NotImplemented`**. Zero implementation logic. No background workers (`DivineAttentionWorker`, `DivinityGenerationWorker` undefined). No event handlers. No plugin startup registration for seed types, currencies, relationship types, or collection/status templates. |
+| **Gardener** (L4, 62%) | Void/discovery garden: enter/leave with distributed lock, POI system (weighted scoring: affinity + diversity + narrative + random), scenario lifecycle (enter, complete, abandon, chain, enter-together for pairs), template CRUD with deprecation, deployment phase config, 15 event types published, `ISeedEvolutionListener` for growth notifications, background workers (5s garden tick, 30s scenario lifecycle) | No divine actor integration (fixed-interval workers instead of ABML-driven orchestration), no client events schema (players must poll), no garden-to-garden transitions, no multiple garden types (only void/discovery), no entity session registry integration, no Puppetmaster notification on scenario start, no prerequisite validation on scenario entry. |
+
+### Recommended Implementation Sequence
+
+1. **Puppetmaster watcher-actor spawning** (Medium complexity): Integrate `IActorClient.SpawnAsync()` in `StartWatcherAsync`, store `ActorId` on `WatcherInfo`, add actor lifecycle tracking (restart on crash, health monitoring). This is the smallest change that unblocks the most — the entire behavioral bootstrap gates on it.
+2. **Puppetmaster distributed watcher state** (Medium complexity): Move watcher registry from in-memory `ConcurrentDictionary` to Redis for multi-instance consistency and persistence across restarts. Currently only one Puppetmaster instance can be active.
+3. **Divine deity creation** (Medium complexity): Implement deity CRUD — create deity record, divinity currency wallet via `ICurrencyClient`, domain power seed via `ISeedClient`, character in PANTHEON system realm via `ICharacterClient`.
+4. **Divine character binding** (Medium complexity): Store `characterId` on `DeityModel`. Design decision required — Option A (character-first: create divine Character before spawning actor, spawn with `characterId` already set) vs. Option B (bind-later: spawn actor as event brain first, create divine Character during deity setup, then call `/actor/bind-character` at runtime).
+5. **Gardener divine actor integration** (High complexity): Replace background worker ticks with ABML-driven gardener behavior documents. Requires: gardener behavior documents authored, actor spawning at garden entry, dynamic character binding for personality-driven gardening, garden-to-garden transitions, client events schema for real-time UX.
+
+### Phase-by-Phase Bootstrap Status
+
+| Phase | Description | Status | Blocker |
+|---|---|---|---|
+| **Phase 1**: Seeded behaviors loaded | Resource loads ABML templates via `ISeededResourceProvider` | PARTIAL — `BehaviorSeededResourceProvider` exists and is wired, but 0 seeded .yaml behavior files exist in lib-actor/Behaviors/ yet | Need actual behavior documents authored |
+| **Phase 2**: Manager actors spawned | Puppetmaster/Gardener spawn singleton manager actors | **BLOCKED** | Puppetmaster `StartWatcherAsync` doesn't call `IActorClient.SpawnAsync()` — creates in-memory watcher entry only |
+| **Phase 3**: Deity initialization | Manager behaviors call Divine API to create/retrieve deities | **BLOCKED** | Divine implementation (all 22 endpoints stubbed) + Phase 2 prerequisite |
+| **Phase 4**: God-actors per realm | Per realm x deity: regional watcher actors spawned with deity-specific ABML | **BLOCKED** | Phase 2 (actor spawning) + Phase 3 (deity identity) |
+| **Phase 5**: Steady state | Puppetmaster gods perceive world events, evaluate archives, orchestrate narratives; Gardener gods tend player experiences | **BLOCKED** | All above phases |
+
+### What IS Ready
+
+Despite the orchestration layer being blocked, the **execution infrastructure** is complete:
+
+- **11 variable providers** registered and functional — NPCs have personality, memory, world awareness, progress tracking, and social structures wired (see O6 table above)
+- **3-tier behavior document chain** — `DynamicBehaviorProvider` (Asset/L3, priority 100) → `SeededBehaviorProvider` (embedded, priority 50) → `FallbackBehaviorProvider` (graceful degradation, priority 0)
+- **Actor runtime** — two-phase tick, dynamic character binding, pool deployment modes, bounded perception queues, GOAP integration, ~80 telemetry spans
+- **DI inversion framework** — `ICollectionUnlockListener` (2 implementations: Seed, Faction), `ISeedEvolutionListener` (3 implementations: Gardener, Faction, Status), all writing to distributed state
+- **Watch system** — Puppetmaster's `WatchRegistry`, `ResourceEventMapping`, lifecycle event subscriptions, watch perception injection all functional
+
+The piano keys work. The conductor is missing.
 
 ---
 
 ## Illuminated but Unresolved Patterns
 
 These are not issues but patterns that the audit surfaced as worth considering.
-
-### Guardian Spirits as Actors
-
-If the guardian spirit is a Character in the Nexius realm, could it have an Actor? A dormant cognitive process representing accumulated instinct would mean:
-
-- The spirit has `${personality.*}` of its own (not just the possessed character's)
-- Spirit "resistance" to player commands that violate the spirit's nature becomes mechanically real
-- The Omega "hacking" mechanic (forcing UX modules the spirit hasn't earned) has a concrete resistance model
-- The spirit's personality evolves over generations based on choices, not just seed growth
-
-This isn't required but the system realm pattern makes it trivially possible.
 
 ### The Underworld as Content Flywheel Amplifier
 
@@ -361,6 +488,73 @@ This would significantly enrich the flywheel and answer "Death Creates, Not Dest
 ### System Realm Character Filtering
 
 Multiple services that list or query characters may need to exclude system realms by default. Character's `listByRealm` already filters by realm, so queries against physical realms naturally exclude system realm entities. But services that query characters globally (e.g., analytics aggregation, leaderboards) should be aware that gods, guardian spirits, and underworld characters are also "characters" in the database. This is a deployment-time concern, not an architectural problem -- filter by `realm.isSystemType == false` for player-facing queries.
+
+---
+
+## Design Recommendations
+
+These are patterns that the audit identified as strong candidates for formal commitment. They are architecturally sound, infrastructure-ready, and serve multiple North Stars. Each includes a recommended path and any design questions requiring human judgment.
+
+### DR1. Guardian Spirits as Actors [RECOMMENDED]
+
+**Recommendation**: Commit to giving guardian spirits their own Actor in the Nexius system realm, following the same 3-stage cognitive progression (Dormant → Stirring → Awakened) used by dungeons and living weapons.
+
+**Why this pattern should be formalized**:
+
+1. **Infrastructure cost is near-zero.** With 11 functional variable providers, the system realm pattern proven by DIVINE.md, and the unified 3-stage progression documented in [ACTOR-BOUND-ENTITIES.md](ACTOR-BOUND-ENTITIES.md), adding a guardian spirit Actor requires no new architectural patterns or DI inversion interfaces. The guardian spirit is a Character in the Nexius realm; Actor binds to that character; all existing variable providers activate automatically.
+
+2. **Mechanically implements progressive agency resistance.** PLAYER-VISION.md describes a core design principle: "The character is ALWAYS autonomous. The player does not 'control' a character -- the player gradually learns to *collaborate with* that character's autonomy." With a spirit Actor, the spirit itself has `${personality.*}` — its own traits, preferences, and accumulated tendencies. Spirit "resistance" to player commands that violate the spirit's nature becomes a numerical comparison (spirit personality alignment vs. requested action), not a hand-authored threshold. The spirit develops genuine preferences over generations of play.
+
+3. **Concretizes the Omega hacking mechanic.** PLAYER-VISION.md describes players in Omega forcing UX modules the spirit hasn't earned, with consequences: "the character may resist more strongly (borrowed understanding vs. earned understanding)." With a spirit Actor, this becomes mechanically precise: the spirit's `${personality.*}` traits reflect earned understanding, and forced modules operate against a resistance derived from the gap between the spirit's actual experience and the module's requirements. Higher gap = more resistance = worse results.
+
+4. **Creates the "your guardian spirit IS your save file" feeling.** Spirit personality evolving over generations based on choices (not just seed growth) means the spirit accumulates character — a player who consistently pursues justice develops a spirit that gravitates toward justice-adjacent scenarios. A player who betrays allies develops a spirit that attracts betrayal narratives. The guardian spirit becomes the most persistent expression of player identity, surviving across all character lifetimes.
+
+5. **Completes the Fulfillment Principle.** R1 resolved the growth mechanism (Collection → Seed pipeline), but growth only changes capabilities. Spirit personality evolution changes *who the spirit is*. A spirit that guided a character through a deeply fulfilling life doesn't just get stronger — it develops traits reflecting that fulfillment (wisdom, serenity, confidence). A spirit whose characters die unfulfilled accumulates restlessness, urgency, regret. This is the qualitative complement to seed growth's quantitative progression.
+
+**Implementation path** (brief sketch, not a full plan):
+
+| Step | Action | Service | Dependency |
+|---|---|---|---|
+| 1 | Guardian spirit Character created in NEXIUS system realm | Character (L2) | Realm with `isSystemType: true` and code `NEXIUS` must exist |
+| 2 | Guardian seed registered as `guardian` type | Seed (L2) | Seed type registration (already referenced in Agency and R6) |
+| 3 | Spirit personality record initialized | Character-Personality (L4) | Character must exist (Step 1) |
+| 4 | Spirit Actor spawned when seed reaches Stirring phase | Actor (L2) via `ISeedEvolutionListener` | Seed growth sufficient; actor spawning functional |
+| 5 | Actor binds to Nexius character (full variable providers activate) | Actor (L2) `/actor/bind-character` | Character exists (Step 1); Actor exists (Step 4) |
+| 6 | Agency reads spirit personality + seed capabilities for UX manifest | Agency (L4) | Steps 2-3 provide the data; Agency computes the manifest |
+
+**Steps 1-3** can be done today with existing infrastructure (no blocked dependencies).
+**Steps 4-5** require Puppetmaster watcher-actor spawning to be functional (see Behavioral Bootstrap Critical Path).
+**Step 6** requires Agency service implementation (currently 0%).
+
+**The entity stack the guardian spirit gains** (via system realm pattern — all automatic, zero new code):
+
+| Service | What the Spirit Gets |
+|---|---|
+| **Character** (L2) | Identity record bound to NEXIUS realm, alive/dead lifecycle |
+| **Character Personality** (L4) | Bipolar trait axes evolving based on player choices across generations |
+| **Character Encounter** (L4) | Memories of possessed characters, notable interactions, generational highlights |
+| **Character History** (L4) | Backstory elements accumulated from player journey (not character journey) |
+| **Seed** (L2) | `guardian` seed with growth domains (wisdom, combat, crafting, social, etc.) |
+| **Collection** (L2) | Permanent knowledge unlocks — scenarios experienced, skills mastered, discoveries made |
+| **Relationship** (L2) | Pair bonds (`twin_spirits` type), bonds to possessed characters, bonds to deities |
+| **Actor** (L2) | Full variable provider chain — spirit cognition with personality, memory, progress awareness |
+
+**Design question requiring human judgment**:
+
+> **Should the spirit Actor run continuously or only activate during specific moments?**
+>
+> | Mode | Cost | Benefit | Trade-off |
+> |---|---|---|---|
+> | **Always-on** | ~1 actor per player. At 10K concurrent players = 10K additional actors (~10% overhead on the 100K NPC target). At 1K concurrent players = negligible. | Spirit has real-time opinions during gameplay. Can inject perceptions into the possessed character's Actor ("the spirit feels uneasy about this decision"). Resistance is immediate, not retroactive. Enables the "spirit co-pilot" experience described in PLAYER-VISION.md. | Resource cost scales linearly with player count. Must be accounted for in pool sizing. |
+> | **Moment-based** | Spawns only during death processing, generation transitions, major choices, Omega hacking, pair bond events. Dormant between moments. | Near-zero steady-state cost. Spirit actors exist for seconds to minutes, not hours. | Loses real-time co-pilot feeling. Spirit resistance is event-based, not continuous. The "spirit has opinions" experience becomes punctuated rather than ambient. Player never feels the spirit's personality during routine play — only at inflection points. |
+> | **Hybrid (recommended)** | Low-frequency tick (every 5-30s instead of 100-500ms). Spirit doesn't need millisecond cognition — it processes at a "spiritual" temporal scale. | Spirit maintains ambient awareness and can inject rare perceptions ("something feels wrong"), but doesn't consume the per-tick resources of a full NPC brain. Cost is ~1/50th to 1/100th of an NPC actor per player. At 10K players = equivalent to 100-200 NPCs. | Requires a new tick rate tier for actors (currently all actors tick at the same configurable rate). Minor Actor runtime enhancement. |
+>
+> The hybrid approach most closely matches the metaphysical model: a guardian spirit is a divine shard, not a mortal brain. It perceives at a cosmic scale, not a human one. A 10-30 second tick rate for spirit actors is narratively justified and computationally efficient.
+
+**Connection to other patterns**:
+- **Twin Spirits** (R2): Pair bond between two Nexius characters with spirit Actors enables ambient awareness of each other's state — one spirit perceives the other's distress even across realms.
+- **Underworld** (see below): When a character dies, the spirit Actor perceives the death and processes it emotionally. Spirit personality shifts based on the death context (fulfilled vs. tragic). This IS the Fulfillment Principle in action.
+- **Content Flywheel**: Spirit personality evolution creates player-specific narrative preferences that god-actors (Gardener) can read to personalize scenario offerings. The flywheel becomes player-attuned, not just world-attuned.
 
 ---
 
@@ -396,21 +590,24 @@ A second cross-cutting pattern emerged from resolving the Combat Dream (R9): ABM
 
 ## Overall Assessment
 
-The 75-service architecture is remarkably coherent. The audit resolved 10 of the original concerns:
+The 75-service architecture is remarkably coherent. The audit has resolved 11 of the original concerns:
 
 - **System realm pattern** (R1-R3): Collapses guardian spirit growth, twin spirits, and Agency data source into existing L2 infrastructure
-- **NPC cognition differentiation** (R4): All 13+ variable provider namespaces are clearly orthogonal
+- **NPC cognition differentiation** (R4): All 15+ variable provider namespaces are clearly orthogonal
 - **Economy consistency** (R5-R6, R8): Item flows, seed growth pipelines, and cleanup all follow uniform patterns
 - **Temporal mechanisms** (R7): Character-Lifecycle aging is correctly event-driven via Worldstate
 - **Combat dream** (R9-R10): Decomposes into CinematicTheory SDK extension + thin lib-cinematic plugin, following the Music/Storyline pattern; ABML recognized as universal authoring language
+- **Spatial awareness** (R11): Transit and Location variable providers now fully implemented, giving NPCs movement reasoning and location context
 
 The remaining open issues are:
-- **One critical blocker** (O1: Divine is stubbed -- blocks behavioral bootstrap, system realms, and content flywheel)
+- **One critical blocker** (O1: Divine is stubbed -- blocks behavioral bootstrap, system realms, and content flywheel; note: Puppetmaster watcher-actor spawning is the first-order blocker, Divine is second-order)
 - **One significant design decision** (O2: Affix metadata T29 violation)
-- **Two moderate gaps** (O3: Transit/Environment variable providers; O4: Organization economic GOAP)
-- **Two minor items** (O5: Loot hierarchy fix; O6: Variable provider scaling plan)
+- **Three moderate gaps** (O3: Environment variable provider; O4: Organization economic GOAP; O7: Social variable provider not yet designed -- NPCs can't perceive or react to social communication)
+- **Three minor items** (O5: Loot hierarchy fix; O6: Variable provider scaling plan; O8: ITransitCostModifierProvider has zero implementations -- NPC route decisions ignore dynamic conditions)
 
-None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet. The single most impactful action is implementing Divine (O1), which unblocks the behavioral bootstrap, proves out the system realm pattern for Nexius/Underworld, and enables the content flywheel's orchestration layer.
+None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet. The NPC cognition infrastructure is far more complete than previously documented: 11 of 15+ planned variable providers are fully implemented and wired, covering personality, memory, world awareness, progress, and social structures. The remaining pre-implementation providers (disposition, hearsay, lexicon, social, and others) await their owning L4 services. The two new items (O7, O8) represent cross-cutting integration hooks -- `${social.*}` bridges Chat/Lexicon into Actor cognition, while `ITransitCostModifierProvider` bridges Environment/Faction/Hearsay into spatial reasoning -- that should be incorporated into the respective L4 service designs when those services are specified.
+
+The single most impactful action sequence is: (1) Puppetmaster watcher-actor integration (unblocking the behavioral bootstrap's Phase 2), then (2) Divine implementation (Phase 3), which together prove out the system realm pattern and enable the content flywheel's orchestration layer.
 
 ---
 

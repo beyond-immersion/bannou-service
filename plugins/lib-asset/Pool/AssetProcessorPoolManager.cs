@@ -6,6 +6,7 @@
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Asset.Pool;
 
@@ -25,13 +26,11 @@ namespace BeyondImmersion.BannouService.Asset.Pool;
 public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
 {
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<AssetProcessorPoolManager> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
-    /// <summary>
-    /// Processor pool state store name. Matches StateStoreDefinitions.AssetProcessorPool after next regeneration.
-    /// </summary>
-    private const string ProcessorPoolStore = "asset-processor-pool";
+    private const string ProcessorPoolStore = StateStoreDefinitions.AssetProcessorPool;
     private const string INDEX_SUFFIX = ":index";
 
     /// <summary>
@@ -39,10 +38,13 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     /// </summary>
     public AssetProcessorPoolManager(
         IStateStoreFactory stateStoreFactory,
+        ITelemetryProvider telemetryProvider,
         ILogger<AssetProcessorPoolManager> logger,
         AssetServiceConfiguration configuration)
     {
         _stateStoreFactory = stateStoreFactory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -57,6 +59,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         int capacity,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.RegisterNodeAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(appId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
@@ -87,8 +90,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         };
 
         // Save with TTL for automatic cleanup if node crashes
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         // Update pool index
         await UpdatePoolIndexAsync(poolType, nodeId, add: true, cancellationToken);
@@ -111,6 +113,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         int currentLoad,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.UpdateHeartbeatAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
@@ -142,8 +145,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         }
 
         // Save with refreshed TTL
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         _logger.LogDebug(
             "Heartbeat from processor {NodeId}: load {PreviousLoad} -> {CurrentLoad}, idle count: {IdleCount}",
@@ -162,6 +164,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.RemoveNodeAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
@@ -187,6 +190,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.SetDrainingAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
@@ -205,8 +209,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         state.Status = ProcessorNodeStatus.Draining;
 
         // Save with TTL (keep alive while draining)
-        var ttlSeconds = _configuration.ProcessorHeartbeatTimeoutSeconds * 2;
-        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+        await store.SaveAsync(nodeKey, state, new StateOptions { Ttl = _configuration.ProcessorNodeTtlSeconds }, cancellationToken);
 
         _logger.LogInformation(
             "Processor node {NodeId} in pool {PoolType} marked as draining (current load: {Load})",
@@ -225,6 +228,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetNodeAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
@@ -238,6 +242,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetAvailableCountAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var nodes = await ListNodesInPoolAsync(poolType, cancellationToken);
@@ -249,6 +254,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetAvailableNodesAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var nodes = await ListNodesInPoolAsync(poolType, cancellationToken);
@@ -260,6 +266,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetTotalNodeCountAsync");
         ArgumentException.ThrowIfNullOrWhiteSpace(poolType);
 
         var index = await GetPoolIndexAsync(poolType, cancellationToken);
@@ -273,6 +280,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
         string poolType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.ListNodesInPoolAsync");
         var index = await GetPoolIndexAsync(poolType, cancellationToken);
         if (index.NodeIds.Count == 0)
         {
@@ -334,6 +342,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     /// </summary>
     private async Task<ProcessorPoolIndex> GetPoolIndexAsync(string poolType, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.GetPoolIndexAsync");
         var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
         var indexKey = GetIndexKey(poolType);
         var index = await store.GetAsync(indexKey, ct);
@@ -347,6 +356,7 @@ public sealed class AssetProcessorPoolManager : IAssetProcessorPoolManager
     /// </summary>
     private async Task UpdatePoolIndexAsync(string poolType, string nodeId, bool add, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AssetProcessorPoolManager.UpdatePoolIndexAsync");
         var store = _stateStoreFactory.GetStore<ProcessorPoolIndex>(ProcessorPoolStore);
         var indexKey = GetIndexKey(poolType);
         var maxRetries = _configuration.ProcessingMaxRetries;

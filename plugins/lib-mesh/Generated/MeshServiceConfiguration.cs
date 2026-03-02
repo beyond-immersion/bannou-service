@@ -55,7 +55,7 @@ public class MeshServiceConfiguration : BaseServiceConfiguration
     /// Explicit mesh node identity override. When set, this value is used as the mesh instance ID instead of generating a random one. Useful for stable node identities in orchestrated deployments. Falls back to --force-service-id CLI argument, then random GUID.
     /// Environment variable: MESH_INSTANCE_ID
     /// </summary>
-    public string? InstanceId { get; set; }
+    public Guid? InstanceId { get; set; }
 
     /// <summary>
     /// Use local-only routing instead of lib-state. All calls route to local instance. ONLY for testing/minimal infrastructure.

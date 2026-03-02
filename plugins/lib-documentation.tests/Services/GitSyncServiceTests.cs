@@ -17,6 +17,7 @@ public class GitSyncServiceTests
 {
     private readonly Mock<ILogger<GitSyncService>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationServiceConfiguration _configuration;
     private readonly GitSyncService _service;
 
@@ -24,11 +25,12 @@ public class GitSyncServiceTests
     {
         _mockLogger = new Mock<ILogger<GitSyncService>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new DocumentationServiceConfiguration
         {
             GitStoragePath = Path.Combine(Path.GetTempPath(), "bannou-git-test-" + Guid.NewGuid().ToString("N")[..8])
         };
-        _service = new GitSyncService(_mockLogger.Object, _configuration, _mockMessageBus.Object);
+        _service = new GitSyncService(_mockLogger.Object, _configuration, _mockMessageBus.Object, _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -206,33 +208,33 @@ public class GitSyncServiceTests
 
     #endregion
 
-    #region GetHeadCommit Tests
+    #region GetHeadCommitAsync Tests
 
     [Fact]
-    public void GetHeadCommit_WithEmptyPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithEmptyPath_ShouldReturnNull()
     {
         // Arrange, Act
-        var result = _service.GetHeadCommit("");
+        var result = await _service.GetHeadCommitAsync("");
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public void GetHeadCommit_WithNonExistentPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithNonExistentPath_ShouldReturnNull()
     {
         // Arrange
         var localPath = Path.Combine(_configuration.GitStoragePath, "nonexistent-" + Guid.NewGuid());
 
         // Act
-        var result = _service.GetHeadCommit(localPath);
+        var result = await _service.GetHeadCommitAsync(localPath);
 
         // Assert
         Assert.Null(result);
     }
 
     [Fact]
-    public void GetHeadCommit_WithNonRepoPath_ShouldReturnNull()
+    public async Task GetHeadCommitAsync_WithNonRepoPath_ShouldReturnNull()
     {
         // Arrange
         var testDir = Path.Combine(_configuration.GitStoragePath, "not-a-repo-" + Guid.NewGuid());
@@ -241,7 +243,7 @@ public class GitSyncServiceTests
         try
         {
             // Act
-            var result = _service.GetHeadCommit(testDir);
+            var result = await _service.GetHeadCommitAsync(testDir);
 
             // Assert
             Assert.Null(result);

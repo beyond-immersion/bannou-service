@@ -356,7 +356,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         // Distributed lock to prevent lost updates from concurrent session modifications
         await using var lockResponse = await _lockProvider.LockAsync(
-            "permission", sessionIdStr, $"permission-state:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.PermissionLock, sessionIdStr, $"permission-state:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -401,7 +401,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
         // Distributed lock to prevent lost updates from concurrent session modifications
         await using var lockResponse = await _lockProvider.LockAsync(
-            "permission", sessionIdStr, $"permission-role:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.PermissionLock, sessionIdStr, $"permission-role:{Guid.NewGuid()}", _configuration.SessionLockTimeoutSeconds, cancellationToken);
 
         if (!lockResponse.Success)
         {
@@ -757,7 +757,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     /// <summary>
     /// Publish compiled capabilities directly to the session via session-specific RabbitMQ channel.
     /// Connect service receives this via ClientEventRabbitMQSubscriber, generates client-salted GUIDs,
-    /// and sends CapabilityManifestEvent to the client.
+    /// and sends CapabilityManifestClientEvent to the client.
     /// Only publishes to sessions in activeConnections to avoid RabbitMQ exchange not_found crashes,
     /// unless skipActiveConnectionsCheck is true.
     /// </summary>

@@ -1126,10 +1126,23 @@ public partial class ScenarioDefinition
     public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
     /// <summary>
-    /// Whether scenario is soft-deleted
+    /// Whether scenario definition is deprecated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecated")]
-    public bool Deprecated { get; set; } = false;
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = false;
+
+    /// <summary>
+    /// When the scenario definition was deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// When definition was created
@@ -1666,8 +1679,21 @@ public partial class ScenarioDefinitionSummary
     /// <summary>
     /// Whether deprecated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("deprecated")]
-    public bool Deprecated { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("isDeprecated")]
+    public bool IsDeprecated { get; set; } = default!;
+
+    /// <summary>
+    /// When deprecated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecatedAt")]
+    public System.DateTimeOffset? DeprecatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
     /// Number of trigger conditions
@@ -1827,6 +1853,13 @@ public partial class DeprecateScenarioDefinitionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid ScenarioId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for deprecation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.StringLength(500)]
+    public string? Reason { get; set; } = default!;
 
 }
 

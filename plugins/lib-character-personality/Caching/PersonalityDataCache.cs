@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Caching;
 
@@ -20,6 +21,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PersonalityDataCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly TimeSpan _cacheTtl;
     private readonly ConcurrentDictionary<Guid, CachedPersonality> _personalityCache = new();
     private readonly ConcurrentDictionary<Guid, CachedCombatPreferences> _combatCache = new();
@@ -30,16 +32,20 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
     public PersonalityDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<PersonalityDataCache> logger,
-        CharacterPersonalityServiceConfiguration config)
+        CharacterPersonalityServiceConfiguration config,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromMinutes(config.CacheTtlMinutes);
     }
 
     /// <inheritdoc/>
     public async Task<PersonalityResponse?> GetOrLoadPersonalityAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadPersonalityAsync");
         // Check cache first
         if (_personalityCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {
@@ -84,6 +90,7 @@ public sealed class PersonalityDataCache : IPersonalityDataCache
     /// <inheritdoc/>
     public async Task<CombatPreferencesResponse?> GetOrLoadCombatPreferencesAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-personality", "PersonalityDataCache.GetOrLoadCombatPreferencesAsync");
         // Check cache first
         if (_combatCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {

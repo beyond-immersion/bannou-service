@@ -31,7 +31,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRelationshipTypeAsync(
+  async relationshipGetRelationshipTypeAsync(
     request: Schemas['GetRelationshipTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRelationshipTypeByCodeAsync(
+  async relationshipGetRelationshipTypeByCodeAsync(
     request: Schemas['GetRelationshipTypeByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRelationshipTypesAsync(
+  async relationshipListRelationshipTypesAsync(
     request: Schemas['ListRelationshipTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getChildRelationshipTypesAsync(
+  async relationshipGetChildRelationshipTypesAsync(
     request: Schemas['GetChildRelationshipTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async matchesHierarchyAsync(
+  async relationshipMatchesHierarchyAsync(
     request: Schemas['MatchesHierarchyRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class RelationshipTypeProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAncestorsAsync(
+  async relationshipGetAncestorsAsync(
     request: Schemas['GetAncestorsRequest'],
     channel: number = 0,
     timeout?: number

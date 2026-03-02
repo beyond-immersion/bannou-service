@@ -179,7 +179,7 @@ public interface IAssetEventEmitter
         Guid jobId,
         string metabundleId,
         bool success,
-        MetabundleJobStatus? status = null,
+        BundleStatus? status = null,
         Uri? downloadUrl = null,
         long? sizeBytes = null,
         int? assetCount = null,

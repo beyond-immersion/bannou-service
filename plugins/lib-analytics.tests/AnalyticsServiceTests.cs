@@ -37,6 +37,7 @@ public class AnalyticsServiceTests
     private readonly Mock<ILogger<AnalyticsService>> _mockLogger;
     private readonly AnalyticsServiceConfiguration _configuration;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public AnalyticsServiceTests()
     {
@@ -49,6 +50,7 @@ public class AnalyticsServiceTests
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<AnalyticsService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _configuration = new AnalyticsServiceConfiguration
         {
@@ -125,7 +127,8 @@ public class AnalyticsServiceTests
             _mockLockProvider.Object,
             _mockLogger.Object,
             _configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

@@ -82,7 +82,8 @@ public class LeaderboardServiceTests
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<ITelemetryProvider>());
     }
 
     #region Constructor Validation

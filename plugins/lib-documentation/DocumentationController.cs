@@ -57,6 +57,10 @@ public partial class DocumentationController
         }
 
         // Return raw markdown content
+        if (result.Document.Content == null)
+        {
+            return NotFound($"Document '{slug}' has no content in namespace '{ns ?? "bannou"}'");
+        }
         return Content(result.Document.Content, "text/markdown; charset=utf-8");
     }
 }

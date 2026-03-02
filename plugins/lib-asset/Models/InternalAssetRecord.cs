@@ -89,7 +89,7 @@ public sealed class InternalAssetRecord
             ContentType = ContentType,
             Size = Size,
             AssetType = AssetType,
-            Realm = Realm ?? "shared",
+            Realm = Realm,
             Tags = Tags ?? new List<string>(),
             ProcessingStatus = ProcessingStatus,
             CreatedAt = CreatedAt,

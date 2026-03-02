@@ -31,7 +31,7 @@ export class RealmProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmAsync(
+  async realmGetRealmAsync(
     request: Schemas['GetRealmRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class RealmProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmByCodeAsync(
+  async realmGetRealmByCodeAsync(
     request: Schemas['GetRealmByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class RealmProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRealmsAsync(
+  async realmListRealmsAsync(
     request: Schemas['ListRealmsRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class RealmProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async realmExistsAsync(
+  async realmRealmExistsAsync(
     request: Schemas['RealmExistsRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class RealmProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async realmsExistBatchAsync(
+  async realmRealmsExistBatchAsync(
     request: Schemas['RealmsExistBatchRequest'],
     channel: number = 0,
     timeout?: number

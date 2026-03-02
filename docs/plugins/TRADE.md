@@ -1385,6 +1385,33 @@ EconomicVelocityMetrics:
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` (on trade route) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a trade route (system, character, guild, faction, organization). All valid values are first-class Bannou entities. |
+| `ownerType` (on shipment) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a shipment (character, guild, organization, caravan_company). |
+| `carrierType` | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity physically transporting cargo (character, npc). |
+| `entityType` (on tariff exemption) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity type receiving a tariff exemption (character, guild, faction, organization). |
+| `taxpayerType` | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity type being taxed (character, guild, organization, household). |
+| `status` (on trade route) | C (System State) | Service-specific enum | Finite set of route states (active, closed, dangerous, seasonal). System-owned; drives route usability and NPC decision-making. |
+| `status` (on shipment) | C (System State) | Service-specific enum | Finite set of shipment lifecycle states (preparing, in_transit, arrived, cancelled, lost, seized). System-owned state machine. |
+| `custodyMode` | C (System State) | Service-specific enum | Finite set of cargo custody modes (escrow, carrier, consigned). System-owned; determines which service manages cargo during transit. |
+| `incidentType` | B (Content Code) | Opaque string | Game-configurable shipment incident types (bandit_attack, storm, customs_inspection, etc.). Extensible for game-specific events. |
+| `terrainType` (on route leg) | B (Content Code) | Opaque string | Game-configurable terrain classifications for route segments. |
+| `transitModeCode` | B (Content Code) | Opaque string | References transit mode codes from lib-transit. Game-configurable movement types. |
+| `category` (on tariff rate) | B (Content Code) | Opaque string | Game-configurable item/goods categories for tariff rate overrides. |
+| `type` (on contraband definition) | B (Content Code) | Opaque string | Contraband targeting types (item_category, item_template, currency). |
+| `targetCategory` | B (Content Code) | Opaque string | Game-configurable categories for contraband definitions (weapons, narcotics, religious_artifacts, magical). |
+| `exemptionType` | C (System State) | Service-specific enum | Finite set of tariff exemption levels (full, partial). System-owned. |
+| `borderType` | C (System State) | Service-specific enum | Finite set of border classifications (internal, external). System-owned; affects tariff applicability. |
+| `collectionMode` (on tariff/tax) | C (System State) | Service-specific enum | Finite set of collection mechanisms (automatic, assessed, advisory). System-owned; drives tariff/tax enforcement behavior. |
+| `collectionStatus` (on tariff record) | C (System State) | Service-specific enum | Finite set of tariff collection states (pending, collected, partial, evaded, exempt). System-owned state tracking. |
+| `taxType` | C (System State) | Service-specific enum | Finite set of tax categories (transaction, income, property, wealth, sales, custom). System-owned; each type has distinct assessment and collection logic. |
+| `scope` (on tariff policy) | C (System State) | Service-specific enum | Finite set of tariff scopes (realm_wide, specific_border, category). System-owned; determines tariff applicability rules. |
+
+---
+
 ## Events
 
 ### Published Events

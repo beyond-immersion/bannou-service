@@ -35,7 +35,7 @@ public sealed class PendingUploadEntry
     /// <summary>
     /// Owner type for the save
     /// </summary>
-    public required OwnerType OwnerType { get; set; }
+    public required EntityType OwnerType { get; set; }
 
     /// <summary>
     /// The actual save data (base64 encoded, compressed)

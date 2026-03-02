@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Documentation.Services;
 
@@ -17,6 +18,7 @@ public class SearchIndexRebuildService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SearchIndexRebuildService> _logger;
     private readonly DocumentationServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string ALL_NAMESPACES_KEY = "all-namespaces";
     private const string BINDINGS_REGISTRY_KEY = "repo-bindings";
@@ -27,16 +29,24 @@ public class SearchIndexRebuildService : BackgroundService
     public SearchIndexRebuildService(
         IServiceProvider serviceProvider,
         ILogger<SearchIndexRebuildService> logger,
-        DocumentationServiceConfiguration configuration)
+        DocumentationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider, nameof(serviceProvider));
+        ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexRebuildService.ExecuteAsync");
         if (!_configuration.SearchIndexRebuildOnStartup)
         {
             _logger.LogInformation("Search index rebuild on startup is disabled");
@@ -75,6 +85,7 @@ public class SearchIndexRebuildService : BackgroundService
     /// </summary>
     private async Task RebuildAllNamespacesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.documentation", "SearchIndexRebuildService.RebuildAllNamespacesAsync");
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var searchIndexService = scope.ServiceProvider.GetRequiredService<ISearchIndexService>();

@@ -293,7 +293,7 @@ Service layers are declared in the API schema using the `x-service-layer` extens
 
 ```yaml
 # In location-api.yaml
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Location Service API
   version: 1.0.0

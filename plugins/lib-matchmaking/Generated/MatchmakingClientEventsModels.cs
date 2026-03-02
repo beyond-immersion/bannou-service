@@ -37,7 +37,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class QueueJoinedEvent : BaseClientEvent
+public partial class QueueJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -46,7 +46,7 @@ public partial class QueueJoinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.queue_joined";
+    public override string EventName { get; set; } = "matchmaking.queue.joined";
 
     /// <summary>
     /// Unique identifier for the matchmaking ticket
@@ -93,7 +93,7 @@ public partial class QueueJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchFoundEvent : BaseClientEvent
+public partial class MatchFoundClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -102,7 +102,7 @@ public partial class MatchFoundEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_found";
+    public override string EventName { get; set; } = "matchmaking.match-found";
 
     /// <summary>
     /// Unique identifier for this match
@@ -174,7 +174,7 @@ public partial class MatchFoundEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchPlayerAcceptedEvent : BaseClientEvent
+public partial class MatchPlayerAcceptedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -183,7 +183,7 @@ public partial class MatchPlayerAcceptedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.player_accepted";
+    public override string EventName { get; set; } = "matchmaking.player-accepted";
 
     /// <summary>
     /// Match identifier
@@ -219,7 +219,7 @@ public partial class MatchPlayerAcceptedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchConfirmedEvent : BaseClientEvent
+public partial class MatchConfirmedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -228,7 +228,7 @@ public partial class MatchConfirmedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_confirmed";
+    public override string EventName { get; set; } = "matchmaking.match-confirmed";
 
     /// <summary>
     /// Match identifier
@@ -266,7 +266,7 @@ public partial class MatchConfirmedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchmakingCancelledEvent : BaseClientEvent
+public partial class MatchmakingCancelledClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -328,7 +328,7 @@ public partial class MatchmakingCancelledEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchDeclinedEvent : BaseClientEvent
+public partial class MatchDeclinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -337,7 +337,7 @@ public partial class MatchDeclinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.match_declined";
+    public override string EventName { get; set; } = "matchmaking.match-declined";
 
     /// <summary>
     /// Match that was declined
@@ -381,7 +381,7 @@ public partial class MatchDeclinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class MatchmakingStatusUpdateEvent : BaseClientEvent
+public partial class MatchmakingStatusUpdateClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -390,7 +390,7 @@ public partial class MatchmakingStatusUpdateEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "matchmaking.status_update";
+    public override string EventName { get; set; } = "matchmaking.status-update";
 
     /// <summary>
     /// Ticket identifier

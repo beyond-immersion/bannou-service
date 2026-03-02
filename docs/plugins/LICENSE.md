@@ -76,22 +76,33 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | Identifies what kind of entity owns a board (character, account, guild, location). All valid values are first-class Bannou entities. Recently migrated from opaque string to the shared `EntityType` enum from `common-api.yaml`. |
+| `adjacencyMode` | C (System State/Mode) | `AdjacencyMode` enum | Grid traversal mode (`four_way`, `eight_way`). Board-internal configuration controlling unlock adjacency validation. |
+| `status` (on `BoardNodeState`) | C (System State/Mode) | `LicenseStatus` enum | Node unlock status (`locked`, `unlockable`, `unlocked`). Computed state representing where a node stands in the unlock progression. |
+| `reason` (on `LicenseUnlockFailedEvent`) | C (System State/Mode) | `UnlockFailureReason` enum | Why an unlock attempt failed (`not_adjacent`, `insufficient_lp`, `contract_failed`, etc.). Service-specific error classification. |
+
+---
+
 ## Events
 
 ### Published Events
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `license-board-template.created` | `LicenseBoardTemplateCreatedEvent` | Board template created via `CreateBoardTemplateAsync` |
-| `license-board-template.updated` | `LicenseBoardTemplateUpdatedEvent` | Board template updated via `UpdateBoardTemplateAsync` |
-| `license-board-template.deleted` | `LicenseBoardTemplateDeletedEvent` | Board template deleted via `DeleteBoardTemplateAsync` |
-| `license-board.created` | `LicenseBoardCreatedEvent` | Board instance created via `CreateBoardAsync` or `CloneBoardAsync` |
-| `license-board.deleted` | `LicenseBoardDeletedEvent` | Board instance deleted via `DeleteBoardAsync` |
-| `license-board.cloned` | `LicenseBoardClonedEvent` | Board unlock state cloned to new owner via `CloneBoardAsync` (includes sourceBoardId, targetBoardId, targetOwnerType, targetOwnerId, targetGameServiceId, licensesCloned) |
+| `license.board-template.created` | `LicenseBoardTemplateCreatedEvent` | Board template created via `CreateBoardTemplateAsync` |
+| `license.board-template.updated` | `LicenseBoardTemplateUpdatedEvent` | Board template updated via `UpdateBoardTemplateAsync` |
+| `license.board-template.deleted` | `LicenseBoardTemplateDeletedEvent` | Board template deleted via `DeleteBoardTemplateAsync` |
+| `license.board.created` | `LicenseBoardCreatedEvent` | Board instance created via `CreateBoardAsync` or `CloneBoardAsync` |
+| `license.board.deleted` | `LicenseBoardDeletedEvent` | Board instance deleted via `DeleteBoardAsync` |
+| `license.board.cloned` | `LicenseBoardClonedEvent` | Board unlock state cloned to new owner via `CloneBoardAsync` (includes sourceBoardId, targetBoardId, targetOwnerType, targetOwnerId, targetGameServiceId, licensesCloned) |
 | `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, ownerType, ownerId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
 | `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, ownerType, ownerId, licenseCode, reason enum) |
 
-**Note**: `license-board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
+**Note**: `license.board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
 
 ### Consumed Events
 
@@ -141,7 +152,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 - `MapToEntityType(ownerType)` - Maps owner type string to `EntityType` for contract parties (character, account, realm, guild, location, actor → mapped; others → null)
 - `IsValidOwnerType(ownerType)` - Validates owner type string is non-empty and doesn't contain the `:` key separator
 - `MapTemplateToResponse`, `MapDefinitionToResponse`, `MapBoardToResponse` - Static model-to-response mapping helpers
-- `LicenseTopics` - Static class with topic string constants for `license.unlocked`, `license.unlock-failed`, and `license-board.cloned`
+- `LicenseTopics` - Static class with topic string constants for `license.unlocked`, `license.unlock-failed`, and `license.board.cloned`
 
 ---
 
@@ -173,7 +184,7 @@ Standard CRUD on license definitions keyed by `{boardTemplateId}:{code}`. `AddLi
 
 `DeleteBoardAsync` (developer role): Acquires distributed lock, deletes inventory container (which destroys contained items), deletes board record, uniqueness key, and cache entry. Unregisters character-type resource references. Publishes lifecycle event.
 
-`CloneBoardAsync` (developer role): Developer-only NPC tooling for bulk state initialization. Reads unlock state from source board, validates target owner (type format, allowed types, character existence for character owners, uniqueness, max boards), creates new inventory container, bulk-creates item instances with `ItemOriginType.Spawn` for each unlocked license, saves board record and cache with cloned unlock state. Skips contracts entirely (admin tooling, not gameplay). Publishes both `license-board.created` lifecycle event and `license-board.cloned` custom event. Registers character-type resource references. On item creation failure, cleans up the container (cascading to any items created) and returns error.
+`CloneBoardAsync` (developer role): Developer-only NPC tooling for bulk state initialization. Reads unlock state from source board, validates target owner (type format, allowed types, character existence for character owners, uniqueness, max boards), creates new inventory container, bulk-creates item instances with `ItemOriginType.Spawn` for each unlocked license, saves board record and cache with cloned unlock state. Skips contracts entirely (admin tooling, not gameplay). Publishes both `license.board.created` lifecycle event and `license.board.cloned` custom event. Registers character-type resource references. On item creation failure, cleans up the container (cascading to any items created) and returns error.
 
 ### Gameplay Operations (3 endpoints, user role)
 

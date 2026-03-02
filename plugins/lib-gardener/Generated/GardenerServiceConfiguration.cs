@@ -76,131 +76,131 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     /// Minimum distance from player to spawn a POI in garden space units
     /// Environment variable: GARDENER_POI_SPAWN_RADIUS_MIN
     /// </summary>
-    public double PoiSpawnRadiusMin { get; set; } = 50.0;
+    public float PoiSpawnRadiusMin { get; set; } = 50.0f;
 
     /// <summary>
     /// Maximum distance from player to spawn a POI in garden space units
     /// Environment variable: GARDENER_POI_SPAWN_RADIUS_MAX
     /// </summary>
-    public double PoiSpawnRadiusMax { get; set; } = 200.0;
+    public float PoiSpawnRadiusMax { get; set; } = 200.0f;
 
     /// <summary>
     /// Minimum distance between any two POIs in garden space units
     /// Environment variable: GARDENER_MIN_POI_SPACING
     /// </summary>
-    public double MinPoiSpacing { get; set; } = 30.0;
+    public float MinPoiSpacing { get; set; } = 30.0f;
 
     /// <summary>
     /// Default initial intensity ramp value for spawned POIs (0.0-1.0)
     /// Environment variable: GARDENER_POI_DEFAULT_INTENSITY_RAMP
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double PoiDefaultIntensityRamp { get; set; } = 0.5;
+    public float PoiDefaultIntensityRamp { get; set; } = 0.5f;
 
     /// <summary>
     /// Default trigger radius for POI proximity detection in garden space units
     /// Environment variable: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
     /// </summary>
     [ConfigRange(Minimum = 1.0)]
-    public double PoiDefaultTriggerRadius { get; set; } = 15.0;
+    public float PoiDefaultTriggerRadius { get; set; } = 15.0f;
 
     /// <summary>
     /// Minimum distance movement for hesitation detection in garden space units
     /// Environment variable: GARDENER_HESITATION_DETECTION_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
-    public double HesitationDetectionThreshold { get; set; } = 0.1;
+    public float HesitationDetectionThreshold { get; set; } = 0.1f;
 
     /// <summary>
     /// Diversity score multiplier for recently completed scenarios (0 = never reoffered, 1 = no penalty)
     /// Environment variable: GARDENER_DIVERSITY_SEEN_PENALTY
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double DiversitySeenPenalty { get; set; } = 0.2;
+    public float DiversitySeenPenalty { get; set; } = 0.2f;
 
     /// <summary>
     /// Minimum total drift distance to classify a player as exploring
     /// Environment variable: GARDENER_EXPLORATION_DISTANCE_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
-    public double ExplorationDistanceThreshold { get; set; } = 500.0;
+    public float ExplorationDistanceThreshold { get; set; } = 500.0f;
 
     /// <summary>
     /// Minimum hesitation ratio to classify a player as hesitant
     /// Environment variable: GARDENER_HESITANT_HESITATION_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double HesitantHesitationThreshold { get; set; } = 0.6;
+    public float HesitantHesitationThreshold { get; set; } = 0.6f;
 
     /// <summary>
     /// Maximum hesitation ratio to still classify a player as exploring
     /// Environment variable: GARDENER_EXPLORATION_MAX_HESITATION_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double ExplorationMaxHesitationRatio { get; set; } = 0.3;
+    public float ExplorationMaxHesitationRatio { get; set; } = 0.3f;
 
     /// <summary>
     /// Minimum total drift distance to classify a player as directed
     /// Environment variable: GARDENER_DIRECTED_DISTANCE_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
-    public double DirectedDistanceThreshold { get; set; } = 200.0;
+    public float DirectedDistanceThreshold { get; set; } = 200.0f;
 
     /// <summary>
     /// Maximum hesitation ratio to classify a player as directed
     /// Environment variable: GARDENER_DIRECTED_MAX_HESITATION_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double DirectedMaxHesitationRatio { get; set; } = 0.15;
+    public float DirectedMaxHesitationRatio { get; set; } = 0.15f;
 
     /// <summary>
     /// Maximum hesitation ratio for proximity-based POI trigger mode selection
     /// Environment variable: GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double ProximityTriggerMaxHesitationRatio { get; set; } = 0.2;
+    public float ProximityTriggerMaxHesitationRatio { get; set; } = 0.2f;
 
     /// <summary>
     /// Divisor for normalizing hesitation count to a ratio against distance
     /// Environment variable: GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR
     /// </summary>
     [ConfigRange(Minimum = 1.0)]
-    public double HesitationRatioNormalizationFactor { get; set; } = 10.0;
+    public float HesitationRatioNormalizationFactor { get; set; } = 10.0f;
 
     /// <summary>
     /// Narrative score for strongest category-pattern match (e.g. exploring player + exploration scenario)
     /// Environment variable: GARDENER_NARRATIVE_SCORE_HIGH
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeScoreHigh { get; set; } = 0.9;
+    public float NarrativeScoreHigh { get; set; } = 0.9f;
 
     /// <summary>
     /// Narrative score for good category-pattern match (e.g. exploring player + narrative scenario)
     /// Environment variable: GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeScoreMediumHigh { get; set; } = 0.7;
+    public float NarrativeScoreMediumHigh { get; set; } = 0.7f;
 
     /// <summary>
     /// Narrative score for moderate category-pattern match (e.g. exploring player + mixed scenario)
     /// Environment variable: GARDENER_NARRATIVE_SCORE_MEDIUM
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeScoreMedium { get; set; } = 0.6;
+    public float NarrativeScoreMedium { get; set; } = 0.6f;
 
     /// <summary>
     /// Narrative score for weak category-pattern match (e.g. exploring player + combat scenario)
     /// Environment variable: GARDENER_NARRATIVE_SCORE_LOW
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeScoreLow { get; set; } = 0.4;
+    public float NarrativeScoreLow { get; set; } = 0.4f;
 
     /// <summary>
     /// Baseline narrative score when no player drift pattern is detected
     /// Environment variable: GARDENER_NARRATIVE_SCORE_NEUTRAL
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeScoreNeutral { get; set; } = 0.5;
+    public float NarrativeScoreNeutral { get; set; } = 0.5f;
 
     /// <summary>
     /// Maximum number of scenario templates to load per orchestrator evaluation cycle
@@ -221,28 +221,28 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: GARDENER_AFFINITY_WEIGHT
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double AffinityWeight { get; set; } = 0.4;
+    public float AffinityWeight { get; set; } = 0.4f;
 
     /// <summary>
     /// Weight for category diversity in scenario scoring algorithm
     /// Environment variable: GARDENER_DIVERSITY_WEIGHT
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double DiversityWeight { get; set; } = 0.3;
+    public float DiversityWeight { get; set; } = 0.3f;
 
     /// <summary>
     /// Weight for drift-pattern narrative response in scenario scoring
     /// Environment variable: GARDENER_NARRATIVE_WEIGHT
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double NarrativeWeight { get; set; } = 0.2;
+    public float NarrativeWeight { get; set; } = 0.2f;
 
     /// <summary>
     /// Weight for randomness and discovery in scenario scoring
     /// Environment variable: GARDENER_RANDOM_WEIGHT
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double RandomWeight { get; set; } = 0.1;
+    public float RandomWeight { get; set; } = 0.1f;
 
     /// <summary>
     /// Minutes before a completed scenario can be re-offered to the same player
@@ -277,28 +277,28 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: GARDENER_GROWTH_AWARD_MULTIPLIER
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
-    public double GrowthAwardMultiplier { get; set; } = 1.0;
+    public float GrowthAwardMultiplier { get; set; } = 1.0f;
 
     /// <summary>
     /// Maximum time ratio cap for full completion growth (overtime bonus cap)
     /// Environment variable: GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.1)]
-    public double GrowthFullCompletionMaxRatio { get; set; } = 1.5;
+    public float GrowthFullCompletionMaxRatio { get; set; } = 1.5f;
 
     /// <summary>
     /// Minimum time ratio floor for full completion growth (speed-run minimum)
     /// Environment variable: GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double GrowthFullCompletionMinRatio { get; set; } = 0.5;
+    public float GrowthFullCompletionMinRatio { get; set; } = 0.5f;
 
     /// <summary>
     /// Maximum time ratio cap for abandoned/timed-out scenario growth
     /// Environment variable: GARDENER_GROWTH_PARTIAL_MAX_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double GrowthPartialMaxRatio { get; set; } = 0.5;
+    public float GrowthPartialMaxRatio { get; set; } = 0.5f;
 
     /// <summary>
     /// Fallback estimated duration for templates without an explicit value
@@ -318,7 +318,7 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: GARDENER_BOND_SCENARIO_PRIORITY
     /// </summary>
     [ConfigRange(Minimum = 1.0)]
-    public double BondScenarioPriority { get; set; } = 1.5;
+    public float BondScenarioPriority { get; set; } = 1.5f;
 
     /// <summary>
     /// Starting deployment phase for new installations
@@ -365,6 +365,6 @@ public class GardenerServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: GARDENER_POI_VERTICAL_DAMPENING_FACTOR
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
-    public double PoiVerticalDampeningFactor { get; set; } = 0.3;
+    public float PoiVerticalDampeningFactor { get; set; } = 0.3f;
 
 }

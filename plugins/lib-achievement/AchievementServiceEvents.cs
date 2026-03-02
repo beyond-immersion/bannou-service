@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -44,6 +45,7 @@ public partial class AchievementService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.HandleScoreUpdatedAsync");
             var definitions = await LoadAchievementDefinitionsAsync(evt.GameServiceId, CancellationToken.None);
             if (definitions.Count == 0)
             {
@@ -172,6 +174,7 @@ public partial class AchievementService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.HandleMilestoneReachedAsync");
             var definitions = await LoadAchievementDefinitionsAsync(evt.GameServiceId, CancellationToken.None);
             if (definitions.Count == 0)
             {
@@ -285,6 +288,7 @@ public partial class AchievementService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.HandleRankChangedAsync");
             var definitions = await LoadAchievementDefinitionsAsync(evt.GameServiceId, CancellationToken.None);
             if (definitions.Count == 0)
             {
@@ -409,6 +413,7 @@ public partial class AchievementService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "AchievementService.LoadAchievementDefinitionsAsync");
         var definitionStore = _stateStoreFactory.GetCacheableStore<AchievementDefinitionData>(StateStoreDefinitions.AchievementDefinition);
         var indexKey = GetDefinitionIndexKey(gameServiceId);
         var achievementIds = await definitionStore.GetSetAsync<string>(indexKey, cancellationToken);

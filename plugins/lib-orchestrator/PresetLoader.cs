@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -14,16 +16,20 @@ public class PresetLoader
     private readonly ILogger<PresetLoader> _logger;
     private readonly string _presetsDirectory;
     private readonly IDeserializer _deserializer;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the PresetLoader.
     /// </summary>
     /// <param name="logger">Logger instance.</param>
     /// <param name="presetsDirectory">Directory containing preset YAML files. Required - from OrchestratorServiceConfiguration.</param>
-    public PresetLoader(ILogger<PresetLoader> logger, string presetsDirectory)
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
+    public PresetLoader(ILogger<PresetLoader> logger, string presetsDirectory, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
         _presetsDirectory = presetsDirectory;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
@@ -36,6 +42,7 @@ public class PresetLoader
     /// <returns>List of preset metadata.</returns>
     public async Task<List<PresetMetadata>> ListPresetsAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PresetLoader.ListPresetsAsync");
         var presets = new List<PresetMetadata>();
 
         if (!Directory.Exists(_presetsDirectory))
@@ -77,6 +84,7 @@ public class PresetLoader
     /// <returns>The loaded preset, or null if not found.</returns>
     public async Task<PresetDefinition?> LoadPresetAsync(string presetName, CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.orchestrator", "PresetLoader.LoadPresetAsync");
         var filePath = Path.Combine(_presetsDirectory, $"{presetName}.yaml");
 
         if (!File.Exists(filePath))

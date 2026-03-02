@@ -129,6 +129,12 @@ public partial class ListSpeciesByRealmRequest
     public bool? IsPlayable { get; set; } = default!;
 
     /// <summary>
+    /// Whether to include deprecated species in results
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("includeDeprecated")]
+    public bool IncludeDeprecated { get; set; } = false;
+
+    /// <summary>
     /// Page number for pagination (1-based)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("page")]
@@ -327,11 +333,11 @@ public partial class DeprecateSpeciesRequest
     public System.Guid SpeciesId { get; set; } = default!;
 
     /// <summary>
-    /// Optional reason for deprecation (for audit purposes)
+    /// Audit reason for deprecation, explaining why this species is being phased out
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     [System.ComponentModel.DataAnnotations.StringLength(500)]
-    public string? Reason { get; set; } = default!;
+    public string? DeprecationReason { get; set; } = default!;
 
 }
 
@@ -464,31 +470,36 @@ public partial class SeedSpecies
 {
 
     /// <summary>
-    /// Unique code for the species
+    /// Unique code for the species (e.g., "HUMAN", "ELF")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(50, MinimumLength = 1)]
+    [System.ComponentModel.DataAnnotations.RegularExpression(@"^[A-Z][A-Z0-9_]*$")]
     public string Code { get; set; } = default!;
 
     /// <summary>
-    /// Display name
+    /// Display name for the species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
     public string Name { get; set; } = default!;
 
     /// <summary>
     /// Description of the species (null if not provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("description")]
+    [System.ComponentModel.DataAnnotations.StringLength(1000)]
     public string? Description { get; set; } = default!;
 
     /// <summary>
     /// Category for grouping (null if not categorized)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("category")]
+    [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string? Category { get; set; } = default!;
 
     /// <summary>
@@ -665,18 +676,6 @@ public partial class SpeciesListResponse
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
 
-    /// <summary>
-    /// Current page number
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("page")]
-    public int Page { get; set; } = default!;
-
-    /// <summary>
-    /// Number of items per page
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
-    public int PageSize { get; set; } = default!;
-
 }
 
 /// <summary>
@@ -722,32 +721,22 @@ public partial class MergeSpeciesResponse
 {
 
     /// <summary>
-    /// ID of the deprecated species that was merged from
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sourceSpeciesId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SourceSpeciesId { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the species that characters were merged into
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("targetSpeciesId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TargetSpeciesId { get; set; } = default!;
-
-    /// <summary>
-    /// Number of characters updated to use the target species
+    /// Number of characters successfully migrated to the target species
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("charactersMigrated")]
     public int CharactersMigrated { get; set; } = default!;
 
     /// <summary>
-    /// Whether the source species was hard-deleted after merge
+    /// Whether the source species was hard-deleted after merge (skipped on partial failure)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceDeleted")]
     public bool SourceDeleted { get; set; } = default!;
+
+    /// <summary>
+    /// Character IDs that failed migration, null if no failures occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("failedEntityIds")]
+    public System.Collections.Generic.ICollection<System.Guid>? FailedEntityIds { get; set; } = default!;
 
 }
 

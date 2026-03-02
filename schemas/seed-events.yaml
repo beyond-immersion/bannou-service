@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Seed Service Events
   description: |
@@ -38,13 +38,13 @@ info:
       description: Published when a seed is deleted
 
     # Seed type lifecycle events (auto-generated from x-lifecycle)
-    - topic: seed-type.created
+    - topic: seed.type.created
       event: SeedTypeCreatedEvent
       description: Published when a new seed type is registered
-    - topic: seed-type.updated
+    - topic: seed.type.updated
       event: SeedTypeUpdatedEvent
       description: Published when a seed type is updated (including deprecation)
-    - topic: seed-type.deleted
+    - topic: seed.type.deleted
       event: SeedTypeDeletedEvent
       description: Published when a seed type is deleted
 
@@ -77,25 +77,26 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/seed-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: seed
   Seed:
     model:
       seedId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the seed" }
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this seed" }
-      ownerType: { type: string, required: true, description: "Owner entity type discriminator" }
-      seedTypeCode: { type: string, required: true, description: "Registered seed type code" }
+      ownerType: { $ref: 'common-api.yaml#/components/schemas/EntityType', required: true, description: "Owner entity type discriminator" }
+      seedTypeCode: { type: string, required: true, minLength: 1, description: "Registered seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this seed is scoped to. Null for cross-game seed types." }
-      growthPhase: { type: string, required: true, description: "Current computed growth phase code" }
+      growthPhase: { type: string, required: true, minLength: 1, description: "Current computed growth phase code" }
       totalGrowth: { type: number, format: float, required: true, description: "Aggregate growth across all domains" }
-      displayName: { type: string, required: true, description: "Human-readable seed name" }
+      displayName: { type: string, required: true, minLength: 1, description: "Human-readable seed name" }
       status: { $ref: 'seed-api.yaml#/components/schemas/SeedStatus', required: true, description: "Current lifecycle status" }
       bondId: { type: string, format: uuid, nullable: true, description: "Bond ID if bonded, null otherwise" }
     sensitive: [metadata]
   SeedType:
     model:
-      seedTypeCode: { type: string, primary: true, required: true, description: "Unique seed type code" }
+      seedTypeCode: { type: string, primary: true, required: true, minLength: 1, description: "Unique seed type code" }
       gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this type is scoped to. Null for cross-game seed types." }
-      displayName: { type: string, required: true, description: "Human-readable name" }
-      description: { type: string, required: true, description: "Description of what this seed type represents" }
+      displayName: { type: string, required: true, minLength: 1, description: "Human-readable name" }
+      description: { type: string, required: true, minLength: 1, description: "Description of what this seed type represents" }
       maxPerOwner: { type: integer, required: true, description: "Maximum seeds of this type per owner" }
       bondCardinality: { type: integer, required: true, description: "Max bond participants (0 = no bonding)" }
       bondPermanent: { type: boolean, required: true, description: "Whether bonds of this type are permanent" }
@@ -143,9 +144,11 @@ components:
           description: The seed that grew
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type code for consumer filtering
         domain:
           type: string
+          minLength: 1
           description: The domain that changed
         previousDepth:
           type: number
@@ -192,12 +195,15 @@ components:
           description: The seed that transitioned
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type code for consumer filtering
         previousPhase:
           type: string
+          minLength: 1
           description: Phase code before transition
         newPhase:
           type: string
+          minLength: 1
           description: Phase code after transition
         totalGrowth:
           type: number
@@ -233,12 +239,15 @@ components:
           description: The seed whose manifest changed
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type code for consumer filtering
         version:
           type: integer
+          minimum: 0
           description: New manifest version number
         capabilityCount:
           type: integer
+          minimum: 0
           description: Number of unlocked capabilities in the new manifest
 
     SeedActivatedEvent:
@@ -270,10 +279,11 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type code
         previousActiveSeedId:
           type: string
@@ -310,10 +320,11 @@ components:
           format: uuid
           description: Owner entity ID
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type code
 
     SeedBondFormedEvent:
@@ -341,10 +352,12 @@ components:
           description: The newly formed bond
         seedTypeCode:
           type: string
+          minLength: 1
           description: Seed type the bond connects
         participantSeedIds:
           type: array
           items:
             type: string
             format: uuid
+          minItems: 2
           description: All seed IDs participating in the bond

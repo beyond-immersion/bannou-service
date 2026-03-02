@@ -31,7 +31,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createContainerAsync(
+  async inventoryCreateContainerAsync(
     request: Schemas['CreateContainerRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getContainerAsync(
+  async inventoryGetContainerAsync(
     request: Schemas['GetContainerRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getOrCreateContainerAsync(
+  async inventoryGetOrCreateContainerAsync(
     request: Schemas['GetOrCreateContainerRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listContainersAsync(
+  async inventoryListContainersAsync(
     request: Schemas['ListContainersRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateContainerAsync(
+  async inventoryUpdateContainerAsync(
     request: Schemas['UpdateContainerRequest'],
     channel: number = 0,
     timeout?: number
@@ -125,7 +125,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async addItemToContainerAsync(
+  async inventoryAddItemToContainerAsync(
     request: Schemas['AddItemRequest'],
     channel: number = 0,
     timeout?: number
@@ -145,7 +145,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async removeItemFromContainerAsync(
+  async inventoryRemoveItemFromContainerAsync(
     request: Schemas['RemoveItemRequest'],
     channel: number = 0,
     timeout?: number
@@ -165,7 +165,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async moveItemAsync(
+  async inventoryMoveItemAsync(
     request: Schemas['MoveItemRequest'],
     channel: number = 0,
     timeout?: number
@@ -185,7 +185,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async transferItemAsync(
+  async inventoryTransferItemAsync(
     request: Schemas['TransferItemRequest'],
     channel: number = 0,
     timeout?: number
@@ -205,7 +205,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async splitStackAsync(
+  async inventorySplitStackAsync(
     request: Schemas['SplitStackRequest'],
     channel: number = 0,
     timeout?: number
@@ -225,7 +225,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async mergeStacksAsync(
+  async inventoryMergeStacksAsync(
     request: Schemas['MergeStacksRequest'],
     channel: number = 0,
     timeout?: number
@@ -245,7 +245,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryItemsAsync(
+  async inventoryQueryItemsAsync(
     request: Schemas['QueryItemsRequest'],
     channel: number = 0,
     timeout?: number
@@ -265,7 +265,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async countItemsAsync(
+  async inventoryCountItemsAsync(
     request: Schemas['CountItemsRequest'],
     channel: number = 0,
     timeout?: number
@@ -285,7 +285,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async hasItemsAsync(
+  async inventoryHasItemsAsync(
     request: Schemas['HasItemsRequest'],
     channel: number = 0,
     timeout?: number
@@ -305,7 +305,7 @@ export class InventoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async findSpaceAsync(
+  async inventoryFindSpaceAsync(
     request: Schemas['FindSpaceRequest'],
     channel: number = 0,
     timeout?: number

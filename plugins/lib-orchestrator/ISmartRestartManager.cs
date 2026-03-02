@@ -16,6 +16,7 @@ public interface ISmartRestartManager : IAsyncDisposable, IDisposable
     /// <summary>
     /// Restart a service container with optional environment updates.
     /// Implements smart restart logic based on health metrics.
+    /// Returns an internal <see cref="RestartOutcome"/> for the service to map to API response and status code.
     /// </summary>
-    Task<ServiceRestartResult> RestartServiceAsync(ServiceRestartRequest request);
+    Task<RestartOutcome> RestartServiceAsync(ServiceRestartRequest request);
 }

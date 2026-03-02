@@ -32,6 +32,7 @@ public partial class FactionService : IFactionService
     private readonly IRealmClient _realmClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Faction store (MySQL)
     private readonly IStateStore<FactionModel> _factionStore;
@@ -66,7 +67,8 @@ public partial class FactionService : IFactionService
         ILocationClient locationClient,
         IRealmClient realmClient,
         IGameServiceClient gameServiceClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -78,6 +80,7 @@ public partial class FactionService : IFactionService
         _realmClient = realmClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
 
         _factionStore = stateStoreFactory.GetStore<FactionModel>(StateStoreDefinitions.Faction);
         _factionQueryStore = stateStoreFactory.GetJsonQueryableStore<FactionModel>(StateStoreDefinitions.Faction);
@@ -169,6 +172,7 @@ public partial class FactionService : IFactionService
     /// </summary>
     private async Task<bool> HasCapabilityAsync(Guid? seedId, string capabilityCode, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.HasCapabilityAsync");
         if (seedId == null) return false;
 
         try
@@ -190,6 +194,7 @@ public partial class FactionService : IFactionService
     /// </summary>
     private async Task PublishCreatedEventAsync(FactionModel model, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.PublishCreatedEventAsync");
         var evt = new FactionCreatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -217,6 +222,7 @@ public partial class FactionService : IFactionService
     /// </summary>
     private async Task PublishUpdatedEventAsync(FactionModel model, ICollection<string> changedFields, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.PublishUpdatedEventAsync");
         var evt = new FactionUpdatedEvent
         {
             EventId = Guid.NewGuid(),
@@ -257,6 +263,7 @@ public partial class FactionService : IFactionService
     /// </remarks>
     private async Task InvalidateNormCacheForFactionAsync(Guid factionId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.InvalidateNormCacheForFactionAsync");
         // Query members of this faction to invalidate their norm caches
         var memberConditions = new List<QueryCondition>
         {
@@ -291,6 +298,7 @@ public partial class FactionService : IFactionService
     /// </summary>
     private async Task InvalidateNormCacheForCharacterAsync(Guid characterId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.InvalidateNormCacheForCharacterAsync");
         // Delete the generic cache key (no location); location-specific entries expire via TTL
         await _normCacheStore.DeleteAsync(NormCacheKey(characterId, null), ct);
     }
@@ -371,7 +379,7 @@ public partial class FactionService : IFactionService
             var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
             {
                 OwnerId = factionId,
-                OwnerType = "faction",
+                OwnerType = EntityType.Faction,
                 SeedTypeCode = _configuration.SeedTypeCode,
                 GameServiceId = body.GameServiceId,
                 DisplayName = body.Name,
@@ -605,7 +613,8 @@ public partial class FactionService : IFactionService
 
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return (StatusCodes.NotFound, null);
-        if (model.Status != FactionStatus.Deprecated) return (StatusCodes.BadRequest, null);
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
+        if (model.Status != FactionStatus.Deprecated) return (StatusCodes.OK, MapToResponse(model));
 
         model.Status = FactionStatus.Active;
         model.UpdatedAt = DateTimeOffset.UtcNow;
@@ -748,7 +757,7 @@ public partial class FactionService : IFactionService
                 var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
                 {
                     OwnerId = factionId,
-                    OwnerType = "faction",
+                    OwnerType = EntityType.Faction,
                     SeedTypeCode = _configuration.SeedTypeCode,
                     GameServiceId = body.GameServiceId,
                     DisplayName = def.Name,
@@ -1038,6 +1047,7 @@ public partial class FactionService : IFactionService
 
     private async Task<StatusCodes> RemoveMemberInternalAsync(Guid factionId, Guid characterId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.RemoveMemberInternalAsync");
         var member = await _memberStore.GetAsync(MemberKey(factionId, characterId), ct);
         if (member == null) return StatusCodes.NotFound;
 
@@ -1358,6 +1368,7 @@ public partial class FactionService : IFactionService
 
     private async Task<StatusCodes> ReleaseTerritoryInternalAsync(TerritoryClaimModel claim, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionService.ReleaseTerritoryInternalAsync");
         claim.Status = TerritoryClaimStatus.Released;
         claim.ReleasedAt = DateTimeOffset.UtcNow;
 

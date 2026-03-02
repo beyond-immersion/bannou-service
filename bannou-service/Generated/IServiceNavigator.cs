@@ -56,6 +56,7 @@ using BeyondImmersion.BannouService.Status;
 using BeyondImmersion.BannouService.Storyline;
 using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Telemetry;
+using BeyondImmersion.BannouService.Transit;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
 using BeyondImmersion.BannouService.Worldstate;
@@ -321,6 +322,11 @@ public partial interface IServiceNavigator
     /// Gets the Telemetry service client.
     /// </summary>
     ITelemetryClient Telemetry { get; }
+
+    /// <summary>
+    /// Gets the Transit service client.
+    /// </summary>
+    ITransitClient Transit { get; }
 
     /// <summary>
     /// Gets the Voice service client.

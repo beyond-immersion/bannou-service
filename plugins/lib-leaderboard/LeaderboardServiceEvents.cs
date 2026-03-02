@@ -34,6 +34,7 @@ public partial class LeaderboardService
     /// <param name="evt">The event data.</param>
     public async Task HandleScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.HandleScoreUpdatedAsync");
         try
         {
             var definition = await GetDefinitionForAnalyticsEventAsync(
@@ -116,6 +117,7 @@ public partial class LeaderboardService
     /// <param name="evt">The event data.</param>
     public async Task HandleRatingUpdatedAsync(AnalyticsRatingUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.HandleRatingUpdatedAsync");
         try
         {
             var definition = await GetDefinitionForAnalyticsEventAsync(
@@ -207,6 +209,7 @@ public partial class LeaderboardService
         string eventTopic,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.leaderboard", "LeaderboardService.GetDefinitionForAnalyticsEventAsync");
         if (string.IsNullOrWhiteSpace(eventType))
         {
             return null;

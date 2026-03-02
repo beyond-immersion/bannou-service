@@ -43,6 +43,7 @@ internal class GameServiceRegistryModel
     public string DisplayName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+    public bool AutoLobbyEnabled { get; set; }
     public long CreatedAtUnix { get; set; }
     public long? UpdatedAtUnix { get; set; }
 }

@@ -34,8 +34,9 @@ public class DocumentationServiceTests
     private readonly Mock<IGitSyncService> _mockGitSyncService;
     private readonly Mock<IContentTransformService> _mockContentTransformService;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
-    private readonly Mock<BeyondImmersion.BannouService.Asset.IAssetClient> _mockAssetClient;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationService _service;
 
     private const string TEST_NAMESPACE = "test-namespace";
@@ -62,8 +63,9 @@ public class DocumentationServiceTests
         _mockGitSyncService = new Mock<IGitSyncService>();
         _mockContentTransformService = new Mock<IContentTransformService>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
-        _mockAssetClient = new Mock<BeyondImmersion.BannouService.Asset.IAssetClient>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
         _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE))
@@ -91,8 +93,9 @@ public class DocumentationServiceTests
             _mockGitSyncService.Object,
             _mockContentTransformService.Object,
             _mockLockProvider.Object,
-            _mockAssetClient.Object,
-            _mockHttpClientFactory.Object);
+            _mockServiceProvider.Object,
+            _mockHttpClientFactory.Object,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests
@@ -971,7 +974,7 @@ public class DocumentationServiceTests
     {
         // ListDocumentsAsync uses _searchIndexService.ListDocumentIdsAsync, not state store directly
         _mockSearchIndexService.Setup(x => x.ListDocumentIdsAsync(
-            It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<DocumentCategory?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Guid>());
     }
 
@@ -985,7 +988,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SortBy = ListSortField.CreatedAt,
-            SortOrder = ListDocumentsRequestSortOrder.Asc
+            SortOrder = SortOrder.Asc
         };
 
         // Act
@@ -1006,7 +1009,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SortBy = ListSortField.Title,
-            SortOrder = ListDocumentsRequestSortOrder.Desc
+            SortOrder = SortOrder.Desc
         };
 
         // Act
@@ -1027,7 +1030,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             Tags = new List<string> { "tag1", "tag2" },
-            TagsMatch = ListDocumentsRequestTagsMatch.All
+            TagsMatch = TagMatchMode.All
         };
 
         // Act
@@ -1048,7 +1051,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             Tags = new List<string> { "tag1", "tag2" },
-            TagsMatch = ListDocumentsRequestTagsMatch.Any
+            TagsMatch = TagMatchMode.Any
         };
 
         // Act
@@ -1067,7 +1070,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SearchTerm = "test query",
-            SortBy = SearchDocumentationRequestSortBy.Relevance
+            SortBy = SearchSortBy.Relevance
         };
 
         _mockSearchIndexService.Setup(x => x.SearchAsync(
@@ -1090,7 +1093,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SearchTerm = "test query",
-            SortBy = SearchDocumentationRequestSortBy.Recency
+            SortBy = SearchSortBy.Recency
         };
 
         _mockSearchIndexService.Setup(x => x.SearchAsync(
@@ -1113,7 +1116,7 @@ public class DocumentationServiceTests
         {
             Namespace = TEST_NAMESPACE,
             SearchTerm = "test query",
-            SortBy = SearchDocumentationRequestSortBy.Alphabetical
+            SortBy = SearchSortBy.Alphabetical
         };
 
         _mockSearchIndexService.Setup(x => x.SearchAsync(

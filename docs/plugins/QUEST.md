@@ -133,6 +133,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | `LockRetryAttempts` | `QUEST_LOCK_RETRY_ATTEMPTS` | 3 | Retry attempts when lock acquisition fails |
 | `MaxConcurrencyRetries` | `QUEST_MAX_CONCURRENCY_RETRIES` | 5 | ETag concurrency retry attempts |
 | `IdempotencyTtlSeconds` | `QUEST_IDEMPOTENCY_TTL_SECONDS` | 86400 | TTL for idempotency keys (24 hours) |
+| `DefaultRewardContainerMaxSlots` | `QUEST_DEFAULT_REWARD_CONTAINER_MAX_SLOTS` | 100 | Maximum slots in quest reward inventory containers |
 
 ---
 
@@ -148,6 +149,7 @@ The Quest service (L2 GameFoundation) provides objective-based gameplay progress
 | `IContractClient` | Contract service integration for template/instance management |
 | `ICharacterClient` | Character validation during quest acceptance |
 | `IQuestDataCache` | In-memory TTL cache for actor behavior expressions |
+| `ITelemetryProvider` | Distributed tracing span instrumentation |
 | `QuestProviderFactory` | IVariableProviderFactory implementation for Actor integration |
 | `QuestProvider` | IVariableProvider exposing `${quest.*}` variables |
 
@@ -257,12 +259,30 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `questCode` | B (Content Code) | Opaque string | Game-configurable quest identifier, unique within game service. Extensible without schema changes. |
+| `objectiveCode` | B (Content Code) | Opaque string | Game-configurable objective identifier, unique within a quest definition. |
+| `targetEntityType` (on objectives) | B (Content Code) | Opaque string | Caller-supplied entity type for kill/collect objectives (e.g., `goblin`, `iron_ore`). Not constrained to Bannou entity types -- represents game content targets. |
+| `status` | C (System State) | `QuestStatus` enum | Finite quest lifecycle states: `ACTIVE`, `COMPLETED`, `FAILED`, `ABANDONED`, `EXPIRED`. |
+| `category` | C (System State) | `QuestCategory` enum | Finite quest organization categories: `MAIN`, `SIDE`, `BOUNTY`, `DAILY`, `WEEKLY`, `EVENT`, `TUTORIAL`. |
+| `difficulty` | C (System State) | `QuestDifficulty` enum | Finite difficulty tiers: `TRIVIAL`, `EASY`, `NORMAL`, `HARD`, `HEROIC`, `LEGENDARY`. |
+| `objectiveType` | C (System State) | `ObjectiveType` enum | Finite objective tracking modes: `KILL`, `COLLECT`, `DELIVER`, `TRAVEL`, `DISCOVER`, `TALK`, `CRAFT`, `ESCORT`, `DEFEND`, `CUSTOM`. |
+| `revealBehavior` (on objectives) | C (System State) | `ObjectiveRevealBehavior` enum | Finite visibility modes for hidden objectives: `ALWAYS`, `ON_PROGRESS`, `ON_COMPLETE`, `NEVER`. |
+| `prerequisiteType` | C (System State) | `PrerequisiteType` enum | Finite prerequisite types: `QUEST_COMPLETED`, `CHARACTER_LEVEL`, `REPUTATION`, `ITEM_OWNED`, `CURRENCY_AMOUNT`. Built-in (L2): QUEST_COMPLETED, CURRENCY_AMOUNT, ITEM_OWNED use direct service client calls. Dynamic: CHARACTER_LEVEL, REPUTATION, and unknown types route through `IPrerequisiteProviderFactory` DI pattern for L4 extensibility. |
+| `reward.type` | C (System State) | `RewardType` enum | Finite reward categories: `CURRENCY`, `ITEM`, `EXPERIENCE`, `REPUTATION`. Determines which reward fields are relevant. |
+| `validationMode` | C (System State) | `PrerequisiteValidationMode` enum | Finite validation strategies: `FAIL_FAST`, `CHECK_ALL`. |
+
+---
+
 ## Stubs & Unimplemented Features
 
 1. ~~**Prerequisite validation for non-QUEST_COMPLETED types**~~: **IMPLEMENTED** (2026-02-07) in #320 - Full prerequisite validation now implemented:
    - **Built-in (L2)**: QUEST_COMPLETED (direct check), CURRENCY_AMOUNT (via ICurrencyClient), ITEM_OWNED (via IInventoryClient/IItemClient)
    - **Dynamic (L4)**: REPUTATION and unknown types (via IPrerequisiteProviderFactory DI collection)
-   - **Stub**: CHARACTER_LEVEL logs and skips until Character service tracks levels
+   - ~~**Stub**: CHARACTER_LEVEL logs and skips~~: **FIXED** (2026-02-28) - CHARACTER_LEVEL now routed through `CheckDynamicPrerequisiteAsync("character_level", ...)` like REPUTATION. Graceful degradation when no provider registered (skip with debug log); automatically activates when an L4 service registers `IPrerequisiteProviderFactory` with `ProviderName = "character_level"`.
    - Configurable validation mode: `CHECK_ALL` (rich error info) or `FAIL_FAST` (early exit)
 
 2. ~~**Reward distribution via prebound APIs**~~: **IMPLEMENTED** (2026-02-07) in #320 - Rewards now execute via Contract prebound APIs:
@@ -277,15 +297,21 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 
 ## Potential Extensions
 
-1. **Quest chains**: Support for sequential quest chains where completing one quest unlocks the next. Currently would require manual prerequisite management.
+1. ~~**Quest chains**~~: **FIXED** (2026-02-28) - Already fully supported via `QUEST_COMPLETED` prerequisite type (implemented in #320). Creating Quest B with `prerequisites: [{type: QUEST_COMPLETED, questCode: QUEST_A}]` creates a chain. `ListAvailableQuestsAsync` hides Quest B until Quest A is completed, and `AcceptQuestAsync` rejects acceptance. Chains of arbitrary length are supported by chaining prerequisites across definitions.
 
 2. **Dynamic objectives**: Objectives that change based on game state or player choices. Current model has static objective definitions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/503 -->
 
-3. **Shared party progress**: Currently each character in a party quest has individual objective progress. Could add shared progress tracking for cooperative objectives.
+3. **Party quest acceptance flow** ([#506](https://github.com/beyond-immersion/bannou-service/issues/506)): The data model supports multi-character instances (`QuestorCharacterIds` list, configurable `MaxQuestors`) and progress is already per-instance (shared), but no API exists to add additional characters to an existing quest instance — `AcceptQuestAsync` always creates a new instance with a single questor. Requires designing party formation model, contract party management, per-objective-type progress semantics, and reward distribution.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/506 -->
 
-4. **Quest log categories**: The quest log returns all active quests. Could add category-based filtering (main story, side, daily, etc.) for UI organization.
+4. ~~**Quest log categories**~~: **FIXED** (2026-02-28) - Added optional `category` filter to `GetQuestLogRequest` in schema. `GetQuestLogAsync` now filters active quests by category when provided, returning all quests when omitted (backward-compatible).
 
 5. **Localization support**: Quest names and descriptions are single-language. Could add localization key support for multi-language games.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/508 -->
+
+6. **Client events for real-time objective tracking** ([#496](https://github.com/beyond-immersion/bannou-service/issues/496)): Push `QuestObjectiveProgressed` and `QuestStatusChanged` (consolidated lifecycle event with status discriminator for accepted/completed/failed/abandoned) client events via `IClientEventPublisher` using the Entity Session Registry (#426). Sessions resolved via `character → session` bindings for all questor characters. Published from Quest's event handlers that process Contract state transitions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/496 -->
 
 ---
 
@@ -312,8 +338,8 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
 ### Design Considerations (Resolved)
 
 1. **Prerequisite architecture (RESOLVED in #320)**: Quest uses a two-tier prerequisite system:
-   - **Built-in (L2)**: `quest_completed`, `currency`, `item`, `character_level`, `relationship` - Quest calls L2 service clients directly with hard dependencies
-   - **Dynamic (L4)**: `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
+   - **Built-in (L2)**: `quest_completed`, `currency`, `item` - Quest calls L2 service clients directly with hard dependencies
+   - **Dynamic (via IPrerequisiteProviderFactory)**: `character_level`, `reputation`, `skill`, `magic`, `achievement`, `status_effect`, etc. - L4 (or future L2) services implement `IPrerequisiteProviderFactory`, Quest discovers via `IEnumerable<IPrerequisiteProviderFactory>` DI collection injection, graceful degradation if provider missing
    - See `docs/planning/QUEST-PLUGIN-ARCHITECTURE.md` and `docs/reference/SERVICE-HIERARCHY.md` for full pattern
 
 2. **Reward execution (RESOLVED in #320)**: Rewards execute via Contract prebound APIs:
@@ -335,5 +361,18 @@ Quest (L2) integrates with the Actor service (L2) via the Variable Provider Fact
   - Added BuildRewardPreboundApis for CURRENCY and ITEM rewards via Contract
   - Added ResolveTemplateValuesAsync for wallet/container ID resolution
   - Added PrerequisiteValidationMode configuration (CHECK_ALL vs FAIL_FAST)
-  - Added FailedPrerequisite model and AcceptQuestErrorResponse for detailed failure info
+  - Added internal PrerequisiteFailure model for prerequisite check logging
 - **2026-02-07**: Fixed T21 violation - `QuestDataCache` TTL is now configurable via `QuestDataCacheTtlSeconds` (env: `QUEST_DATA_CACHE_TTL_SECONDS`, default: 120)
+- **2026-02-26**: Production hardening audit - Schema, code, and test fixes across 17 items:
+  - **Schema (T1)**: Consolidated inline RewardType enum to `$ref`; removed dead types AcceptQuestErrorResponse, AcceptQuestErrorCode, FailedPrerequisite; fixed NRT violations in event schemas; added validation keywords to API and config integer properties; fixed non-required/non-nullable fields on CreateQuestDefinitionRequest
+  - **Config (T21/T25)**: Changed PrerequisiteValidationMode from string to `$ref` enum; added DefaultRewardContainerMaxSlots (default: 100); added minimum/maximum bounds to all 12 integer config properties
+  - **Code (T9)**: Added ETag-based optimistic concurrency to all CharacterIndex mutation sites via new `UpdateCharacterIndexAsync` helper with retry loop
+  - **Code (T25)**: Fixed PrerequisiteValidationMode string comparison to enum equality
+  - **Code (T26)**: Replaced Guid.Empty sentinel for QuestGiverCharacterId with nullable Guid chain
+  - **Code (T30)**: Added ITelemetryProvider + StartActivity spans to all 15 private async methods across QuestService.cs and QuestServiceEvents.cs
+  - **Code (T21)**: Replaced hardcoded `MaxSlots = 100` with `_configuration.DefaultRewardContainerMaxSlots`
+  - **Code (T2)**: Fixed incorrect L4 layer comments to L2 in QuestServicePlugin and QuestProvider
+  - **Tests**: Updated constructor for ITelemetryProvider, updated CharacterIndex mocks for ETag concurrency, added 5 new event handler tests (46 total, all passing)
+- **2026-02-28**: Audit doc cleanup - Struck through "Quest chains" potential extension (already implemented via `QUEST_COMPLETED` prerequisite type since #320)
+- **2026-02-28**: Quest log category filter - Added optional `category` field to `GetQuestLogRequest` schema, filtering logic in `GetQuestLogAsync`, and 2 unit tests (48 total, all passing)
+- **2026-02-28**: CHARACTER_LEVEL prerequisite stub → dynamic provider - Replaced hardcoded stub with `CheckDynamicPrerequisiteAsync("character_level", ...)` routing, consistent with REPUTATION pattern. Graceful degradation when no provider registered; auto-activates when provider is added.

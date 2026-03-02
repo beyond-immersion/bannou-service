@@ -31,7 +31,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getLocationAsync(
+  async locationGetLocationAsync(
     request: Schemas['GetLocationRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getLocationByCodeAsync(
+  async locationGetLocationByCodeAsync(
     request: Schemas['GetLocationByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listLocationsAsync(
+  async locationListLocationsAsync(
     request: Schemas['ListLocationsRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listLocationsByRealmAsync(
+  async locationListLocationsByRealmAsync(
     request: Schemas['ListLocationsByRealmRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listLocationsByParentAsync(
+  async locationListLocationsByParentAsync(
     request: Schemas['ListLocationsByParentRequest'],
     channel: number = 0,
     timeout?: number
@@ -123,7 +123,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRootLocationsAsync(
+  async locationListRootLocationsAsync(
     request: Schemas['ListRootLocationsRequest'],
     channel: number = 0,
     timeout?: number
@@ -141,7 +141,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getLocationAncestorsAsync(
+  async locationGetLocationAncestorsAsync(
     request: Schemas['GetLocationAncestorsRequest'],
     channel: number = 0,
     timeout?: number
@@ -159,7 +159,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateTerritoryAsync(
+  async locationValidateTerritoryAsync(
     request: Schemas['ValidateTerritoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -177,7 +177,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getLocationDescendantsAsync(
+  async locationGetLocationDescendantsAsync(
     request: Schemas['GetLocationDescendantsRequest'],
     channel: number = 0,
     timeout?: number
@@ -195,7 +195,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async locationExistsAsync(
+  async locationLocationExistsAsync(
     request: Schemas['LocationExistsRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryLocationsByPositionAsync(
+  async locationQueryLocationsByPositionAsync(
     request: Schemas['QueryLocationsByPositionRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async reportEntityPositionAsync(
+  async locationReportEntityPositionAsync(
     request: Schemas['ReportEntityPositionRequest'],
     channel: number = 0,
     timeout?: number
@@ -249,7 +249,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getEntityLocationAsync(
+  async locationGetEntityLocationAsync(
     request: Schemas['GetEntityLocationRequest'],
     channel: number = 0,
     timeout?: number
@@ -267,7 +267,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listEntitiesAtLocationAsync(
+  async locationListEntitiesAtLocationAsync(
     request: Schemas['ListEntitiesAtLocationRequest'],
     channel: number = 0,
     timeout?: number
@@ -285,7 +285,7 @@ export class LocationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async clearEntityPositionAsync(
+  async locationClearEntityPositionAsync(
     request: Schemas['ClearEntityPositionRequest'],
     channel: number = 0,
     timeout?: number

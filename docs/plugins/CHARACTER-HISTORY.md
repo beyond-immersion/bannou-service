@@ -53,6 +53,17 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `eventCategory` | C (System State) | `EventCategory` enum | Finite set of historical event categories (WAR, NATURAL_DISASTER, POLITICAL, ECONOMIC, RELIGIOUS, CULTURAL, PERSONAL). System-defined; drives query filtering and summarization logic. |
+| `role` | C (System State) | `ParticipationRole` enum | Finite set of participation roles (LEADER, COMBATANT, VICTIM, WITNESS, BENEFICIARY, CONSPIRATOR, HERO, SURVIVOR). System-defined; drives text summarization templates. |
+| `elementType` | C (System State) | `BackstoryElementType` enum | Finite set of backstory element categories (ORIGIN, OCCUPATION, TRAINING, TRAUMA, ACHIEVEMENT, SECRET, GOAL, FEAR, BELIEF). System-defined; used as keyed dimensions in behavior system lookups. |
+| `relatedEntityType` | A (Entity Reference) | Plain string | References the type of a related entity (location, organization, character) on a backstory element. Currently a plain string rather than `EntityType` enum because the set of relatable entity types is not yet formalized in schema. |
+
+---
+
 ## Events
 
 ### Published Events

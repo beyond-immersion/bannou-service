@@ -1,9 +1,10 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Seed;
 
@@ -16,38 +17,59 @@ namespace BeyondImmersion.BannouService.Seed;
 /// This is the Collection→Seed pipeline: when a collection entry is unlocked,
 /// this listener finds the owner's seeds, checks their type definitions for
 /// <c>collectionGrowthMappings</c>, matches entry tags against tag prefixes,
-/// and records growth to the corresponding domains.
+/// and records growth via <see cref="ISeedClient"/> to reuse the full growth
+/// pipeline (distributed locks, phase transitions, cross-pollination,
+/// capability cache invalidation, evolution listener dispatch).
 /// </para>
 /// <para>
 /// Registered as Singleton via DI. Collection discovers it via
 /// <c>IEnumerable&lt;ICollectionUnlockListener&gt;</c> and calls it during GrantEntryAsync.
 /// </para>
+/// <para>
+/// <b>Distributed safety</b>: This is a DI Listener (local-only fan-out).
+/// Growth recording writes to distributed state via <see cref="ISeedClient"/>,
+/// so the result is visible on all nodes regardless of which node processed
+/// the collection grant. See SERVICE-HIERARCHY.md § DI Provider vs Listener.
+/// </para>
 /// </remarks>
 public class SeedCollectionUnlockListener : ICollectionUnlockListener
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IQueryableStateStore<SeedModel> _seedStore;
+    private readonly IStateStore<SeedTypeDefinitionModel> _typeStore;
+    private readonly ISeedClient _seedClient;
     private readonly IMessageBus _messageBus;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<SeedCollectionUnlockListener> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SeedCollectionUnlockListener"/> class.
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for seed data access.</param>
+    /// <param name="seedClient">Generated seed client for growth recording via mesh.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public SeedCollectionUnlockListener(
         IStateStoreFactory stateStoreFactory,
+        ISeedClient seedClient,
         IMessageBus messageBus,
+        ITelemetryProvider telemetryProvider,
         ILogger<SeedCollectionUnlockListener> logger)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _seedStore = stateStoreFactory.GetQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
+        _typeStore = stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        _seedClient = seedClient;
         _messageBus = messageBus;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
     /// <inheritdoc/>
     public async Task OnEntryUnlockedAsync(CollectionUnlockNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.seed", "SeedCollectionUnlockListener.OnEntryUnlocked");
+
         if (notification.Tags == null || notification.Tags.Count == 0)
         {
             _logger.LogDebug(
@@ -56,9 +78,8 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
             return;
         }
 
-        // Find all seeds owned by this entity
-        var seedStore = _stateStoreFactory.GetQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
-        var ownerSeeds = await seedStore.QueryAsync(
+        // Find all active seeds owned by this entity
+        var ownerSeeds = await _seedStore.QueryAsync(
             s => s.OwnerId == notification.OwnerId
                 && s.OwnerType == notification.OwnerType
                 && s.GameServiceId == notification.GameServiceId
@@ -73,13 +94,10 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
             return;
         }
 
-        // Load seed type definitions to get collection growth mappings
-        var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-
         foreach (var seed in ownerSeeds)
         {
-            var seedType = await typeStore.GetAsync(
-                $"type:{seed.GameServiceId}:{seed.SeedTypeCode}", ct);
+            var seedType = await _typeStore.GetAsync(
+                SeedService.TypeKey(seed.GameServiceId, seed.SeedTypeCode), ct);
 
             if (seedType?.CollectionGrowthMappings == null) continue;
 
@@ -90,7 +108,7 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
             if (typeMapping == null) continue;
 
             // Match entry tags against domain mappings
-            var growthEntries = new List<(string Domain, float Amount)>();
+            var growthEntries = new List<GrowthEntry>();
 
             foreach (var domainMapping in typeMapping.DomainMappings)
             {
@@ -115,7 +133,7 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
                         ? tag[domainMapping.TagPrefix.Length..]
                         : domainMapping.TagPrefix.TrimEnd(':');
 
-                    growthEntries.Add((domain, amount));
+                    growthEntries.Add(new GrowthEntry { Domain = domain, Amount = amount });
                 }
             }
 
@@ -125,47 +143,23 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
                 "Recording collection-driven growth for seed {SeedId} ({SeedType}): {DomainCount} domains from entry {EntryCode}",
                 seed.SeedId, seed.SeedTypeCode, growthEntries.Count, notification.EntryCode);
 
-            // Record growth via the seed's RecordGrowth API (reuse existing infrastructure)
+            // Record growth via ISeedClient — reuses full pipeline: distributed locks,
+            // phase transitions, cross-pollination, capability cache invalidation,
+            // evolution listener dispatch, and TotalGrowth update
             try
             {
-                // In-process: directly use the seed service's growth state store
-                var growthStore = _stateStoreFactory.GetStore<SeedGrowthModel>(StateStoreDefinitions.SeedGrowth);
-                var growth = await growthStore.GetAsync($"growth:{seed.SeedId}", ct);
-                growth ??= new SeedGrowthModel { SeedId = seed.SeedId, Domains = new() };
-
-                foreach (var (domain, amount) in growthEntries)
+                await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
                 {
-                    if (!growth.Domains.ContainsKey(domain))
-                    {
-                        growth.Domains[domain] = new DomainGrowthEntry();
-                    }
-
-                    growth.Domains[domain].Depth += amount;
-                    growth.Domains[domain].LastActivityAt = DateTimeOffset.UtcNow;
-                }
-
-                var totalGrowth = growth.Domains.Values.Sum(d => d.Depth);
-                await growthStore.SaveAsync($"growth:{seed.SeedId}", growth, cancellationToken: ct);
-
-                // Publish per-domain growth events
-                foreach (var (domain, amount) in growthEntries)
-                {
-                    await _messageBus.TryPublishAsync(
-                        "seed.growth.updated",
-                        new Events.SeedGrowthUpdatedEvent
-                        {
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            SeedId = seed.SeedId,
-                            SeedTypeCode = seed.SeedTypeCode,
-                            Domain = domain,
-                            PreviousDepth = growth.Domains[domain].Depth - amount,
-                            NewDepth = growth.Domains[domain].Depth,
-                            TotalGrowth = totalGrowth,
-                            CrossPollinated = false
-                        },
-                        ct);
-                }
+                    SeedId = seed.SeedId,
+                    Entries = growthEntries,
+                    Source = $"collection:{notification.CollectionType}:{notification.EntryCode}"
+                }, ct);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Seed growth recording failed for seed {SeedId} from collection unlock (status {Status})",
+                    seed.SeedId, ex.StatusCode);
             }
             catch (Exception ex)
             {

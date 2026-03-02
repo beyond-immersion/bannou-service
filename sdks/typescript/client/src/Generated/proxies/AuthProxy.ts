@@ -31,7 +31,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async loginAsync(
+  async authLoginAsync(
     request: Schemas['LoginRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerAsync(
+  async authRegisterAsync(
     request: Schemas['RegisterRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async completeOAuthAsync(
+  async authCompleteOAuthAsync(
     request: Schemas['OAuthCallbackRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async verifySteamAuthAsync(
+  async authVerifySteamAuthAsync(
     request: Schemas['SteamVerifyRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async refreshTokenAsync(
+  async authRefreshTokenAsync(
     request: Schemas['RefreshRequest'],
     channel: number = 0,
     timeout?: number
@@ -130,7 +130,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateTokenAsync(
+  async authValidateTokenAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ValidateTokenResponse']>> {
@@ -148,7 +148,10 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async logoutEventAsync(request: Schemas['LogoutRequest'], channel: number = 0): Promise<void> {
+  async authLogoutEventAsync(
+    request: Schemas['LogoutRequest'],
+    channel: number = 0
+  ): Promise<void> {
     return this.client.sendEventAsync<Schemas['LogoutRequest']>('/auth/logout', request, channel);
   }
 
@@ -158,7 +161,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSessionsAsync(
+  async authGetSessionsAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SessionsResponse']>> {
@@ -176,7 +179,7 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async terminateSessionEventAsync(
+  async authTerminateSessionEventAsync(
     request: Schemas['TerminateSessionRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -193,7 +196,7 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async requestPasswordResetEventAsync(
+  async authRequestPasswordResetEventAsync(
     request: Schemas['PasswordResetRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -210,7 +213,7 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async confirmPasswordResetEventAsync(
+  async authConfirmPasswordResetEventAsync(
     request: Schemas['PasswordResetConfirmRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -227,7 +230,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listProvidersAsync(
+  async authListProvidersAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ProvidersResponse']>> {
@@ -245,7 +248,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setupMfaAsync(
+  async authSetupMfaAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['MfaSetupResponse']>> {
@@ -263,7 +266,7 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async enableMfaEventAsync(
+  async authEnableMfaEventAsync(
     request: Schemas['MfaEnableRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -280,7 +283,7 @@ export class AuthProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async disableMfaEventAsync(
+  async authDisableMfaEventAsync(
     request: Schemas['MfaDisableRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -298,7 +301,7 @@ export class AuthProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async verifyMfaAsync(
+  async authVerifyMfaAsync(
     request: Schemas['MfaVerifyRequest'],
     channel: number = 0,
     timeout?: number

@@ -31,7 +31,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createFactionAsync(
+  async factionCreateFactionAsync(
     request: Schemas['CreateFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getFactionAsync(
+  async factionGetFactionAsync(
     request: Schemas['GetFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getFactionByCodeAsync(
+  async factionGetFactionByCodeAsync(
     request: Schemas['GetFactionByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listFactionsAsync(
+  async factionListFactionsAsync(
     request: Schemas['ListFactionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateFactionAsync(
+  async factionUpdateFactionAsync(
     request: Schemas['UpdateFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deprecateFactionAsync(
+  async factionDeprecateFactionAsync(
     request: Schemas['DeprecateFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async undeprecateFactionAsync(
+  async factionUndeprecateFactionAsync(
     request: Schemas['UndeprecateFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -169,7 +169,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async designateRealmBaselineAsync(
+  async factionDesignateRealmBaselineAsync(
     request: Schemas['DesignateRealmBaselineRequest'],
     channel: number = 0,
     timeout?: number
@@ -187,7 +187,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmBaselineAsync(
+  async factionGetRealmBaselineAsync(
     request: Schemas['GetRealmBaselineRequest'],
     channel: number = 0,
     timeout?: number
@@ -207,7 +207,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async addMemberAsync(
+  async factionAddMemberAsync(
     request: Schemas['AddMemberRequest'],
     channel: number = 0,
     timeout?: number
@@ -226,7 +226,7 @@ export class FactionProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async removeMemberEventAsync(
+  async factionRemoveMemberEventAsync(
     request: Schemas['RemoveMemberRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -244,7 +244,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listMembersAsync(
+  async factionListMembersAsync(
     request: Schemas['ListMembersRequest'],
     channel: number = 0,
     timeout?: number
@@ -264,7 +264,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listMembershipsByCharacterAsync(
+  async factionListMembershipsByCharacterAsync(
     request: Schemas['ListMembershipsByCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -282,7 +282,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateMemberRoleAsync(
+  async factionUpdateMemberRoleAsync(
     request: Schemas['UpdateMemberRoleRequest'],
     channel: number = 0,
     timeout?: number
@@ -300,7 +300,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkMembershipAsync(
+  async factionCheckMembershipAsync(
     request: Schemas['CheckMembershipRequest'],
     channel: number = 0,
     timeout?: number
@@ -318,7 +318,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async claimTerritoryAsync(
+  async factionClaimTerritoryAsync(
     request: Schemas['ClaimTerritoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -335,7 +335,7 @@ export class FactionProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async releaseTerritoryEventAsync(
+  async factionReleaseTerritoryEventAsync(
     request: Schemas['ReleaseTerritoryRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -353,7 +353,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listTerritoryClaimsAsync(
+  async factionListTerritoryClaimsAsync(
     request: Schemas['ListTerritoryClaimsRequest'],
     channel: number = 0,
     timeout?: number
@@ -371,7 +371,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getControllingFactionAsync(
+  async factionGetControllingFactionAsync(
     request: Schemas['GetControllingFactionRequest'],
     channel: number = 0,
     timeout?: number
@@ -389,7 +389,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async defineNormAsync(
+  async factionDefineNormAsync(
     request: Schemas['DefineNormRequest'],
     channel: number = 0,
     timeout?: number
@@ -409,7 +409,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateNormAsync(
+  async factionUpdateNormAsync(
     request: Schemas['UpdateNormRequest'],
     channel: number = 0,
     timeout?: number
@@ -428,7 +428,7 @@ export class FactionProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deleteNormEventAsync(
+  async factionDeleteNormEventAsync(
     request: Schemas['DeleteNormRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -446,7 +446,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listNormsAsync(
+  async factionListNormsAsync(
     request: Schemas['ListNormsRequest'],
     channel: number = 0,
     timeout?: number
@@ -466,7 +466,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByCharacterAsync(
+  async factionCleanupByCharacterAsync(
     request: Schemas['CleanupByCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -484,7 +484,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByRealmAsync(
+  async factionCleanupByRealmAsync(
     request: Schemas['CleanupByRealmRequest'],
     channel: number = 0,
     timeout?: number
@@ -502,7 +502,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByLocationAsync(
+  async factionCleanupByLocationAsync(
     request: Schemas['CleanupByLocationRequest'],
     channel: number = 0,
     timeout?: number
@@ -520,7 +520,7 @@ export class FactionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async factionGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

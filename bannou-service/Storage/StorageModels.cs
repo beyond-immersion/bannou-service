@@ -85,6 +85,18 @@ public record AssetReference(
 /// <summary>
 /// Information about a specific version of an object.
 /// </summary>
+/// <summary>
+/// Summary of a storage object returned by prefix listing.
+/// Provides key, size, and age for background cleanup operations.
+/// </summary>
+/// <param name="Key">Object key (path) within the bucket</param>
+/// <param name="Size">Object size in bytes</param>
+/// <param name="LastModified">When the object was last modified</param>
+public record ObjectSummary(
+    string Key,
+    long Size,
+    DateTime LastModified);
+
 /// <param name="VersionId">The version identifier</param>
 /// <param name="IsLatest">Whether this is the current version</param>
 /// <param name="LastModified">When this version was created</param>
@@ -93,7 +105,7 @@ public record AssetReference(
 /// <param name="IsDeleteMarker">Whether this version is a delete marker</param>
 /// <param name="StorageClass">Storage tier (e.g., STANDARD, GLACIER, DEEP_ARCHIVE)</param>
 public record ObjectVersionInfo(
-    string VersionId,
+    string? VersionId,
     bool IsLatest,
     DateTime LastModified,
     long Size,

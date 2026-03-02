@@ -32,8 +32,8 @@ using System = global::System;
 
 /// <summary>
 /// Voice communication tier:
-/// <br/>- p2p: Direct peer-to-peer connections (up to 6 participants)
-/// <br/>- scaled: RTP server-mediated communication (unlimited participants)
+/// <br/>- P2P: Direct peer-to-peer connections (up to 6 participants)
+/// <br/>- Scaled: RTP server-mediated communication (unlimited participants)
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -41,10 +41,10 @@ using System = global::System;
 public enum VoiceTier
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"p2p")]
-    P2p = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"P2P")]
+    P2P = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"scaled")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Scaled")]
     Scaled = 1,
 
 }
@@ -58,13 +58,13 @@ public enum VoiceTier
 public enum VoiceCodec
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
+    [System.Runtime.Serialization.EnumMember(Value = @"Opus")]
     Opus = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"g711")]
+    [System.Runtime.Serialization.EnumMember(Value = @"G711")]
     G711 = 1,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"g722")]
+    [System.Runtime.Serialization.EnumMember(Value = @"G722")]
     G722 = 2,
 
 }
@@ -135,6 +135,91 @@ public enum VoiceBroadcastStoppedReason
 #pragma warning restore CS1591
 
 /// <summary>
+/// Peer connection information for P2P voice
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoicePeerInfo
+{
+
+    /// <summary>
+    /// WebSocket session ID for this peer
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid PeerSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Peer's display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// SDP offer for WebRTC negotiation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string SdpOffer { get; set; } = default!;
+
+    /// <summary>
+    /// ICE candidates for NAT traversal
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
+    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
+
+    /// <summary>
+    /// Whether peer is currently muted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isMuted")]
+    public bool IsMuted { get; set; } = false;
+
+}
+
+/// <summary>
+/// SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
+/// <br/>These credentials are dynamically generated per-user per-room and should be used
+/// <br/>for SIP REGISTER and subsequent INVITE requests.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SipCredentials
+{
+
+    /// <summary>
+    /// SIP username (typically sessionId or a hash-derived identifier)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("username")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Username { get; set; } = default!;
+
+    /// <summary>
+    /// SIP password (dynamically generated, short-lived)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("password")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Password { get; set; } = default!;
+
+    /// <summary>
+    /// SIP domain/realm for authentication (e.g., "voice.bannou.local")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("domain")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Domain { get; set; } = default!;
+
+    /// <summary>
+    /// When these credentials expire (clients should re-authenticate before this)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
+    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to create a voice room
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -150,11 +235,11 @@ public partial class CreateVoiceRoomRequest
     public System.Guid SessionId { get; set; } = default!;
 
     /// <summary>
-    /// Preferred voice tier (defaults to p2p)
+    /// Preferred voice tier (defaults to P2P)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("preferredTier")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceTier PreferredTier { get; set; } = default!;
+    public VoiceTier? PreferredTier { get; set; } = default!;
 
     /// <summary>
     /// Maximum participants before tier upgrade
@@ -164,11 +249,11 @@ public partial class CreateVoiceRoomRequest
     public int MaxParticipants { get; set; } = 6;
 
     /// <summary>
-    /// Preferred audio codec (defaults to opus)
+    /// Preferred audio codec (defaults to Opus)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public VoiceCodec Codec { get; set; } = default!;
+    public VoiceCodec? Codec { get; set; } = default!;
 
     /// <summary>
     /// If true, room auto-deletes when empty after grace period
@@ -237,7 +322,7 @@ public partial class JoinVoiceRoomRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
     [System.ComponentModel.DataAnnotations.StringLength(50)]
-    public string DisplayName { get; set; } = default!;
+    public string? DisplayName { get; set; } = default!;
 
     /// <summary>
     /// Room password (required if room is password-protected)
@@ -288,10 +373,11 @@ public partial class DeleteVoiceRoomRequest
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for deletion
+    /// Reason for deletion (defaults to Manual if not specified)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    public string Reason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public VoiceRoomDeletedReason? Reason { get; set; } = default!;
 
 }
 
@@ -365,7 +451,7 @@ public partial class AnswerPeerRequest
     /// ICE candidates for NAT traversal (can be trickled later)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string> IceCandidates { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
 
 }
 
@@ -499,6 +585,8 @@ public partial class VoiceRoomResponse
     /// Active audio codec
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceCodec Codec { get; set; } = default!;
 
@@ -518,7 +606,9 @@ public partial class VoiceRoomResponse
     /// List of current participants
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participants")]
-    public System.Collections.Generic.ICollection<VoiceParticipant> Participants { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<VoiceParticipant> Participants { get; set; } = new System.Collections.ObjectModel.Collection<VoiceParticipant>();
 
     /// <summary>
     /// When the room was created
@@ -547,15 +637,11 @@ public partial class VoiceRoomResponse
     public bool IsPasswordProtected { get; set; } = default!;
 
     /// <summary>
-    /// Whether the room is currently broadcasting (Approved state)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isBroadcasting")]
-    public bool IsBroadcasting { get; set; } = default!;
-
-    /// <summary>
     /// Current broadcast consent state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("broadcastState")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BroadcastConsentState BroadcastState { get; set; } = default!;
 
@@ -589,6 +675,8 @@ public partial class JoinVoiceRoomResponse
     /// Codec to use
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceCodec Codec { get; set; } = default!;
 
@@ -596,7 +684,9 @@ public partial class JoinVoiceRoomResponse
     /// Current peers to connect to (P2P mode only)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("peers")]
-    public System.Collections.Generic.ICollection<VoicePeer> Peers { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<VoicePeer> Peers { get; set; } = new System.Collections.ObjectModel.Collection<VoicePeer>();
 
     /// <summary>
     /// RTP server URI (scaled mode only)
@@ -608,7 +698,9 @@ public partial class JoinVoiceRoomResponse
     /// STUN server URIs for NAT traversal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stunServers")]
-    public System.Collections.Generic.ICollection<string> StunServers { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> StunServers { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
     /// True if room is about to upgrade to scaled tier
@@ -617,15 +709,11 @@ public partial class JoinVoiceRoomResponse
     public bool TierUpgradePending { get; set; } = false;
 
     /// <summary>
-    /// Whether the room is currently broadcasting (Approved state)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isBroadcasting")]
-    public bool IsBroadcasting { get; set; } = default!;
-
-    /// <summary>
     /// Current broadcast consent state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("broadcastState")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BroadcastConsentState BroadcastState { get; set; } = default!;
 
@@ -642,12 +730,16 @@ public partial class BroadcastConsentStatus
     /// Voice room ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
     /// Current broadcast consent state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("state")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public BroadcastConsentState State { get; set; } = default!;
 
@@ -661,16 +753,20 @@ public partial class BroadcastConsentStatus
     /// Sessions that have consented so far
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("consentedSessionIds")]
-    public System.Collections.Generic.ICollection<System.Guid> ConsentedSessionIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> ConsentedSessionIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
     /// Sessions that haven't responded yet
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("pendingSessionIds")]
-    public System.Collections.Generic.ICollection<System.Guid> PendingSessionIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> PendingSessionIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
-    /// RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.
+    /// RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rtpAudioEndpoint")]
@@ -697,7 +793,7 @@ public partial class SipEndpoint
     /// ICE candidates for NAT traversal
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string> IceCandidates { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
 
     /// <summary>
     /// Public IP address if known

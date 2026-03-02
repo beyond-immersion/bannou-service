@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Asset Service Configuration
   description: |
@@ -16,8 +16,7 @@ x-service-configuration:
   properties:
     # Storage Provider Configuration
     StorageProvider:
-      type: string
-      enum: ["minio", "s3", "r2", "azure", "filesystem"]
+      $ref: 'asset-api.yaml#/components/schemas/StorageProvider'
       description: Storage backend type
       env: ASSET_STORAGE_PROVIDER
       default: minio
@@ -43,15 +42,17 @@ x-service-configuration:
 
     StorageAccessKey:
       type: string
-      description: Storage access key/username
+      nullable: true
+      description: Storage access key/username. Required for production deployments.
       env: ASSET_STORAGE_ACCESS_KEY
-      default: "minioadmin"
+      example: "minioadmin"
 
     StorageSecretKey:
       type: string
-      description: Storage secret key/password
+      nullable: true
+      description: Storage secret key/password. Required for production deployments.
       env: ASSET_STORAGE_SECRET_KEY
-      default: "minioadmin"
+      example: "minioadmin"
 
     StorageRegion:
       type: string
@@ -71,15 +72,32 @@ x-service-configuration:
       env: ASSET_STORAGE_USE_SSL
       default: false
 
+    # MinIO Startup Probe Configuration
+    MinioStartupMaxRetries:
+      type: integer
+      minimum: 1
+      description: Maximum number of retries when waiting for MinIO connectivity during startup
+      env: ASSET_MINIO_STARTUP_MAX_RETRIES
+      default: 30
+
+    MinioStartupRetryDelayMs:
+      type: integer
+      minimum: 100
+      description: Delay in milliseconds between MinIO startup connectivity retries
+      env: ASSET_MINIO_STARTUP_RETRY_DELAY_MS
+      default: 2000
+
     # Pre-signed URL Configuration
     TokenTtlSeconds:
       type: integer
+      minimum: 1
       description: TTL for pre-signed upload/download URLs in seconds
       env: ASSET_TOKEN_TTL_SECONDS
       default: 3600
 
     DownloadTokenTtlSeconds:
       type: integer
+      minimum: 1
       description: TTL for download URLs (can be shorter than upload)
       env: ASSET_DOWNLOAD_TOKEN_TTL_SECONDS
       default: 900
@@ -87,18 +105,21 @@ x-service-configuration:
     # Upload Limits
     MaxUploadSizeMb:
       type: integer
+      minimum: 1
       description: Maximum upload size in megabytes
       env: ASSET_MAX_UPLOAD_SIZE_MB
       default: 500
 
     MultipartThresholdMb:
       type: integer
+      minimum: 1
       description: File size threshold for multipart uploads in megabytes
       env: ASSET_MULTIPART_THRESHOLD_MB
       default: 50
 
     MultipartPartSizeMb:
       type: integer
+      minimum: 1
       description: Size of each part in multipart uploads in megabytes
       env: ASSET_MULTIPART_PART_SIZE_MB
       default: 16
@@ -106,12 +127,14 @@ x-service-configuration:
     # API Limits
     MaxResolutionAssets:
       type: integer
+      minimum: 1
       description: Maximum number of asset IDs allowed in a single bundle resolution request
       env: ASSET_MAX_RESOLUTION_ASSETS
       default: 500
 
     MaxBulkGetAssets:
       type: integer
+      minimum: 1
       description: Maximum number of asset IDs allowed in a single bulk get request
       env: ASSET_MAX_BULK_GET_ASSETS
       default: 100
@@ -130,8 +153,7 @@ x-service-configuration:
       default: asset-processor
 
     ProcessingMode:
-      type: string
-      enum: ["api", "worker", "both"]
+      $ref: 'asset-api.yaml#/components/schemas/ProcessingMode'
       description: Service mode
       env: ASSET_PROCESSING_MODE
       default: both
@@ -175,6 +197,13 @@ x-service-configuration:
       env: ASSET_PROCESSOR_HEARTBEAT_TIMEOUT_SECONDS
       default: 90
 
+    ProcessorNodeTtlSeconds:
+      type: integer
+      minimum: 1
+      description: TTL in seconds for processor node state entries in the state store. Should be larger than ProcessorHeartbeatTimeoutSeconds to allow for heartbeat delays.
+      env: ASSET_PROCESSOR_NODE_TTL_SECONDS
+      default: 180
+
     # FFmpeg Configuration
     FfmpegPath:
       type: string
@@ -191,14 +220,15 @@ x-service-configuration:
 
     # Audio Processing Configuration
     AudioOutputFormat:
-      type: string
-      enum: ["mp3", "opus", "aac"]
+      $ref: 'asset-api.yaml#/components/schemas/AudioOutputFormat'
       description: Default audio output format
       env: ASSET_AUDIO_OUTPUT_FORMAT
       default: mp3
 
     AudioBitrateKbps:
       type: integer
+      minimum: 32
+      maximum: 320
       description: Default audio bitrate in kbps
       env: ASSET_AUDIO_BITRATE_KBPS
       default: 192
@@ -209,6 +239,40 @@ x-service-configuration:
       env: ASSET_AUDIO_PRESERVE_LOSSLESS
       default: true
 
+    # Texture Processing Configuration
+    TextureMaxDimension:
+      type: integer
+      minimum: 1
+      description: Default maximum texture dimension in pixels when not specified in processing options
+      env: ASSET_TEXTURE_MAX_DIMENSION
+      default: 4096
+
+    TextureDefaultOutputFormat:
+      type: string
+      description: Default output format for texture processing when not specified in processing options
+      env: ASSET_TEXTURE_DEFAULT_OUTPUT_FORMAT
+      default: webp
+
+    # 3D Model Processing Configuration
+    ModelOptimizeMeshesDefault:
+      type: boolean
+      description: Default for whether to optimize meshes during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_OPTIMIZE_MESHES_DEFAULT
+      default: true
+
+    ModelGenerateLodsDefault:
+      type: boolean
+      description: Default for whether to generate LOD levels during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_GENERATE_LODS_DEFAULT
+      default: true
+
+    ModelLodLevels:
+      type: integer
+      minimum: 1
+      description: Default number of LOD levels to generate during 3D model processing when not specified in processing options
+      env: ASSET_MODEL_LOD_LEVELS
+      default: 3
+
     # Bundle Configuration
     BundleCompressionDefault:
       $ref: 'asset-api.yaml#/components/schemas/CompressionType'
@@ -218,16 +282,51 @@ x-service-configuration:
 
     ZipCacheTtlHours:
       type: integer
+      minimum: 1
       description: TTL for cached ZIP conversions in hours
       env: ASSET_ZIP_CACHE_TTL_HOURS
       default: 24
 
+    ZipCacheDirectory:
+      type: string
+      nullable: true
+      description: Directory for ZIP cache files. When null, uses the system temp directory with a 'bannou-zip-cache' subdirectory.
+      env: ASSET_ZIP_CACHE_DIRECTORY
+
     DeletedBundleRetentionDays:
       type: integer
-      nullable: true
+      minimum: 0
       description: Number of days to retain soft-deleted bundles before permanent removal. Set to 0 for immediate deletion.
       env: ASSET_DELETED_BUNDLE_RETENTION_DAYS
       default: 30
+
+    BundleCleanupIntervalMinutes:
+      type: integer
+      minimum: 1
+      description: Interval in minutes between bundle cleanup scans for permanently removing expired soft-deleted bundles.
+      env: ASSET_BUNDLE_CLEANUP_INTERVAL_MINUTES
+      default: 60
+
+    BundleCleanupStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      description: Delay in seconds before the bundle cleanup worker begins its first scan after startup, allowing other services to initialize.
+      env: ASSET_BUNDLE_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 30
+
+    ZipCacheCleanupIntervalMinutes:
+      type: integer
+      minimum: 1
+      description: Interval in minutes between ZIP cache cleanup scans for removing expired converted bundles from storage.
+      env: ASSET_ZIP_CACHE_CLEANUP_INTERVAL_MINUTES
+      default: 120
+
+    ZipCacheCleanupStartupDelaySeconds:
+      type: integer
+      minimum: 0
+      description: Delay in seconds before the ZIP cache cleanup worker begins its first scan after startup, allowing other services to initialize.
+      env: ASSET_ZIP_CACHE_CLEANUP_STARTUP_DELAY_SECONDS
+      default: 60
 
     # Webhook Configuration
     MinioWebhookSecret:
@@ -280,6 +379,13 @@ x-service-configuration:
       description: Polling interval in seconds when waiting for processor
       env: ASSET_PROCESSOR_AVAILABILITY_POLL_INTERVAL_SECONDS
       default: 2
+
+    ProcessorAcquisitionTimeoutSeconds:
+      type: integer
+      minimum: 1
+      description: Maximum seconds to wait when acquiring a processor from the pool for asset processing
+      env: ASSET_PROCESSOR_ACQUISITION_TIMEOUT_SECONDS
+      default: 600
 
     ProcessingMaxRetries:
       type: integer
@@ -474,3 +580,34 @@ x-service-configuration:
       description: Default TTL in hours for bundle cache entries
       default: 24
       env: ASSET_DEFAULT_BUNDLE_CACHE_TTL_HOURS
+
+    # === Query Limits ===
+    DefaultListLimit:
+      type: integer
+      minimum: 1
+      description: Default number of results per page when client does not specify a limit
+      default: 50
+      env: ASSET_DEFAULT_LIST_LIMIT
+
+    MaxQueryLimit:
+      type: integer
+      description: Maximum number of results per query/list request
+      default: 1000
+      env: ASSET_MAX_QUERY_LIMIT
+
+    # === Processor File Size Warning Thresholds ===
+    AudioLargeFileWarningThresholdMb:
+      type: integer
+      description: File size in MB above which audio processing logs a warning
+      default: 100
+      env: ASSET_AUDIO_LARGE_FILE_WARNING_THRESHOLD_MB
+    TextureLargeFileWarningThresholdMb:
+      type: integer
+      description: File size in MB above which texture processing logs a warning
+      default: 100
+      env: ASSET_TEXTURE_LARGE_FILE_WARNING_THRESHOLD_MB
+    ModelLargeFileWarningThresholdMb:
+      type: integer
+      description: File size in MB above which model processing logs a warning
+      default: 50
+      env: ASSET_MODEL_LARGE_FILE_WARNING_THRESHOLD_MB

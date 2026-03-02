@@ -40,6 +40,10 @@ x-variable-providers:
     service: Seed
     purpose: "Seed growth and capability data for ABML expressions (${seed.*})"
 
+  transit:
+    service: Transit
+    purpose: "Transit mode availability, journey state, and route data for ABML expressions (${transit.*})"
+
   world:
     service: Worldstate
     purpose: "Game time, calendar, and season data for ABML expressions (${world.*})"

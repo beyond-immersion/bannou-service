@@ -37,7 +37,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionStateChangedEvent : BaseClientEvent
+public partial class SessionStateChangedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -46,7 +46,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.state_changed";
+    public override string EventName { get; set; } = "game-session.state-changed";
 
     /// <summary>
     /// ID of the game session
@@ -93,7 +93,7 @@ public partial class SessionStateChangedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerJoinedEvent : BaseClientEvent
+public partial class PlayerJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -102,7 +102,7 @@ public partial class PlayerJoinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.player_joined";
+    public override string EventName { get; set; } = "game-session.player-joined";
 
     /// <summary>
     /// ID of the game session
@@ -139,7 +139,7 @@ public partial class PlayerJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerLeftEvent : BaseClientEvent
+public partial class PlayerLeftClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -148,7 +148,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.player_left";
+    public override string EventName { get; set; } = "game-session.player-left";
 
     /// <summary>
     /// ID of the game session
@@ -192,7 +192,7 @@ public partial class PlayerLeftEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PlayerKickedEvent : BaseClientEvent
+public partial class PlayerKickedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -201,7 +201,7 @@ public partial class PlayerKickedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.player_kicked";
+    public override string EventName { get; set; } = "game-session.player-kicked";
 
     /// <summary>
     /// ID of the game session
@@ -242,12 +242,12 @@ public partial class PlayerKickedEvent : BaseClientEvent
 }
 
 /// <summary>
-/// Sent to recipients when a chat message is posted in the session.
-/// <br/>Public messages go to all participants, whispers only to the target.
+/// Sent to players who claimed their reservation when a matchmade session
+/// <br/>is cancelled due to not enough players joining before reservation expiry.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionChatReceivedEvent : BaseClientEvent
+public partial class SessionCancelledClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -256,7 +256,42 @@ public partial class SessionChatReceivedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.chat_received";
+    public override string EventName { get; set; } = "game-session.session-cancelled";
+
+    /// <summary>
+    /// ID of the cancelled game session
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Reason for cancellation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Sent to recipients when a chat message is posted in the session.
+/// <br/>Public messages go to all participants, whispers only to the target.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class SessionChatReceivedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "game-session.chat-received";
 
     /// <summary>
     /// ID of the game session
@@ -319,7 +354,7 @@ public partial class SessionChatReceivedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GameStateUpdatedEvent : BaseClientEvent
+public partial class GameStateUpdatedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -328,7 +363,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.state_updated";
+    public override string EventName { get; set; } = "game-session.state-updated";
 
     /// <summary>
     /// ID of the game session
@@ -372,7 +407,7 @@ public partial class GameStateUpdatedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GameActionResultEvent : BaseClientEvent
+public partial class GameActionResultClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -381,7 +416,7 @@ public partial class GameActionResultEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "game_session.action_result";
+    public override string EventName { get; set; } = "game-session.action-result";
 
     /// <summary>
     /// ID of the game session

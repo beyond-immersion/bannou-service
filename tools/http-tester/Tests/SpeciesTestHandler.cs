@@ -159,7 +159,7 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             await speciesClient.DeprecateSpeciesAsync(new DeprecateSpeciesRequest
             {
                 SpeciesId = created.SpeciesId,
-                Reason = "Test deletion"
+                DeprecationReason = "Test deletion"
             });
 
             await speciesClient.DeleteSpeciesAsync(new DeleteSpeciesRequest { SpeciesId = created.SpeciesId });
@@ -424,7 +424,7 @@ public class SpeciesTestHandler : BaseHttpTestHandler
             await speciesClient.DeprecateSpeciesAsync(new DeprecateSpeciesRequest
             {
                 SpeciesId = species.SpeciesId,
-                Reason = "Lifecycle test cleanup"
+                DeprecationReason = "Lifecycle test cleanup"
             });
 
             // Step 8: Delete species

@@ -5,7 +5,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 /// Used by <see cref="AssetProcessingResult"/> and <see cref="AssetValidationResult"/>
 /// to provide structured error categorization.
 /// </summary>
-public enum ProcessingErrorCode
+public enum ProcessorError
 {
     /// <summary>
     /// Content type is not supported by this processor.
@@ -120,9 +120,10 @@ public sealed class AssetProcessingContext
     /// <summary>
     /// Owner of this processing operation. NOT a session ID.
     /// Contains either an accountId (UUID format) for user-initiated processing
-    /// or a service name for service-initiated processing.
+    /// or a service name for service-initiated processing. Null when the dispatched
+    /// event does not include owner information.
     /// </summary>
-    public required string Owner { get; init; }
+    public string? Owner { get; init; }
 
     /// <summary>
     /// Optional realm-specific context for the asset.
@@ -173,7 +174,7 @@ public sealed class AssetProcessingResult
     /// <summary>
     /// Error code if processing failed.
     /// </summary>
-    public ProcessingErrorCode? ErrorCode { get; init; }
+    public ProcessorError? ErrorCode { get; init; }
 
     /// <summary>
     /// Time taken to process the asset in milliseconds.
@@ -214,7 +215,7 @@ public sealed class AssetProcessingResult
     /// <param name="processingTimeMs">Time spent before failure in milliseconds.</param>
     public static AssetProcessingResult Failed(
         string errorMessage,
-        ProcessingErrorCode? errorCode = null,
+        ProcessorError? errorCode = null,
         long processingTimeMs = 0)
     {
         return new AssetProcessingResult
@@ -245,7 +246,7 @@ public sealed class AssetValidationResult
     /// <summary>
     /// Error code if validation failed.
     /// </summary>
-    public ProcessingErrorCode? ErrorCode { get; init; }
+    public ProcessorError? ErrorCode { get; init; }
 
     /// <summary>
     /// Validation warnings that don't prevent processing.
@@ -269,7 +270,7 @@ public sealed class AssetValidationResult
     /// </summary>
     /// <param name="errorMessage">Human-readable validation failure description.</param>
     /// <param name="errorCode">Structured error code for categorization.</param>
-    public static AssetValidationResult Invalid(string errorMessage, ProcessingErrorCode? errorCode = null)
+    public static AssetValidationResult Invalid(string errorMessage, ProcessorError? errorCode = null)
     {
         return new AssetValidationResult
         {

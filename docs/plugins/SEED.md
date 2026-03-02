@@ -39,6 +39,18 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `ownerType` | A (Entity Reference) | `EntityType` enum | All valid values are first-class Bannou entities (accounts, actors, realms, characters, relationships). Recently migrated to shared EntityType enum. |
+| `seedTypeCode` | B (Content Code) | Opaque string | Game-configurable seed type identifier. New types registered via API without schema changes (e.g., `guardian`, `dungeon_core`, `combat_archetype`). |
+| `growthPhase` | B (Content Code) | Opaque string | Phase labels defined per seed type in `GrowthPhases` configuration. Extensible per type without schema changes (e.g., `nascent`, `stirring`, `awakened`, `ancient`). Falls back to `"initial"` if no phases defined. |
+| `status` | C (System State) | `SeedStatus` enum | Finite lifecycle states: `active`, `dormant`, `archived`. System-owned transitions. |
+| `direction` (SeedPhaseChangedEvent) | C (System State) | `PhaseChangeDirection` enum | Binary system state: `progressed` or `regressed`. Determined by growth vs decay mechanics. |
+
+---
+
 ## State Storage
 
 **Store**: `seed-statestore` (Backend: MySQL)
@@ -96,9 +108,9 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | `seed.phase.changed` | `SeedPhaseChangedEvent` | Seed crossed a phase threshold during growth recording or decay; includes `Direction` (`Progressed` or `Regressed`) |
 | `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Capability manifest recomputed and cached; includes manifest version and unlocked count |
 | `seed.bond.formed` | `SeedBondFormedEvent` | Bond transitions to Active after all participants confirm |
-| `seed-type.created` | `SeedTypeCreatedEvent` | New seed type registered via `RegisterSeedTypeAsync` |
-| `seed-type.updated` | `SeedTypeUpdatedEvent` | Seed type updated, deprecated, or undeprecated; includes `ChangedFields` list |
-| `seed-type.deleted` | `SeedTypeDeletedEvent` | Seed type hard-deleted via `DeleteSeedTypeAsync` |
+| `seed.type.created` | `SeedTypeCreatedEvent` | New seed type registered via `RegisterSeedTypeAsync` |
+| `seed.type.updated` | `SeedTypeUpdatedEvent` | Seed type updated, deprecated, or undeprecated; includes `ChangedFields` list |
+| `seed.type.deleted` | `SeedTypeDeletedEvent` | Seed type hard-deleted via `DeleteSeedTypeAsync` |
 
 ### Consumed Events
 
@@ -175,17 +187,17 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ### Seed Type Definitions (7 endpoints)
 
-`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings. Publishes `seed-type.created` lifecycle event.
+`RegisterSeedTypeAsync` validates the game service exists via `IGameServiceClient`, checks for duplicate type codes per game service, and enforces `MaxSeedTypesPerGameService`. Type definitions include growth phase definitions (labels + thresholds), capability rules (domain-to-capability mapping with fidelity formulas), bond configuration (cardinality + permanence), allowed owner types, optional per-type decay overrides (`GrowthDecayEnabled`, `GrowthDecayRatePerDay`) that take precedence over global configuration, and a `SameOwnerGrowthMultiplier` (0.0-1.0, default 0.0) that controls cross-pollination of growth to same-type same-owner siblings. Publishes `seed.type.created` lifecycle event.
 
-`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change. Publishes `seed-type.updated` with `changedFields`.
+`UpdateSeedTypeAsync` acquires a distributed lock on the type key, supports partial updates (only non-null fields applied), and triggers recomputation of all existing seeds' phases and capability caches when growth phases or capability rules change. Publishes `seed.type.updated` with `changedFields`.
 
 `ListSeedTypesAsync` supports `includeDeprecated` filter (default: false) to control visibility of deprecated types.
 
-`DeprecateSeedTypeAsync` marks a seed type as deprecated, preventing creation of new seeds of this type. Existing seeds are unaffected. Publishes `seed-type.updated` with `changedFields = ["isDeprecated", "deprecatedAt", "deprecationReason"]`. No distributed lock needed (simple flag flip).
+`DeprecateSeedTypeAsync` marks a seed type as deprecated, preventing creation of new seeds of this type. Existing seeds are unaffected. Publishes `seed.type.updated` with `changedFields = ["isDeprecated", "deprecatedAt", "deprecationReason"]`. No distributed lock needed (simple flag flip).
 
-`UndeprecateSeedTypeAsync` restores a deprecated seed type to active status. Publishes `seed-type.updated` with the same changed fields.
+`UndeprecateSeedTypeAsync` restores a deprecated seed type to active status. Publishes `seed.type.updated` with the same changed fields.
 
-`DeleteSeedTypeAsync` hard-deletes a deprecated seed type. Requires deprecation first (`BadRequest` if not deprecated) and zero non-archived seeds (`Conflict` if any exist, checked via same-service JSON query). Acquires a distributed lock to prevent concurrent deletes. Publishes `seed-type.deleted`. `CreateSeedAsync` checks the `IsDeprecated` flag to prevent seed creation for deprecated types. No merge endpoint exists -- see [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
+`DeleteSeedTypeAsync` hard-deletes a deprecated seed type. Requires deprecation first (`BadRequest` if not deprecated) and zero non-archived seeds (`Conflict` if any exist, checked via same-service JSON query). Acquires a distributed lock to prevent concurrent deletes. Publishes `seed.type.deleted`. `CreateSeedAsync` checks the `IsDeprecated` flag to prevent seed creation for deprecated types. No merge endpoint exists -- see [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
 
 ### Bonds (5 endpoints)
 
@@ -263,8 +275,14 @@ Manifest version is monotonically incremented from the previous cached version.
 - **Seed type merge**: No `MergeSeedType` endpoint exists. Unlike species merge (simple foreign key reassignment), seed type merge is fundamentally complex due to incompatible growth domains, phase definitions, capability rules, bond constraints, and per-owner limits. See [#374](https://github.com/beyond-immersion/bannou-service/issues/374).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/374 -->
 
-- **Capability push notifications (L4 consumer responsibility)**: Currently capabilities are pull-only (consumer calls `GetCapabilityManifest`). Real-time UI updates when capabilities unlock should be implemented by L4 consumers (lib-gardener, dungeon plugin) subscribing to `seed.capability.updated` and forwarding to connected sessions via `IClientEventPublisher`. Adding client events directly to Seed (L2) would violate the service hierarchy by introducing session/WebSocket awareness into a foundational service.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/365 -->
+- **Cross-seed-type growth transfer matrix** ([#354](https://github.com/beyond-immersion/bannou-service/issues/354)): When an entity holds seeds of different types (e.g., `guardian` + `dungeon_master`), experience in one role could partially feed growth in the other via configurable `SeedGrowthTransferRule` mappings with domain-to-domain multipliers. Distinct from same-type cross-pollination (`SameOwnerGrowthMultiplier`, already implemented). Not blocking initial implementation -- add when gameplay testing validates which cross-type relationships feel right.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/354 -->
+
+- **Seed owner type promotion / re-parenting** ([#437](https://github.com/beyond-immersion/bannou-service/issues/437)): Mechanism to atomically change a seed's `ownerType` and `ownerId` (e.g., character-owned → account-owned) while preserving all growth data. Required for dungeon Pattern A (full split mastery) where the `dungeon_master` seed promotes from character to account ownership. Depends on #436 (household split mechanic). Recommended approach: direct `seed/reparent` endpoint with per-owner limit validation against the new owner.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/437 -->
+
+- **Client events for guardian spirit progression** ([#497](https://github.com/beyond-immersion/bannou-service/issues/497)): Push `SeedPhaseChanged`, `SeedCapabilityChanged`, `SeedGrowthUpdated`, `SeedBondFormed`, and `SeedActivated` client events via `IClientEventPublisher` using the Entity Session Registry (#426). Gardener registers `seed → session` bindings. The Entity Session Registry resolves the previous concern about "introducing session/WebSocket awareness into a foundational service" — Seed only needs `IEntitySessionRegistry` (L1 hard dependency) and `IClientEventPublisher` (L1), not session management knowledge. Supersedes the previous "L4 consumer responsibility" framing from [#365](https://github.com/beyond-immersion/bannou-service/issues/365). Also includes investigation items: verify whether `seed.updated` is emitted for the deactivated seed during `ActivateSeedAsync`, and consider adding `seed.bond.initiated` for pending bond state.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-26:https://github.com/beyond-immersion/bannou-service/issues/497 -->
 
 ---
 
@@ -297,10 +315,8 @@ Manifest version is monotonically incremented from the previous cached version.
 - **No cleanup of associated data on archive**: `ArchiveSeedAsync` sets the seed's status to `Archived` but does not clean up growth data (`growth:{seedId}`), capability cache (`cap:{seedId}`), or bond data (`bond:{bondId}`). Archived seeds retain all associated state indefinitely. A cleanup strategy is needed -- either immediate deletion, a background retention worker, or integration with lib-resource for compression.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/366 -->
 
-- **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied if the bond is active. The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/367 -->
-
 - **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed.
+<!-- AUDIT:BLOCKED:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/434 -->
 
 ---
 

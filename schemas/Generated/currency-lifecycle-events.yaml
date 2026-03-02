@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Currency Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for currency service.\nDO NOT EDIT - This file is completely overwritten
@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-definition.created when a currencydefinition is created
+      description: Published to currency.definition.created when a currencydefinition is created
       required:
       - eventName
       - eventId
@@ -27,8 +27,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-definition.created
-          description: 'Event type identifier: currency-definition.created'
+          default: currency.definition.created
+          description: 'Event type identifier: currency.definition.created'
         definitionId: &id001
           type: string
           format: uuid
@@ -62,7 +62,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-definition.updated when a currencydefinition is updated
+      description: Published to currency.definition.updated when a currencydefinition is updated
       required:
       - eventName
       - eventId
@@ -78,8 +78,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-definition.updated
-          description: 'Event type identifier: currency-definition.updated'
+          default: currency.definition.updated
+          description: 'Event type identifier: currency.definition.updated'
         definitionId: *id001
         code: *id002
         name: *id003
@@ -98,7 +98,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-definition.deleted when a currencydefinition is deleted
+      description: Published to currency.definition.deleted when a currencydefinition is deleted
       required:
       - eventName
       - eventId
@@ -113,8 +113,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-definition.deleted
-          description: 'Event type identifier: currency-definition.deleted'
+          default: currency.definition.deleted
+          description: 'Event type identifier: currency.definition.deleted'
         definitionId: *id001
         code: *id002
         name: *id003
@@ -132,7 +132,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-wallet.created when a currencywallet is created
+      description: Published to currency.wallet.created when a currencywallet is created
       required:
       - eventName
       - eventId
@@ -145,8 +145,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-wallet.created
-          description: 'Event type identifier: currency-wallet.created'
+          default: currency.wallet.created
+          description: 'Event type identifier: currency.wallet.created'
         walletId: &id009
           type: string
           format: uuid
@@ -156,7 +156,7 @@ components:
           format: uuid
           description: "Owner entity ID"
         ownerType: &id011
-          $ref: ../currency-api.yaml#/components/schemas/WalletOwnerType
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type"
         realmId: &id012
           type: string
@@ -175,7 +175,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-wallet.updated when a currencywallet is updated
+      description: Published to currency.wallet.updated when a currencywallet is updated
       required:
       - eventName
       - eventId
@@ -189,8 +189,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-wallet.updated
-          description: 'Event type identifier: currency-wallet.updated'
+          default: currency.wallet.updated
+          description: 'Event type identifier: currency.wallet.updated'
         walletId: *id009
         ownerId: *id010
         ownerType: *id011
@@ -207,7 +207,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to currency-wallet.deleted when a currencywallet is deleted
+      description: Published to currency.wallet.deleted when a currencywallet is deleted
       required:
       - eventName
       - eventId
@@ -220,8 +220,8 @@ components:
       properties:
         eventName:
           type: string
-          default: currency-wallet.deleted
-          description: 'Event type identifier: currency-wallet.deleted'
+          default: currency.wallet.deleted
+          description: 'Event type identifier: currency.wallet.deleted'
         walletId: *id009
         ownerId: *id010
         ownerType: *id011

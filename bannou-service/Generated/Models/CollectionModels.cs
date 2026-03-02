@@ -154,9 +154,9 @@ public partial class CreateEntryTemplateRequest
     /// Unique code within this collection type and game service
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    [System.ComponentModel.DataAnnotations.StringLength(128)]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string Code { get; set; } = default!;
 
     /// <summary>
@@ -179,8 +179,9 @@ public partial class CreateEntryTemplateRequest
     /// Human-readable display name for this entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -646,12 +647,13 @@ public partial class CreateCollectionRequest
     public System.Guid OwnerId { get; set; } = default!;
 
     /// <summary>
-    /// Entity type discriminator (e.g., account, character)
+    /// Entity type discriminator
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection to create
@@ -709,7 +711,8 @@ public partial class ListCollectionsRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by game service
@@ -765,7 +768,8 @@ public partial class CollectionResponse
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Type of collection
@@ -845,7 +849,8 @@ public partial class GrantEntryRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -859,8 +864,9 @@ public partial class GrantEntryRequest
     /// Entry template code to grant
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -875,7 +881,7 @@ public partial class GrantEntryRequest
     /// Optional initial metadata for the unlocked entry
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public EntryMetadata Metadata { get; set; } = default!;
+    public EntryMetadata? Metadata { get; set; } = default!;
 
 }
 
@@ -955,7 +961,8 @@ public partial class HasEntryRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -969,8 +976,9 @@ public partial class HasEntryRequest
     /// Entry template code to check
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -1135,10 +1143,10 @@ public partial class UnlockedEntryResponse
     public System.DateTimeOffset UnlockedAt { get; set; } = default!;
 
     /// <summary>
-    /// Entry instance metadata
+    /// Entry instance metadata (null if no metadata was provided at grant time)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public EntryMetadata Metadata { get; set; } = default!;
+    public EntryMetadata? Metadata { get; set; } = default!;
 
 }
 
@@ -1161,8 +1169,9 @@ public partial class UpdateEntryMetadataRequest
     /// Entry code to update metadata for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
     /// <summary>
@@ -1218,7 +1227,8 @@ public partial class GetCompletionStatsRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -1327,7 +1337,8 @@ public partial class SelectContentForAreaRequest
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string OwnerType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Game service scope
@@ -1349,8 +1360,9 @@ public partial class SelectContentForAreaRequest
     /// Area code to select content for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
 }
@@ -1423,8 +1435,9 @@ public partial class SetAreaContentConfigRequest
     /// Area code to configure (unique per game service and collection type)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
     /// <summary>
@@ -1456,8 +1469,9 @@ public partial class SetAreaContentConfigRequest
     /// Default entry code to use when no matches are found
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("defaultEntryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string DefaultEntryCode { get; set; } = default!;
 
 }
@@ -1473,8 +1487,9 @@ public partial class GetAreaContentConfigRequest
     /// Area code to look up
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("areaCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string AreaCode { get; set; } = default!;
 
     /// <summary>
@@ -1627,8 +1642,9 @@ public partial class AdvanceDiscoveryRequest
     /// Entry code to advance discovery for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("entryCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
     public string EntryCode { get; set; } = default!;
 
 }
@@ -1661,6 +1677,39 @@ public partial class AdvanceDiscoveryResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<string> Reveals { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
+/// Request to clean up all collections owned by a deleted character
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterRequest
+{
+
+    /// <summary>
+    /// The character ID whose collections should be cleaned up
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Result of character collection cleanup
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class CleanupByCharacterResponse
+{
+
+    /// <summary>
+    /// Number of collections deleted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deletedCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int DeletedCount { get; set; } = default!;
 
 }
 

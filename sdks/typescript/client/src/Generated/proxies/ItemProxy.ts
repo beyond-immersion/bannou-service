@@ -31,7 +31,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createItemTemplateAsync(
+  async itemCreateItemTemplateAsync(
     request: Schemas['CreateItemTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getItemTemplateAsync(
+  async itemGetItemTemplateAsync(
     request: Schemas['GetItemTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listItemTemplatesAsync(
+  async itemListItemTemplatesAsync(
     request: Schemas['ListItemTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateItemTemplateAsync(
+  async itemUpdateItemTemplateAsync(
     request: Schemas['UpdateItemTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createItemInstanceAsync(
+  async itemCreateItemInstanceAsync(
     request: Schemas['CreateItemInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getItemInstanceAsync(
+  async itemGetItemInstanceAsync(
     request: Schemas['GetItemInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async modifyItemInstanceAsync(
+  async itemModifyItemInstanceAsync(
     request: Schemas['ModifyItemInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -157,7 +157,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async bindItemInstanceAsync(
+  async itemBindItemInstanceAsync(
     request: Schemas['BindItemInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -175,7 +175,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async destroyItemInstanceAsync(
+  async itemDestroyItemInstanceAsync(
     request: Schemas['DestroyItemInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -193,7 +193,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async useItemAsync(
+  async itemUseItemAsync(
     request: Schemas['UseItemRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async useItemStepAsync(
+  async itemUseItemStepAsync(
     request: Schemas['UseItemStepRequest'],
     channel: number = 0,
     timeout?: number
@@ -233,7 +233,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listItemsByContainerAsync(
+  async itemListItemsByContainerAsync(
     request: Schemas['ListItemsByContainerRequest'],
     channel: number = 0,
     timeout?: number
@@ -251,7 +251,7 @@ export class ItemProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async batchGetItemInstancesAsync(
+  async itemBatchGetItemInstancesAsync(
     request: Schemas['BatchGetItemInstancesRequest'],
     channel: number = 0,
     timeout?: number

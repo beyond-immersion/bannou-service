@@ -1,0 +1,82 @@
+openapi: 3.0.4
+info:
+  title: Subscription Client Events API
+  description: |
+    Server-to-client push events for the Subscription service.
+    These events notify clients of real-time subscription status changes
+    delivered via WebSocket through account-session routing.
+
+    Subscriptions are account-scoped, so events route via the Entity Session
+    Registry's "account" entity type — the same mapping Connect maintains
+    natively for account→session resolution.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "subscription.{event_type}" naming convention.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Subscription Status Changed Client Event
+    # ============================================
+
+    SubscriptionStatusChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to all sessions for the affected account when a subscription
+        changes state. Uses action discriminator matching the service event
+        pattern: created, updated, cancelled, expired, renewed.
+        Especially important for background expiration (player didn't initiate)
+        and admin renewals.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - accountId
+        - serviceId
+        - serviceName
+        - action
+        - isActive
+      properties:
+        eventName:
+          type: string
+          default: "subscription.status-changed"
+          description: Fixed event type identifier
+        accountId:
+          type: string
+          format: uuid
+          description: Account whose subscription changed
+        serviceId:
+          type: string
+          format: uuid
+          description: Game service the subscription is for
+        serviceName:
+          type: string
+          description: Display name of the service for client-side notifications
+        action:
+          $ref: 'subscription-api.yaml#/components/schemas/SubscriptionAction'
+          description: Type of subscription change that occurred
+        isActive:
+          type: boolean
+          description: Whether the subscription is currently active after this change
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the subscription expires (null for cancelled/expired states or unlimited subscriptions)

@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Subscription;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -78,13 +79,13 @@ public partial class SubscriptionUpdatedEvent : BaseServiceEvent
     public string? DisplayName { get; set; } = default!;
 
     /// <summary>
-    /// What action triggered this event
+    /// The action that triggered this subscription change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("action")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SubscriptionUpdatedEventAction Action { get; set; } = default!;
+    public SubscriptionAction Action { get; set; } = default!;
 
     /// <summary>
     /// Whether the subscription is currently active
@@ -98,42 +99,7 @@ public partial class SubscriptionUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("expirationDate")]
     public System.DateTimeOffset? ExpirationDate { get; set; } = default!;
 
-    /// <summary>
-    /// Previous values for updated fields (for update action)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("previousValues")]
-    public object? PreviousValues { get; set; } = default!;
-
-    /// <summary>
-    /// New values for updated fields (for update action)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newValues")]
-    public object? NewValues { get; set; } = default!;
-
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SubscriptionUpdatedEventAction
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"created")]
-    Created = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"updated")]
-    Updated = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
-    Cancelled = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
-    Expired = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"renewed")]
-    Renewed = 4,
-
-}
-#pragma warning restore CS1591
 
 
 

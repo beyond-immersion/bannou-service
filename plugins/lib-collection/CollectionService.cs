@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Collection.ClientEvents;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
@@ -7,6 +8,7 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,8 +46,9 @@ public static class CollectionTopics
 /// <para>
 /// <b>SERVICE HIERARCHY (L2 Game Foundation):</b>
 /// <list type="bullet">
-///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0)</item>
+///   <item>Hard dependencies (constructor injection): IInventoryClient (L2), IItemClient (L2), IGameServiceClient (L2), IDistributedLockProvider (L0), IEntitySessionRegistry (L1)</item>
 ///   <item>DI listeners (ICollectionUnlockListener): Seed (L2) receives in-process unlock notifications for growth pipeline</item>
+///   <item>Client events: Pushes unlock/milestone/discovery events to owner WebSocket sessions via IEntitySessionRegistry</item>
 ///   <item>No owner-specific client dependencies: owner validation is caller-responsibility</item>
 /// </list>
 /// </para>
@@ -73,6 +76,9 @@ public partial class CollectionService : ICollectionService
     private readonly IItemClient _itemClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
     private readonly IReadOnlyList<ICollectionUnlockListener> _unlockListeners;
 
     #region State Store Accessors
@@ -93,6 +99,10 @@ public partial class CollectionService : ICollectionService
     private IStateStore<CollectionCacheModel> CollectionCache =>
         _collectionCache ??= _stateStoreFactory.GetStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
 
+    private ICacheableStateStore<CollectionCacheModel>? _cacheableCollectionCache;
+    private ICacheableStateStore<CollectionCacheModel> CacheableCollectionCache =>
+        _cacheableCollectionCache ??= _stateStoreFactory.GetCacheableStore<CollectionCacheModel>(StateStoreDefinitions.CollectionCache);
+
     #endregion
 
     #region Key Building
@@ -101,35 +111,31 @@ public partial class CollectionService : ICollectionService
     private static string BuildTemplateByCodeKey(Guid gameServiceId, string collectionType, string code) =>
         $"tpl:{gameServiceId}:{collectionType}:{code}";
     private static string BuildCollectionKey(Guid collectionId) => $"col:{collectionId}";
-    private static string BuildCollectionByOwnerKey(Guid ownerId, string ownerType, Guid gameServiceId, string collectionType) =>
-        $"col:{ownerId}:{ownerType}:{gameServiceId}:{collectionType}";
+    private static string BuildCollectionByOwnerKey(Guid ownerId, EntityType ownerType, Guid gameServiceId, string collectionType) =>
+        $"col:{ownerId}:{ownerType.ToString().ToLowerInvariant()}:{gameServiceId}:{collectionType}";
     private static string BuildAreaContentKey(Guid areaConfigId) => $"acc:{areaConfigId}";
     private static string BuildAreaContentByCodeKey(Guid gameServiceId, string collectionType, string areaCode) =>
         $"acc:{gameServiceId}:{collectionType}:{areaCode}";
     private static string BuildCacheKey(Guid collectionId) => $"cache:{collectionId}";
+    private static string BuildGlobalUnlocksSetKey(Guid gameServiceId, string collectionType) =>
+        $"global-unlocks:{gameServiceId}:{collectionType}";
 
     #endregion
 
     #region Owner Type Mapping
 
     /// <summary>
-    /// Maps an opaque owner type string to ContainerOwnerType for inventory operations.
-    /// Returns null if the owner type has no known mapping.
+    /// Maps an EntityType to ContainerOwnerType for inventory operations.
+    /// Returns null if the entity type has no known mapping.
     /// </summary>
-    private static ContainerOwnerType? MapToContainerOwnerType(string ownerType) => ownerType switch
+    private static ContainerOwnerType? MapToContainerOwnerType(EntityType ownerType) => ownerType switch
     {
-        "character" => ContainerOwnerType.Character,
-        "account" => ContainerOwnerType.Account,
-        "location" => ContainerOwnerType.Location,
-        "guild" => ContainerOwnerType.Guild,
+        EntityType.Character => ContainerOwnerType.Character,
+        EntityType.Account => ContainerOwnerType.Account,
+        EntityType.Location => ContainerOwnerType.Location,
+        EntityType.Guild => ContainerOwnerType.Guild,
         _ => null
     };
-
-    /// <summary>
-    /// Validates that an owner type string does not contain the key separator character.
-    /// </summary>
-    private static bool IsValidOwnerType(string ownerType)
-        => !string.IsNullOrWhiteSpace(ownerType) && !ownerType.Contains(':');
 
     #endregion
 
@@ -145,6 +151,7 @@ public partial class CollectionService : ICollectionService
         UnlockedEntryRecord entry,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.DispatchUnlockListeners");
         if (_unlockListeners.Count == 0) return;
 
         var notification = new CollectionUnlockNotification(
@@ -188,6 +195,8 @@ public partial class CollectionService : ICollectionService
     /// <param name="itemClient">Item client for entry item instances (L2 hard dependency).</param>
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
+    /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing (L0 hard dependency).</param>
     /// <param name="unlockListeners">DI-discovered listeners for entry unlock notifications (e.g., Seed growth pipeline).</param>
     public CollectionService(
         IMessageBus messageBus,
@@ -199,6 +208,9 @@ public partial class CollectionService : ICollectionService
         IItemClient itemClient,
         IGameServiceClient gameServiceClient,
         IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient,
+        ITelemetryProvider telemetryProvider,
+        IEntitySessionRegistry entitySessionRegistry,
         IEnumerable<ICollectionUnlockListener> unlockListeners)
     {
         _messageBus = messageBus;
@@ -209,6 +221,9 @@ public partial class CollectionService : ICollectionService
         _itemClient = itemClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
+        _telemetryProvider = telemetryProvider;
+        _entitySessionRegistry = entitySessionRegistry;
         _unlockListeners = unlockListeners.ToList();
 
         RegisterEventConsumers(eventConsumer);
@@ -333,6 +348,7 @@ public partial class CollectionService : ICollectionService
         CollectionInstanceModel collection,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.LoadOrRebuildCollectionCache");
         var cache = await CollectionCache.GetAsync(BuildCacheKey(collection.CollectionId), cancellationToken);
         if (cache != null)
         {
@@ -422,11 +438,12 @@ public partial class CollectionService : ICollectionService
     /// </summary>
     private async Task<CollectionInstanceModel> CreateCollectionInternalAsync(
         Guid ownerId,
-        string ownerType,
+        EntityType ownerType,
         string collectionType,
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.CreateCollectionInternal");
         var containerOwnerType = MapToContainerOwnerType(ownerType) ?? throw new InvalidOperationException(
                 $"Owner type '{ownerType}' cannot be mapped to a ContainerOwnerType for inventory operations");
         ContainerResponse containerResponse;
@@ -486,6 +503,13 @@ public partial class CollectionService : ICollectionService
             },
             cancellationToken: cancellationToken);
 
+        // Register reference with lib-resource for character-owned collections per FOUNDATION TENETS
+        if (ownerType == EntityType.Character)
+        {
+            await RegisterCharacterReferenceAsync(
+                instance.CollectionId.ToString(), ownerId, cancellationToken);
+        }
+
         _logger.LogInformation(
             "Created collection {CollectionId} of type {CollectionType} for {OwnerType} {OwnerId}",
             instance.CollectionId, collectionType, ownerType, ownerId);
@@ -506,6 +530,7 @@ public partial class CollectionService : ICollectionService
         int totalCount,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.CheckAndPublishMilestones");
         if (totalCount == 0) return;
 
         var percentage = (double)unlockedCount / totalCount * 100.0;
@@ -532,6 +557,20 @@ public partial class CollectionService : ICollectionService
                         CompletionPercentage = percentage
                     },
                     cancellationToken: cancellationToken);
+
+                // Push milestone client event to collection owner's WebSocket sessions
+                await _entitySessionRegistry.PublishToEntitySessionsAsync(
+                    collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
+                    new CollectionMilestoneReachedClientEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CollectionId = collection.CollectionId,
+                        CollectionType = collection.CollectionType,
+                        Milestone = $"{(int)milestone}%",
+                        CompletionPercentage = percentage
+                    },
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "Collection {CollectionId} reached {Milestone} milestone ({Percentage:F1}%)",
@@ -632,7 +671,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.created",
+            "collection.entry-template.created",
             new CollectionEntryTemplateCreatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -675,7 +714,7 @@ public partial class CollectionService : ICollectionService
         ListEntryTemplatesRequest body,
         CancellationToken cancellationToken)
     {
-        var pageSize = _configuration.DefaultPageSize;
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
 
         var results = await EntryTemplateStore.QueryAsync(
             t => t.CollectionType == body.CollectionType && t.GameServiceId == body.GameServiceId,
@@ -789,6 +828,18 @@ public partial class CollectionService : ICollectionService
             template.Composer = body.Composer;
             changedFields.Add("composer");
         }
+        if (body.HideWhenLocked != null)
+        {
+            template.HideWhenLocked = body.HideWhenLocked.Value;
+            changedFields.Add("hideWhenLocked");
+        }
+        if (body.DiscoveryLevels != null)
+        {
+            template.DiscoveryLevels = body.DiscoveryLevels
+                .Select(dl => new DiscoveryLevelEntry { Level = dl.Level, Reveals = dl.Reveals.ToList() })
+                .ToList();
+            changedFields.Add("discoveryLevels");
+        }
 
         if (changedFields.Count == 0)
         {
@@ -808,7 +859,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.updated",
+            "collection.entry-template.updated",
             new CollectionEntryTemplateUpdatedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -884,7 +935,7 @@ public partial class CollectionService : ICollectionService
             cancellationToken);
 
         await _messageBus.TryPublishAsync(
-            "collection-entry-template.deleted",
+            "collection.entry-template.deleted",
             new CollectionEntryTemplateDeletedEvent
             {
                 EntryTemplateId = template.EntryTemplateId,
@@ -993,7 +1044,7 @@ public partial class CollectionService : ICollectionService
                 cancellationToken: cancellationToken);
 
             await _messageBus.TryPublishAsync(
-                "collection-entry-template.created",
+                "collection.entry-template.created",
                 new CollectionEntryTemplateCreatedEvent
                 {
                     EntryTemplateId = template.EntryTemplateId,
@@ -1033,12 +1084,6 @@ public partial class CollectionService : ICollectionService
         _logger.LogInformation(
             "Creating collection of type {CollectionType} for {OwnerType} {OwnerId} in game {GameServiceId}",
             body.CollectionType, body.OwnerType, body.OwnerId, body.GameServiceId);
-
-        if (!IsValidOwnerType(body.OwnerType))
-        {
-            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
 
         if (MapToContainerOwnerType(body.OwnerType) == null)
         {
@@ -1203,6 +1248,13 @@ public partial class CollectionService : ICollectionService
             },
             cancellationToken: cancellationToken);
 
+        // Unregister reference with lib-resource for character-owned collections per FOUNDATION TENETS
+        if (collection.OwnerType == EntityType.Character)
+        {
+            await UnregisterCharacterReferenceAsync(
+                collection.CollectionId.ToString(), collection.OwnerId, cancellationToken);
+        }
+
         _logger.LogInformation("Deleted collection {CollectionId}", collection.CollectionId);
 
         return (StatusCodes.OK, MapCollectionToResponse(collection, 0));
@@ -1220,12 +1272,6 @@ public partial class CollectionService : ICollectionService
         _logger.LogInformation(
             "Granting entry {EntryCode} of type {CollectionType} to {OwnerType} {OwnerId}",
             body.EntryCode, body.CollectionType, body.OwnerType, body.OwnerId);
-
-        if (!IsValidOwnerType(body.OwnerType))
-        {
-            _logger.LogWarning("Invalid owner type {OwnerType}", body.OwnerType);
-            return (StatusCodes.BadRequest, null);
-        }
 
         if (MapToContainerOwnerType(body.OwnerType) == null)
         {
@@ -1267,6 +1313,19 @@ public partial class CollectionService : ICollectionService
 
         if (collection == null)
         {
+            // Check max collections per owner before auto-creating
+            var ownerCollections = await CollectionStore.QueryAsync(
+                c => c.OwnerId == body.OwnerId && c.OwnerType == body.OwnerType,
+                cancellationToken: cancellationToken);
+
+            if (ownerCollections.Count >= _configuration.MaxCollectionsPerOwner)
+            {
+                _logger.LogWarning(
+                    "Owner {OwnerType} {OwnerId} has reached max collections limit of {Max} during grant auto-create",
+                    body.OwnerType, body.OwnerId, _configuration.MaxCollectionsPerOwner);
+                return (StatusCodes.Conflict, null);
+            }
+
             // Auto-create collection (and inventory container)
             _logger.LogInformation(
                 "Auto-creating collection of type {CollectionType} for {OwnerType} {OwnerId}",
@@ -1432,6 +1491,12 @@ public partial class CollectionService : ICollectionService
             }
         }
 
+        // Track global first-unlock via atomic Redis SADD (returns true if newly added)
+        var isFirstGlobal = await CacheableCollectionCache.AddToSetAsync(
+            BuildGlobalUnlocksSetKey(collection.GameServiceId, collection.CollectionType),
+            template.Code,
+            cancellationToken: cancellationToken);
+
         // Publish entry-unlocked event (for external/distributed consumers)
         await _messageBus.TryPublishAsync(
             CollectionTopics.EntryUnlocked,
@@ -1448,9 +1513,25 @@ public partial class CollectionService : ICollectionService
                 DisplayName = template.DisplayName,
                 Category = template.Category,
                 Tags = template.Tags,
-                IsFirstGlobal = false // Would require global tracking to determine
+                IsFirstGlobal = isFirstGlobal
             },
             cancellationToken: cancellationToken);
+
+        // Push client event to collection owner's WebSocket sessions
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
+            new CollectionEntryUnlockedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                CollectionId = collection.CollectionId,
+                EntryCode = template.Code,
+                DisplayName = template.DisplayName,
+                Category = template.Category,
+                CollectionType = collection.CollectionType,
+                IsFirstGlobal = isFirstGlobal
+            },
+            cancellationToken);
 
         // Dispatch to in-process unlock listeners (e.g., Seed growth pipeline)
         await DispatchUnlockListenersAsync(collection, template, newEntry, cancellationToken);
@@ -1871,6 +1952,7 @@ public partial class CollectionService : ICollectionService
         string collectionType,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.collection", "CollectionService.BuildDefaultContentResponse");
         var defaultTemplate = await EntryTemplateStore.GetAsync(
             BuildTemplateByCodeKey(gameServiceId, collectionType, areaConfig.DefaultEntryCode),
             cancellationToken);
@@ -1938,10 +2020,21 @@ public partial class CollectionService : ICollectionService
             cancellationToken);
 
         AreaContentConfigModel config;
+        var isUpdate = existing != null;
+        var changedFields = new List<string>();
+
         if (existing != null)
         {
-            existing.Themes = body.Themes.ToList();
-            existing.DefaultEntryCode = body.DefaultEntryCode;
+            if (!existing.Themes.SequenceEqual(body.Themes))
+            {
+                existing.Themes = body.Themes.ToList();
+                changedFields.Add("themes");
+            }
+            if (existing.DefaultEntryCode != body.DefaultEntryCode)
+            {
+                existing.DefaultEntryCode = body.DefaultEntryCode;
+                changedFields.Add("defaultEntryCode");
+            }
             existing.UpdatedAt = now;
             config = existing;
         }
@@ -1968,6 +2061,41 @@ public partial class CollectionService : ICollectionService
             BuildAreaContentByCodeKey(config.GameServiceId, config.CollectionType, config.AreaCode),
             config,
             cancellationToken: cancellationToken);
+
+        // Publish lifecycle event per FOUNDATION TENETS
+        if (isUpdate)
+        {
+            await _messageBus.TryPublishAsync(
+                "collection.area-content-config.updated",
+                new CollectionAreaContentConfigUpdatedEvent
+                {
+                    AreaConfigId = config.AreaConfigId,
+                    AreaCode = config.AreaCode,
+                    CollectionType = config.CollectionType,
+                    GameServiceId = config.GameServiceId,
+                    DefaultEntryCode = config.DefaultEntryCode,
+                    CreatedAt = config.CreatedAt,
+                    UpdatedAt = config.UpdatedAt,
+                    ChangedFields = changedFields
+                },
+                cancellationToken: cancellationToken);
+        }
+        else
+        {
+            await _messageBus.TryPublishAsync(
+                "collection.area-content-config.created",
+                new CollectionAreaContentConfigCreatedEvent
+                {
+                    AreaConfigId = config.AreaConfigId,
+                    AreaCode = config.AreaCode,
+                    CollectionType = config.CollectionType,
+                    GameServiceId = config.GameServiceId,
+                    DefaultEntryCode = config.DefaultEntryCode,
+                    CreatedAt = config.CreatedAt,
+                    UpdatedAt = config.UpdatedAt
+                },
+                cancellationToken: cancellationToken);
+        }
 
         _logger.LogInformation(
             "Set area content config {AreaConfigId} for area {AreaCode} type {CollectionType}",
@@ -2130,6 +2258,20 @@ public partial class CollectionService : ICollectionService
             },
             cancellationToken: cancellationToken);
 
+        // Push discovery client event to collection owner's WebSocket sessions
+        await _entitySessionRegistry.PublishToEntitySessionsAsync(
+            collection.OwnerType.ToString().ToLowerInvariant(), collection.OwnerId,
+            new CollectionDiscoveryAdvancedClientEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CollectionId = collection.CollectionId,
+                EntryCode = body.EntryCode,
+                NewDiscoveryLevel = nextLevel,
+                RevealedKeys = nextLevelDef.Reveals.ToList()
+            },
+            cancellationToken);
+
         _logger.LogInformation(
             "Advanced discovery for entry {EntryCode} in collection {CollectionId} to level {NewLevel}",
             body.EntryCode, body.CollectionId, nextLevel);
@@ -2139,6 +2281,28 @@ public partial class CollectionService : ICollectionService
             EntryCode = body.EntryCode,
             NewLevel = nextLevel,
             Reveals = nextLevelDef.Reveals.ToList()
+        });
+    }
+
+    #endregion
+
+    #region Resource Cleanup
+
+    /// <summary>
+    /// Cleans up all collections owned by a deleted character.
+    /// Called by lib-resource cleanup coordination during cascading resource cleanup.
+    /// </summary>
+    public async Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(
+        CleanupByCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Cleaning up collections for deleted character {CharacterId}", body.CharacterId);
+
+        var deletedCount = await CleanupCollectionsForOwnerAsync(body.CharacterId, EntityType.Character, cancellationToken);
+
+        return (StatusCodes.OK, new CleanupByCharacterResponse
+        {
+            DeletedCount = deletedCount
         });
     }
 

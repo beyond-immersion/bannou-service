@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Asset Client Events API
   description: |
@@ -31,7 +31,7 @@ components:
     # Upload Events
     # ============================================
 
-    AssetUploadCompleteEvent:
+    AssetUploadCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -72,7 +72,9 @@ components:
           nullable: true
           description: File size in bytes
         errorCode:
-          $ref: '#/components/schemas/UploadErrorCode'
+          allOf:
+            - $ref: '#/components/schemas/UploadErrorCode'
+          nullable: true
           description: Error code indicating the type of upload failure
         errorMessage:
           type: string
@@ -83,7 +85,7 @@ components:
     # Processing Events
     # ============================================
 
-    AssetProcessingCompleteEvent:
+    AssetProcessingCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -110,23 +112,27 @@ components:
           type: boolean
           description: Whether processing completed successfully
         processingType:
-          $ref: '#/components/schemas/ProcessingType'
+          allOf:
+            - $ref: '#/components/schemas/ProcessingType'
+          nullable: true
           description: Type of processing that was performed on the asset
         outputs:
           type: array
           nullable: true
           description: Generated derivative assets (mipmaps, LODs, etc.)
           items:
-            $ref: '#/components/schemas/ProcessingOutput'
+            $ref: 'asset-api.yaml#/components/schemas/ProcessingOutput'
         errorCode:
-          $ref: '#/components/schemas/ProcessingErrorCode'
+          allOf:
+            - $ref: '#/components/schemas/ProcessingErrorCode'
+          nullable: true
           description: Error code indicating the type of processing failure
         errorMessage:
           type: string
           nullable: true
           description: Human-readable error description
 
-    AssetProcessingFailedEvent:
+    AssetProcessingFailedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -139,7 +145,6 @@ components:
         - eventId
         - timestamp
         - assetId
-        - errorCode
       properties:
         eventName:
           type: string
@@ -149,7 +154,9 @@ components:
           type: string
           description: ID of the asset that failed processing
         errorCode:
-          $ref: '#/components/schemas/ProcessingErrorCode'
+          allOf:
+            - $ref: '#/components/schemas/ProcessingErrorCode'
+          nullable: true
           description: Error code indicating the type of processing failure
         errorMessage:
           type: string
@@ -168,7 +175,7 @@ components:
     # Bundle Events
     # ============================================
 
-    BundleValidationCompleteEvent:
+    BundleValidationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -214,7 +221,7 @@ components:
           items:
             $ref: '#/components/schemas/ValidationWarning'
 
-    BundleValidationFailedEvent:
+    BundleValidationFailedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -243,7 +250,7 @@ components:
           items:
             $ref: '#/components/schemas/ValidationError'
 
-    BundleCreationCompleteEvent:
+    BundleCreationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -291,7 +298,7 @@ components:
           nullable: true
           description: Human-readable error description
 
-    MetabundleCreationCompleteEvent:
+    MetabundleCreationCompleteClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -324,7 +331,8 @@ components:
           type: boolean
           description: Whether creation completed successfully
         status:
-          $ref: '#/components/schemas/MetabundleJobStatus'
+          $ref: 'asset-api.yaml#/components/schemas/BundleStatus'
+          nullable: true
           description: Final job status
         downloadUrl:
           type: string
@@ -350,7 +358,9 @@ components:
           nullable: true
           description: Total processing time in milliseconds
         errorCode:
-          $ref: '#/components/schemas/MetabundleErrorCode'
+          allOf:
+            - $ref: '#/components/schemas/MetabundleErrorCode'
+          nullable: true
           description: Error code on failure
         errorMessage:
           type: string
@@ -361,7 +371,7 @@ components:
     # Asset Ready Event
     # ============================================
 
-    AssetReadyEvent:
+    AssetReadyClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -411,58 +421,25 @@ components:
     # ============================================
 
     UploadErrorCode:
-      type: string
+      allOf:
+        - $ref: 'asset-api.yaml#/components/schemas/UploadErrorCode'
       nullable: true
-      enum:
-        - VALIDATION_FAILED
-        - HASH_MISMATCH
-        - SIZE_EXCEEDED
-        - STORAGE_ERROR
-        - TIMEOUT
       description: Error codes for upload failures
 
     ProcessingType:
-      type: string
+      allOf:
+        - $ref: 'asset-api.yaml#/components/schemas/ProcessingType'
       nullable: true
-      enum:
-        - mipmaps
-        - lod_generation
-        - transcode
-        - compression
-        - validation
-        - behavior_compile
       description: Type of processing performed
 
     ProcessingErrorCode:
-      type: string
+      allOf:
+        - $ref: 'asset-api.yaml#/components/schemas/ProcessingErrorCode'
       nullable: true
-      enum:
-        - PROCESSING_FAILED
-        - INVALID_FORMAT
-        - RESOURCE_EXHAUSTED
-        - TIMEOUT
-        - PROCESSOR_UNAVAILABLE
       description: Error codes for processing failures
 
-    ProcessingOutput:
-      type: object
-      additionalProperties: false
-      description: Information about a generated derivative asset
-      required:  # NRT: Required event properties
-        - outputType
-        - assetId
-      properties:
-        outputType:
-          type: string
-          description: Type of output (e.g., "mipmap_level_1", "lod_2")
-        assetId:
-          type: string
-          description: ID of the generated asset
-        size:
-          type: integer
-          format: int64
-          nullable: true  # NRT: Optional property MUST be nullable
-          description: Size of the generated asset
+    # ProcessingOutput is canonical in asset-api.yaml
+    # Referenced via $ref from event schemas
 
     ValidationWarning:
       type: object
@@ -503,47 +480,11 @@ components:
           description: Path within bundle where error occurred
 
     ValidationErrorCode:
-      type: string
-      enum:
-        - INVALID_ARCHIVE
-        - MISSING_MANIFEST
-        - INVALID_MANIFEST
-        - HASH_MISMATCH
-        - PATH_TRAVERSAL
-        - SIZE_EXCEEDED
-        - DUPLICATE_ASSET_ID
-        - MISSING_DEPENDENCY
+      $ref: 'asset-api.yaml#/components/schemas/ValidationErrorCode'
       description: Error codes for bundle validation failures
 
-    MetabundleJobStatus:
-      type: string
-      nullable: true
-      enum:
-        - queued
-        - processing
-        - ready
-        - failed
-        - cancelled
-      description: |
-        Status of an async metabundle creation job.
-        - queued: Job accepted, waiting for processing resources
-        - processing: Job is actively being processed
-        - ready: Job completed successfully
-        - failed: Job failed (see errorCode/errorMessage)
-        - cancelled: Job was cancelled before completion
-
     MetabundleErrorCode:
-      type: string
+      allOf:
+        - $ref: 'asset-api.yaml#/components/schemas/MetabundleErrorCode'
       nullable: true
-      enum:
-        - SOURCE_BUNDLE_NOT_FOUND
-        - SOURCE_BUNDLE_NOT_READY
-        - STANDALONE_ASSET_NOT_FOUND
-        - STANDALONE_ASSET_NOT_READY
-        - REALM_MISMATCH
-        - ASSET_CONFLICT
-        - STORAGE_ERROR
-        - TIMEOUT
-        - CANCELLED
-        - INTERNAL_ERROR
       description: Error codes for metabundle creation failures

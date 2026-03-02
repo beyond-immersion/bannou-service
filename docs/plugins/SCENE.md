@@ -71,11 +71,11 @@ Hierarchical composition storage (L4 GameFeatures) for game worlds. Stores scene
 | `scene.deleted` | `SceneDeletedEvent` | Scene soft-deleted |
 | `scene.instantiated` | `SceneInstantiatedEvent` | Scene declared instantiated in game world |
 | `scene.destroyed` | `SceneDestroyedEvent` | Scene instance declared removed from game world |
-| `scene.checked_out` | `SceneCheckedOutEvent` | Scene locked for editing |
+| `scene.checked-out` | `SceneCheckedOutEvent` | Scene locked for editing |
 | `scene.committed` | `SceneCommittedEvent` | Checkout changes committed, version bumped |
 | `scene.checkout.discarded` | `SceneCheckoutDiscardedEvent` | Checkout released without saving |
 | `scene.checkout.expired` | `SceneCheckoutExpiredEvent` | Checkout lock expired due to TTL (defined but not currently triggered by background process) |
-| `scene.validation_rules.updated` | `SceneValidationRulesUpdatedEvent` | Validation rules registered/updated for gameId+sceneType |
+| `scene.validation-rules.updated` | `SceneValidationRulesUpdatedEvent` | Validation rules registered/updated for gameId+sceneType |
 | `scene.reference.broken` | `SceneReferenceBrokenEvent` | Referenced scene became unavailable (defined but not currently triggered) |
 
 ### Consumed Events
@@ -159,7 +159,7 @@ Extracted from `SceneService` for testability. Handles:
 
 ### Versioning Operations (5 endpoints)
 
-- **CheckoutScene** (`/scene/checkout`): Gets index with ETag for optimistic concurrency. If already checked out, checks if existing checkout is expired (allows takeover if expired). Loads scene from content store. Creates `CheckoutState` with random token (Guid "N" format), editor ID, expiry (now + ttlMinutes), extension count 0. Stores with TTL = ttlMinutes + 5 minutes (buffer). Updates index `IsCheckedOut=true` with ETag concurrency check. Publishes `scene.checked_out`. Returns token, scene, and expiresAt.
+- **CheckoutScene** (`/scene/checkout`): Gets index with ETag for optimistic concurrency. If already checked out, checks if existing checkout is expired (allows takeover if expired). Loads scene from content store. Creates `CheckoutState` with random token (Guid "N" format), editor ID, expiry (now + ttlMinutes), extension count 0. Stores with TTL = ttlMinutes + 5 minutes (buffer). Updates index `IsCheckedOut=true` with ETag concurrency check. Publishes `scene.checked-out`. Returns token, scene, and expiresAt.
 
 - **CommitScene** (`/scene/commit`): Validates checkout token (403 Forbidden on mismatch). Checks expiry (409 Conflict if expired). Gets index with ETag. Delegates scene update to `UpdateSceneAsync()` (which handles validation, version increment, and storage). Deletes checkout state. Clears `IsCheckedOut` on index with ETag concurrency. Publishes `scene.committed` with new version, previous version, committer, changes summary, and node count.
 
@@ -171,7 +171,7 @@ Extracted from `SceneService` for testability. Handles:
 
 ### Validation Operations (2 endpoints)
 
-- **RegisterValidationRules** (`/scene/register-validation-rules`): Stores rule list at `scene:validation:{gameId}:{sceneType}`. Replaces any existing rules for the combination. Publishes `scene.validation_rules.updated` with game ID, scene type, and rule count. Returns registered=true and rule count. Supported rule types: require_tag, forbid_tag, require_node_type, require_annotation (not yet implemented), custom_expression (not yet implemented).
+- **RegisterValidationRules** (`/scene/register-validation-rules`): Stores rule list at `scene:validation:{gameId}:{sceneType}`. Replaces any existing rules for the combination. Publishes `scene.validation-rules.updated` with game ID, scene type, and rule count. Returns registered=true and rule count. Supported rule types: require_tag, forbid_tag, require_node_type, require_annotation (not yet implemented), custom_expression (not yet implemented).
 
 - **GetValidationRules** (`/scene/get-validation-rules`): Simple lookup from state store. Returns empty list if no rules registered for the gameId+sceneType combination.
 

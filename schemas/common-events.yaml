@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Common Events API
   description: |
@@ -77,8 +77,7 @@ components:
           type: string
           description: Bannou app-id for this instance (e.g., "bannou", "jobberwocky")
         status:
-          type: string
-          enum: [healthy, degraded, overloaded, shutting_down, unavailable]
+          $ref: 'common-api.yaml#/components/schemas/InstanceHealthStatus'
           description: Overall instance health status (worst of all services + app-level issues)
         services:
           type: array
@@ -119,8 +118,7 @@ components:
           type: string
           description: Service name (e.g., "auth", "account", "behavior")
         status:
-          type: string
-          enum: [healthy, degraded, unavailable]
+          $ref: 'common-api.yaml#/components/schemas/ServiceHealthStatus'
           description: Individual service health status
         version:
           type: string
@@ -467,7 +465,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "character.state_update"
+          default: "character.state-update"
           description: Fixed event type identifier
         characterId:
           type: string

@@ -62,28 +62,32 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `AssetProcessingCompletedEvent` | Custom | `asset-processing-completed` | Event published when asset processing completes |
+| `AssetProcessingJobDispatchedEvent` | Custom | `asset-processing-job-dispatched` | Event published when an asset processing job is di... |
 | `AssetProcessingQueuedEvent` | Custom | `asset-processing-queued` | Event published when an asset is queued for proces... |
+| `AssetProcessingRetryEvent` | Custom | `asset-processing-retry` | Event published when asset processing needs to be ... |
 | `AssetReadyEvent` | Custom | `asset-ready` | Event published when an asset is fully processed a... |
 | `AssetUploadCompletedEvent` | Custom | `asset-upload-completed` | Event published when an upload is completed and fi... |
 | `AssetUploadRequestedEvent` | Custom | `asset-upload-requested` | Event published when a new upload is initiated via... |
 | `BundleCreatedEvent` | Lifecycle (Created) | `bundle.created` | Event published when a bundle is successfully crea... |
+| `BundleCreationJobQueuedEvent` | Custom | `bundle-creation-job-queued` | Event published when a bundle creation job is queu... |
 | `BundleDeletedEvent` | Lifecycle (Deleted) | `bundle.deleted` | Event published when a bundle is soft-deleted or p... |
 | `BundleRestoredEvent` | Custom | `bundle-restored` | Event published when a soft-deleted bundle is rest... |
 | `BundleUpdatedEvent` | Lifecycle (Updated) | `bundle.updated` | Event published when bundle metadata is updated |
 | `MetabundleCreatedEvent` | Lifecycle (Created) | `metabundle.created` | Event published when a metabundle is successfully ... |
+| `MetabundleJobQueuedEvent` | Custom | `metabundle-job-queued` | Event published when a metabundle creation job is ... |
 
 ### Asset (client)
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `AssetProcessingCompleteEvent` | Custom | `asset-processing-complete` | Sent when asset processing (e.g., texture mipmaps,... |
-| `AssetProcessingFailedEvent` | Custom | `asset-processing-failed` | Sent when asset processing fails. Includes retry i... |
-| `AssetReadyEvent` | Custom | `asset-ready` | Final notification that an asset is ready for use. |
-| `AssetUploadCompleteEvent` | Custom | `asset-upload-complete` | Sent when an asset upload has completed (success o... |
-| `BundleCreationCompleteEvent` | Custom | `bundle-creation-complete` | Sent when bundle creation from asset_ids completes... |
-| `BundleValidationCompleteEvent` | Custom | `bundle-validation-complete` | Sent when a bundle upload has been validated and p... |
-| `BundleValidationFailedEvent` | Custom | `bundle-validation-failed` | Sent when bundle validation fails. Includes detail... |
-| `MetabundleCreationCompleteEvent` | Custom | `metabundle-creation-complete` | Sent when async metabundle creation job completes ... |
+| `AssetProcessingCompleteClientEvent` | Custom | `asset-processing-complete-client` | Sent when asset processing (e.g., texture mipmaps,... |
+| `AssetProcessingFailedClientEvent` | Custom | `asset-processing-failed-client` | Sent when asset processing fails. Includes retry i... |
+| `AssetReadyClientEvent` | Custom | `asset-ready-client` | Final notification that an asset is ready for use. |
+| `AssetUploadCompleteClientEvent` | Custom | `asset-upload-complete-client` | Sent when an asset upload has completed (success o... |
+| `BundleCreationCompleteClientEvent` | Custom | `bundle-creation-complete-client` | Sent when bundle creation from asset_ids completes... |
+| `BundleValidationCompleteClientEvent` | Custom | `bundle-validation-complete-client` | Sent when a bundle upload has been validated and p... |
+| `BundleValidationFailedClientEvent` | Custom | `bundle-validation-failed-client` | Sent when bundle validation fails. Includes detail... |
+| `MetabundleCreationCompleteClientEvent` | Custom | `metabundle-creation-complete-client` | Sent when async metabundle creation job completes ... |
 
 ### Auth
 
@@ -102,6 +106,18 @@ This document lists all events defined in Bannou's event schemas.
 | `SessionInvalidatedEvent` | Custom | `session.invalidated` | Event published when sessions are invalidated (log... |
 | `SessionUpdatedEvent` | Lifecycle (Updated) | `session.updated` | Published when a session's roles or authorizations... |
 
+### Auth (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `AuthDeviceLoginClientEvent` | Custom | `auth-device-login-client` | Sent to all existing sessions when a new login occ... |
+| `AuthExternalAccountLinkedClientEvent` | Custom | `auth-external-account-linked-client` | Sent to all sessions when a new OAuth provider is ... |
+| `AuthMfaDisabledClientEvent` | Custom | `auth-mfa-disabled-client` | Sent to all sessions when MFA is disabled on the a... |
+| `AuthMfaEnabledClientEvent` | Custom | `auth-mfa-enabled-client` | Sent to all sessions when MFA is enabled on the ac... |
+| `AuthPasswordChangedClientEvent` | Custom | `auth-password-changed-client` | Sent to all sessions when the account's password i... |
+| `AuthSessionTerminatedClientEvent` | Custom | `auth-session-terminated-client` | Sent to remaining sessions when a session is remot... |
+| `AuthSuspiciousLoginClientEvent` | Custom | `auth-suspicious-login-client` | Sent to all sessions when a failed login attempt o... |
+
 ### Behavior
 
 | Event | Type | Likely Topic | Description |
@@ -117,6 +133,13 @@ This document lists all events defined in Bannou's event schemas.
 | `CharacterCompressedEvent` | Custom | `character-compressed` | Published when a character is compressed to archiv... |
 | `CharacterRealmJoinedEvent` | Custom | `character-realm-joined` | Event published when a character joins a realm (cr... |
 | `CharacterRealmLeftEvent` | Custom | `character-realm-left` | Event published when a character leaves a realm (d... |
+
+### Character (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CharacterRealmTransferredClientEvent` | Custom | `character-realm-transferred-client` | Published when a character is transferred to a dif... |
+| `CharacterUpdatedClientEvent` | Lifecycle (Updated) | `character.updated-client` | Published when a character's state changes (death,... |
 
 ### Character Encounter
 
@@ -163,6 +186,8 @@ This document lists all events defined in Bannou's event schemas.
 | `ChatParticipantKickedEvent` | Custom | `chat-participant-kicked` | Published when a participant is kicked from a chat... |
 | `ChatParticipantLeftEvent` | Custom | `chat-participant-left` | Published when a participant leaves a chat room |
 | `ChatParticipantMutedEvent` | Custom | `chat-participant-muted` | Published when a participant is muted in a chat ro... |
+| `ChatParticipantRoleChangedEvent` | Custom | `chat-participant-role-changed` | Published when a participant's role changes (manua... |
+| `ChatParticipantUnbannedEvent` | Custom | `chat-participant-unbanned` | Published when a participant is unbanned from a ch... |
 | `ChatParticipantUnmutedEvent` | Custom | `chat-participant-unmuted` | Published when a participant is unmuted in a chat ... |
 | `ChatRoomArchivedEvent` | Custom | `chat-room-archived` | Published when a chat room is archived via Resourc... |
 | `ChatRoomLockedEvent` | Custom | `chat-room-locked` | Published when a chat room is locked (contract-tri... |
@@ -172,16 +197,19 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `ChatMessageDeletedClientEvent` | Lifecycle (Deleted) | `chat-message.deleted-client` | Sent to room participants when a message is delete... |
-| `ChatMessagePinnedEvent` | Custom | `chat-message-pinned` | Sent to room participants when a message is pinned... |
-| `ChatMessageReceivedEvent` | Custom | `chat-message-received` | Sent to room participants when a new message is re... |
+| `ChatMessagePinnedClientEvent` | Custom | `chat-message-pinned-client` | Sent to room participants when a message is pinned... |
+| `ChatMessageReceivedClientEvent` | Custom | `chat-message-received-client` | Sent to room participants when a new message is re... |
 | `ChatParticipantBannedClientEvent` | Custom | `chat-participant-banned-client` | Sent to all room participants when someone is bann... |
 | `ChatParticipantJoinedClientEvent` | Custom | `chat-participant-joined-client` | Sent to room participants when someone joins the r... |
 | `ChatParticipantKickedClientEvent` | Custom | `chat-participant-kicked-client` | Sent to all room participants when someone is kick... |
 | `ChatParticipantLeftClientEvent` | Custom | `chat-participant-left-client` | Sent to room participants when someone leaves the ... |
 | `ChatParticipantMutedClientEvent` | Custom | `chat-participant-muted-client` | Sent to all room participants when someone is mute... |
+| `ChatParticipantRoleChangedClientEvent` | Custom | `chat-participant-role-changed-client` | Sent to room participants when a participant's rol... |
+| `ChatParticipantUnbannedClientEvent` | Custom | `chat-participant-unbanned-client` | Sent to room participants when a ban is lifted. |
 | `ChatParticipantUnmutedClientEvent` | Custom | `chat-participant-unmuted-client` | Sent to all room participants when someone is unmu... |
 | `ChatRoomDeletedClientEvent` | Lifecycle (Deleted) | `chat-room.deleted-client` | Sent to room participants when the room is being d... |
 | `ChatRoomLockedClientEvent` | Custom | `chat-room-locked-client` | Sent to room participants when the room is locked. |
+| `ChatRoomUpdatedClientEvent` | Lifecycle (Updated) | `chat-room.updated-client` | Sent to room participants when room settings chang... |
 | `ChatTypingStartedClientEvent` | Custom | `chat-typing-started-client` | Sent to room participants when someone starts typi... |
 | `ChatTypingStoppedClientEvent` | Custom | `chat-typing-stopped-client` | Sent to room participants when someone stops typin... |
 
@@ -194,18 +222,26 @@ This document lists all events defined in Bannou's event schemas.
 | `CollectionEntryUnlockedEvent` | Custom | `collection-entry-unlocked` | Published when an entry is successfully unlocked i... |
 | `CollectionMilestoneReachedEvent` | Custom | `collection-milestone-reached` | Published when a completion milestone is reached (... |
 
+### Collection (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CollectionDiscoveryAdvancedClientEvent` | Custom | `collection-discovery-advanced-client` | Sent to the collection owner when progressive disc... |
+| `CollectionEntryUnlockedClientEvent` | Custom | `collection-entry-unlocked-client` | Sent to the collection owner when an entry is unlo... |
+| `CollectionMilestoneReachedClientEvent` | Custom | `collection-milestone-reached-client` | Sent to the collection owner when a completion mil... |
+
 ### Common (client)
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `BaseClientEvent` | Custom | `base-client` | Base schema for all server-to-client push events. |
-| `CapabilityManifestEvent` | Custom | `capability-manifest` | Sent to client when their available API capabiliti... |
-| `DisconnectNotificationEvent` | Custom | `disconnect-notification` | Sent to client before WebSocket connection is clos... |
+| `CapabilityManifestClientEvent` | Custom | `capability-manifest-client` | Sent to client when their available API capabiliti... |
+| `DisconnectNotificationClientEvent` | Custom | `disconnect-notification-client` | Sent to client before WebSocket connection is clos... |
 | `SessionCapabilitiesEvent` | Custom | `session-capabilities` | Internal event carrying compiled capabilities from... |
 | `ShortcutPublishedEvent` | Custom | `shortcut-published` | Published by services to create or update a sessio... |
 | `ShortcutRevokedEvent` | Expiration | `shortcut.revoked` | Published by services to remove shortcuts. |
-| `SystemErrorEvent` | Error | `system.error` | Generic error notification sent to client. |
-| `SystemNotificationEvent` | Custom | `system-notification` | Generic notification event for system-level messag... |
+| `SystemErrorClientEvent` | Error | `system.error-client` | Generic error notification sent to client. |
+| `SystemNotificationClientEvent` | Custom | `system-notification-client` | Generic notification event for system-level messag... |
 
 ### Contract
 
@@ -252,6 +288,14 @@ This document lists all events defined in Bannou's event schemas.
 | `CurrencyWalletClosedEvent` | Custom | `currency-wallet-closed` | Event published when a wallet is permanently close... |
 | `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Event published when a wallet is frozen |
 | `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Event published when a wallet is unfrozen |
+
+### Currency (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `CurrencyBalanceChangedClientEvent` | Custom | `currency-balance-changed-client` | Sent to the wallet owner when any balance mutation... |
+| `CurrencyWalletFrozenClientEvent` | Custom | `currency-wallet-frozen-client` | Sent to the wallet owner when their wallet is froz... |
+| `CurrencyWalletUnfrozenClientEvent` | Custom | `currency-wallet-unfrozen-client` | Sent to the wallet owner when their wallet is unfr... |
 
 ### Divine
 
@@ -317,6 +361,7 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `GameSessionActionPerformedEvent` | Custom | `game-session-action-performed` | Published when a game action is performed in a ses... |
+| `GameSessionCancelledEvent` | Custom | `game-session-cancelled` | Published when a matchmade session is cancelled du... |
 | `GameSessionPlayerJoinedEvent` | Custom | `game-session-player-joined` | Published when a player joins a game session |
 | `GameSessionPlayerLeftEvent` | Custom | `game-session-player-left` | Published when a player leaves a game session |
 
@@ -324,13 +369,14 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `GameActionResultEvent` | Custom | `game-action-result` | Sent to relevant players when a game action produc... |
-| `GameStateUpdatedEvent` | Lifecycle (Updated) | `game-state.updated` | Sent when game state changes that all players shou... |
-| `PlayerJoinedEvent` | Custom | `player-joined` | Sent to all session participants when a new player... |
-| `PlayerKickedEvent` | Custom | `player-kicked` | Sent to all session participants when a player is ... |
-| `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
-| `SessionChatReceivedEvent` | Custom | `session-chat-received` | Sent to recipients when a chat message is posted i... |
-| `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
+| `GameActionResultClientEvent` | Custom | `game-action-result-client` | Sent to relevant players when a game action produc... |
+| `GameStateUpdatedClientEvent` | Lifecycle (Updated) | `game-state.updated-client` | Sent when game state changes that all players shou... |
+| `PlayerJoinedClientEvent` | Custom | `player-joined-client` | Sent to all session participants when a new player... |
+| `PlayerKickedClientEvent` | Custom | `player-kicked-client` | Sent to all session participants when a player is ... |
+| `PlayerLeftClientEvent` | Custom | `player-left-client` | Sent to all session participants when a player lea... |
+| `SessionCancelledClientEvent` | Custom | `session-cancelled-client` | Sent to players who claimed their reservation when... |
+| `SessionChatReceivedClientEvent` | Custom | `session-chat-received-client` | Sent to recipients when a chat message is posted i... |
+| `SessionStateChangedClientEvent` | Custom | `session-state-changed-client` | Sent to all session participants when the session ... |
 
 ### Gardener
 
@@ -361,6 +407,14 @@ This document lists all events defined in Bannou's event schemas.
 | `InventoryItemStackedEvent` | Custom | `inventory-item-stacked` | Event when items are stacked together |
 | `InventoryItemTransferredEvent` | Custom | `inventory-item-transferred` | Event when item ownership transfers |
 
+### Inventory (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `InventoryContainerFullClientEvent` | Custom | `inventory-container-full-client` | Sent to sessions observing a container owner when ... |
+| `InventoryItemChangedClientEvent` | Custom | `inventory-item-changed-client` | Sent to sessions observing a container owner when ... |
+| `InventoryItemTransferredClientEvent` | Custom | `inventory-item-transferred-client` | Sent to sessions observing either the source or ta... |
+
 ### Item
 
 | Event | Type | Likely Topic | Description |
@@ -369,7 +423,6 @@ This document lists all events defined in Bannou's event schemas.
 | `ItemInstanceDestroyedEvent` | Custom | `item-instance-destroyed` | Event published when an item instance is permanent... |
 | `ItemInstanceModifiedEvent` | Custom | `item-instance-modified` | Event published when an item instance is modified ... |
 | `ItemInstanceUnboundEvent` | Custom | `item-instance-unbound` | Event published when an item binding is removed (a... |
-| `ItemTemplateDeprecatedEvent` | Custom | `item-template-deprecated` | Event published when an item template is deprecate... |
 | `ItemUseFailedEvent` | Custom | `item-use-failed` | Published when item use attempts fail, batched wit... |
 | `ItemUseStepCompletedEvent` | Custom | `item-use-step-completed` | Published when a multi-step item use milestone is ... |
 | `ItemUseStepFailedEvent` | Custom | `item-use-step-failed` | Published when a multi-step item use milestone fai... |
@@ -397,6 +450,13 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `LocationEntityArrivedEvent` | Custom | `location-entity-arrived` | Published when an entity arrives at a location |
 | `LocationEntityDepartedEvent` | Custom | `location-entity-departed` | Published when an entity departs from a location |
+
+### Location (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `LocationPresenceChangedClientEvent` | Custom | `location-presence-changed-client` | Sent to sessions observing a location when an enti... |
+| `LocationUpdatedClientEvent` | Lifecycle (Updated) | `location.updated-client` | Sent to sessions observing a location when locatio... |
 
 ### Mapping
 
@@ -431,13 +491,13 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `MatchConfirmedEvent` | Custom | `match-confirmed` | Sent to all match participants when all players ha... |
-| `MatchDeclinedEvent` | Custom | `match-declined` | Sent to all match participants when someone declin... |
-| `MatchFoundEvent` | Custom | `match-found` | Sent to all matched players when a match is formed... |
-| `MatchPlayerAcceptedEvent` | Custom | `match-player-accepted` | Sent to all match participants when a player accep... |
-| `MatchmakingCancelledEvent` | Custom | `matchmaking-cancelled` | Sent when matchmaking is cancelled for any reason. |
-| `MatchmakingStatusUpdateEvent` | Custom | `matchmaking-status-update` | Periodic status update sent to players in queue. |
-| `QueueJoinedEvent` | Custom | `queue-joined` | Sent to the player when they successfully join a m... |
+| `MatchConfirmedClientEvent` | Custom | `match-confirmed-client` | Sent to all match participants when all players ha... |
+| `MatchDeclinedClientEvent` | Custom | `match-declined-client` | Sent to all match participants when someone declin... |
+| `MatchFoundClientEvent` | Custom | `match-found-client` | Sent to all matched players when a match is formed... |
+| `MatchPlayerAcceptedClientEvent` | Custom | `match-player-accepted-client` | Sent to all match participants when a player accep... |
+| `MatchmakingCancelledClientEvent` | Custom | `matchmaking-cancelled-client` | Sent when matchmaking is cancelled for any reason. |
+| `MatchmakingStatusUpdateClientEvent` | Custom | `matchmaking-status-update-client` | Periodic status update sent to players in queue. |
+| `QueueJoinedClientEvent` | Custom | `queue-joined-client` | Sent to the player when they successfully join a m... |
 
 ### Mesh
 
@@ -460,7 +520,11 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `ConfigurationChangedEvent` | Custom | `configuration-changed` | Published when configuration or secrets change. Al... |
+| `DeploymentEvent` | Custom | `deployment` | Published when deployment state changes. Topic ban... |
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
+| `ProcessorReleasedEvent` | Custom | `processor-released` | Published when a processor is released back to the... |
+| `ServiceRestartEvent` | Custom | `service-restart` | Published when a service is restarted. Topic banno... |
 
 ### Puppetmaster
 
@@ -574,6 +638,12 @@ This document lists all events defined in Bannou's event schemas.
 | `StatusRemovedEvent` | Custom | `status-removed` | Published when a status effect is removed from an ... |
 | `StatusStackedEvent` | Custom | `status-stacked` | Published when a status effect stack count changes |
 
+### Status (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StatusEffectChangedClientEvent` | Custom | `status-effect-changed-client` | Sent to sessions observing an entity when a status... |
+
 ### Storyline
 
 | Event | Type | Likely Topic | Description |
@@ -591,15 +661,45 @@ This document lists all events defined in Bannou's event schemas.
 |-------|------|--------------|-------------|
 | `SubscriptionUpdatedEvent` | Lifecycle (Updated) | `subscription.updated` | Published when a subscription changes state (creat... |
 
+### Subscription (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `SubscriptionStatusChangedClientEvent` | Custom | `subscription-status-changed-client` | Sent to all sessions for the affected account when... |
+
+### Transit
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `TransitConnectionStatusChangedEvent` | Custom | `transit-connection-status-changed` | Published when a connection's operational status c... |
+| `TransitDiscoveryRevealedEvent` | Custom | `transit-discovery-revealed` | Published when a discoverable connection is reveal... |
+| `TransitJourneyAbandonedEvent` | Custom | `transit-journey-abandoned` | Published when a journey is abandoned before reach... |
+| `TransitJourneyArrivedEvent` | Custom | `transit-journey-arrived` | Published when a traveling entity reaches its dest... |
+| `TransitJourneyDepartedEvent` | Custom | `transit-journey-departed` | Published when an entity begins traveling |
+| `TransitJourneyInterruptedEvent` | Custom | `transit-journey-interrupted` | Published when a journey is interrupted (combat, e... |
+| `TransitJourneyResumedEvent` | Custom | `transit-journey-resumed` | Published when an interrupted journey is resumed |
+| `TransitJourneyWaypointReachedEvent` | Custom | `transit-journey-waypoint-reached` | Published when a traveling entity reaches an inter... |
+| `TransitModeDeletedEvent` | Lifecycle (Deleted) | `transit-mode.deleted` | Published when a deprecated transit mode is perman... |
+| `TransitModeRegisteredEvent` | Registration | `transit-mode.registered` | Published when a new transit mode is registered |
+| `TransitModeUpdatedEvent` | Lifecycle (Updated) | `transit-mode.updated` | Published when a transit mode is updated (covers p... |
+
+### Transit (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `TransitConnectionStatusChangedClientEvent` | Custom | `transit-connection-status-changed-client` | A connection's operational status changed -- pushe... |
+| `TransitDiscoveryRevealedClientEvent` | Custom | `transit-discovery-revealed-client` | A discoverable connection was revealed -- pushed t... |
+| `TransitJourneyUpdatedClientEvent` | Lifecycle (Updated) | `transit-journey.updated-client` | Journey state changed -- pushed to the traveling e... |
+
 ### Voice
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `VoiceParticipantJoinedEvent` | Custom | `voice-participant-joined` | Published when a participant joins a room |
-| `VoiceParticipantLeftEvent` | Custom | `voice-participant-left` | Published when a participant leaves a room |
-| `VoiceRoomBroadcastApprovedEvent` | Custom | `voice-room-broadcast-approved` | All participants consented to broadcasting. lib-st... |
-| `VoiceRoomBroadcastDeclinedEvent` | Custom | `voice-room-broadcast-declined` | A participant declined broadcast consent |
-| `VoiceRoomBroadcastStoppedEvent` | Custom | `voice-room-broadcast-stopped` | Broadcasting stopped |
+| `VoiceBroadcastApprovedEvent` | Custom | `voice-broadcast-approved` | All participants consented to broadcasting. lib-st... |
+| `VoiceBroadcastDeclinedEvent` | Custom | `voice-broadcast-declined` | A participant declined broadcast consent |
+| `VoiceBroadcastStoppedEvent` | Custom | `voice-broadcast-stopped` | Broadcasting stopped |
+| `VoicePeerJoinedEvent` | Custom | `voice-peer-joined` | Published when a peer joins a room |
+| `VoicePeerLeftEvent` | Custom | `voice-peer-left` | Published when a peer leaves a room |
 | `VoiceRoomCreatedEvent` | Lifecycle (Created) | `voice-room.created` | Published when a voice room is created |
 | `VoiceRoomDeletedEvent` | Lifecycle (Deleted) | `voice-room.deleted` | Published when a voice room is deleted |
 | `VoiceRoomTierUpgradedEvent` | Custom | `voice-room-tier-upgraded` | Published when a room upgrades from P2P to scaled ... |
@@ -608,19 +708,20 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `VoiceBroadcastConsentRequestEvent` | Custom | `voice-broadcast-consent-request` | Sent to all room participants when someone request... |
-| `VoiceBroadcastConsentUpdateEvent` | Custom | `voice-broadcast-consent-update` | Sent to all room participants when the broadcast c... |
-| `VoicePeerJoinedEvent` | Custom | `voice-peer-joined` | Sent to existing room participants when a new peer... |
-| `VoicePeerLeftEvent` | Custom | `voice-peer-left` | Sent to remaining room participants when a peer le... |
-| `VoicePeerUpdatedEvent` | Lifecycle (Updated) | `voice-peer.updated` | Sent when a peer updates their SIP endpoint (e.g.,... |
-| `VoiceRoomClosedEvent` | Custom | `voice-room-closed` | Sent to all room participants when the voice room ... |
-| `VoiceRoomStateEvent` | Custom | `voice-room-state` | Sent to a client when they join a voice room. |
-| `VoiceTierUpgradeEvent` | Custom | `voice-tier-upgrade` | Sent to all room participants when the voice tier ... |
+| `VoiceBroadcastConsentRequestClientEvent` | Custom | `voice-broadcast-consent-request-client` | Sent to all room participants when someone request... |
+| `VoiceBroadcastConsentUpdateClientEvent` | Custom | `voice-broadcast-consent-update-client` | Sent to all room participants when the broadcast c... |
+| `VoicePeerJoinedClientEvent` | Custom | `voice-peer-joined-client` | Sent to existing room participants when a new peer... |
+| `VoicePeerLeftClientEvent` | Custom | `voice-peer-left-client` | Sent to remaining room participants when a peer le... |
+| `VoicePeerUpdatedClientEvent` | Lifecycle (Updated) | `voice-peer.updated-client` | Sent when a peer updates their SIP endpoint (e.g.,... |
+| `VoiceRoomClosedClientEvent` | Custom | `voice-room-closed-client` | Sent to all room participants when the voice room ... |
+| `VoiceRoomStateClientEvent` | Custom | `voice-room-state-client` | Sent to a client when they join a voice room. |
+| `VoiceTierUpgradeClientEvent` | Custom | `voice-tier-upgrade-client` | Sent to all room participants when the voice tier ... |
 
 ### Worldstate
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `WorldstateClockAdvancedEvent` | Custom | `worldstate-clock-advanced` | Published when a realm clock is advanced via Advan... |
 | `WorldstateDayChangedEvent` | Custom | `worldstate-day-changed` | Published when a game-day boundary is crossed. Dur... |
 | `WorldstateHourChangedEvent` | Custom | `worldstate-hour-changed` | Published when a game-hour boundary is crossed dur... |
 | `WorldstateMonthChangedEvent` | Custom | `worldstate-month-changed` | Published when a month boundary is crossed |
@@ -634,7 +735,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `WorldstateTimeSyncEvent` | Custom | `worldstate-time-sync` | Published on period-changed boundaries, ratio chan... |
+| `WorldstateTimeSyncClientEvent` | Custom | `worldstate-time-sync-client` | Published on period-changed boundaries, ratio chan... |
 
 ## Event Types
 

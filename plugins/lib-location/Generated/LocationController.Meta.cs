@@ -58,6 +58,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -309,6 +311,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -591,7 +595,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -635,6 +641,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -917,7 +925,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -961,6 +971,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1243,7 +1255,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -1287,6 +1301,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1569,7 +1585,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -1613,6 +1631,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -1852,7 +1872,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -1896,6 +1918,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -2325,7 +2349,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -2369,6 +2395,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -2720,6 +2748,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -3061,6 +3091,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -3310,6 +3342,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -3553,6 +3587,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -3886,6 +3922,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -4135,6 +4173,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -4378,6 +4418,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -4626,12 +4668,6 @@ public partial class LocationController
                     "type": "boolean",
                     "description": "Whether the location is active (false if deprecated or not found)"
                 },
-                "locationId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "The location ID if found"
-                },
                 "realmId": {
                     "type": "string",
                     "format": "uuid",
@@ -4761,7 +4797,9 @@ public partial class LocationController
                 "locations",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "locations": {
@@ -4805,6 +4843,8 @@ public partial class LocationController
                 "locationType",
                 "depth",
                 "isDeprecated",
+                "boundsPrecision",
+                "coordinateMode",
                 "createdAt",
                 "updatedAt"
             ],
@@ -5047,19 +5087,28 @@ public partial class LocationController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
                     "description": "Unique code for the location within realm"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Display name"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 2000,
                     "nullable": true,
                     "description": "Description"
                 },
                 "realmCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
                     "description": "Code of the realm (resolved during seeding)"
                 },
                 "locationType": {
@@ -5068,6 +5117,9 @@ public partial class LocationController
                 },
                 "parentLocationCode": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
                     "nullable": true,
                     "description": "Code of the parent location (resolved during seeding)"
                 },
@@ -5308,17 +5360,10 @@ public partial class LocationController
     "$ref": "#/$defs/ReportEntityPositionResponse",
     "$defs": {
         "ReportEntityPositionResponse": {
-            "description": "Result of reporting entity presence",
+            "description": "Result of reporting entity presence. HTTP 200 confirms the position was recorded.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "recorded"
-            ],
             "properties": {
-                "recorded": {
-                    "type": "boolean",
-                    "description": "Whether the position was successfully recorded"
-                },
                 "arrivedAt": {
                     "type": "string",
                     "format": "uuid",
@@ -5428,39 +5473,21 @@ public partial class LocationController
     "$ref": "#/$defs/GetEntityLocationResponse",
     "$defs": {
         "GetEntityLocationResponse": {
-            "description": "Result of querying an entity's current location",
+            "description": "Result of querying an entity's current location. All fields are null if no active presence exists.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "found"
-            ],
             "properties": {
-                "found": {
-                    "type": "boolean",
-                    "description": "Whether a non-expired presence binding exists for this entity"
-                },
                 "locationId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
-                    "description": "ID of the location the entity is currently at"
+                    "description": "ID of the location the entity is currently at (null if no active presence)"
                 },
                 "realmId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "ID of the realm the location belongs to"
-                },
-                "entityType": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Type of entity (echoed back)"
-                },
-                "entityId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "ID of the entity (echoed back)"
                 },
                 "reportedAt": {
                     "type": "string",
@@ -5560,11 +5587,14 @@ public partial class LocationController
                 },
                 "page": {
                     "type": "integer",
+                    "minimum": 1,
                     "default": 1,
                     "description": "Page number (1-indexed)"
                 },
                 "pageSize": {
                     "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
                     "default": 50,
                     "description": "Number of entities per page"
                 }
@@ -5733,17 +5763,10 @@ public partial class LocationController
     "$ref": "#/$defs/ClearEntityPositionResponse",
     "$defs": {
         "ClearEntityPositionResponse": {
-            "description": "Result of clearing entity presence",
+            "description": "Result of clearing entity presence. HTTP 200 confirms the operation completed.",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "cleared"
-            ],
             "properties": {
-                "cleared": {
-                    "type": "boolean",
-                    "description": "Whether the entity had an active presence that was cleared"
-                },
                 "previousLocationId": {
                     "type": "string",
                     "format": "uuid",

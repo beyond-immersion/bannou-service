@@ -583,7 +583,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
                         Category = DocumentCategory.Tutorials
                     }
                 },
-                OnConflict = ImportDocumentationRequestOnConflict.Skip
+                OnConflict = ConflictResolution.Skip
             });
 
             var importedCount = response.Created + response.Updated;
@@ -832,7 +832,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SortBy = ListSortField.Title,
-                SortOrder = ListDocumentsRequestSortOrder.Asc
+                SortOrder = SortOrder.Asc
             });
 
             if (ascResponse.Documents == null || ascResponse.Documents.Count < 3)
@@ -848,7 +848,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SortBy = ListSortField.Title,
-                SortOrder = ListDocumentsRequestSortOrder.Desc
+                SortOrder = SortOrder.Desc
             });
 
             // Verify descending order - first should be Zebra
@@ -861,7 +861,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SortBy = ListSortField.CreatedAt,
-                SortOrder = ListDocumentsRequestSortOrder.Desc
+                SortOrder = SortOrder.Desc
             });
 
             if (createdResponse.Documents == null || createdResponse.Documents.Count < 3)
@@ -901,7 +901,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SearchTerm = "authentication",
-                SortBy = SearchDocumentationRequestSortBy.Alphabetical
+                SortBy = SearchSortBy.Alphabetical
             });
 
             if (alphaResponse.Results == null)
@@ -912,7 +912,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SearchTerm = "authentication",
-                SortBy = SearchDocumentationRequestSortBy.Relevance
+                SortBy = SearchSortBy.Relevance
             });
 
             // Test search with recency sorting
@@ -920,7 +920,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 SearchTerm = "authentication",
-                SortBy = SearchDocumentationRequestSortBy.Recency
+                SortBy = SearchSortBy.Recency
             });
 
             return TestResult.Successful($"Search sorting tests passed: alpha={alphaResponse.TotalResults}, relevance={relevanceResponse.TotalResults}, recency={recencyResponse.TotalResults}");
@@ -968,7 +968,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 Tags = new List<string> { "tag1", "tag2" },
-                TagsMatch = ListDocumentsRequestTagsMatch.All
+                TagsMatch = TagMatchMode.All
             });
 
             if (allResponse.Documents == null || allResponse.Documents.Count != 1)
@@ -979,7 +979,7 @@ public class DocumentationTestHandler : BaseHttpTestHandler
             {
                 Namespace = testNamespace,
                 Tags = new List<string> { "tag1", "tag2" },
-                TagsMatch = ListDocumentsRequestTagsMatch.Any
+                TagsMatch = TagMatchMode.Any
             });
 
             if (anyResponse.Documents == null || anyResponse.Documents.Count != 2)

@@ -594,7 +594,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -620,6 +620,8 @@ public partial class ContractService : IContractService
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Persist first
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -651,7 +653,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -692,6 +694,8 @@ public partial class ContractService : IContractService
                 // Transition to expired
                 model.Status = ContractStatus.Expired;
                 model.UpdatedAt = DateTimeOffset.UtcNow;
+                // GetWithETagAsync returns non-null etag for existing records;
+                // coalesce satisfies compiler's nullable analysis (will never execute)
                 var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
                 if (expiredEtag != null)
                 {
@@ -762,6 +766,8 @@ public partial class ContractService : IContractService
         }
 
         // Persist state change first, then perform side effects
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -922,7 +928,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -961,6 +967,8 @@ public partial class ContractService : IContractService
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Persist first
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1018,6 +1026,8 @@ public partial class ContractService : IContractService
             }
 
             model.UpdatedAt = DateTimeOffset.UtcNow;
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var activatedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (activatedEtag != null)
             {
@@ -1050,6 +1060,8 @@ public partial class ContractService : IContractService
 
             model.Status = ContractStatus.Expired;
             model.UpdatedAt = DateTimeOffset.UtcNow;
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
             if (expiredEtag != null)
             {
@@ -1075,6 +1087,8 @@ public partial class ContractService : IContractService
         if (anyProcessed)
         {
             // Persist the updated contract
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         }
 
@@ -1148,7 +1162,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1204,6 +1218,8 @@ public partial class ContractService : IContractService
         }
 
         // Persist first
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1250,7 +1266,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1291,6 +1307,8 @@ public partial class ContractService : IContractService
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Persist first
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1341,6 +1359,8 @@ public partial class ContractService : IContractService
         if (wasProcessed)
         {
             // Persist the updated contract
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         }
 
@@ -1367,7 +1387,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock for state transition
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
@@ -1423,6 +1443,8 @@ public partial class ContractService : IContractService
         model.BreachIds.Add(breachId);
         model.UpdatedAt = now;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1454,7 +1476,7 @@ public partial class ContractService : IContractService
 
         // Acquire contract lock to serialize breach state changes
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", breachModel.ContractId);
@@ -1470,6 +1492,8 @@ public partial class ContractService : IContractService
         breachModel.Status = BreachStatus.Cured;
         breachModel.CuredAt = DateTimeOffset.UtcNow;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await breachStore.TrySaveAsync(breachKey, breachModel, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1533,6 +1557,8 @@ public partial class ContractService : IContractService
 
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {
@@ -1778,7 +1804,7 @@ public partial class ContractService : IContractService
     private async Task AddToListAsync(string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
+            StateStoreDefinitions.ContractLock, key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             // Behavior controlled by IndexLockFailureMode configuration
@@ -1802,7 +1828,7 @@ public partial class ContractService : IContractService
     private async Task RemoveFromListAsync(string key, string value, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
-            "contract-index", key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
+            StateStoreDefinitions.ContractLock, key, Guid.NewGuid().ToString(), _configuration.IndexLockTimeoutSeconds, ct);
         if (!lockResponse.Success)
         {
             // Behavior controlled by IndexLockFailureMode configuration
@@ -2542,7 +2568,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateCreatedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.created", new ContractTemplateCreatedEvent
+        await _messageBus.TryPublishAsync("contract.template.created", new ContractTemplateCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2563,7 +2589,7 @@ public partial class ContractService : IContractService
     private async Task PublishTemplateUpdatedEventAsync(
         ContractTemplateModel model, List<string> changedFields, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.updated", new ContractTemplateUpdatedEvent
+        await _messageBus.TryPublishAsync("contract.template.updated", new ContractTemplateUpdatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2585,7 +2611,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishTemplateDeletedEventAsync(ContractTemplateModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-template.deleted", new ContractTemplateDeletedEvent
+        await _messageBus.TryPublishAsync("contract.template.deleted", new ContractTemplateDeletedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -2607,7 +2633,7 @@ public partial class ContractService : IContractService
 
     private async Task PublishInstanceCreatedEventAsync(ContractInstanceModel model, CancellationToken ct)
     {
-        await _messageBus.TryPublishAsync("contract-instance.created", new ContractInstanceCreatedEvent
+        await _messageBus.TryPublishAsync("contract.instance.created", new ContractInstanceCreatedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,

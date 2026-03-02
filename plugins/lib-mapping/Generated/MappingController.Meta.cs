@@ -116,7 +116,7 @@ public partial class MappingController
                 },
                 "alertTopic": {
                     "type": "string",
-                    "description": "Custom topic for warnings (default map.warnings.unauthorized_publish)",
+                    "description": "Custom topic for warnings (default map.warnings.unauthorized-publish)",
                     "nullable": true
                 },
                 "includePayloadSummary": {

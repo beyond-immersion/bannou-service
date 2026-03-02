@@ -24,6 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Documentation;
 
 
 namespace BeyondImmersion.BannouService.Events;
@@ -83,7 +84,8 @@ public partial class DocumentCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentCategory Category { get; set; } = default!;
 
     /// <summary>
     /// List of tags for categorization and search
@@ -162,7 +164,8 @@ public partial class DocumentUpdatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentCategory Category { get; set; } = default!;
 
     /// <summary>
     /// List of tags for categorization and search
@@ -249,7 +252,8 @@ public partial class DocumentDeletedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("category")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Category { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public DocumentCategory Category { get; set; } = default!;
 
     /// <summary>
     /// List of tags for categorization and search

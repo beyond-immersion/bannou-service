@@ -522,6 +522,18 @@ weight their personal experience higher.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `targetType` (on FeelingEntry) | A (Entity Reference) | `EntityType` enum (service-scoped subset) | Valid values are first-class Bannou entities ("character", "location", "faction", "organization") plus the special "guardian" target for the player-spirit relationship. Uses `EntityType` enum but with a service-specific subset; "guardian" is a pseudo-entity representing the player |
+| `axis` (on FeelingEntry) | B (Content Code) | Opaque string | Emotional axis codes ("trust", "fear", "warmth", "respect", "resentment", etc.); game-configurable per target type, extensible without schema changes |
+| `driveCode` (on DriveEntry) | B (Content Code) | Opaque string | Drive type codes ("master_craft", "protect_family", "gain_wealth"); emergent from gameplay, extensible without schema changes |
+| `category` (on DriveEntry) | B (Content Code) | Opaque string | Drive category codes ("mastery", "social", "survival", "identity", "exploration"); game-configurable grouping for GOAP priority mapping |
+| `originType` (on DriveEntry) | C (System State) | Service-specific enum | Finite set of drive formation mechanisms ("personality", "experience", "backstory", "circumstance"); system-owned classification of how drives form |
+
+---
+
 ## Events
 
 ### Published Events

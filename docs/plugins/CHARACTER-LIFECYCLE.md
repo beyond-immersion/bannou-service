@@ -692,6 +692,21 @@ GENERATION 3: Thane grows up carrying both bloodlines
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `currentStage` | B (Content Code) | Opaque string | Species-configurable lifecycle stage codes (infant, child, adolescent, adult, elder, dying, etc.). Follows the same extensibility pattern as seed type codes and collection type codes. Different species define different stage sets and thresholds. |
+| `speciesCode` | B (Content Code) | Opaque string | References species from lib-species. Determines stage thresholds, longevity, heritage trait definitions, and lifecycle progression rules. |
+| `status` (on lifecycle) | C (System State) | Service-specific enum | Finite set of character lifecycle statuses (alive, dying, dead, archived). System-owned; drives death processing and archival state machine. |
+| `traitCode` (on genotype/phenotype) | B (Content Code) | Opaque string | Game-configurable genetic trait identifiers (physical_strength, magical_aptitude, heat_tolerance, etc.). Extensible per species without schema changes. |
+| `dominance` (on genotype) | C (System State) | Service-specific enum | Finite set of genetic dominance models (dominant_high, dominant_low, blending, random). System-owned; each model has specific phenotype computation logic. |
+| `category` (on trait definition) | B (Content Code) | Opaque string | Game-configurable trait categories (physical, mental, magical, social). Used for grouping and aptitude computation. |
+| `bloodlineCode` | B (Content Code) | Opaque string | Game-configurable bloodline identifiers (blackthorn, ironforge, moonwhisper, etc.). Accumulated through lineage, carries trait signatures. |
+| `deathPathway` | B (Content Code) | Opaque string | Game-configurable afterlife pathway codes (elysium, purgatory, restless, etc.). Determines what kind of content the death archive generates. |
+
+---
+
 ## Events
 
 ### Published Events

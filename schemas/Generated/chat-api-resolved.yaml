@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Chat Service API
   version: 1.0.0
@@ -438,6 +438,56 @@ paths:
       responses:
         '200':
           description: Participant muted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participant/unmute:
+    post:
+      operationId: UnmuteParticipant
+      summary: Unmute a participant
+      description: Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or 
+        Moderator.
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnmuteParticipantRequest'
+      responses:
+        '200':
+          description: Participant unmuted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRoomResponse'
+
+  /chat/room/participant/change-role:
+    post:
+      operationId: ChangeParticipantRole
+      summary: Change a participant's role
+      description: >
+        Changes a participant's role within a chat room. Only the room Owner can change roles.
+        Cannot change own role or promote to Owner (ownership transfer happens automatically
+        when the owner leaves via LeaveRoom).
+      x-permissions:
+      - role: user
+        states:
+          chat: in_room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeParticipantRoleRequest'
+      responses:
+        '200':
+          description: Role changed
           content:
             application/json:
               schema:
@@ -1561,6 +1611,44 @@ components:
           nullable: true
           minimum: 1
           description: Mute duration in minutes (null for permanent)
+
+    UnmuteParticipantRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unmute a participant in a chat room
+      required:
+      - roomId
+      - targetSessionId
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room containing the muted participant
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant to unmute
+
+    ChangeParticipantRoleRequest:
+      type: object
+      additionalProperties: false
+      description: Request to change a participant's role in a chat room
+      required:
+      - roomId
+      - targetSessionId
+      - newRole
+      properties:
+        roomId:
+          type: string
+          format: uuid
+          description: Room containing the participant
+        targetSessionId:
+          type: string
+          format: uuid
+          description: Session ID of participant whose role will change
+        newRole:
+          $ref: '#/components/schemas/ChatParticipantRole'
+          description: New role to assign to the participant
 
     # ==========================================================================
     # Message Requests/Responses

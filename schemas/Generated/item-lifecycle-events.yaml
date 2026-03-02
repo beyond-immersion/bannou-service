@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Item Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for item service.\nDO NOT EDIT - This file is completely overwritten
@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.created when a itemtemplate is created
+      description: Published to item.template.created when a itemtemplate is created
       required:
       - eventName
       - eventId
@@ -36,8 +36,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.created
-          description: 'Event type identifier: item-template.created'
+          default: item.template.created
+          description: 'Event type identifier: item.template.created'
         templateId: &id001
           type: string
           format: uuid
@@ -97,16 +97,20 @@ components:
           format: date-time
           nullable: true
           description: "When the template was deprecated"
-        migrationTargetId: &id019
+        deprecationReason: &id019
+          type: string
+          nullable: true
+          description: "Reason for deprecation"
+        migrationTargetId: &id020
           type: string
           format: uuid
           nullable: true
           description: "Template ID to migrate existing instances to"
-        createdAt: &id020
+        createdAt: &id021
           type: string
           format: date-time
           description: "When the template was created"
-        updatedAt: &id021
+        updatedAt: &id022
           type: string
           format: date-time
           nullable: true
@@ -116,7 +120,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.updated when a itemtemplate is updated
+      description: Published to item.template.updated when a itemtemplate is updated
       required:
       - eventName
       - eventId
@@ -141,8 +145,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.updated
-          description: 'Event type identifier: item-template.updated'
+          default: item.template.updated
+          description: 'Event type identifier: item.template.updated'
         templateId: *id001
         code: *id002
         gameId: *id003
@@ -161,9 +165,10 @@ components:
         isActive: *id016
         isDeprecated: *id017
         deprecatedAt: *id018
-        migrationTargetId: *id019
-        createdAt: *id020
-        updatedAt: *id021
+        deprecationReason: *id019
+        migrationTargetId: *id020
+        createdAt: *id021
+        updatedAt: *id022
         changedFields:
           type: array
           items:
@@ -174,7 +179,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-template.deleted when a itemtemplate is deleted
+      description: Published to item.template.deleted when a itemtemplate is deleted
       required:
       - eventName
       - eventId
@@ -198,8 +203,8 @@ components:
       properties:
         eventName:
           type: string
-          default: item-template.deleted
-          description: 'Event type identifier: item-template.deleted'
+          default: item.template.deleted
+          description: 'Event type identifier: item.template.deleted'
         templateId: *id001
         code: *id002
         gameId: *id003
@@ -218,9 +223,10 @@ components:
         isActive: *id016
         isDeprecated: *id017
         deprecatedAt: *id018
-        migrationTargetId: *id019
-        createdAt: *id020
-        updatedAt: *id021
+        deprecationReason: *id019
+        migrationTargetId: *id020
+        createdAt: *id021
+        updatedAt: *id022
         deletedReason:
           type: string
           nullable: true
@@ -230,14 +236,13 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.created when a iteminstance is created
+      description: Published to item.instance.created when a iteminstance is created
       required:
       - eventName
       - eventId
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -245,75 +250,76 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.created
-          description: 'Event type identifier: item-instance.created'
-        instanceId: &id022
+          default: item.instance.created
+          description: 'Event type identifier: item.instance.created'
+        instanceId: &id023
           type: string
           format: uuid
           description: "Unique identifier for this item instance"
-        templateId: &id023
+        templateId: &id024
           type: string
           format: uuid
           description: "Reference to the item template"
-        containerId: &id024
+        containerId: &id025
           type: string
           format: uuid
-          description: "Container holding this item (ownership derived from container)"
-        realmId: &id025
+          nullable: true
+          description: "Container holding this item (ownership derived from container). Null when removed from all containers."
+        realmId: &id026
           type: string
           format: uuid
           description: "Realm this instance exists in"
-        quantity: &id026
+        quantity: &id027
           type: number
           format: double
           description: "Item quantity (1 for unique, integer for discrete, decimal for continuous)"
-        slotIndex: &id027
+        slotIndex: &id028
           type: integer
           nullable: true
           description: "Slot position in slot-based containers"
-        slotX: &id028
+        slotX: &id029
           type: integer
           nullable: true
           description: "X position in grid-based containers"
-        slotY: &id029
+        slotY: &id030
           type: integer
           nullable: true
           description: "Y position in grid-based containers"
-        rotated: &id030
+        rotated: &id031
           type: boolean
           nullable: true
           description: "Whether item is rotated in grid-based containers"
-        currentDurability: &id031
+        currentDurability: &id032
           type: integer
           nullable: true
           description: "Current durability value"
-        boundToId: &id032
+        boundToId: &id033
           type: string
           format: uuid
           nullable: true
           description: "Character ID this item is bound to (if soulbound)"
-        boundAt: &id033
+        boundAt: &id034
           type: string
           format: date-time
           nullable: true
           description: "When the item was bound to a character"
-        customName: &id034
+        customName: &id035
           type: string
           nullable: true
           description: "Player-assigned custom name for this instance"
-        originType: &id035
+        originType: &id036
           $ref: ../item-api.yaml#/components/schemas/ItemOriginType
           description: "How this item instance was created"
-        originId: &id036
+        originId: &id037
           type: string
           format: uuid
           nullable: true
           description: "Source entity ID for the origin (e.g., crafting recipe, vendor)"
-        createdAt: &id037
+        createdAt: &id038
           type: string
           format: date-time
           description: "When the instance was created"
-        modifiedAt: &id038
+        modifiedAt: &id039
           type: string
           format: date-time
           nullable: true
@@ -323,14 +329,13 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.updated when a iteminstance is updated
+      description: Published to item.instance.updated when a iteminstance is updated
       required:
       - eventName
       - eventId
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -339,25 +344,25 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.updated
-          description: 'Event type identifier: item-instance.updated'
-        instanceId: *id022
-        templateId: *id023
-        containerId: *id024
-        realmId: *id025
-        quantity: *id026
-        slotIndex: *id027
-        slotX: *id028
-        slotY: *id029
-        rotated: *id030
-        currentDurability: *id031
-        boundToId: *id032
-        boundAt: *id033
-        customName: *id034
-        originType: *id035
-        originId: *id036
-        createdAt: *id037
-        modifiedAt: *id038
+          default: item.instance.updated
+          description: 'Event type identifier: item.instance.updated'
+        instanceId: *id023
+        templateId: *id024
+        containerId: *id025
+        realmId: *id026
+        quantity: *id027
+        slotIndex: *id028
+        slotX: *id029
+        slotY: *id030
+        rotated: *id031
+        currentDurability: *id032
+        boundToId: *id033
+        boundAt: *id034
+        customName: *id035
+        originType: *id036
+        originId: *id037
+        createdAt: *id038
+        modifiedAt: *id039
         changedFields:
           type: array
           items:
@@ -368,14 +373,13 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to item-instance.deleted when a iteminstance is deleted
+      description: Published to item.instance.deleted when a iteminstance is deleted
       required:
       - eventName
       - eventId
       - timestamp
       - instanceId
       - templateId
-      - containerId
       - realmId
       - quantity
       - originType
@@ -383,25 +387,25 @@ components:
       properties:
         eventName:
           type: string
-          default: item-instance.deleted
-          description: 'Event type identifier: item-instance.deleted'
-        instanceId: *id022
-        templateId: *id023
-        containerId: *id024
-        realmId: *id025
-        quantity: *id026
-        slotIndex: *id027
-        slotX: *id028
-        slotY: *id029
-        rotated: *id030
-        currentDurability: *id031
-        boundToId: *id032
-        boundAt: *id033
-        customName: *id034
-        originType: *id035
-        originId: *id036
-        createdAt: *id037
-        modifiedAt: *id038
+          default: item.instance.deleted
+          description: 'Event type identifier: item.instance.deleted'
+        instanceId: *id023
+        templateId: *id024
+        containerId: *id025
+        realmId: *id026
+        quantity: *id027
+        slotIndex: *id028
+        slotX: *id029
+        slotY: *id030
+        rotated: *id031
+        currentDurability: *id032
+        boundToId: *id033
+        boundAt: *id034
+        customName: *id035
+        originType: *id036
+        originId: *id037
+        createdAt: *id038
+        modifiedAt: *id039
         deletedReason:
           type: string
           nullable: true

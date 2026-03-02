@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Asset.Health;
 
@@ -12,16 +13,23 @@ namespace BeyondImmersion.BannouService.Asset.Health;
 public class MinioHealthCheck : IHealthCheck
 {
     private readonly IAssetStorageProvider _storageProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<MinioHealthCheck> _logger;
 
     /// <summary>
     /// Initializes a new instance of the MinioHealthCheck class.
     /// </summary>
     /// <param name="storageProvider">The asset storage provider.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="logger">The logger.</param>
-    public MinioHealthCheck(IAssetStorageProvider storageProvider, ILogger<MinioHealthCheck> logger)
+    public MinioHealthCheck(
+        IAssetStorageProvider storageProvider,
+        ITelemetryProvider telemetryProvider,
+        ILogger<MinioHealthCheck> logger)
     {
         _storageProvider = storageProvider;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -32,6 +40,7 @@ public class MinioHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "MinioHealthCheck.CheckHealthAsync");
         await Task.CompletedTask;
         try
         {
@@ -58,6 +67,7 @@ public class MinioHealthCheck : IHealthCheck
 public class RedisHealthCheck : IHealthCheck
 {
     private readonly IStateStore<object> _stateStore;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<RedisHealthCheck> _logger;
     private const string HEALTH_CHECK_KEY = "asset-health-check";
 
@@ -65,10 +75,16 @@ public class RedisHealthCheck : IHealthCheck
     /// Initializes a new instance of the RedisHealthCheck class.
     /// </summary>
     /// <param name="stateStoreFactory">The state store factory.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="logger">The logger.</param>
-    public RedisHealthCheck(IStateStoreFactory stateStoreFactory, ILogger<RedisHealthCheck> logger)
+    public RedisHealthCheck(
+        IStateStoreFactory stateStoreFactory,
+        ITelemetryProvider telemetryProvider,
+        ILogger<RedisHealthCheck> logger)
     {
         _stateStore = stateStoreFactory.GetStore<object>(StateStoreDefinitions.Asset);
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -79,6 +95,7 @@ public class RedisHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "RedisHealthCheck.CheckHealthAsync");
         try
         {
             // Try to save and retrieve a health check value
@@ -109,6 +126,7 @@ public class ProcessingPoolHealthCheck : IHealthCheck
 {
     private readonly BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient _orchestratorClient;
     private readonly AssetServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<ProcessingPoolHealthCheck> _logger;
 
     /// <summary>
@@ -116,14 +134,18 @@ public class ProcessingPoolHealthCheck : IHealthCheck
     /// </summary>
     /// <param name="orchestratorClient">The orchestrator client.</param>
     /// <param name="configuration">The asset service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="logger">The logger.</param>
     public ProcessingPoolHealthCheck(
         BeyondImmersion.BannouService.Orchestrator.IOrchestratorClient orchestratorClient,
         AssetServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
         ILogger<ProcessingPoolHealthCheck> logger)
     {
         _orchestratorClient = orchestratorClient;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
     }
 
@@ -134,6 +156,7 @@ public class ProcessingPoolHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "ProcessingPoolHealthCheck.CheckHealthAsync");
         try
         {
             // Try to get pool status from orchestrator

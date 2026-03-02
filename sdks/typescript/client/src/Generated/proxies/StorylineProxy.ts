@@ -31,7 +31,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async composeAsync(
+  async storylineComposeAsync(
     request: Schemas['ComposeRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPlanAsync(
+  async storylineGetPlanAsync(
     request: Schemas['GetPlanRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listPlansAsync(
+  async storylineListPlansAsync(
     request: Schemas['ListPlansRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createScenarioDefinitionAsync(
+  async storylineCreateScenarioDefinitionAsync(
     request: Schemas['CreateScenarioDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -109,7 +109,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getScenarioDefinitionAsync(
+  async storylineGetScenarioDefinitionAsync(
     request: Schemas['GetScenarioDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -127,7 +127,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listScenarioDefinitionsAsync(
+  async storylineListScenarioDefinitionsAsync(
     request: Schemas['ListScenarioDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -145,7 +145,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateScenarioDefinitionAsync(
+  async storylineUpdateScenarioDefinitionAsync(
     request: Schemas['UpdateScenarioDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -162,7 +162,7 @@ export class StorylineProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async deprecateScenarioDefinitionEventAsync(
+  async storylineDeprecateScenarioDefinitionEventAsync(
     request: Schemas['DeprecateScenarioDefinitionRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -180,7 +180,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async testScenarioTriggerAsync(
+  async storylineTestScenarioTriggerAsync(
     request: Schemas['TestScenarioRequest'],
     channel: number = 0,
     timeout?: number
@@ -200,7 +200,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getActiveScenariosAsync(
+  async storylineGetActiveScenariosAsync(
     request: Schemas['GetActiveScenariosRequest'],
     channel: number = 0,
     timeout?: number
@@ -218,7 +218,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getScenarioHistoryAsync(
+  async storylineGetScenarioHistoryAsync(
     request: Schemas['GetScenarioHistoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -236,7 +236,7 @@ export class StorylineProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCompressDataAsync(
+  async storylineGetCompressDataAsync(
     request: Schemas['GetCompressDataRequest'],
     channel: number = 0,
     timeout?: number

@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Species;
+using BeyondImmersion.BannouService.Worldstate;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -21,14 +22,19 @@ namespace BeyondImmersion.BannouService.Realm;
 [BannouService("realm", typeof(IRealmService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class RealmService : IRealmService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IStateStore<RealmModel> _realmStore;
+    private readonly IStateStore<string> _codeIndexStore;
+    private readonly IStateStore<List<Guid>> _realmListStore;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<RealmService> _logger;
     private readonly RealmServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly IResourceClient _resourceClient;
     private readonly ISpeciesClient _speciesClient;
     private readonly ILocationClient _locationClient;
     private readonly ICharacterClient _characterClient;
+    private readonly IWorldstateClient _worldstateClient;
 
     private const string REALM_KEY_PREFIX = "realm:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -40,19 +46,27 @@ public partial class RealmService : IRealmService
         ILogger<RealmService> logger,
         RealmServiceConfiguration configuration,
         IEventConsumer eventConsumer,
+        IDistributedLockProvider lockProvider,
+        ITelemetryProvider telemetryProvider,
         IResourceClient resourceClient,
         ISpeciesClient speciesClient,
         ILocationClient locationClient,
-        ICharacterClient characterClient)
+        ICharacterClient characterClient,
+        IWorldstateClient worldstateClient)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _realmStore = stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm);
+        _codeIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm);
+        _realmListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm);
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
+        _lockProvider = lockProvider;
+        _telemetryProvider = telemetryProvider;
         _resourceClient = resourceClient;
         _speciesClient = speciesClient;
         _locationClient = locationClient;
         _characterClient = characterClient;
+        _worldstateClient = worldstateClient;
 
         // Register event handlers via partial class (RealmServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -77,7 +91,7 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Getting realm by ID: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
+        var model = await _realmStore.GetAsync(realmKey, cancellationToken);
 
         if (model == null)
         {
@@ -98,7 +112,7 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Getting realm by code: {Code}", body.Code);
 
         var codeIndexKey = BuildCodeIndexKey(body.Code);
-        var realmIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+        var realmIdStr = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken);
 
         if (string.IsNullOrEmpty(realmIdStr) || !Guid.TryParse(realmIdStr, out var realmId))
         {
@@ -107,7 +121,7 @@ public partial class RealmService : IRealmService
         }
 
         var realmKey = BuildRealmKey(realmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
+        var model = await _realmStore.GetAsync(realmKey, cancellationToken);
 
         if (model == null)
         {
@@ -128,7 +142,7 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Listing realms with filters - Category: {Category}, IsActive: {IsActive}, IncludeDeprecated: {IncludeDeprecated}",
             body.Category, body.IsActive, body.IncludeDeprecated);
 
-        var allRealmIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm).GetAsync(ALL_REALMS_KEY, cancellationToken);
+        var allRealmIds = await _realmListStore.GetAsync(ALL_REALMS_KEY, cancellationToken);
 
         if (allRealmIds == null || allRealmIds.Count == 0)
         {
@@ -195,7 +209,7 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Checking if realm exists: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
+        var model = await _realmStore.GetAsync(realmKey, cancellationToken);
 
         if (model == null)
         {
@@ -302,7 +316,7 @@ public partial class RealmService : IRealmService
 
         // Check if code already exists
         var codeIndexKey = BuildCodeIndexKey(code);
-        var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+        var existingIdStr = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken);
 
         if (!string.IsNullOrEmpty(existingIdStr))
         {
@@ -333,16 +347,22 @@ public partial class RealmService : IRealmService
 
         // Save the model
         var realmKey = BuildRealmKey(realmId);
-        await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
+        await _realmStore.SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
         // Update code index (stored as string for state store compatibility)
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
+        await _codeIndexStore.SaveAsync(codeIndexKey, realmId.ToString(), cancellationToken: cancellationToken);
 
         // Update all-realms list with ETag-based optimistic concurrency
         await AddToRealmListAsync(realmId, cancellationToken);
 
         // Publish realm created event
         await PublishRealmCreatedEventAsync(model, cancellationToken);
+
+        // Optionally auto-initialize worldstate clock for the new realm
+        if (_configuration.AutoInitializeWorldstateClock)
+        {
+            await TryInitializeWorldstateClockAsync(realmId, cancellationToken);
+        }
 
         _logger.LogInformation("Created realm: {RealmId} with code {Code}", realmId, code);
         return (StatusCodes.OK, MapToResponse(model));
@@ -358,64 +378,81 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Updating realm: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
-        if (model == null)
+        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
         {
-            _logger.LogDebug("Realm not found for update: {RealmId}", body.RealmId);
-            return (StatusCodes.NotFound, null);
-        }
+            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
 
-        // Track changed fields and apply updates
-        var changedFields = new List<string>();
+            if (model == null)
+            {
+                _logger.LogDebug("Realm not found for update: {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
 
-        if (body.Name != null && body.Name != model.Name)
-        {
-            model.Name = body.Name;
-            changedFields.Add("name");
-        }
-        if (body.Description != null && body.Description != model.Description)
-        {
-            model.Description = body.Description;
-            changedFields.Add("description");
-        }
-        if (body.Category != null && body.Category != model.Category)
-        {
-            model.Category = body.Category;
-            changedFields.Add("category");
-        }
-        if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
-        {
-            model.IsActive = body.IsActive.Value;
-            changedFields.Add("isActive");
-        }
-        if (body.IsSystemType.HasValue && body.IsSystemType.Value != model.IsSystemType)
-        {
-            model.IsSystemType = body.IsSystemType.Value;
-            changedFields.Add("isSystemType");
-        }
-        if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
-        {
-            model.GameServiceId = body.GameServiceId.Value;
-            changedFields.Add("gameServiceId");
-        }
-        if (body.Metadata != null)
-        {
-            model.Metadata = body.Metadata;
-            changedFields.Add("metadata");
-        }
+            // Track changed fields and apply updates
+            var changedFields = new List<string>();
 
-        if (changedFields.Count > 0)
-        {
+            if (body.Name != null && body.Name != model.Name)
+            {
+                model.Name = body.Name;
+                changedFields.Add("name");
+            }
+            if (body.Description != null && body.Description != model.Description)
+            {
+                model.Description = body.Description;
+                changedFields.Add("description");
+            }
+            if (body.Category != null && body.Category != model.Category)
+            {
+                model.Category = body.Category;
+                changedFields.Add("category");
+            }
+            if (body.IsActive.HasValue && body.IsActive.Value != model.IsActive)
+            {
+                model.IsActive = body.IsActive.Value;
+                changedFields.Add("isActive");
+            }
+            if (body.IsSystemType.HasValue && body.IsSystemType.Value != model.IsSystemType)
+            {
+                model.IsSystemType = body.IsSystemType.Value;
+                changedFields.Add("isSystemType");
+            }
+            if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
+            {
+                model.GameServiceId = body.GameServiceId.Value;
+                changedFields.Add("gameServiceId");
+            }
+            if (body.Metadata != null)
+            {
+                model.Metadata = body.Metadata;
+                changedFields.Add("metadata");
+            }
+
+            if (changedFields.Count == 0)
+            {
+                _logger.LogInformation("Updated realm: {RealmId} (no changes)", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
             model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
 
-            // Publish realm updated event
-            await PublishRealmUpdatedEventAsync(model, changedFields, cancellationToken);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                await PublishRealmUpdatedEventAsync(model, changedFields, cancellationToken);
+                _logger.LogInformation("Updated realm: {RealmId}", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying update (attempt {Attempt})",
+                body.RealmId, attempt + 1);
         }
 
-        _logger.LogInformation("Updated realm: {RealmId}", body.RealmId);
-        return (StatusCodes.OK, MapToResponse(model));
+        _logger.LogWarning("Failed to update realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+            body.RealmId, _configuration.OptimisticRetryAttempts);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <summary>
@@ -428,7 +465,7 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Deleting realm: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
+        var model = await _realmStore.GetAsync(realmKey, cancellationToken);
 
         if (model == null)
         {
@@ -436,11 +473,11 @@ public partial class RealmService : IRealmService
             return StatusCodes.NotFound;
         }
 
-        // Realm should be deprecated before deletion
+        // Realm should be deprecated before deletion (Category A per FOUNDATION TENETS)
         if (!model.IsDeprecated)
         {
             _logger.LogDebug("Cannot delete realm {Code}: realm must be deprecated first", model.Code);
-            return StatusCodes.Conflict;
+            return StatusCodes.BadRequest;
         }
 
         // Check for external references via lib-resource (L1 - allowed per SERVICE_HIERARCHY)
@@ -501,11 +538,11 @@ public partial class RealmService : IRealmService
         }
 
         // Delete the model
-        await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).DeleteAsync(realmKey, cancellationToken);
+        await _realmStore.DeleteAsync(realmKey, cancellationToken);
 
         // Delete code index
         var codeIndexKey = BuildCodeIndexKey(model.Code);
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).DeleteAsync(codeIndexKey, cancellationToken);
+        await _codeIndexStore.DeleteAsync(codeIndexKey, cancellationToken);
 
         // Remove from all-realms list with ETag-based optimistic concurrency
         await RemoveFromRealmListAsync(body.RealmId, cancellationToken);
@@ -531,32 +568,46 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Deprecating realm: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
-        if (model == null)
+        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
         {
-            _logger.LogDebug("Realm not found for deprecation: {RealmId}", body.RealmId);
-            return (StatusCodes.NotFound, null);
+            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Realm not found for deprecation: {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Idempotent per FOUNDATION TENETS — caller's intent (deprecate) is already satisfied
+            if (model.IsDeprecated)
+            {
+                _logger.LogDebug("Realm {RealmId} already deprecated, returning OK (idempotent)", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            model.IsDeprecated = true;
+            model.DeprecatedAt = DateTimeOffset.UtcNow;
+            model.DeprecationReason = body.Reason;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+                _logger.LogInformation("Deprecated realm: {RealmId}", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying deprecation (attempt {Attempt})",
+                body.RealmId, attempt + 1);
         }
 
-        if (model.IsDeprecated)
-        {
-            _logger.LogDebug("Realm already deprecated: {RealmId}", body.RealmId);
-            return (StatusCodes.Conflict, null);
-        }
-
-        model.IsDeprecated = true;
-        model.DeprecatedAt = DateTimeOffset.UtcNow;
-        model.DeprecationReason = body.Reason;
-        model.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
-
-        // Publish realm updated event with deprecation fields
-        await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
-
-        _logger.LogInformation("Deprecated realm: {RealmId}", body.RealmId);
-        return (StatusCodes.OK, MapToResponse(model));
+        _logger.LogWarning("Failed to deprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+            body.RealmId, _configuration.OptimisticRetryAttempts);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <summary>
@@ -569,32 +620,46 @@ public partial class RealmService : IRealmService
         _logger.LogDebug("Undeprecating realm: {RealmId}", body.RealmId);
 
         var realmKey = BuildRealmKey(body.RealmId);
-        var model = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
 
-        if (model == null)
+        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
         {
-            _logger.LogDebug("Realm not found for undeprecation: {RealmId}", body.RealmId);
-            return (StatusCodes.NotFound, null);
+            var (model, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
+
+            if (model == null)
+            {
+                _logger.LogDebug("Realm not found for undeprecation: {RealmId}", body.RealmId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Idempotent per FOUNDATION TENETS — caller's intent (undeprecate) is already satisfied
+            if (!model.IsDeprecated)
+            {
+                _logger.LogDebug("Realm {RealmId} not deprecated, returning OK (idempotent)", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            model.IsDeprecated = false;
+            model.DeprecatedAt = null;
+            model.DeprecationReason = null;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await _realmStore.TrySaveAsync(realmKey, model, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+                _logger.LogInformation("Undeprecated realm: {RealmId}", body.RealmId);
+                return (StatusCodes.OK, MapToResponse(model));
+            }
+
+            _logger.LogDebug("Concurrent modification on realm {RealmId}, retrying undeprecation (attempt {Attempt})",
+                body.RealmId, attempt + 1);
         }
 
-        if (!model.IsDeprecated)
-        {
-            _logger.LogDebug("Realm is not deprecated: {RealmId}", body.RealmId);
-            return (StatusCodes.BadRequest, null);
-        }
-
-        model.IsDeprecated = false;
-        model.DeprecatedAt = null;
-        model.DeprecationReason = null;
-        model.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, model, cancellationToken: cancellationToken);
-
-        // Publish realm updated event with deprecation fields cleared
-        await PublishRealmUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
-
-        _logger.LogInformation("Undeprecated realm: {RealmId}", body.RealmId);
-        return (StatusCodes.OK, MapToResponse(model));
+        _logger.LogWarning("Failed to undeprecate realm {RealmId} after {Attempts} attempts due to concurrent modifications",
+            body.RealmId, _configuration.OptimisticRetryAttempts);
+        return (StatusCodes.Conflict, null);
     }
 
     #endregion
@@ -620,9 +685,27 @@ public partial class RealmService : IRealmService
             return (StatusCodes.BadRequest, null);
         }
 
+        // Acquire distributed lock for the merge operation to prevent concurrent merges
+        // involving the same realms. Lock key uses deterministic ordering to prevent deadlocks.
+        var lockKey = string.Compare(
+            body.SourceRealmId.ToString(), body.TargetRealmId.ToString(), StringComparison.Ordinal) < 0
+            ? $"merge:{body.SourceRealmId}:{body.TargetRealmId}"
+            : $"merge:{body.TargetRealmId}:{body.SourceRealmId}";
+
+        await using var mergeLock = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RealmLock, lockKey, Guid.NewGuid().ToString(),
+            _configuration.MergeLockTimeoutSeconds, cancellationToken);
+
+        if (!mergeLock.Success)
+        {
+            _logger.LogWarning("Failed to acquire merge lock for source {SourceRealmId} and target {TargetRealmId}",
+                body.SourceRealmId, body.TargetRealmId);
+            return (StatusCodes.Conflict, null);
+        }
+
         // Load source realm
         var sourceKey = BuildRealmKey(body.SourceRealmId);
-        var sourceRealm = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm)
+        var sourceRealm = await _realmStore
             .GetAsync(sourceKey, cancellationToken);
 
         if (sourceRealm == null)
@@ -648,7 +731,7 @@ public partial class RealmService : IRealmService
 
         // Load target realm
         var targetKey = BuildRealmKey(body.TargetRealmId);
-        var targetRealm = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm)
+        var targetRealm = await _realmStore
             .GetAsync(targetKey, cancellationToken);
 
         if (targetRealm == null)
@@ -723,8 +806,6 @@ public partial class RealmService : IRealmService
 
         return (StatusCodes.OK, new MergeRealmsResponse
         {
-            SourceRealmId = body.SourceRealmId,
-            TargetRealmId = body.TargetRealmId,
             SpeciesMigrated = speciesMigrated,
             SpeciesFailed = speciesFailed,
             LocationsMigrated = locationsMigrated,
@@ -744,19 +825,29 @@ public partial class RealmService : IRealmService
     private async Task<(int migrated, int failed)> MigrateSpeciesAsync(
         Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateSpeciesAsync");
         var migrated = 0;
         var failed = 0;
         var failedSpeciesIds = new HashSet<Guid>();
 
         while (true)
         {
-            var listResponse = await _speciesClient.ListSpeciesByRealmAsync(
-                new ListSpeciesByRealmRequest
-                {
-                    RealmId = sourceRealmId,
-                    Page = 1,
-                    PageSize = pageSize
-                }, cancellationToken);
+            SpeciesListResponse listResponse;
+            try
+            {
+                listResponse = await _speciesClient.ListSpeciesByRealmAsync(
+                    new ListSpeciesByRealmRequest
+                    {
+                        RealmId = sourceRealmId,
+                        Page = 1,
+                        PageSize = pageSize
+                    }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Species service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
+                break;
+            }
 
             if (listResponse.Species.Count == 0)
             {
@@ -823,6 +914,7 @@ public partial class RealmService : IRealmService
     private async Task<(int migrated, int failed)> MigrateLocationsAsync(
         Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateLocationsAsync");
         var migrated = 0;
         var failed = 0;
 
@@ -833,14 +925,23 @@ public partial class RealmService : IRealmService
 
         do
         {
-            var listResponse = await _locationClient.ListRootLocationsAsync(
-                new ListRootLocationsRequest
-                {
-                    RealmId = sourceRealmId,
-                    IncludeDeprecated = true,
-                    Page = page,
-                    PageSize = pageSize
-                }, cancellationToken);
+            LocationListResponse listResponse;
+            try
+            {
+                listResponse = await _locationClient.ListRootLocationsAsync(
+                    new ListRootLocationsRequest
+                    {
+                        RealmId = sourceRealmId,
+                        IncludeDeprecated = true,
+                        Page = page,
+                        PageSize = pageSize
+                    }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Location service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
+                break;
+            }
 
             rootLocations.AddRange(listResponse.Locations);
             hasMore = listResponse.HasNextPage;
@@ -966,19 +1067,29 @@ public partial class RealmService : IRealmService
     private async Task<(int migrated, int failed)> MigrateCharactersAsync(
         Guid sourceRealmId, Guid targetRealmId, int pageSize, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.MigrateCharactersAsync");
         var migrated = 0;
         var failed = 0;
         var failedCharacterIds = new HashSet<Guid>();
 
         while (true)
         {
-            var listResponse = await _characterClient.GetCharactersByRealmAsync(
-                new GetCharactersByRealmRequest
-                {
-                    RealmId = sourceRealmId,
-                    Page = 1,
-                    PageSize = pageSize
-                }, cancellationToken);
+            CharacterListResponse listResponse;
+            try
+            {
+                listResponse = await _characterClient.GetCharactersByRealmAsync(
+                    new GetCharactersByRealmRequest
+                    {
+                        RealmId = sourceRealmId,
+                        Page = 1,
+                        PageSize = pageSize
+                    }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex, "Character service unavailable during merge for realm {SourceRealmId}", sourceRealmId);
+                break;
+            }
 
             if (listResponse.Characters.Count == 0)
             {
@@ -1053,30 +1164,95 @@ public partial class RealmService : IRealmService
             {
                 var code = seedRealm.Code.ToUpperInvariant();
                 var codeIndexKey = BuildCodeIndexKey(code);
-                var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Realm).GetAsync(codeIndexKey, cancellationToken);
+                var existingIdStr = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken);
 
                 if (!string.IsNullOrEmpty(existingIdStr) && Guid.TryParse(existingIdStr, out var existingId))
                 {
                     if (body.UpdateExisting == true)
                     {
-                        // Update existing
+                        // Update existing with ETag-based optimistic concurrency per IMPLEMENTATION TENETS
                         var realmKey = BuildRealmKey(existingId);
-                        var existingModel = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetAsync(realmKey, cancellationToken);
+                        var seedUpdated = false;
 
-                        if (existingModel != null)
+                        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
                         {
-                            existingModel.Name = seedRealm.Name;
-                            existingModel.GameServiceId = seedRealm.GameServiceId;
-                            if (seedRealm.Description != null) existingModel.Description = seedRealm.Description;
-                            if (seedRealm.Category != null) existingModel.Category = seedRealm.Category;
-                            existingModel.IsActive = seedRealm.IsActive;
-                            existingModel.IsSystemType = seedRealm.IsSystemType;
-                            if (seedRealm.Metadata != null) existingModel.Metadata = seedRealm.Metadata;
-                            existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+                            // GetWithETagAsync returns non-null etag for existing records;
+                            // coalesce satisfies compiler's nullable analysis (will never execute)
+                            var (existingModel, etag) = await _realmStore.GetWithETagAsync(realmKey, cancellationToken);
 
-                            await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).SaveAsync(realmKey, existingModel, cancellationToken: cancellationToken);
+                            if (existingModel == null)
+                            {
+                                break;
+                            }
+
+                            var changedFields = new List<string>();
+
+                            if (existingModel.Name != seedRealm.Name)
+                            {
+                                existingModel.Name = seedRealm.Name;
+                                changedFields.Add("name");
+                            }
+                            if (existingModel.GameServiceId != seedRealm.GameServiceId)
+                            {
+                                existingModel.GameServiceId = seedRealm.GameServiceId;
+                                changedFields.Add("gameServiceId");
+                            }
+                            if (seedRealm.Description != null && existingModel.Description != seedRealm.Description)
+                            {
+                                existingModel.Description = seedRealm.Description;
+                                changedFields.Add("description");
+                            }
+                            if (seedRealm.Category != null && existingModel.Category != seedRealm.Category)
+                            {
+                                existingModel.Category = seedRealm.Category;
+                                changedFields.Add("category");
+                            }
+                            if (existingModel.IsActive != seedRealm.IsActive)
+                            {
+                                existingModel.IsActive = seedRealm.IsActive;
+                                changedFields.Add("isActive");
+                            }
+                            if (existingModel.IsSystemType != seedRealm.IsSystemType)
+                            {
+                                existingModel.IsSystemType = seedRealm.IsSystemType;
+                                changedFields.Add("isSystemType");
+                            }
+                            if (seedRealm.Metadata != null)
+                            {
+                                existingModel.Metadata = seedRealm.Metadata;
+                                changedFields.Add("metadata");
+                            }
+
+                            if (changedFields.Count == 0)
+                            {
+                                seedUpdated = true;
+                                break;
+                            }
+
+                            existingModel.UpdatedAt = DateTimeOffset.UtcNow;
+                            var saved = await _realmStore.TrySaveAsync(realmKey, existingModel,
+                                etag ?? string.Empty, cancellationToken);
+
+                            if (saved != null)
+                            {
+                                await PublishRealmUpdatedEventAsync(existingModel, changedFields, cancellationToken);
+                                seedUpdated = true;
+                                _logger.LogDebug("Updated existing realm: {Code} (changed: {ChangedFields})",
+                                    code, string.Join(", ", changedFields));
+                                break;
+                            }
+
+                            _logger.LogDebug("Seed update retry {Attempt} for realm {Code} due to ETag conflict",
+                                attempt + 1, code);
+                        }
+
+                        if (seedUpdated)
+                        {
                             updated++;
-                            _logger.LogDebug("Updated existing realm: {Code}", code);
+                        }
+                        else
+                        {
+                            errors.Add($"Failed to update realm '{seedRealm.Code}' after {_configuration.OptimisticRetryAttempts} attempts (concurrent modification)");
                         }
                     }
                     else
@@ -1096,6 +1272,7 @@ public partial class RealmService : IRealmService
                         Description = seedRealm.Description,
                         Category = seedRealm.Category,
                         IsActive = seedRealm.IsActive,
+                        IsSystemType = seedRealm.IsSystemType,
                         Metadata = seedRealm.Metadata
                     };
 
@@ -1141,11 +1318,10 @@ public partial class RealmService : IRealmService
     /// </summary>
     private async Task AddToRealmListAsync(Guid realmId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm);
-
-        for (var attempt = 0; attempt < 3; attempt++)
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.AddToRealmListAsync");
+        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
         {
-            var (realmIds, etag) = await listStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
+            var (realmIds, etag) = await _realmListStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
             realmIds ??= new List<Guid>();
 
             if (realmIds.Contains(realmId))
@@ -1154,7 +1330,9 @@ public partial class RealmService : IRealmService
             }
 
             realmIds.Add(realmId);
-            var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            // etag is null when list key doesn't exist yet; empty string signals
+            // "create new" to TrySaveAsync (will never conflict on new entries)
+            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 return;
@@ -1163,7 +1341,7 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Concurrent modification on realm list, retrying add (attempt {Attempt})", attempt + 1);
         }
 
-        _logger.LogWarning("Failed to add realm {RealmId} to list after 3 attempts", realmId);
+        _logger.LogWarning("Failed to add realm {RealmId} to list after {Attempts} attempts", realmId, _configuration.OptimisticRetryAttempts);
     }
 
     /// <summary>
@@ -1172,17 +1350,18 @@ public partial class RealmService : IRealmService
     /// </summary>
     private async Task RemoveFromRealmListAsync(Guid realmId, CancellationToken cancellationToken)
     {
-        var listStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Realm);
-
-        for (var attempt = 0; attempt < 3; attempt++)
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.RemoveFromRealmListAsync");
+        for (var attempt = 0; attempt < _configuration.OptimisticRetryAttempts; attempt++)
         {
-            var (realmIds, etag) = await listStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
+            var (realmIds, etag) = await _realmListStore.GetWithETagAsync(ALL_REALMS_KEY, cancellationToken);
             if (realmIds == null || !realmIds.Remove(realmId))
             {
                 return; // Not in list or already removed
             }
 
-            var result = await listStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await _realmListStore.TrySaveAsync(ALL_REALMS_KEY, realmIds, etag ?? string.Empty, cancellationToken);
             if (result != null)
             {
                 return;
@@ -1191,18 +1370,19 @@ public partial class RealmService : IRealmService
             _logger.LogDebug("Concurrent modification on realm list, retrying remove (attempt {Attempt})", attempt + 1);
         }
 
-        _logger.LogWarning("Failed to remove realm {RealmId} from list after 3 attempts", realmId);
+        _logger.LogWarning("Failed to remove realm {RealmId} from list after {Attempts} attempts", realmId, _configuration.OptimisticRetryAttempts);
     }
 
     private async Task<List<RealmModel>> LoadRealmsByIdsAsync(List<Guid> realmIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.LoadRealmsByIdsAsync");
         if (realmIds.Count == 0)
         {
             return new List<RealmModel>();
         }
 
         var keys = realmIds.Select(BuildRealmKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<RealmModel>(StateStoreDefinitions.Realm).GetBulkAsync(keys, cancellationToken);
+        var bulkResults = await _realmStore.GetBulkAsync(keys, cancellationToken);
 
         var realmList = new List<RealmModel>();
         foreach (var (_, model) in bulkResults)
@@ -1237,6 +1417,37 @@ public partial class RealmService : IRealmService
         };
     }
 
+    /// <summary>
+    /// Attempts to initialize a worldstate clock for a newly created realm.
+    /// Logs a warning on failure but does not fail the realm creation -- the clock
+    /// can be initialized manually later via the worldstate API.
+    /// </summary>
+    private async Task TryInitializeWorldstateClockAsync(Guid realmId, CancellationToken cancellationToken)
+    {
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.TryInitializeWorldstateClock");
+
+        try
+        {
+            await _worldstateClient.InitializeRealmClockAsync(
+                new InitializeRealmClockRequest
+                {
+                    RealmId = realmId,
+                    CalendarTemplateCode = _configuration.DefaultCalendarTemplateCode
+                },
+                cancellationToken);
+
+            _logger.LogInformation(
+                "Auto-initialized worldstate clock for realm {RealmId} with calendar template {CalendarTemplateCode}",
+                realmId, _configuration.DefaultCalendarTemplateCode);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex,
+                "Failed to auto-initialize worldstate clock for realm {RealmId} (status {StatusCode}). Clock can be initialized manually via the worldstate API",
+                realmId, ex.StatusCode);
+        }
+    }
+
     #endregion
 
     #region Event Publishing
@@ -1246,35 +1457,29 @@ public partial class RealmService : IRealmService
     /// </summary>
     private async Task PublishRealmCreatedEventAsync(RealmModel model, CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.PublishRealmCreatedEventAsync");
+        var eventModel = new RealmCreatedEvent
         {
-            var eventModel = new RealmCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RealmId = model.RealmId,
-                Code = model.Code,
-                Name = model.Name,
-                GameServiceId = model.GameServiceId,
-                Description = model.Description,
-                Category = model.Category,
-                IsActive = model.IsActive,
-                IsSystemType = model.IsSystemType,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                Metadata = model.Metadata,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = model.RealmId,
+            Code = model.Code,
+            Name = model.Name,
+            GameServiceId = model.GameServiceId,
+            Description = model.Description,
+            Category = model.Category,
+            IsActive = model.IsActive,
+            IsSystemType = model.IsSystemType,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Metadata = model.Metadata,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt
+        };
 
-            await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish realm.created event for {RealmId}", model.RealmId);
-        }
+        await _messageBus.TryPublishAsync("realm.created", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published realm.created event for {RealmId}", model.RealmId);
     }
 
     /// <summary>
@@ -1282,37 +1487,31 @@ public partial class RealmService : IRealmService
     /// </summary>
     private async Task PublishRealmUpdatedEventAsync(RealmModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.PublishRealmUpdatedEventAsync");
+        var eventModel = new RealmUpdatedEvent
         {
-            var eventModel = new RealmUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RealmId = model.RealmId,
-                Code = model.Code,
-                Name = model.Name,
-                GameServiceId = model.GameServiceId,
-                Description = model.Description,
-                Category = model.Category,
-                IsActive = model.IsActive,
-                IsSystemType = model.IsSystemType,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                Metadata = model.Metadata,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt,
-                ChangedFields = changedFields.ToList()
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = model.RealmId,
+            Code = model.Code,
+            Name = model.Name,
+            GameServiceId = model.GameServiceId,
+            Description = model.Description,
+            Category = model.Category,
+            IsActive = model.IsActive,
+            IsSystemType = model.IsSystemType,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Metadata = model.Metadata,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            ChangedFields = changedFields.ToList()
+        };
 
-            await _messageBus.TryPublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
-                model.RealmId, string.Join(", ", changedFields));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish realm.updated event for {RealmId}", model.RealmId);
-        }
+        await _messageBus.TryPublishAsync("realm.updated", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published realm.updated event for {RealmId} with changed fields: {ChangedFields}",
+            model.RealmId, string.Join(", ", changedFields));
     }
 
     /// <summary>
@@ -1329,32 +1528,26 @@ public partial class RealmService : IRealmService
         int charactersFailed,
         CancellationToken cancellationToken)
     {
-        try
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.PublishRealmMergedEventAsync");
+        var eventModel = new RealmMergedEvent
         {
-            var eventModel = new RealmMergedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SourceRealmId = sourceRealm.RealmId,
-                SourceRealmCode = sourceRealm.Code,
-                TargetRealmId = targetRealm.RealmId,
-                TargetRealmCode = targetRealm.Code,
-                SpeciesMigrated = speciesMigrated,
-                SpeciesFailed = speciesFailed,
-                LocationsMigrated = locationsMigrated,
-                LocationsFailed = locationsFailed,
-                CharactersMigrated = charactersMigrated,
-                CharactersFailed = charactersFailed
-            };
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SourceRealmId = sourceRealm.RealmId,
+            SourceRealmCode = sourceRealm.Code,
+            TargetRealmId = targetRealm.RealmId,
+            TargetRealmCode = targetRealm.Code,
+            SpeciesMigrated = speciesMigrated,
+            SpeciesFailed = speciesFailed,
+            LocationsMigrated = locationsMigrated,
+            LocationsFailed = locationsFailed,
+            CharactersMigrated = charactersMigrated,
+            CharactersFailed = charactersFailed
+        };
 
-            await _messageBus.TryPublishAsync("realm.merged", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published realm.merged event for source {SourceRealmId} into target {TargetRealmId}",
-                sourceRealm.RealmId, targetRealm.RealmId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to publish realm.merged event for source {SourceRealmId}", sourceRealm.RealmId);
-        }
+        await _messageBus.TryPublishAsync("realm.merged", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published realm.merged event for source {SourceRealmId} into target {TargetRealmId}",
+            sourceRealm.RealmId, targetRealm.RealmId);
     }
 
     /// <summary>
@@ -1362,36 +1555,31 @@ public partial class RealmService : IRealmService
     /// </summary>
     private async Task PublishRealmDeletedEventAsync(RealmModel model, string? deletedReason, CancellationToken cancellationToken)
     {
-        try
-        {
-            var eventModel = new RealmDeletedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                RealmId = model.RealmId,
-                Code = model.Code,
-                Name = model.Name,
-                GameServiceId = model.GameServiceId,
-                Description = model.Description,
-                Category = model.Category,
-                IsActive = model.IsActive,
-                IsSystemType = model.IsSystemType,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason,
-                Metadata = model.Metadata,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = model.UpdatedAt,
-                DeletedReason = deletedReason
-            };
+        using var activity = _telemetryProvider.StartActivity("bannou.realm", "RealmService.PublishRealmDeletedEventAsync");
 
-            await _messageBus.TryPublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
-            _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
-        }
-        catch (Exception ex)
+        var eventModel = new RealmDeletedEvent
         {
-            _logger.LogWarning(ex, "Failed to publish realm.deleted event for {RealmId}", model.RealmId);
-        }
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RealmId = model.RealmId,
+            Code = model.Code,
+            Name = model.Name,
+            GameServiceId = model.GameServiceId,
+            Description = model.Description,
+            Category = model.Category,
+            IsActive = model.IsActive,
+            IsSystemType = model.IsSystemType,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason,
+            Metadata = model.Metadata,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = model.UpdatedAt,
+            DeletedReason = deletedReason
+        };
+
+        await _messageBus.TryPublishAsync("realm.deleted", eventModel, cancellationToken: cancellationToken);
+        _logger.LogDebug("Published realm.deleted event for {RealmId}", model.RealmId);
     }
 
     #endregion
@@ -1399,25 +1587,4 @@ public partial class RealmService : IRealmService
     #region Permission Registration
 
     #endregion
-}
-
-/// <summary>
-/// Internal storage model for realm data.
-/// </summary>
-internal class RealmModel
-{
-    public Guid RealmId { get; set; }
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public Guid GameServiceId { get; set; }
-    public string? Description { get; set; }
-    public string? Category { get; set; }
-    public bool IsActive { get; set; } = true;
-    public bool IsSystemType { get; set; }
-    public bool IsDeprecated { get; set; }
-    public DateTimeOffset? DeprecatedAt { get; set; }
-    public string? DeprecationReason { get; set; }
-    public object? Metadata { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
 }

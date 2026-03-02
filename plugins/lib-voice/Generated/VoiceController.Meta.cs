@@ -36,8 +36,13 @@ public partial class VoiceController
                     "description": "Session ID this voice room is associated with"
                 },
                 "preferredTier": {
-                    "$ref": "#/$defs/VoiceTier",
-                    "description": "Preferred voice tier (defaults to p2p)"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/VoiceTier"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Preferred voice tier (defaults to P2P)"
                 },
                 "maxParticipants": {
                     "type": "integer",
@@ -47,8 +52,13 @@ public partial class VoiceController
                     "description": "Maximum participants before tier upgrade"
                 },
                 "codec": {
-                    "$ref": "#/$defs/VoiceCodec",
-                    "description": "Preferred audio codec (defaults to opus)"
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/VoiceCodec"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Preferred audio codec (defaults to Opus)"
                 },
                 "autoCleanup": {
                     "type": "boolean",
@@ -65,17 +75,17 @@ public partial class VoiceController
         "VoiceTier": {
             "type": "string",
             "enum": [
-                "p2p",
-                "scaled"
+                "P2P",
+                "Scaled"
             ],
-            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+            "description": "Voice communication tier:\n- P2P: Direct peer-to-peer connections (up to 6 participants)\n- Scaled: RTP server-mediated communication (unlimited participants)\n"
         },
         "VoiceCodec": {
             "type": "string",
             "enum": [
-                "opus",
-                "g711",
-                "g722"
+                "Opus",
+                "G711",
+                "G722"
             ],
             "description": "Audio codec for voice communication"
         }
@@ -96,7 +106,14 @@ public partial class VoiceController
                 "roomId",
                 "sessionId",
                 "tier",
-                "createdAt"
+                "codec",
+                "maxParticipants",
+                "currentParticipants",
+                "participants",
+                "createdAt",
+                "autoCleanup",
+                "isPasswordProtected",
+                "broadcastState"
             ],
             "properties": {
                 "roomId": {
@@ -150,10 +167,6 @@ public partial class VoiceController
                     "type": "boolean",
                     "description": "Whether the room requires a password to join"
                 },
-                "isBroadcasting": {
-                    "type": "boolean",
-                    "description": "Whether the room is currently broadcasting (Approved state)"
-                },
                 "broadcastState": {
                     "$ref": "#/$defs/BroadcastConsentState",
                     "description": "Current broadcast consent state"
@@ -163,17 +176,17 @@ public partial class VoiceController
         "VoiceTier": {
             "type": "string",
             "enum": [
-                "p2p",
-                "scaled"
+                "P2P",
+                "Scaled"
             ],
-            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+            "description": "Voice communication tier:\n- P2P: Direct peer-to-peer connections (up to 6 participants)\ n- Scaled: RTP server-mediated communication (unlimited participants)\n"
         },
         "VoiceCodec": {
             "type": "string",
             "enum": [
-                "opus",
-                "g711",
-                "g722"
+                "Opus",
+                "G711",
+                "G722"
             ],
             "description": "Audio codec for voice communication"
         },
@@ -314,7 +327,14 @@ public partial class VoiceController
                 "roomId",
                 "sessionId",
                 "tier",
-                "createdAt"
+                "codec",
+                "maxParticipants",
+                "currentParticipants",
+                "participants",
+                "createdAt",
+                "autoCleanup",
+                "isPasswordProtected",
+                "broadcastState"
             ],
             "properties": {
                 "roomId": {
@@ -368,10 +388,6 @@ public partial class VoiceController
                     "type": "boolean",
                     "description": "Whether the room requires a password to join"
                 },
-                "isBroadcasting": {
-                    "type": "boolean",
-                    "description": "Whether the room is currently broadcasting (Approved state)"
-                },
                 "broadcastState": {
                     "$ref": "#/$defs/BroadcastConsentState",
                     "description": "Current broadcast consent state"
@@ -381,17 +397,17 @@ public partial class VoiceController
         "VoiceTier": {
             "type": "string",
             "enum": [
-                "p2p",
-                "scaled"
+                "P2P",
+                "Scaled"
             ],
-            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+            "description": "Voice communication tier:\n- P2P: Direct peer-to-peer connections (up to 6 participants)\ n- Scaled: RTP server-mediated communication (unlimited participants)\n"
         },
         "VoiceCodec": {
             "type": "string",
             "enum": [
-                "opus",
-                "g711",
-                "g722"
+                "Opus",
+                "G711",
+                "G722"
             ],
             "description": "Audio codec for voice communication"
         },
@@ -527,6 +543,7 @@ public partial class VoiceController
                 "displayName": {
                     "type": "string",
                     "maxLength": 50,
+                    "nullable": true,
                     "description": "Display name for UI"
                 },
                 "password": {
@@ -550,6 +567,7 @@ public partial class VoiceController
                 },
                 "iceCandidates": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -582,7 +600,11 @@ public partial class VoiceController
             "description": "Response after joining a voice room",
             "required": [
                 "roomId",
-                "tier"
+                "tier",
+                "codec",
+                "peers",
+                "stunServers",
+                "broadcastState"
             ],
             "properties": {
                 "roomId": {
@@ -622,10 +644,6 @@ public partial class VoiceController
                     "default": false,
                     "description": "True if room is about to upgrade to scaled tier"
                 },
-                "isBroadcasting": {
-                    "type": "boolean",
-                    "description": "Whether the room is currently broadcasting (Approved state)"
-                },
                 "broadcastState": {
                     "$ref": "#/$defs/BroadcastConsentState",
                     "description": "Current broadcast consent state"
@@ -635,17 +653,17 @@ public partial class VoiceController
         "VoiceTier": {
             "type": "string",
             "enum": [
-                "p2p",
-                "scaled"
+                "P2P",
+                "Scaled"
             ],
-            "description": "Voice communication tier:\n- p2p: Direct peer-to-peer connections (up to 6 participants)\n- scaled: RTP server-mediated communication (unlimited participants)\n"
+            "description": "Voice communication tier:\n- P2P: Direct peer-to-peer connections (up to 6 participants)\ n- Scaled: RTP server-mediated communication (unlimited participants)\n"
         },
         "VoiceCodec": {
             "type": "string",
             "enum": [
-                "opus",
-                "g711",
-                "g722"
+                "Opus",
+                "G711",
+                "G722"
             ],
             "description": "Audio codec for voice communication"
         },
@@ -688,6 +706,7 @@ public partial class VoiceController
                 },
                 "iceCandidates": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -883,10 +902,20 @@ public partial class VoiceController
                     "description": "Voice room ID to delete"
                 },
                 "reason": {
-                    "type": "string",
-                    "description": "Reason for deletion"
+                    "$ref": "#/$defs/VoiceRoomDeletedReason",
+                    "nullable": true,
+                    "description": "Reason for deletion (defaults to Manual if not specified)"
                 }
             }
+        },
+        "VoiceRoomDeletedReason": {
+            "type": "string",
+            "enum": [
+                "Manual",
+                "Empty",
+                "Error"
+            ],
+            "description": "Reason a voice room was deleted"
         }
     }
 }
@@ -1079,6 +1108,7 @@ public partial class VoiceController
                 },
                 "iceCandidates": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "type": "string"
                     },
@@ -1189,6 +1219,12 @@ public partial class VoiceController
             "type": "object",
             "additionalProperties": false,
             "description": "Current broadcast consent status for a voice room",
+            "required": [
+                "roomId",
+                "state",
+                "consentedSessionIds",
+                "pendingSessionIds"
+            ],
             "properties": {
                 "roomId": {
                     "type": "string",
@@ -1224,7 +1260,7 @@ public partial class VoiceController
                 "rtpAudioEndpoint": {
                     "type": "string",
                     "nullable": true,
-                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio.\n"
                 }
             }
         },
@@ -1244,7 +1280,7 @@ public partial class VoiceController
     private static readonly string _RequestBroadcastConsent_Info = """
 {
     "summary": "Request broadcast consent from all room participants",
-    "description": "Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.\ nThis endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.\n",
+    "description": "Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.\ nThis endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline events.\n",
     "tags": [
         "Voice Broadcasting"
     ],
@@ -1341,6 +1377,12 @@ public partial class VoiceController
             "type": "object",
             "additionalProperties": false,
             "description": "Current broadcast consent status for a voice room",
+            "required": [
+                "roomId",
+                "state",
+                "consentedSessionIds",
+                "pendingSessionIds"
+            ],
             "properties": {
                 "roomId": {
                     "type": "string",
@@ -1376,7 +1418,7 @@ public partial class VoiceController
                 "rtpAudioEndpoint": {
                     "type": "string",
                     "nullable": true,
-                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio.\n"
                 }
             }
         },
@@ -1396,7 +1438,7 @@ public partial class VoiceController
     private static readonly string _RespondBroadcastConsent_Info = """
 {
     "summary": "Respond to a broadcast consent request",
-    "description": "Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.\n",
+    "description": "Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved. If any participant declines, lib-voice publishes voice.broadcast.declined.\n",
     "tags": [
         "Voice Broadcasting"
     ],
@@ -1486,7 +1528,7 @@ public partial class VoiceController
     private static readonly string _StopBroadcast_Info = """
 {
     "summary": "Stop broadcasting from a voice room",
-    "description": "Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.\n",
+    "description": "Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped with reason ConsentRevoked.\n",
     "tags": [
         "Voice Broadcasting"
     ],
@@ -1572,6 +1614,12 @@ public partial class VoiceController
             "type": "object",
             "additionalProperties": false,
             "description": "Current broadcast consent status for a voice room",
+            "required": [
+                "roomId",
+                "state",
+                "consentedSessionIds",
+                "pendingSessionIds"
+            ],
             "properties": {
                 "roomId": {
                     "type": "string",
@@ -1607,7 +1655,7 @@ public partial class VoiceController
                 "rtpAudioEndpoint": {
                     "type": "string",
                     "nullable": true,
-                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.\n"
+                    "description": "RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio.\n"
                 }
             }
         },

@@ -52,12 +52,6 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
 {
 
     /// <summary>
-    /// Default max stack size for new templates when not specified
-    /// Environment variable: ITEM_DEFAULT_MAX_STACK_SIZE
-    /// </summary>
-    public int DefaultMaxStackSize { get; set; } = 99;
-
-    /// <summary>
     /// Default weight precision for new templates
     /// Environment variable: ITEM_DEFAULT_WEIGHT_PRECISION
     /// </summary>
@@ -67,18 +61,21 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
     /// TTL for template cache entries in seconds (templates change infrequently)
     /// Environment variable: ITEM_TEMPLATE_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int TemplateCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// TTL for instance cache entries in seconds (15 minutes for active gameplay)
     /// Environment variable: ITEM_INSTANCE_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int InstanceCacheTtlSeconds { get; set; } = 900;
 
     /// <summary>
     /// Maximum item instances returned in a single query
     /// Environment variable: ITEM_MAX_INSTANCES_PER_QUERY
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxInstancesPerQuery { get; set; } = 1000;
 
     /// <summary>
@@ -103,12 +100,14 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
     /// Maximum retry attempts for optimistic concurrency on list operations
     /// Environment variable: ITEM_LIST_OPERATION_MAX_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ListOperationMaxRetries { get; set; } = 3;
 
     /// <summary>
     /// Timeout in seconds for distributed locks on item instance modifications
     /// Environment variable: ITEM_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
@@ -136,14 +135,13 @@ public class ItemServiceConfiguration : BaseServiceConfiguration
     /// System party ID for item use contracts (null uses deterministic UUID from game ID)
     /// Environment variable: ITEM_SYSTEM_PARTY_ID
     /// </summary>
-    public string? SystemPartyId { get; set; }
+    public Guid? SystemPartyId { get; set; }
 
     /// <summary>
-    /// Entity type string for the system party in item use contracts
+    /// Entity type for the system party in item use contracts
     /// Environment variable: ITEM_SYSTEM_PARTY_TYPE
     /// </summary>
-    [ConfigStringLength(MinLength = 1, MaxLength = 64)]
-    public string SystemPartyType { get; set; } = "system";
+    public EntityType SystemPartyType { get; set; } = EntityType.System;
 
     /// <summary>
     /// Milestone code to complete for CanUse validation contracts

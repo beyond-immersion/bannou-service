@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Bannou Quest Service API
   description: |
@@ -472,18 +472,26 @@ components:
         FAIL_FAST: Stop on first failure, return that failure.
         CHECK_ALL: Check all prerequisites, return all failures for richer error info.
 
+    RewardType:
+      type: string
+      enum: [CURRENCY, ITEM, EXPERIENCE, REPUTATION]
+      description: Type of reward granted on quest completion
+
     # === REQUEST/RESPONSE MODELS ===
     CreateQuestDefinitionRequest:
       type: object
       description: Request to create a new quest definition with objectives and rewards
       additionalProperties: false
-      required: [code, name, objectives]
+      required: [code, name, objectives, gameServiceId, category, difficulty]
       properties:
         code:
           type: string
+          minLength: 1
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique quest code (uppercase, underscores)
         name:
           type: string
+          minLength: 1
           description: Display name of the quest
         description:
           type: string
@@ -506,17 +514,21 @@ components:
         cooldownSeconds:
           type: integer
           nullable: true
+          minimum: 0
           description: Cooldown in seconds for repeatable quests
         deadlineSeconds:
           type: integer
           nullable: true
+          minimum: 1
           description: Time limit in seconds (null for no deadline)
         maxQuestors:
           type: integer
           default: 1
+          minimum: 1
           description: Maximum party members (1 for solo)
         objectives:
           type: array
+          minItems: 1
           items:
             $ref: '#/components/schemas/ObjectiveDefinition'
           description: List of quest objectives (ordered)
@@ -556,9 +568,11 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
           description: Unique objective code within quest
         name:
           type: string
+          minLength: 1
           description: Display name of the objective
         description:
           type: string
@@ -569,6 +583,7 @@ components:
           $ref: '#/components/schemas/ObjectiveType'
         requiredCount:
           type: integer
+          minimum: 1
           description: Count needed to complete
         targetEntityType:
           type: string
@@ -588,8 +603,10 @@ components:
           default: false
           description: Whether objective is hidden initially
         revealBehavior:
-          description: When a hidden objective is revealed in the quest log
-          $ref: '#/components/schemas/ObjectiveRevealBehavior'
+          description: When a hidden objective is revealed in the quest log (null defaults to ALWAYS)
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ObjectiveRevealBehavior'
         optional:
           type: boolean
           default: false
@@ -611,6 +628,7 @@ components:
         minLevel:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum level for CHARACTER_LEVEL type
         factionCode:
           type: string
@@ -631,6 +649,7 @@ components:
         minAmount:
           type: integer
           nullable: true
+          minimum: 0
           description: Minimum amount for CURRENCY_AMOUNT type
 
     RewardDefinition:
@@ -640,9 +659,8 @@ components:
       required: [type]
       properties:
         type:
-          type: string
-          enum: [CURRENCY, ITEM, EXPERIENCE, REPUTATION]
           description: Type of reward
+          $ref: '#/components/schemas/RewardType'
         currencyCode:
           type: string
           nullable: true
@@ -650,6 +668,7 @@ components:
         amount:
           type: integer
           nullable: true
+          minimum: 1
           description: Amount for CURRENCY/EXPERIENCE rewards
         itemCode:
           type: string
@@ -658,66 +677,18 @@ components:
         quantity:
           type: integer
           nullable: true
+          minimum: 1
           description: Quantity for ITEM rewards
         factionCode:
           type: string
           nullable: true
           description: Faction code for REPUTATION rewards
 
-    FailedPrerequisite:
-      type: object
-      description: Details about a failed prerequisite check during quest acceptance
-      additionalProperties: false
-      required: [type, reason]
-      properties:
-        type:
-          $ref: '#/components/schemas/PrerequisiteType'
-          description: Type of prerequisite that failed
-        code:
-          type: string
-          nullable: true
-          description: Specific code (quest code, currency code, item code, etc.)
-        reason:
-          type: string
-          description: Human-readable failure reason
-        currentValue:
-          type: string
-          nullable: true
-          description: Current value (e.g., "50 gold", "3 wolf pelts")
-        requiredValue:
-          type: string
-          nullable: true
-          description: Required value (e.g., "100 gold", "5 wolf pelts")
-
-    AcceptQuestErrorCode:
-      type: string
-      enum: [PREREQUISITES_NOT_MET, ALREADY_ACTIVE, ON_COOLDOWN, MAX_QUESTS_REACHED, DEFINITION_NOT_FOUND, DEFINITION_DEPRECATED]
-      description: Specific error codes for quest acceptance failures
-
-    AcceptQuestErrorResponse:
-      type: object
-      description: Error response when quest acceptance fails
-      additionalProperties: false
-      required: [errorCode, message]
-      properties:
-        errorCode:
-          $ref: '#/components/schemas/AcceptQuestErrorCode'
-          description: Specific error code indicating failure type
-        message:
-          type: string
-          description: Human-readable error message
-        failedPrerequisites:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/FailedPrerequisite'
-          description: List of prerequisites that were not met (only for PREREQUISITES_NOT_MET)
-
     QuestDefinitionResponse:
       type: object
       description: Complete quest definition including objectives, prerequisites, and rewards
       additionalProperties: false
-      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, deprecated, createdAt, gameServiceId]
+      required: [definitionId, contractTemplateId, code, name, category, difficulty, repeatable, maxQuestors, objectives, isDeprecated, createdAt, gameServiceId]
       properties:
         definitionId:
           type: string
@@ -784,9 +755,19 @@ components:
           items:
             type: string
           description: Tags
-        deprecated:
+        isDeprecated:
           type: boolean
-          description: Whether deprecated
+          description: Whether this quest definition is deprecated
+        deprecatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the quest definition was deprecated
+        deprecationReason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
         createdAt:
           type: string
           format: date-time
@@ -844,10 +825,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
 
     ListQuestDefinitionsResponse:
@@ -910,6 +894,11 @@ components:
           type: string
           format: uuid
           description: Definition to deprecate
+        reason:
+          type: string
+          nullable: true
+          maxLength: 500
+          description: Reason for deprecation
 
     # === INSTANCE MODELS ===
     AcceptQuestRequest:
@@ -988,10 +977,13 @@ components:
         limit:
           type: integer
           default: 50
-          description: Max results
+          minimum: 1
+          maximum: 100
+          description: Max results per page
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
 
     ListQuestsResponse:
@@ -1052,6 +1044,11 @@ components:
           type: string
           format: uuid
           description: Character to get log for
+        category:
+          description: Filter active quests by category
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/QuestCategory'
 
     QuestInstanceResponse:
       type: object
@@ -1225,6 +1222,7 @@ components:
           description: Objective code
         incrementBy:
           type: integer
+          minimum: 1
           description: Amount to increment progress
         trackedEntityId:
           type: string

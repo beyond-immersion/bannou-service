@@ -83,11 +83,11 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
 
         Configuration.DefaultMaxSeedsPerOwner = 3;
         Configuration.MaxSeedTypesPerGameService = 50;
-        Configuration.BondSharedGrowthMultiplier = 1.5;
+        Configuration.BondSharedGrowthMultiplier = 1.5f;
         Configuration.CapabilityRecomputeDebounceMs = 5000;
         Configuration.GrowthDecayEnabled = false;
-        Configuration.GrowthDecayRatePerDay = 0.01;
-        Configuration.BondStrengthGrowthRate = 0.1;
+        Configuration.GrowthDecayRatePerDay = 0.01f;
+        Configuration.BondStrengthGrowthRate = 0.1f;
         Configuration.DefaultQueryPageSize = 100;
     }
 
@@ -97,6 +97,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         _mockStateStoreFactory.Object,
         _mockLockProvider.Object,
         _mockLogger.Object,
+        new NullTelemetryProvider(),
         Configuration,
         _mockEventConsumer.Object,
         _mockGameServiceClient.Object,
@@ -111,7 +112,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
             DisplayName = "Guardian",
             Description = "A guardian seed type",
             MaxPerOwner = 3,
-            AllowedOwnerTypes = new List<string> { "account", "character" },
+            AllowedOwnerTypes = new List<EntityType> { EntityType.Account, EntityType.Character },
             GrowthPhases = new List<GrowthPhaseDefinition>
             {
                 new GrowthPhaseDefinition { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },
@@ -129,7 +130,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
     private SeedModel CreateTestSeed(
         Guid? seedId = null,
         Guid? ownerId = null,
-        string ownerType = "character",
+        EntityType ownerType = EntityType.Character,
         string seedTypeCode = "guardian",
         Guid? gameServiceId = null,
         SeedStatus status = SeedStatus.Active) => new SeedModel
@@ -333,7 +334,7 @@ public class SeedEvolutionListenerTests : ServiceTestBase<SeedServiceConfigurati
         Assert.Equal(seedId, capturedNotification.SeedId);
         Assert.Equal("guardian", capturedNotification.SeedTypeCode);
         Assert.Equal(_testOwnerId, capturedNotification.OwnerId);
-        Assert.Equal("character", capturedNotification.OwnerType);
+        Assert.Equal(EntityType.Character, capturedNotification.OwnerType);
         Assert.Equal(3, capturedNotification.DomainChanges.Count);
         Assert.False(capturedNotification.CrossPollinated);
         Assert.Equal("test-batch", capturedNotification.Source);

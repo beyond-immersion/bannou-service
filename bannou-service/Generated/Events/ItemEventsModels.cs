@@ -32,125 +32,6 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Event published when an item template is deprecated (soft-disable with optional migration)
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ItemTemplateDeprecatedEvent
-{
-
-    /// <summary>
-    /// Unique event identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the event occurred
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Deprecated template ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("templateId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid TemplateId { get; set; } = default!;
-
-    /// <summary>
-    /// Item template code
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("code")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Code { get; set; } = default!;
-
-    /// <summary>
-    /// Game service ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("gameId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string GameId { get; set; } = default!;
-
-    /// <summary>
-    /// Template display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Name { get; set; } = default!;
-
-    /// <summary>
-    /// Item category
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("category")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemCategory Category { get; set; } = default!;
-
-    /// <summary>
-    /// Item rarity tier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("rarity")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemRarity Rarity { get; set; } = default!;
-
-    /// <summary>
-    /// Quantity tracking model
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("quantityModel")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QuantityModel QuantityModel { get; set; } = default!;
-
-    /// <summary>
-    /// Realm availability scope
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("scope")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ItemScope Scope { get; set; } = default!;
-
-    /// <summary>
-    /// Whether template is still active
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
-    public bool IsActive { get; set; } = default!;
-
-    /// <summary>
-    /// When the template was created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset CreatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// When the template was last modified
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")]
-    public System.DateTimeOffset? UpdatedAt { get; set; } = default!;
-
-    /// <summary>
-    /// Template ID to migrate existing instances to
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("migrationTargetId")]
-    public System.Guid? MigrationTargetId { get; set; } = default!;
-
-}
-
-/// <summary>
 /// Event published when an item instance is modified (durability, stats, name changes)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -190,12 +71,10 @@ public partial class ItemInstanceModifiedEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container holding this item
+    /// Container holding this item. Null when item has been removed from all containers.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance exists in
@@ -276,12 +155,10 @@ public partial class ItemInstanceDestroyedEvent
     public System.Guid TemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Container that held this item
+    /// Container that held this item. Null if item was not in a container at destruction.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("containerId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid ContainerId { get; set; } = default!;
+    public System.Guid? ContainerId { get; set; } = default!;
 
     /// <summary>
     /// Realm this instance existed in
@@ -460,12 +337,13 @@ public partial class ItemInstanceUnboundEvent
     public System.Guid PreviousCharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for unbinding (admin, expiration, transfer_override)
+    /// Reason for unbinding
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Reason { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public UnbindReason Reason { get; set; } = default!;
 
     /// <summary>
     /// Account ID of admin who performed unbinding (if admin action)
@@ -609,12 +487,13 @@ public partial class ItemUseRecord
     public System.Guid UserId { get; set; } = default!;
 
     /// <summary>
-    /// Type of user entity (e.g., character, account, actor)
+    /// Type of user entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Unique identifier of the target entity if item was used on a target
@@ -626,7 +505,8 @@ public partial class ItemUseRecord
     /// Type of target entity when targetId is present
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("targetType")]
-    public string? TargetType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? TargetType { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the item was successfully used
@@ -690,12 +570,13 @@ public partial class ItemUseFailureRecord
     public System.Guid UserId { get; set; } = default!;
 
     /// <summary>
-    /// Type of user entity (e.g., character, account, actor)
+    /// Type of user entity
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when the use attempt failed
@@ -776,7 +657,8 @@ public partial class ItemUseStepCompletedEvent
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Contract instance tracking this use session
@@ -875,7 +757,8 @@ public partial class ItemUseStepFailedEvent
     [System.Text.Json.Serialization.JsonPropertyName("userType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string UserType { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType UserType { get; set; } = default!;
 
     /// <summary>
     /// Contract instance tracking this use session

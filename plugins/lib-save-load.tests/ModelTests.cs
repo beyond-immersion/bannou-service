@@ -19,7 +19,7 @@ public class ModelTests
             SlotId = Guid.NewGuid(),
             GameId = "test-game",
             OwnerId = ownerId,
-            OwnerType = OwnerType.ACCOUNT,
+            OwnerType = EntityType.Account,
             SlotName = "main-save",
             Category = SaveCategory.MANUAL_SAVE
         };
@@ -28,7 +28,7 @@ public class ModelTests
         var key = slot.GetStateKey();
 
         // Assert
-        Assert.Equal($"slot:test-game:ACCOUNT:{ownerId}:main-save", key);
+        Assert.Equal($"slot:test-game:account:{ownerId}:main-save", key);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class ModelTests
             SlotId = Guid.NewGuid(),
             GameId = "testgame",
             OwnerId = ownerId,
-            OwnerType = OwnerType.SESSION,
+            OwnerType = EntityType.Session,
             SlotName = "slot1",
             Category = SaveCategory.AUTO_SAVE
         };
@@ -59,7 +59,7 @@ public class ModelTests
         // Act
         var instanceKey = slot.GetStateKey();
         var staticKey = SaveSlotMetadata.GetStateKey(
-            slot.GameId, slot.OwnerType.ToString(), slot.OwnerId.ToString(), slot.SlotName);
+            slot.GameId, slot.OwnerType.ToString().ToLowerInvariant(), slot.OwnerId.ToString(), slot.SlotName);
 
         // Assert
         Assert.Equal(instanceKey, staticKey);
@@ -74,7 +74,7 @@ public class ModelTests
             SlotId = Guid.NewGuid(),
             GameId = "game",
             OwnerId = Guid.NewGuid(),
-            OwnerType = OwnerType.ACCOUNT,
+            OwnerType = EntityType.Account,
             SlotName = "slot",
             Category = SaveCategory.MANUAL_SAVE
         };
@@ -283,7 +283,7 @@ public class ModelTests
             VersionNumber = 3,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
-            OwnerType = OwnerType.ACCOUNT,
+            OwnerType = EntityType.Account,
             Data = "data",
             ContentHash = "hash"
         };
@@ -317,7 +317,7 @@ public class ModelTests
             VersionNumber = 1,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
-            OwnerType = OwnerType.CHARACTER,
+            OwnerType = EntityType.Character,
             Data = "data",
             ContentHash = "hash"
         };
@@ -341,7 +341,7 @@ public class ModelTests
             VersionNumber = 1,
             GameId = "game",
             OwnerId = Guid.NewGuid(),
-            OwnerType = OwnerType.ACCOUNT,
+            OwnerType = EntityType.Account,
             Data = "data",
             ContentHash = "hash"
         };

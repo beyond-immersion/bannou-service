@@ -24,79 +24,90 @@ public sealed class GameSessionEventSubscriptions
     }
 
     /// <summary>
-    /// Subscribe to <see cref="GameActionResultEvent"/> events.
+    /// Subscribe to <see cref="GameActionResultClientEvent"/> events.
     /// Sent to relevant players when a game action produces results.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnGameActionResult(Action<GameActionResultEvent> handler)
+    public IEventSubscription OnGameActionResult(Action<GameActionResultClientEvent> handler)
     {
-        return _client.OnEvent<GameActionResultEvent>(handler);
+        return _client.OnEvent<GameActionResultClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="GameStateUpdatedEvent"/> events.
+    /// Subscribe to <see cref="GameStateUpdatedClientEvent"/> events.
     /// Sent when game state changes that all players should see.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnGameStateUpdated(Action<GameStateUpdatedEvent> handler)
+    public IEventSubscription OnGameStateUpdated(Action<GameStateUpdatedClientEvent> handler)
     {
-        return _client.OnEvent<GameStateUpdatedEvent>(handler);
+        return _client.OnEvent<GameStateUpdatedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="PlayerJoinedEvent"/> events.
+    /// Subscribe to <see cref="PlayerJoinedClientEvent"/> events.
     /// Sent to all session participants when a new player joins.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerJoined(Action<PlayerJoinedEvent> handler)
+    public IEventSubscription OnPlayerJoined(Action<PlayerJoinedClientEvent> handler)
     {
-        return _client.OnEvent<PlayerJoinedEvent>(handler);
+        return _client.OnEvent<PlayerJoinedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="PlayerKickedEvent"/> events.
+    /// Subscribe to <see cref="PlayerKickedClientEvent"/> events.
     /// Sent to all session participants when a player is kicked.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerKicked(Action<PlayerKickedEvent> handler)
+    public IEventSubscription OnPlayerKicked(Action<PlayerKickedClientEvent> handler)
     {
-        return _client.OnEvent<PlayerKickedEvent>(handler);
+        return _client.OnEvent<PlayerKickedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="PlayerLeftEvent"/> events.
+    /// Subscribe to <see cref="PlayerLeftClientEvent"/> events.
     /// Sent to all session participants when a player leaves voluntarily.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnPlayerLeft(Action<PlayerLeftEvent> handler)
+    public IEventSubscription OnPlayerLeft(Action<PlayerLeftClientEvent> handler)
     {
-        return _client.OnEvent<PlayerLeftEvent>(handler);
+        return _client.OnEvent<PlayerLeftClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="SessionChatReceivedEvent"/> events.
+    /// Subscribe to <see cref="SessionCancelledClientEvent"/> events.
+    /// Sent to players who claimed their reservation when a matchmade session
+    /// </summary>
+    /// <param name="handler">Handler invoked when the event is received.</param>
+    /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
+    public IEventSubscription OnSessionCancelled(Action<SessionCancelledClientEvent> handler)
+    {
+        return _client.OnEvent<SessionCancelledClientEvent>(handler);
+    }
+
+    /// <summary>
+    /// Subscribe to <see cref="SessionChatReceivedClientEvent"/> events.
     /// Sent to recipients when a chat message is posted in the session.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionChatReceived(Action<SessionChatReceivedEvent> handler)
+    public IEventSubscription OnSessionChatReceived(Action<SessionChatReceivedClientEvent> handler)
     {
-        return _client.OnEvent<SessionChatReceivedEvent>(handler);
+        return _client.OnEvent<SessionChatReceivedClientEvent>(handler);
     }
 
     /// <summary>
-    /// Subscribe to <see cref="SessionStateChangedEvent"/> events.
+    /// Subscribe to <see cref="SessionStateChangedClientEvent"/> events.
     /// Sent to all session participants when the session state changes.
     /// </summary>
     /// <param name="handler">Handler invoked when the event is received.</param>
     /// <returns>Subscription handle. Dispose to unsubscribe.</returns>
-    public IEventSubscription OnSessionStateChanged(Action<SessionStateChangedEvent> handler)
+    public IEventSubscription OnSessionStateChanged(Action<SessionStateChangedClientEvent> handler)
     {
-        return _client.OnEvent<SessionStateChangedEvent>(handler);
+        return _client.OnEvent<SessionStateChangedClientEvent>(handler);
     }
 }

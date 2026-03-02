@@ -34,7 +34,7 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
         EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
-        EventSubscriptionRegistry.Register<ActorTemplateUpdatedEvent>("actor-template.updated");
+        EventSubscriptionRegistry.Register<ActorTemplateUpdatedEvent>("actor.template.updated");
 
         // From analytics-events.yaml
         EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");
@@ -49,6 +49,9 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<CharacterUpdatedEvent>("character.updated");
         EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
 
+        // From asset-events.yaml
+        EventSubscriptionRegistry.Register<MetabundleJobQueuedEvent>("asset.metabundle.job.queued");
+
         // From auth-events.yaml
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
         EventSubscriptionRegistry.Register<AccountUpdatedEvent>("account.updated");
@@ -60,7 +63,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractExpiredEvent>("contract.expired");
 
         // From collection-events.yaml
-        EventSubscriptionRegistry.Register<CharacterDeletedEvent>("character.deleted");
         EventSubscriptionRegistry.Register<AccountDeletedEvent>("account.deleted");
 
         // From connect-events.yaml
@@ -84,6 +86,8 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
         EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
         EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+        EventSubscriptionRegistry.Register<LocationEntityArrivedEvent>("location.entity-arrived");
+        EventSubscriptionRegistry.Register<LocationEntityDepartedEvent>("location.entity-departed");
 
         // From leaderboard-events.yaml
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
@@ -129,7 +133,14 @@ public static class EventSubscriptionRegistration
         // From status-events.yaml
         EventSubscriptionRegistry.Register<SeedCapabilityUpdatedEvent>("seed.capability.updated");
 
+        // From transit-events.yaml
+        EventSubscriptionRegistry.Register<WorldstateSeasonChangedEvent>("worldstate.season-changed");
+
         // From worldstate-events.yaml
         EventSubscriptionRegistry.Register<CalendarTemplateUpdatedEvent>("worldstate.calendar-template.updated");
+        EventSubscriptionRegistry.Register<CalendarTemplateDeletedEvent>("worldstate.calendar-template.deleted");
+        EventSubscriptionRegistry.Register<WorldstateRatioChangedEvent>("worldstate.ratio-changed");
+        EventSubscriptionRegistry.Register<RealmConfigDeletedEvent>("worldstate.realm-config.deleted");
+        EventSubscriptionRegistry.Register<WorldstateClockAdvancedEvent>("worldstate.clock-advanced");
     }
 }

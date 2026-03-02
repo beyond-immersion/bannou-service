@@ -1,6 +1,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
 using BeyondImmersion.BannouService.Puppetmaster.Providers;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -17,7 +18,7 @@ public class DynamicBehaviorProviderTests
     public DynamicBehaviorProviderTests()
     {
         _mockCache = new Mock<IBehaviorDocumentCache>();
-        _provider = new DynamicBehaviorProvider(_mockCache.Object);
+        _provider = new DynamicBehaviorProvider(_mockCache.Object, Mock.Of<ITelemetryProvider>());
     }
 
     #region Priority Tests

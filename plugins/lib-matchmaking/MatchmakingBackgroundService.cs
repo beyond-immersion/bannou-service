@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public class MatchmakingBackgroundService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly MatchmakingServiceConfiguration _configuration;
     private readonly ILogger<MatchmakingBackgroundService> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new MatchmakingBackgroundService instance.
@@ -24,14 +26,17 @@ public class MatchmakingBackgroundService : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes.</param>
     /// <param name="configuration">Matchmaking service configuration.</param>
     /// <param name="logger">Logger for this service.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public MatchmakingBackgroundService(
         IServiceProvider serviceProvider,
         MatchmakingServiceConfiguration configuration,
-        ILogger<MatchmakingBackgroundService> logger)
+        ILogger<MatchmakingBackgroundService> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -39,6 +44,7 @@ public class MatchmakingBackgroundService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingBackgroundService.ExecuteAsync");
         // Wait for other services to initialize
         await Task.Delay(TimeSpan.FromSeconds(_configuration.BackgroundServiceStartupDelaySeconds), stoppingToken);
 
@@ -55,16 +61,18 @@ public class MatchmakingBackgroundService : BackgroundService
             try
             {
                 // Create a scope for the scoped MatchmakingService
-                using var scope = _serviceProvider.CreateScope();
-                var matchmakingService = scope.ServiceProvider.GetRequiredService<IMatchmakingService>();
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var matchmakingService = scope.ServiceProvider.GetRequiredService<IMatchmakingService>();
 
-                if (matchmakingService is MatchmakingService service)
-                {
-                    await service.ProcessAllQueuesAsync(stoppingToken);
-                }
-                else
-                {
-                    _logger.LogWarning("MatchmakingService is not of expected type, skipping interval processing");
+                    if (matchmakingService is MatchmakingService service)
+                    {
+                        await service.ProcessAllQueuesAsync(stoppingToken);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("MatchmakingService is not of expected type, skipping interval processing");
+                    }
                 }
 
                 // Publish stats periodically
@@ -104,6 +112,7 @@ public class MatchmakingBackgroundService : BackgroundService
     /// </summary>
     private async Task PublishStatsAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.matchmaking", "MatchmakingBackgroundService.PublishStatsAsync");
         try
         {
             // Create a scope for the scoped MatchmakingService

@@ -158,8 +158,13 @@ def extract_mappings_from_schema(
 
         # Find the event topic
         if is_lifecycle:
-            # Lifecycle events: infer from event name
-            event_topic = extract_topic_from_event_name(event_name)
+            # Lifecycle events: read from generated eventName.default (set by generate-lifecycle-events.py)
+            event_props = event_schema.get('properties', {}) or {}
+            event_name_prop = event_props.get('eventName', {}) or {}
+            event_topic = event_name_prop.get('default') if isinstance(event_name_prop, dict) else None
+            if not event_topic:
+                # Fallback to inference from event name
+                event_topic = extract_topic_from_event_name(event_name)
         else:
             # Manual events: look up in x-event-publications
             event_topic = find_topic_in_publications(schema, event_name)

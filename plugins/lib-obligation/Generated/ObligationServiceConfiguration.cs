@@ -130,6 +130,6 @@ public class ObligationServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: OBLIGATION_NORM_UNCERTAINTY_VARIANCE
     /// </summary>
     [ConfigRange(Minimum = 0.0, Maximum = 0.5)]
-    public double NormUncertaintyVariance { get; set; } = 0.2;
+    public float NormUncertaintyVariance { get; set; } = 0.2f;
 
 }

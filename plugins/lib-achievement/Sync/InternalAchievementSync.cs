@@ -1,4 +1,6 @@
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Achievement.Sync;
 
@@ -13,6 +15,7 @@ namespace BeyondImmersion.BannouService.Achievement.Sync;
 public class InternalAchievementSync : IPlatformAchievementSync
 {
     private readonly ILogger<InternalAchievementSync> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <inheritdoc />
     public Platform Platform => Platform.Internal;
@@ -24,14 +27,17 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// <summary>
     /// Initializes a new instance of the InternalAchievementSync.
     /// </summary>
-    public InternalAchievementSync(ILogger<InternalAchievementSync> logger)
+    public InternalAchievementSync(ILogger<InternalAchievementSync> logger, ITelemetryProvider telemetryProvider)
     {
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
     public async Task<bool> IsLinkedAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "InternalAchievementSync.IsLinkedAsync");
         // Internal achievements are always "linked" - no external account needed
         _logger.LogDebug("Internal platform is always linked for account {AccountId}", accountId);
         await Task.CompletedTask;
@@ -41,6 +47,7 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<string?> GetExternalIdAsync(Guid accountId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "InternalAchievementSync.GetExternalIdAsync");
         // For internal achievements, the external ID is the same as the account ID
         _logger.LogDebug("Internal platform using account ID as external ID for {AccountId}", accountId);
         await Task.CompletedTask;
@@ -50,6 +57,7 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<PlatformSyncResult> UnlockAsync(string externalUserId, string platformAchievementId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "InternalAchievementSync.UnlockAsync");
         // No-op: internal achievements don't need external sync
         _logger.LogDebug("Internal unlock (no-op) for {AchievementId} for {UserId}",
             platformAchievementId, externalUserId);
@@ -65,6 +73,7 @@ public class InternalAchievementSync : IPlatformAchievementSync
     /// <inheritdoc />
     public async Task<PlatformSyncResult> SetProgressAsync(string externalUserId, string platformAchievementId, int current, int target, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "InternalAchievementSync.SetProgressAsync");
         // No-op: internal achievements don't need external sync
         _logger.LogDebug("Internal progress (no-op) for {AchievementId} ({Current}/{Target}) for {UserId}",
             platformAchievementId, current, target, externalUserId);

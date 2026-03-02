@@ -31,7 +31,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryDocumentationAsync(
+  async documentationQueryDocumentationAsync(
     request: Schemas['QueryDocumentationRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDocumentAsync(
+  async documentationGetDocumentAsync(
     request: Schemas['GetDocumentRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async searchDocumentationAsync(
+  async documentationSearchDocumentationAsync(
     request: Schemas['SearchDocumentationRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listDocumentsAsync(
+  async documentationListDocumentsAsync(
     request: Schemas['ListDocumentsRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async suggestRelatedTopicsAsync(
+  async documentationSuggestRelatedTopicsAsync(
     request: Schemas['SuggestRelatedRequest'],
     channel: number = 0,
     timeout?: number
@@ -123,7 +123,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async bindRepositoryAsync(
+  async documentationBindRepositoryAsync(
     request: Schemas['BindRepositoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -141,7 +141,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async syncRepositoryAsync(
+  async documentationSyncRepositoryAsync(
     request: Schemas['SyncRepositoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -159,7 +159,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRepositoryStatusAsync(
+  async documentationGetRepositoryStatusAsync(
     request: Schemas['RepositoryStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -177,7 +177,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRepositoryBindingsAsync(
+  async documentationListRepositoryBindingsAsync(
     request: Schemas['ListRepositoryBindingsRequest'],
     channel: number = 0,
     timeout?: number
@@ -195,7 +195,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateRepositoryBindingAsync(
+  async documentationUpdateRepositoryBindingAsync(
     request: Schemas['UpdateRepositoryBindingRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createDocumentationArchiveAsync(
+  async documentationCreateDocumentationArchiveAsync(
     request: Schemas['CreateArchiveRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class DocumentationProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listDocumentationArchivesAsync(
+  async documentationListDocumentationArchivesAsync(
     request: Schemas['ListArchivesRequest'],
     channel: number = 0,
     timeout?: number

@@ -351,6 +351,42 @@ public sealed class ChatProxy
     }
 
     /// <summary>
+    /// Unmute a participant
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ChatRoomResponse on success.</returns>
+    public Task<ApiResponse<ChatRoomResponse>> UnmuteParticipantAsync(
+        UnmuteParticipantRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<UnmuteParticipantRequest, ChatRoomResponse>(
+            "/chat/room/participant/unmute", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
+    /// Change a participant's role
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ChatRoomResponse on success.</returns>
+    public Task<ApiResponse<ChatRoomResponse>> ChangeParticipantRoleAsync(
+        ChangeParticipantRoleRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<ChangeParticipantRoleRequest, ChatRoomResponse>(
+            "/chat/room/participant/change-role", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Send a message to a room
     /// </summary>
     /// <param name="request">The request payload.</param>

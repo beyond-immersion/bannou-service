@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Client;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.SaveLoad;
 
 namespace BeyondImmersion.EdgeTester.Tests;
@@ -44,7 +45,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
         {
             GameId = GameId,
             OwnerId = ownerId,
-            OwnerType = OwnerType.CHARACTER,
+            OwnerType = EntityType.Character,
             SlotName = slotName,
             Category = SaveCategory.MANUAL_SAVE,
         }, timeout: TimeSpan.FromSeconds(10));
@@ -73,7 +74,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
         {
             GameId = GameId,
             OwnerId = ownerId,
-            OwnerType = OwnerType.CHARACTER,
+            OwnerType = EntityType.Character,
             SlotName = slotName,
             Data = testData,
             DisplayName = displayName,
@@ -110,7 +111,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -150,7 +151,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
             }, timeout: TimeSpan.FromSeconds(10));
 
             if (!listResponse.IsSuccess || listResponse.Result == null)
@@ -188,7 +189,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -229,7 +230,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -272,7 +273,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var listResponse = await adminClient.SaveLoad.ListVersionsAsync(new ListVersionsRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -294,7 +295,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var pinResponse = await adminClient.SaveLoad.PinVersionAsync(new PinVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
                 VersionNumber = save1.VersionNumber,
                 CheckpointName = "test-checkpoint",
@@ -318,7 +319,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var unpinResponse = await adminClient.SaveLoad.UnpinVersionAsync(new UnpinVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
                 VersionNumber = save1.VersionNumber,
             }, timeout: TimeSpan.FromSeconds(10));
@@ -364,7 +365,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -387,7 +388,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var listResponse = await adminClient.SaveLoad.ListVersionsAsync(new ListVersionsRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -403,7 +404,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var pinResponse = await adminClient.SaveLoad.PinVersionAsync(new PinVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
                 VersionNumber = save1.VersionNumber,
                 CheckpointName = "lifecycle-checkpoint",
@@ -421,7 +422,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var deleteVersionResponse = await adminClient.SaveLoad.DeleteVersionAsync(new DeleteVersionRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
                 VersionNumber = save2.VersionNumber,
             }, timeout: TimeSpan.FromSeconds(10));
@@ -440,7 +441,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = slotName,
                 NewSlotName = newSlotName,
             }, timeout: TimeSpan.FromSeconds(10));
@@ -458,7 +459,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             {
                 GameId = GameId,
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
                 SlotName = newSlotName,
             }, timeout: TimeSpan.FromSeconds(10));
 
@@ -492,7 +493,7 @@ public class SaveLoadWebSocketTestHandler : BaseWebSocketTestHandler
             var queryResponse = await adminClient.SaveLoad.QuerySavesAsync(new QuerySavesRequest
             {
                 OwnerId = ownerId,
-                OwnerType = OwnerType.CHARACTER,
+                OwnerType = EntityType.Character,
             }, timeout: TimeSpan.FromSeconds(10));
 
             if (!queryResponse.IsSuccess || queryResponse.Result == null)

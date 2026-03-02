@@ -7,7 +7,7 @@ namespace BeyondImmersion.Bannou.Client;
 public interface IEventSubscription : IDisposable
 {
     /// <summary>
-    /// The eventName this subscription is listening for (e.g., "game_session.chat_received").
+    /// The eventName this subscription is listening for (e.g., "game-session.chat-received").
     /// </summary>
     string EventName { get; }
 

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Inventory Service API
   version: 1.0.0
@@ -78,60 +78,66 @@ paths:
         \n                },\n                \"equipmentSlotName\": {\n                    \"type\": \"string\",\n      \
         \              \"maxLength\": 64,\n                    \"nullable\": true,\n                    \"description\": \"\
         Equipment slot name if isEquipmentSlot is true\"\n                },\n                \"maxSlots\": {\n          \
-        \          \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Maximum slots for slot-based containers\"\n                },\n                \"maxWeight\": {\n                \
-        \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Maximum weight capacity\"\n                },\n                \"gridWidth\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Internal grid width for grid containers\"\n                },\n                \"gridHeight\": {\n           \
-        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Internal grid height for grid containers\"\n                },\n                \"maxVolume\": {\n               \
-        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Maximum volume for volumetric containers\"\n                },\n         \
-        \       \"parentContainerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Parent container ID for nested
-        containers\"\n                },\n                \"canContainContainers\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"Whether this container can hold
-        other containers\"\n                },\n                \"maxNestingDepth\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Maximum nesting depth (null uses
-        global default)\"\n                },\n                \"selfWeight\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"double\",\n                    \"default\": 0,\n                    \"description\"\
-        : \"Empty container weight\"\n                },\n                \"weightContribution\": {\n                    \"\
-        $ref\": \"#/$defs/WeightContribution\",\n                    \"description\": \"How weight propagates to parent\"\n\
-        \                },\n                \"slotCost\": {\n                    \"type\": \"integer\",\n               \
-        \     \"default\": 1,\n                    \"description\": \"Slots used in slot-based parent\"\n                },\n\
-        \                \"parentGridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Width footprint in grid-based parent\"\n                },\n     \
-        \           \"parentGridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Height footprint in grid-based parent\"\n                },\n    \
-        \            \"parentVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Volume footprint in volumetric
-        parent\"\n                },\n                \"allowedCategories\": {\n                    \"type\": \"array\",\n\
-        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
-        \            \"nullable\": true,\n                    \"description\": \"Allowed item categories (null allows all)\"\
-        \n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n     \
-        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Forbidden item categories\"\n                },\n\
-        \                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"Required item tags for placement\"\n                },\n                \"\
-        realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Realm this container belongs to (null for account-level)\"\
+        \          \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n\
+        \                    \"description\": \"Maximum slots for slot-based containers\"\n                },\n          \
+        \      \"maxWeight\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n\
+        \                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Maximum weight capacity\"\n                },\n                \"gridWidth\": {\n                    \"type\"\
+        : \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n                   \
+        \ \"description\": \"Internal grid width for grid containers\"\n                },\n                \"gridHeight\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Internal grid height for grid containers\"\n                },\n    \
+        \            \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Maximum volume for volumetric containers\"\n                },\n                \"parentContainerId\": {\n   \
+        \                 \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Parent container ID for nested containers\"\n                },\n\
+        \                \"canContainContainers\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether this container can hold other containers\"\n            \
+        \    },\n                \"maxNestingDepth\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Maximum nesting depth
+        (null uses global default)\"\n                },\n                \"selfWeight\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"default\": 0,\n                \
+        \    \"minimum\": 0,\n                    \"description\": \"Empty container weight\"\n                },\n      \
+        \          \"weightContribution\": {\n                    \"$ref\": \"#/$defs/WeightContribution\",\n            \
+        \        \"description\": \"How weight propagates to parent\"\n                },\n                \"slotCost\": {\n\
+        \                    \"type\": \"integer\",\n                    \"default\": 1,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Slots used in slot-based parent\"\n                },\n             \
+        \   \"parentGridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"minimum\": 1,\n                    \"description\": \"Width footprint in grid-based parent\"\
+        \n                },\n                \"parentGridHeight\": {\n                    \"type\": \"integer\",\n      \
+        \              \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Height
+        footprint in grid-based parent\"\n                },\n                \"parentVolume\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n      \
+        \              \"minimum\": 0,\n                    \"description\": \"Volume footprint in volumetric parent\"\n \
+        \               },\n                \"allowedCategories\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"type\": \"string\"\n                    },\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Allowed item categories (null allows all)\"\n    \
+        \            },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n          \
+        \          \"items\": {\n                        \"type\": \"string\"\n                    },\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Forbidden item categories\"\n                },\n \
+        \               \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n  \
+        \                  \"description\": \"Required item tags for placement\"\n                },\n                \"realmId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Realm this container belongs to (null for account-level)\"\
         \n                },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"\
         items\": {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\"\
         : true,\n                    \"description\": \"Container tags for filtering\"\n                },\n             \
-        \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Game-specific container data\"\n                }\n            }\n        },\n   \
-        \     \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity
-        that owns this container\",\n            \"enum\": [\n                \"character\",\n                \"account\"\
-        ,\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n                \"escrow\"\
-        ,\n                \"mail\",\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Container capacity constraint type\",\n   \
-        \         \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\"\
-        ,\n                \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n    \
-        \    },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How
-        container weight propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\"\
-        ,\n                \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+        \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Game-specific container data. Client-only
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n\
+        \        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n            \
+        \    \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n     \
+        \           \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        },\n       \
+        \ \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n            \"description\": \"Container capacity
+        constraint type\",\n            \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n  \
+        \              \"slot_and_weight\",\n                \"grid\",\n                \"volumetric\",\n                \"\
+        unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n            \"type\": \"string\",\n   \
+        \         \"description\": \"How container weight propagates to parent\",\n            \"enum\": [\n             \
+        \   \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\n            ]\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -197,23 +203,25 @@ paths:
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
-        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
-        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
-        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
-        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
-        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
-        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
+        \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new container\",\n    \"description\": \"Creates a new container
         with the specified constraint model and capacity.\\nContainer types are game-defined strings (e.g., \\\"inventory\\\
         \", \\\"bank\\\", \\\"equipment_slot\\\").\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
@@ -323,38 +331,40 @@ paths:
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
-        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
-        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
-        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
-        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
-        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
-        \            \"self_plus_contents\"\n            ]\n        },\n        \"ContainerItem\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"Item in a container\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"instanceId\",\n                \"templateId\",\n                \"\
-        quantity\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Item instance
-        ID\"\n                },\n                \"templateId\": {\n                    \"type\": \"string\",\n         \
-        \           \"format\": \"uuid\",\n                    \"description\": \"Item template ID\"\n                },\n\
-        \                \"quantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"Item quantity\"\n                },\n                \"slotIndex\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Slot position\"\n                },\n                \"slotX\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Grid X position\"\n             \
-        \   },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Grid Y position\"\n                },\n                \"rotated\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Rotated in grid\"\n                }\n            }\n        }\n    }\n}"
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
+        \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \n            ]\n        },\n        \"ContainerItem\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Item in a container\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
+        \      \"instanceId\",\n                \"templateId\",\n                \"quantity\"\n            ],\n          \
+        \  \"properties\": {\n                \"instanceId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"description\": \"Item instance ID\"\n                },\n   \
+        \             \"templateId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Item template ID\"\n                },\n                \"quantity\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Item quantity\"\n                },\n                \"slotIndex\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Slot position\"\n             \
+        \   },\n                \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Grid X position\"\n                },\n                \"slotY\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Grid Y position\"\n                },\n                \"rotated\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Rotated in grid\"\n           \
+        \     }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get container with contents\",\n    \"description\": \"Retrieves a container
         by ID, optionally including its contents.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\":
         false,\n    \"operationId\": \"getContainer\"\n}"
@@ -396,23 +406,25 @@ paths:
         \"Container type to find or create\"\n                },\n                \"constraintModel\": {\n               \
         \     \"$ref\": \"#/$defs/ContainerConstraintModel\",\n                    \"description\": \"Constraint model for
         new container\"\n                },\n                \"maxSlots\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Default max slots if creating\"\n\
-        \                },\n                \"maxWeight\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Default
-        max weight if creating\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Default grid width if creating\"\
-        \n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Default grid height if creating\"\n         \
-        \       },\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Realm for new container\"\
-        \n                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
-        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
-        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
-        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
-        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
-        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Default max slots if creating\"\n                },\n                \"maxWeight\": {\n                    \"\
+        type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n      \
+        \              \"minimum\": 0,\n                    \"description\": \"Default max weight if creating\"\n        \
+        \        },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"minimum\": 1,\n                    \"description\": \"Default grid width
+        if creating\"\n                },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n\
+        \                    \"nullable\": true,\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"Default grid height if creating\"\n                },\n                \"realmId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Realm for new container\"\n                }\n            }\n        },\n        \"\
+        ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns
+        this container\",\n            \"enum\": [\n                \"character\",\n                \"account\",\n       \
+        \         \"location\",\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n \
+        \               \"mail\",\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Container capacity constraint type\",\n   \
+        \         \"enum\": [\n                \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\"\
+        ,\n                \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n    \
+        \    }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -478,23 +490,25 @@ paths:
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
-        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
-        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
-        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
-        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
-        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
-        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
+        \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get container or create if not exists\",\n    \"description\": \"Enables
         lazy container creation for character inventories.\\nIf a container doesn't exist for the owner/type combination,
         creates it\\nwith the specified defaults.\\n\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\"\
@@ -612,23 +626,25 @@ paths:
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
-        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
-        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
-        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
-        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
-        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
-        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
+        \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List containers for owner\",\n    \"description\": \"Returns all containers
         owned by the specified entity.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n  \
         \  \"operationId\": \"listContainers\"\n}"
@@ -663,28 +679,31 @@ paths:
         : [\n                \"containerId\"\n            ],\n            \"properties\": {\n                \"containerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Container ID to update\"\n                },\n                \"maxSlots\": {\n                 \
-        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"New max
-        slots\"\n                },\n                \"maxWeight\": {\n                    \"type\": \"number\",\n       \
-        \             \"format\": \"double\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New max weight\"\n                },\n                \"gridWidth\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"New grid width\"\n            \
-        \    },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"New grid height\"\n                },\n                \"maxVolume\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"New max volume\"\n                },\n                \"\
-        allowedCategories\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
-        \           \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n              \
-        \      \"description\": \"New allowed categories\"\n                },\n                \"forbiddenCategories\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\"\n                    },\n                    \"nullable\": true,\n                    \"description\": \"\
-        New forbidden categories\"\n                },\n                \"allowedTags\": {\n                    \"type\":
-        \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"New allowed tags\"\n            \
-        \    },\n                \"tags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 1,\n       \
+        \             \"description\": \"New max slots\"\n                },\n                \"maxWeight\": {\n         \
+        \           \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\":
+        true,\n                    \"minimum\": 0,\n                    \"description\": \"New max weight\"\n            \
+        \    },\n                \"gridWidth\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"minimum\": 1,\n                    \"description\": \"New grid width\"\n          \
+        \      },\n                \"gridHeight\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
+        : true,\n                    \"minimum\": 1,\n                    \"description\": \"New grid height\"\n         \
+        \       },\n                \"maxVolume\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n                    \"\
+        description\": \"New max volume\"\n                },\n                \"allowedCategories\": {\n                \
+        \    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n      \
+        \              },\n                    \"nullable\": true,\n                    \"description\": \"New allowed categories\"\
+        \n                },\n                \"forbiddenCategories\": {\n                    \"type\": \"array\",\n     \
+        \               \"items\": {\n                        \"type\": \"string\"\n                    },\n             \
+        \       \"nullable\": true,\n                    \"description\": \"New forbidden categories\"\n                },\n\
+        \                \"allowedTags\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
         \                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n \
-        \                   \"description\": \"New container tags\"\n                },\n                \"metadata\": {\n\
-        \                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"New metadata\"\n                }\n            }\n        }\n    }\n}"
+        \                   \"description\": \"New allowed tags\"\n                },\n                \"tags\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"New container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by
+        convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContainerResponse\"\
         ,\n    \"$defs\": {\n        \"ContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Container details\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
@@ -750,23 +769,25 @@ paths:
         \                \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Realm ID\"\n                },\n                \"tags\": {\n    \
         \                \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        \n                    },\n                    \"description\": \"Container tags\"\n                },\n          \
-        \      \"metadata\": {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Game-specific data\"\n                },\n                \"createdAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Creation timestamp\"\n                },\n                \"modifiedAt\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n             \
-        \       \"description\": \"Last modification\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
-        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
-        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
-        ,\n                \"other\"\n            ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n   \
-        \             \"slot_only\",\n                \"weight_only\",\n                \"slot_and_weight\",\n           \
-        \     \"grid\",\n                \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n     \
-        \   \"WeightContribution\": {\n            \"type\": \"string\",\n            \"description\": \"How container weight
-        propagates to parent\",\n            \"enum\": [\n                \"none\",\n                \"self_only\",\n    \
-        \            \"self_plus_contents\"\n            ]\n        }\n    }\n}"
+        \n                    },\n                    \"nullable\": true,\n                    \"description\": \"Container
+        tags\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"Creation timestamp\"\n                },\n\
+        \                \"modifiedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Last modification\"\n\
+        \                }\n            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Type of entity that owns this container\",\n            \"enum\": [\n          \
+        \      \"character\",\n                \"account\",\n                \"location\",\n                \"vehicle\",\n\
+        \                \"guild\",\n                \"escrow\",\n                \"mail\",\n                \"other\"\n \
+        \           ]\n        },\n        \"ContainerConstraintModel\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Container capacity constraint type\",\n            \"enum\": [\n                \"slot_only\"\
+        ,\n                \"weight_only\",\n                \"slot_and_weight\",\n                \"grid\",\n           \
+        \     \"volumetric\",\n                \"unlimited\"\n            ]\n        },\n        \"WeightContribution\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How container weight propagates to parent\",\n\
+        \            \"enum\": [\n                \"none\",\n                \"self_only\",\n                \"self_plus_contents\"\
+        \n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update container properties\",\n    \"description\": \"Updates mutable
         container properties like capacity limits and filtering.\",\n    \"tags\": [\n        \"Container\"\n    ],\n    \"\
         deprecated\": false,\n    \"operationId\": \"updateContainer\"\n}"
@@ -814,14 +835,10 @@ paths:
         \            \"transfer\",\n                \"error\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteContainerResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteContainerResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after deleting container\",\n            \"additionalProperties\": false,\n            \"required\":
-        [\n                \"deleted\",\n                \"containerId\",\n                \"itemsHandled\"\n            ],\n\
-        \            \"properties\": {\n                \"deleted\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"description\": \"Whether deletion succeeded\"\n                },\n                \"containerId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Deleted container ID\"\n                },\n                \"itemsHandled\": {\n               \
-        \     \"type\": \"integer\",\n                    \"description\": \"Number of items handled\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        : \"Response after deleting container. HTTP 200 confirms deletion.\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"itemsHandled\"\n            ],\n            \"properties\": {\n  \
+        \              \"itemsHandled\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of items handled during deletion\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete container\",\n    \"description\": \"Deletes a container. Must specify
         how to handle existing contents:\\ndestroy, transfer to another container, or error if not empty.\\n\",\n    \"tags\"\
         : [\n        \"Container\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteContainer\"\n}"
@@ -863,32 +880,28 @@ paths:
         uuid\",\n                    \"description\": \"Item instance ID to add\"\n                },\n                \"\
         containerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
         \           \"description\": \"Target container ID\"\n                },\n                \"slotIndex\": {\n     \
-        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Specific slot (auto-assign if null)\"\n                },\n                \"slotX\": {\n                    \"\
-        type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Grid X position\"\
-        \n                },\n                \"slotY\": {\n                    \"type\": \"integer\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Grid Y position\"\n                },\n          \
-        \      \"rotated\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n     \
-        \               \"description\": \"Rotate in grid\"\n                },\n                \"autoStack\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
+        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\":
+        0,\n                    \"description\": \"Specific slot (auto-assign if null)\"\n                },\n           \
+        \     \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n        \
+        \            \"minimum\": 0,\n                    \"description\": \"Grid X position\"\n                },\n     \
+        \           \"slotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n  \
+        \                  \"minimum\": 0,\n                    \"description\": \"Grid Y position\"\n                },\n\
+        \                \"rotated\": {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Rotate in grid\"\n                },\n                \"autoStack\": {\n \
+        \                   \"type\": \"boolean\",\n                    \"default\": true,\n                    \"description\"\
         : \"Auto-merge with existing stacks\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AddItemResponse\"\
         ,\n    \"$defs\": {\n        \"AddItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after adding item\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
-        \             \"success\",\n                \"instanceId\",\n                \"containerId\"\n            ],\n   \
-        \         \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n        \
-        \            \"description\": \"Whether add succeeded\"\n                },\n                \"instanceId\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Added item ID\"\n                },\n                \"containerId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Container ID\"\n            \
-        \    },\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Assigned slot\"\n                },\n                \"slotX\": {\n\
+        : \"Response after adding item. HTTP 200 confirms placement.\",\n            \"additionalProperties\": false,\n  \
+        \          \"properties\": {\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Assigned slot\"\n                },\n\
+        \                \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Assigned X position\"\n                },\n                \"slotY\": {\n\
         \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Assigned X position\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Assigned Y position\"\n       \
-        \         },\n                \"mergedWithInstanceId\": {\n                    \"type\": \"string\",\n           \
-        \         \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Instance merged into if stacked\"\n                }\n            }\n        }\n    }\n}"
+        : \"Assigned Y position\"\n                },\n                \"mergedWithInstanceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Instance merged into if stacked\"\n                }\n            }\n        }\n \
+        \   }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add item to container\",\n    \"description\": \"Adds an item instance
         to a container. Validates container constraints\\n(slots, weight, grid, category filters). For stackable items, may\\
         nmerge with existing stacks.\\n\",\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\"\
@@ -928,14 +941,11 @@ paths:
         description\": \"Item instance ID to remove\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RemoveItemResponse\"\
         ,\n    \"$defs\": {\n        \"RemoveItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after removing item\",\n            \"additionalProperties\": false,\n            \"required\": [\n \
-        \               \"success\",\n                \"instanceId\",\n                \"previousContainerId\"\n         \
-        \   ],\n            \"properties\": {\n                \"success\": {\n                    \"type\": \"boolean\",\n\
-        \                    \"description\": \"Whether remove succeeded\"\n                },\n                \"instanceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Removed item ID\"\n                },\n                \"previousContainerId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Container removed from\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response after removing item. HTTP 200 confirms removal.\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"previousContainerId\"\n            ],\n            \"properties\": {\n\
+        \                \"previousContainerId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Container the item was removed from\"\n                }\n   \
+        \         }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove item from container\",\n    \"description\": \"Removes an item from
         its container. The item still exists but has no\\ncontainer assignment. Use destroy via lib-item to permanently delete.\\\
         n\",\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\":
@@ -978,30 +988,26 @@ paths:
         ,\n                    \"description\": \"Item instance ID to move\"\n                },\n                \"targetContainerId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Target container ID\"\n                },\n                \"targetSlotIndex\": {\n             \
-        \       \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Target
-        slot\"\n                },\n                \"targetSlotX\": {\n                    \"type\": \"integer\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Target grid X\"\n                },\n\
-        \                \"targetSlotY\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Target grid Y\"\n                },\n                \"rotated\":
-        {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
+        \       \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\": 0,\n   \
+        \                 \"description\": \"Target slot\"\n                },\n                \"targetSlotX\": {\n     \
+        \               \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\":
+        0,\n                    \"description\": \"Target grid X\"\n                },\n                \"targetSlotY\": {\n\
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Target grid Y\"\n                },\n                \"rotated\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Rotate in target\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MoveItemResponse\"\
         ,\n    \"$defs\": {\n        \"MoveItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after moving item\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
-        \             \"success\",\n                \"instanceId\",\n                \"sourceContainerId\",\n            \
-        \    \"targetContainerId\"\n            ],\n            \"properties\": {\n                \"success\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"description\": \"Whether move succeeded\"\n         \
-        \       },\n                \"instanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Moved item ID\"\n                },\n                \"sourceContainerId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Previous container\"\n                },\n                \"targetContainerId\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        New container\"\n                },\n                \"slotIndex\": {\n                    \"type\": \"integer\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"New slot\"\n                },\n\
-        \                \"slotX\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"New grid X\"\n                },\n                \"slotY\": {\n         \
-        \           \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\":
-        \"New grid Y\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response after moving item. HTTP 200 confirms move.\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"sourceContainerId\"\n            ],\n            \"properties\": {\n    \
+        \            \"sourceContainerId\": {\n                    \"type\": \"string\",\n                    \"format\":
+        \"uuid\",\n                    \"description\": \"Container the item was moved from\"\n                },\n      \
+        \          \"slotIndex\": {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"New slot\"\n                },\n                \"slotX\": {\n           \
+        \         \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        New grid X\"\n                },\n                \"slotY\": {\n                    \"type\": \"integer\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"New grid Y\"\n                }\n    \
+        \        }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Move item to different slot or container\",\n    \"description\": \"Moves
         an item within the same container (slot change) or to a different\\ncontainer. Validates destination constraints.
         For equipment slots, this\\neffectively equips/unequips items.\\n\",\n    \"tags\": [\n        \"Inventory Operations\"\
@@ -1048,16 +1054,13 @@ paths:
         \ }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/TransferItemResponse\"\
         ,\n    \"$defs\": {\n        \"TransferItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after transfer\",\n            \"additionalProperties\": false,\n            \"required\": [\n      \
-        \          \"success\",\n                \"instanceId\",\n                \"sourceContainerId\",\n               \
-        \ \"targetContainerId\",\n                \"quantityTransferred\"\n            ],\n            \"properties\": {\n\
-        \                \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\":
-        \"Whether transfer succeeded\"\n                },\n                \"instanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Transferred item
-        ID\"\n                },\n                \"sourceContainerId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"Previous container\"\n          \
-        \      },\n                \"targetContainerId\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"uuid\",\n                    \"description\": \"New container\"\n                },\n          \
+        : \"Response after transfer. HTTP 200 confirms transfer.\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"instanceId\",\n                \"sourceContainerId\",\n                \"\
+        quantityTransferred\"\n            ],\n            \"properties\": {\n                \"instanceId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Transferred item ID (for partial transfers, this is the new split item)\"\n                },\n              \
+        \  \"sourceContainerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"Container the item was transferred from\"\n                },\n          \
         \      \"quantityTransferred\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
         ,\n                    \"description\": \"Amount transferred\"\n                }\n            }\n        }\n    }\n\
         }"
@@ -1102,26 +1105,24 @@ paths:
         \                    \"description\": \"Stack to split\"\n                },\n                \"quantity\": {\n  \
         \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"minimum\"\
         : 1,\n                    \"description\": \"Quantity to split off\"\n                },\n                \"targetSlotIndex\"\
-        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Slot for new stack\"\n                },\n                \"targetSlotX\": {\n                    \"type\": \"\
-        integer\",\n                    \"nullable\": true,\n                    \"description\": \"Grid X for new stack\"\
-        \n                },\n                \"targetSlotY\": {\n                    \"type\": \"integer\",\n           \
-        \         \"nullable\": true,\n                    \"description\": \"Grid Y for new stack\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Slot for new stack\"\n                },\n                \"targetSlotX\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Grid X for new stack\"\n                },\n                \"targetSlotY\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Grid Y for new stack\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SplitStackResponse\"\
         ,\n    \"$defs\": {\n        \"SplitStackResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after splitting\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
-        \           \"success\",\n                \"originalInstanceId\",\n                \"newInstanceId\",\n          \
-        \      \"originalQuantity\",\n                \"newQuantity\"\n            ],\n            \"properties\": {\n   \
-        \             \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"\
-        Whether split succeeded\"\n                },\n                \"originalInstanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Original stack ID\"\
-        \n                },\n                \"newInstanceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"New stack ID\"\n                },\n    \
-        \            \"originalQuantity\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
-        double\",\n                    \"description\": \"Remaining quantity\"\n                },\n                \"newQuantity\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"Split quantity\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response after splitting. HTTP 200 confirms split.\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"newInstanceId\",\n                \"originalQuantity\",\n                \"\
+        newQuantity\"\n            ],\n            \"properties\": {\n                \"newInstanceId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        New stack ID\"\n                },\n                \"originalQuantity\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"double\",\n                    \"description\": \"Remaining quantity\"\n    \
+        \            },\n                \"newQuantity\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"double\",\n                    \"description\": \"Split quantity\"\n                }\n        \
+        \    }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Split stack into two\",\n    \"description\": \"Splits a stack of items
         into two stacks. The original stack keeps the\\nremainder, and a new stack is created with the split quantity.\\n\"\
         ,\n    \"tags\": [\n        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"\
@@ -1166,18 +1167,15 @@ paths:
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeStacksResponse\"\
         ,\n    \"$defs\": {\n        \"MergeStacksResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after merging\",\n            \"additionalProperties\": false,\n            \"required\": [\n       \
-        \         \"success\",\n                \"targetInstanceId\",\n                \"newQuantity\",\n                \"\
-        sourceDestroyed\"\n            ],\n            \"properties\": {\n                \"success\": {\n               \
-        \     \"type\": \"boolean\",\n                    \"description\": \"Whether merge succeeded\"\n                },\n\
-        \                \"targetInstanceId\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"uuid\",\n                    \"description\": \"Merged stack ID\"\n                },\n                \"newQuantity\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"New quantity\"\n                },\n                \"sourceDestroyed\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether source was destroyed\"\n                },\n\
-        \                \"overflowQuantity\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Quantity that didn't
-        fit\"\n                }\n            }\n        }\n    }\n}"
+        : \"Response after merging. HTTP 200 confirms merge.\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"newQuantity\",\n                \"sourceDestroyed\"\n            ],\n      \
+        \      \"properties\": {\n                \"newQuantity\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"double\",\n                    \"description\": \"New quantity\"\n                },\n\
+        \                \"sourceDestroyed\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether source was destroyed\"\n                },\n                \"overflowQuantity\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Quantity that didn't fit\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Merge two stacks\",\n    \"description\": \"Merges two stacks of the same
         item template. The source stack is\\ndestroyed and its quantity added to the target stack.\\n\",\n    \"tags\": [\n\
         \        \"Inventory Operations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"mergeStacks\"\n}"
@@ -1224,14 +1222,14 @@ paths:
         : \"Filter by container type\"\n                },\n                \"excludeEquipmentSlots\": {\n               \
         \     \"type\": \"boolean\",\n                    \"default\": false,\n                    \"description\": \"Exclude
         equipment slots\"\n                },\n                \"offset\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 0,\n                    \"description\": \"Pagination offset\"\n               \
-        \ },\n                \"limit\": {\n                    \"type\": \"integer\",\n                    \"default\": 50,\n\
-        \                    \"maximum\": 200,\n                    \"description\": \"Max results\"\n                }\n\
-        \            }\n        },\n        \"ContainerOwnerType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of entity that owns this container\",\n            \"enum\": [\n                \"character\",\n        \
-        \        \"account\",\n                \"location\",\n                \"vehicle\",\n                \"guild\",\n \
-        \               \"escrow\",\n                \"mail\",\n                \"other\"\n            ]\n        }\n    }\n\
-        }"
+        \                    \"default\": 0,\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Pagination offset\"\n                },\n                \"limit\": {\n                    \"type\": \"integer\",\n\
+        \                    \"default\": 50,\n                    \"minimum\": 1,\n                    \"maximum\": 200,\n\
+        \                    \"description\": \"Max results\"\n                }\n            }\n        },\n        \"ContainerOwnerType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type of entity that owns this container\",\n\
+        \            \"enum\": [\n                \"character\",\n                \"account\",\n                \"location\"\
+        ,\n                \"vehicle\",\n                \"guild\",\n                \"escrow\",\n                \"mail\"\
+        ,\n                \"other\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryItemsResponse\"\
         ,\n    \"$defs\": {\n        \"QueryItemsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Query results\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
@@ -1494,6 +1492,15 @@ components:
       - destroy
       - transfer
       - error
+    InventoryItemChangeType:
+      type: string
+      description: Type of item change within an inventory container, used as discriminator for client events
+      enum:
+      - placed
+      - removed
+      - moved
+      - stacked
+      - split
     CreateContainerRequest:
       type: object
       description: Request to create a new container
@@ -1530,24 +1537,29 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: Maximum slots for slot-based containers
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Maximum weight capacity
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Internal grid width for grid containers
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Internal grid height for grid containers
         maxVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Maximum volume for volumetric containers
         parentContainerId:
           type: string
@@ -1561,11 +1573,13 @@ components:
         maxNestingDepth:
           type: integer
           nullable: true
+          minimum: 1
           description: Maximum nesting depth (null uses global default)
         selfWeight:
           type: number
           format: double
           default: 0
+          minimum: 0
           description: Empty container weight
         weightContribution:
           $ref: '#/components/schemas/WeightContribution'
@@ -1573,19 +1587,23 @@ components:
         slotCost:
           type: integer
           default: 1
+          minimum: 0
           description: Slots used in slot-based parent
         parentGridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Width footprint in grid-based parent
         parentGridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Height footprint in grid-based parent
         parentVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Volume footprint in volumetric parent
         allowedCategories:
           type: array
@@ -1618,8 +1636,10 @@ components:
           description: Container tags for filtering
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: Game-specific container data
+          description: Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from 
+            this field by convention.
     GetContainerRequest:
       type: object
       description: Request to get a container
@@ -1661,19 +1681,23 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: Default max slots if creating
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: Default max weight if creating
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: Default grid width if creating
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: Default grid height if creating
         realmId:
           type: string
@@ -1722,24 +1746,29 @@ components:
         maxSlots:
           type: integer
           nullable: true
+          minimum: 1
           description: New max slots
         maxWeight:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: New max weight
         gridWidth:
           type: integer
           nullable: true
+          minimum: 1
           description: New grid width
         gridHeight:
           type: integer
           nullable: true
+          minimum: 1
           description: New grid height
         maxVolume:
           type: number
           format: double
           nullable: true
+          minimum: 0
           description: New max volume
         allowedCategories:
           type: array
@@ -1767,8 +1796,10 @@ components:
           description: New container tags
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: New metadata
+          description: New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from
+            this field by convention.
     DeleteContainerRequest:
       type: object
       description: Request to delete a container
@@ -1937,11 +1968,14 @@ components:
           type: array
           items:
             type: string
+          nullable: true
           description: Container tags
         metadata:
           type: object
+          additionalProperties: true
           nullable: true
-          description: Game-specific data
+          description: Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from 
+            this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -2022,23 +2056,14 @@ components:
           description: Total count
     DeleteContainerResponse:
       type: object
-      description: Response after deleting container
+      description: Response after deleting container. HTTP 200 confirms deletion.
       additionalProperties: false
       required:
-      - deleted
-      - containerId
       - itemsHandled
       properties:
-        deleted:
-          type: boolean
-          description: Whether deletion succeeded
-        containerId:
-          type: string
-          format: uuid
-          description: Deleted container ID
         itemsHandled:
           type: integer
-          description: Number of items handled
+          description: Number of items handled during deletion
     AddItemRequest:
       type: object
       description: Request to add item to container
@@ -2058,14 +2083,17 @@ components:
         slotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Specific slot (auto-assign if null)
         slotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid X position
         slotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid Y position
         rotated:
           type: boolean
@@ -2077,24 +2105,9 @@ components:
           description: Auto-merge with existing stacks
     AddItemResponse:
       type: object
-      description: Response after adding item
+      description: Response after adding item. HTTP 200 confirms placement.
       additionalProperties: false
-      required:
-      - success
-      - instanceId
-      - containerId
       properties:
-        success:
-          type: boolean
-          description: Whether add succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Added item ID
-        containerId:
-          type: string
-          format: uuid
-          description: Container ID
         slotIndex:
           type: integer
           nullable: true
@@ -2125,24 +2138,15 @@ components:
           description: Item instance ID to remove
     RemoveItemResponse:
       type: object
-      description: Response after removing item
+      description: Response after removing item. HTTP 200 confirms removal.
       additionalProperties: false
       required:
-      - success
-      - instanceId
       - previousContainerId
       properties:
-        success:
-          type: boolean
-          description: Whether remove succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Removed item ID
         previousContainerId:
           type: string
           format: uuid
-          description: Container removed from
+          description: Container the item was removed from
     MoveItemRequest:
       type: object
       description: Request to move item
@@ -2162,14 +2166,17 @@ components:
         targetSlotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Target slot
         targetSlotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Target grid X
         targetSlotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Target grid Y
         rotated:
           type: boolean
@@ -2177,29 +2184,15 @@ components:
           description: Rotate in target
     MoveItemResponse:
       type: object
-      description: Response after moving item
+      description: Response after moving item. HTTP 200 confirms move.
       additionalProperties: false
       required:
-      - success
-      - instanceId
       - sourceContainerId
-      - targetContainerId
       properties:
-        success:
-          type: boolean
-          description: Whether move succeeded
-        instanceId:
-          type: string
-          format: uuid
-          description: Moved item ID
         sourceContainerId:
           type: string
           format: uuid
-          description: Previous container
-        targetContainerId:
-          type: string
-          format: uuid
-          description: New container
+          description: Container the item was moved from
         slotIndex:
           type: integer
           nullable: true
@@ -2235,30 +2228,21 @@ components:
           description: Quantity to transfer (all if null)
     TransferItemResponse:
       type: object
-      description: Response after transfer
+      description: Response after transfer. HTTP 200 confirms transfer.
       additionalProperties: false
       required:
-      - success
       - instanceId
       - sourceContainerId
-      - targetContainerId
       - quantityTransferred
       properties:
-        success:
-          type: boolean
-          description: Whether transfer succeeded
         instanceId:
           type: string
           format: uuid
-          description: Transferred item ID
+          description: Transferred item ID (for partial transfers, this is the new split item)
         sourceContainerId:
           type: string
           format: uuid
-          description: Previous container
-        targetContainerId:
-          type: string
-          format: uuid
-          description: New container
+          description: Container the item was transferred from
         quantityTransferred:
           type: number
           format: double
@@ -2283,33 +2267,27 @@ components:
         targetSlotIndex:
           type: integer
           nullable: true
+          minimum: 0
           description: Slot for new stack
         targetSlotX:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid X for new stack
         targetSlotY:
           type: integer
           nullable: true
+          minimum: 0
           description: Grid Y for new stack
     SplitStackResponse:
       type: object
-      description: Response after splitting
+      description: Response after splitting. HTTP 200 confirms split.
       additionalProperties: false
       required:
-      - success
-      - originalInstanceId
       - newInstanceId
       - originalQuantity
       - newQuantity
       properties:
-        success:
-          type: boolean
-          description: Whether split succeeded
-        originalInstanceId:
-          type: string
-          format: uuid
-          description: Original stack ID
         newInstanceId:
           type: string
           format: uuid
@@ -2340,21 +2318,12 @@ components:
           description: Stack to merge into
     MergeStacksResponse:
       type: object
-      description: Response after merging
+      description: Response after merging. HTTP 200 confirms merge.
       additionalProperties: false
       required:
-      - success
-      - targetInstanceId
       - newQuantity
       - sourceDestroyed
       properties:
-        success:
-          type: boolean
-          description: Whether merge succeeded
-        targetInstanceId:
-          type: string
-          format: uuid
-          description: Merged stack ID
         newQuantity:
           type: number
           format: double
@@ -2408,10 +2377,12 @@ components:
         offset:
           type: integer
           default: 0
+          minimum: 0
           description: Pagination offset
         limit:
           type: integer
           default: 50
+          minimum: 1
           maximum: 200
           description: Max results
     QueryItemsResponse:

@@ -82,8 +82,8 @@ internal class StatusInstanceModel
     /// <summary>Entity that has this status effect.</summary>
     public Guid EntityId { get; set; }
 
-    /// <summary>Entity type discriminator (opaque string per IMPLEMENTATION TENETS).</summary>
-    public string EntityType { get; set; } = string.Empty;
+    /// <summary>Entity type discriminator per IMPLEMENTATION TENETS.</summary>
+    public EntityType EntityType { get; set; }
 
     /// <summary>Game service scope for this instance.</summary>
     public Guid GameServiceId { get; set; }
@@ -129,7 +129,7 @@ internal class StatusContainerModel
     public Guid EntityId { get; set; }
 
     /// <summary>Entity type discriminator.</summary>
-    public string EntityType { get; set; } = string.Empty;
+    public EntityType EntityType { get; set; }
 
     /// <summary>Game service this container is scoped to.</summary>
     public Guid GameServiceId { get; set; }
@@ -149,7 +149,7 @@ internal class ActiveStatusCacheModel
     public Guid EntityId { get; set; }
 
     /// <summary>Entity type discriminator.</summary>
-    public string EntityType { get; set; } = string.Empty;
+    public EntityType EntityType { get; set; }
 
     /// <summary>Cached active status entries.</summary>
     public List<CachedStatusEntry> Statuses { get; set; } = new();
@@ -192,7 +192,7 @@ internal class SeedEffectsCacheModel
     public Guid EntityId { get; set; }
 
     /// <summary>Entity type discriminator.</summary>
-    public string EntityType { get; set; } = string.Empty;
+    public EntityType EntityType { get; set; }
 
     /// <summary>Cached seed-derived effects.</summary>
     public List<CachedSeedEffect> Effects { get; set; } = new();

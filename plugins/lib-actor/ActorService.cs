@@ -196,7 +196,7 @@ public partial class ActorService : IActorService
             BehaviorRef = body.BehaviorRef,
             CreatedAt = now
         };
-        await _messageBus.TryPublishAsync("actor-template.created", evt, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("actor.template.created", evt, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Created actor template {TemplateId} for category {Category}",
             templateId, body.Category);
@@ -365,7 +365,7 @@ public partial class ActorService : IActorService
             CreatedAt = existing.CreatedAt,
             ChangedFields = changedFields
         };
-        await _messageBus.TryPublishAsync("actor-template.updated", evt, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("actor.template.updated", evt, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Updated actor template {TemplateId} (changed: {Fields})",
             body.TemplateId, string.Join(", ", changedFields));
@@ -434,7 +434,7 @@ public partial class ActorService : IActorService
             CreatedAt = existing.CreatedAt,
             DeletedReason = body.ForceStopActors ? $"Deleted with {stoppedCount} actors stopped" : null
         };
-        await _messageBus.TryPublishAsync("actor-template.deleted", evt, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("actor.template.deleted", evt, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Deleted actor template {TemplateId} (stopped {StoppedCount} actors)",
             body.TemplateId, stoppedCount);
@@ -653,7 +653,7 @@ public partial class ActorService : IActorService
             Status = _configuration.DeploymentMode == ActorDeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
             StartedAt = startedAt
         };
-        await _messageBus.TryPublishAsync("actor-instance.created", evt, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("actor.instance.created", evt, cancellationToken: cancellationToken);
 
         // Register character reference if actor is linked to a character
         if (body.CharacterId.HasValue)
@@ -955,7 +955,7 @@ public partial class ActorService : IActorService
                 StartedAt = runner.StartedAt,
                 DeletedReason = body.Graceful ? "graceful_stop" : "forced_stop"
             };
-            await _messageBus.TryPublishAsync("actor-instance.deleted", evt, cancellationToken: cancellationToken);
+            await _messageBus.TryPublishAsync("actor.instance.deleted", evt, cancellationToken: cancellationToken);
 
             _logger.LogInformation("Stopped actor {ActorId}", body.ActorId);
 

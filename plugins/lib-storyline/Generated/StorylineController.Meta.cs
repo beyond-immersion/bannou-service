@@ -1850,10 +1850,22 @@ public partial class StorylineController
                     "nullable": true,
                     "description": "Classification tags for filtering"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether scenario is soft-deleted"
+                    "description": "Whether scenario definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the scenario definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -1977,7 +1989,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -2088,7 +2100,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -2341,10 +2353,22 @@ public partial class StorylineController
                     "nullable": true,
                     "description": "Classification tags for filtering"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether scenario is soft-deleted"
+                    "description": "Whether scenario definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the scenario definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -2468,7 +2492,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -2579,7 +2603,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -2783,9 +2807,21 @@ public partial class StorylineController
                     "type": "boolean",
                     "description": "Whether enabled"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "conditionCount": {
                     "type": "integer",
@@ -3355,10 +3391,22 @@ public partial class StorylineController
                     "nullable": true,
                     "description": "Classification tags for filtering"
                 },
-                "deprecated": {
+                "isDeprecated": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Whether scenario is soft-deleted"
+                    "description": "Whether scenario definition is deprecated"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "When the scenario definition was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3482,7 +3530,7 @@ public partial class StorylineController
                 "WorldState",
                 "Custom"
             ],
-            "description": "Types of trigger conditions for scenario activation.\ nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
+            "description": "Types of trigger conditions for scenario activation.\nTraitRange: Character trait within value range\nBackstoryElement: Character has specific backstory element\nRelationshipExists: Relationship exists between entities\nRelationshipMissing: Relationship does not exist\nAgeRange: Character age within range\nLocationAt: Character at specific location\nTimeOfDay: In-game time within range\nWorldState: Custom world state check\nCustom: Custom condition (not evaluated server-side)\n"
         },
         "ScenarioPhase": {
             "type": "object",
@@ -3593,7 +3641,7 @@ public partial class StorylineController
                 "RelationshipEnd",
                 "Custom"
             ],
-            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\nCustom: Custom mutation (not executed server-side)\n"
+            "description": "Types of state mutations a scenario can apply.\nPersonalityEvolve: Apply experience to evolve personality traits\nBackstoryAdd: Add backstory element to character history\nRelationshipCreate: Create relationship between entities\nRelationshipEnd: End existing relationship\ nCustom: Custom mutation (not executed server-side)\n"
         },
         "ScenarioQuestHook": {
             "type": "object",
@@ -3699,6 +3747,12 @@ public partial class StorylineController
                     "type": "string",
                     "format": "uuid",
                     "description": "Scenario to deprecate"
+                },
+                "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 }
             }
         }

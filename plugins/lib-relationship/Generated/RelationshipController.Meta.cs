@@ -446,7 +446,9 @@ public partial class RelationshipController
                 "relationships",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "relationships": {
@@ -688,7 +690,9 @@ public partial class RelationshipController
                 "relationships",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "relationships": {
@@ -918,7 +922,9 @@ public partial class RelationshipController
                 "relationships",
                 "totalCount",
                 "page",
-                "pageSize"
+                "pageSize",
+                "hasNextPage",
+                "hasPreviousPage"
             ],
             "properties": {
                 "relationships": {
@@ -1278,7 +1284,8 @@ public partial class RelationshipController
                 "endedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "In-game timestamp when relationship ended (defaults to now)"
+                    "nullable": true,
+                    "description": "In-game timestamp when relationship ended (null defaults to now)"
                 },
                 "reason": {
                     "type": "string",
@@ -1387,12 +1394,12 @@ public partial class RelationshipController
     "$ref": "#/$defs/CleanupByEntityResponse",
     "$defs": {
         "CleanupByEntityResponse": {
-            "description": "Response summarizing the results of a cascading relationship cleanup operation",
+            "description": "Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success.",
             "type": "object",
             "additionalProperties": false,
             "required": [
                 "relationshipsEnded",
-                "success"
+                "alreadyEnded"
             ],
             "properties": {
                 "relationshipsEnded": {
@@ -1402,10 +1409,6 @@ public partial class RelationshipController
                 "alreadyEnded": {
                     "type": "integer",
                     "description": "Number of relationships that were already ended (skipped)"
-                },
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the cleanup completed without errors"
                 }
             }
         }
@@ -2336,7 +2339,8 @@ public partial class RelationshipController
                 },
                 "depth": {
                     "type": "integer",
-                    "description": "Number of levels between the types (0 if same, -1 if no match)"
+                    "nullable": true,
+                    "description": "Number of levels between the types (0 if same type, null if no match)"
                 }
             }
         }
@@ -3593,23 +3597,11 @@ public partial class RelationshipController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "sourceTypeId",
-                "targetTypeId",
                 "relationshipsMigrated",
                 "relationshipsFailed",
                 "sourceDeleted"
             ],
             "properties": {
-                "sourceTypeId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the deprecated type that was merged from"
-                },
-                "targetTypeId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "ID of the type that relationships were merged into"
-                },
                 "relationshipsMigrated": {
                     "type": "integer",
                     "description": "Number of relationships successfully updated to use the target type"
@@ -3624,10 +3616,11 @@ public partial class RelationshipController
                 },
                 "migrationErrors": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/MigrationError"
                     },
-                    "description": "Details of individual migration failures (limited to first 100)"
+                    "description": "Details of individual migration failures (limited to first 100), null when no failures"
                 }
             }
         },
@@ -3749,29 +3742,38 @@ public partial class RelationshipController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50,
+                    "pattern": "^[A-Z][A-Z0-9_]*$",
                     "description": "Unique code for the relationship type"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
                     "description": "Display name for the relationship type"
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 500,
                     "nullable": true,
                     "description": "Human-readable description of the relationship type (null if not provided)"
                 },
                 "category": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Category for grouping relationship types (null if not categorized)"
                 },
                 "parentTypeCode": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Code of the parent type (resolved during seeding) (null for root types)"
                 },
                 "inverseTypeCode": {
                     "type": "string",
+                    "maxLength": 50,
                     "nullable": true,
                     "description": "Code of the inverse relationship (null if not applicable)"
                 },

@@ -102,8 +102,8 @@ internal class CollectionInstanceModel
     /// <summary>Entity that owns this collection.</summary>
     public Guid OwnerId { get; set; }
 
-    /// <summary>Entity type discriminator (e.g., account, character).</summary>
-    public string OwnerType { get; set; } = string.Empty;
+    /// <summary>Entity type discriminator (e.g., Account, Character).</summary>
+    public EntityType OwnerType { get; set; }
 
     /// <summary>Type of collection content (opaque string code).</summary>
     public string CollectionType { get; set; } = string.Empty;

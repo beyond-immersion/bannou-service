@@ -25,10 +25,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     private readonly Mock<IStateStore<RelationshipModel>> _mockRelationshipStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
     private readonly Mock<IStateStore<List<Guid>>> _mockListStore;
+    private readonly Mock<IStateStore<RelationshipTypeModel>> _mockRtModelStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "relationship-statestore";
@@ -39,16 +41,23 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
         _mockRelationshipStore = new Mock<IStateStore<RelationshipModel>>();
         _mockStringStore = new Mock<IStateStore<string>>();
         _mockListStore = new Mock<IStateStore<List<Guid>>>();
+        _mockRtModelStore = new Mock<IStateStore<RelationshipTypeModel>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipModel>(STATE_STORE)).Returns(_mockRelationshipStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
         _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>(STATE_STORE)).Returns(_mockListStore.Object);
+
+        // Setup relationship-type-statestore (needed by constructor caching and deprecation checks)
+        _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>("relationship-type-statestore")).Returns(_mockRtModelStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>("relationship-type-statestore")).Returns(new Mock<IStateStore<string>>().Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<List<Guid>>("relationship-type-statestore")).Returns(new Mock<IStateStore<List<Guid>>>().Object);
 
         // Setup lock provider to always succeed
         var mockLockResponse = new Mock<ILockResponse>();
@@ -72,6 +81,7 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
             Configuration,
             _mockLockProvider.Object,
             _mockEventConsumer.Object,
+            _mockTelemetryProvider.Object,
             _mockResourceClient.Object);
     }
 
@@ -690,6 +700,21 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
 
     private void SetupCreateRelationshipMocks(Guid entity1Id, Guid entity2Id, Guid relationshipTypeId, bool existingCompositeKey)
     {
+        // Setup relationship type lookup (deprecation check per IMPLEMENTATION TENETS)
+        _mockRtModelStore
+            .Setup(s => s.GetAsync($"type:{relationshipTypeId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RelationshipTypeModel
+            {
+                RelationshipTypeId = relationshipTypeId,
+                Code = "TEST_TYPE",
+                Name = "Test Type",
+                IsBidirectional = true,
+                IsDeprecated = false,
+                Depth = 0,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            });
+
         // Setup composite key check using prefix pattern since key includes entity types
         _mockStringStore
             .Setup(s => s.GetAsync(It.Is<string>(k => k.StartsWith("composite:")), It.IsAny<CancellationToken>()))

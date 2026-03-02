@@ -20,6 +20,7 @@ public class RepositorySyncSchedulerServiceTests
     private readonly Mock<IServiceScope> _mockServiceScope;
     private readonly Mock<IServiceScopeFactory> _mockServiceScopeFactory;
     private readonly Mock<ILogger<RepositorySyncSchedulerService>> _mockLogger;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly DocumentationServiceConfiguration _configuration;
 
     public RepositorySyncSchedulerServiceTests()
@@ -28,11 +29,12 @@ public class RepositorySyncSchedulerServiceTests
         _mockServiceScope = new Mock<IServiceScope>();
         _mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
         _mockLogger = new Mock<ILogger<RepositorySyncSchedulerService>>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new DocumentationServiceConfiguration
         {
             SyncSchedulerEnabled = true,
             SyncSchedulerCheckIntervalMinutes = 1,
-            MaxConcurrentSyncs = 3
+            MaxSyncsPerCycle = 3
         };
 
         // Setup service scope factory
@@ -53,7 +55,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
         Assert.NotNull(service);
     }
 
@@ -69,7 +72,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            config);
+            config,
+            _mockTelemetryProvider.Object);
 
         using var cts = new CancellationTokenSource();
 
@@ -89,7 +93,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
 
         using var cts = new CancellationTokenSource();
 
@@ -122,7 +127,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
 
         using var cts = new CancellationTokenSource();
 
@@ -146,7 +152,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
 
         using var cts = new CancellationTokenSource();
 
@@ -313,7 +320,8 @@ public class RepositorySyncSchedulerServiceTests
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            config);
+            config,
+            _mockTelemetryProvider.Object);
 
         // Assert - Internal check interval should be 15 minutes
         // Note: We can't directly test private members, but the behavior
@@ -322,20 +330,21 @@ public class RepositorySyncSchedulerServiceTests
     }
 
     [Fact]
-    public void MaxConcurrentSyncs_ShouldLimitParallelSyncs()
+    public void MaxSyncsPerCycle_ShouldLimitSyncsPerSchedulerCycle()
     {
         // Arrange
         var config = new DocumentationServiceConfiguration
         {
-            MaxConcurrentSyncs = 1 // Only allow 1 concurrent sync
+            MaxSyncsPerCycle = 1 // Only allow 1 sync per scheduler cycle
         };
 
         using var service = new RepositorySyncSchedulerService(
             _mockServiceProvider.Object,
             _mockLogger.Object,
-            config);
+            config,
+            _mockTelemetryProvider.Object);
 
-        // Assert - Service should respect max concurrent limit
+        // Assert - Service should respect max syncs per cycle limit
         Assert.NotNull(service);
     }
 

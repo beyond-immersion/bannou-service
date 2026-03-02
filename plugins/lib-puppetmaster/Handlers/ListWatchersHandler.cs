@@ -6,6 +6,7 @@
 using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
@@ -42,18 +43,22 @@ public sealed class ListWatchersHandler : IActionHandler
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ListWatchersHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new list watchers handler.
     /// </summary>
     /// <param name="scopeFactory">Service scope factory for resolving scoped dependencies.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ListWatchersHandler(
         IServiceScopeFactory scopeFactory,
-        ILogger<ListWatchersHandler> logger)
+        ILogger<ListWatchersHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -65,6 +70,7 @@ public sealed class ListWatchersHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "ListWatchersHandler.ExecuteAsync");
         var listAction = (ListWatchersAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

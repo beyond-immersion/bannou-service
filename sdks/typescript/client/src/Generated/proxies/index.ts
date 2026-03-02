@@ -51,6 +51,7 @@ export { SpeciesProxy } from './SpeciesProxy.js';
 export { StatusProxy } from './StatusProxy.js';
 export { StorylineProxy } from './StorylineProxy.js';
 export { SubscriptionProxy } from './SubscriptionProxy.js';
+export { TransitProxy } from './TransitProxy.js';
 export { ValidateProxy } from './ValidateProxy.js';
 export { VoiceProxy } from './VoiceProxy.js';
 export { WebsiteProxy } from './WebsiteProxy.js';

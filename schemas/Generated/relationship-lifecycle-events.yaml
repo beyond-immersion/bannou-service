@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Relationship Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for relationship service.\nDO NOT EDIT - This file is completely overwritten
@@ -73,7 +73,8 @@ components:
         updatedAt: &id011
           type: string
           format: date-time
-          description: "Timestamp when the relationship record was last updated"
+          nullable: true
+          description: "Timestamp when the relationship record was last updated, null if never updated"
     RelationshipUpdatedEvent:
       allOf:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
@@ -157,7 +158,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.created when a relationshiptype is created
+      description: Published to relationship.type.created when a relationshiptype is created
       required:
       - eventName
       - eventId
@@ -173,8 +174,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.created
-          description: 'Event type identifier: relationship-type.created'
+          default: relationship.type.created
+          description: 'Event type identifier: relationship.type.created'
         relationshipTypeId: &id012
           type: string
           format: uuid
@@ -248,7 +249,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.updated when a relationshiptype is updated
+      description: Published to relationship.type.updated when a relationshiptype is updated
       required:
       - eventName
       - eventId
@@ -265,8 +266,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.updated
-          description: 'Event type identifier: relationship-type.updated'
+          default: relationship.type.updated
+          description: 'Event type identifier: relationship.type.updated'
         relationshipTypeId: *id012
         code: *id013
         name: *id014
@@ -294,7 +295,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to relationship-type.deleted when a relationshiptype is deleted
+      description: Published to relationship.type.deleted when a relationshiptype is deleted
       required:
       - eventName
       - eventId
@@ -310,8 +311,8 @@ components:
       properties:
         eventName:
           type: string
-          default: relationship-type.deleted
-          description: 'Event type identifier: relationship-type.deleted'
+          default: relationship.type.deleted
+          description: 'Event type identifier: relationship.type.deleted'
         relationshipTypeId: *id012
         code: *id013
         name: *id014

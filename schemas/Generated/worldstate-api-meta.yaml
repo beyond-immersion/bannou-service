@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Worldstate Service API
   version: 1.0.0
@@ -77,35 +77,38 @@ paths:
         \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
         \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
         the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
-        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
-        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
-        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
-        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
-        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
-        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
-        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
-        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
-        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
-        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
-        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
-        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
-        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
-        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
-        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
-        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
-        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
-        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
-        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Current game year (0-based from realm
+        epoch)\"\n                },\n                \"monthIndex\": {\n                    \"type\": \"integer\",\n    \
+        \                \"minimum\": 0,\n                    \"description\": \"0-based index into calendar months\"\n  \
+        \              },\n                \"monthCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Month code from
+        calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n                \"dayOfMonth\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based
+        day within current month\"\n                },\n                \"dayOfYear\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based day within current
+        year\"\n                },\n                \"hour\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n  \
+        \              },\n                \"minute\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 0,\n                    \"maximum\": 59,\n                    \"description\": \"Current game minute
+        (0-59)\"\n                },\n                \"period\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
+        day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n                \"isDaylight\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current period's isDaylight
+        flag is set in the calendar template\"\n                },\n                \"season\": {\n                    \"\
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n             \
+        \       \"description\": \"Current season code from calendar (e.g., \\\"spring\\\")\"\n                },\n      \
+        \          \"seasonIndex\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
+        \                   \"description\": \"Current season ordinal (0-based)\"\n                },\n                \"\
+        seasonProgress\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n     \
+        \               \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"0.0-1.0
+        progress through the current season, computed from day-of-season / days-in-season\"\n                },\n        \
+        \        \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Absolute game-seconds since realm epoch\"\n                },\n\
+        \                \"timeRatio\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"Current game-seconds per real-second\"\n                },\n           \
+        \     \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Real-world UTC timestamp of this snapshot\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current game time for a realm\",\n    \"description\": \"Returns full
         GameTimeSnapshot for a realm. Reads from Redis cache (hot path).\",\n    \"tags\": [\n        \"Worldstate\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmTime\"\n}"
@@ -154,35 +157,38 @@ paths:
         \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
         \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
         the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
-        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
-        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
-        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
-        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
-        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
-        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
-        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
-        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
-        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
-        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
-        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
-        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
-        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
-        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
-        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
-        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
-        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
-        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
-        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
-        \n                }\n            }\n        }\n    }\n}"
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Current game year (0-based from realm
+        epoch)\"\n                },\n                \"monthIndex\": {\n                    \"type\": \"integer\",\n    \
+        \                \"minimum\": 0,\n                    \"description\": \"0-based index into calendar months\"\n  \
+        \              },\n                \"monthCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Month code from
+        calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n                \"dayOfMonth\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based
+        day within current month\"\n                },\n                \"dayOfYear\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based day within current
+        year\"\n                },\n                \"hour\": {\n                    \"type\": \"integer\",\n            \
+        \        \"minimum\": 0,\n                    \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n  \
+        \              },\n                \"minute\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"minimum\": 0,\n                    \"maximum\": 59,\n                    \"description\": \"Current game minute
+        (0-59)\"\n                },\n                \"period\": {\n                    \"type\": \"string\",\n         \
+        \           \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
+        day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n                \"isDaylight\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current period's isDaylight
+        flag is set in the calendar template\"\n                },\n                \"season\": {\n                    \"\
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n             \
+        \       \"description\": \"Current season code from calendar (e.g., \\\"spring\\\")\"\n                },\n      \
+        \          \"seasonIndex\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
+        \                   \"description\": \"Current season ordinal (0-based)\"\n                },\n                \"\
+        seasonProgress\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n     \
+        \               \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"0.0-1.0
+        progress through the current season, computed from day-of-season / days-in-season\"\n                },\n        \
+        \        \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Absolute game-seconds since realm epoch\"\n                },\n\
+        \                \"timeRatio\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"Current game-seconds per real-second\"\n                },\n           \
+        \     \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Real-world UTC timestamp of this snapshot\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current game time by realm code\",\n    \"description\": \"Convenience
         endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.\"\
         ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmTimeByCode\"\
@@ -221,51 +227,57 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/BatchGetRealmTimesResponse\"\
         ,\n    \"$defs\": {\n        \"BatchGetRealmTimesResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Game time snapshots for multiple realms\",\n      \
-        \      \"required\": [\n                \"snapshots\"\n            ],\n            \"properties\": {\n           \
-        \     \"snapshots\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
-        \           \"$ref\": \"#/$defs/GameTimeSnapshot\"\n                    },\n                    \"description\": \"\
-        Game time snapshots for each requested realm (omits realms without initialized clocks)\"\n                }\n    \
-        \        }\n        },\n        \"GameTimeSnapshot\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Complete point-in-time game time state for a realm, used in responses and
-        boundary events\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n\
-        \                \"year\",\n                \"monthIndex\",\n                \"monthCode\",\n                \"dayOfMonth\"\
-        ,\n                \"dayOfYear\",\n                \"hour\",\n                \"minute\",\n                \"period\"\
-        ,\n                \"isDaylight\",\n                \"season\",\n                \"seasonIndex\",\n              \
-        \  \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\",\n                \"timeRatio\",\n        \
-        \        \"timestamp\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n          \
-        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
-        \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
-        the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Current game year (0-based from realm epoch)\"\n                },\n   \
-        \             \"monthIndex\": {\n                    \"type\": \"integer\",\n                    \"description\":
-        \"0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\
-        \")\"\n                },\n                \"dayOfMonth\": {\n                    \"type\": \"integer\",\n       \
-        \             \"minimum\": 1,\n                    \"description\": \"1-based day within current month\"\n       \
-        \         },\n                \"dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"\
-        minimum\": 1,\n                    \"description\": \"1-based day within current year\"\n                },\n    \
-        \            \"hour\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n      \
-        \              \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n             \
-        \   \"minute\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n             \
-        \       \"maximum\": 59,\n                    \"description\": \"Current game minute (0-59)\"\n                },\n\
-        \                \"period\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
-        Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n              \
-        \  \"isDaylight\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current
-        period's isDaylight flag is set in the calendar template\"\n                },\n                \"season\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Current season code from calendar
-        (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                    \"type\": \"\
-        integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season ordinal (0-based)\"\
-        \n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\",\n         \
-        \           \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n   \
-        \                 \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season / days-in-season\"\
-        \n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute game-seconds since
-        realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n \
-        \                   \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
-        \n                },\n                \"timestamp\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of this snapshot\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \      \"required\": [\n                \"snapshots\",\n                \"notFoundRealmIds\"\n            ],\n   \
+        \         \"properties\": {\n                \"snapshots\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"$ref\": \"#/$defs/GameTimeSnapshot\"\n                    },\n\
+        \                    \"description\": \"Game time snapshots for each requested realm that has an initialized clock\"\
+        \n                },\n                \"notFoundRealmIds\": {\n                    \"type\": \"array\",\n        \
+        \            \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\
+        \n                    },\n                    \"description\": \"Realm IDs from the request that had no initialized
+        clock\"\n                }\n            }\n        },\n        \"GameTimeSnapshot\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Complete point-in-time game time state
+        for a realm, used in responses and boundary events\",\n            \"required\": [\n                \"realmId\",\n\
+        \                \"gameServiceId\",\n                \"year\",\n                \"monthIndex\",\n                \"\
+        monthCode\",\n                \"dayOfMonth\",\n                \"dayOfYear\",\n                \"hour\",\n       \
+        \         \"minute\",\n                \"period\",\n                \"isDaylight\",\n                \"season\",\n\
+        \                \"seasonIndex\",\n                \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\"\
+        ,\n                \"timeRatio\",\n                \"timestamp\"\n            ],\n            \"properties\": {\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm this snapshot belongs to\"\n                },\n                \"\
+        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
+        \             \"description\": \"Game service the realm belongs to\"\n                },\n                \"year\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Current game year (0-based from realm epoch)\"\n                },\n                \"monthIndex\": {\n      \
+        \              \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"\
+        0-based index into calendar months\"\n                },\n                \"monthCode\": {\n                    \"\
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n             \
+        \       \"description\": \"Month code from calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n   \
+        \             \"dayOfMonth\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"description\": \"1-based day within current month\"\n                },\n                \"\
+        dayOfYear\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                \
+        \    \"description\": \"1-based day within current year\"\n                },\n                \"hour\": {\n     \
+        \               \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\":
+        \"Current game hour (0 to gameHoursPerDay-1)\"\n                },\n                \"minute\": {\n              \
+        \      \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\": 59,\n       \
+        \             \"description\": \"Current game minute (0-59)\"\n                },\n                \"period\": {\n\
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 64,\n                    \"description\": \"Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\
+        \")\"\n                },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n       \
+        \             \"description\": \"True if current period's isDaylight flag is set in the calendar template\"\n    \
+        \            },\n                \"season\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Current season code
+        from calendar (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\": {\n                 \
+        \   \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Current season
+        ordinal (0-based)\"\n                },\n                \"seasonProgress\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1,\n                    \"description\": \"0.0-1.0 progress through the current season, computed from day-of-season
+        / days-in-season\"\n                },\n                \"totalGameSecondsSinceEpoch\": {\n                    \"\
+        type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"description\": \"Absolute
+        game-seconds since realm epoch\"\n                },\n                \"timeRatio\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Current game-seconds
+        per real-second\"\n                },\n                \"timestamp\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp
+        of this snapshot\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get current game time for multiple realms\",\n    \"description\": \"Returns
         GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.\",\n    \"tags\"\
         : [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"batchGetRealmTimes\"\n}"
@@ -421,26 +433,28 @@ paths:
         \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InitializeRealmClockResponse\"\
         ,\n    \"$defs\": {\n        \"InitializeRealmClockResponse\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Confirmation of realm clock initialization with resolved
-        values\",\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n       \
-        \         \"calendarTemplateCode\",\n                \"timeRatio\",\n                \"downtimePolicy\",\n       \
-        \         \"epoch\",\n                \"startingYear\"\n            ],\n            \"properties\": {\n          \
-        \      \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
-        \                \"description\": \"Realm the clock was initialized for\"\n                },\n                \"\
-        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Game service the realm belongs to\"\n                },\n                \"calendarTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template code in use
-        (resolved from request or config)\"\n                },\n                \"timeRatio\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Initial game-seconds
-        per real-second (resolved from request or config)\"\n                },\n                \"downtimePolicy\": {\n \
-        \                   \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"Downtime handling
-        policy (resolved from request or config)\"\n                },\n                \"epoch\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        timestamp of the realm epoch\"\n                },\n                \"startingYear\": {\n                    \"type\"\
-        : \"integer\",\n                    \"description\": \"Game year the clock started at\"\n                }\n     \
-        \       }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n                \"Advance\",\n  \
-        \              \"Pause\"\n            ]\n        }\n    }\n}"
+        additionalProperties\": false,\n            \"description\": \"Resolved entity state after realm clock initialization.
+        Caller already knows realmId from request. Shows resolved values for optional fields that may have fallen back to
+        config defaults.\",\n            \"required\": [\n                \"gameServiceId\",\n                \"calendarTemplateCode\"\
+        ,\n                \"timeRatio\",\n                \"downtimePolicy\",\n                \"epoch\",\n             \
+        \   \"startingYear\"\n            ],\n            \"properties\": {\n                \"gameServiceId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service the realm belongs to (resolved from realm lookup)\"\n                },\n                \"calendarTemplateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Calendar template code in use (resolved from request or config default)\"\
+        \n                },\n                \"timeRatio\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"float\",\n                    \"minimum\": 0.1,\n                    \"maximum\": 10000.0,\n\
+        \                    \"description\": \"Initial game-seconds per real-second (resolved from request or config default)\"\
+        \n                },\n                \"downtimePolicy\": {\n                    \"$ref\": \"#/$defs/DowntimePolicy\"\
+        ,\n                    \"description\": \"Downtime handling policy (resolved from request or config default)\"\n \
+        \               },\n                \"epoch\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"Real-world timestamp of the realm epoch (resolved
+        from request or current time)\"\n                },\n                \"startingYear\": {\n                    \"type\"\
+        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Game year the clock started
+        at (resolved from request or default 0)\"\n                }\n            }\n        },\n        \"DowntimePolicy\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"How to handle clock gaps after service downtime\"\
+        ,\n            \"enum\": [\n                \"Advance\",\n                \"Pause\"\n            ]\n        }\n  \
+        \  }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Initialize a clock for a realm\",\n    \"description\": \"The primary path
         from \\\"realm exists\\\" to \\\"realm has a clock.\\\" Validates realm existence, calendar template existence, and
         that no clock already exists. Registers reference with lib-resource.\",\n    \"tags\": [\n        \"Worldstate\"\n\
@@ -486,20 +500,11 @@ paths:
         \                \"Pause\",\n                \"Resume\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetTimeRatioResponse\"\
         ,\n    \"$defs\": {\n        \"SetTimeRatioResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Confirmation of time ratio change\",\n            \"required\": [\n     \
-        \           \"realmId\",\n                \"previousRatio\",\n                \"newRatio\",\n                \"reason\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm the ratio was changed
-        for\"\n                },\n                \"previousRatio\": {\n                    \"type\": \"number\",\n     \
-        \               \"format\": \"float\",\n                    \"description\": \"Previous game-seconds per real-second\"\
-        \n                },\n                \"newRatio\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"float\",\n                    \"description\": \"New game-seconds per real-second\"\n        \
-        \        },\n                \"reason\": {\n                    \"$ref\": \"#/$defs/TimeRatioChangeReason\",\n   \
-        \                 \"description\": \"Reason for the ratio change\"\n                }\n            }\n        },\n\
-        \        \"TimeRatioChangeReason\": {\n            \"type\": \"string\",\n            \"description\": \"Why the time
-        ratio was changed\",\n            \"enum\": [\n                \"Initial\",\n                \"AdminAdjustment\",\n\
-        \                \"Event\",\n                \"Pause\",\n                \"Resume\"\n            ]\n        }\n  \
-        \  }\n}"
+        : false,\n            \"description\": \"Result of time ratio change. Caller already knows realmId, newRatio, and
+        reason from request.\",\n            \"required\": [\n                \"previousRatio\"\n            ],\n        \
+        \    \"properties\": {\n                \"previousRatio\": {\n                    \"type\": \"number\",\n        \
+        \            \"format\": \"float\",\n                    \"description\": \"Previous game-seconds per real-second
+        before the change\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Change the time ratio for a realm\",\n    \"description\": \"Materializes
         current clock state, records new ratio segment in history, updates realm clock. Setting ratio to 0.0 pauses the clock.\"\
         ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setTimeRatio\"\
@@ -549,56 +554,58 @@ paths:
         current calendar structure)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AdvanceClockResponse\"\
         ,\n    \"$defs\": {\n        \"AdvanceClockResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Result of manual clock advancement\",\n            \"required\": [\n    \
-        \            \"realmId\",\n                \"previousTime\",\n                \"newTime\",\n                \"boundaryEventsPublished\"\
-        \n            ],\n            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Realm the clock was advanced
-        for\"\n                },\n                \"previousTime\": {\n                    \"$ref\": \"#/$defs/GameTimeSnapshot\"\
-        ,\n                    \"description\": \"Game time before advancement\"\n                },\n                \"newTime\"\
-        : {\n                    \"$ref\": \"#/$defs/GameTimeSnapshot\",\n                    \"description\": \"Game time
-        after advancement\"\n                },\n                \"boundaryEventsPublished\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Number of boundary events
-        published during advancement\"\n                }\n            }\n        },\n        \"GameTimeSnapshot\": {\n  \
-        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Complete
-        point-in-time game time state for a realm, used in responses and boundary events\",\n            \"required\": [\n\
-        \                \"realmId\",\n                \"gameServiceId\",\n                \"year\",\n                \"monthIndex\"\
-        ,\n                \"monthCode\",\n                \"dayOfMonth\",\n                \"dayOfYear\",\n             \
-        \   \"hour\",\n                \"minute\",\n                \"period\",\n                \"isDaylight\",\n       \
-        \         \"season\",\n                \"seasonIndex\",\n                \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\"\
-        ,\n                \"timeRatio\",\n                \"timestamp\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Realm this snapshot belongs to\"\n                },\n                \"\
-        gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
-        \             \"description\": \"Game service the realm belongs to\"\n                },\n                \"year\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current game year (0-based
-        from realm epoch)\"\n                },\n                \"monthIndex\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"0-based index into calendar months\"\n                },\n             \
-        \   \"monthCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Month code
-        from calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n                \"dayOfMonth\": {\n      \
-        \              \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"\
-        1-based day within current month\"\n                },\n                \"dayOfYear\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based day within current
+        : false,\n            \"description\": \"Result of manual clock advancement. Caller already knows realmId from request.\"\
+        ,\n            \"required\": [\n                \"previousTime\",\n                \"newTime\",\n                \"\
+        boundaryEventsPublished\"\n            ],\n            \"properties\": {\n                \"previousTime\": {\n  \
+        \                  \"$ref\": \"#/$defs/GameTimeSnapshot\",\n                    \"description\": \"Game time before
+        advancement\"\n                },\n                \"newTime\": {\n                    \"$ref\": \"#/$defs/GameTimeSnapshot\"\
+        ,\n                    \"description\": \"Game time after advancement\"\n                },\n                \"boundaryEventsPublished\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
+        : \"Number of boundary events published during advancement\"\n                }\n            }\n        },\n     \
+        \   \"GameTimeSnapshot\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n   \
+        \         \"description\": \"Complete point-in-time game time state for a realm, used in responses and boundary events\"\
+        ,\n            \"required\": [\n                \"realmId\",\n                \"gameServiceId\",\n               \
+        \ \"year\",\n                \"monthIndex\",\n                \"monthCode\",\n                \"dayOfMonth\",\n  \
+        \              \"dayOfYear\",\n                \"hour\",\n                \"minute\",\n                \"period\"\
+        ,\n                \"isDaylight\",\n                \"season\",\n                \"seasonIndex\",\n              \
+        \  \"seasonProgress\",\n                \"totalGameSecondsSinceEpoch\",\n                \"timeRatio\",\n        \
+        \        \"timestamp\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n          \
+        \          \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\":
+        \"Realm this snapshot belongs to\"\n                },\n                \"gameServiceId\": {\n                   \
+        \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
+        the realm belongs to\"\n                },\n                \"year\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"description\": \"Current game year (0-based from realm
+        epoch)\"\n                },\n                \"monthIndex\": {\n                    \"type\": \"integer\",\n    \
+        \                \"minimum\": 0,\n                    \"description\": \"0-based index into calendar months\"\n  \
+        \              },\n                \"monthCode\": {\n                    \"type\": \"string\",\n                 \
+        \   \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Month code from
+        calendar template (e.g., \\\"greenleaf\\\")\"\n                },\n                \"dayOfMonth\": {\n           \
+        \         \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based
+        day within current month\"\n                },\n                \"dayOfYear\": {\n                    \"type\": \"\
+        integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based day within current
         year\"\n                },\n                \"hour\": {\n                    \"type\": \"integer\",\n            \
         \        \"minimum\": 0,\n                    \"description\": \"Current game hour (0 to gameHoursPerDay-1)\"\n  \
         \              },\n                \"minute\": {\n                    \"type\": \"integer\",\n                   \
         \ \"minimum\": 0,\n                    \"maximum\": 59,\n                    \"description\": \"Current game minute
         (0-59)\"\n                },\n                \"period\": {\n                    \"type\": \"string\",\n         \
-        \           \"description\": \"Current day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n   \
-        \             },\n                \"isDaylight\": {\n                    \"type\": \"boolean\",\n                \
-        \    \"description\": \"True if current period's isDaylight flag is set in the calendar template\"\n             \
-        \   },\n                \"season\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Current season code from calendar (e.g., \\\"spring\\\")\"\n                },\n                \"seasonIndex\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\"\
-        : \"Current season ordinal (0-based)\"\n                },\n                \"seasonProgress\": {\n              \
-        \      \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n  \
-        \                  \"maximum\": 1,\n                    \"description\": \"0.0-1.0 progress through the current season,
-        computed from day-of-season / days-in-season\"\n                },\n                \"totalGameSecondsSinceEpoch\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Absolute game-seconds since realm epoch\"\n                },\n                \"timeRatio\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Current game-seconds per real-second\"\n                },\n                \"timestamp\": {\n               \
-        \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Real-world UTC timestamp of this snapshot\"\n                }\n            }\n        }\n    }\n}"
+        \           \"minLength\": 1,\n                    \"maxLength\": 64,\n                    \"description\": \"Current
+        day period code from calendar (e.g., \\\"dawn\\\", \\\"morning\\\")\"\n                },\n                \"isDaylight\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if current period's isDaylight
+        flag is set in the calendar template\"\n                },\n                \"season\": {\n                    \"\
+        type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 64,\n             \
+        \       \"description\": \"Current season code from calendar (e.g., \\\"spring\\\")\"\n                },\n      \
+        \          \"seasonIndex\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n \
+        \                   \"description\": \"Current season ordinal (0-based)\"\n                },\n                \"\
+        seasonProgress\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n     \
+        \               \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\": \"0.0-1.0
+        progress through the current season, computed from day-of-season / days-in-season\"\n                },\n        \
+        \        \"totalGameSecondsSinceEpoch\": {\n                    \"type\": \"integer\",\n                    \"format\"\
+        : \"int64\",\n                    \"description\": \"Absolute game-seconds since realm epoch\"\n                },\n\
+        \                \"timeRatio\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"Current game-seconds per real-second\"\n                },\n           \
+        \     \"timestamp\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Real-world UTC timestamp of this snapshot\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Manually advance a realm's clock\",\n    \"description\": \"Advances a
         realm's clock by a specified amount of game time. Used for testing and administrative fast-forward. Publishes all
         boundary events crossed during advancement.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\"\
@@ -708,17 +715,18 @@ paths:
         ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
         daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
         \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
-        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
-        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
-        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Calendar
+        template identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this calendar
+        belongs to\"\n                },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"Number of game hours in a day\"\n \
+        \               },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n   \
+        \                 \"description\": \"Named time-of-day periods\"\n                },\n                \"months\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months in
+        a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
         \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
         daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
         days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
@@ -816,17 +824,18 @@ paths:
         ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
         daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
         \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
-        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
-        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
-        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Calendar
+        template identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this calendar
+        belongs to\"\n                },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"Number of game hours in a day\"\n \
+        \               },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n   \
+        \                 \"description\": \"Named time-of-day periods\"\n                },\n                \"months\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months in
+        a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
         \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
         daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
         days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
@@ -924,11 +933,12 @@ paths:
         ,\n                \"gameServiceId\",\n                \"gameHoursPerDay\",\n                \"dayPeriods\",\n   \
         \             \"months\",\n                \"seasons\",\n                \"daysPerYear\",\n                \"monthsPerYear\"\
         ,\n                \"seasonsPerYear\"\n            ],\n            \"properties\": {\n                \"templateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template identifier\"\
-        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
-        \          \"format\": \"uuid\",\n                    \"description\": \"Game service this calendar belongs to\"\n\
-        \                },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\",\n        \
-        \            \"description\": \"Number of game hours in a day\"\n                },\n                \"dayPeriods\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Calendar template identifier\"\n                },\n              \
+        \  \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n  \
+        \                  \"description\": \"Game service this calendar belongs to\"\n                },\n              \
+        \  \"gameHoursPerDay\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n     \
+        \               \"description\": \"Number of game hours in a day\"\n                },\n                \"dayPeriods\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
         : \"#/$defs/DayPeriodDefinition\"\n                    },\n                    \"description\": \"Named time-of-day
         periods\"\n                },\n                \"months\": {\n                    \"type\": \"array\",\n         \
@@ -1097,17 +1107,18 @@ paths:
         ,\n                \"dayPeriods\",\n                \"months\",\n                \"seasons\",\n                \"\
         daysPerYear\",\n                \"monthsPerYear\",\n                \"seasonsPerYear\"\n            ],\n         \
         \   \"properties\": {\n                \"templateCode\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Calendar template identifier\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Game service this calendar belongs to\"\n                },\n                \"gameHoursPerDay\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of game hours in a
-        day\"\n                },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n         \
-        \           \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n\
-        \                    \"description\": \"Named time-of-day periods\"\n                },\n                \"months\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months
-        in a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
+        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Calendar
+        template identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this calendar
+        belongs to\"\n                },\n                \"gameHoursPerDay\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"Number of game hours in a day\"\n \
+        \               },\n                \"dayPeriods\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/DayPeriodDefinition\"\n                    },\n   \
+        \                 \"description\": \"Named time-of-day periods\"\n                },\n                \"months\":
+        {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/MonthDefinition\"\n                    },\n                    \"description\": \"Ordered list of months in
+        a year\"\n                },\n                \"seasons\": {\n                    \"type\": \"array\",\n         \
+        \           \"items\": {\n                        \"$ref\": \"#/$defs/SeasonDefinition\"\n                    },\n\
         \                    \"description\": \"Ordered list of seasons in a year\"\n                },\n                \"\
         daysPerYear\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Computed total
         days per year (sum of all months' daysInMonth)\"\n                },\n                \"monthsPerYear\": {\n     \
@@ -1204,10 +1215,8 @@ paths:
         \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteCalendarResponse\"\
         ,\n    \"$defs\": {\n        \"DeleteCalendarResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Confirmation of calendar template deletion\",\n            \"required\":
-        [\n                \"deleted\"\n            ],\n            \"properties\": {\n                \"deleted\": {\n  \
-        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the calendar template was
-        deleted\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the deletion succeeded.\",\n          \
+        \  \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a calendar template\",\n    \"description\": \"Deletes a calendar
         template. Fails with Conflict if any active realm clocks reference this template. Acquires distributed lock. Unregisters
         reference with lib-resource.\",\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n   \
@@ -1253,17 +1262,18 @@ paths:
         identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Game service the realm belongs
         to\"\n                },\n                \"calendarTemplateCode\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Current game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n\
-        \                    \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps
-        are handled after service downtime\"\n                },\n                \"realmEpoch\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        timestamp when the realm's clock started\"\n                },\n                \"isActive\": {\n                \
-        \    \"type\": \"boolean\",\n                    \"description\": \"Whether the realm clock is initialized and active\"\
-        \n                }\n            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n    \
-        \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
+        \                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Current
+        game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n                    \"\
+        $ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps are handled after service
+        downtime\"\n                },\n                \"realmEpoch\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"description\": \"Real-world timestamp when the
+        realm's clock started\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm clock is initialized and active\"\n                }\n\
+        \            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n                \"Advance\",\n  \
+        \              \"Pause\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm worldstate configuration\",\n    \"description\": \"Returns the
         realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.\"\
         ,\n    \"tags\": [\n        \"Worldstate\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealmConfig\"\
@@ -1318,17 +1328,18 @@ paths:
         identifier\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"uuid\",\n                    \"description\": \"Game service the realm belongs
         to\"\n                },\n                \"calendarTemplateCode\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
-        description\": \"Current game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n\
-        \                    \"$ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps
-        are handled after service downtime\"\n                },\n                \"realmEpoch\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"Real-world
-        timestamp when the realm's clock started\"\n                },\n                \"isActive\": {\n                \
-        \    \"type\": \"boolean\",\n                    \"description\": \"Whether the realm clock is initialized and active\"\
-        \n                }\n            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n    \
-        \            \"Advance\",\n                \"Pause\"\n            ]\n        }\n    }\n}"
+        \                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Calendar template code in use\"\n                },\n                \"currentTimeRatio\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Current
+        game-seconds per real-second\"\n                },\n                \"downtimePolicy\": {\n                    \"\
+        $ref\": \"#/$defs/DowntimePolicy\",\n                    \"description\": \"How clock gaps are handled after service
+        downtime\"\n                },\n                \"realmEpoch\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"description\": \"Real-world timestamp when the
+        realm's clock started\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the realm clock is initialized and active\"\n                }\n\
+        \            }\n        },\n        \"DowntimePolicy\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How to handle clock gaps after service downtime\",\n            \"enum\": [\n                \"Advance\",\n  \
+        \              \"Pause\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update realm worldstate configuration\",\n    \"description\": \"Partial
         update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode.
         Cannot change time ratio (use SetTimeRatio) or epoch (immutable).\",\n    \"tags\": [\n        \"Worldstate\"\n  \
@@ -1370,31 +1381,29 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListRealmClocksResponse\"\
         ,\n    \"$defs\": {\n        \"ListRealmClocksResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Paginated list of active realm clocks\",\n            \"required\": [\n \
-        \               \"items\",\n                \"totalCount\",\n                \"page\",\n                \"pageSize\"\
-        \n            ],\n            \"properties\": {\n                \"items\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmClockSummary\"\n           \
-        \         },\n                    \"description\": \"Realm clock summaries for the current page\"\n              \
-        \  },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Total matching realm clocks\"\n                },\n                \"\
-        page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
-        description\": \"Current page number\"\n                },\n                \"pageSize\": {\n                    \"\
-        type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000,\n              \
-        \      \"description\": \"Items per page\"\n                }\n            }\n        },\n        \"RealmClockSummary\"\
-        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
-        : \"Summary information for an active realm clock\",\n            \"required\": [\n                \"realmId\",\n\
-        \                \"calendarTemplateCode\",\n                \"currentTimeRatio\",\n                \"currentSeason\"\
-        ,\n                \"currentYear\",\n                \"lastAdvancedAt\"\n            ],\n            \"properties\"\
-        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Realm identifier\"\n                },\n                \"calendarTemplateCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Calendar template code in use\"\
-        \n                },\n                \"currentTimeRatio\": {\n                    \"type\": \"number\",\n       \
-        \             \"format\": \"float\",\n                    \"description\": \"Current game-seconds per real-second\"\
-        \n                },\n                \"currentSeason\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"Current season code\"\n                },\n                \"currentYear\": {\n    \
-        \                \"type\": \"integer\",\n                    \"description\": \"Current game year\"\n            \
-        \    },\n                \"lastAdvancedAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"Real-world UTC timestamp of last clock advancement\"\
-        \n                }\n            }\n        }\n    }\n}"
+        \               \"items\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n      \
+        \          \"items\": {\n                    \"type\": \"array\",\n                    \"items\": {\n            \
+        \            \"$ref\": \"#/$defs/RealmClockSummary\"\n                    },\n                    \"description\"\
+        : \"Realm clock summaries for the current page\"\n                },\n                \"totalCount\": {\n        \
+        \            \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"\
+        Total matching realm clocks\"\n                }\n            }\n        },\n        \"RealmClockSummary\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Summary
+        information for an active realm clock\",\n            \"required\": [\n                \"realmId\",\n            \
+        \    \"calendarTemplateCode\",\n                \"currentTimeRatio\",\n                \"currentSeason\",\n      \
+        \          \"currentYear\",\n                \"lastAdvancedAt\"\n            ],\n            \"properties\": {\n \
+        \               \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Realm identifier\"\n                },\n                \"calendarTemplateCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Calendar template code in use\"\n                },\n             \
+        \   \"currentTimeRatio\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"Current game-seconds per real-second\"\n                },\n           \
+        \     \"currentSeason\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n   \
+        \                 \"maxLength\": 64,\n                    \"description\": \"Current season code\"\n             \
+        \   },\n                \"currentYear\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"description\": \"Current game year\"\n                },\n                \"lastAdvancedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Real-world UTC timestamp of last clock advancement\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List active realm clocks\",\n    \"description\": \"Lists all active realm
         clocks with summary info. Supports pagination and optional gameServiceId filter.\",\n    \"tags\": [\n        \"Worldstate\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRealmClocks\"\n}"
@@ -1429,10 +1438,8 @@ paths:
         description\": \"Realm to clean up worldstate data for\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByRealmResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByRealmResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"description\": \"Confirmation of realm worldstate cleanup\",\n            \"required\": [\n\
-        \                \"cleaned\"\n            ],\n            \"properties\": {\n                \"cleaned\": {\n    \
-        \                \"type\": \"boolean\",\n                    \"description\": \"Whether worldstate data was found
-        and cleaned up for this realm\"\n                }\n            }\n        }\n    }\n}"
+        : false,\n            \"description\": \"Empty response. HTTP 200 confirms the cleanup succeeded.\",\n           \
+        \ \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Clean up worldstate data for a deleted realm\",\n    \"description\": \"\
         Removes realm clock, ratio history, and realm configuration for a realm. Called exclusively by lib-resource during
         coordinated deletion. Unregisters reference with lib-resource. Publishes RealmConfigDeletedEvent.\",\n    \"tags\"\
@@ -1469,11 +1476,8 @@ paths:
         \   }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByGameServiceResponse\"\
         ,\n    \"$defs\": {\n        \"CleanupByGameServiceResponse\": {\n            \"type\": \"object\",\n            \"\
-        additionalProperties\": false,\n            \"description\": \"Confirmation of game service worldstate cleanup\",\n\
-        \            \"required\": [\n                \"templatesRemoved\"\n            ],\n            \"properties\": {\n\
-        \                \"templatesRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
-        : 0,\n                    \"description\": \"Number of calendar templates removed\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        additionalProperties\": false,\n            \"description\": \"Empty response. HTTP 200 confirms the cleanup succeeded.\"\
+        ,\n            \"properties\": {}\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Clean up worldstate data for a deleted game service\",\n    \"description\"\
         : \"Removes all calendar templates for a game service. Realm configs are cleaned up transitively via realm deletion.
         Called exclusively by lib-resource. Unregisters references with lib-resource. Publishes CalendarTemplateDeletedEvent
@@ -1537,12 +1541,16 @@ components:
           description: Game service the realm belongs to
         year:
           type: integer
+          minimum: 0
           description: Current game year (0-based from realm epoch)
         monthIndex:
           type: integer
+          minimum: 0
           description: 0-based index into calendar months
         monthCode:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Month code from calendar template (e.g., "greenleaf")
         dayOfMonth:
           type: integer
@@ -1563,12 +1571,16 @@ components:
           description: Current game minute (0-59)
         period:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current day period code from calendar (e.g., "dawn", "morning")
         isDaylight:
           type: boolean
           description: True if current period's isDaylight flag is set in the calendar template
         season:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current season code from calendar (e.g., "spring")
         seasonIndex:
           type: integer
@@ -1735,12 +1747,19 @@ components:
       description: Game time snapshots for multiple realms
       required:
       - snapshots
+      - notFoundRealmIds
       properties:
         snapshots:
           type: array
           items:
             $ref: '#/components/schemas/GameTimeSnapshot'
-          description: Game time snapshots for each requested realm (omits realms without initialized clocks)
+          description: Game time snapshots for each requested realm that has an initialized clock
+        notFoundRealmIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Realm IDs from the request that had no initialized clock
     GetElapsedGameTimeRequest:
       type: object
       additionalProperties: false
@@ -1858,9 +1877,9 @@ components:
     InitializeRealmClockResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of realm clock initialization with resolved values
+      description: Resolved entity state after realm clock initialization. Caller already knows realmId from request. 
+        Shows resolved values for optional fields that may have fallen back to config defaults.
       required:
-      - realmId
       - gameServiceId
       - calendarTemplateCode
       - timeRatio
@@ -1868,31 +1887,32 @@ components:
       - epoch
       - startingYear
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the clock was initialized for
         gameServiceId:
           type: string
           format: uuid
-          description: Game service the realm belongs to
+          description: Game service the realm belongs to (resolved from realm lookup)
         calendarTemplateCode:
           type: string
-          description: Calendar template code in use (resolved from request or config)
+          minLength: 1
+          maxLength: 128
+          description: Calendar template code in use (resolved from request or config default)
         timeRatio:
           type: number
           format: float
-          description: Initial game-seconds per real-second (resolved from request or config)
+          minimum: 0.1
+          maximum: 10000.0
+          description: Initial game-seconds per real-second (resolved from request or config default)
         downtimePolicy:
           $ref: '#/components/schemas/DowntimePolicy'
-          description: Downtime handling policy (resolved from request or config)
+          description: Downtime handling policy (resolved from request or config default)
         epoch:
           type: string
           format: date-time
-          description: Real-world timestamp of the realm epoch
+          description: Real-world timestamp of the realm epoch (resolved from request or current time)
         startingYear:
           type: integer
-          description: Game year the clock started at
+          minimum: 0
+          description: Game year the clock started at (resolved from request or default 0)
     SetTimeRatioRequest:
       type: object
       additionalProperties: false
@@ -1918,28 +1938,14 @@ components:
     SetTimeRatioResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of time ratio change
+      description: Result of time ratio change. Caller already knows realmId, newRatio, and reason from request.
       required:
-      - realmId
       - previousRatio
-      - newRatio
-      - reason
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the ratio was changed for
         previousRatio:
           type: number
           format: float
-          description: Previous game-seconds per real-second
-        newRatio:
-          type: number
-          format: float
-          description: New game-seconds per real-second
-        reason:
-          $ref: '#/components/schemas/TimeRatioChangeReason'
-          description: Reason for the ratio change
+          description: Previous game-seconds per real-second before the change
     AdvanceClockRequest:
       type: object
       additionalProperties: false
@@ -1975,17 +1981,12 @@ components:
     AdvanceClockResponse:
       type: object
       additionalProperties: false
-      description: Result of manual clock advancement
+      description: Result of manual clock advancement. Caller already knows realmId from request.
       required:
-      - realmId
       - previousTime
       - newTime
       - boundaryEventsPublished
       properties:
-        realmId:
-          type: string
-          format: uuid
-          description: Realm the clock was advanced for
         previousTime:
           $ref: '#/components/schemas/GameTimeSnapshot'
           description: Game time before advancement
@@ -2063,6 +2064,8 @@ components:
       properties:
         templateCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Calendar template identifier
         gameServiceId:
           type: string
@@ -2070,6 +2073,7 @@ components:
           description: Game service this calendar belongs to
         gameHoursPerDay:
           type: integer
+          minimum: 1
           description: Number of game hours in a day
         dayPeriods:
           type: array
@@ -2210,13 +2214,8 @@ components:
     DeleteCalendarResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of calendar template deletion
-      required:
-      - deleted
-      properties:
-        deleted:
-          type: boolean
-          description: Whether the calendar template was deleted
+      description: Empty response. HTTP 200 confirms the deletion succeeded.
+      properties: {}
     GetRealmConfigRequest:
       type: object
       additionalProperties: false
@@ -2251,6 +2250,8 @@ components:
           description: Game service the realm belongs to
         calendarTemplateCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Calendar template code in use
         currentTimeRatio:
           type: number
@@ -2315,8 +2316,6 @@ components:
       required:
       - items
       - totalCount
-      - page
-      - pageSize
       properties:
         items:
           type: array
@@ -2327,15 +2326,6 @@ components:
           type: integer
           minimum: 0
           description: Total matching realm clocks
-        page:
-          type: integer
-          minimum: 0
-          description: Current page number
-        pageSize:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: Items per page
     RealmClockSummary:
       type: object
       additionalProperties: false
@@ -2354,6 +2344,8 @@ components:
           description: Realm identifier
         calendarTemplateCode:
           type: string
+          minLength: 1
+          maxLength: 128
           description: Calendar template code in use
         currentTimeRatio:
           type: number
@@ -2361,9 +2353,12 @@ components:
           description: Current game-seconds per real-second
         currentSeason:
           type: string
+          minLength: 1
+          maxLength: 64
           description: Current season code
         currentYear:
           type: integer
+          minimum: 0
           description: Current game year
         lastAdvancedAt:
           type: string
@@ -2383,13 +2378,8 @@ components:
     CleanupByRealmResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of realm worldstate cleanup
-      required:
-      - cleaned
-      properties:
-        cleaned:
-          type: boolean
-          description: Whether worldstate data was found and cleaned up for this realm
+      description: Empty response. HTTP 200 confirms the cleanup succeeded.
+      properties: {}
     CleanupByGameServiceRequest:
       type: object
       additionalProperties: false
@@ -2404,11 +2394,5 @@ components:
     CleanupByGameServiceResponse:
       type: object
       additionalProperties: false
-      description: Confirmation of game service worldstate cleanup
-      required:
-      - templatesRemoved
-      properties:
-        templatesRemoved:
-          type: integer
-          minimum: 0
-          description: Number of calendar templates removed
+      description: Empty response. HTTP 200 confirms the cleanup succeeded.
+      properties: {}

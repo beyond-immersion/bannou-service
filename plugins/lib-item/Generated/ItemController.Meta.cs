@@ -38,17 +38,20 @@ public partial class ItemController
             "properties": {
                 "code": {
                     "type": "string",
+                    "minLength": 2,
                     "maxLength": 64,
                     "pattern": "^[a-z][a-z0-9_]{1,63}$",
                     "description": "Unique code within the game (immutable after creation)"
                 },
                 "gameId": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 64,
                     "description": "Game service this template belongs to (immutable after creation)"
                 },
                 "name": {
                     "type": "string",
+                    "minLength": 1,
                     "maxLength": 128,
                     "description": "Human-readable display name"
                 },
@@ -178,27 +181,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats (e.g., attack, defense)"
+                    "description": "Game-defined stats (e.g., attack, defense). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects (e.g., on_use, on_equip)"
+                    "description": "Game-defined effects (e.g., on_use, on_equip). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements (e.g., level, strength)"
+                    "description": "Game-defined requirements (e.g., level, strength). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties (e.g., iconId, modelId)"
+                    "description": "Display properties (e.g., iconId, modelId). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Any other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -335,11 +338,14 @@ public partial class ItemController
                 "category",
                 "quantityModel",
                 "maxStackSize",
+                "rarity",
+                "weightPrecision",
                 "scope",
                 "tradeable",
                 "destroyable",
                 "soulboundType",
                 "hasDurability",
+                "tags",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -475,27 +481,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats"
+                    "description": "Game-defined stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects"
+                    "description": "Game-defined effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements"
+                    "description": "Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties"
+                    "description": "Display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -538,6 +544,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -625,7 +637,7 @@ public partial class ItemController
         },
         "ItemUseBehavior": {
             "type": "string",
-            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
                 "disabled",
                 "destroy_on_success",
@@ -750,11 +762,14 @@ public partial class ItemController
                 "category",
                 "quantityModel",
                 "maxStackSize",
+                "rarity",
+                "weightPrecision",
                 "scope",
                 "tradeable",
                 "destroyable",
                 "soulboundType",
                 "hasDurability",
+                "tags",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -890,27 +905,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats"
+                    "description": "Game-defined stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects"
+                    "description": "Game-defined effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements"
+                    "description": "Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties"
+                    "description": "Display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -953,6 +968,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -1040,7 +1061,7 @@ public partial class ItemController
         },
         "ItemUseBehavior": {
             "type": "string",
-            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
                 "disabled",
                 "destroy_on_success",
@@ -1128,10 +1149,12 @@ public partial class ItemController
             "properties": {
                 "gameId": {
                     "type": "string",
+                    "nullable": true,
                     "description": "Filter by game service"
                 },
                 "category": {
                     "$ref": "#/$defs/ItemCategory",
+                    "nullable": true,
                     "description": "Filter by item category"
                 },
                 "subcategory": {
@@ -1149,10 +1172,12 @@ public partial class ItemController
                 },
                 "rarity": {
                     "$ref": "#/$defs/ItemRarity",
+                    "nullable": true,
                     "description": "Filter by rarity tier"
                 },
                 "scope": {
                     "$ref": "#/$defs/ItemScope",
+                    "nullable": true,
                     "description": "Filter by realm scope"
                 },
                 "realmId": {
@@ -1178,13 +1203,15 @@ public partial class ItemController
                 },
                 "offset": {
                     "type": "integer",
+                    "minimum": 0,
                     "default": 0,
                     "description": "Pagination offset"
                 },
                 "limit": {
                     "type": "integer",
-                    "default": 50,
+                    "minimum": 1,
                     "maximum": 200,
+                    "default": 50,
                     "description": "Maximum results to return"
                 }
             }
@@ -1269,11 +1296,14 @@ public partial class ItemController
                 "category",
                 "quantityModel",
                 "maxStackSize",
+                "rarity",
+                "weightPrecision",
                 "scope",
                 "tradeable",
                 "destroyable",
                 "soulboundType",
                 "hasDurability",
+                "tags",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -1409,27 +1439,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats"
+                    "description": "Game-defined stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects"
+                    "description": "Game-defined effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements"
+                    "description": "Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties"
+                    "description": "Display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -1472,6 +1502,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -1559,7 +1595,7 @@ public partial class ItemController
         },
         "ItemUseBehavior": {
             "type": "string",
-            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
                 "disabled",
                 "destroy_on_success",
@@ -1681,6 +1717,7 @@ public partial class ItemController
                 },
                 "rarity": {
                     "$ref": "#/$defs/ItemRarity",
+                    "nullable": true,
                     "description": "New rarity tier"
                 },
                 "weight": {
@@ -1743,27 +1780,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New stats"
+                    "description": "New stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New effects"
+                    "description": "New effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New requirements"
+                    "description": "New requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New display properties"
+                    "description": "New display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New metadata"
+                    "description": "New metadata. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "isActive": {
                     "type": "boolean",
@@ -1851,11 +1888,14 @@ public partial class ItemController
                 "category",
                 "quantityModel",
                 "maxStackSize",
+                "rarity",
+                "weightPrecision",
                 "scope",
                 "tradeable",
                 "destroyable",
                 "soulboundType",
                 "hasDurability",
+                "tags",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -1991,27 +2031,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats"
+                    "description": "Game-defined stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects"
+                    "description": "Game-defined effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements"
+                    "description": "Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties"
+                    "description": "Display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -2054,6 +2094,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -2141,7 +2187,7 @@ public partial class ItemController
         },
         "ItemUseBehavior": {
             "type": "string",
-            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
                 "disabled",
                 "destroy_on_success",
@@ -2270,11 +2316,14 @@ public partial class ItemController
                 "category",
                 "quantityModel",
                 "maxStackSize",
+                "rarity",
+                "weightPrecision",
                 "scope",
                 "tradeable",
                 "destroyable",
                 "soulboundType",
                 "hasDurability",
+                "tags",
                 "isActive",
                 "isDeprecated",
                 "createdAt",
@@ -2410,27 +2459,27 @@ public partial class ItemController
                 "stats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined stats"
+                    "description": "Game-defined stats. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "effects": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined effects"
+                    "description": "Game-defined effects. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "requirements": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Game-defined requirements"
+                    "description": "Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "display": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Display properties"
+                    "description": "Display properties. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other game-specific data"
+                    "description": "Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "useBehaviorContractTemplateId": {
                     "type": "string",
@@ -2473,6 +2522,12 @@ public partial class ItemController
                     "format": "date-time",
                     "nullable": true,
                     "description": "When template was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 500,
+                    "description": "Reason for deprecation"
                 },
                 "migrationTargetId": {
                     "type": "string",
@@ -2560,7 +2615,7 @@ public partial class ItemController
         },
         "ItemUseBehavior": {
             "type": "string",
-            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\ n- destroy_always: Item consumed regardless of success/failure\n",
+            "description": "Controls item consumption on use.\n- disabled: Item cannot be used (/item/use returns 400)\n- destroy_on_success: Item consumed only if use behavior succeeds (default)\n- destroy_always: Item consumed regardless of success/failure\n",
             "enum": [
                 "disabled",
                 "destroy_on_success",
@@ -2703,7 +2758,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -2714,7 +2769,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Any other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -2777,7 +2832,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -2797,7 +2851,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -2849,7 +2904,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -2859,7 +2914,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -3013,7 +3068,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3033,7 +3087,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3085,7 +3140,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -3095,7 +3150,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -3239,7 +3294,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New custom stats (merges with existing)"
+                    "description": "New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -3256,13 +3311,18 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "New instance metadata (merges with existing)"
+                    "description": "New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "newContainerId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true,
                     "description": "Move item to a different container. Used by inventory service for item movement."
+                },
+                "clearContainerId": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId."
                 },
                 "newSlotIndex": {
                     "type": "integer",
@@ -3297,7 +3357,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3317,7 +3376,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3369,7 +3429,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -3379,7 +3439,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -3508,7 +3568,8 @@ public partial class ItemController
             "additionalProperties": false,
             "required": [
                 "instanceId",
-                "characterId"
+                "characterId",
+                "bindType"
             ],
             "properties": {
                 "instanceId": {
@@ -3553,7 +3614,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3573,7 +3633,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3625,7 +3686,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -3635,7 +3696,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -3773,11 +3834,19 @@ public partial class ItemController
                     "description": "Instance ID to unbind"
                 },
                 "reason": {
-                    "type": "string",
-                    "maxLength": 200,
-                    "description": "Reason for unbinding (admin, expiration, transfer_override)"
+                    "$ref": "#/$defs/UnbindReason",
+                    "description": "Reason for unbinding"
                 }
             }
+        },
+        "UnbindReason": {
+            "type": "string",
+            "description": "Reason for unbinding an item from a character",
+            "enum": [
+                "admin",
+                "expiration",
+                "transfer_override"
+            ]
         }
     }
 }
@@ -3795,7 +3864,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -3815,7 +3883,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -3867,7 +3936,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -3877,7 +3946,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -4015,10 +4084,20 @@ public partial class ItemController
                     "description": "Instance ID to destroy"
                 },
                 "reason": {
-                    "type": "string",
-                    "description": "Reason for destruction (consumed, destroyed, expired, admin)"
+                    "$ref": "#/$defs/DestroyReason",
+                    "description": "Reason for destruction"
                 }
             }
+        },
+        "DestroyReason": {
+            "type": "string",
+            "description": "Reason for destroying an item instance",
+            "enum": [
+                "consumed",
+                "destroyed",
+                "expired",
+                "admin"
+            ]
         }
     }
 }
@@ -4034,24 +4113,13 @@ public partial class ItemController
             "description": "Response after destroying an item instance",
             "additionalProperties": false,
             "required": [
-                "destroyed",
-                "instanceId",
                 "templateId"
             ],
             "properties": {
-                "destroyed": {
-                    "type": "boolean",
-                    "description": "Whether destruction was successful"
-                },
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Destroyed instance ID"
-                },
                 "templateId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Template of destroyed instance"
+                    "description": "Template of the destroyed instance"
                 }
             }
         }
@@ -4141,9 +4209,8 @@ public partial class ItemController
                     "description": "Unique identifier of the entity using the item (character, account, or actor)"
                 },
                 "userType": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "description": "Type of user entity performing the use action (e.g., character, account, actor)"
+                    "type": "object",
+                    "description": "Type of user entity performing the use action"
                 },
                 "targetId": {
                     "type": "string",
@@ -4152,8 +4219,7 @@ public partial class ItemController
                     "description": "Optional unique identifier of the target entity for directional item effects"
                 },
                 "targetType": {
-                    "type": "string",
-                    "maxLength": 64,
+                    "type": "object",
                     "nullable": true,
                     "description": "Type of target entity when targetId is provided"
                 },
@@ -4179,21 +4245,10 @@ public partial class ItemController
             "description": "Response containing the result of an item use attempt",
             "additionalProperties": false,
             "required": [
-                "success",
-                "instanceId",
                 "templateId",
                 "consumed"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the item use behavior executed successfully"
-                },
-                "instanceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Unique identifier of the item instance that was used"
-                },
                 "templateId": {
                     "type": "string",
                     "format": "uuid",
@@ -4309,9 +4364,8 @@ public partial class ItemController
                     "description": "User performing the step"
                 },
                 "userType": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "description": "Type of user entity (e.g., character, account, actor)"
+                    "type": "object",
+                    "description": "Type of user entity performing the step"
                 },
                 "milestoneCode": {
                     "type": "string",
@@ -4346,7 +4400,6 @@ public partial class ItemController
             "description": "Response from completing a multi-step item use milestone",
             "additionalProperties": false,
             "required": [
-                "success",
                 "instanceId",
                 "contractInstanceId",
                 "completedMilestone",
@@ -4354,10 +4407,6 @@ public partial class ItemController
                 "consumed"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the step completed successfully"
-                },
                 "instanceId": {
                     "type": "string",
                     "format": "uuid",
@@ -4519,7 +4568,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -4539,7 +4587,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -4591,7 +4640,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -4601,7 +4650,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -4745,13 +4794,15 @@ public partial class ItemController
                 },
                 "offset": {
                     "type": "integer",
+                    "minimum": 0,
                     "default": 0,
                     "description": "Pagination offset"
                 },
                 "limit": {
                     "type": "integer",
-                    "default": 50,
+                    "minimum": 1,
                     "maximum": 200,
+                    "default": 50,
                     "description": "Maximum results to return"
                 }
             }
@@ -4800,7 +4851,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -4820,7 +4870,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -4872,7 +4923,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -4882,7 +4933,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",
@@ -5019,6 +5070,7 @@ public partial class ItemController
                         "type": "string",
                         "format": "uuid"
                     },
+                    "minItems": 1,
                     "maxItems": 100,
                     "description": "Instance IDs to retrieve"
                 }
@@ -5066,7 +5118,6 @@ public partial class ItemController
             "required": [
                 "instanceId",
                 "templateId",
-                "containerId",
                 "realmId",
                 "quantity",
                 "originType",
@@ -5086,7 +5137,8 @@ public partial class ItemController
                 "containerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Container holding this item"
+                    "nullable": true,
+                    "description": "Container holding this item. Null when item has been removed from all containers."
                 },
                 "realmId": {
                     "type": "string",
@@ -5138,7 +5190,7 @@ public partial class ItemController
                 "customStats": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Instance-specific stat modifications"
+                    "description": "Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "customName": {
                     "type": "string",
@@ -5148,7 +5200,7 @@ public partial class ItemController
                 "instanceMetadata": {
                     "type": "object",
                     "nullable": true,
-                    "description": "Other instance-specific data"
+                    "description": "Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention."
                 },
                 "originType": {
                     "$ref": "#/$defs/ItemOriginType",

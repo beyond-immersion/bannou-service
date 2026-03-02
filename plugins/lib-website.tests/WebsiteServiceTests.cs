@@ -17,6 +17,7 @@ public class WebsiteServiceTests
     private readonly Mock<ILogger<WebsiteService>> _mockLogger;
     private readonly Mock<WebsiteServiceConfiguration> _mockConfiguration;
     private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
 
     public WebsiteServiceTests()
@@ -24,6 +25,7 @@ public class WebsiteServiceTests
         _mockLogger = new Mock<ILogger<WebsiteService>>();
         _mockConfiguration = new Mock<WebsiteServiceConfiguration>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockEventConsumer = new Mock<IEventConsumer>();
     }
 
@@ -35,6 +37,7 @@ public class WebsiteServiceTests
             _mockLogger.Object,
             _mockConfiguration.Object,
             _mockMessageBus.Object,
+            _mockTelemetryProvider.Object,
             _mockEventConsumer.Object);
 
         Assert.NotNull(service);

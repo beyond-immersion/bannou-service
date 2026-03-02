@@ -117,6 +117,22 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `orgTypeCode` | B (Content Code) | Opaque string | Game-configurable organization types (household, guild, trading_company, temple, military_unit, etc.). Extensible without schema changes; role templates are defined per org type. |
+| `ownerType` (on `OrganizationModel`) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns the organization (character, family, faction). All valid values are first-class Bannou entities. |
+| `entityType` (on succession heir) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the type of the designated heir entity. |
+| `assetType` | B (Content Code) | Opaque string | Asset categories registered to an organization (wallet, inventory, location, contract, custom). Extensible for game-specific asset registrations. |
+| `roleCode` | B (Content Code) | Opaque string | Role identifiers within an organization type (owner, manager, apprentice, etc.). Defined per org type at deployment time. |
+| `departmentCode` | B (Content Code) | Opaque string | Optional department identifiers within an organization. Game-configurable grouping mechanism. |
+| `legalStatus` | C (System State) | Service-specific enum | Finite set of legal statuses (Chartered, Licensed, Tolerated, Outlawed). System-owned; drives sovereign interaction logic and charter contract management. |
+| `status` (on `OrganizationModel`) | C (System State) | Service-specific enum | Finite set of organization lifecycle states (Active, Suspended, Dissolved, Archived). System-owned; drives state machine transitions. |
+| `successionMode` | C (System State) | Service-specific enum | Finite set of succession strategies (primogeniture, designated, elective, conquest). System-owned; determines succession execution logic. |
+
+---
+
 ## Events
 
 ### Published Events

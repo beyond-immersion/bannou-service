@@ -35,6 +35,29 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entityType` (on parties, consent, breach, termination, constraint, query) | A (Entity Reference) | `EntityType` enum (`$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity is a contract party, breach reporter, or constraint subject |
+| `guardianType` (on lock/unlock/transfer requests and events) | C (System State) | Opaque string (`maxLength: 64`) | System-mechanism identifier for the custody holder (e.g., `"escrow"`); not an entity type -- identifies the *kind of guardian system*, of which there may be only a few but they are not Bannou entities |
+| `ContractStatus` | C (System State) | Service-specific enum | Finite state machine states (`draft`, `proposed`, `pending`, `active`, `fulfilled`, `terminated`, `expired`, `declined`) |
+| `MilestoneStatus` | C (System State) | Service-specific enum | Finite milestone lifecycle states (`pending`, `active`, `completed`, `failed`, `skipped`) |
+| `BreachType` | C (System State) | Service-specific enum | Finite breach categories (`term_violation`, `milestone_missed`, `milestone_deadline`, `non_payment`) |
+| `BreachStatus` | C (System State) | Service-specific enum | Finite breach lifecycle states (`detected`, `cure_period`, `cured`, `escalated`, `forgiven`) |
+| `ConsentStatus` | C (System State) | Service-specific enum | Finite consent states (`pending`, `consented`, `declined`, `implicit`) |
+| `EnforcementMode` | C (System State) | Service-specific enum | Finite enforcement behavior modes (`advisory`, `event_only`, `consequence_based`, `community`) |
+| `TerminationPolicy` | C (System State) | Service-specific enum | Finite termination rule modes (`mutual_consent`, `unilateral_with_notice`, `unilateral_immediate`, `non_terminable`) |
+| `PaymentSchedule` | C (System State) | Service-specific enum | Finite payment timing modes (`one_time`, `recurring`, `milestone_based`) |
+| `ConstraintType` | C (System State) | Service-specific enum | Finite constraint check types (`exclusivity`, `non_compete`, `time_commitment`) |
+| `MetadataType` | C (System State) | Service-specific enum | Finite metadata partition types (`instance_data`, `runtime_state`) |
+| `MilestoneDeadlineBehavior` | C (System State) | Service-specific enum | Finite deadline handling modes (`skip`, `warn`, `breach`) |
+| `ValidationOutcome` | C (System State) | Service-specific enum | Finite prebound API validation results (`success`, `failure`, `transient_failure`) |
+| `TimeCommitmentType` | C (System State) | Service-specific enum | Finite time commitment modes (`exclusive`, `shared`, `flexible`, `fire_and_forget`) |
+| `ClauseCategory` | C (System State) | Service-specific enum | Finite clause handler categories (validation, execution, or both) |
+
+---
+
 ## State Storage
 
 **Stores**: 1 state store (Redis-backed)
@@ -68,10 +91,10 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `contract-template.created` | `ContractTemplateCreatedEvent` | Template created |
-| `contract-template.updated` | `ContractTemplateUpdatedEvent` | Template name/description/active/metadata changed |
-| `contract-template.deleted` | `ContractTemplateDeletedEvent` | Template soft-deleted (marked inactive) |
-| `contract-instance.created` | `ContractInstanceCreatedEvent` | Instance created in draft status |
+| `contract.template.created` | `ContractTemplateCreatedEvent` | Template created |
+| `contract.template.updated` | `ContractTemplateUpdatedEvent` | Template name/description/active/metadata changed |
+| `contract.template.deleted` | `ContractTemplateDeletedEvent` | Template soft-deleted (marked inactive) |
+| `contract.instance.created` | `ContractInstanceCreatedEvent` | Instance created in draft status |
 | `contract.proposed` | `ContractProposedEvent` | Contract proposed to parties (awaiting consent) |
 | `contract.consent-received` | `ContractConsentReceivedEvent` | One party consents; includes remaining count |
 | `contract.accepted` | `ContractAcceptedEvent` | All required parties have consented |
@@ -147,11 +170,11 @@ Service lifetime is **Scoped** (per-request). Background service `ContractExpira
 
 ### Template Operations (5 endpoints)
 
-- **CreateContractTemplate** (`/contract/template/create`): Validates milestone count against `MaxMilestonesPerTemplate`. Validates prebound API count per milestone against `MaxPreboundApisPerMilestone` (checks both onComplete and onExpire lists). Validates deadline format (ISO 8601 duration via `XmlConvert.ToTimeSpan`). Checks template code uniqueness via code index. Saves template, code-to-id mapping, and adds to all-templates list. Publishes `contract-template.created`.
+- **CreateContractTemplate** (`/contract/template/create`): Validates milestone count against `MaxMilestonesPerTemplate`. Validates prebound API count per milestone against `MaxPreboundApisPerMilestone` (checks both onComplete and onExpire lists). Validates deadline format (ISO 8601 duration via `XmlConvert.ToTimeSpan`). Checks template code uniqueness via code index. Saves template, code-to-id mapping, and adds to all-templates list. Publishes `contract.template.created`.
 - **GetContractTemplate** (`/contract/template/get`): Supports lookup by template ID or code (via code index). Returns full template with party roles, milestones, default terms, and enforcement mode.
 - **ListContractTemplates** (`/contract/template/list`): Cursor-based pagination. Filters by realmId, isActive, and search term (case-insensitive name/description substring match). Returns templates ordered by CreatedAt descending. Request accepts optional `cursor` (opaque, from previous response) and `pageSize` (defaults to `DefaultPageSize`). Response includes `templates`, `nextCursor` (null if no more results), and `hasMore`.
-- **UpdateContractTemplate** (`/contract/template/update`): Mutable fields only: name, description, isActive, gameMetadata. Tracks changed fields for event. Does not update milestones, party roles, or terms. Publishes `contract-template.updated` with changedFields list.
-- **DeleteContractTemplate** (`/contract/template/delete`): Soft-delete (marks inactive). Checks for active instances first (Draft/Proposed/Pending/Active statuses). Returns Conflict if active instances exist. Publishes `contract-template.deleted`.
+- **UpdateContractTemplate** (`/contract/template/update`): Mutable fields only: name, description, isActive, gameMetadata. Tracks changed fields for event. Does not update milestones, party roles, or terms. Publishes `contract.template.updated` with changedFields list.
+- **DeleteContractTemplate** (`/contract/template/delete`): Soft-delete (marks inactive). Checks for active instances first (Draft/Proposed/Pending/Active statuses). Returns Conflict if active instances exist. Publishes `contract.template.deleted`.
 
 ### Instance Operations (7 endpoints)
 

@@ -18,6 +18,7 @@ public sealed class SchemaMigrator
     private readonly ILogger _logger;
     private readonly IQueryableStateStore<SaveSchemaDefinition> _schemaStore;
     private readonly int _maxMigrationSteps;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new SchemaMigrator instance.
@@ -25,10 +26,12 @@ public sealed class SchemaMigrator
     public SchemaMigrator(
         ILogger logger,
         IQueryableStateStore<SaveSchemaDefinition> schemaStore,
+        ITelemetryProvider telemetryProvider,
         int maxMigrationSteps = 10)
     {
         _logger = logger;
         _schemaStore = schemaStore;
+        _telemetryProvider = telemetryProvider;
         _maxMigrationSteps = maxMigrationSteps;
     }
 
@@ -46,6 +49,7 @@ public sealed class SchemaMigrator
         string toVersion,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SchemaMigrator.FindMigrationPathAsync");
         if (fromVersion == toVersion)
         {
             return new List<string> { fromVersion };
@@ -118,6 +122,7 @@ public sealed class SchemaMigrator
         List<string> migrationPath,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SchemaMigrator.ApplyMigrationPathAsync");
         if (migrationPath.Count < 2)
         {
             // No migration needed
@@ -233,6 +238,7 @@ public sealed class SchemaMigrator
         string @namespace,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SchemaMigrator.LoadAllSchemasAsync");
         var result = new Dictionary<string, SaveSchemaDefinition>();
 
         // Query all schemas with the namespace

@@ -14,7 +14,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Update account profile */
-    post: operations['updateProfile'];
+    post: operations['account_updateProfile'];
     delete?: never;
     options?: never;
     head?: never;
@@ -31,7 +31,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Update account password hash */
-    post: operations['updatePasswordHash'];
+    post: operations['account_updatePasswordHash'];
     delete?: never;
     options?: never;
     head?: never;
@@ -53,7 +53,7 @@ export interface paths {
      *     Used by Auth service during MFA enable/disable flows. Auth owns the encryption logic;
      *     Account stores the opaque encrypted data.
      */
-    post: operations['updateMfa'];
+    post: operations['account_updateMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -70,7 +70,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Update email verification status */
-    post: operations['updateVerificationStatus'];
+    post: operations['account_updateVerificationStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -91,7 +91,7 @@ export interface paths {
      * @description Create a new achievement with specified criteria and platform mappings.
      *     Developer-only endpoint.
      */
-    post: operations['createAchievementDefinition'];
+    post: operations['achievement_createAchievementDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -111,7 +111,7 @@ export interface paths {
      * List achievement definitions
      * @description List achievements for a game service with optional platform filtering.
      */
-    post: operations['listAchievementDefinitions'];
+    post: operations['achievement_listAchievementDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -132,7 +132,7 @@ export interface paths {
      * @description Update properties of an existing achievement.
      *     Developer-only endpoint.
      */
-    post: operations['updateAchievementDefinition'];
+    post: operations['achievement_updateAchievementDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -153,7 +153,7 @@ export interface paths {
      * @description Delete an achievement. Earned instances are preserved in history.
      *     Developer-only endpoint.
      */
-    post: operations['deleteAchievementDefinition'];
+    post: operations['achievement_deleteAchievementDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -173,7 +173,7 @@ export interface paths {
      * Get entity's achievement progress
      * @description Get progress for an entity across all achievements or a specific one.
      */
-    post: operations['getAchievementProgress'];
+    post: operations['achievement_getAchievementProgress'];
     delete?: never;
     options?: never;
     head?: never;
@@ -193,7 +193,7 @@ export interface paths {
      * List unlocked achievements
      * @description Get all achievements unlocked by an entity.
      */
-    post: operations['listUnlockedAchievements'];
+    post: operations['achievement_listUnlockedAchievements'];
     delete?: never;
     options?: never;
     head?: never;
@@ -210,7 +210,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Create an actor template (category definition) */
-    post: operations['CreateActorTemplate'];
+    post: operations['actor_CreateActorTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -227,7 +227,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Update an actor template */
-    post: operations['UpdateActorTemplate'];
+    post: operations['actor_UpdateActorTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -244,7 +244,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Delete an actor template */
-    post: operations['DeleteActorTemplate'];
+    post: operations['actor_DeleteActorTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -261,7 +261,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Spawn a new actor from a template */
-    post: operations['SpawnActor'];
+    post: operations['actor_SpawnActor'];
     delete?: never;
     options?: never;
     head?: never;
@@ -278,7 +278,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Stop a running actor */
-    post: operations['StopActor'];
+    post: operations['actor_StopActor'];
     delete?: never;
     options?: never;
     head?: never;
@@ -301,7 +301,7 @@ export interface paths {
      *     providers begin loading character-specific data on subsequent ticks.
      *     Fails if the actor is already bound to a character.
      */
-    post: operations['BindActorCharacter'];
+    post: operations['actor_BindActorCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -324,7 +324,7 @@ export interface paths {
      *     This endpoint is designed for internal service-to-service calls during
      *     cascading resource cleanup.
      */
-    post: operations['CleanupByCharacter'];
+    post: operations['actor_CleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -346,7 +346,7 @@ export interface paths {
      *     for testing purposes. Useful for testing actor behavior without a
      *     full game server setup.
      */
-    post: operations['InjectPerception'];
+    post: operations['actor_InjectPerception'];
     delete?: never;
     options?: never;
     head?: never;
@@ -368,7 +368,7 @@ export interface paths {
      *     will coordinate the encounter, sending instructions to participant NPC Brain actors
      *     via their character perception channels.
      */
-    post: operations['StartEncounter'];
+    post: operations['actor_StartEncounter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -389,7 +389,7 @@ export interface paths {
      * @description Updates the phase of an encounter being managed by an Event Brain actor.
      *     Phase changes are logged and can trigger behavior changes in participant actors.
      */
-    post: operations['UpdateEncounterPhase'];
+    post: operations['actor_UpdateEncounterPhase'];
     delete?: never;
     options?: never;
     head?: never;
@@ -410,7 +410,7 @@ export interface paths {
      * @description Ends an encounter being managed by an Event Brain actor. This clears the
      *     encounter state and allows the actor to manage a new encounter.
      */
-    post: operations['EndEncounter'];
+    post: operations['actor_EndEncounter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -431,7 +431,7 @@ export interface paths {
      * @description Generate a pre-signed URL for uploading a new asset directly to storage.
      *     For large files (>50MB), returns multipart upload configuration.
      */
-    post: operations['requestUpload'];
+    post: operations['asset_requestUpload'];
     delete?: never;
     options?: never;
     head?: never;
@@ -453,7 +453,7 @@ export interface paths {
      *     Triggers the asset processing pipeline (texture conversion, model validation, etc.)
      *     and emits completion events via WebSocket.
      */
-    post: operations['completeUpload'];
+    post: operations['asset_completeUpload'];
     delete?: never;
     options?: never;
     head?: never;
@@ -474,7 +474,7 @@ export interface paths {
      * @description Retrieve asset metadata and generate a pre-signed download URL.
      *     Specify version to download a specific version, or omit for latest.
      */
-    post: operations['getAsset'];
+    post: operations['asset_getAsset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -495,7 +495,7 @@ export interface paths {
      * @description Retrieve version history for an asset with pagination.
      *     Includes version IDs, creation timestamps, and archive status.
      */
-    post: operations['listAssetVersions'];
+    post: operations['asset_listAssetVersions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -516,7 +516,7 @@ export interface paths {
      * @description Search assets using various filters with pagination.
      *     All filters are optional and combine with AND logic.
      */
-    post: operations['searchAssets'];
+    post: operations['asset_searchAssets'];
     delete?: never;
     options?: never;
     head?: never;
@@ -538,7 +538,7 @@ export interface paths {
      *     For large bundles, processing is delegated to the processing pool.
      *     Completion notification sent via WebSocket event.
      */
-    post: operations['createBundle'];
+    post: operations['asset_createBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -559,7 +559,7 @@ export interface paths {
      * @description Retrieve bundle metadata and generate a pre-signed download URL.
      *     Supports both native .bannou format and ZIP conversion (cached).
      */
-    post: operations['getBundle'];
+    post: operations['asset_getBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -580,7 +580,7 @@ export interface paths {
      * @description Upload a pre-built bundle (.bannou or .zip format).
      *     After upload, the bundle undergoes validation before registration.
      */
-    post: operations['requestBundleUpload'];
+    post: operations['asset_requestBundleUpload'];
     delete?: never;
     options?: never;
     head?: never;
@@ -606,7 +606,7 @@ export interface paths {
      *     multiple source bundles with different content hashes, the request fails
      *     with conflict details.
      */
-    post: operations['createMetabundle'];
+    post: operations['asset_createMetabundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -630,7 +630,7 @@ export interface paths {
      *     Clients can either poll this endpoint or wait for the
      *     MetabundleCreationCompleteEvent via WebSocket for completion notification.
      */
-    post: operations['getJobStatus'];
+    post: operations['asset_getJobStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -654,7 +654,7 @@ export interface paths {
      *     Successfully cancelled jobs will emit a MetabundleCreationCompleteEvent
      *     with status 'cancelled' via WebSocket.
      */
-    post: operations['cancelJob'];
+    post: operations['asset_cancelJob'];
     delete?: never;
     options?: never;
     head?: never;
@@ -683,7 +683,7 @@ export interface paths {
      *
      *     Returns pre-signed download URLs for all selected bundles and assets.
      */
-    post: operations['resolveBundles'];
+    post: operations['asset_resolveBundles'];
     delete?: never;
     options?: never;
     head?: never;
@@ -705,7 +705,7 @@ export interface paths {
      *     that contain a specific asset ID. Useful for understanding asset
      *     distribution and debugging resolution issues.
      */
-    post: operations['queryBundlesByAsset'];
+    post: operations['asset_queryBundlesByAsset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -729,7 +729,7 @@ export interface paths {
      *     Increments the bundle version and records the change in version history.
      *     Only the bundle owner or admin can update.
      */
-    post: operations['updateBundle'];
+    post: operations['asset_updateBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -755,7 +755,7 @@ export interface paths {
      *
      *     Only the bundle owner or admin can delete.
      */
-    post: operations['deleteBundle'];
+    post: operations['asset_deleteBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -778,7 +778,7 @@ export interface paths {
      *
      *     Only the bundle owner or admin can restore.
      */
-    post: operations['restoreBundle'];
+    post: operations['asset_restoreBundle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -806,7 +806,7 @@ export interface paths {
      *
      *     Supports pagination and sorting.
      */
-    post: operations['queryBundles'];
+    post: operations['asset_queryBundles'];
     delete?: never;
     options?: never;
     head?: never;
@@ -834,7 +834,7 @@ export interface paths {
      *
      *     The current version's full metadata snapshot is always included.
      */
-    post: operations['listBundleVersions'];
+    post: operations['asset_listBundleVersions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -856,7 +856,7 @@ export interface paths {
      *     Optionally includes pre-signed download URLs.
      *     Maximum 100 asset IDs per request.
      */
-    post: operations['bulkGetAssets'];
+    post: operations['asset_bulkGetAssets'];
     delete?: never;
     options?: never;
     head?: never;
@@ -873,7 +873,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Login with email/password */
-    post: operations['login'];
+    post: operations['auth_login'];
     delete?: never;
     options?: never;
     head?: never;
@@ -890,7 +890,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Register new user account */
-    post: operations['register'];
+    post: operations['auth_register'];
     delete?: never;
     options?: never;
     head?: never;
@@ -912,7 +912,7 @@ export interface paths {
      *     **Note**: This endpoint uses GET with path parameters because it's a browser
      *     redirect flow, not a WebSocket-routed API call.
      */
-    get: operations['initOAuth'];
+    get: operations['auth_initOAuth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -938,7 +938,7 @@ export interface paths {
      *     **Note**: This endpoint uses path parameters because the callback URL is registered
      *     with OAuth providers and cannot be changed without updating provider configurations.
      */
-    post: operations['completeOAuth'];
+    post: operations['auth_completeOAuth'];
     delete?: never;
     options?: never;
     head?: never;
@@ -960,7 +960,7 @@ export interface paths {
      *     The server validates the ticket with Steam's Web API and retrieves the SteamID from Steam's response.
      *     NEVER trust client-provided SteamID - it must come from Steam's authenticated response.
      */
-    post: operations['verifySteamAuth'];
+    post: operations['auth_verifySteamAuth'];
     delete?: never;
     options?: never;
     head?: never;
@@ -977,7 +977,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Refresh access token */
-    post: operations['refreshToken'];
+    post: operations['auth_refreshToken'];
     delete?: never;
     options?: never;
     head?: never;
@@ -994,7 +994,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Validate access token */
-    post: operations['validateToken'];
+    post: operations['auth_validateToken'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1011,7 +1011,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Logout and invalidate tokens */
-    post: operations['logout'];
+    post: operations['auth_logout'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1028,7 +1028,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get active sessions for account */
-    post: operations['getSessions'];
+    post: operations['auth_getSessions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1045,7 +1045,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Terminate specific session */
-    post: operations['terminateSession'];
+    post: operations['auth_terminateSession'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1062,7 +1062,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Request password reset */
-    post: operations['requestPasswordReset'];
+    post: operations['auth_requestPasswordReset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1079,7 +1079,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Confirm password reset with token */
-    post: operations['confirmPasswordReset'];
+    post: operations['auth_confirmPasswordReset'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1101,7 +1101,7 @@ export interface paths {
      *     Providers are only listed if their client credentials are configured.
      *     Steam authentication uses session tickets, not OAuth, but is included for completeness.
      */
-    post: operations['listProviders'];
+    post: operations['auth_listProviders'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1123,7 +1123,7 @@ export interface paths {
      *     code scanning and the recovery codes in plain text (shown only once). The setup is
      *     not active until confirmed via /auth/mfa/enable with a valid TOTP code.
      */
-    post: operations['setupMfa'];
+    post: operations['auth_setupMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1145,7 +1145,7 @@ export interface paths {
      *     app is correctly configured. On success, persists MFA settings to the account and
      *     MFA is active for all subsequent password logins.
      */
-    post: operations['enableMfa'];
+    post: operations['auth_enableMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1167,7 +1167,7 @@ export interface paths {
      *     recovery code to prevent unauthorized disable. Clears the TOTP secret and
      *     recovery codes from the account.
      */
-    post: operations['disableMfa'];
+    post: operations['auth_disableMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1190,7 +1190,7 @@ export interface paths {
      *     non-MFA login would). The challenge token is single-use and has a configurable
      *     TTL (default 5 minutes).
      */
-    post: operations['verifyMfa'];
+    post: operations['auth_verifyMfa'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1211,7 +1211,7 @@ export interface paths {
      * @description Compiles a YAML-based ABML behavior definition into executable behavior trees.
      *     Handles stackable behavior sets, cultural adaptations, and context variable resolution.
      */
-    post: operations['CompileAbmlBehavior'];
+    post: operations['behavior_CompileAbmlBehavior'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1232,7 +1232,7 @@ export interface paths {
      * @description Validates ABML YAML against schema and checks for semantic correctness.
      *     Includes context variable validation and service dependency checking.
      */
-    post: operations['ValidateAbml'];
+    post: operations['behavior_ValidateAbml'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1253,7 +1253,7 @@ export interface paths {
      * @description Retrieves a previously compiled behavior from the cache.
      *     Used for performance optimization in high-frequency behavior execution.
      */
-    post: operations['GetCachedBehavior'];
+    post: operations['behavior_GetCachedBehavior'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1274,7 +1274,7 @@ export interface paths {
      * @description Removes a behavior from the cache, forcing recompilation on next access.
      *     Used when behavior definitions are updated.
      */
-    post: operations['InvalidateCachedBehavior'];
+    post: operations['behavior_InvalidateCachedBehavior'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1295,7 +1295,7 @@ export interface paths {
      * @description Generates a GOAP plan to achieve a goal from the current world state.
      *     Uses A* search to find the optimal sequence of actions.
      */
-    post: operations['GenerateGoapPlan'];
+    post: operations['behavior_GenerateGoapPlan'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1316,7 +1316,7 @@ export interface paths {
      * @description Validates an existing GOAP plan against the current world state.
      *     Returns whether the plan is still valid or needs replanning.
      */
-    post: operations['ValidateGoapPlan'];
+    post: operations['behavior_ValidateGoapPlan'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1333,7 +1333,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get character by ID */
-    post: operations['getCharacter'];
+    post: operations['character_getCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1350,7 +1350,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** List characters with filtering */
-    post: operations['listCharacters'];
+    post: operations['character_listCharacters'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1372,7 +1372,7 @@ export interface paths {
      *     Use this endpoint when you need aggregated character data from multiple services.
      *     Each included dataset is fetched from its respective service.
      */
-    post: operations['getEnrichedCharacter'];
+    post: operations['character_getEnrichedCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1389,7 +1389,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get compressed archive data for a character */
-    post: operations['getCharacterArchive'];
+    post: operations['character_getCharacterArchive'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1406,7 +1406,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get all characters in a realm (primary query pattern) */
-    post: operations['getCharactersByRealm'];
+    post: operations['character_getCharactersByRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1428,7 +1428,7 @@ export interface paths {
      *     Returns core character data (name, dates, family summary).
      *     Returns BadRequest if character is alive - only dead characters can be compressed.
      */
-    post: operations['getCompressData'];
+    post: operations['character_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1448,7 +1448,7 @@ export interface paths {
      * Get encounter type by code
      * @description Retrieve an encounter type by its unique code.
      */
-    post: operations['getEncounterType'];
+    post: operations['characterEncounter_getEncounterType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1468,7 +1468,7 @@ export interface paths {
      * List all encounter types
      * @description Retrieve all encounter types including built-in and custom types.
      */
-    post: operations['listEncounterTypes'];
+    post: operations['characterEncounter_listEncounterTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1489,7 +1489,7 @@ export interface paths {
      * @description Retrieves all encounters for a character with optional filtering.
      *     Memory decay is applied lazily on access.
      */
-    post: operations['queryByCharacter'];
+    post: operations['characterEncounter_queryByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1510,7 +1510,7 @@ export interface paths {
      * @description Retrieves all encounters between two specific characters.
      *     Useful for relationship history and dialogue context.
      */
-    post: operations['queryBetween'];
+    post: operations['characterEncounter_queryBetween'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1531,7 +1531,7 @@ export interface paths {
      * @description Retrieves recent encounters at a specific location.
      *     Useful for scene context and area history.
      */
-    post: operations['queryByLocation'];
+    post: operations['characterEncounter_queryByLocation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1552,7 +1552,7 @@ export interface paths {
      * @description Fast boolean check for whether two characters have any recorded encounters.
      *     Does not apply memory decay or return encounter details.
      */
-    post: operations['hasMet'];
+    post: operations['characterEncounter_hasMet'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1573,7 +1573,7 @@ export interface paths {
      * @description Calculates the aggregate sentiment a character has toward another based
      *     on all their encounters. Memory strength is factored into the calculation.
      */
-    post: operations['getSentiment'];
+    post: operations['characterEncounter_getSentiment'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1594,7 +1594,7 @@ export interface paths {
      * @description Retrieves a specific character's perspective on an encounter.
      *     Includes emotional impact, sentiment shift, and memory strength.
      */
-    post: operations['getPerspective'];
+    post: operations['characterEncounter_getPerspective'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1615,7 +1615,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns encounters and perspectives involving this character for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['characterEncounter_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1636,7 +1636,7 @@ export interface paths {
      * @description Retrieves all historical event participation records for a character.
      *     Supports filtering by event category and minimum significance.
      */
-    post: operations['getParticipation'];
+    post: operations['characterHistory_getParticipation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1657,7 +1657,7 @@ export interface paths {
      * @description Retrieves all characters who participated in a specific historical event.
      *     Useful for generating event summaries or finding related characters.
      */
-    post: operations['getEventParticipants'];
+    post: operations['characterHistory_getEventParticipants'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1679,7 +1679,7 @@ export interface paths {
      *     are machine-readable key-value pairs used by the behavior system for
      *     decision-making, not narrative text for players.
      */
-    post: operations['getBackstory'];
+    post: operations['characterHistory_getBackstory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1700,7 +1700,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns historical participations, backstory elements, and text summaries for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['characterHistory_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1721,7 +1721,7 @@ export interface paths {
      * @description Retrieves the personality profile for a character. Returns 404 if no
      *     personality has been defined for this character.
      */
-    post: operations['getPersonality'];
+    post: operations['characterPersonality_getPersonality'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1743,7 +1743,7 @@ export interface paths {
      *     influence tactical decisions in the behavior system, including engagement
      *     style, positioning, and retreat conditions.
      */
-    post: operations['getCombatPreferences'];
+    post: operations['characterPersonality_getCombatPreferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1764,7 +1764,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns personality traits and combat preferences for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['characterPersonality_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1787,7 +1787,7 @@ export interface paths {
      *     This endpoint is designed for internal service-to-service calls during
      *     cascading resource cleanup.
      */
-    post: operations['cleanupByCharacter'];
+    post: operations['characterPersonality_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1807,7 +1807,7 @@ export interface paths {
      * Register a new room type
      * @description Registers a new room type definition. Room types are a dynamic registry of string codes. Built-in types (text, sentiment, emoji) are pre-registered on startup. Custom types are added via this endpoint. Returns conflict if code already exists for the given game service scope.
      */
-    post: operations['RegisterRoomType'];
+    post: operations['chat_RegisterRoomType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1827,7 +1827,7 @@ export interface paths {
      * Get room type by code
      * @description Returns the room type definition for the specified code and optional game service scope.
      */
-    post: operations['GetRoomType'];
+    post: operations['chat_GetRoomType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1847,7 +1847,7 @@ export interface paths {
      * List room types with filters
      * @description Returns room types matching the specified filters with pagination.
      */
-    post: operations['ListRoomTypes'];
+    post: operations['chat_ListRoomTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1867,7 +1867,7 @@ export interface paths {
      * Update a room type definition
      * @description Updates mutable fields of a room type definition. Cannot change code or message format.
      */
-    post: operations['UpdateRoomType'];
+    post: operations['chat_UpdateRoomType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1887,7 +1887,7 @@ export interface paths {
      * Soft-deprecate a room type
      * @description Sets the room type status to Deprecated. Existing rooms continue to work but no new rooms can be created with this type.
      */
-    post: operations['DeprecateRoomType'];
+    post: operations['chat_DeprecateRoomType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1907,7 +1907,7 @@ export interface paths {
      * Create a chat room
      * @description Creates a new chat room of the specified type. Optionally associates a governing contract that drives room lifecycle (lock, archive, delete) on contract state changes.
      */
-    post: operations['CreateRoom'];
+    post: operations['chat_CreateRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1927,7 +1927,7 @@ export interface paths {
      * Get room by ID
      * @description Returns the chat room metadata for the specified room ID.
      */
-    post: operations['GetRoom'];
+    post: operations['chat_GetRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1947,7 +1947,7 @@ export interface paths {
      * List rooms with filters
      * @description Returns rooms matching the specified filters with pagination.
      */
-    post: operations['ListRooms'];
+    post: operations['chat_ListRooms'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1967,7 +1967,7 @@ export interface paths {
      * Update room settings
      * @description Updates mutable room settings. Caller must be the room owner.
      */
-    post: operations['UpdateRoom'];
+    post: operations['chat_UpdateRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1987,7 +1987,7 @@ export interface paths {
      * Delete a room
      * @description Deletes a room, removing all participants and messages. Caller must be the room owner or the room must be empty.
      */
-    post: operations['DeleteRoom'];
+    post: operations['chat_DeleteRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2007,7 +2007,7 @@ export interface paths {
      * Archive a room to Resource
      * @description Archives a persistent room via lib-resource, preserving message history and metadata. Room is marked as archived after successful archival.
      */
-    post: operations['ArchiveRoom'];
+    post: operations['chat_ArchiveRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2027,7 +2027,7 @@ export interface paths {
      * Join a chat room
      * @description Joins the caller to the specified room. For companion rooms in AutoJoinLazy or Manual mode, the room is created on-the-fly if it does not yet exist. Returns conflict if the room is full or forbidden if the caller is banned.
      */
-    post: operations['JoinRoom'];
+    post: operations['chat_JoinRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2047,7 +2047,7 @@ export interface paths {
      * Leave a chat room
      * @description Removes the caller from the room. If the owner leaves, promotes the next moderator or oldest member.
      */
-    post: operations['LeaveRoom'];
+    post: operations['chat_LeaveRoom'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2067,7 +2067,7 @@ export interface paths {
      * List room participants
      * @description Returns all current participants in the room with their roles and status.
      */
-    post: operations['ListParticipants'];
+    post: operations['chat_ListParticipants'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2087,7 +2087,7 @@ export interface paths {
      * Remove a participant from the room
      * @description Kicks a participant from the room. Caller must be Owner or Moderator with higher role than target.
      */
-    post: operations['KickParticipant'];
+    post: operations['chat_KickParticipant'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2107,7 +2107,7 @@ export interface paths {
      * Ban a participant from the room
      * @description Bans a participant. If currently in the room, they are kicked first. Optionally set a duration; null means permanent.
      */
-    post: operations['BanParticipant'];
+    post: operations['chat_BanParticipant'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2127,7 +2127,7 @@ export interface paths {
      * Unban a participant
      * @description Removes a ban record for a participant. Caller must be Owner or Moderator.
      */
-    post: operations['UnbanParticipant'];
+    post: operations['chat_UnbanParticipant'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2147,7 +2147,47 @@ export interface paths {
      * Mute a participant
      * @description Mutes a participant, preventing them from sending messages. Optionally set a duration; null means permanent.
      */
-    post: operations['MuteParticipant'];
+    post: operations['chat_MuteParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/unmute': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Unmute a participant
+     * @description Removes a mute from a participant, allowing them to send messages again. Caller must be Owner or Moderator.
+     */
+    post: operations['chat_UnmuteParticipant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/chat/room/participant/change-role': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Change a participant's role
+     * @description Changes a participant's role within a chat room. Only the room Owner can change roles. Cannot change own role or promote to Owner (ownership transfer happens automatically when the owner leaves via LeaveRoom).
+     */
+    post: operations['chat_ChangeParticipantRole'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2167,7 +2207,7 @@ export interface paths {
      * Send a message to a room
      * @description Sends a message to the specified room. Content is validated against the room type's message format and validator config. For AutoJoinLazy companion rooms, the room is created and the sender auto-joined if the room does not yet exist.
      */
-    post: operations['SendMessage'];
+    post: operations['chat_SendMessage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2187,7 +2227,7 @@ export interface paths {
      * Send multiple messages
      * @description Sends multiple messages to a room atomically. Intended for bulk sentiment pushes from higher-layer services.
      */
-    post: operations['SendMessageBatch'];
+    post: operations['chat_SendMessageBatch'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2207,7 +2247,7 @@ export interface paths {
      * Get message history
      * @description Returns paginated message history for a room, ordered by timestamp descending. Uses cursor-based pagination.
      */
-    post: operations['GetMessageHistory'];
+    post: operations['chat_GetMessageHistory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2227,7 +2267,7 @@ export interface paths {
      * Delete a message
      * @description Deletes a specific message. Caller must be the message sender, room Owner, or Moderator.
      */
-    post: operations['DeleteMessage'];
+    post: operations['chat_DeleteMessage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2247,7 +2287,7 @@ export interface paths {
      * Pin a message
      * @description Pins a message in the room. Caller must be Owner or Moderator. Returns conflict if max pinned messages reached.
      */
-    post: operations['PinMessage'];
+    post: operations['chat_PinMessage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2267,7 +2307,7 @@ export interface paths {
      * Unpin a message
      * @description Unpins a previously pinned message. Caller must be Owner or Moderator.
      */
-    post: operations['UnpinMessage'];
+    post: operations['chat_UnpinMessage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2287,7 +2327,7 @@ export interface paths {
      * Full-text search in persistent rooms
      * @description Searches message content in persistent rooms using MySQL full-text search. Not available for ephemeral rooms.
      */
-    post: operations['SearchMessages'];
+    post: operations['chat_SearchMessages'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2307,7 +2347,7 @@ export interface paths {
      * List all rooms system-wide
      * @description Returns all rooms across the system for administrative purposes. Supports filtering by status and type.
      */
-    post: operations['AdminListRooms'];
+    post: operations['chat_AdminListRooms'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2327,7 +2367,7 @@ export interface paths {
      * Room and message statistics
      * @description Returns system-wide chat statistics for monitoring and debugging.
      */
-    post: operations['AdminGetStats'];
+    post: operations['chat_AdminGetStats'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2347,7 +2387,7 @@ export interface paths {
      * Force cleanup of idle rooms
      * @description Triggers an immediate idle room cleanup cycle, bypassing the normal interval.
      */
-    post: operations['AdminForceCleanup'];
+    post: operations['chat_AdminForceCleanup'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2369,7 +2409,7 @@ export interface paths {
      *     has a unique code within its collection type and game service, references
      *     an item template for inventory placement, and includes display/metadata fields.
      */
-    post: operations['createEntryTemplate'];
+    post: operations['collection_createEntryTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2389,7 +2429,7 @@ export interface paths {
      * Get an entry template by ID
      * @description Retrieves an entry template by its unique identifier.
      */
-    post: operations['getEntryTemplate'];
+    post: operations['collection_getEntryTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2409,7 +2449,7 @@ export interface paths {
      * List entry templates
      * @description Paginated list of entry templates filtered by collection type, game service, and optional category.
      */
-    post: operations['listEntryTemplates'];
+    post: operations['collection_listEntryTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2429,7 +2469,7 @@ export interface paths {
      * Update an entry template
      * @description Update mutable fields of an entry template (displayName, tags, assets, unlockHint, themes, music metadata).
      */
-    post: operations['updateEntryTemplate'];
+    post: operations['collection_updateEntryTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2449,7 +2489,7 @@ export interface paths {
      * Delete an entry template
      * @description Delete an entry template. Warns if instances reference it but does not block deletion.
      */
-    post: operations['deleteEntryTemplate'];
+    post: operations['collection_deleteEntryTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2469,7 +2509,7 @@ export interface paths {
      * Bulk seed entry templates
      * @description Bulk create entry templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
      */
-    post: operations['seedEntryTemplates'];
+    post: operations['collection_seedEntryTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2491,7 +2531,7 @@ export interface paths {
      *     per game service per owner (ownerId + ownerType). Creates an inventory
      *     container (unlimited type) to hold unlocked entry items.
      */
-    post: operations['createCollection'];
+    post: operations['collection_createCollection'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2511,7 +2551,7 @@ export interface paths {
      * Get a collection with unlocked entry summary
      * @description Retrieves a collection instance with its unlocked entry count.
      */
-    post: operations['getCollection'];
+    post: operations['collection_getCollection'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2531,7 +2571,7 @@ export interface paths {
      * List all collections for an owner
      * @description List all collection instances for an owner entity, with optional game service filter.
      */
-    post: operations['listCollections'];
+    post: operations['collection_listCollections'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2551,7 +2591,7 @@ export interface paths {
      * Delete a collection and its inventory container
      * @description Delete a collection instance, destroying its inventory container and all contained entry items.
      */
-    post: operations['deleteCollection'];
+    post: operations['collection_deleteCollection'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2574,7 +2614,7 @@ export interface paths {
      *     if one does not exist for this owner+type+game. Creates an item instance
      *     and places it in the collection container.
      */
-    post: operations['grantEntry'];
+    post: operations['collection_grantEntry'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2594,7 +2634,7 @@ export interface paths {
      * Check if owner has a specific entry
      * @description Check if an owner has a specific entry unlocked in their collection.
      */
-    post: operations['hasEntry'];
+    post: operations['collection_hasEntry'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2614,7 +2654,7 @@ export interface paths {
      * Query unlocked entries with filtering
      * @description Query unlocked entries in a collection with optional filtering by category, tags, and metadata.
      */
-    post: operations['queryEntries'];
+    post: operations['collection_queryEntries'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2634,7 +2674,7 @@ export interface paths {
      * Update entry instance metadata
      * @description Update metadata for an unlocked entry (play count, kill count, favorites, discovery level, custom data).
      */
-    post: operations['updateEntryMetadata'];
+    post: operations['collection_updateEntryMetadata'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2654,7 +2694,7 @@ export interface paths {
      * Get completion statistics per collection type
      * @description Get completion statistics for a collection including total entries, unlocked count, percentage, and breakdown by category.
      */
-    post: operations['getCompletionStats'];
+    post: operations['collection_getCompletionStats'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2676,7 +2716,7 @@ export interface paths {
      *     and area theme configuration. Uses weighted random selection based on theme overlap.
      *     Falls back to the area's default entry if no matches are found.
      */
-    post: operations['selectContentForArea'];
+    post: operations['collection_selectContentForArea'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2696,7 +2736,7 @@ export interface paths {
      * Set area-to-theme mapping
      * @description Create or update an area content configuration that maps an area code to themes and a default entry.
      */
-    post: operations['setAreaContentConfig'];
+    post: operations['collection_setAreaContentConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2716,7 +2756,7 @@ export interface paths {
      * Get area content config
      * @description Get the content configuration for a specific area and game service.
      */
-    post: operations['getAreaContentConfig'];
+    post: operations['collection_getAreaContentConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2736,7 +2776,7 @@ export interface paths {
      * List area configs for a game service
      * @description List all area content configurations for a game service.
      */
-    post: operations['listAreaContentConfigs'];
+    post: operations['collection_listAreaContentConfigs'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2758,7 +2798,32 @@ export interface paths {
      *     reveal). Each level reveals additional information about the entry as defined
      *     in the entry template's discovery levels.
      */
-    post: operations['advanceDiscovery'];
+    post: operations['collection_advanceDiscovery'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/collection/cleanup-by-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Cleanup all collections for a deleted character
+     * @description Called by lib-resource cleanup coordination when a character is deleted.
+     *     Removes all collections owned by the specified characterId, including
+     *     their inventory containers, cache entries, and publishes collection.deleted
+     *     lifecycle events.
+     *     This endpoint is designed for internal service-to-service calls during
+     *     cascading resource cleanup.
+     */
+    post: operations['collection_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2790,7 +2855,7 @@ export interface paths {
      *
      *     Clients should listen for capability update events via WebSocket to stay current.
      */
-    post: operations['getClientCapabilities'];
+    post: operations['connect_getClientCapabilities'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2811,7 +2876,7 @@ export interface paths {
      * @description Retrieves a contract template by its unique ID or code.
      *     At least one of templateId or code must be provided.
      */
-    post: operations['getContractTemplate'];
+    post: operations['contract_getContractTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2832,7 +2897,7 @@ export interface paths {
      * @description Lists contract templates with optional filtering by realm, active status,
      *     and search term.
      */
-    post: operations['listContractTemplates'];
+    post: operations['contract_listContractTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2853,7 +2918,7 @@ export interface paths {
      * @description Creates a new contract instance from a template. The instance starts
      *     in 'draft' status and must be proposed to parties before activation.
      */
-    post: operations['createContractInstance'];
+    post: operations['contract_createContractInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2874,7 +2939,7 @@ export interface paths {
      * @description Moves a draft contract to 'proposed' status and notifies parties.
      *     Parties must consent before the contract becomes active.
      */
-    post: operations['proposeContractInstance'];
+    post: operations['contract_proposeContractInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2895,7 +2960,7 @@ export interface paths {
      * @description Records a party's consent to a proposed contract. When all required
      *     parties consent, the contract moves to 'accepted' then 'active' status.
      */
-    post: operations['consentToContract'];
+    post: operations['contract_consentToContract'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2915,7 +2980,7 @@ export interface paths {
      * Get instance by ID
      * @description Retrieves a contract instance by its unique ID.
      */
-    post: operations['getContractInstance'];
+    post: operations['contract_getContractInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2936,7 +3001,7 @@ export interface paths {
      * @description Queries contract instances with various filters. At least one filter
      *     must be provided.
      */
-    post: operations['queryContractInstances'];
+    post: operations['contract_queryContractInstances'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2958,7 +3023,7 @@ export interface paths {
      *     contract's termination policy, this may require mutual consent or
      *     incur penalties.
      */
-    post: operations['terminateContractInstance'];
+    post: operations['contract_terminateContractInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2979,7 +3044,7 @@ export interface paths {
      * @description Gets the current status of a contract including milestone progress,
      *     pending consents, and any active breaches.
      */
-    post: operations['getContractInstanceStatus'];
+    post: operations['contract_getContractInstanceStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3001,7 +3066,7 @@ export interface paths {
      *     have been met. Triggers onComplete prebound APIs and may advance
      *     contract status.
      */
-    post: operations['completeMilestone'];
+    post: operations['contract_completeMilestone'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3023,7 +3088,7 @@ export interface paths {
      *     (e.g., deadline passed, conditions cannot be met). Triggers onExpire
      *     prebound APIs and may record a breach.
      */
-    post: operations['failMilestone'];
+    post: operations['contract_failMilestone'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3043,7 +3108,7 @@ export interface paths {
      * Get milestone details and status
      * @description Gets the current state of a specific milestone.
      */
-    post: operations['getMilestone'];
+    post: operations['contract_getMilestone'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3065,7 +3130,7 @@ export interface paths {
      *     or external systems. The breach enters a grace period for cure
      *     if configured.
      */
-    post: operations['reportBreach'];
+    post: operations['contract_reportBreach'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3087,7 +3152,7 @@ export interface paths {
      *     consequences from being applied. Called by systems that verify
      *     the breach has been remedied.
      */
-    post: operations['cureBreach'];
+    post: operations['contract_cureBreach'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3107,7 +3172,7 @@ export interface paths {
      * Get breach details
      * @description Retrieves details of a specific breach record.
      */
-    post: operations['getBreach'];
+    post: operations['contract_getBreach'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3129,7 +3194,7 @@ export interface paths {
      *     touching contract state. Used by higher-level systems (quests, etc.)
      *     to store additional context.
      */
-    post: operations['updateContractMetadata'];
+    post: operations['contract_updateContractMetadata'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3149,7 +3214,7 @@ export interface paths {
      * Get game metadata
      * @description Retrieves game-specific metadata from a contract instance.
      */
-    post: operations['getContractMetadata'];
+    post: operations['contract_getContractMetadata'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3170,7 +3235,7 @@ export interface paths {
      * @description Checks whether an entity's proposed action would violate any
      *     active contract constraints (exclusivity, non-compete, territory, etc.).
      */
-    post: operations['checkContractConstraint'];
+    post: operations['contract_checkContractConstraint'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3191,7 +3256,7 @@ export interface paths {
      * @description Returns all active contracts where the specified entity is a party.
      *     Useful for displaying current obligations in UI.
      */
-    post: operations['queryActiveContracts'];
+    post: operations['contract_queryActiveContracts'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3213,7 +3278,7 @@ export interface paths {
      *     cannot be modified, terminated, or have parties transferred except by the
      *     guardian. Requires the contract template to have `transferable: true`.
      */
-    post: operations['lockContract'];
+    post: operations['contract_lockContract'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3234,7 +3299,7 @@ export interface paths {
      * @description Unlocks a contract from guardian custody. Only the current guardian can
      *     unlock a contract. Called on escrow refund to restore contract to original state.
      */
-    post: operations['unlockContract'];
+    post: operations['contract_unlockContract'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3256,7 +3321,7 @@ export interface paths {
      *     roles on release (e.g., transfer landlord role to new property owner).
      *     Contract must be locked and caller must be the guardian.
      */
-    post: operations['transferContractParty'];
+    post: operations['contract_transferContractParty'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3277,7 +3342,7 @@ export interface paths {
      * @description Lists all registered clause types including built-in types and
      *     custom-registered types.
      */
-    post: operations['listClauseTypes'];
+    post: operations['contract_listClauseTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3299,7 +3364,7 @@ export interface paths {
      *     a contract to an escrow agreement. Template values are used for variable
      *     substitution in clause handlers (e.g., wallet IDs, container IDs).
      */
-    post: operations['setContractTemplateValues'];
+    post: operations['contract_setContractTemplateValues'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3321,7 +3386,7 @@ export interface paths {
      *     (e.g., PartyA_EscrowWalletId) to query actual balances in escrow wallets/containers
      *     via the registered clause type handlers.
      */
-    post: operations['checkAssetRequirements'];
+    post: operations['contract_checkAssetRequirements'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3344,7 +3409,7 @@ export interface paths {
      *     returns the same result without re-executing. Contract must be in fulfilled
      *     status and all template values must be set.
      */
-    post: operations['executeContract'];
+    post: operations['contract_executeContract'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3365,7 +3430,7 @@ export interface paths {
      * @description Retrieves a currency definition by its unique ID or code.
      *     At least one of definitionId or code must be provided.
      */
-    post: operations['getCurrencyDefinition'];
+    post: operations['currency_getCurrencyDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3386,7 +3451,7 @@ export interface paths {
      * @description Lists currency definitions with optional filtering by realm, scope,
      *     active status, and base currency flag.
      */
-    post: operations['listCurrencyDefinitions'];
+    post: operations['currency_listCurrencyDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3407,7 +3472,7 @@ export interface paths {
      * @description Creates a new wallet for a polymorphic owner (account, character, NPC, guild, etc.).
      *     Each owner+ownerType+realm combination can have at most one wallet.
      */
-    post: operations['createWallet'];
+    post: operations['currency_createWallet'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3428,7 +3493,7 @@ export interface paths {
      * @description Retrieves a wallet by its ID, or by owner+ownerType+realm combination.
      *     Returns the wallet with all non-zero balances.
      */
-    post: operations['getWallet'];
+    post: operations['currency_getWallet'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3449,7 +3514,7 @@ export interface paths {
      * @description Retrieves a wallet if it exists, otherwise creates a new one.
      *     Upsert pattern for convenience.
      */
-    post: operations['getOrCreateWallet'];
+    post: operations['currency_getOrCreateWallet'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3471,7 +3536,7 @@ export interface paths {
      *     In lazy autogain mode, this may trigger autogain calculation and emit events.
      *     Returns earn cap info and autogain info when applicable.
      */
-    post: operations['getBalance'];
+    post: operations['currency_getBalance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3492,7 +3557,7 @@ export interface paths {
      * @description Retrieves balances for multiple wallet+currency combinations.
      *     Autogain is applied where applicable.
      */
-    post: operations['batchGetBalances'];
+    post: operations['currency_batchGetBalances'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3513,7 +3578,7 @@ export interface paths {
      * @description Credits currency to a wallet. This is a faucet operation (currency enters the system).
      *     Enforces earn caps, wallet caps, and global supply caps. Requires idempotency key.
      */
-    post: operations['creditCurrency'];
+    post: operations['currency_creditCurrency'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3534,7 +3599,7 @@ export interface paths {
      * @description Debits currency from a wallet. This is a sink operation (currency exits the system).
      *     Checks for sufficient funds unless negative balance is allowed.
      */
-    post: operations['debitCurrency'];
+    post: operations['currency_debitCurrency'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3555,7 +3620,7 @@ export interface paths {
      * @description Transfers currency from one wallet to another. Validates transferability,
      *     realm compatibility, and sufficient funds.
      */
-    post: operations['transferCurrency'];
+    post: operations['currency_transferCurrency'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3576,7 +3641,28 @@ export interface paths {
      * @description Credits currency to multiple wallets in one call. Each operation is independent;
      *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
      */
-    post: operations['batchCreditCurrency'];
+    post: operations['currency_batchCreditCurrency'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/currency/batch-debit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Debit multiple wallets in one call
+     * @description Debits currency from multiple wallets in one call. Each operation is independent;
+     *     failures do not rollback others. For atomic multi-wallet operations, use lib-escrow.
+     */
+    post: operations['currency_batchDebitCurrency'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3597,7 +3683,7 @@ export interface paths {
      * @description Previews a currency conversion calculation without executing it.
      *     Uses base currency exchange rates to compute the effective rate.
      */
-    post: operations['calculateConversion'];
+    post: operations['currency_calculateConversion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3618,7 +3704,7 @@ export interface paths {
      * @description Executes a currency conversion within a single wallet. Debits the source
      *     currency and credits the target currency at the computed exchange rate.
      */
-    post: operations['executeConversion'];
+    post: operations['currency_executeConversion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3639,7 +3725,7 @@ export interface paths {
      * @description Retrieves the exchange rate between two currencies using the base currency
      *     as an intermediary.
      */
-    post: operations['getExchangeRate'];
+    post: operations['currency_getExchangeRate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3659,7 +3745,7 @@ export interface paths {
      * Get a transaction by ID
      * @description Retrieves a single transaction record by its unique ID.
      */
-    post: operations['getTransaction'];
+    post: operations['currency_getTransaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3680,7 +3766,7 @@ export interface paths {
      * @description Retrieves transaction history for a wallet with optional filters
      *     by currency, transaction type, and date range.
      */
-    post: operations['getTransactionHistory'];
+    post: operations['currency_getTransactionHistory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3701,7 +3787,7 @@ export interface paths {
      * @description Retrieves all transactions linked to a specific reference (quest, auction,
      *     escrow, etc.).
      */
-    post: operations['getTransactionsByReference'];
+    post: operations['currency_getTransactionsByReference'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3722,7 +3808,7 @@ export interface paths {
      * @description Returns aggregate supply statistics including total supply, circulation,
      *     escrow amounts, and lifetime mint/burn totals.
      */
-    post: operations['getGlobalSupply'];
+    post: operations['currency_getGlobalSupply'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3743,7 +3829,7 @@ export interface paths {
      * @description Called by lib-escrow when a party deposits currency into an escrow agreement.
      *     Immediately debits the wallet (no lock tracking needed - escrow owns the funds).
      */
-    post: operations['escrowDeposit'];
+    post: operations['currency_escrowDeposit'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3764,7 +3850,7 @@ export interface paths {
      * @description Called by lib-escrow when an escrow agreement completes successfully.
      *     Credits the recipient wallet with the released funds.
      */
-    post: operations['escrowRelease'];
+    post: operations['currency_escrowRelease'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3785,7 +3871,7 @@ export interface paths {
      * @description Called by lib-escrow when an escrow agreement is cancelled or refunded.
      *     Credits the original depositor wallet with the refunded funds.
      */
-    post: operations['escrowRefund'];
+    post: operations['currency_escrowRefund'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3807,7 +3893,7 @@ export interface paths {
      *     The held amount reduces the effective balance but does not leave the wallet.
      *     Used for pre-auth scenarios (dining, gas, hotels) where final amount may differ.
      */
-    post: operations['createHold'];
+    post: operations['currency_createHold'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3828,7 +3914,7 @@ export interface paths {
      * @description Captures an active hold by debiting the final amount (which may be less than
      *     or equal to the held amount). Any difference is released back to available balance.
      */
-    post: operations['captureHold'];
+    post: operations['currency_captureHold'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3849,7 +3935,7 @@ export interface paths {
      * @description Releases an active hold, making all held funds available again.
      *     No debit occurs.
      */
-    post: operations['releaseHold'];
+    post: operations['currency_releaseHold'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3869,7 +3955,7 @@ export interface paths {
      * Get hold status and details
      * @description Retrieves the current status and details of an authorization hold.
      */
-    post: operations['getHold'];
+    post: operations['currency_getHold'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3891,7 +3977,7 @@ export interface paths {
      *     Provisions a divinity currency wallet, a domain power seed, and optionally
      *     starts a deity watcher actor via Puppetmaster.
      */
-    post: operations['createDeity'];
+    post: operations['divine_createDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3911,7 +3997,7 @@ export interface paths {
      * Get a deity by ID
      * @description Returns a single deity entity by its unique identifier.
      */
-    post: operations['getDeity'];
+    post: operations['divine_getDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3931,7 +4017,7 @@ export interface paths {
      * Get a deity by code within a game service
      * @description Looks up a deity by its unique code within a game service scope.
      */
-    post: operations['getDeityByCode'];
+    post: operations['divine_getDeityByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3952,7 +4038,7 @@ export interface paths {
      * @description Returns a paginated list of deities for a game service, optionally
      *     filtered by domain code and status.
      */
-    post: operations['listDeities'];
+    post: operations['divine_listDeities'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3973,7 +4059,7 @@ export interface paths {
      * @description Partial update of deity properties. Only non-null fields are applied.
      *     Requires a distributed lock on the deity.
      */
-    post: operations['updateDeity'];
+    post: operations['divine_updateDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3994,7 +4080,7 @@ export interface paths {
      * @description Sets the deity status to Active. If Puppetmaster is available and no
      *     watcher actor exists, starts one. Publishes a deity activated event.
      */
-    post: operations['activateDeity'];
+    post: operations['divine_activateDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4015,7 +4101,7 @@ export interface paths {
      * @description Sets the deity status to Dormant. Stops the watcher actor if Puppetmaster
      *     is available. Clears all attention slots. Publishes a deity dormant event.
      */
-    post: operations['deactivateDeity'];
+    post: operations['divine_deactivateDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4038,7 +4124,7 @@ export interface paths {
      *     attention slots, and coordinates cleanup via lib-resource. Publishes a
      *     lifecycle deleted event.
      */
-    post: operations['deleteDeity'];
+    post: operations['divine_deleteDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4058,7 +4144,7 @@ export interface paths {
      * Get a deity's divinity balance
      * @description Returns the current divinity balance for a deity by querying its currency wallet.
      */
-    post: operations['getDivinityBalance'];
+    post: operations['divine_getDivinityBalance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4079,7 +4165,7 @@ export interface paths {
      * @description Credits divinity to a deity's currency wallet. Used for mortal actions
      *     in the deity's domain, direct grants, or other divinity generation sources.
      */
-    post: operations['creditDivinity'];
+    post: operations['divine_creditDivinity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4101,7 +4187,7 @@ export interface paths {
      *     miracles, or other divinity expenditures. Validates sufficient balance
      *     before debiting.
      */
-    post: operations['debitDivinity'];
+    post: operations['divine_debitDivinity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4121,7 +4207,7 @@ export interface paths {
      * Get divinity transaction history
      * @description Returns paginated transaction history for a deity's divinity wallet.
      */
-    post: operations['getDivinityHistory'];
+    post: operations['divine_getDivinityHistory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4145,7 +4231,7 @@ export interface paths {
      *     Status Inventory (Minor/Standard), and records the blessing. Blessings are
      *     entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
      */
-    post: operations['grantBlessing'];
+    post: operations['divine_grantBlessing'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4167,7 +4253,7 @@ export interface paths {
      *     the status item. For permanent blessings (Greater/Supreme), marks as
      *     revoked in collection. Updates the blessing record with revocation timestamp.
      */
-    post: operations['revokeBlessing'];
+    post: operations['divine_revokeBlessing'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4187,7 +4273,7 @@ export interface paths {
      * List blessings for an entity
      * @description Returns paginated blessings granted to a specific entity.
      */
-    post: operations['listBlessingsByEntity'];
+    post: operations['divine_listBlessingsByEntity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4207,7 +4293,7 @@ export interface paths {
      * List blessings granted by a deity
      * @description Returns paginated blessings granted by a specific deity, optionally filtered by tier.
      */
-    post: operations['listBlessingsByDeity'];
+    post: operations['divine_listBlessingsByDeity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4227,7 +4313,7 @@ export interface paths {
      * Get a blessing by ID
      * @description Returns a single blessing record by its unique identifier.
      */
-    post: operations['getBlessing'];
+    post: operations['divine_getBlessing'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4249,7 +4335,7 @@ export interface paths {
      *     increments the deity's follower count, and adds the character to the
      *     deity's attention slots if capacity is available.
      */
-    post: operations['registerFollower'];
+    post: operations['divine_registerFollower'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4270,7 +4356,7 @@ export interface paths {
      * @description Removes the deity-character follower relationship, decrements the
      *     deity's follower count, and removes the character from attention slots.
      */
-    post: operations['unregisterFollower'];
+    post: operations['divine_unregisterFollower'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4290,7 +4376,7 @@ export interface paths {
      * Get followers of a deity
      * @description Returns paginated follower list for a deity by querying relationships.
      */
-    post: operations['getFollowers'];
+    post: operations['divine_getFollowers'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4313,7 +4399,7 @@ export interface paths {
      *     relationships from all deities, updates follower counts, and clears
      *     attention slots.
      */
-    post: operations['cleanupByCharacter'];
+    post: operations['divine_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4335,7 +4421,7 @@ export interface paths {
      *     for this game service along with their blessings, followers, attention
      *     slots, and associated resources.
      */
-    post: operations['cleanupByGameService'];
+    post: operations['divine_cleanupByGameService'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4356,7 +4442,7 @@ export interface paths {
      * @description Search documentation using natural language queries.
      *     Returns the most relevant documents with voice-friendly summaries.
      */
-    post: operations['queryDocumentation'];
+    post: operations['documentation_queryDocumentation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4377,7 +4463,7 @@ export interface paths {
      * @description Retrieve a specific document by its unique identifier or slug.
      *     Returns full content with metadata.
      */
-    post: operations['getDocument'];
+    post: operations['documentation_getDocument'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4398,7 +4484,7 @@ export interface paths {
      * @description Search documentation using exact keyword matching.
      *     Faster than semantic search but less flexible.
      */
-    post: operations['searchDocumentation'];
+    post: operations['documentation_searchDocumentation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4419,7 +4505,7 @@ export interface paths {
      * @description List all documents in a specific category or all categories.
      *     Supports pagination for large result sets.
      */
-    post: operations['listDocuments'];
+    post: operations['documentation_listDocuments'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4440,7 +4526,7 @@ export interface paths {
      * @description Given a topic or document ID, returns related topics the user
      *     might want to explore. Useful for conversational AI flow.
      */
-    post: operations['suggestRelatedTopics'];
+    post: operations['documentation_suggestRelatedTopics'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4462,7 +4548,7 @@ export interface paths {
      *     The namespace will be exclusively managed by the repository - manual edits will be blocked.
      *     Triggers initial sync after binding.
      */
-    post: operations['bindRepository'];
+    post: operations['documentation_bindRepository'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4483,7 +4569,7 @@ export interface paths {
      * @description Manually trigger synchronization of a bound repository.
      *     If force=true, performs full re-sync regardless of commit hash.
      */
-    post: operations['syncRepository'];
+    post: operations['documentation_syncRepository'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4503,7 +4589,7 @@ export interface paths {
      * Get repository binding status
      * @description Get current status of a repository binding including sync state and statistics.
      */
-    post: operations['getRepositoryStatus'];
+    post: operations['documentation_getRepositoryStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4523,7 +4609,7 @@ export interface paths {
      * List all repository bindings
      * @description List all repository bindings with optional filtering by status.
      */
-    post: operations['listRepositoryBindings'];
+    post: operations['documentation_listRepositoryBindings'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4543,7 +4629,7 @@ export interface paths {
      * Update repository binding configuration
      * @description Update sync settings, file patterns, category mappings, or archive configuration.
      */
-    post: operations['updateRepositoryBinding'];
+    post: operations['documentation_updateRepositoryBinding'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4564,7 +4650,7 @@ export interface paths {
      * @description Create a .bannou bundle archive of all documents in a namespace.
      *     Archives are stored via Asset Service.
      */
-    post: operations['createDocumentationArchive'];
+    post: operations['documentation_createDocumentationArchive'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4584,7 +4670,7 @@ export interface paths {
      * List documentation archives
      * @description List all archives for a namespace.
      */
-    post: operations['listDocumentationArchives'];
+    post: operations['documentation_listDocumentationArchives'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4607,7 +4693,7 @@ export interface paths {
      *     tokens to the creating service, which is responsible for distributing them to
      *     parties through appropriate channels. Sets template values on bound contract.
      */
-    post: operations['createEscrow'];
+    post: operations['escrow_createEscrow'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4627,7 +4713,7 @@ export interface paths {
      * Get escrow details
      * @description Get escrow agreement details by ID.
      */
-    post: operations['getEscrow'];
+    post: operations['escrow_getEscrow'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4647,7 +4733,7 @@ export interface paths {
      * List escrows for a party
      * @description List escrow agreements with filtering options.
      */
-    post: operations['listEscrows'];
+    post: operations['escrow_listEscrows'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4671,7 +4757,7 @@ export interface paths {
      *     Rejects soulbound/non-tradeable items. After each deposit, queries bound contract
      *     to check if all asset requirements are satisfied.
      */
-    post: operations['deposit'];
+    post: operations['escrow_deposit'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4691,7 +4777,7 @@ export interface paths {
      * Validate a deposit without executing
      * @description Validate a deposit without executing (dry run).
      */
-    post: operations['validateDeposit'];
+    post: operations['escrow_validateDeposit'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4711,7 +4797,7 @@ export interface paths {
      * Get deposit status for a party
      * @description Get deposit status for a party in an escrow.
      */
-    post: operations['getDepositStatus'];
+    post: operations['escrow_getDepositStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4731,7 +4817,7 @@ export interface paths {
      * Record party consent
      * @description Record party consent for release, refund, or re-affirmation.
      */
-    post: operations['recordConsent'];
+    post: operations['escrow_recordConsent'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4751,7 +4837,7 @@ export interface paths {
      * Get consent status for escrow
      * @description Get consent status for all parties in an escrow.
      */
-    post: operations['getConsentStatus'];
+    post: operations['escrow_getConsentStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4773,7 +4859,7 @@ export interface paths {
      *     If boundContractId is set, checks contract status first (must be fulfilled).
      *     Runs finalization flow before releasing remaining assets.
      */
-    post: operations['release'];
+    post: operations['escrow_release'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4793,7 +4879,7 @@ export interface paths {
      * Trigger refund
      * @description Trigger refund (for trusted modes or consent).
      */
-    post: operations['refund'];
+    post: operations['escrow_refund'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4813,7 +4899,7 @@ export interface paths {
      * Cancel escrow before fully funded
      * @description Cancel escrow before fully funded, refunding any deposits.
      */
-    post: operations['cancel'];
+    post: operations['escrow_cancel'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4833,7 +4919,7 @@ export interface paths {
      * Raise a dispute on funded escrow
      * @description Raise a dispute on a funded escrow.
      */
-    post: operations['dispute'];
+    post: operations['escrow_dispute'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4854,7 +4940,7 @@ export interface paths {
      * @description Called by parties to confirm they received their released assets.
      *     Required when ReleaseMode is party_required or service_and_party.
      */
-    post: operations['confirmRelease'];
+    post: operations['escrow_confirmRelease'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4875,7 +4961,7 @@ export interface paths {
      * @description Called by parties to confirm they received their refunded deposits.
      *     Required when RefundMode is party_required.
      */
-    post: operations['confirmRefund'];
+    post: operations['escrow_confirmRefund'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4895,7 +4981,7 @@ export interface paths {
      * Arbiter resolves disputed escrow
      * @description Arbiter resolves a disputed escrow.
      */
-    post: operations['resolve'];
+    post: operations['escrow_resolve'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4916,7 +5002,7 @@ export interface paths {
      * @description Verify condition for conditional escrow (non-contract path).
      *     For escrows with boundContractId, use contract milestones instead.
      */
-    post: operations['verifyCondition'];
+    post: operations['escrow_verifyCondition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4936,7 +5022,7 @@ export interface paths {
      * Re-affirm after validation failure
      * @description Re-affirm after validation failure (party accepts changed state).
      */
-    post: operations['reaffirm'];
+    post: operations['escrow_reaffirm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4964,7 +5050,7 @@ export interface paths {
      *     to the same game service and realm, and that the resulting hierarchy depth
      *     does not exceed the configured maximum.
      */
-    post: operations['createFaction'];
+    post: operations['faction_createFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4985,7 +5071,7 @@ export interface paths {
      * @description Retrieves a faction by its unique identifier. Includes the current seed
      *     growth phase (denormalized from lib-seed for convenience) and member count.
      */
-    post: operations['getFaction'];
+    post: operations['faction_getFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5006,7 +5092,7 @@ export interface paths {
      * @description Retrieves a faction by its unique code within a game service scope.
      *     Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
      */
-    post: operations['getFactionByCode'];
+    post: operations['faction_getFactionByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5027,7 +5113,7 @@ export interface paths {
      * @description Returns a paginated list of factions with optional filters by realm,
      *     game service, status, and parent faction. Supports cursor-based pagination.
      */
-    post: operations['listFactions'];
+    post: operations['faction_listFactions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5049,7 +5135,7 @@ export interface paths {
      *     code must remain unique within its game service scope. Cannot change
      *     gameServiceId or realmId after creation.
      */
-    post: operations['updateFaction'];
+    post: operations['faction_updateFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5071,7 +5157,7 @@ export interface paths {
      *     or define new norms, but existing memberships and norms remain active.
      *     Existing norm enforcement continues until the faction is dissolved.
      */
-    post: operations['deprecateFaction'];
+    post: operations['faction_deprecateFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5091,7 +5177,7 @@ export interface paths {
      * Reactivate a deprecated faction
      * @description Restores a deprecated faction to active status.
      */
-    post: operations['undeprecateFaction'];
+    post: operations['faction_undeprecateFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5117,7 +5203,7 @@ export interface paths {
      *     Only one faction per realm can be the baseline. Setting a new baseline
      *     clears the previous one. The faction must belong to the specified realm.
      */
-    post: operations['designateRealmBaseline'];
+    post: operations['faction_designateRealmBaseline'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5138,7 +5224,7 @@ export interface paths {
      * @description Returns the faction designated as the baseline cultural faction for a realm.
      *     Returns 404 if no baseline has been designated.
      */
-    post: operations['getRealmBaseline'];
+    post: operations['faction_getRealmBaseline'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5165,7 +5251,7 @@ export interface paths {
      *
      *     Publishes a faction.member.added event for downstream consumers.
      */
-    post: operations['addMember'];
+    post: operations['faction_addMember'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5186,7 +5272,7 @@ export interface paths {
      * @description Removes a character's membership in a faction. Publishes a
      *     faction.member.removed event for downstream consumers.
      */
-    post: operations['removeMember'];
+    post: operations['faction_removeMember'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5207,7 +5293,7 @@ export interface paths {
      * @description Returns a paginated list of members for a faction. Supports filtering
      *     by role and cursor-based pagination. Ordered by join date descending.
      */
-    post: operations['listMembers'];
+    post: operations['faction_listMembers'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5229,7 +5315,7 @@ export interface paths {
      *     to determine which guild faction norms apply to a character, and by the
      *     ${faction.*} variable provider for ABML behavior expressions.
      */
-    post: operations['listMembershipsByCharacter'];
+    post: operations['faction_listMembershipsByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5250,7 +5336,7 @@ export interface paths {
      * @description Changes a member's role within a faction. Publishes a
      *     faction.member.role-changed event for downstream consumers.
      */
-    post: operations['updateMemberRole'];
+    post: operations['faction_updateMemberRole'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5271,7 +5357,7 @@ export interface paths {
      * @description Returns whether a character is currently a member of the specified faction,
      *     and if so, their role. Lightweight lookup for permission/capability checks.
      */
-    post: operations['checkMembership'];
+    post: operations['faction_checkMembership'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5296,7 +5382,7 @@ export interface paths {
      *
      *     The faction must belong to the same realm as the location.
      */
-    post: operations['claimTerritory'];
+    post: operations['faction_claimTerritory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5317,7 +5403,7 @@ export interface paths {
      * @description Releases a faction's claim on a location. The territory becomes unclaimed
      *     and available for other factions. Publishes a faction.territory.released event.
      */
-    post: operations['releaseTerritory'];
+    post: operations['faction_releaseTerritory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5338,7 +5424,7 @@ export interface paths {
      * @description Returns all territory claims for a faction with optional status filtering
      *     and cursor-based pagination.
      */
-    post: operations['listTerritoryClaims'];
+    post: operations['faction_listTerritoryClaims'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5362,7 +5448,7 @@ export interface paths {
      *
      *     Returns 404 if the location has no controlling faction.
      */
-    post: operations['getControllingFaction'];
+    post: operations['faction_getControllingFaction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5396,7 +5482,7 @@ export interface paths {
      *     "honor_combat"). No separate taxonomy is maintained -- the vocabulary
      *     is defined by contract templates and action tag mappings.
      */
-    post: operations['defineNorm'];
+    post: operations['faction_defineNorm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5418,7 +5504,7 @@ export interface paths {
      *     cannot be changed (delete and recreate if needed). Severity changes
      *     are subject to capability checks.
      */
-    post: operations['updateNorm'];
+    post: operations['faction_updateNorm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5438,7 +5524,7 @@ export interface paths {
      * Delete a norm definition
      * @description Removes a behavioral norm definition from a faction.
      */
-    post: operations['deleteNorm'];
+    post: operations['faction_deleteNorm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5459,7 +5545,7 @@ export interface paths {
      * @description Returns all norm definitions for a faction with optional filtering
      *     by severity and scope.
      */
-    post: operations['listNorms'];
+    post: operations['faction_listNorms'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5481,7 +5567,7 @@ export interface paths {
      *     Removes all faction memberships for the character. Territory claims and
      *     norm definitions are faction-owned, not character-owned, so they remain.
      */
-    post: operations['cleanupByCharacter'];
+    post: operations['faction_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5503,7 +5589,7 @@ export interface paths {
      *     Removes all factions belonging to the realm, including their memberships,
      *     territory claims, norm definitions, and associated seeds.
      */
-    post: operations['cleanupByRealm'];
+    post: operations['faction_cleanupByRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5525,7 +5611,7 @@ export interface paths {
      *     Removes all territory claims referencing the location. The faction itself
      *     remains intact.
      */
-    post: operations['cleanupByLocation'];
+    post: operations['faction_cleanupByLocation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5547,7 +5633,7 @@ export interface paths {
      *     memberships and roles for the character for archival. Norm definitions
      *     are faction-owned data and not included in character archives.
      */
-    post: operations['getCompressData'];
+    post: operations['faction_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5567,7 +5653,7 @@ export interface paths {
      * List all registered game services
      * @description Returns all game services, optionally filtered by active status.
      */
-    post: operations['listServices'];
+    post: operations['gameService_listServices'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5587,7 +5673,7 @@ export interface paths {
      * Get service by ID or stub name
      * @description Retrieves a single service by either serviceId (GUID) or stubName.
      */
-    post: operations['getService'];
+    post: operations['gameService_getService'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5607,7 +5693,7 @@ export interface paths {
      * Get game session details
      * @description Get details of the current game session the user has joined.
      */
-    post: operations['getGameSession'];
+    post: operations['gameSession_getGameSession'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5624,7 +5710,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Leave a game session */
-    post: operations['leaveGameSession'];
+    post: operations['gameSession_leaveGameSession'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5641,7 +5727,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Send chat message to game session */
-    post: operations['sendChatMessage'];
+    post: operations['gameSession_sendChatMessage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5658,7 +5744,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Perform game action (enhanced permissions after joining) */
-    post: operations['performGameAction'];
+    post: operations['gameSession_performGameAction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5679,7 +5765,7 @@ export interface paths {
      * @description Leave a game session by its session ID. This is the session-specific alternative
      *     to /sessions/leave which uses gameType. Useful for matchmade sessions.
      */
-    post: operations['leaveGameSessionById'];
+    post: operations['gameSession_leaveGameSessionById'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5701,7 +5787,7 @@ export interface paths {
      *     active guardian seed, initializes drift metrics, and returns the initial
      *     garden state. First tick of the garden orchestrator spawns POIs.
      */
-    post: operations['enterGarden'];
+    post: operations['gardener_enterGarden'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5721,7 +5807,7 @@ export interface paths {
      * Get current garden state
      * @description Returns the player's current garden instance with active POIs.
      */
-    post: operations['getGardenState'];
+    post: operations['gardener_getGardenState'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5742,7 +5828,7 @@ export interface paths {
      * @description Updates the player's position and velocity in garden space. Accumulates
      *     drift metrics and checks proximity triggers against active POIs.
      */
-    post: operations['updatePosition'];
+    post: operations['gardener_updatePosition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5763,7 +5849,7 @@ export interface paths {
      * @description Cleans up the garden instance, all associated POIs, and publishes a
      *     garden-left event with session duration.
      */
-    post: operations['leaveGarden'];
+    post: operations['gardener_leaveGarden'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5783,7 +5869,7 @@ export interface paths {
      * List active POIs
      * @description Returns all active POIs for the player's current garden instance.
      */
-    post: operations['listPois'];
+    post: operations['gardener_listPois'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5805,7 +5891,7 @@ export interface paths {
      *     prompted POIs return scenario info with choices, proximity/interaction POIs
      *     enter the scenario directly.
      */
-    post: operations['interactWithPoi'];
+    post: operations['gardener_interactWithPoi'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5826,7 +5912,7 @@ export interface paths {
      * @description Marks a POI as declined. The template is added to the garden instance's
      *     scenario history for diversity scoring.
      */
-    post: operations['declinePoi'];
+    post: operations['gardener_declinePoi'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5848,7 +5934,7 @@ export interface paths {
      *     instance, destroys the garden instance (player leaves the garden), and
      *     publishes scenario-started events.
      */
-    post: operations['enterScenario'];
+    post: operations['gardener_enterScenario'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5868,7 +5954,7 @@ export interface paths {
      * Get current scenario state
      * @description Returns the player's active scenario instance.
      */
-    post: operations['getScenarioState'];
+    post: operations['gardener_getScenarioState'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5889,7 +5975,7 @@ export interface paths {
      * @description Calculates and awards growth per domain, closes the game session,
      *     writes history, and returns the player to the garden.
      */
-    post: operations['completeScenario'];
+    post: operations['gardener_completeScenario'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5910,7 +5996,7 @@ export interface paths {
      * @description Awards partial growth proportional to time spent, cleans up the
      *     game session, and writes history.
      */
-    post: operations['abandonScenario'];
+    post: operations['gardener_abandonScenario'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5932,7 +6018,7 @@ export interface paths {
      *     creates a new scenario instance from the target template. Validates
      *     chaining rules (leadsTo list, max chain depth).
      */
-    post: operations['chainScenario'];
+    post: operations['gardener_chainScenario'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5952,7 +6038,7 @@ export interface paths {
      * Create a scenario template
      * @description Creates a new scenario template definition.
      */
-    post: operations['createTemplate'];
+    post: operations['gardener_createTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5972,7 +6058,7 @@ export interface paths {
      * Get scenario template by ID
      * @description Returns a scenario template by its unique identifier.
      */
-    post: operations['getTemplate'];
+    post: operations['gardener_getTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -5992,7 +6078,7 @@ export interface paths {
      * Get scenario template by code
      * @description Returns a scenario template by its unique code string.
      */
-    post: operations['getTemplateByCode'];
+    post: operations['gardener_getTemplateByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6012,7 +6098,7 @@ export interface paths {
      * List scenario templates
      * @description Returns paginated scenario templates with optional filters.
      */
-    post: operations['listTemplates'];
+    post: operations['gardener_listTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6032,7 +6118,7 @@ export interface paths {
      * Update scenario template
      * @description Updates non-null fields of an existing template.
      */
-    post: operations['updateTemplate'];
+    post: operations['gardener_updateTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6052,7 +6138,7 @@ export interface paths {
      * Deprecate scenario template
      * @description Sets the template status to Deprecated, preventing new instances.
      */
-    post: operations['deprecateTemplate'];
+    post: operations['gardener_deprecateTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6072,7 +6158,7 @@ export interface paths {
      * Delete scenario template
      * @description Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.
      */
-    post: operations['deleteTemplate'];
+    post: operations['gardener_deleteTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6092,7 +6178,7 @@ export interface paths {
      * Get deployment phase configuration
      * @description Returns the current deployment phase configuration. Creates defaults if none exists.
      */
-    post: operations['getPhaseConfig'];
+    post: operations['gardener_getPhaseConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6112,7 +6198,7 @@ export interface paths {
      * Update deployment phase configuration
      * @description Updates non-null fields of the phase configuration. Publishes phase-changed event if phase changes.
      */
-    post: operations['updatePhaseConfig'];
+    post: operations['gardener_updatePhaseConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6132,7 +6218,7 @@ export interface paths {
      * Get deployment phase metrics
      * @description Returns current counts of active garden instances, scenario instances, and capacity utilization.
      */
-    post: operations['getPhaseMetrics'];
+    post: operations['gardener_getPhaseMetrics'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6153,7 +6239,7 @@ export interface paths {
      * @description Both bonded players enter a shared scenario instance. Validates bond state,
      *     both participants' garden instances, and template multiplayer support.
      */
-    post: operations['enterScenarioTogether'];
+    post: operations['gardener_enterScenarioTogether'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6173,7 +6259,7 @@ export interface paths {
      * Get shared garden state for bonded players
      * @description Returns the merged garden state for both bond participants including shared POIs.
      */
-    post: operations['getSharedGardenState'];
+    post: operations['gardener_getSharedGardenState'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6194,7 +6280,7 @@ export interface paths {
      * @description Creates a new container with the specified constraint model and capacity.
      *     Container types are game-defined strings (e.g., "inventory", "bank", "equipment_slot").
      */
-    post: operations['createContainer'];
+    post: operations['inventory_createContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6214,7 +6300,7 @@ export interface paths {
      * Get container with contents
      * @description Retrieves a container by ID, optionally including its contents.
      */
-    post: operations['getContainer'];
+    post: operations['inventory_getContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6236,7 +6322,7 @@ export interface paths {
      *     If a container doesn't exist for the owner/type combination, creates it
      *     with the specified defaults.
      */
-    post: operations['getOrCreateContainer'];
+    post: operations['inventory_getOrCreateContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6256,7 +6342,7 @@ export interface paths {
      * List containers for owner
      * @description Returns all containers owned by the specified entity.
      */
-    post: operations['listContainers'];
+    post: operations['inventory_listContainers'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6276,7 +6362,7 @@ export interface paths {
      * Update container properties
      * @description Updates mutable container properties like capacity limits and filtering.
      */
-    post: operations['updateContainer'];
+    post: operations['inventory_updateContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6298,7 +6384,7 @@ export interface paths {
      *     (slots, weight, grid, category filters). For stackable items, may
      *     merge with existing stacks.
      */
-    post: operations['addItemToContainer'];
+    post: operations['inventory_addItemToContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6319,7 +6405,7 @@ export interface paths {
      * @description Removes an item from its container. The item still exists but has no
      *     container assignment. Use destroy via lib-item to permanently delete.
      */
-    post: operations['removeItemFromContainer'];
+    post: operations['inventory_removeItemFromContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6341,7 +6427,7 @@ export interface paths {
      *     container. Validates destination constraints. For equipment slots, this
      *     effectively equips/unequips items.
      */
-    post: operations['moveItem'];
+    post: operations['inventory_moveItem'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6362,7 +6448,7 @@ export interface paths {
      * @description Transfers an item to a container owned by a different entity.
      *     Used for trades, gifts, and loot distribution.
      */
-    post: operations['transferItem'];
+    post: operations['inventory_transferItem'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6383,7 +6469,7 @@ export interface paths {
      * @description Splits a stack of items into two stacks. The original stack keeps the
      *     remainder, and a new stack is created with the split quantity.
      */
-    post: operations['splitStack'];
+    post: operations['inventory_splitStack'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6404,7 +6490,7 @@ export interface paths {
      * @description Merges two stacks of the same item template. The source stack is
      *     destroyed and its quantity added to the target stack.
      */
-    post: operations['mergeStacks'];
+    post: operations['inventory_mergeStacks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6425,7 +6511,7 @@ export interface paths {
      * @description Searches for items across all containers owned by an entity.
      *     Can filter by template, category, tags, and other criteria.
      */
-    post: operations['queryItems'];
+    post: operations['inventory_queryItems'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6445,7 +6531,7 @@ export interface paths {
      * Count items of a template
      * @description Counts total quantity of a specific item template across containers.
      */
-    post: operations['countItems'];
+    post: operations['inventory_countItems'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6466,7 +6552,7 @@ export interface paths {
      * @description Checks if an entity has the required quantities of specified items.
      *     Used for crafting and quest requirements validation.
      */
-    post: operations['hasItems'];
+    post: operations['inventory_hasItems'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6487,7 +6573,7 @@ export interface paths {
      * @description Finds available space for an item in the owner's containers.
      *     Returns candidate containers and slots where the item could be placed.
      */
-    post: operations['findSpace'];
+    post: operations['inventory_findSpace'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6508,7 +6594,7 @@ export interface paths {
      * @description Creates a new item definition for a game. Code, gameId, quantityModel, and scope
      *     are immutable after creation.
      */
-    post: operations['createItemTemplate'];
+    post: operations['item_createItemTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6529,7 +6615,7 @@ export interface paths {
      * @description Retrieves an item template by its unique ID or by code+gameId combination.
      *     At least one of templateId or (code + gameId) must be provided.
      */
-    post: operations['getItemTemplate'];
+    post: operations['item_getItemTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6550,7 +6636,7 @@ export interface paths {
      * @description Lists item templates with optional filtering by gameId, category, tags,
      *     rarity, scope, and active status.
      */
-    post: operations['listItemTemplates'];
+    post: operations['item_listItemTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6571,7 +6657,7 @@ export interface paths {
      * @description Updates mutable fields of an item template. Code, gameId, quantityModel, and scope
      *     are immutable after creation and cannot be changed.
      */
-    post: operations['updateItemTemplate'];
+    post: operations['item_updateItemTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6593,7 +6679,7 @@ export interface paths {
      *     in a container (containerId required). Use lib-inventory's /inventory/add
      *     for most use cases - this endpoint is for low-level instance creation.
      */
-    post: operations['createItemInstance'];
+    post: operations['item_createItemInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6613,7 +6699,7 @@ export interface paths {
      * Get item instance by ID
      * @description Retrieves an item instance by its unique ID.
      */
-    post: operations['getItemInstance'];
+    post: operations['item_getItemInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6634,7 +6720,7 @@ export interface paths {
      * @description Modifies an item instance's mutable state: durability, custom stats,
      *     custom name, and metadata. Cannot modify bound items unless admin.
      */
-    post: operations['modifyItemInstance'];
+    post: operations['item_modifyItemInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6655,7 +6741,7 @@ export interface paths {
      * @description Binds an item instance to a character. The bind type must be allowed by
      *     the template's soulboundType. Once bound, the item cannot be traded.
      */
-    post: operations['bindItemInstance'];
+    post: operations['item_bindItemInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6676,7 +6762,7 @@ export interface paths {
      * @description Permanently destroys an item instance. The reason is recorded for audit.
      *     Cannot destroy bound items unless admin or reason is 'admin'.
      */
-    post: operations['destroyItemInstance'];
+    post: operations['item_destroyItemInstance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6700,7 +6786,7 @@ export interface paths {
      *     on success if the template defines it as consumable. Returns failure if the
      *     contract's prebound APIs fail.
      */
-    post: operations['useItem'];
+    post: operations['item_useItem'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6724,7 +6810,7 @@ export interface paths {
      *     the existing contract. Item is consumed only when all required milestones
      *     are complete (per itemUseBehavior).
      */
-    post: operations['useItemStep'];
+    post: operations['item_useItemStep'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6744,7 +6830,7 @@ export interface paths {
      * List items in a container
      * @description Returns all item instances in the specified container.
      */
-    post: operations['listItemsByContainer'];
+    post: operations['item_listItemsByContainer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6764,7 +6850,7 @@ export interface paths {
      * Get multiple item instances by ID
      * @description Retrieves multiple item instances in a single request.
      */
-    post: operations['batchGetItemInstances'];
+    post: operations['item_batchGetItemInstances'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6785,7 +6871,7 @@ export interface paths {
      * @description Create a new leaderboard with specified properties.
      *     Developer-only endpoint for setting up game leaderboards.
      */
-    post: operations['createLeaderboardDefinition'];
+    post: operations['leaderboard_createLeaderboardDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6806,7 +6892,7 @@ export interface paths {
      * @description Update properties of an existing leaderboard.
      *     Developer-only endpoint.
      */
-    post: operations['updateLeaderboardDefinition'];
+    post: operations['leaderboard_updateLeaderboardDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6827,7 +6913,7 @@ export interface paths {
      * @description Delete a leaderboard and all its scores.
      *     Developer-only endpoint. This action is irreversible.
      */
-    post: operations['deleteLeaderboardDefinition'];
+    post: operations['leaderboard_deleteLeaderboardDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6847,7 +6933,7 @@ export interface paths {
      * Get entity's rank
      * @description Get the current rank and score for a specific entity.
      */
-    post: operations['getEntityRank'];
+    post: operations['leaderboard_getEntityRank'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6867,7 +6953,7 @@ export interface paths {
      * Get top entries
      * @description Get the top N entries on a leaderboard.
      */
-    post: operations['getTopRanks'];
+    post: operations['leaderboard_getTopRanks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6888,7 +6974,7 @@ export interface paths {
      * @description Get leaderboard entries surrounding a specific entity.
      *     Useful for showing a player's position with nearby competitors.
      */
-    post: operations['getRanksAround'];
+    post: operations['leaderboard_getRanksAround'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6908,7 +6994,7 @@ export interface paths {
      * Get current season info
      * @description Get information about the current or a specific past season.
      */
-    post: operations['getSeason'];
+    post: operations['leaderboard_getSeason'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6930,7 +7016,7 @@ export interface paths {
      *     and a reference to the contract template that controls unlock behavior.
      *     Board templates are scoped to a game service.
      */
-    post: operations['createBoardTemplate'];
+    post: operations['license_createBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6950,7 +7036,7 @@ export interface paths {
      * Get a board template by ID
      * @description Retrieves a board template by its unique identifier.
      */
-    post: operations['getBoardTemplate'];
+    post: operations['license_getBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6970,7 +7056,7 @@ export interface paths {
      * List board templates for a game service
      * @description Paginated list of board templates filtered by game service ID.
      */
-    post: operations['listBoardTemplates'];
+    post: operations['license_listBoardTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -6991,7 +7077,7 @@ export interface paths {
      * @description Update mutable fields of a board template. Grid dimensions, starting nodes,
      *     and contract template are immutable after creation.
      */
-    post: operations['updateBoardTemplate'];
+    post: operations['license_updateBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7012,7 +7098,7 @@ export interface paths {
      * @description Delete a board template. Blocked if active board instances exist
      *     that reference this template.
      */
-    post: operations['deleteBoardTemplate'];
+    post: operations['license_deleteBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7035,7 +7121,7 @@ export interface paths {
      *     and a reference to the item template that is created when the license is unlocked.
      *     Optional non-adjacent prerequisites can reference other license codes on the board.
      */
-    post: operations['addLicenseDefinition'];
+    post: operations['license_addLicenseDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7055,7 +7141,7 @@ export interface paths {
      * Get a license definition
      * @description Get a license definition by board template ID and license code.
      */
-    post: operations['getLicenseDefinition'];
+    post: operations['license_getLicenseDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7075,7 +7161,7 @@ export interface paths {
      * List all license definitions for a board template
      * @description Returns the full grid layout of all license definitions for a board template.
      */
-    post: operations['listLicenseDefinitions'];
+    post: operations['license_listLicenseDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7096,7 +7182,7 @@ export interface paths {
      * @description Update mutable fields of a license definition. Position and code are immutable
      *     after creation.
      */
-    post: operations['updateLicenseDefinition'];
+    post: operations['license_updateLicenseDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7117,7 +7203,7 @@ export interface paths {
      * @description Remove a license definition from a board template. Blocked if any board
      *     instances have this license unlocked.
      */
-    post: operations['removeLicenseDefinition'];
+    post: operations['license_removeLicenseDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7141,7 +7227,7 @@ export interface paths {
      *     exists and resolves realm context. Creates an inventory container (slot_only,
      *     maxSlots = gridWidth * gridHeight) to hold unlocked license items.
      */
-    post: operations['createBoard'];
+    post: operations['license_createBoard'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7161,7 +7247,7 @@ export interface paths {
      * Get a board instance by ID
      * @description Retrieves a board instance by its unique identifier.
      */
-    post: operations['getBoard'];
+    post: operations['license_getBoard'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7181,7 +7267,7 @@ export interface paths {
      * List boards for an owner
      * @description List all board instances for an owner (by ownerType + ownerId), with optional game service filter.
      */
-    post: operations['listBoardsByOwner'];
+    post: operations['license_listBoardsByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7202,7 +7288,7 @@ export interface paths {
      * @description Delete a board instance. Destroys the inventory container and all license
      *     items within it.
      */
-    post: operations['deleteBoard'];
+    post: operations['license_deleteBoard'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7226,7 +7312,7 @@ export interface paths {
      *     item instance and places it in the board container. Atomic: if contract
      *     execution fails, no license is placed.
      */
-    post: operations['unlockLicense'];
+    post: operations['license_unlockLicense'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7248,7 +7334,7 @@ export interface paths {
      *     adjacency status, prerequisite status, and whether the character has
      *     sufficient LP.
      */
-    post: operations['checkUnlockable'];
+    post: operations['license_checkUnlockable'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7270,7 +7356,7 @@ export interface paths {
      *     (unlocked, locked, unlockable) and adjacency info. Primary endpoint for
      *     client UI rendering.
      */
-    post: operations['getBoardState'];
+    post: operations['license_getBoardState'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7291,7 +7377,7 @@ export interface paths {
      * @description Bulk seed a board template with license definitions from a JSON payload.
      *     Two-pass: creates definitions, then resolves prerequisite references.
      */
-    post: operations['seedBoardTemplate'];
+    post: operations['license_seedBoardTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7315,7 +7401,7 @@ export interface paths {
      *     not gameplay). Publishes a single license.board.cloned event.
      *     Does not publish individual license.unlocked events.
      */
-    post: operations['cloneBoard'];
+    post: operations['license_cloneBoard'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7339,7 +7425,7 @@ export interface paths {
      *     This endpoint is designed for internal service-to-service calls during
      *     cascading resource cleanup.
      */
-    post: operations['cleanupByOwner'];
+    post: operations['license_cleanupByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7356,7 +7442,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get location by ID */
-    post: operations['getLocation'];
+    post: operations['location_getLocation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7376,7 +7462,7 @@ export interface paths {
      * Get location by code and realm
      * @description Retrieve a location using its unique code within a specific realm
      */
-    post: operations['getLocationByCode'];
+    post: operations['location_getLocationByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7396,7 +7482,7 @@ export interface paths {
      * List locations with filtering
      * @description Retrieve locations with optional realm, parent, and type filtering
      */
-    post: operations['listLocations'];
+    post: operations['location_listLocations'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7418,7 +7504,7 @@ export interface paths {
      *     location type and parent. This is the primary access pattern for
      *     realm-scoped location queries.
      */
-    post: operations['listLocationsByRealm'];
+    post: operations['location_listLocationsByRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7439,7 +7525,7 @@ export interface paths {
      * @description Retrieve all locations that have the specified location as their parent.
      *     Useful for getting all cities in a region, all buildings in a city, etc.
      */
-    post: operations['listLocationsByParent'];
+    post: operations['location_listLocationsByParent'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7460,7 +7546,7 @@ export interface paths {
      * @description Returns all top-level locations in a realm (locations with no parent).
      *     These are typically regions or major areas within the realm.
      */
-    post: operations['listRootLocations'];
+    post: operations['location_listRootLocations'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7482,7 +7568,7 @@ export interface paths {
      *     root location (parentLocationId=null). For example, for a specific building
      *     might return [district, city, region].
      */
-    post: operations['getLocationAncestors'];
+    post: operations['location_getLocationAncestors'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7507,7 +7593,7 @@ export interface paths {
      *     - exclusive: Location must NOT be within any territory location (or descendants)
      *     - inclusive: Location MUST be within at least one territory location (or descendants)
      */
-    post: operations['validateTerritory'];
+    post: operations['location_validateTerritory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7529,7 +7615,7 @@ export interface paths {
      *     (direct children, grandchildren, etc.). Useful for finding all places
      *     within a region or city.
      */
-    post: operations['getLocationDescendants'];
+    post: operations['location_getLocationDescendants'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7550,7 +7636,7 @@ export interface paths {
      * @description Fast validation endpoint for other services to check location validity.
      *     Returns true if location exists and is not deprecated, false otherwise.
      */
-    post: operations['locationExists'];
+    post: operations['location_locationExists'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7573,7 +7659,7 @@ export interface paths {
      *     locations with spatial bounds data are considered. A position is "in" a
      *     location if it falls within the location's axis-aligned bounding box.
      */
-    post: operations['queryLocationsByPosition'];
+    post: operations['location_queryLocationsByPosition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7600,7 +7686,7 @@ export interface paths {
      *     and matches the current stored location, only a TTL refresh occurs (no GET needed).
      *     If omitted, the service reads the current value to detect location changes.
      */
-    post: operations['reportEntityPosition'];
+    post: operations['location_reportEntityPosition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7621,7 +7707,7 @@ export interface paths {
      * @description Queries where an entity currently is. Returns the entity's location if a
      *     non-expired presence binding exists.
      */
-    post: operations['getEntityLocation'];
+    post: operations['location_getEntityLocation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7643,7 +7729,7 @@ export interface paths {
      *     entity type filtering and pagination. Results are hydrated from the entity
      *     presence store for reporting metadata.
      */
-    post: operations['listEntitiesAtLocation'];
+    post: operations['location_listEntitiesAtLocation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7664,7 +7750,7 @@ export interface paths {
      * @description Clears an entity's presence binding, removing it from its current location.
      *     Publishes a departure event if the entity was present at a location.
      */
-    post: operations['clearEntityPosition'];
+    post: operations['location_clearEntityPosition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7686,7 +7772,7 @@ export interface paths {
      *     Returns current snapshot of requested region/kinds.
      *     For very large maps, payloadRef points to lib-asset storage.
      */
-    post: operations['requestSnapshot'];
+    post: operations['mapping_requestSnapshot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7708,7 +7794,7 @@ export interface paths {
      *     Used by behavior stacks for contextual decisions.
      *     Optionally includes objects within radius.
      */
-    post: operations['queryPoint'];
+    post: operations['mapping_queryPoint'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7730,7 +7816,7 @@ export interface paths {
      *     For event actors needing region overview.
      *     Limited to maxObjects per kind.
      */
-    post: operations['queryBounds'];
+    post: operations['mapping_queryBounds'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7751,7 +7837,7 @@ export interface paths {
      * @description Returns all objects matching an objectType filter.
      *     For event actors asking "where are all the boulder clusters?"
      */
-    post: operations['queryObjectsByType'];
+    post: operations['mapping_queryObjectsByType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7780,7 +7866,7 @@ export interface paths {
      *     Well-known types have predefined scoring; use affordanceType=custom
      *     with customAffordance for novel scenarios.
      */
-    post: operations['queryAffordance'];
+    post: operations['mapping_queryAffordance'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7802,7 +7888,7 @@ export interface paths {
      *     Game servers do NOT use this - they use create-channel for implicit authority.
      *     Returns authority token for publishing edits.
      */
-    post: operations['checkoutForAuthoring'];
+    post: operations['mapping_checkoutForAuthoring'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7823,7 +7909,7 @@ export interface paths {
      * @description Commits pending changes and releases the checkout lock.
      *     Optionally includes a commit message for history.
      */
-    post: operations['commitAuthoring'];
+    post: operations['mapping_commitAuthoring'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7844,7 +7930,7 @@ export interface paths {
      * @description Discards pending changes and releases the checkout lock.
      *     Use when abandoning edits.
      */
-    post: operations['releaseAuthoring'];
+    post: operations['mapping_releaseAuthoring'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7866,7 +7952,7 @@ export interface paths {
      *     of a region. Definitions are templates that can be used to bootstrap
      *     channels with predefined layer configurations.
      */
-    post: operations['createDefinition'];
+    post: operations['mapping_createDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7886,7 +7972,7 @@ export interface paths {
      * Get a map definition by ID
      * @description Returns the full map definition including all layer configurations.
      */
-    post: operations['getDefinition'];
+    post: operations['mapping_getDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7906,7 +7992,7 @@ export interface paths {
      * List map definitions with optional filters
      * @description Returns a paginated list of map definitions.
      */
-    post: operations['listDefinitions'];
+    post: operations['mapping_listDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7927,7 +8013,7 @@ export interface paths {
      * @description Updates an existing map definition. Cannot change the definition ID.
      *     Layer configurations can be modified.
      */
-    post: operations['updateDefinition'];
+    post: operations['mapping_updateDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7948,7 +8034,7 @@ export interface paths {
      * @description List all available matchmaking queues that players can join.
      *     Returns queue configuration details including skill settings.
      */
-    post: operations['listQueues'];
+    post: operations['matchmaking_listQueues'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7968,7 +8054,7 @@ export interface paths {
      * Get queue details
      * @description Get detailed configuration for a specific matchmaking queue.
      */
-    post: operations['getQueue'];
+    post: operations['matchmaking_getQueue'];
     delete?: never;
     options?: never;
     head?: never;
@@ -7991,7 +8077,7 @@ export interface paths {
      *     Returns immediately after ticket creation. Match results are delivered
      *     via WebSocket push events.
      */
-    post: operations['joinMatchmaking'];
+    post: operations['matchmaking_joinMatchmaking'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8012,7 +8098,7 @@ export interface paths {
      * @description Leave a matchmaking queue and cancel the ticket.
      *     Only available when actively in a queue (shortcut/prebound).
      */
-    post: operations['leaveMatchmaking'];
+    post: operations['matchmaking_leaveMatchmaking'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8033,7 +8119,7 @@ export interface paths {
      * @description Get current matchmaking status for the player's active ticket.
      *     Only available when actively in a queue (shortcut/prebound).
      */
-    post: operations['getMatchmakingStatus'];
+    post: operations['matchmaking_getMatchmakingStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8055,7 +8141,7 @@ export interface paths {
      *     is pending acceptance (shortcut/prebound after match formation).
      *     All players must accept within the timeout for the match to start.
      */
-    post: operations['acceptMatch'];
+    post: operations['matchmaking_acceptMatch'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8077,7 +8163,7 @@ export interface paths {
      *     is pending acceptance (shortcut/prebound after match formation).
      *     Declining cancels the match for all participants.
      */
-    post: operations['declineMatch'];
+    post: operations['matchmaking_declineMatch'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8098,7 +8184,7 @@ export interface paths {
      * @description Get operational statistics for matchmaking queues.
      *     Includes queue depths, average wait times, and match rates.
      */
-    post: operations['getMatchmakingStats'];
+    post: operations['matchmaking_getMatchmakingStats'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8119,7 +8205,7 @@ export interface paths {
      * @description Generates a complete musical composition using the specified style definition
      *     and compositional constraints. Returns MIDI-JSON format output.
      */
-    post: operations['GenerateComposition'];
+    post: operations['music_GenerateComposition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8140,7 +8226,7 @@ export interface paths {
      * @description Validates a MIDI-JSON structure for correctness including note ranges,
      *     timing, and format compliance.
      */
-    post: operations['ValidateMidiJson'];
+    post: operations['music_ValidateMidiJson'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8161,7 +8247,7 @@ export interface paths {
      * @description Retrieves a style definition by ID or name. Styles define mode preferences,
      *     interval rules, form templates, and genre-specific parameters.
      */
-    post: operations['GetStyle'];
+    post: operations['music_GetStyle'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8181,7 +8267,7 @@ export interface paths {
      * List available styles
      * @description Lists all available style definitions with optional filtering by category.
      */
-    post: operations['ListStyles'];
+    post: operations['music_ListStyles'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8203,7 +8289,7 @@ export interface paths {
      *     Supports multiple harmonic styles including functional harmony,
      *     modal interchange, and jazz voicings.
      */
-    post: operations['GenerateProgression'];
+    post: operations['music_GenerateProgression'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8224,7 +8310,7 @@ export interface paths {
      * @description Generates a melodic line over a chord progression using contour rules,
      *     interval preferences, and rhythmic patterns from the specified style.
      */
-    post: operations['GenerateMelody'];
+    post: operations['music_GenerateMelody'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8245,7 +8331,7 @@ export interface paths {
      * @description Applies voice leading rules to a chord sequence, ensuring smooth
      *     part-writing according to traditional or style-specific rules.
      */
-    post: operations['ApplyVoiceLeading'];
+    post: operations['music_ApplyVoiceLeading'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8276,7 +8362,7 @@ export interface paths {
      *     needed when the vocabularies differ or when one action triggers multiple
      *     violation types (e.g., "attack_surrendered_enemy" → ["honor_combat", "show_mercy"]).
      */
-    post: operations['setActionMapping'];
+    post: operations['obligation_setActionMapping'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8297,7 +8383,7 @@ export interface paths {
      * @description Returns all registered action tag to violation type mappings.
      *     Supports cursor-based pagination and optional text search.
      */
-    post: operations['listActionMappings'];
+    post: operations['obligation_listActionMappings'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8318,7 +8404,7 @@ export interface paths {
      * @description Removes a registered action tag mapping. After deletion, the tag will
      *     fall back to convention-based 1:1 matching (tag name == violation type code).
      */
-    post: operations['deleteActionMapping'];
+    post: operations['obligation_deleteActionMapping'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8340,7 +8426,7 @@ export interface paths {
      *     Supports filtering by contract, violation type, and time range.
      *     Ordered by timestamp descending (most recent first).
      */
-    post: operations['queryViolations'];
+    post: operations['obligation_queryViolations'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8365,7 +8451,7 @@ export interface paths {
      *     Normally, the cache is maintained automatically via contract lifecycle
      *     events. This endpoint is for administrative and debugging purposes.
      */
-    post: operations['invalidateCache'];
+    post: operations['obligation_invalidateCache'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8386,7 +8472,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns violation history and cached obligation state for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['obligation_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8409,7 +8495,7 @@ export interface paths {
      *     specified character. This endpoint is designed for internal
      *     service-to-service calls during cascading resource cleanup.
      */
-    post: operations['cleanupByCharacter'];
+    post: operations['obligation_cleanupByCharacter'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8430,7 +8516,7 @@ export interface paths {
      * @description Starts a regional watcher for the specified realm with the given behavior.
      *     If a watcher already exists for this realm and watcher type, returns the existing watcher.
      */
-    post: operations['startWatcher'];
+    post: operations['puppetmaster_startWatcher'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8450,7 +8536,7 @@ export interface paths {
      * Stop a regional watcher
      * @description Stops an active regional watcher by its ID.
      */
-    post: operations['stopWatcher'];
+    post: operations['puppetmaster_stopWatcher'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8471,7 +8557,7 @@ export interface paths {
      * @description Starts all applicable regional watchers for the specified realm.
      *     Uses configured watcher templates to determine which watchers to start.
      */
-    post: operations['startWatchersForRealm'];
+    post: operations['puppetmaster_startWatchersForRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8491,7 +8577,7 @@ export interface paths {
      * Create a new quest definition
      * @description Creates a quest definition wrapping a contract template with quest metadata.
      */
-    post: operations['createQuestDefinition'];
+    post: operations['quest_createQuestDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8511,7 +8597,7 @@ export interface paths {
      * Get quest definition by ID or code
      * @description Retrieves a quest definition by its unique identifier or code.
      */
-    post: operations['getQuestDefinition'];
+    post: operations['quest_getQuestDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8531,7 +8617,7 @@ export interface paths {
      * List quest definitions with filtering
      * @description Lists quest definitions with optional filtering by category, difficulty, tags.
      */
-    post: operations['listQuestDefinitions'];
+    post: operations['quest_listQuestDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8551,7 +8637,7 @@ export interface paths {
      * Update quest definition metadata
      * @description Updates quest metadata (not contract template - that's immutable).
      */
-    post: operations['updateQuestDefinition'];
+    post: operations['quest_updateQuestDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8571,7 +8657,7 @@ export interface paths {
      * Mark quest definition as deprecated
      * @description Marks a quest definition as deprecated. No new instances can be created.
      */
-    post: operations['deprecateQuestDefinition'];
+    post: operations['quest_deprecateQuestDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8591,7 +8677,7 @@ export interface paths {
      * Accept a quest
      * @description Creates a contract instance and auto-consents for the questor. Returns the active quest.
      */
-    post: operations['acceptQuest'];
+    post: operations['quest_acceptQuest'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8611,7 +8697,7 @@ export interface paths {
      * Abandon an active quest
      * @description Terminates the underlying contract and marks the quest as abandoned.
      */
-    post: operations['abandonQuest'];
+    post: operations['quest_abandonQuest'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8631,7 +8717,7 @@ export interface paths {
      * Get quest instance details
      * @description Retrieves detailed quest instance information including objectives.
      */
-    post: operations['getQuest'];
+    post: operations['quest_getQuest'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8651,7 +8737,7 @@ export interface paths {
      * List character's quests
      * @description Lists quests for a character filtered by status.
      */
-    post: operations['listQuests'];
+    post: operations['quest_listQuests'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8671,7 +8757,7 @@ export interface paths {
      * List quests available to accept
      * @description Lists quests a character can accept (prerequisites met, not on cooldown, not active).
      */
-    post: operations['listAvailableQuests'];
+    post: operations['quest_listAvailableQuests'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8691,7 +8777,7 @@ export interface paths {
      * Get player-facing quest log
      * @description Returns UI-optimized quest log with progress summaries.
      */
-    post: operations['getQuestLog'];
+    post: operations['quest_getQuestLog'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8711,7 +8797,7 @@ export interface paths {
      * Report progress on an objective
      * @description Manually reports progress on a quest objective. Used by game systems.
      */
-    post: operations['reportObjectiveProgress'];
+    post: operations['quest_reportObjectiveProgress'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8731,7 +8817,7 @@ export interface paths {
      * Get objective progress details
      * @description Returns detailed progress information for a specific objective.
      */
-    post: operations['getObjectiveProgress'];
+    post: operations['quest_getObjectiveProgress'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8752,7 +8838,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns active quests, completion counts, and category breakdown for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['quest_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8769,7 +8855,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get realm by ID */
-    post: operations['getRealm'];
+    post: operations['realm_getRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8789,7 +8875,7 @@ export interface paths {
      * Get realm by code
      * @description Retrieve a realm using its unique code (e.g., "REALM_1", "REALM_2")
      */
-    post: operations['getRealmByCode'];
+    post: operations['realm_getRealmByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8809,7 +8895,7 @@ export interface paths {
      * List all realms
      * @description Retrieve all realms with optional filtering
      */
-    post: operations['listRealms'];
+    post: operations['realm_listRealms'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8830,7 +8916,7 @@ export interface paths {
      * @description Fast validation endpoint for other services to check realm validity.
      *     Returns true if realm exists and is not deprecated, false otherwise.
      */
-    post: operations['realmExists'];
+    post: operations['realm_realmExists'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8852,7 +8938,7 @@ export interface paths {
      *     Returns validation results for each realm ID in a single call, avoiding
      *     N+1 API calls when validating multiple realms.
      */
-    post: operations['realmsExistBatch'];
+    post: operations['realm_realmsExistBatch'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8873,7 +8959,7 @@ export interface paths {
      * @description Retrieves all historical event participation records for a realm.
      *     Supports filtering by event category and minimum impact.
      */
-    post: operations['getRealmParticipation'];
+    post: operations['realmHistory_getRealmParticipation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8894,7 +8980,7 @@ export interface paths {
      * @description Retrieves all realms that participated in a specific historical event.
      *     Useful for generating event summaries or finding related realms.
      */
-    post: operations['getRealmEventParticipants'];
+    post: operations['realmHistory_getRealmEventParticipants'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8916,7 +9002,7 @@ export interface paths {
      *     are machine-readable key-value pairs used by the behavior system for
      *     decision-making, not narrative text for players.
      */
-    post: operations['getRealmLore'];
+    post: operations['realmHistory_getRealmLore'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8933,7 +9019,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get a relationship by ID */
-    post: operations['getRelationship'];
+    post: operations['relationship_getRelationship'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8955,7 +9041,7 @@ export interface paths {
      *     entity1 or entity2. Supports filtering by relationship type,
      *     other entity type, and whether to include ended relationships.
      */
-    post: operations['listRelationshipsByEntity'];
+    post: operations['relationship_listRelationshipsByEntity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8976,7 +9062,7 @@ export interface paths {
      * @description Returns all relationships that exist between two specific entities,
      *     regardless of which is entity1 or entity2.
      */
-    post: operations['getRelationshipsBetween'];
+    post: operations['relationship_getRelationshipsBetween'];
     delete?: never;
     options?: never;
     head?: never;
@@ -8997,7 +9083,7 @@ export interface paths {
      * @description Returns all relationships that use a specific relationship type.
      *     Useful for finding all "FRIEND" relationships, for example.
      */
-    post: operations['listRelationshipsByType'];
+    post: operations['relationship_listRelationshipsByType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9021,7 +9107,7 @@ export interface paths {
      *     preserved for history (soft-delete via endedAt). This endpoint is designed
      *     for internal service-to-service calls during cascading resource cleanup.
      */
-    post: operations['cleanupByEntity'];
+    post: operations['relationship_cleanupByEntity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9038,7 +9124,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get relationship type by ID */
-    post: operations['getRelationshipType'];
+    post: operations['relationship_getRelationshipType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9058,7 +9144,7 @@ export interface paths {
      * Get relationship type by code
      * @description Retrieve a relationship type using its unique code (e.g., "SON", "MOTHER", "FRIEND")
      */
-    post: operations['getRelationshipTypeByCode'];
+    post: operations['relationship_getRelationshipTypeByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9078,7 +9164,7 @@ export interface paths {
      * List all relationship types
      * @description Retrieve all relationship types with optional hierarchy filtering
      */
-    post: operations['listRelationshipTypes'];
+    post: operations['relationship_listRelationshipTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9098,7 +9184,7 @@ export interface paths {
      * Get child types for a parent type
      * @description Retrieve all relationship types that have the specified type as their parent
      */
-    post: operations['getChildRelationshipTypes'];
+    post: operations['relationship_getChildRelationshipTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9120,7 +9206,7 @@ export interface paths {
      *     For example, "SON" matches "CHILD" because CHILD is an ancestor of SON.
      *     This enables queries like "find all CHILD relationships" to match SON, DAUGHTER, etc.
      */
-    post: operations['matchesHierarchy'];
+    post: operations['relationship_matchesHierarchy'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9141,7 +9227,7 @@ export interface paths {
      * @description Returns the full ancestry chain from the specified type up to the root.
      *     For example, for "SON" might return ["CHILD", "FAMILY"].
      */
-    post: operations['getAncestors'];
+    post: operations['relationship_getAncestors'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9162,7 +9248,7 @@ export interface paths {
      * @description Records that sourceType:sourceId references resourceType:resourceId.
      *     Typically called via event handlers, not directly.
      */
-    post: operations['registerReference'];
+    post: operations['resource_registerReference'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9183,7 +9269,7 @@ export interface paths {
      * @description Records that sourceType:sourceId no longer references resourceType:resourceId.
      *     Typically called via event handlers, not directly.
      */
-    post: operations['unregisterReference'];
+    post: operations['resource_unregisterReference'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9204,7 +9290,7 @@ export interface paths {
      * @description Returns the current reference count for a resource and whether it is
      *     eligible for cleanup (refcount=0 and grace period passed).
      */
-    post: operations['checkReferences'];
+    post: operations['resource_checkReferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9225,7 +9311,7 @@ export interface paths {
      * @description Returns all entities currently referencing a resource.
      *     Useful for debugging and understanding reference chains.
      */
-    post: operations['listReferences'];
+    post: operations['resource_listReferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9247,7 +9333,7 @@ export interface paths {
      *     re-validates under lock, then executes all cleanup callbacks.
      *     Returns Conflict if refcount changed during execution.
      */
-    post: operations['executeCleanup'];
+    post: operations['resource_executeCleanup'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9268,7 +9354,7 @@ export interface paths {
      * @description Returns all cleanup callbacks registered for a resource type.
      *     Useful for debugging and admin inspection of cleanup chains.
      */
-    post: operations['listCleanupCallbacks'];
+    post: operations['resource_listCleanupCallbacks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9300,7 +9386,7 @@ export interface paths {
      *     7. If deleteSourceData, invoke cleanup callbacks
      *     8. Publish resource.compressed event
      */
-    post: operations['executeCompress'];
+    post: operations['resource_executeCompress'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9321,7 +9407,7 @@ export interface paths {
      * @description Returns all compression callbacks registered for a resource type.
      *     Useful for debugging and admin inspection of compression chains.
      */
-    post: operations['listCompressCallbacks'];
+    post: operations['resource_listCompressCallbacks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9342,7 +9428,7 @@ export interface paths {
      * @description Retrieves a compressed archive by resource type and ID.
      *     Returns the latest version unless a specific archiveId is provided.
      */
-    post: operations['getArchive'];
+    post: operations['resource_getArchive'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9379,7 +9465,7 @@ export interface paths {
      *     - Regional Watchers for storyline composition
      *     - Analytics for living entity state capture
      */
-    post: operations['executeSnapshot'];
+    post: operations['resource_executeSnapshot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9403,7 +9489,7 @@ export interface paths {
      *     Snapshots are stored with TTL - if the TTL has elapsed, the snapshot
      *     is automatically deleted by Redis.
      */
-    post: operations['getSnapshot'];
+    post: operations['resource_getSnapshot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9425,7 +9511,7 @@ export interface paths {
      *     Slots are auto-created on first save, but pre-creation allows setting
      *     custom configuration (max versions, retention policy, etc.).
      */
-    post: operations['CreateSlot'];
+    post: operations['saveLoad_CreateSlot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9445,7 +9531,7 @@ export interface paths {
      * Get slot metadata
      * @description Returns slot configuration and version summary.
      */
-    post: operations['GetSlot'];
+    post: operations['saveLoad_GetSlot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9465,7 +9551,7 @@ export interface paths {
      * List slots for owner
      * @description Returns all slots owned by the specified entity.
      */
-    post: operations['ListSlots'];
+    post: operations['saveLoad_ListSlots'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9486,7 +9572,7 @@ export interface paths {
      * @description Permanently deletes a slot and all save versions within it.
      *     This is irreversible. Requires owner access or admin role.
      */
-    post: operations['DeleteSlot'];
+    post: operations['saveLoad_DeleteSlot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9507,7 +9593,7 @@ export interface paths {
      * @description Renames an existing slot without affecting its versions or data.
      *     The new name must not already exist for this owner.
      */
-    post: operations['RenameSlot'];
+    post: operations['saveLoad_RenameSlot'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9531,7 +9617,7 @@ export interface paths {
      *     Large saves (>1MB by default) are automatically compressed.
      *     Rolling version cleanup is applied based on slot configuration.
      */
-    post: operations['Save'];
+    post: operations['saveLoad_Save'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9552,7 +9638,7 @@ export interface paths {
      * @description Retrieves save data from the specified slot. By default, loads the
      *     latest version. Optionally specify a version number or checkpoint name.
      */
-    post: operations['Load'];
+    post: operations['saveLoad_Load'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9579,7 +9665,7 @@ export interface paths {
      *
      *     Delta versions store only the patch; full data is reconstructed on load.
      */
-    post: operations['SaveDelta'];
+    post: operations['saveLoad_SaveDelta'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9603,7 +9689,7 @@ export interface paths {
      *     For performance, the service may cache reconstructed data or collapse
      *     delta chains during background cleanup.
      */
-    post: operations['LoadWithDeltas'];
+    post: operations['saveLoad_LoadWithDeltas'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9624,7 +9710,7 @@ export interface paths {
      * @description Collapses a chain of delta versions into a single full snapshot.
      *     Useful for reducing load latency or before deleting base versions.
      */
-    post: operations['CollapseDeltas'];
+    post: operations['saveLoad_CollapseDeltas'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9644,7 +9730,7 @@ export interface paths {
      * List versions in slot
      * @description Returns all versions in a slot with metadata.
      */
-    post: operations['ListVersions'];
+    post: operations['saveLoad_ListVersions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9665,7 +9751,7 @@ export interface paths {
      * @description Pins a specific version, excluding it from rolling cleanup.
      *     Optionally assigns a checkpoint name for easy retrieval.
      */
-    post: operations['PinVersion'];
+    post: operations['saveLoad_PinVersion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9685,7 +9771,7 @@ export interface paths {
      * Unpin a version
      * @description Removes pin from a version, making it eligible for rolling cleanup.
      */
-    post: operations['UnpinVersion'];
+    post: operations['saveLoad_UnpinVersion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9706,7 +9792,7 @@ export interface paths {
      * @description Permanently deletes a specific version from a slot.
      *     Cannot delete pinned versions; unpin first.
      */
-    post: operations['DeleteVersion'];
+    post: operations['saveLoad_DeleteVersion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9727,7 +9813,7 @@ export interface paths {
      * @description Search and filter saves across slots. Supports filtering by owner,
      *     category, date range, metadata, and more. Paginated results.
      */
-    post: operations['QuerySaves'];
+    post: operations['saveLoad_QuerySaves'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9748,7 +9834,7 @@ export interface paths {
      * @description Copies a save version to a different slot or owner.
      *     Can copy to same owner (different slot) or different owner (with admin).
      */
-    post: operations['CopySave'];
+    post: operations['saveLoad_CopySave'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9769,7 +9855,7 @@ export interface paths {
      * @description Exports one or more slots with all versions as a downloadable archive.
      *     Returns a pre-signed URL to download the export bundle.
      */
-    post: operations['ExportSaves'];
+    post: operations['saveLoad_ExportSaves'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9790,7 +9876,7 @@ export interface paths {
      * @description Verifies the integrity of stored save data by comparing content hash
      *     against the stored SHA-256 hash. Detects corruption or tampering.
      */
-    post: operations['VerifyIntegrity'];
+    post: operations['saveLoad_VerifyIntegrity'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9811,7 +9897,7 @@ export interface paths {
      * @description Creates a new version from an existing older version, effectively
      *     "promoting" it to be the latest. Useful for rollback scenarios.
      */
-    post: operations['PromoteVersion'];
+    post: operations['saveLoad_PromoteVersion'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9832,7 +9918,7 @@ export interface paths {
      * @description Applies migration handlers to upgrade a save from one schema version
      *     to another. Creates a new version with the migrated data.
      */
-    post: operations['MigrateSave'];
+    post: operations['saveLoad_MigrateSave'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9853,7 +9939,7 @@ export interface paths {
      * @description Registers a JSON schema for validation of save data.
      *     Optionally includes migration handlers from previous versions.
      */
-    post: operations['RegisterSchema'];
+    post: operations['saveLoad_RegisterSchema'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9873,7 +9959,7 @@ export interface paths {
      * List registered schemas
      * @description Returns all registered schemas for a game/namespace.
      */
-    post: operations['ListSchemas'];
+    post: operations['saveLoad_ListSchemas'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9895,7 +9981,7 @@ export interface paths {
      *     Publishes scene.created event on success.
      *     Returns Conflict if a scene with the same sceneId already exists.
      */
-    post: operations['createScene'];
+    post: operations['scene_createScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9916,7 +10002,7 @@ export interface paths {
      * @description Retrieves a scene document. Optionally resolves nested scene references
      *     up to a configurable depth.
      */
-    post: operations['getScene'];
+    post: operations['scene_getScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9937,7 +10023,7 @@ export interface paths {
      * @description Lists scenes matching the provided filters. Supports pagination.
      *     Results are ordered by updatedAt descending (most recent first).
      */
-    post: operations['listScenes'];
+    post: operations['scene_listScenes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9959,7 +10045,7 @@ export interface paths {
      *     another user. Increments the PATCH version automatically.
      *     Publishes scene.updated event on success.
      */
-    post: operations['updateScene'];
+    post: operations['scene_updateScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -9981,7 +10067,7 @@ export interface paths {
      *     for approximately 30 days. Cannot delete if other scenes reference this one.
      *     Publishes scene.deleted event on success.
      */
-    post: operations['deleteScene'];
+    post: operations['scene_deleteScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10002,7 +10088,7 @@ export interface paths {
      * @description Validates a scene document without saving it. Checks structural validity
      *     and optionally applies game-specific validation rules.
      */
-    post: operations['validateScene'];
+    post: operations['scene_validateScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10024,7 +10110,7 @@ export interface paths {
      *     Returns a checkout token required for commit.
      *     Lock expires after TTL if not extended via heartbeat.
      */
-    post: operations['checkoutScene'];
+    post: operations['scene_checkoutScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10045,7 +10131,7 @@ export interface paths {
      * @description Commits the changes made during checkout, increments version,
      *     and releases the lock. Publishes scene.committed event.
      */
-    post: operations['commitScene'];
+    post: operations['scene_commitScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10066,7 +10152,7 @@ export interface paths {
      * @description Discards any changes and releases the checkout lock.
      *     Scene remains at its pre-checkout version.
      */
-    post: operations['discardCheckout'];
+    post: operations['scene_discardCheckout'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10087,7 +10173,7 @@ export interface paths {
      * @description Extends the checkout lock TTL. Should be called periodically
      *     during editing to prevent lock expiration.
      */
-    post: operations['heartbeatCheckout'];
+    post: operations['scene_heartbeatCheckout'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10108,7 +10194,7 @@ export interface paths {
      * @description Returns the version history for a scene, up to the configured
      *     retention limit per gameId.
      */
-    post: operations['getSceneHistory'];
+    post: operations['scene_getSceneHistory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10129,7 +10215,7 @@ export interface paths {
      * @description Retrieves the registered validation rules for a specific
      *     gameId and sceneType combination.
      */
-    post: operations['getValidationRules'];
+    post: operations['scene_getValidationRules'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10150,7 +10236,7 @@ export interface paths {
      * @description Searches scene names, descriptions, tags, and node names
      *     for matching content.
      */
-    post: operations['searchScenes'];
+    post: operations['scene_searchScenes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10171,7 +10257,7 @@ export interface paths {
      * @description Returns all scenes that contain reference nodes pointing
      *     to the specified scene.
      */
-    post: operations['findReferences'];
+    post: operations['scene_findReferences'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10192,7 +10278,7 @@ export interface paths {
      * @description Returns all scenes containing nodes that reference
      *     a specific asset ID.
      */
-    post: operations['findAssetUsage'];
+    post: operations['scene_findAssetUsage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10213,7 +10299,7 @@ export interface paths {
      * @description Creates a copy of a scene with a new sceneId and name.
      *     All node IDs are regenerated. Version resets to 1.0.0.
      */
-    post: operations['duplicateScene'];
+    post: operations['scene_duplicateScene'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10233,7 +10319,7 @@ export interface paths {
      * Create a new seed
      * @description Creates a new seed bound to the specified owner. The seed type must be registered and the owner type must be allowed by the seed type definition. Returns conflict if creating this seed would exceed the type's MaxPerOwner limit.
      */
-    post: operations['CreateSeed'];
+    post: operations['seed_CreateSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10253,7 +10339,7 @@ export interface paths {
      * Get seed by ID
      * @description Returns the seed entity with current growth phase and summary data.
      */
-    post: operations['GetSeed'];
+    post: operations['seed_GetSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10273,7 +10359,7 @@ export interface paths {
      * Get seeds by owner ID and type
      * @description Returns all seeds owned by the specified entity. Optionally filter by seed type code and status.
      */
-    post: operations['GetSeedsByOwner'];
+    post: operations['seed_GetSeedsByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10293,7 +10379,7 @@ export interface paths {
      * List seeds with filtering
      * @description Returns seeds matching the specified filters. Supports filtering by seed type, owner type, growth phase, status, and game service.
      */
-    post: operations['ListSeeds'];
+    post: operations['seed_ListSeeds'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10313,7 +10399,7 @@ export interface paths {
      * Update seed metadata or display name
      * @description Updates mutable fields of a seed. Cannot change owner or seed type.
      */
-    post: operations['UpdateSeed'];
+    post: operations['seed_UpdateSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10333,7 +10419,7 @@ export interface paths {
      * Set a seed as active
      * @description Activates the specified seed. Only one seed of a given type can be active per owner at a time. Deactivates any previously active seed of the same type.
      */
-    post: operations['ActivateSeed'];
+    post: operations['seed_ActivateSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10353,7 +10439,7 @@ export interface paths {
      * Archive a seed
      * @description Soft-deletes a seed, preserving its data but removing it from active rotation. Archived seeds do not count toward the MaxPerOwner limit. Cannot archive an active seed.
      */
-    post: operations['ArchiveSeed'];
+    post: operations['seed_ArchiveSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10373,7 +10459,7 @@ export interface paths {
      * Get full growth domain map
      * @description Returns the complete growth domain map for a seed, including all top-level and sub-domain entries with their current depth values.
      */
-    post: operations['GetGrowth'];
+    post: operations['seed_GetGrowth'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10393,7 +10479,7 @@ export interface paths {
      * Record growth in a domain
      * @description Records growth in a specific domain for a seed. Primarily called internally by consuming services after processing game events. Triggers capability manifest recomputation if thresholds are crossed.
      */
-    post: operations['RecordGrowth'];
+    post: operations['seed_RecordGrowth'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10413,7 +10499,7 @@ export interface paths {
      * Record growth across multiple domains atomically
      * @description Records growth across multiple domains in a single atomic operation. Useful when a single game event contributes to multiple domains simultaneously.
      */
-    post: operations['RecordGrowthBatch'];
+    post: operations['seed_RecordGrowthBatch'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10433,7 +10519,7 @@ export interface paths {
      * Get current growth phase
      * @description Returns the current computed growth phase for the seed, based on the seed type's configured phase thresholds.
      */
-    post: operations['GetGrowthPhase'];
+    post: operations['seed_GetGrowthPhase'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10453,7 +10539,7 @@ export interface paths {
      * Get current capability manifest
      * @description Returns the most recently computed capability manifest for the seed. Consumers interpret what capabilities mean (UX modules, spawning permissions, faction actions, etc.).
      */
-    post: operations['GetCapabilityManifest'];
+    post: operations['seed_GetCapabilityManifest'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10473,7 +10559,7 @@ export interface paths {
      * Register a new seed type definition
      * @description Registers a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed types are scoped to game services.
      */
-    post: operations['RegisterSeedType'];
+    post: operations['seed_RegisterSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10493,7 +10579,7 @@ export interface paths {
      * Get seed type definition
      * @description Returns the full seed type definition including phases and capability rules.
      */
-    post: operations['GetSeedType'];
+    post: operations['seed_GetSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10513,7 +10599,7 @@ export interface paths {
      * List registered seed types
      * @description Returns all seed types registered for the specified game service.
      */
-    post: operations['ListSeedTypes'];
+    post: operations['seed_ListSeedTypes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10533,7 +10619,7 @@ export interface paths {
      * Update seed type definition
      * @description Updates a seed type definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.
      */
-    post: operations['UpdateSeedType'];
+    post: operations['seed_UpdateSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10553,7 +10639,7 @@ export interface paths {
      * Deprecate a seed type
      * @description Marks a seed type as deprecated. Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated before it can be deleted.
      */
-    post: operations['DeprecateSeedType'];
+    post: operations['seed_DeprecateSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10573,7 +10659,7 @@ export interface paths {
      * Restore a deprecated seed type
      * @description Removes deprecated status from a seed type, allowing new seeds of this type to be created again.
      */
-    post: operations['UndeprecateSeedType'];
+    post: operations['seed_UndeprecateSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10593,7 +10679,7 @@ export interface paths {
      * Delete a seed type
      * @description Hard deletes a deprecated seed type. Fails if any non-archived seeds of this type exist. Must deprecate first, then ensure all seeds are archived or deleted before calling this endpoint.
      */
-    post: operations['DeleteSeedType'];
+    post: operations['seed_DeleteSeedType'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10613,7 +10699,7 @@ export interface paths {
      * Begin bond process between seeds
      * @description Initiates a bond between seeds of the same type. All participants must confirm for the bond to become active. Returns conflict if any participant already has a bond and the type's cardinality is 1.
      */
-    post: operations['InitiateBond'];
+    post: operations['seed_InitiateBond'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10633,7 +10719,7 @@ export interface paths {
      * Confirm a pending bond
      * @description Confirms a pending bond. When all participants have confirmed, the bond becomes active. Bond permanence is determined by the seed type.
      */
-    post: operations['ConfirmBond'];
+    post: operations['seed_ConfirmBond'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10653,7 +10739,7 @@ export interface paths {
      * Get bond by ID
      * @description Returns the bond record with all participants and status.
      */
-    post: operations['GetBond'];
+    post: operations['seed_GetBond'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10673,7 +10759,7 @@ export interface paths {
      * Get bond for a specific seed
      * @description Returns the bond that the specified seed participates in, if any.
      */
-    post: operations['GetBondForSeed'];
+    post: operations['seed_GetBondForSeed'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10693,7 +10779,7 @@ export interface paths {
      * Get partner seed(s) public info
      * @description Returns public information about the other seeds in the bond.
      */
-    post: operations['GetBondPartners'];
+    post: operations['seed_GetBondPartners'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10710,7 +10796,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get species by ID */
-    post: operations['getSpecies'];
+    post: operations['species_getSpecies'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10730,7 +10816,7 @@ export interface paths {
      * Get species by code
      * @description Retrieve a species using its unique code (e.g., "HUMAN", "ELF", "DWARF")
      */
-    post: operations['getSpeciesByCode'];
+    post: operations['species_getSpeciesByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10750,7 +10836,7 @@ export interface paths {
      * List all species
      * @description Retrieve all species with optional realm filtering
      */
-    post: operations['listSpecies'];
+    post: operations['species_listSpecies'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10770,7 +10856,7 @@ export interface paths {
      * List species available in a realm
      * @description Retrieve all species that are available in a specific realm
      */
-    post: operations['listSpeciesByRealm'];
+    post: operations['species_listSpeciesByRealm'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10793,7 +10879,7 @@ export interface paths {
      *     inventory placement, and configures stacking behavior and optional contract
      *     integration for lifecycle management.
      */
-    post: operations['createStatusTemplate'];
+    post: operations['status_createStatusTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10813,7 +10899,7 @@ export interface paths {
      * Get a status template by ID
      * @description Retrieves a status template by its unique identifier.
      */
-    post: operations['getStatusTemplate'];
+    post: operations['status_getStatusTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10833,7 +10919,7 @@ export interface paths {
      * Get a status template by code
      * @description Retrieves a status template by its game service and unique code.
      */
-    post: operations['getStatusTemplateByCode'];
+    post: operations['status_getStatusTemplateByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10853,7 +10939,7 @@ export interface paths {
      * List status templates
      * @description Paginated list of status templates filtered by game service with optional category filter.
      */
-    post: operations['listStatusTemplates'];
+    post: operations['status_listStatusTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10873,7 +10959,7 @@ export interface paths {
      * Update a status template
      * @description Update mutable fields of a status template. Only non-null fields in the request are updated.
      */
-    post: operations['updateStatusTemplate'];
+    post: operations['status_updateStatusTemplate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10893,7 +10979,7 @@ export interface paths {
      * Bulk seed status templates
      * @description Bulk create status templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
      */
-    post: operations['seedStatusTemplates'];
+    post: operations['status_seedStatusTemplates'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10923,7 +11009,7 @@ export interface paths {
      *     - replace: removes existing, creates new
      *     - ignore: rejects if already present
      */
-    post: operations['grantStatus'];
+    post: operations['status_grantStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10945,7 +11031,7 @@ export interface paths {
      *     cancels any associated contract, deletes the instance record, and invalidates
      *     the active status cache.
      */
-    post: operations['removeStatus'];
+    post: operations['status_removeStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10965,7 +11051,7 @@ export interface paths {
      * Remove all statuses from a source
      * @description Remove all status instances granted by a specific source for an entity. Used for cascading removal when a source entity is deleted.
      */
-    post: operations['removeBySource'];
+    post: operations['status_removeBySource'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10985,7 +11071,7 @@ export interface paths {
      * Remove all statuses of a category (cleanse)
      * @description Remove all status instances of a given category for an entity. Used for cleanse mechanics (remove all debuffs, etc.).
      */
-    post: operations['removeByCategory'];
+    post: operations['status_removeByCategory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11005,7 +11091,7 @@ export interface paths {
      * Check if an entity has a specific status
      * @description Check if an entity has a specific status template code active. Returns the status instance ID and stack count if found.
      */
-    post: operations['hasStatus'];
+    post: operations['status_hasStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11027,7 +11113,7 @@ export interface paths {
      *     and seed-derived passive effect inclusion. Merges item-based statuses
      *     from cache with seed-derived effects when includePassive is true.
      */
-    post: operations['listStatuses'];
+    post: operations['status_listStatuses'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11047,7 +11133,7 @@ export interface paths {
      * Get a specific status instance
      * @description Retrieves a status instance by its unique identifier with full details including metadata.
      */
-    post: operations['getStatus'];
+    post: operations['status_getStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11069,7 +11155,7 @@ export interface paths {
      *     and seed-derived passive capabilities. Returns a unified view with source
      *     attribution via the effectSource field.
      */
-    post: operations['getEffects'];
+    post: operations['status_getEffects'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11091,7 +11177,7 @@ export interface paths {
      *     manifests across all seeds owned by the entity. Returns capabilities with
      *     domain, fidelity, and seed attribution.
      */
-    post: operations['getSeedEffects'];
+    post: operations['status_getSeedEffects'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11114,7 +11200,7 @@ export interface paths {
      *     account is deleted. Destroys inventory containers (cascades to items),
      *     deletes all instance records, and invalidates all caches.
      */
-    post: operations['cleanupByOwner'];
+    post: operations['status_cleanupByOwner'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11143,7 +11229,7 @@ export interface paths {
      *     4. Run GOAP planner to generate action sequences
      *     5. Cache plan and publish storyline.composed event
      */
-    post: operations['Compose'];
+    post: operations['storyline_Compose'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11164,7 +11250,7 @@ export interface paths {
      * @description Retrieves a previously generated storyline plan by its ID.
      *     Returns 404 if the plan has expired from cache or doesn't exist.
      */
-    post: operations['GetPlan'];
+    post: operations['storyline_GetPlan'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11185,7 +11271,7 @@ export interface paths {
      * @description Lists storyline plans in the cache, optionally filtered by realm.
      *     Plans are ordered by creation time (newest first).
      */
-    post: operations['ListPlans'];
+    post: operations['storyline_ListPlans'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11207,7 +11293,7 @@ export interface paths {
      *     Scenarios are passive building blocks with triggering conditions,
      *     phases, mutations, and optional quest hooks.
      */
-    post: operations['CreateScenarioDefinition'];
+    post: operations['storyline_CreateScenarioDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11228,7 +11314,7 @@ export interface paths {
      * @description Retrieves a scenario definition by its ID or code.
      *     Uses read-through cache for performance.
      */
-    post: operations['GetScenarioDefinition'];
+    post: operations['storyline_GetScenarioDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11249,7 +11335,7 @@ export interface paths {
      * @description Lists scenario definitions with optional filtering by realm, game service, and tags.
      *     Results are paginated and ordered by priority (descending), then creation time.
      */
-    post: operations['ListScenarioDefinitions'];
+    post: operations['storyline_ListScenarioDefinitions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11270,7 +11356,7 @@ export interface paths {
      * @description Updates an existing scenario definition.
      *     Uses ETag for optimistic concurrency control.
      */
-    post: operations['UpdateScenarioDefinition'];
+    post: operations['storyline_UpdateScenarioDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11291,7 +11377,7 @@ export interface paths {
      * @description Soft-deletes a scenario definition by marking it deprecated.
      *     Deprecated scenarios are not returned by find-available.
      */
-    post: operations['DeprecateScenarioDefinition'];
+    post: operations['storyline_DeprecateScenarioDefinition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11313,7 +11399,7 @@ export interface paths {
      *     actually executing it. Returns detailed condition evaluation results
      *     and predicted mutations.
      */
-    post: operations['TestScenarioTrigger'];
+    post: operations['storyline_TestScenarioTrigger'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11333,7 +11419,7 @@ export interface paths {
      * Get active scenarios for a character
      * @description Returns currently executing scenarios for a character.
      */
-    post: operations['GetActiveScenarios'];
+    post: operations['storyline_GetActiveScenarios'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11353,7 +11439,7 @@ export interface paths {
      * Get scenario execution history
      * @description Returns historical scenario executions for a character with pagination.
      */
-    post: operations['GetScenarioHistory'];
+    post: operations['storyline_GetScenarioHistory'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11374,7 +11460,7 @@ export interface paths {
      * @description Called by Resource service during character compression.
      *     Returns scenario participations, active arcs, and completion counts for archival.
      */
-    post: operations['getCompressData'];
+    post: operations['storyline_getCompressData'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11394,7 +11480,7 @@ export interface paths {
      * Get subscriptions for an account
      * @description Returns all subscriptions for a given account, with optional filtering.
      */
-    post: operations['getAccountSubscriptions'];
+    post: operations['subscription_getAccountSubscriptions'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11411,7 +11497,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Get a specific subscription by ID */
-    post: operations['getSubscription'];
+    post: operations['subscription_getSubscription'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11432,7 +11518,695 @@ export interface paths {
      * @description Cancels a subscription. Users can cancel their own subscriptions,
      *     admins can cancel any subscription.
      */
-    post: operations['cancelSubscription'];
+    post: operations['subscription_cancelSubscription'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Register a new transit mode type
+     * @description Register a new transit mode type with movement properties, terrain
+     *     compatibility, entity restrictions, and requirements. Mode codes are
+     *     unique string identifiers (e.g., "walking", "horseback", "wagon").
+     */
+    post: operations['transit_registerMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a transit mode by code
+     * @description Retrieve a transit mode definition by its unique code.
+     */
+    post: operations['transit_getMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List all registered transit modes
+     * @description List transit modes with optional filtering by realm availability,
+     *     terrain compatibility, tags, and deprecation status.
+     */
+    post: operations['transit_listModes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a transit mode's properties
+     * @description Update properties of an existing transit mode. Only provided fields
+     *     are updated; null fields are left unchanged.
+     */
+    post: operations['transit_updateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate a transit mode
+     * @description Deprecate a transit mode. Existing journeys using this mode continue,
+     *     but new journeys cannot use it. Sets the triple-field deprecation model:
+     *     isDeprecated=true, deprecatedAt=now, deprecationReason=reason.
+     *     Idempotent: returns OK if already deprecated (caller's intent is satisfied).
+     *     Category A per IMPLEMENTATION TENETS: connections store compatibleModes
+     *     and journeys store primaryModeCode/legModes referencing mode codes.
+     */
+    post: operations['transit_deprecateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/undeprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reverse deprecation of a transit mode
+     * @description Reverse deprecation of a transit mode (Category A — undeprecate is required).
+     *     Clears isDeprecated, deprecatedAt, deprecationReason.
+     *     Idempotent: returns OK if not currently deprecated.
+     */
+    post: operations['transit_undeprecateMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a deprecated transit mode
+     * @description Delete a deprecated transit mode (Category A — must be deprecated before
+     *     deletion). Rejects if active journeys use this mode or if connections
+     *     still list this mode in compatibleModes. Archived journeys retain the
+     *     mode code as historical data.
+     */
+    post: operations['transit_deleteMode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/mode/check-availability': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check which transit modes an entity can currently use
+     * @description Check mode availability for an entity based on item requirements,
+     *     species restrictions, entity type restrictions, and optional location
+     *     context. Also applies ITransitCostModifierProvider enrichment to
+     *     compute preferenceCost and effectiveSpeed adjustments.
+     */
+    post: operations['transit_checkModeAvailability'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a connection between two locations
+     * @description Create a directed or bidirectional connection between two locations.
+     *     fromRealmId, toRealmId, and crossRealm are derived from the locations
+     *     via the Location service. Season keys in seasonalAvailability are
+     *     validated against the realm's Worldstate season codes.
+     */
+    post: operations['transit_createConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a connection by ID or code
+     * @description Retrieve a connection by its unique ID or code. One of connectionId or code must be provided.
+     */
+    post: operations['transit_getConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/query': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query connections by location, terrain, mode, or status
+     * @description Query connections with optional filters. All filters are optional;
+     *     an empty request returns all connections paginated.
+     */
+    post: operations['transit_queryConnections'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a connection's properties
+     * @description Update properties of an existing connection. Does not update status —
+     *     use update-status for operational status changes. Only provided fields
+     *     are updated; null fields are left unchanged.
+     */
+    post: operations['transit_updateConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/update-status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Transition a connection's operational status with optimistic concurrency
+     * @description Transition a connection's operational status using optimistic concurrency.
+     *     Caller specifies currentStatus (what they believe the status is) and
+     *     newStatus. If the actual status does not match currentStatus, returns
+     *     Bad Request with the actual status. Use forceUpdate=true for administrative
+     *     overrides where currentStatus is ignored. The seasonal_closed status is
+     *     typically only set by the Seasonal Connection Worker via forceUpdate=true.
+     */
+    post: operations['transit_updateConnectionStatus'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a connection between locations
+     * @description Delete a connection. Rejects if active journeys are currently using
+     *     this connection.
+     */
+    post: operations['transit_deleteConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/connection/bulk-seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Seed connections from configuration
+     * @description Seed connections from configuration using location codes resolved via
+     *     the Location service. Two-pass resolution: first pass creates connections
+     *     with location code lookup, second pass validates all mode codes exist.
+     *     When realmId is provided, location codes are resolved within that realm
+     *     and replaceExisting deletes connections for that realm only.
+     */
+    post: operations['transit_bulkSeedConnections'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Plan a journey (status preparing)
+     * @description Plan a journey from origin to destination. Internally calls route/calculate
+     *     to find the best path and populate legs. Checks mode compatibility via
+     *     check-availability. Does NOT start the journey — call /transit/journey/depart
+     *     for that. When preferMultiModal is true, each leg gets the fastest compatible
+     *     mode the entity can use on that connection.
+     */
+    post: operations['transit_createJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/depart': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a prepared journey
+     * @description Start a prepared journey, transitioning status from preparing to in_transit.
+     *     Publishes transit.journey.departed event.
+     */
+    post: operations['transit_departJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/resume': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Resume an interrupted journey
+     * @description Resume an interrupted journey, transitioning status from interrupted
+     *     to in_transit. Distinct from depart: depart is for initial departure
+     *     (preparing to in_transit), resume is for continuing after interruption.
+     *     Publishes transit.journey.resumed event.
+     */
+    post: operations['transit_resumeJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/advance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark arrival at next waypoint
+     * @description Mark arrival at the next waypoint, completing the current leg and
+     *     starting the next. If this completes the final leg, journey status
+     *     transitions to arrived. Publishes transit.journey.waypoint-reached
+     *     or transit.journey.arrived accordingly.
+     */
+    post: operations['transit_advanceJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/advance-batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Advance multiple journeys in a single call
+     * @description Advance multiple journeys in a single call for game SDK efficiency at
+     *     NPC scale (10,000+ concurrent journeys). Each advance is processed
+     *     independently — failure of one does not roll back others. Results
+     *     include per-journey success/failure with error details. Ordering within
+     *     the batch is preserved for cases where the same journeyId appears
+     *     multiple times (advancing through multiple waypoints in a single tick).
+     */
+    post: operations['transit_advanceBatchJourneys'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/arrive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Force-arrive a journey at destination
+     * @description Force-arrive a journey at its destination, skipping remaining legs.
+     *     Remaining legs are marked as skipped rather than completed. Used for
+     *     narrative fast-travel, teleportation, or game-driven skip.
+     *     Publishes transit.journey.arrived event.
+     */
+    post: operations['transit_arriveJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/interrupt': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Interrupt an active journey
+     * @description Interrupt an active journey due to combat, event, or breakdown.
+     *     Transitions status to interrupted. To resume, call /transit/journey/resume.
+     *     To abandon, call /transit/journey/abandon.
+     *     Publishes transit.journey.interrupted event.
+     */
+    post: operations['transit_interruptJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/abandon': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Abandon a journey
+     * @description Abandon a journey. The entity stays at its current location.
+     *     Publishes transit.journey.abandoned event.
+     */
+    post: operations['transit_abandonJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a journey by ID
+     * @description Retrieve a journey by its unique ID.
+     */
+    post: operations['transit_getJourney'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/query-by-connection': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List active journeys on a specific connection
+     * @description List active journeys currently traversing a specific connection.
+     *     Enables queries like "who is on this road?" for encounter generation,
+     *     bandit ambush targeting, caravan interception, and road traffic monitoring.
+     */
+    post: operations['transit_queryJourneysByConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List journeys for an entity or within a realm
+     * @description List journeys with optional filtering by entity, entity type, realm,
+     *     cross-realm status, journey status, and active-only flag.
+     */
+    post: operations['transit_listJourneys'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/journey/query-archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Query archived journeys from MySQL historical store
+     * @description Query archived (completed/abandoned) journeys from the MySQL historical
+     *     store. Used by Trade (velocity calculations), Analytics (travel patterns),
+     *     and Character History (travel biography generation).
+     */
+    post: operations['transit_queryJourneyArchive'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/route/calculate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Calculate route options between two locations
+     * @description Calculate route options between two locations. Pure computation endpoint
+     *     with no state mutation. Performs Dijkstra graph search over the connection
+     *     graph filtered by mode compatibility, seasonal availability, and discovery
+     *     status. Does NOT apply entity-specific DI cost modifiers (those are applied
+     *     by the variable provider when GOAP evaluates the results).
+     */
+    post: operations['transit_calculateRoute'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/reveal': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Reveal a discoverable connection to an entity
+     * @description Reveal a discoverable connection to an entity via explicit grant.
+     *     Also called internally by journey/advance when a leg uses a discoverable
+     *     connection. Hearsay (L4) calls this when propagating route knowledge
+     *     via rumor. Publishes transit.discovery.revealed event for new discoveries.
+     */
+    post: operations['transit_revealDiscovery'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List connections an entity has discovered
+     * @description List all discoverable connections that an entity has discovered, with optional realm filtering.
+     */
+    post: operations['transit_listDiscoveries'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/transit/discovery/check': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Check if an entity has discovered specific connections
+     * @description Check whether an entity has discovered each of the specified connections.
+     */
+    post: operations['transit_checkDiscoveries'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11458,7 +12232,7 @@ export interface paths {
      *     automatically set by the Voice service when a VoicePeerJoinedEvent is sent to the client.
      *     The state is cleared after the answer is processed or times out.
      */
-    post: operations['answerPeer'];
+    post: operations['voice_answerPeer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11477,9 +12251,9 @@ export interface paths {
     /**
      * Request broadcast consent from all room participants
      * @description Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
-     *     This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+     *     This endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline events.
      */
-    post: operations['requestBroadcastConsent'];
+    post: operations['voice_requestBroadcastConsent'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11497,9 +12271,9 @@ export interface paths {
     put?: never;
     /**
      * Respond to a broadcast consent request
-     * @description Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+     * @description Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved. If any participant declines, lib-voice publishes voice.broadcast.declined.
      */
-    post: operations['respondBroadcastConsent'];
+    post: operations['voice_respondBroadcastConsent'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11517,9 +12291,9 @@ export interface paths {
     put?: never;
     /**
      * Stop broadcasting from a voice room
-     * @description Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+     * @description Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped with reason ConsentRevoked.
      */
-    post: operations['stopBroadcast'];
+    post: operations['voice_stopBroadcast'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11539,7 +12313,7 @@ export interface paths {
      * Get broadcast status for a voice room
      * @description Returns the current broadcast state: whether consent is pending, active, or inactive.
      */
-    post: operations['getBroadcastStatus'];
+    post: operations['voice_getBroadcastStatus'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11554,7 +12328,7 @@ export interface paths {
       cookie?: never;
     };
     /** Get website status and version */
-    get: operations['getStatus'];
+    get: operations['website_getStatus'];
     put?: never;
     post?: never;
     delete?: never;
@@ -11571,7 +12345,7 @@ export interface paths {
       cookie?: never;
     };
     /** Get dynamic page content from CMS */
-    get: operations['getPageContent'];
+    get: operations['website_getPageContent'];
     put?: never;
     post?: never;
     delete?: never;
@@ -11588,7 +12362,7 @@ export interface paths {
       cookie?: never;
     };
     /** Get latest news and announcements */
-    get: operations['getNews'];
+    get: operations['website_getNews'];
     put?: never;
     post?: never;
     delete?: never;
@@ -11605,7 +12379,7 @@ export interface paths {
       cookie?: never;
     };
     /** Get download links for game clients */
-    get: operations['getDownloads'];
+    get: operations['website_getDownloads'];
     put?: never;
     post?: never;
     delete?: never;
@@ -11624,7 +12398,7 @@ export interface paths {
     get?: never;
     put?: never;
     /** Submit contact form */
-    post: operations['submitContact'];
+    post: operations['website_submitContact'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11639,7 +12413,7 @@ export interface paths {
       cookie?: never;
     };
     /** Get account profile for logged-in user */
-    get: operations['getAccountProfile'];
+    get: operations['website_getAccountProfile'];
     put?: never;
     post?: never;
     delete?: never;
@@ -11656,10 +12430,10 @@ export interface paths {
       cookie?: never;
     };
     /** List all CMS pages */
-    get: operations['listPages'];
+    get: operations['website_listPages'];
     put?: never;
     /** Create new CMS page */
-    post: operations['createPage'];
+    post: operations['website_createPage'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11675,10 +12449,10 @@ export interface paths {
     };
     get?: never;
     /** Update CMS page */
-    put: operations['updatePage'];
+    put: operations['website_updatePage'];
     post?: never;
     /** Delete CMS page */
-    delete: operations['deletePage'];
+    delete: operations['website_deletePage'];
     options?: never;
     head?: never;
     patch?: never;
@@ -11692,9 +12466,9 @@ export interface paths {
       cookie?: never;
     };
     /** Get site configuration */
-    get: operations['getSiteSettings'];
+    get: operations['website_getSiteSettings'];
     /** Update site configuration */
-    put: operations['updateSiteSettings'];
+    put: operations['website_updateSiteSettings'];
     post?: never;
     delete?: never;
     options?: never;
@@ -11710,9 +12484,9 @@ export interface paths {
       cookie?: never;
     };
     /** Get current theme configuration */
-    get: operations['getTheme'];
+    get: operations['website_getTheme'];
     /** Update theme configuration */
-    put: operations['updateTheme'];
+    put: operations['website_updateTheme'];
     post?: never;
     delete?: never;
     options?: never;
@@ -11733,7 +12507,7 @@ export interface paths {
      * Get current game time for a realm
      * @description Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
      */
-    post: operations['getRealmTime'];
+    post: operations['worldstate_getRealmTime'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11753,7 +12527,7 @@ export interface paths {
      * Get current game time by realm code
      * @description Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.
      */
-    post: operations['getRealmTimeByCode'];
+    post: operations['worldstate_getRealmTimeByCode'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11773,7 +12547,7 @@ export interface paths {
      * Get current game time for multiple realms
      * @description Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.
      */
-    post: operations['batchGetRealmTimes'];
+    post: operations['worldstate_batchGetRealmTimes'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11793,7 +12567,7 @@ export interface paths {
      * Compute elapsed game-time between two real timestamps
      * @description Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history segments. Critical for lazy evaluation patterns.
      */
-    post: operations['getElapsedGameTime'];
+    post: operations['worldstate_getElapsedGameTime'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11813,7 +12587,7 @@ export interface paths {
      * Trigger a time sync event for an entity's sessions
      * @description Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
      */
-    post: operations['triggerTimeSync'];
+    post: operations['worldstate_triggerTimeSync'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11833,7 +12607,7 @@ export interface paths {
      * Initialize a clock for a realm
      * @description The primary path from "realm exists" to "realm has a clock." Validates realm existence, calendar template existence, and that no clock already exists. Registers reference with lib-resource.
      */
-    post: operations['initializeRealmClock'];
+    post: operations['worldstate_initializeRealmClock'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11853,7 +12627,7 @@ export interface paths {
      * Change the time ratio for a realm
      * @description Materializes current clock state, records new ratio segment in history, updates realm clock. Setting ratio to 0.0 pauses the clock.
      */
-    post: operations['setTimeRatio'];
+    post: operations['worldstate_setTimeRatio'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11873,7 +12647,7 @@ export interface paths {
      * Manually advance a realm's clock
      * @description Advances a realm's clock by a specified amount of game time. Used for testing and administrative fast-forward. Publishes all boundary events crossed during advancement.
      */
-    post: operations['advanceClock'];
+    post: operations['worldstate_advanceClock'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11893,7 +12667,7 @@ export interface paths {
      * Create a calendar template
      * @description Creates a calendar template for a game service. Validates structural consistency (day period coverage, season-month mapping, day count sums). Registers reference with lib-resource for game-service target.
      */
-    post: operations['seedCalendar'];
+    post: operations['worldstate_seedCalendar'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11913,7 +12687,7 @@ export interface paths {
      * Get a calendar template
      * @description Returns a calendar template by game service ID and template code.
      */
-    post: operations['getCalendar'];
+    post: operations['worldstate_getCalendar'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11933,7 +12707,7 @@ export interface paths {
      * List calendar templates for a game service
      * @description Returns all calendar templates registered for a game service.
      */
-    post: operations['listCalendars'];
+    post: operations['worldstate_listCalendars'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11953,7 +12727,7 @@ export interface paths {
      * Update a calendar template
      * @description Partial update of a calendar template. Acquires distributed lock. Validates structural consistency. Cannot change template code or game service ID. Invalidates local cache and publishes CalendarTemplateUpdatedEvent for cross-node invalidation.
      */
-    post: operations['updateCalendar'];
+    post: operations['worldstate_updateCalendar'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11973,7 +12747,7 @@ export interface paths {
      * Delete a calendar template
      * @description Deletes a calendar template. Fails with Conflict if any active realm clocks reference this template. Acquires distributed lock. Unregisters reference with lib-resource.
      */
-    post: operations['deleteCalendar'];
+    post: operations['worldstate_deleteCalendar'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11993,7 +12767,7 @@ export interface paths {
      * Get realm worldstate configuration
      * @description Returns the realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.
      */
-    post: operations['getRealmConfig'];
+    post: operations['worldstate_getRealmConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -12013,7 +12787,7 @@ export interface paths {
      * Update realm worldstate configuration
      * @description Partial update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode. Cannot change time ratio (use SetTimeRatio) or epoch (immutable).
      */
-    post: operations['updateRealmConfig'];
+    post: operations['worldstate_updateRealmConfig'];
     delete?: never;
     options?: never;
     head?: never;
@@ -12033,7 +12807,7 @@ export interface paths {
      * List active realm clocks
      * @description Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId filter.
      */
-    post: operations['listRealmClocks'];
+    post: operations['worldstate_listRealmClocks'];
     delete?: never;
     options?: never;
     head?: never;
@@ -12044,6 +12818,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description Request to abandon a journey */
+    AbandonJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to abandon
+       */
+      journeyId: string;
+      /** @description Reason for abandonment */
+      reason: string;
+    };
     /** @description Request to abandon an active quest */
     AbandonQuestRequest: {
       /**
@@ -12529,20 +13313,8 @@ export interface components {
        */
       autoStack: boolean;
     };
-    /** @description Response after adding item */
+    /** @description Response after adding item. HTTP 200 confirms placement. */
     AddItemResponse: {
-      /** @description Whether add succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Added item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Container ID
-       */
-      containerId: string;
       /** @description Assigned slot */
       slotIndex?: number | null;
       /** @description Assigned X position */
@@ -12649,6 +13421,16 @@ export interface components {
       /** @description Total registered room types */
       totalRoomTypes: number;
     };
+    /** @description Request to advance multiple journeys in a single call */
+    AdvanceBatchRequest: {
+      /** @description Individual advance entries */
+      advances: components['schemas']['BatchAdvanceEntry'][];
+    };
+    /** @description Response from batch advance operation with per-journey results */
+    AdvanceBatchResponse: {
+      /** @description Per-journey advance results */
+      results: components['schemas']['BatchAdvanceResult'][];
+    };
     /** @description Request to manually advance a realm's clock by a specified amount */
     AdvanceClockRequest: {
       /**
@@ -12668,13 +13450,8 @@ export interface components {
       /** @description Number of game-years to advance (uses current calendar structure) */
       gameYears?: number | null;
     };
-    /** @description Result of manual clock advancement */
+    /** @description Result of manual clock advancement. Caller already knows realmId from request. */
     AdvanceClockResponse: {
-      /**
-       * Format: uuid
-       * @description Realm the clock was advanced for
-       */
-      realmId: string;
       /** @description Game time before advancement */
       previousTime: components['schemas']['GameTimeSnapshot'];
       /** @description Game time after advancement */
@@ -12700,6 +13477,21 @@ export interface components {
       newLevel: number;
       /** @description Information keys revealed at the new level */
       reveals: string[];
+    };
+    /** @description Request to mark arrival at the next waypoint */
+    AdvanceJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to advance
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the waypoint was reached
+       */
+      arrivedAtGameTime: number;
+      /** @description Events that occurred during this leg */
+      incidents?: components['schemas']['JourneyIncident'][] | null;
     };
     /**
      * @description Describes a capability or interaction mode for a node.
@@ -12836,7 +13628,7 @@ export interface components {
       /** @description SDP answer generated by this client's WebRTC stack */
       sdpAnswer: string;
       /** @description ICE candidates for NAT traversal (can be trickled later) */
-      iceCandidates?: string[];
+      iceCandidates?: string[] | null;
     };
     /**
      * @description Emotional arc shapes from Reagan et al. research.
@@ -12878,9 +13670,9 @@ export interface components {
       namespace: string;
       /**
        * Format: uuid
-       * @description Asset ID in Asset Service
+       * @description Asset ID in Asset Service (null if bundle creation failed)
        */
-      bundleAssetId?: string;
+      bundleAssetId?: string | null;
       /** @description Description of the archive */
       description?: string | null;
       /** @description Number of documents in the archive */
@@ -12895,11 +13687,11 @@ export interface components {
        */
       createdAt: string;
       /**
-       * @description Owner of this archive. NOT a session ID.
+       * @description Owner of this archive. NOT a session ID (null if owner unknown).
        *     Contains either an accountId (UUID format) for user-initiated archives
        *     or a service name for service-initiated archives.
        */
-      owner?: string;
+      owner?: string | null;
     };
     /** @description Request to archive a room (makes it read-only) */
     ArchiveRoomRequest: {
@@ -12948,6 +13740,21 @@ export interface components {
        */
       updatedAt?: string | null;
     };
+    /** @description Request to force-arrive a journey at destination (skips remaining legs) */
+    ArriveJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to force-arrive
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time of arrival
+       */
+      arrivedAtGameTime: number;
+      /** @description Why legs were skipped (e.g., "teleported", "fast_travel", "narrative") */
+      reason: string;
+    };
     /** @description Describes a conflict when the same asset ID has different content hashes */
     AssetConflict: {
       /** @description The conflicting asset identifier */
@@ -12972,8 +13779,8 @@ export interface components {
       size: number;
       /** @description Type classification for the asset */
       assetType: components['schemas']['AssetType'];
-      /** @description Game realm the asset belongs to */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm the asset belongs to. Null for cross-realm assets. */
+      realm: components['schemas']['GameRealm'] | null;
       /** @description Searchable tags for the asset */
       tags: string[];
       /** @description Current status of asset processing pipeline */
@@ -12996,12 +13803,12 @@ export interface components {
     };
     /** @description User-provided metadata for asset categorization */
     AssetMetadataInput: {
-      /** @description Type classification for the asset */
-      assetType?: components['schemas']['AssetType'];
-      /** @description Game realm the asset belongs to */
-      realm?: components['schemas']['GameRealm'];
-      /** @description Searchable tags for the asset */
-      tags?: string[];
+      /** @description Type classification for the asset (null to omit) */
+      assetType?: components['schemas']['AssetType'] | null;
+      /** @description Game realm the asset belongs to (null for unscoped) */
+      realm?: components['schemas']['GameRealm'] | null;
+      /** @description Searchable tags for the asset (null to omit) */
+      tags?: string[] | null;
     };
     /** @description Reference to an asset in lib-asset */
     AssetReference: {
@@ -13111,8 +13918,8 @@ export interface components {
     };
     /** @description Metadata for a specific version of an asset */
     AssetVersion: {
-      /** @description Unique version identifier */
-      versionId: string;
+      /** @description Unique version identifier. Null when object storage versioning is not enabled. */
+      versionId?: string | null;
       /**
        * Format: date-time
        * @description Timestamp when this version was created
@@ -13128,8 +13935,6 @@ export interface components {
     };
     /** @description Paginated list of asset versions */
     AssetVersionList: {
-      /** @description Asset identifier */
-      assetId: string;
       /** @description List of asset versions */
       versions: components['schemas']['AssetVersion'][];
       /** @description Total number of versions available */
@@ -13489,6 +14294,33 @@ export interface components {
       /** @description Ban duration in minutes (null for permanent) */
       durationMinutes?: number | null;
     };
+    /** @description A single advance entry in a batch advance request */
+    BatchAdvanceEntry: {
+      /**
+       * Format: uuid
+       * @description Journey to advance
+       */
+      journeyId: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the waypoint was reached
+       */
+      arrivedAtGameTime: number;
+      /** @description Events that occurred during this leg */
+      incidents?: components['schemas']['JourneyIncident'][] | null;
+    };
+    /** @description Result for a single journey in a batch advance */
+    BatchAdvanceResult: {
+      /**
+       * Format: uuid
+       * @description Journey that was advanced
+       */
+      journeyId: string;
+      /** @description Error code on failure. Null on success. */
+      error?: string | null;
+      /** @description Updated journey on success. Null on failure. */
+      journey?: components['schemas']['TransitJourney'] | null;
+    };
     /** @description Result of a single balance query in a batch */
     BatchBalanceResult: {
       /**
@@ -13531,7 +14363,7 @@ export interface components {
       currencyDefinitionId: string;
       /**
        * Format: double
-       * @description Amount to credit
+       * @description Amount to credit (must be positive)
        */
       amount: number;
       /** @description Faucet transaction type */
@@ -13558,6 +14390,62 @@ export interface components {
     };
     /** @description Result of a single credit in a batch */
     BatchCreditResult: {
+      /** @description Index in the operations array */
+      index: number;
+      /** @description Whether the operation succeeded */
+      success: boolean;
+      /** @description Transaction record if successful */
+      transaction?: components['schemas']['CurrencyTransactionRecord'];
+      /** @description Error code if failed */
+      error?: string | null;
+    };
+    /** @description A single debit operation in a batch */
+    BatchDebitOperation: {
+      /**
+       * Format: uuid
+       * @description Source wallet ID
+       */
+      walletId: string;
+      /**
+       * Format: uuid
+       * @description Currency to debit
+       */
+      currencyDefinitionId: string;
+      /**
+       * Format: double
+       * @description Amount to debit (must be positive)
+       */
+      amount: number;
+      /** @description Sink transaction type (burn, vendor_purchase, fee, etc.) */
+      transactionType: components['schemas']['TransactionType'];
+      /** @description What triggered this transaction */
+      referenceType?: string | null;
+      /**
+       * Format: uuid
+       * @description Reference entity ID
+       */
+      referenceId?: string | null;
+      /** @description Override negative balance allowance for this transaction */
+      allowNegative?: boolean | null;
+      /** @description Free-form transaction metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** @description Request to debit multiple wallets */
+    BatchDebitRequest: {
+      /** @description Debit operations to execute */
+      operations: components['schemas']['BatchDebitOperation'][];
+      /** @description Unique key covering the entire batch */
+      idempotencyKey: string;
+    };
+    /** @description Results of batch debit operations */
+    BatchDebitResponse: {
+      /** @description Results for each operation */
+      results: components['schemas']['BatchDebitResult'][];
+    };
+    /** @description Result of a single debit in a batch */
+    BatchDebitResult: {
       /** @description Index in the operations array */
       index: number;
       /** @description Whether the operation succeeded */
@@ -13596,8 +14484,10 @@ export interface components {
     };
     /** @description Game time snapshots for multiple realms */
     BatchGetRealmTimesResponse: {
-      /** @description Game time snapshots for each requested realm (omits realms without initialized clocks) */
+      /** @description Game time snapshots for each requested realm that has an initialized clock */
       snapshots: components['schemas']['GameTimeSnapshot'][];
+      /** @description Realm IDs from the request that had no initialized clock */
+      notFoundRealmIds: string[];
     };
     /** @description Individual message entry in a batch send operation */
     BatchMessageEntry: {
@@ -13652,7 +14542,7 @@ export interface components {
        */
       characterId: string;
       /** @description Type of binding to apply */
-      bindType?: components['schemas']['SoulboundType'];
+      bindType: components['schemas']['SoulboundType'];
     };
     /** @description Request to bind a Git repository for automatic documentation sync */
     BindRepositoryRequest: {
@@ -13694,7 +14584,7 @@ export interface components {
       excludePatterns: string[] | null;
       /** @description Map directory prefixes to categories (empty mapping if not provided) */
       categoryMapping?: {
-        [key: string]: string;
+        [key: string]: components['schemas']['DocumentCategory'];
       } | null;
       /** @description Default category for documents without mapping */
       defaultCategory?: components['schemas']['DocumentCategory'];
@@ -13719,16 +14609,16 @@ export interface components {
       /** @description Namespace the repository is bound to */
       namespace: string;
       /** @description URL of the bound repository */
-      repositoryUrl?: string;
+      repositoryUrl: string;
       /** @description Branch being synced */
-      branch?: string;
+      branch: string;
       /** @description Current status of the binding */
       status: components['schemas']['BindingStatus'];
       /**
        * Format: date-time
        * @description Timestamp when the binding was created
        */
-      createdAt?: string;
+      createdAt: string;
     };
     /**
      * @description Status of a repository binding
@@ -13753,7 +14643,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity that received this blessing */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing */
       tier: components['schemas']['BlessingTier'];
       /** @description Item template code for the blessing effect */
@@ -13801,7 +14691,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity that received this blessing */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing */
       tier: components['schemas']['BlessingTier'];
       /**
@@ -13859,7 +14749,7 @@ export interface components {
        */
       boardId: string;
       /** @description Type of entity that owns this board */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Entity that owns this board
@@ -13907,7 +14797,7 @@ export interface components {
        */
       boardId: string;
       /** @description Type of entity that owns this board (e.g., character, account, guild) */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that owns this board
@@ -13955,7 +14845,7 @@ export interface components {
       /** @description Grid traversal mode for this template */
       adjacencyMode: components['schemas']['AdjacencyMode'];
       /** @description Owner types allowed to create boards from this template */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Whether the template is active (can create new board instances) */
       isActive: boolean;
       /**
@@ -14208,19 +15098,19 @@ export interface components {
        * Format: uuid
        * @description Voice room ID
        */
-      roomId?: string;
+      roomId: string;
       /** @description Current broadcast consent state */
-      state?: components['schemas']['BroadcastConsentState'];
+      state: components['schemas']['BroadcastConsentState'];
       /**
        * Format: uuid
        * @description Who initiated the broadcast request (null if inactive)
        */
       requestedBySessionId?: string | null;
       /** @description Sessions that have consented so far */
-      consentedSessionIds?: string[];
+      consentedSessionIds: string[];
       /** @description Sessions that haven't responded yet */
-      pendingSessionIds?: string[];
-      /** @description RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio. */
+      pendingSessionIds: string[];
+      /** @description RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-broadcast so it can connect its RTMP output to the voice room's audio. */
       rtpAudioEndpoint?: string | null;
     };
     /** @description Request to get broadcast consent status for a voice room */
@@ -14248,6 +15138,61 @@ export interface components {
       /** @description Asset IDs that weren't found */
       notFound: string[];
     };
+    /** @description A single connection entry in a bulk seed request */
+    BulkSeedConnectionEntry: {
+      /** @description Location code for the starting point (resolved via Location service) */
+      fromLocationCode: string;
+      /** @description Location code for the ending point (resolved via Location service) */
+      toLocationCode: string;
+      /** @description Whether the connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain type code. Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Null means always available. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable connection name */
+      name?: string | null;
+      /** @description Unique code for lookup */
+      code?: string | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
+    };
+    /** @description Request to seed connections from configuration */
+    BulkSeedConnectionsRequest: {
+      /**
+       * Format: uuid
+       * @description Scope location code resolution to this realm. When provided, replaceExisting deletes connections for this realm only.
+       */
+      realmId?: string | null;
+      /** @description Connection entries to seed */
+      connections: components['schemas']['BulkSeedConnectionEntry'][];
+      /**
+       * @description If true, delete existing connections scoped by realmId before seeding
+       * @default false
+       */
+      replaceExisting: boolean;
+    };
+    /** @description Response from bulk seed operation */
+    BulkSeedConnectionsResponse: {
+      /** @description Number of connections created */
+      created: number;
+      /** @description Number of connections updated */
+      updated: number;
+      /** @description Error messages for individual entries that failed */
+      errors: string[];
+    };
     /**
      * @description Bundle file format
      * @enum {string}
@@ -14269,8 +15214,8 @@ export interface components {
       description?: string | null;
       /** @description Owner account ID or service name (null for system-owned bundles) */
       owner?: string | null;
-      /** @description Game realm this bundle belongs to */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm this bundle belongs to. Null for cross-realm bundles. */
+      realm?: components['schemas']['GameRealm'] | null;
       /** @description Key-value tags for categorization and filtering */
       tags?: {
         [key: string]: string;
@@ -14317,6 +15262,21 @@ export interface components {
       /** @description Number of assets declared in the manifest */
       assetCount: number;
     };
+    /**
+     * @description Fields available for sorting bundle query results
+     * @enum {string}
+     */
+    BundleSortField: 'created_at' | 'updated_at' | 'name' | 'size';
+    /**
+     * @description Bundle processing status:
+     *     - queued: Bundle creation is queued for processing
+     *     - processing: Bundle is being processed
+     *     - ready: Bundle is ready for download
+     *     - failed: Bundle creation failed
+     *     - cancelled: Bundle creation was cancelled
+     * @enum {string}
+     */
+    BundleStatus: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
     /** @description Summary information about a bundle */
     BundleSummary: {
       /** @description Human-readable bundle identifier */
@@ -14332,8 +15292,8 @@ export interface components {
        * @description Bundle file size
        */
       sizeBytes?: number | null;
-      /** @description Game realm */
-      realm: components['schemas']['GameRealm'];
+      /** @description Game realm. Null for cross-realm bundles. */
+      realm?: components['schemas']['GameRealm'] | null;
       /**
        * Format: date-time
        * @description When the bundle was created
@@ -14454,7 +15414,7 @@ export interface components {
       toCurrencyId: string;
       /**
        * Format: double
-       * @description Amount to convert
+       * @description Amount to convert (must be positive)
        */
       fromAmount: number;
     };
@@ -14471,9 +15431,50 @@ export interface components {
        */
       effectiveRate: number;
       /** @description Steps in the conversion */
-      conversionPath?: components['schemas']['ConversionStep'][];
+      conversionPath: components['schemas']['ConversionStep'][];
       /** @description Base currency used for conversion */
       baseCurrency: string;
+    };
+    /** @description Request to calculate route options between two locations (pure computation) */
+    CalculateRouteRequest: {
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Destination location
+       */
+      toLocationId: string;
+      /** @description Specific mode to calculate for. Null means try all modes. */
+      modeCode?: string | null;
+      /**
+       * @description When true, selects best mode per leg
+       * @default false
+       */
+      preferMultiModal: boolean;
+      /**
+       * Format: uuid
+       * @description Entity for discovery filtering. When provided, discoverable connections are filtered to only those this entity has discovered. Null means discoverable connections are excluded entirely.
+       */
+      entityId?: string | null;
+      /** @description Maximum legs to consider. Uses service config default if null. */
+      maxLegs?: number | null;
+      /** @description Sort criteria for results. Defaults to fastest. */
+      sortBy?: components['schemas']['RouteSortBy'] | null;
+      /** @description Maximum route options to return. Uses service config default if null. */
+      maxOptions?: number | null;
+      /**
+       * @description Whether to include currently seasonally closed routes
+       * @default false
+       */
+      includeSeasonalClosed: boolean;
+    };
+    /** @description Response containing calculated route options */
+    CalculateRouteResponse: {
+      /** @description Route options ranked by sort criteria */
+      options: components['schemas']['TransitRouteOption'][];
     };
     /** @description A calendar template definition with computed summary fields */
     CalendarTemplateResponse: {
@@ -14524,15 +15525,8 @@ export interface components {
        * @description Job identifier
        */
       jobId: string;
-      /** @description Whether the job was successfully cancelled */
-      cancelled: boolean;
-      /**
-       * @description Current job status after cancellation attempt
-       * @enum {string}
-       */
-      status: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
-      /** @description Additional context about the cancellation result */
-      message?: string | null;
+      /** @description Current job status after cancellation attempt */
+      status: components['schemas']['BundleStatus'];
     };
     /** @description Request to cancel escrow before fully funded */
     CancelRequest: {
@@ -14676,6 +15670,21 @@ export interface components {
        * @description Template to chain into
        */
       targetTemplateId: string;
+    };
+    /** @description Request to change a participant's role in a chat room */
+    ChangeParticipantRoleRequest: {
+      /**
+       * Format: uuid
+       * @description Room containing the participant
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant whose role will change
+       */
+      targetSessionId: string;
+      /** @description New role to assign to the participant */
+      newRole: components['schemas']['ChatParticipantRole'];
     };
     /**
      * @description Compressed archive of a dead character.
@@ -15011,7 +16020,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
       /** @description Content of the chat message */
       message: string;
       /**
@@ -15150,6 +16159,21 @@ export interface components {
       /** @description Explanation if not allowed */
       reason?: string | null;
     };
+    /** @description Request to check if an entity has discovered specific connections */
+    CheckDiscoveriesRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to check discoveries for
+       */
+      entityId: string;
+      /** @description Connection IDs to check */
+      connectionIds: string[];
+    };
+    /** @description Response containing discovery check results */
+    CheckDiscoveriesResponse: {
+      /** @description Per-connection discovery status */
+      results: components['schemas']['DiscoveryCheckResult'][];
+    };
     /** @description Request to check faction membership */
     CheckMembershipRequest: {
       /**
@@ -15179,6 +16203,28 @@ export interface components {
       isMember: boolean;
       /** @description Member's role (null if not a member) */
       role?: components['schemas']['FactionMemberRole'];
+    };
+    /** @description Request to check which transit modes an entity can use */
+    CheckModeAvailabilityRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to check availability for
+       */
+      entityId: string;
+      /** @description Type of entity (e.g., "character", "npc", "caravan") */
+      entityType: string;
+      /**
+       * Format: uuid
+       * @description Only check modes available at this location
+       */
+      locationId?: string | null;
+      /** @description Check specific mode only (omit to check all modes) */
+      modeCode?: string | null;
+    };
+    /** @description Response containing mode availability results for an entity */
+    CheckModeAvailabilityResponse: {
+      /** @description Availability status for each checked mode */
+      availableModes: components['schemas']['ModeAvailabilityResult'][];
     };
     /** @description Request to check reference count for a character */
     CheckReferencesRequest: {
@@ -15389,14 +16435,12 @@ export interface components {
       /** @description Type of the deleted entity (e.g., Character, Realm) */
       entityType: components['schemas']['EntityType'];
     };
-    /** @description Response summarizing the results of a cascading relationship cleanup operation */
+    /** @description Response summarizing the results of a cascading relationship cleanup operation. HTTP 200 confirms success. */
     CleanupByEntityResponse: {
       /** @description Number of active relationships that were ended during cleanup */
       relationshipsEnded: number;
       /** @description Number of relationships that were already ended (skipped) */
-      alreadyEnded?: number;
-      /** @description Whether the cleanup completed without errors */
-      success: boolean;
+      alreadyEnded: number;
     };
     /** @description Request to cleanup divine data for a deleted game service (called by lib-resource) */
     CleanupByGameServiceRequest: {
@@ -15424,7 +16468,7 @@ export interface components {
     /** @description Request to cleanup all boards for a deleted owner entity */
     CleanupByOwnerRequest: {
       /** @description Type of entity whose boards should be cleaned up */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity whose boards should be cleaned up
@@ -15434,7 +16478,7 @@ export interface components {
     /** @description Result of owner board cleanup */
     CleanupByOwnerResponse: {
       /** @description Type of entity that was cleaned up */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that was cleaned up
@@ -15525,10 +16569,8 @@ export interface components {
        */
       entityId: string;
     };
-    /** @description Result of clearing entity presence */
+    /** @description Result of clearing entity presence. HTTP 200 confirms the operation completed. */
     ClearEntityPositionResponse: {
-      /** @description Whether the entity had an active presence that was cleared */
-      cleared: boolean;
       /**
        * Format: uuid
        * @description Location the entity was removed from (null if entity had no active presence)
@@ -15620,7 +16662,7 @@ export interface components {
        */
       sourceBoardId: string;
       /** @description Type of entity to clone the board to (must be in template's allowedOwnerTypes) */
-      targetOwnerType: string;
+      targetOwnerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the target entity
@@ -15645,7 +16687,7 @@ export interface components {
        */
       targetBoardId: string;
       /** @description Type of entity the board was cloned to */
-      targetOwnerType: string;
+      targetOwnerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity the board was cloned to
@@ -15669,7 +16711,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot containing deltas to collapse */
       slotName: string;
       /** @description Version to collapse to (latest if null) */
@@ -15715,7 +16757,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Type of collection */
       collectionType: components['schemas']['CollectionType'];
       /**
@@ -16247,6 +17289,16 @@ export interface components {
       /** @description Content hash of asset in this bundle */
       contentHash: string;
     };
+    /** @description Response containing a single transit connection */
+    ConnectionResponse: {
+      /** @description The transit connection */
+      connection: components['schemas']['TransitConnection'];
+    };
+    /**
+     * @description Operational status of a transit connection
+     * @enum {string}
+     */
+    ConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked' | 'seasonal_closed';
     /**
      * @description How a scenario instance connects to the broader game world
      * @enum {string}
@@ -16490,9 +17542,11 @@ export interface components {
        */
       realmId?: string | null;
       /** @description Container tags */
-      tags?: string[];
-      /** @description Game-specific data */
-      metadata?: Record<string, never> | null;
+      tags?: string[] | null;
+      /** @description Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -16511,6 +17565,11 @@ export interface components {
       /** @description Items in container */
       items: components['schemas']['ContainerItem'][];
     };
+    /**
+     * @description Format of the content field in a document response
+     * @enum {string}
+     */
+    ContentFormat: 'markdown' | 'html' | 'none';
     /** @description Selected content entry for an area */
     ContentSelectionResponse: {
       /** @description Code of the selected entry */
@@ -16889,7 +17948,7 @@ export interface components {
        */
       sourceOwnerId: string;
       /** @description Type of entity that owns the source save */
-      sourceOwnerType: components['schemas']['OwnerType'];
+      sourceOwnerType: components['schemas']['EntityType'];
       /** @description Name of the source slot to copy from */
       sourceSlotName: string;
       /** @description Version to copy (latest if null) */
@@ -16902,7 +17961,7 @@ export interface components {
        */
       targetOwnerId: string;
       /** @description Type of entity that will own the copied save */
-      targetOwnerType: components['schemas']['OwnerType'];
+      targetOwnerType: components['schemas']['EntityType'];
       /** @description Name of the target slot to copy to */
       targetSlotName: string;
       /** @description Category for new slot if auto-created */
@@ -17065,9 +18124,9 @@ export interface components {
       namespace: string;
       /**
        * Format: uuid
-       * @description Asset ID in Asset Service
+       * @description Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)
        */
-      bundleAssetId?: string;
+      bundleAssetId?: string | null;
       /** @description Number of documents in the archive */
       documentCount?: number;
       /** @description Total size of the archive in bytes */
@@ -17083,7 +18142,7 @@ export interface components {
     /** @description Request to create a board instance for an owner entity */
     CreateBoardRequest: {
       /** @description Type of entity that owns this board (e.g., character, account, realm, guild) */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description ID of the entity that owns this board
@@ -17130,7 +18189,7 @@ export interface components {
       /** @description Grid traversal mode. Defaults to eight_way if not specified. */
       adjacencyMode?: components['schemas']['AdjacencyMode'] | null;
       /** @description Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild). */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
     };
     /** @description Request to create a new asset bundle from multiple assets */
     CreateBundleRequest: {
@@ -17149,7 +18208,7 @@ export interface components {
       version: string;
       /**
        * @description Game realm this bundle belongs to.
-       *     Defaults to 'shared' if not specified.
+       *     Null for realm-agnostic bundles available across all realms.
        */
       realm?: components['schemas']['GameRealm'] | null;
       /** @description List of asset IDs to include in the bundle */
@@ -17165,11 +18224,8 @@ export interface components {
     CreateBundleResponse: {
       /** @description Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1") */
       bundleId: string;
-      /**
-       * @description Bundle creation status
-       * @enum {string}
-       */
-      status: 'queued' | 'processing' | 'ready' | 'failed';
+      /** @description Bundle creation status */
+      status: components['schemas']['BundleStatus'];
       /**
        * Format: int64
        * @description Estimated bundle size in bytes
@@ -17183,8 +18239,8 @@ export interface components {
        * @description Entity that owns this collection
        */
       ownerId: string;
-      /** @description Entity type discriminator (e.g., account, character) */
-      ownerType: string;
+      /** @description Entity type discriminator */
+      ownerType: components['schemas']['EntityType'];
       /** @description Type of collection to create */
       collectionType: components['schemas']['CollectionType'];
       /**
@@ -17192,6 +18248,50 @@ export interface components {
        * @description Game service this collection is scoped to
        */
       gameServiceId: string;
+    };
+    /** @description Request to create a connection between two locations */
+    CreateConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Starting location ID
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location ID
+       */
+      toLocationId: string;
+      /** @description Whether the connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain type code. Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Season keys validated against realm's Worldstate seasons. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable risk description */
+      riskDescription?: string | null;
+      /**
+       * @description Whether this connection requires discovery to appear in route queries
+       * @default false
+       */
+      discoverable: boolean;
+      /** @description Human-readable connection name */
+      name?: string | null;
+      /** @description Unique code for lookup */
+      code?: string | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
     };
     /** @description Request to create a new container */
     CreateContainerRequest: {
@@ -17276,8 +18376,10 @@ export interface components {
       realmId?: string | null;
       /** @description Container tags for filtering */
       tags?: string[] | null;
-      /** @description Game-specific container data */
-      metadata?: Record<string, never> | null;
+      /** @description Game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to create a contract instance */
     CreateContractInstanceRequest: {
@@ -17569,11 +18671,11 @@ export interface components {
       rotated?: boolean | null;
       /** @description Initial durability (defaults to template's maxDurability) */
       currentDurability?: number | null;
-      /** @description Instance-specific stat modifications */
+      /** @description Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description Player-assigned custom name */
       customName?: string | null;
-      /** @description Any other instance-specific data */
+      /** @description Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /** @description How this item instance was created */
       originType: components['schemas']['ItemOriginType'];
@@ -17666,15 +18768,15 @@ export interface components {
       scope: components['schemas']['ItemScope'];
       /** @description Realm IDs where this template is available (for realm_specific or multi_realm) */
       availableRealms?: string[] | null;
-      /** @description Game-defined stats (e.g., attack, defense) */
+      /** @description Game-defined stats (e.g., attack, defense). Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description Game-defined effects (e.g., on_use, on_equip) */
+      /** @description Game-defined effects (e.g., on_use, on_equip). Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description Game-defined requirements (e.g., level, strength) */
+      /** @description Game-defined requirements (e.g., level, strength). Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description Display properties (e.g., iconId, modelId) */
+      /** @description Display properties (e.g., iconId, modelId). Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description Any other game-specific data */
+      /** @description Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /**
        * Format: uuid
@@ -17699,6 +18801,49 @@ export interface components {
       itemUseBehavior?: components['schemas']['ItemUseBehavior'];
       /** @description How CanUse validation failures should be handled (defaults to block) */
       canUseBehavior?: components['schemas']['CanUseBehavior'];
+    };
+    /** @description Request to plan a journey (creates in preparing status) */
+    CreateJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Entity that will travel
+       */
+      entityId: string;
+      /** @description Type of traveling entity (e.g., "character", "npc", "caravan") */
+      entityType: string;
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      originLocationId: string;
+      /**
+       * Format: uuid
+       * @description Final destination
+       */
+      destinationLocationId: string;
+      /** @description Preferred transit mode. Used for all legs unless overridden by multi-modal. */
+      primaryModeCode: string;
+      /**
+       * @description When true, route calculation selects the best mode per leg
+       * @default false
+       */
+      preferMultiModal: boolean;
+      /**
+       * Format: decimal
+       * @description Planned departure game-time. Defaults to current game-time if null.
+       */
+      plannedDepartureGameTime?: number | null;
+      /**
+       * @description Number of entities traveling together
+       * @default 1
+       */
+      partySize: number;
+      /**
+       * Format: decimal
+       * @description Total cargo weight in game-kg
+       * @default 0
+       */
+      cargoWeightKg: number;
     };
     /** @description Request to create a new leaderboard */
     CreateLeaderboardDefinitionRequest: {
@@ -17806,9 +18951,8 @@ export interface components {
        *     - processing: Job is actively running
        *     - ready: Metabundle created and available for download
        *     - failed: Creation failed (see conflicts for details)
-       * @enum {string}
        */
-      status: 'queued' | 'processing' | 'ready' | 'failed';
+      status: components['schemas']['BundleStatus'];
       /**
        * Format: uri
        * @description Pre-signed download URL (only present when status is 'ready')
@@ -17823,8 +18967,8 @@ export interface components {
        * @description Total size in bytes
        */
       sizeBytes: number;
-      /** @description Provenance data for the metabundle */
-      sourceBundles?: components['schemas']['SourceBundleReference'][];
+      /** @description Provenance data for the metabundle (null when status is not ready) */
+      sourceBundles?: components['schemas']['SourceBundleReference'][] | null;
       /** @description Present if creation failed due to asset conflicts */
       conflicts?: components['schemas']['AssetConflict'][] | null;
     };
@@ -17837,9 +18981,9 @@ export interface components {
       /** @description Quest description for players */
       description?: string | null;
       /** @description Quest category for organization */
-      category?: components['schemas']['QuestCategory'];
+      category: components['schemas']['QuestCategory'];
       /** @description Difficulty rating of the quest */
-      difficulty?: components['schemas']['QuestDifficulty'];
+      difficulty: components['schemas']['QuestDifficulty'];
       /** @description Minimum character level required */
       levelRequirement?: number | null;
       /**
@@ -17873,7 +19017,7 @@ export interface components {
        * Format: uuid
        * @description Game service this quest belongs to
        */
-      gameServiceId?: string;
+      gameServiceId: string;
     };
     /** @description Request to create a new chat room */
     CreateRoomRequest: {
@@ -17959,8 +19103,8 @@ export interface components {
        * @description The entity that owns this seed.
        */
       ownerId: string;
-      /** @description Entity type discriminator (e.g., "account", "actor", "realm", "character", "relationship"). */
-      ownerType: string;
+      /** @description Owner entity type discriminator. */
+      ownerType: components['schemas']['EntityType'];
       /** @description Registered seed type code (e.g., "guardian", "dungeon_core"). */
       seedTypeCode: string;
       /**
@@ -17985,7 +19129,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name (lowercase alphanumeric with hyphens, single char like "q" allowed) */
       slotName: string;
       /** @description Save category determining retention and cleanup behavior */
@@ -18092,7 +19236,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of owner entity */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID for realm-scoped wallets (null for global)
@@ -18734,13 +19878,8 @@ export interface components {
     };
     /** @description Result of bundle deletion */
     DeleteBundleResponse: {
-      /** @description Human-readable bundle identifier that was deleted */
-      bundleId: string;
-      /**
-       * @description Deletion status
-       * @enum {string}
-       */
-      status: 'deleted' | 'permanently_deleted';
+      /** @description Deletion status */
+      status: components['schemas']['DeletionStatus'];
       /**
        * Format: date-time
        * @description When the bundle was deleted
@@ -18762,11 +19901,8 @@ export interface components {
       /** @description Calendar template code to delete */
       templateCode: string;
     };
-    /** @description Confirmation of calendar template deletion */
-    DeleteCalendarResponse: {
-      /** @description Whether the calendar template was deleted */
-      deleted: boolean;
-    };
+    /** @description Empty response. HTTP 200 confirms the deletion succeeded. */
+    DeleteCalendarResponse: Record<string, never>;
     /** @description Request to delete a collection */
     DeleteCollectionRequest: {
       /**
@@ -18775,6 +19911,16 @@ export interface components {
        */
       collectionId: string;
     };
+    /** @description Request to delete a connection */
+    DeleteConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to delete
+       */
+      connectionId: string;
+    };
+    /** @description Confirms successful connection deletion */
+    DeleteConnectionResponse: Record<string, never>;
     /** @description Request to permanently delete a deity and all dependent data */
     DeleteDeityRequest: {
       /**
@@ -18814,6 +19960,13 @@ export interface components {
        */
       messageId: string;
     };
+    /** @description Request to delete a deprecated transit mode */
+    DeleteModeRequest: {
+      /** @description Mode code to delete */
+      code: string;
+    };
+    /** @description Confirms successful mode deletion */
+    DeleteModeResponse: Record<string, never>;
     /** @description Request to delete a norm definition */
     DeleteNormRequest: {
       /**
@@ -18872,7 +20025,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
     };
@@ -18904,7 +20057,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to delete */
@@ -18921,6 +20074,13 @@ export interface components {
       bytesFreed: number;
     };
     /**
+     * @description Result of a deletion operation:
+     *     - deleted: Soft-deleted (within retention period, can be restored)
+     *     - permanently_deleted: Permanently removed (unrecoverable)
+     * @enum {string}
+     */
+    DeletionStatus: 'deleted' | 'permanently_deleted';
+    /**
      * @description Algorithm used for delta computation.
      *     JSON_PATCH: RFC 6902, best for structured JSON data
      *     BSDIFF: Binary diff, good for general binary data
@@ -18929,6 +20089,14 @@ export interface components {
      * @enum {string}
      */
     DeltaAlgorithm: 'JSON_PATCH' | 'BSDIFF' | 'XDELTA';
+    /** @description Request to start a prepared journey */
+    DepartJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to start
+       */
+      journeyId: string;
+    };
     /**
      * @description Current deployment phase for scenario availability gating
      * @enum {string}
@@ -18974,6 +20142,13 @@ export interface components {
        */
       factionId: string;
     };
+    /** @description Request to deprecate a transit mode */
+    DeprecateModeRequest: {
+      /** @description Mode code to deprecate */
+      code: string;
+      /** @description Why this mode is being deprecated */
+      reason: string;
+    };
     /** @description Request to mark a quest definition as deprecated */
     DeprecateQuestDefinitionRequest: {
       /**
@@ -18981,6 +20156,8 @@ export interface components {
        * @description Definition to deprecate
        */
       definitionId: string;
+      /** @description Reason for deprecation */
+      reason?: string | null;
     };
     /** @description Request to deprecate a room type (prevents new room creation) */
     DeprecateRoomTypeRequest: {
@@ -18999,6 +20176,8 @@ export interface components {
        * @description Scenario to deprecate
        */
       scenarioId: string;
+      /** @description Reason for deprecation */
+      reason?: string | null;
     };
     /** @description Request to deprecate a seed type, preventing new seed creation. */
     DeprecateSeedTypeRequest: {
@@ -19010,7 +20189,7 @@ export interface components {
        */
       gameServiceId?: string | null;
       /** @description Optional reason for deprecation (for audit purposes). */
-      reason?: string | null;
+      reason: string;
     };
     /** @description Request to deprecate a template */
     DeprecateTemplateRequest: {
@@ -19035,24 +20214,22 @@ export interface components {
        * @description Instance ID to destroy
        */
       instanceId: string;
-      /** @description Reason for destruction (consumed, destroyed, expired, admin) */
-      reason: string;
+      /** @description Reason for destruction */
+      reason: components['schemas']['DestroyReason'];
     };
     /** @description Response after destroying an item instance */
     DestroyItemInstanceResponse: {
-      /** @description Whether destruction was successful */
-      destroyed: boolean;
       /**
        * Format: uuid
-       * @description Destroyed instance ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Template of destroyed instance
+       * @description Template of the destroyed instance
        */
       templateId: string;
     };
+    /**
+     * @description Reason for destroying an item instance
+     * @enum {string}
+     */
+    DestroyReason: 'consumed' | 'destroyed' | 'expired' | 'admin';
     /** @description Information about the client device used for authentication or session tracking */
     DeviceInfo: {
       /** @description Category of the device */
@@ -19084,12 +20261,51 @@ export interface components {
       /** @description Whether discard was successful */
       discarded: boolean;
     };
+    /** @description Discovery status for a single connection */
+    DiscoveryCheckResult: {
+      /**
+       * Format: uuid
+       * @description Connection checked
+       */
+      connectionId: string;
+      /** @description Whether the entity has discovered this connection */
+      discovered: boolean;
+      /**
+       * Format: date-time
+       * @description When it was discovered. Null if not discovered.
+       */
+      discoveredAt?: string | null;
+      /** @description How it was discovered. Null if not discovered. */
+      source?: string | null;
+    };
     /** @description A discovery level defining what information is revealed at this level */
     DiscoveryLevel: {
       /** @description Discovery level number (zero-indexed) */
       level: number;
       /** @description List of field or information keys revealed at this level */
       reveals: string[];
+    };
+    /** @description Record of a connection discovery by an entity */
+    DiscoveryRecord: {
+      /**
+       * Format: uuid
+       * @description Entity that discovered the connection
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Connection that was discovered
+       */
+      connectionId: string;
+      /** @description How the connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward") */
+      source: string;
+      /**
+       * Format: date-time
+       * @description When discovery occurred (now for new, original time if already known)
+       */
+      discoveredAt: string;
+      /** @description Whether this was a new discovery (true) or already known (false). Stored entity state needed by Collection to distinguish first discovery from re-revelation. */
+      isNew: boolean;
     };
     /** @description Request to raise a dispute on a funded escrow */
     DisputeRequest: {
@@ -19195,20 +20411,20 @@ export interface components {
       title: string;
       /** @description Category for organizing the document */
       category: components['schemas']['DocumentCategory'];
-      /** @description Full markdown content of the document */
-      content?: string;
+      /** @description Full markdown content of the document (null if content not requested) */
+      content?: string | null;
       /** @description Brief text summary of the document */
       summary?: string | null;
       /** @description Concise summary optimized for voice AI */
       voiceSummary?: string | null;
-      /** @description Tags for filtering and search */
-      tags?: string[];
-      /** @description IDs of related documents */
-      relatedDocuments?: string[];
-      /** @description Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention. */
+      /** @description Tags for filtering and search (null if no tags) */
+      tags?: string[] | null;
+      /** @description IDs of related documents (null if none linked) */
+      relatedDocuments?: string[] | null;
+      /** @description Client-provided custom metadata (null if none set). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
-      };
+      } | null;
       /**
        * Format: date-time
        * @description Timestamp when the document was created
@@ -19246,7 +20462,7 @@ export interface components {
       slug: string;
       /** @description Display title of the document */
       title: string;
-      /** @description Category of the document */
+      /** @description Category of the document (null if uncategorized) */
       category?: components['schemas']['DocumentCategory'];
       /** @description Brief text summary of the document */
       summary?: string | null;
@@ -19259,8 +20475,8 @@ export interface components {
        * @description Relevance score from 0.0 to 1.0
        */
       relevanceScore: number;
-      /** @description Text snippets showing where matches occurred */
-      matchHighlights?: string[];
+      /** @description Text snippets showing where matches occurred (null if not computed) */
+      matchHighlights?: string[] | null;
     };
     /** @description Lightweight document representation for listings and references */
     DocumentSummary: {
@@ -19279,8 +20495,8 @@ export interface components {
       summary?: string | null;
       /** @description Concise summary optimized for voice AI */
       voiceSummary?: string | null;
-      /** @description Tags associated with the document */
-      tags?: string[];
+      /** @description Tags associated with the document (null if no tags) */
+      tags?: string[] | null;
     };
     /** @description A deity's influence in a specific domain with a weight representing strength */
     DomainInfluence: {
@@ -19778,9 +20994,12 @@ export interface components {
       sourceArchiveId?: string | null;
     };
     /**
-     * @description Universal entity type identifier used across Bannou services.
-     *     Provides first-class support for various kinds of entities in analytics,
-     *     achievements, leaderboards, contracts, relationships, and other systems.
+     * @description Universal entity type identifier for first-class Bannou entities.
+     *     Used for polymorphic entity references (ownerType, entityType, partyType).
+     *
+     *     NOT for game-configurable content type codes (use opaque strings) or
+     *     service-specific roles that include non-entity values (use service-specific enums).
+     *     See IMPLEMENTATION TENETS polymorphic type field classification for guidance.
      * @enum {string}
      */
     EntityType:
@@ -19796,6 +21015,10 @@ export interface components {
       | 'realm'
       | 'item'
       | 'monster'
+      | 'relationship'
+      | 'session'
+      | 'deity'
+      | 'dungeon'
       | 'custom'
       | 'other';
     /** @description Metadata for an unlocked entry instance tracking usage and discovery state */
@@ -20577,7 +21800,7 @@ export interface components {
       toCurrencyId: string;
       /**
        * Format: double
-       * @description Amount to convert
+       * @description Amount to convert (must be positive)
        */
       fromAmount: number;
       /** @description Unique key for idempotency */
@@ -20743,16 +21966,13 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns the saves to export */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Specific slots to export (all if null) */
       slotNames?: string[];
     };
     /** @description Response with pre-signed URL for downloading exported save archive */
     ExportSavesResponse: {
-      /**
-       * Format: uri
-       * @description Pre-signed URL to download export archive
-       */
+      /** @description Pre-signed URL to download export archive */
       downloadUrl: string;
       /**
        * Format: date-time
@@ -21027,7 +22247,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type for the action. Determines which lobby to apply the action. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
       /** @description Type of game action to perform */
       actionType: components['schemas']['GameActionType'];
       /** @description Game-specific action data. No Bannou plugin reads specific keys from this field by convention. */
@@ -21086,16 +22306,11 @@ export interface components {
       characterData?: {
         [key: string]: unknown;
       } | null;
-      /**
-       * Format: uuid
-       * @description Voice participant session ID (if player has joined voice)
-       */
-      voiceSessionId?: string | null;
     };
     /**
      * @description Realm stub name (lowercase string identifier) that this asset belongs to.
      *     Use the realm's stub_name property (e.g., "realm-1", "realm-2") from the Realm service.
-     *     Use "shared" for assets that are available across all realms.
+     *     Null for assets that are available across all realms.
      */
     GameRealm: string;
     /** @description Complete details of a game session including players and settings */
@@ -21121,9 +22336,9 @@ export interface components {
       isPrivate?: boolean;
       /**
        * Format: uuid
-       * @description Account ID of the session owner
+       * @description Account ID of the session owner (null for system-owned lobby sessions)
        */
-      owner?: string;
+      owner?: string | null;
       /** @description List of players currently in the session */
       players?: components['schemas']['GamePlayer'][];
       /**
@@ -21443,13 +22658,10 @@ export interface components {
     };
     /** @description Request to retrieve asset metadata and download URL */
     GetAssetRequest: {
-      /** @description Asset identifier */
+      /** @description Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19) */
       assetId: string;
-      /**
-       * @description Version ID or 'latest'
-       * @default latest
-       */
-      version: string;
+      /** @description Version ID to retrieve (null for latest version) */
+      version?: string | null;
     };
     /** @description Request payload for getting a character's backstory */
     GetBackstoryRequest: {
@@ -21492,7 +22704,7 @@ export interface components {
        */
       currencyDefinitionId: string;
       /** @description Currency code */
-      currencyCode?: string;
+      currencyCode: string;
       /**
        * Format: double
        * @description Total balance
@@ -21692,7 +22904,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -21708,6 +22920,16 @@ export interface components {
        * @description ID of the character to get compress data for
        */
       characterId: string;
+    };
+    /** @description Request to get a connection by ID or code. One of connectionId or code must be provided. */
+    GetConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection ID to look up
+       */
+      connectionId?: string | null;
+      /** @description Connection code to look up */
+      code?: string | null;
     };
     /** @description Request to get consent status for all parties */
     GetConsentStatusRequest: {
@@ -21911,13 +23133,10 @@ export interface components {
     GetDocumentResponse: {
       /** @description The requested document */
       document: components['schemas']['Document'];
-      /** @description List of related documents based on includeRelated depth */
-      relatedDocuments?: components['schemas']['DocumentSummary'][];
-      /**
-       * @description Format of the content field in the response
-       * @enum {string}
-       */
-      contentFormat?: 'markdown' | 'html' | 'none';
+      /** @description List of related documents based on includeRelated depth (null if not requested) */
+      relatedDocuments?: components['schemas']['DocumentSummary'][] | null;
+      /** @description Format of the content field in the response (null if content not included) */
+      contentFormat?: components['schemas']['ContentFormat'];
     };
     /** @description Request to get unified effects for an entity */
     GetEffectsRequest: {
@@ -21927,7 +23146,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * @description Whether to include seed-derived passive effects. Defaults to true because GetEffects is the unified query endpoint designed to return all active effects. Set to false to retrieve only item-based statuses from this endpoint.
        * @default true
@@ -21942,7 +23161,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Number of item-based status effects */
       itemBasedCount: number;
       /** @description Number of seed-derived passive effects */
@@ -22013,13 +23232,11 @@ export interface components {
        */
       entityId: string;
     };
-    /** @description Result of querying an entity's current location */
+    /** @description Result of querying an entity's current location. All fields are null if no active presence exists. */
     GetEntityLocationResponse: {
-      /** @description Whether a non-expired presence binding exists for this entity */
-      found: boolean;
       /**
        * Format: uuid
-       * @description ID of the location the entity is currently at
+       * @description ID of the location the entity is currently at (null if no active presence)
        */
       locationId?: string | null;
       /**
@@ -22027,13 +23244,6 @@ export interface components {
        * @description ID of the realm the location belongs to
        */
       realmId?: string | null;
-      /** @description Type of entity (echoed back) */
-      entityType?: string | null;
-      /**
-       * Format: uuid
-       * @description ID of the entity (echoed back)
-       */
-      entityId?: string | null;
       /**
        * Format: date-time
        * @description When the presence was last reported
@@ -22307,9 +23517,8 @@ export interface components {
        *     - ready: Completed successfully
        *     - failed: Creation failed
        *     - cancelled: Job was cancelled
-       * @enum {string}
        */
-      status: 'queued' | 'processing' | 'ready' | 'failed' | 'cancelled';
+      status: components['schemas']['BundleStatus'];
       /** @description Progress percentage (0-100) when status is 'processing' */
       progress?: number | null;
       /**
@@ -22329,7 +23538,7 @@ export interface components {
       /** @description Provenance data (when ready) */
       sourceBundles?: components['schemas']['SourceBundleReference'][] | null;
       /** @description Error code (when status is 'failed') */
-      errorCode?: string | null;
+      errorCode?: components['schemas']['MetabundleErrorCode'] | null;
       /** @description Human-readable error description (when status is 'failed') */
       errorMessage?: string | null;
       /**
@@ -22347,6 +23556,14 @@ export interface components {
        * @description Total processing time in milliseconds (when complete)
        */
       processingTimeMs?: number | null;
+    };
+    /** @description Request to get a journey by ID */
+    GetJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to retrieve
+       */
+      journeyId: string;
     };
     /** @description Request to get a license definition by board template ID and code */
     GetLicenseDefinitionRequest: {
@@ -22446,6 +23663,11 @@ export interface components {
       /** @description Milestone code */
       milestoneCode: string;
     };
+    /** @description Request to get a transit mode by code */
+    GetModeRequest: {
+      /** @description Transit mode code to look up */
+      code: string;
+    };
     /** @description Request to get detailed progress for a specific objective */
     GetObjectiveProgressRequest: {
       /**
@@ -22494,7 +23716,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of owner entity */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID for realm-scoped wallets
@@ -22592,6 +23814,8 @@ export interface components {
        * @description Character to get log for
        */
       characterId: string;
+      /** @description Filter active quests by category */
+      category?: components['schemas']['QuestCategory'] | null;
     };
     /** @description Request to get details of a quest instance */
     GetQuestRequest: {
@@ -22912,7 +24136,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
     };
     /** @description Request to get a seed by ID. */
     GetSeedRequest: {
@@ -22940,7 +24164,7 @@ export interface components {
        */
       ownerId: string;
       /** @description The owner entity type. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Filter by seed type. */
       seedTypeCode?: string | null;
       /**
@@ -22990,7 +24214,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
     };
@@ -23195,7 +24419,7 @@ export interface components {
        */
       ownerId?: string | null;
       /** @description Owner type (requires ownerId) */
-      ownerType?: components['schemas']['WalletOwnerType'];
+      ownerType?: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID (required if using ownerId lookup)
@@ -23307,7 +24531,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity receiving the blessing (e.g., character, account, deity) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Tier of the blessing (determines cost and storage mechanism) */
       tier: components['schemas']['BlessingTier'];
       /** @description Item template code for the blessing effect */
@@ -23323,7 +24547,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -23334,7 +24558,7 @@ export interface components {
       /** @description Type of collection to grant into */
       collectionType: components['schemas']['CollectionType'];
       /** @description Optional initial metadata for the unlocked entry */
-      metadata?: components['schemas']['EntryMetadata'];
+      metadata?: components['schemas']['EntryMetadata'] | null;
     };
     /** @description Result of a grant operation */
     GrantEntryResponse: {
@@ -23380,7 +24604,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator (e.g., character, account) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope for template lookup
@@ -23547,7 +24771,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -23635,7 +24859,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Status template code to check for */
       statusCode: string;
     };
@@ -23871,33 +25095,28 @@ export interface components {
       /** @description Initial downtime handling policy (falls back to DefaultDowntimePolicy config) */
       downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
     };
-    /** @description Confirmation of realm clock initialization with resolved values */
+    /** @description Resolved entity state after realm clock initialization. Caller already knows realmId from request. Shows resolved values for optional fields that may have fallen back to config defaults. */
     InitializeRealmClockResponse: {
       /**
        * Format: uuid
-       * @description Realm the clock was initialized for
-       */
-      realmId: string;
-      /**
-       * Format: uuid
-       * @description Game service the realm belongs to
+       * @description Game service the realm belongs to (resolved from realm lookup)
        */
       gameServiceId: string;
-      /** @description Calendar template code in use (resolved from request or config) */
+      /** @description Calendar template code in use (resolved from request or config default) */
       calendarTemplateCode: string;
       /**
        * Format: float
-       * @description Initial game-seconds per real-second (resolved from request or config)
+       * @description Initial game-seconds per real-second (resolved from request or config default)
        */
       timeRatio: number;
-      /** @description Downtime handling policy (resolved from request or config) */
+      /** @description Downtime handling policy (resolved from request or config default) */
       downtimePolicy: components['schemas']['DowntimePolicy'];
       /**
        * Format: date-time
-       * @description Real-world timestamp of the realm epoch
+       * @description Real-world timestamp of the realm epoch (resolved from request or current time)
        */
       epoch: string;
-      /** @description Game year the clock started at */
+      /** @description Game year the clock started at (resolved from request or default 0) */
       startingYear: number;
     };
     /** @description Request to initiate a bond between seeds. */
@@ -23937,6 +25156,21 @@ export interface components {
        * @description POI to interact with
        */
       poiId: string;
+    };
+    /** @description Request to interrupt an active journey */
+    InterruptJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to interrupt
+       */
+      journeyId: string;
+      /** @description Reason for interruption (e.g., "bandit_attack", "storm", "breakdown") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description Game-time when the interruption occurred
+       */
+      gameTime: number;
     };
     /** @description Melodic interval preference weights */
     IntervalPreferences: {
@@ -24011,9 +25245,9 @@ export interface components {
       templateId: string;
       /**
        * Format: uuid
-       * @description Container holding this item
+       * @description Container holding this item. Null when item has been removed from all containers.
        */
-      containerId: string;
+      containerId?: string | null;
       /**
        * Format: uuid
        * @description Realm this instance exists in
@@ -24044,11 +25278,11 @@ export interface components {
        * @description When item was bound
        */
       boundAt?: string | null;
-      /** @description Instance-specific stat modifications */
+      /** @description Instance-specific stat modifications. Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description Player-assigned custom name */
       customName?: string | null;
-      /** @description Other instance-specific data */
+      /** @description Additional instance-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /** @description How this item instance was created */
       originType: components['schemas']['ItemOriginType'];
@@ -24132,9 +25366,9 @@ export interface components {
       /** @description Game-defined subcategory */
       subcategory?: string | null;
       /** @description Filtering tags */
-      tags?: string[];
+      tags: string[];
       /** @description Item rarity tier */
-      rarity?: components['schemas']['ItemRarity'];
+      rarity: components['schemas']['ItemRarity'];
       /** @description How quantities are tracked */
       quantityModel: components['schemas']['QuantityModel'];
       /** @description Maximum stack size */
@@ -24142,7 +25376,7 @@ export interface components {
       /** @description Unit for continuous quantities */
       unitOfMeasure?: string | null;
       /** @description Precision for weight values */
-      weightPrecision?: components['schemas']['WeightPrecision'];
+      weightPrecision: components['schemas']['WeightPrecision'];
       /**
        * Format: double
        * @description Weight value
@@ -24178,15 +25412,15 @@ export interface components {
       scope: components['schemas']['ItemScope'];
       /** @description Available realms */
       availableRealms?: string[] | null;
-      /** @description Game-defined stats */
+      /** @description Game-defined stats. Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description Game-defined effects */
+      /** @description Game-defined effects. Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description Game-defined requirements */
+      /** @description Game-defined requirements. Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description Display properties */
+      /** @description Display properties. Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description Other game-specific data */
+      /** @description Additional game-specific data. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /**
        * Format: uuid
@@ -24216,6 +25450,8 @@ export interface components {
        * @description When template was deprecated
        */
       deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: uuid
        * @description Migration target template
@@ -24310,6 +25546,39 @@ export interface components {
       /** @description Requested role (defaults to Member if not specified) */
       role?: components['schemas']['ChatParticipantRole'] | null;
     };
+    /** @description An incident that occurred during a journey leg */
+    JourneyIncident: {
+      /** @description Type of incident (e.g., "bandit_attack", "storm_delay", "detour") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description How much game-time the incident added
+       */
+      durationGameHours: number;
+      /** @description Optional narrative description of the incident */
+      description?: string | null;
+    };
+    /**
+     * @description Lifecycle status of a journey leg
+     * @enum {string}
+     */
+    JourneyLegStatus: 'pending' | 'in_progress' | 'completed' | 'skipped';
+    /** @description Response containing a single transit journey */
+    JourneyResponse: {
+      /** @description The transit journey */
+      journey: components['schemas']['TransitJourney'];
+    };
+    /**
+     * @description Lifecycle status of a transit journey
+     * @enum {string}
+     */
+    JourneyStatus:
+      | 'preparing'
+      | 'in_transit'
+      | 'at_waypoint'
+      | 'arrived'
+      | 'interrupted'
+      | 'abandoned';
     /**
      * @description JSON Patch operation per RFC 6902.
      *     Uses JsonPatch.Net library (MIT licensed).
@@ -24498,7 +25767,7 @@ export interface components {
        */
       accountId: string;
       /** @description Game type being left. Determines which lobby to leave. Provided by shortcut system. */
-      gameType: string;
+      gameType: components['schemas']['GameType'];
     };
     /** @description Request to leave the garden */
     LeaveGardenRequest: {
@@ -24725,7 +25994,7 @@ export interface components {
        */
       entityId: string;
       /** @description Type of entity (e.g., character, account, deity) */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * @description Page number for pagination
        * @default 1
@@ -24772,7 +26041,7 @@ export interface components {
     /** @description Request to list board instances for an owner entity */
     ListBoardsByOwnerRequest: {
       /** @description Type of entity that owns the boards */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Entity to list boards for
@@ -24890,7 +26159,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Optional filter by game service
@@ -25051,40 +26320,54 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
     };
+    /** @description Request to list connections an entity has discovered */
+    ListDiscoveriesRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to list discoveries for
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Filter by realm (fromRealmId or toRealmId)
+       */
+      realmId?: string | null;
+    };
+    /** @description Response containing discovered connection IDs */
+    ListDiscoveriesResponse: {
+      /** @description IDs of connections this entity has discovered */
+      connectionIds: string[];
+    };
     /** @description Request to list documents with optional filtering and pagination */
     ListDocumentsRequest: {
       /** @description Documentation namespace to list documents from */
       namespace: string;
-      /** @description Filter to a specific category */
+      /** @description Filter to a specific category (null for all categories) */
       category?: components['schemas']['DocumentCategory'];
       /** @description Filter by tags (null to skip tag filtering) */
       tags?: string[] | null;
-      /**
-       * @description Whether documents must match all tags or any tag
-       * @default all
-       * @enum {string}
-       */
-      tagsMatch: 'all' | 'any';
+      /** @description Whether documents must match all tags or any tag */
+      tagsMatch?: components['schemas']['TagMatchMode'];
       /**
        * Format: date-time
-       * @description Filter to documents created after this timestamp
+       * @description Filter to documents created after this timestamp (null to skip)
        */
-      createdAfter?: string;
+      createdAfter?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents created before this timestamp
+       * @description Filter to documents created before this timestamp (null to skip)
        */
-      createdBefore?: string;
+      createdBefore?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents updated after this timestamp
+       * @description Filter to documents updated after this timestamp (null to skip)
        */
-      updatedAfter?: string;
+      updatedAfter?: string | null;
       /**
        * Format: date-time
-       * @description Filter to documents updated before this timestamp
+       * @description Filter to documents updated before this timestamp (null to skip)
        */
-      updatedBefore?: string;
+      updatedBefore?: string | null;
       /**
        * @description Return only document titles without summaries
        * @default false
@@ -25102,25 +26385,15 @@ export interface components {
       pageSize: number;
       /** @description Field to sort results by */
       sortBy?: components['schemas']['ListSortField'];
-      /**
-       * @description Sort order direction
-       * @default desc
-       * @enum {string}
-       */
-      sortOrder: 'asc' | 'desc';
+      /** @description Sort order direction */
+      sortOrder?: components['schemas']['SortOrder'];
     };
     /** @description Response containing a paginated list of documents */
     ListDocumentsResponse: {
-      /** @description The namespace that was listed */
-      namespace: string;
       /** @description List of documents in the namespace */
       documents: components['schemas']['DocumentSummary'][];
       /** @description Total number of documents matching filters */
       totalCount?: number;
-      /** @description Current page number */
-      page?: number;
-      /** @description Number of documents per page */
-      pageSize?: number;
       /** @description Total number of pages available */
       totalPages?: number;
     };
@@ -25296,7 +26569,7 @@ export interface components {
     /** @description Request to list item templates */
     ListItemTemplatesRequest: {
       /** @description Filter by game service */
-      gameId?: string;
+      gameId?: string | null;
       /** @description Filter by item category */
       category?: components['schemas']['ItemCategory'];
       /** @description Filter by subcategory */
@@ -25361,6 +26634,47 @@ export interface components {
        * @default false
        */
       wasTruncated: boolean;
+    };
+    /** @description Request to list journeys with optional filters */
+    ListJourneysRequest: {
+      /**
+       * Format: uuid
+       * @description Filter to journeys for this entity
+       */
+      entityId?: string | null;
+      /** @description Filter by entity type */
+      entityType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to journeys touching this realm (origin or destination)
+       */
+      realmId?: string | null;
+      /** @description Filter to cross-realm journeys only */
+      crossRealm?: boolean | null;
+      /** @description Filter by journey status */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * @description When true, excludes arrived and abandoned journeys
+       * @default true
+       */
+      activeOnly: boolean;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Response containing a paginated list of journeys */
+    ListJourneysResponse: {
+      /** @description Journeys matching the query */
+      journeys: components['schemas']['TransitJourney'][];
+      /** @description Total matching journeys across all pages */
+      totalCount: number;
     };
     /** @description Request to list all license definitions for a board template */
     ListLicenseDefinitionsRequest: {
@@ -25504,6 +26818,28 @@ export interface components {
       /** @description All faction memberships for the character */
       memberships: components['schemas']['CharacterMembershipEntry'][];
     };
+    /** @description Request to list transit modes with optional filters */
+    ListModesRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by realm availability
+       */
+      realmId?: string | null;
+      /** @description Filter by terrain compatibility */
+      terrainType?: string | null;
+      /** @description Filter by tags (modes matching any tag are included) */
+      tags?: string[] | null;
+      /**
+       * @description Whether to include deprecated modes in results
+       * @default false
+       */
+      includeDeprecated: boolean;
+    };
+    /** @description Response containing a list of transit modes */
+    ListModesResponse: {
+      /** @description Transit modes matching the query */
+      modes: components['schemas']['TransitMode'][];
+    };
     /** @description Request to list norms defined by a faction */
     ListNormsRequest: {
       /**
@@ -25596,7 +26932,7 @@ export interface components {
        */
       includeDeprecated: boolean;
       /**
-       * @description Max results
+       * @description Max results per page
        * @default 50
        */
       limit: number;
@@ -25623,7 +26959,7 @@ export interface components {
       /** @description Filter by statuses (null for all) */
       statuses?: components['schemas']['QuestStatus'][] | null;
       /**
-       * @description Max results
+       * @description Max results per page
        * @default 50
        */
       limit: number;
@@ -25679,10 +27015,6 @@ export interface components {
       items: components['schemas']['RealmClockSummary'][];
       /** @description Total matching realm clocks */
       totalCount: number;
-      /** @description Current page number */
-      page: number;
-      /** @description Items per page */
-      pageSize: number;
     };
     /** @description Request to list realms with optional filtering and pagination */
     ListRealmsRequest: {
@@ -26030,7 +27362,7 @@ export interface components {
       /** @description Filter by seed type. */
       seedTypeCode?: string | null;
       /** @description Filter by owner type. */
-      ownerType?: string | null;
+      ownerType?: components['schemas']['EntityType'] | null;
       /**
        * Format: uuid
        * @description Filter by game service.
@@ -26039,7 +27371,7 @@ export interface components {
       /** @description Filter by current growth phase code. */
       growthPhase?: string | null;
       /** @description Filter by seed status. */
-      status?: components['schemas']['SeedStatus'];
+      status?: components['schemas']['SeedStatus'] | null;
       /**
        * @description Page number (1-based).
        * @default 1
@@ -26093,7 +27425,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns the save slots to list */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Optional filter by save category */
       category?: components['schemas']['SaveCategory'] | null;
       /**
@@ -26124,6 +27456,11 @@ export interface components {
       realmId: string;
       /** @description Filter by playable status */
       isPlayable?: boolean | null;
+      /**
+       * @description Whether to include deprecated species in results
+       * @default false
+       */
+      includeDeprecated: boolean;
       /**
        * @description Page number for pagination (1-based)
        * @default 1
@@ -26196,7 +27533,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Optional filter by status category */
       category?: components['schemas']['StatusCategory'] | null;
       /**
@@ -26339,7 +27676,7 @@ export interface components {
     };
     /** @description Request to list all versions of an asset with pagination */
     ListVersionsRequest: {
-      /** @description Asset identifier to list versions for */
+      /** @description Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format) */
       assetId: string;
       /**
        * @description Maximum number of versions to return
@@ -26369,7 +27706,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Specific version to load (defaults to latest) */
@@ -26441,11 +27778,6 @@ export interface components {
       isActive: boolean;
       /**
        * Format: uuid
-       * @description The location ID if found
-       */
-      locationId?: string | null;
-      /**
-       * Format: uuid
        * @description The realm ID if location found
        */
       realmId?: string | null;
@@ -26461,9 +27793,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more pages after the current page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are pages before the current page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description Complete location data returned from API operations */
     LocationResponse: {
@@ -26504,9 +27836,9 @@ export interface components {
       /** @description Optional spatial extent in world coordinates */
       bounds?: components['schemas']['BoundingBox3D'] | null;
       /** @description Precision level of spatial bounds */
-      boundsPrecision?: components['schemas']['BoundsPrecision'];
+      boundsPrecision: components['schemas']['BoundsPrecision'];
       /** @description How this location's coordinate system relates to its parent */
-      coordinateMode?: components['schemas']['CoordinateMode'];
+      coordinateMode: components['schemas']['CoordinateMode'];
       /** @description Origin point for local or inherited coordinate systems */
       localOrigin?: components['schemas']['Position3D'] | null;
       /** @description Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
@@ -26750,8 +28082,8 @@ export interface components {
     MatchesHierarchyResponse: {
       /** @description True if typeId equals or descends from ancestorTypeId */
       matches: boolean;
-      /** @description Number of levels between the types (0 if same, -1 if no match) */
-      depth?: number;
+      /** @description Number of levels between the types (0 if same type, null if no match) */
+      depth?: number | null;
     };
     /** @description Matchmaking operational statistics */
     MatchmakingStatsResponse: {
@@ -26822,15 +28154,8 @@ export interface components {
        */
       targetInstanceId: string;
     };
-    /** @description Response after merging */
+    /** @description Response after merging. HTTP 200 confirms merge. */
     MergeStacksResponse: {
-      /** @description Whether merge succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Merged stack ID
-       */
-      targetInstanceId: string;
       /**
        * Format: double
        * @description New quantity
@@ -26873,6 +28198,21 @@ export interface components {
       /** @description Cursor for fetching the next page */
       nextCursor?: string | null;
     };
+    /**
+     * @description Error codes for metabundle creation failures
+     * @enum {string}
+     */
+    MetabundleErrorCode:
+      | 'SOURCE_BUNDLE_NOT_FOUND'
+      | 'SOURCE_BUNDLE_NOT_READY'
+      | 'STANDALONE_ASSET_NOT_FOUND'
+      | 'STANDALONE_ASSET_NOT_READY'
+      | 'REALM_MISMATCH'
+      | 'ASSET_CONFLICT'
+      | 'STORAGE_ERROR'
+      | 'TIMEOUT'
+      | 'CANCELLED'
+      | 'INTERNAL_ERROR';
     /**
      * @description Type of metadata to update
      * @enum {string}
@@ -26984,7 +28324,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Specific version to migrate (defaults to latest) */
@@ -27095,6 +28435,25 @@ export interface components {
      * @enum {string}
      */
     MilestoneStatus: 'pending' | 'active' | 'completed' | 'failed' | 'skipped';
+    /** @description Availability result for a single transit mode for an entity */
+    ModeAvailabilityResult: {
+      /** @description Transit mode code */
+      code: string;
+      /** @description Whether the entity can currently use this mode */
+      available: boolean;
+      /** @description Why the mode is unavailable. Null if available. */
+      unavailableReason?: string | null;
+      /**
+       * Format: decimal
+       * @description Effective speed in km/game-hour adjusted for cargo weight
+       */
+      effectiveSpeed: number;
+      /**
+       * Format: decimal
+       * @description GOAP preference cost from DI cost modifier providers (0.0 = neutral, 1.0 = extreme aversion)
+       */
+      preferenceCost: number;
+    };
     /** @description Probability distribution over musical modes */
     ModeDistribution: {
       /**
@@ -27146,6 +28505,11 @@ export interface components {
        */
       locrian: number;
     };
+    /** @description Response containing a single transit mode */
+    ModeResponse: {
+      /** @description The transit mode */
+      mode: components['schemas']['TransitMode'];
+    };
     /**
      * @description Musical mode/scale type
      * @enum {string}
@@ -27175,7 +28539,7 @@ export interface components {
       instanceId: string;
       /** @description Change to durability (positive to repair, negative for damage) */
       durabilityDelta?: number | null;
-      /** @description New custom stats (merges with existing) */
+      /** @description New custom stats (merges with existing). Opaque to Bannou; no plugin reads keys by convention. */
       customStats?: Record<string, never> | null;
       /** @description New custom name */
       customName?: string | null;
@@ -27184,13 +28548,15 @@ export interface components {
        * @description Change to quantity (positive to add, negative to subtract). Only valid for stackable items.
        */
       quantityDelta?: number | null;
-      /** @description New instance metadata (merges with existing) */
+      /** @description New instance metadata (merges with existing). Opaque to Bannou; no plugin reads keys by convention. */
       instanceMetadata?: Record<string, never> | null;
       /**
        * Format: uuid
        * @description Move item to a different container. Used by inventory service for item movement.
        */
       newContainerId?: string | null;
+      /** @description When true, removes the item from its current container (clears container reference and index). Mutually exclusive with newContainerId. */
+      clearContainerId?: boolean | null;
       /** @description New slot index within the container */
       newSlotIndex?: number | null;
       /** @description New X position for grid-based containers */
@@ -27230,25 +28596,13 @@ export interface components {
       /** @description Rotate in target */
       rotated?: boolean | null;
     };
-    /** @description Response after moving item */
+    /** @description Response after moving item. HTTP 200 confirms move. */
     MoveItemResponse: {
-      /** @description Whether move succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Moved item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Previous container
+       * @description Container the item was moved from
        */
       sourceContainerId: string;
-      /**
-       * Format: uuid
-       * @description New container
-       */
-      targetContainerId: string;
       /** @description New slot */
       slotIndex?: number | null;
       /** @description New grid X */
@@ -27259,11 +28613,11 @@ export interface components {
     /** @description Configuration for multipart uploads of large files */
     MultipartConfig: {
       /** @description Whether multipart upload is required for this file size */
-      required?: boolean;
+      required: boolean;
       /** @description Size of each part in bytes */
-      partSize?: number;
+      partSize: number;
       /** @description Maximum number of parts */
-      maxParts?: number;
+      maxParts: number;
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
     };
@@ -27518,8 +28872,8 @@ export interface components {
        * @default false
        */
       hidden: boolean;
-      /** @description When a hidden objective is revealed in the quest log */
-      revealBehavior?: components['schemas']['ObjectiveRevealBehavior'];
+      /** @description When a hidden objective is revealed in the quest log (null defaults to ALWAYS) */
+      revealBehavior?: components['schemas']['ObjectiveRevealBehavior'] | null;
       /**
        * @description Whether objective is optional for completion
        * @default false
@@ -27610,11 +28964,6 @@ export interface components {
      * @enum {string}
      */
     OnDeleteAction: 'CASCADE' | 'RESTRICT' | 'DETACH';
-    /**
-     * @description Type of entity that owns this save slot
-     * @enum {string}
-     */
-    OwnerType: 'ACCOUNT' | 'CHARACTER' | 'SESSION' | 'REALM';
     /** @description Full content and metadata for a CMS-managed page */
     PageContent: {
       /** @description URL-friendly identifier for the page */
@@ -27769,7 +29118,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Partner's owner entity type. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Partner's current growth phase. */
       growthPhase: string;
       /** @description Partner's seed status. */
@@ -28076,7 +29425,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to pin */
@@ -28351,7 +29700,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot containing the version to promote */
       slotName: string;
       /** @description Old version to promote to latest */
@@ -28520,8 +29869,6 @@ export interface components {
     };
     /** @description Bundles containing the requested asset */
     QueryBundlesByAssetResponse: {
-      /** @description The queried asset ID */
-      assetId: string;
       /** @description Bundles containing this asset */
       bundles: components['schemas']['BundleSummary'][];
       /** @description Total matching bundles */
@@ -28561,16 +29908,10 @@ export interface components {
       realm?: components['schemas']['GameRealm'] | null;
       /** @description Filter by bundle type (source or metabundle) */
       bundleType?: components['schemas']['BundleType'] | null;
-      /**
-       * @description Field to sort by (default created_at)
-       * @enum {string|null}
-       */
-      sortField?: 'created_at' | 'updated_at' | 'name' | 'size' | null;
-      /**
-       * @description Sort order (default desc)
-       * @enum {string|null}
-       */
-      sortOrder?: 'asc' | 'desc' | null;
+      /** @description Field to sort by (default created_at) */
+      sortField?: components['schemas']['BundleSortField'] | null;
+      /** @description Sort order (default desc) */
+      sortOrder?: components['schemas']['SortOrder'] | null;
       /**
        * @description Maximum results to return (max 1000)
        * @default 100
@@ -28660,6 +30001,61 @@ export interface components {
        */
       pageSize: number;
     };
+    /** @description Request to query connections with optional filters */
+    QueryConnectionsRequest: {
+      /**
+       * Format: uuid
+       * @description Filter to connections FROM this location
+       */
+      fromLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections TO this location
+       */
+      toLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections involving this location (either end)
+       */
+      locationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to connections touching this realm
+       */
+      realmId?: string | null;
+      /** @description Filter to only cross-realm (true) or intra-realm (false) connections */
+      crossRealm?: boolean | null;
+      /** @description Filter by terrain type */
+      terrainType?: string | null;
+      /** @description Filter by mode compatibility */
+      modeCode?: string | null;
+      /** @description Filter by connection status */
+      status?: components['schemas']['ConnectionStatus'] | null;
+      /** @description Filter by tags */
+      tags?: string[] | null;
+      /**
+       * @description Whether to include seasonally closed connections
+       * @default true
+       */
+      includeSeasonalClosed: boolean;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Response containing a paginated list of connections */
+    QueryConnectionsResponse: {
+      /** @description Connections matching the query */
+      connections: components['schemas']['TransitConnection'][];
+      /** @description Total matching connections across all pages */
+      totalCount: number;
+    };
     /** @description Request to query contract instances with cursor-based pagination. */
     QueryContractInstancesRequest: {
       /**
@@ -28698,10 +30094,10 @@ export interface components {
       query: string;
       /**
        * Format: uuid
-       * @description Optional session ID for conversational context
+       * @description Optional session ID for conversational context (null if not tracking)
        */
-      sessionId?: string;
-      /** @description Filter results to a specific category */
+      sessionId?: string | null;
+      /** @description Filter results to a specific category (null for all categories) */
       category?: components['schemas']['DocumentCategory'];
       /**
        * @description Maximum number of results to return
@@ -28727,20 +30123,16 @@ export interface components {
     };
     /** @description Response containing search results and voice-friendly summaries */
     QueryDocumentationResponse: {
-      /** @description The namespace that was searched */
-      namespace: string;
-      /** @description The original query string */
-      query: string;
       /** @description List of matching documents */
       results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents */
-      totalResults?: number;
-      /** @description Concise spoken summary for voice AI */
-      voiceSummary?: string;
-      /** @description Suggested follow-up queries */
-      suggestedFollowups?: string[];
-      /** @description User-friendly message when no results found */
-      noResultsMessage?: string;
+      /** @description Total number of matching documents (null if count unavailable) */
+      totalResults?: number | null;
+      /** @description Concise spoken summary for voice AI (null if not generated) */
+      voiceSummary?: string | null;
+      /** @description Suggested follow-up queries (null if none available) */
+      suggestedFollowups?: string[] | null;
+      /** @description User-friendly message when no results found (null when results exist) */
+      noResultsMessage?: string | null;
     };
     /** @description Request to query unlocked entries */
     QueryEntriesRequest: {
@@ -28809,6 +30201,77 @@ export interface components {
       items: components['schemas']['QueryResultItem'][];
       /** @description Total matching */
       totalCount: number;
+    };
+    /** @description Request to query archived journeys from MySQL historical store */
+    QueryJourneyArchiveRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by entity
+       */
+      entityId?: string | null;
+      /** @description Filter by entity type */
+      entityType?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter to journeys touching this realm
+       */
+      realmId?: string | null;
+      /** @description Filter to cross-realm journeys only */
+      crossRealm?: boolean | null;
+      /**
+       * Format: uuid
+       * @description Filter by origin location
+       */
+      originLocationId?: string | null;
+      /**
+       * Format: uuid
+       * @description Filter by destination location
+       */
+      destinationLocationId?: string | null;
+      /** @description Filter by primary mode code */
+      modeCode?: string | null;
+      /** @description Filter by status (typically arrived or abandoned) */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * Format: decimal
+       * @description Filter to journeys departed after this game-time
+       */
+      fromGameTime?: number | null;
+      /**
+       * Format: decimal
+       * @description Filter to journeys departed before this game-time
+       */
+      toGameTime?: number | null;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
+    };
+    /** @description Request to list active journeys on a specific connection */
+    QueryJourneysByConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to query journeys for
+       */
+      connectionId: string;
+      /** @description Filter by journey status (defaults to in_transit in service logic) */
+      status?: components['schemas']['JourneyStatus'] | null;
+      /**
+       * @description Page number (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Request to find all locations containing a spatial position */
     QueryLocationsByPositionRequest: {
@@ -28916,7 +30379,7 @@ export interface components {
        */
       ownerId?: string | null;
       /** @description Filter by owner type */
-      ownerType?: components['schemas']['OwnerType'] | null;
+      ownerType?: components['schemas']['EntityType'] | null;
       /** @description Filter by save category */
       category?: components['schemas']['SaveCategory'] | null;
       /**
@@ -29068,8 +30531,15 @@ export interface components {
       rewards?: components['schemas']['RewardDefinition'][] | null;
       /** @description Tags */
       tags?: string[] | null;
-      /** @description Whether deprecated */
-      deprecated: boolean;
+      /** @description Whether this quest definition is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the quest definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description Creation timestamp
@@ -29476,9 +30946,9 @@ export interface components {
       /** @description Number of realms per page */
       pageSize: number;
       /** @description Whether there are more realms available on the next page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are realms available on the previous page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description A machine-readable lore element for behavior system consumption */
     RealmLoreElement: {
@@ -29620,9 +31090,9 @@ export interface components {
       /** @description True if all requested realms exist AND are active (not deprecated) */
       allActive: boolean;
       /** @description List of realm IDs that do not exist (empty if all exist) */
-      invalidRealmIds?: string[];
+      invalidRealmIds: string[];
       /** @description List of realm IDs that exist but are deprecated (empty if none deprecated) */
-      deprecatedRealmIds?: string[];
+      deprecatedRealmIds: string[];
     };
     /** @description Request to record growth across multiple domains atomically. */
     RecordGrowthBatchRequest: {
@@ -29735,6 +31205,54 @@ export interface components {
        * @description Character becoming a follower
        */
       characterId: string;
+    };
+    /** @description Request to register a new transit mode */
+    RegisterModeRequest: {
+      /** @description Unique mode code (e.g., "walking", "horseback", "wagon") */
+      code: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description of this transit mode */
+      description: string;
+      /**
+       * Format: decimal
+       * @description Base speed in game-kilometers per game-hour
+       */
+      baseSpeedKmPerGameHour: number;
+      /** @description Per-terrain speed multipliers. Null means base speed applies uniformly. */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description How many entities can ride */
+      passengerCapacity: number;
+      /**
+       * Format: decimal
+       * @description Weight capacity in game-kg
+       */
+      cargoCapacityKg: number;
+      /**
+       * Format: decimal
+       * @description Per-mode cargo speed penalty rate override. Null means use plugin config default.
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Terrain types this mode can traverse. Empty array means all terrain. */
+      compatibleTerrainTypes: string[];
+      /** @description Entity types allowed to use this mode. Null means no restriction. */
+      validEntityTypes?: string[] | null;
+      /** @description Requirements that must be met to use this mode */
+      requirements: components['schemas']['TransitModeRequirements'];
+      /**
+       * Format: decimal
+       * @description Stamina cost per game-hour of travel
+       */
+      fatigueRatePerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Noise level from 0.0 (silent) to 1.0 (loud)
+       */
+      noiseLevelNormalized: number;
+      /** @description Realm IDs where this mode is available. Null means all realms. */
+      realmRestrictions?: string[] | null;
+      /** @description Freeform classification tags */
+      tags?: string[] | null;
     };
     /** @description Request to register a reference to a resource */
     RegisterReferenceRequest: {
@@ -29874,7 +31392,7 @@ export interface components {
       /** @description Maximum seeds of this type per owner entity. */
       maxPerOwner: number;
       /** @description Entity types that can own seeds of this type. */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Ordered growth phase definitions with thresholds. */
       growthPhases: components['schemas']['GrowthPhaseDefinition'][];
       /** @description Max bond participants. 0 = no bonding, 1 = pair bonds, N = group bonds of up to N+1 participants. */
@@ -29922,9 +31440,9 @@ export interface components {
       /** @description Number of results per page */
       pageSize: number;
       /** @description Whether there are more results on the next page */
-      hasNextPage?: boolean;
+      hasNextPage: boolean;
       /** @description Whether there are results on the previous page */
-      hasPreviousPage?: boolean;
+      hasPreviousPage: boolean;
     };
     /** @description Complete details of a relationship between two entities */
     RelationshipResponse: {
@@ -30170,7 +31688,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Category of statuses to remove */
       category: components['schemas']['StatusCategory'];
       /** @description Why these statuses are being removed */
@@ -30184,7 +31702,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Source that originally granted the statuses
@@ -30199,18 +31717,11 @@ export interface components {
        */
       instanceId: string;
     };
-    /** @description Response after removing item */
+    /** @description Response after removing item. HTTP 200 confirms removal. */
     RemoveItemResponse: {
-      /** @description Whether remove succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Removed item ID
-       */
-      instanceId: string;
-      /**
-       * Format: uuid
-       * @description Container removed from
+       * @description Container the item was removed from
        */
       previousContainerId: string;
     };
@@ -30262,7 +31773,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Current slot name */
       slotName: string;
       /** @description New slot name */
@@ -30316,10 +31827,8 @@ export interface components {
       /** @description Identifier of the reporter (service name or session ID) */
       reportedBy?: string | null;
     };
-    /** @description Result of reporting entity presence */
+    /** @description Result of reporting entity presence. HTTP 200 confirms the position was recorded. */
     ReportEntityPositionResponse: {
-      /** @description Whether the position was successfully recorded */
-      recorded: boolean;
       /**
        * Format: uuid
        * @description Location ID the entity arrived at (only set when location changed)
@@ -30360,7 +31869,7 @@ export interface components {
       /** @description URL of the bound repository */
       repositoryUrl: string;
       /** @description Branch being synced */
-      branch?: string;
+      branch: string;
       /** @description Current status of the binding */
       status: components['schemas']['BindingStatus'];
       /** @description Whether automatic sync is enabled */
@@ -30373,13 +31882,13 @@ export interface components {
        * Format: date-time
        * @description Timestamp when the binding was created
        */
-      createdAt?: string;
+      createdAt: string;
       /**
        * @description Owner of this binding. NOT a session ID.
        *     Contains either an accountId (UUID format) for user-initiated bindings
        *     or a service name for service-initiated bindings.
        */
-      owner?: string;
+      owner: string;
     };
     /** @description Request to get current repository binding and sync status */
     RepositoryStatusRequest: {
@@ -30388,9 +31897,9 @@ export interface components {
     };
     /** @description Response containing binding configuration and recent sync information */
     RepositoryStatusResponse: {
-      /** @description Current binding configuration and status */
+      /** @description Current binding configuration and status (null if no binding exists) */
       binding?: components['schemas']['RepositoryBindingInfo'];
-      /** @description Information about the most recent sync */
+      /** @description Information about the most recent sync (null if no sync has occurred) */
       lastSync?: components['schemas']['SyncInfo'];
     };
     /** @description Request for full snapshot */
@@ -30683,17 +32192,38 @@ export interface components {
     };
     /** @description Result of bundle restoration */
     RestoreBundleResponse: {
-      /** @description Human-readable bundle identifier that was restored */
-      bundleId: string;
-      /** @description Current bundle status (should be "active") */
-      status: string;
-      /**
-       * Format: date-time
-       * @description When the bundle was restored
-       */
-      restoredAt: string;
+      /** @description Current bundle lifecycle status after restoration (should be "active") */
+      status: components['schemas']['BundleLifecycle'];
       /** @description Version number the bundle was restored from */
       restoredFromVersion: number;
+    };
+    /** @description Request to resume an interrupted journey */
+    ResumeJourneyRequest: {
+      /**
+       * Format: uuid
+       * @description Journey to resume
+       */
+      journeyId: string;
+    };
+    /** @description Request to reveal a discoverable connection to an entity */
+    RevealDiscoveryRequest: {
+      /**
+       * Format: uuid
+       * @description Entity to reveal the connection to
+       */
+      entityId: string;
+      /**
+       * Format: uuid
+       * @description Discoverable connection to reveal
+       */
+      connectionId: string;
+      /** @description How the connection was discovered (e.g., "travel", "guide", "hearsay", "map", "quest_reward") */
+      source: string;
+    };
+    /** @description Response containing the discovery record */
+    RevealDiscoveryResponse: {
+      /** @description The discovery record */
+      discovery: components['schemas']['DiscoveryRecord'];
     };
     /** @description Request to revoke an active blessing */
     RevokeBlessingRequest: {
@@ -30707,11 +32237,8 @@ export interface components {
     };
     /** @description Reward granted when a quest is completed */
     RewardDefinition: {
-      /**
-       * @description Type of reward
-       * @enum {string}
-       */
-      type: 'CURRENCY' | 'ITEM' | 'EXPERIENCE' | 'REPUTATION';
+      /** @description Type of reward */
+      type: components['schemas']['RewardType'];
       /** @description Currency code for CURRENCY rewards */
       currencyCode?: string | null;
       /** @description Amount for CURRENCY/EXPERIENCE rewards */
@@ -30723,6 +32250,11 @@ export interface components {
       /** @description Faction code for REPUTATION rewards */
       factionCode?: string | null;
     };
+    /**
+     * @description Type of reward granted on quest completion
+     * @enum {string}
+     */
+    RewardType: 'CURRENCY' | 'ITEM' | 'EXPERIENCE' | 'REPUTATION';
     /** @description Room type definition with current configuration and status */
     RoomTypeResponse: {
       /** @description Unique room type code */
@@ -30775,6 +32307,11 @@ export interface components {
      * @enum {string}
      */
     RoomTypeStatus: 'Active' | 'Deprecated';
+    /**
+     * @description Sort criteria for route calculation results
+     * @enum {string}
+     */
+    RouteSortBy: 'fastest' | 'safest' | 'shortest';
     /** @description Search engine optimization and social media sharing metadata */
     SEOMetadata: {
       /** @description Meta description for search engines */
@@ -30811,7 +32348,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot to save the delta to */
       slotName: string;
       /** @description Version number this delta is based on */
@@ -30880,7 +32417,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name (auto-created if doesn't exist) */
       slotName: string;
       /** @description Category for auto-created slots (defaults to MANUAL_SAVE) */
@@ -30943,10 +32480,7 @@ export interface components {
       pinned?: boolean;
       /** @description Checkpoint name if pinned */
       checkpointName?: string | null;
-      /**
-       * Format: uri
-       * @description Pre-signed URL to retrieve thumbnail (if provided)
-       */
+      /** @description Pre-signed URL to retrieve thumbnail (if provided) */
       thumbnailUrl?: string | null;
       /**
        * @description True if this save overwrote a version from a different device.
@@ -31081,10 +32615,17 @@ export interface components {
       /** @description Classification tags for filtering */
       tags?: string[] | null;
       /**
-       * @description Whether scenario is soft-deleted
+       * @description Whether scenario definition is deprecated
        * @default false
        */
-      deprecated: boolean;
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When the scenario definition was deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /**
        * Format: date-time
        * @description When definition was created
@@ -31114,7 +32655,14 @@ export interface components {
       /** @description Whether enabled */
       enabled: boolean;
       /** @description Whether deprecated */
-      deprecated?: boolean;
+      isDeprecated?: boolean;
+      /**
+       * Format: date-time
+       * @description When deprecated
+       */
+      deprecatedAt?: string | null;
+      /** @description Reason for deprecation */
+      deprecationReason?: string | null;
       /** @description Number of trigger conditions */
       conditionCount?: number;
       /** @description Number of phases */
@@ -31571,12 +33119,8 @@ export interface components {
       maxResults: number;
       /** @description Fields to search within (null for default fields) */
       searchIn?: components['schemas']['SearchField'][] | null;
-      /**
-       * @description How to sort the search results
-       * @default relevance
-       * @enum {string}
-       */
-      sortBy: 'relevance' | 'recency' | 'alphabetical';
+      /** @description How to sort the search results */
+      sortBy?: components['schemas']['SearchSortBy'];
       /**
        * @description Whether to include full document content in results
        * @default false
@@ -31585,14 +33129,10 @@ export interface components {
     };
     /** @description Response containing keyword search results */
     SearchDocumentationResponse: {
-      /** @description The namespace that was searched */
-      namespace: string;
       /** @description List of matching documents */
       results: components['schemas']['DocumentResult'][];
-      /** @description Total number of matching documents */
-      totalResults?: number;
-      /** @description The original search term */
-      searchTerm?: string;
+      /** @description Total number of matching documents (null if count unavailable) */
+      totalResults?: number | null;
     };
     /**
      * @description Fields that can be searched within documents
@@ -31661,6 +33201,12 @@ export interface components {
       /** @description Total matches */
       total: number;
     };
+    /**
+     * @description How to sort search results
+     * @default relevance
+     * @enum {string}
+     */
+    SearchSortBy: 'relevance' | 'recency' | 'alphabetical';
     /** @description A season within a calendar template year */
     SeasonDefinition: {
       /** @description Season identifier code (e.g., "winter", "spring", "summer", "autumn") */
@@ -31695,6 +33241,31 @@ export interface components {
        * @description Number of entries in this season
        */
       entryCount?: number;
+    };
+    /** @description Per-season availability for a connection. Season codes must match the realm's Worldstate calendar template. */
+    SeasonalAvailabilityEntry: {
+      /** @description Season code matching the realm's Worldstate calendar template (e.g., "winter", "wet", "dry") */
+      season: string;
+      /** @description Whether the connection is open during this season */
+      available: boolean;
+    };
+    /** @description Warning about an upcoming seasonal closure on a route leg */
+    SeasonalRouteWarning: {
+      /**
+       * Format: uuid
+       * @description Connection with the seasonal risk
+       */
+      connectionId: string;
+      /** @description Human-readable connection name for display */
+      connectionName?: string | null;
+      /** @description Which leg in the route uses this connection */
+      legIndex: number;
+      /** @description Current season code (from Worldstate) */
+      currentSeason: string;
+      /** @description Season code when this connection closes */
+      closingSeason: string;
+      /** @description How many season transitions until closure (1 = next season) */
+      closingSeasonIndex: number;
     };
     /** @description Request to bulk seed a board template with license definitions */
     SeedBoardTemplateRequest: {
@@ -31765,7 +33336,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Seed-derived passive effects */
       effects: components['schemas']['SeedEffectEntry'][];
     };
@@ -31794,7 +33365,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Owner entity type discriminator. */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /** @description Registered seed type code. */
       seedTypeCode: string;
       /**
@@ -31880,7 +33451,7 @@ export interface components {
       /** @description Maximum seeds of this type per owner. */
       maxPerOwner: number;
       /** @description Allowed owner entity types. */
-      allowedOwnerTypes: string[];
+      allowedOwnerTypes: components['schemas']['EntityType'][];
       /** @description Phase definitions with thresholds. */
       growthPhases: components['schemas']['GrowthPhaseDefinition'][];
       /** @description Bond participant limit. */
@@ -31921,7 +33492,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Entity type discriminator */
-      ownerType: string;
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Game service scope
@@ -32039,6 +33610,8 @@ export interface components {
       description?: string | null;
       /** @description Whether the service is currently active */
       isActive: boolean;
+      /** @description Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect */
+      autoLobbyEnabled: boolean;
       /**
        * Format: date-time
        * @description When the service was created
@@ -32156,26 +33729,19 @@ export interface components {
       /** @description Reason for the ratio change */
       reason: components['schemas']['TimeRatioChangeReason'];
     };
-    /** @description Confirmation of time ratio change */
+    /** @description Result of time ratio change. Caller already knows realmId, newRatio, and reason from request. */
     SetTimeRatioResponse: {
       /**
-       * Format: uuid
-       * @description Realm the ratio was changed for
-       */
-      realmId: string;
-      /**
        * Format: float
-       * @description Previous game-seconds per real-second
+       * @description Previous game-seconds per real-second before the change
        */
       previousRatio: number;
-      /**
-       * Format: float
-       * @description New game-seconds per real-second
-       */
-      newRatio: number;
-      /** @description Reason for the ratio change */
-      reason: components['schemas']['TimeRatioChangeReason'];
     };
+    /**
+     * @description Connection statuses that can be set via the update-status endpoint (excludes seasonal_closed which is managed by the Seasonal Connection Worker)
+     * @enum {string}
+     */
+    SettableConnectionStatus: 'open' | 'closed' | 'dangerous' | 'blocked';
     /** @description Shared garden state for bonded players */
     SharedGardenStateResponse: {
       /**
@@ -32247,7 +33813,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Save category determining retention and cleanup behavior */
@@ -32283,10 +33849,10 @@ export interface components {
       };
     };
     /**
-     * @description How scores are sorted
+     * @description Sort direction for query results
      * @enum {string}
      */
-    SortOrder: 'descending' | 'ascending';
+    SortOrder: 'asc' | 'desc';
     /**
      * @description When item becomes bound to a character
      * @enum {string}
@@ -32385,10 +33951,6 @@ export interface components {
       species: components['schemas']['SpeciesResponse'][];
       /** @description Total number of species matching the query (for pagination) */
       totalCount: number;
-      /** @description Current page number */
-      page?: number;
-      /** @description Number of items per page */
-      pageSize?: number;
     };
     /** @description Complete species data including all attributes and realm associations */
     SpeciesResponse: {
@@ -32488,15 +34050,8 @@ export interface components {
       /** @description Grid Y for new stack */
       targetSlotY?: number | null;
     };
-    /** @description Response after splitting */
+    /** @description Response after splitting. HTTP 200 confirms split. */
     SplitStackResponse: {
-      /** @description Whether split succeeded */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Original stack ID
-       */
-      originalInstanceId: string;
       /**
        * Format: uuid
        * @description New stack ID
@@ -32634,7 +34189,7 @@ export interface components {
        */
       entityId: string;
       /** @description Entity type discriminator */
-      entityType: string;
+      entityType: components['schemas']['EntityType'];
       /** @description Status template code */
       statusTemplateCode: string;
       /** @description Status category */
@@ -32978,7 +34533,7 @@ export interface components {
       /** @description Stub name of the service (denormalized for efficiency) */
       stubName: string;
       /** @description Display name of the service (denormalized for efficiency) */
-      displayName?: string;
+      displayName: string;
       /**
        * Format: date-time
        * @description When the subscription started
@@ -33013,8 +34568,6 @@ export interface components {
     SubscriptionListResponse: {
       /** @description List of subscriptions matching the filter criteria */
       subscriptions: components['schemas']['SubscriptionInfo'][];
-      /** @description Total number of subscriptions matching the filter */
-      totalCount: number;
     };
     /** @description Request to get related topic suggestions based on a source */
     SuggestRelatedRequest: {
@@ -33022,13 +34575,13 @@ export interface components {
       namespace: string;
       /** @description Type of source to base suggestions on */
       suggestionSource: components['schemas']['SuggestionSource'];
-      /** @description The value for the suggestion source (document ID, slug, topic, or category) */
-      sourceValue?: string;
+      /** @description The value for the suggestion source (document ID, slug, topic, or category; null if source is context-based) */
+      sourceValue?: string | null;
       /**
        * Format: uuid
-       * @description Optional session ID for personalized suggestions
+       * @description Optional session ID for personalized suggestions (null if not tracking)
        */
-      sessionId?: string;
+      sessionId?: string | null;
       /**
        * @description Maximum number of suggestions to return
        * @default 5
@@ -33046,8 +34599,8 @@ export interface components {
       namespace: string;
       /** @description List of suggested related topics */
       suggestions: components['schemas']['TopicSuggestion'][];
-      /** @description Voice-friendly prompt for presenting suggestions */
-      voicePrompt?: string;
+      /** @description Voice-friendly prompt for presenting suggestions (null if not generated) */
+      voicePrompt?: string | null;
       /** @description Whether suggestions were influenced by session history */
       sessionInfluenced?: boolean;
     };
@@ -33060,23 +34613,23 @@ export interface components {
     SyncInfo: {
       /**
        * Format: uuid
-       * @description Unique identifier of the sync operation
+       * @description Unique identifier of the sync operation (null if no sync has occurred)
        */
-      syncId?: string;
-      /** @description Result status of the sync */
+      syncId?: string | null;
+      /** @description Result status of the sync (null if no sync has occurred) */
       status?: components['schemas']['SyncStatus'];
-      /** @description What triggered the sync */
+      /** @description What triggered the sync (null if no sync has occurred) */
       triggeredBy?: components['schemas']['SyncTrigger'];
       /**
        * Format: date-time
-       * @description Timestamp when sync started
+       * @description Timestamp when sync started (null if no sync has occurred)
        */
-      startedAt?: string;
+      startedAt?: string | null;
       /**
        * Format: date-time
-       * @description Timestamp when sync completed
+       * @description Timestamp when sync completed (null if sync is in progress or none occurred)
        */
-      completedAt?: string;
+      completedAt?: string | null;
       /** @description Git commit hash that was synced (null if sync failed or repo is empty) */
       commitHash?: string | null;
       /** @description Total documents processed in sync */
@@ -33126,6 +34679,12 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'manual' | 'scheduled';
+    /**
+     * @description Whether documents must match all specified tags or any tag
+     * @default all
+     * @enum {string}
+     */
+    TagMatchMode: 'all' | 'any';
     /**
      * @description Current lifecycle status of a scenario template
      * @enum {string}
@@ -33182,6 +34741,16 @@ export interface components {
       | 'unilateral_with_notice'
       | 'unilateral_immediate'
       | 'non_terminable';
+    /** @description Per-terrain speed multiplier applied to a mode's base speed */
+    TerrainSpeedModifier: {
+      /** @description Terrain type code (e.g., "road", "trail", "forest"). Category B content code (game-configurable). */
+      terrainType: string;
+      /**
+       * Format: decimal
+       * @description Speed multiplier applied to base speed (1.0 = no change, 0.5 = half speed, 1.2 = 20% faster)
+       */
+      multiplier: number;
+    };
     /** @description A faction's territory claim on a location */
     TerritoryClaimResponse: {
       /**
@@ -33316,14 +34885,14 @@ export interface components {
        * @description Unique identifier of the suggested document
        */
       documentId: string;
-      /** @description URL-friendly slug of the suggested document */
-      slug?: string;
+      /** @description URL-friendly slug of the suggested document (null if unavailable) */
+      slug?: string | null;
       /** @description Title of the suggested document */
       title: string;
-      /** @description Category of the suggested document */
+      /** @description Category of the suggested document (null if uncategorized) */
       category?: components['schemas']['DocumentCategory'];
-      /** @description Explanation of why this document is relevant */
-      relevanceReason?: string;
+      /** @description Explanation of why this document is relevant (null if not computed) */
+      relevanceReason?: string | null;
     };
     /**
      * @description Core personality trait axes. Each represents a spectrum from -1.0 to +1.0.
@@ -33527,25 +35096,18 @@ export interface components {
        */
       quantity?: number | null;
     };
-    /** @description Response after transfer */
+    /** @description Response after transfer. HTTP 200 confirms transfer. */
     TransferItemResponse: {
-      /** @description Whether transfer succeeded */
-      success: boolean;
       /**
        * Format: uuid
-       * @description Transferred item ID
+       * @description Transferred item ID (for partial transfers, this is the new split item)
        */
       instanceId: string;
       /**
        * Format: uuid
-       * @description Previous container
+       * @description Container the item was transferred from
        */
       sourceContainerId: string;
-      /**
-       * Format: uuid
-       * @description New container
-       */
-      targetContainerId: string;
       /**
        * Format: double
        * @description Amount transferred
@@ -33574,6 +35136,357 @@ export interface components {
       rotation: components['schemas']['Quaternion'];
       /** @description Scale relative to parent */
       scale: components['schemas']['Vector3'];
+    };
+    /** @description A connection (edge) between two locations in the transit connectivity graph */
+    TransitConnection: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this connection
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @description Starting location (Location service entity)
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location (Location service entity)
+       */
+      toLocationId: string;
+      /** @description Whether this connection is traversable both ways */
+      bidirectional: boolean;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers
+       */
+      distanceKm: number;
+      /** @description Terrain classification (e.g., "road", "trail", "forest", "mountain", "river"). Category B content code. */
+      terrainType: string;
+      /** @description Transit mode codes that can use this connection. Empty means walking only. */
+      compatibleModes: string[];
+      /** @description Per-season availability restrictions. Season codes must match the realm's Worldstate calendar template. Null means always available. */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Base risk level from 0.0 (safe) to 1.0 (extremely dangerous)
+       */
+      baseRiskLevel: number;
+      /** @description Human-readable risk description (e.g., "Bandit territory", "Avalanche prone"). Null means no specific risk. */
+      riskDescription?: string | null;
+      /** @description Current operational status of this connection */
+      status: components['schemas']['ConnectionStatus'];
+      /** @description Why the connection is in its current status. Null when open with no special reason. */
+      statusReason?: string | null;
+      /**
+       * Format: date-time
+       * @description When the status was last changed
+       */
+      statusChangedAt: string;
+      /** @description Whether this connection requires discovery. False means common knowledge visible to all route queries. */
+      discoverable: boolean;
+      /** @description Human-readable connection name (e.g., "The King's Road", "Serpent River") */
+      name?: string | null;
+      /** @description Unique code for lookup (e.g., "kings_road") */
+      code?: string | null;
+      /** @description Freeform classification tags (e.g., "trade_route", "military", "smuggler_path"). Null means no tags. */
+      tags?: string[] | null;
+      /**
+       * Format: uuid
+       * @description Realm of fromLocationId (derived, not caller-specified)
+       */
+      fromRealmId: string;
+      /**
+       * Format: uuid
+       * @description Realm of toLocationId (derived, not caller-specified)
+       */
+      toRealmId: string;
+      /** @description Whether fromRealmId differs from toRealmId (derived convenience flag) */
+      crossRealm: boolean;
+      /**
+       * Format: date-time
+       * @description When this connection was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this connection was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description A recorded interruption during a journey */
+    TransitInterruption: {
+      /** @description Which leg was interrupted (0-based index) */
+      legIndex: number;
+      /**
+       * Format: decimal
+       * @description Game-time when the interruption occurred
+       */
+      gameTime: number;
+      /** @description Reason for interruption (e.g., "bandit_attack", "storm", "breakdown", "encounter") */
+      reason: string;
+      /**
+       * Format: decimal
+       * @description How long the interruption lasted in game-hours. 0 if unresolved or resolved immediately.
+       */
+      durationGameHours: number;
+      /** @description Whether travel resumed after this interruption. Stored entity state, not derivable from durationGameHours. */
+      resolved: boolean;
+    };
+    /** @description An active or completed transit journey tracking entity movement across connections */
+    TransitJourney: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this journey
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @description Entity that is traveling
+       */
+      entityId: string;
+      /** @description Type of traveling entity (e.g., "character", "npc", "caravan", "army", "creature"). Category B content code. */
+      entityType: string;
+      /** @description Ordered list of connections to traverse */
+      legs: components['schemas']['TransitJourneyLeg'][];
+      /** @description Which leg the entity is currently on (0-based) */
+      currentLegIndex: number;
+      /** @description Primary transit mode for this journey */
+      primaryModeCode: string;
+      /**
+       * Format: decimal
+       * @description Current effective speed accounting for modifiers
+       */
+      effectiveSpeedKmPerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of planned departure
+       */
+      plannedDepartureGameTime: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of actual departure. Null if not yet departed.
+       */
+      actualDepartureGameTime?: number | null;
+      /**
+       * Format: decimal
+       * @description Estimated arrival game-time based on route, speed, and worldstate
+       */
+      estimatedArrivalGameTime: number;
+      /**
+       * Format: decimal
+       * @description Game-time timestamp of actual arrival. Null if not yet arrived.
+       */
+      actualArrivalGameTime?: number | null;
+      /**
+       * Format: uuid
+       * @description Starting location
+       */
+      originLocationId: string;
+      /**
+       * Format: uuid
+       * @description Final destination
+       */
+      destinationLocationId: string;
+      /**
+       * Format: uuid
+       * @description Last known position (most recently departed-from or arrived-at location)
+       */
+      currentLocationId: string;
+      /** @description Current journey lifecycle status */
+      status: components['schemas']['JourneyStatus'];
+      /** @description Reason for interruption or abandonment. Null for normal status transitions. */
+      statusReason?: string | null;
+      /** @description Recorded interruptions during this journey */
+      interruptions: components['schemas']['TransitInterruption'][];
+      /** @description Number of entities traveling together */
+      partySize: number;
+      /**
+       * Format: decimal
+       * @description Total cargo weight affecting speed on some modes
+       */
+      cargoWeightKg: number;
+      /**
+       * Format: date-time
+       * @description When this journey was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this journey was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description A single leg of a journey following one connection */
+    TransitJourneyLeg: {
+      /**
+       * Format: uuid
+       * @description Transit connection this leg follows
+       */
+      connectionId: string;
+      /**
+       * Format: uuid
+       * @description Starting location of this leg
+       */
+      fromLocationId: string;
+      /**
+       * Format: uuid
+       * @description Ending location of this leg
+       */
+      toLocationId: string;
+      /** @description Transit mode for this leg. May differ from the journey's primaryModeCode for multi-modal journeys. */
+      modeCode: string;
+      /**
+       * Format: decimal
+       * @description Distance in game-kilometers (copied from connection)
+       */
+      distanceKm: number;
+      /** @description Terrain type of this leg's connection. Category B content code. */
+      terrainType: string;
+      /**
+       * Format: decimal
+       * @description Estimated duration for this leg in game-hours
+       */
+      estimatedDurationGameHours: number;
+      /**
+       * Format: decimal
+       * @description Delay at the waypoint before starting this leg. Models intra-location transfer time (disembarking, changing mounts, crossing a city). Null or 0 means no delay.
+       */
+      waypointTransferTimeGameHours?: number | null;
+      /** @description Current status of this journey leg */
+      status: components['schemas']['JourneyLegStatus'];
+      /**
+       * Format: decimal
+       * @description Game-time when this leg was completed. Null if pending or in_progress.
+       */
+      completedAtGameTime?: number | null;
+    };
+    /** @description A transit mode defining movement capabilities (e.g., walking, horseback, wagon) */
+    TransitMode: {
+      /** @description Unique string identifier for this mode (e.g., "walking", "horseback", "wagon") */
+      code: string;
+      /** @description Human-readable display name */
+      name: string;
+      /** @description Detailed description of this transit mode */
+      description: string;
+      /**
+       * Format: decimal
+       * @description Base speed in game-kilometers per game-hour. Used when no terrain-specific speed modifier is defined.
+       */
+      baseSpeedKmPerGameHour: number;
+      /** @description Per-terrain speed multipliers. Null means base speed applies uniformly across all compatible terrain. */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description How many entities can ride (1 for horse, 20 for ship) */
+      passengerCapacity: number;
+      /**
+       * Format: decimal
+       * @description Weight capacity in game-kg (0 for walking, 500 for wagon)
+       */
+      cargoCapacityKg: number;
+      /**
+       * Format: decimal
+       * @description Per-mode cargo speed penalty rate. Overrides the plugin-level DefaultCargoSpeedPenaltyRate. Null means use plugin config default. 0.0 means no cargo penalty.
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Terrain types this mode can traverse. Empty array means all terrain (e.g., walking, flying). */
+      compatibleTerrainTypes: string[];
+      /** @description Entity types allowed to use this mode. Null means no entity type restriction. Characters are not exempt. */
+      validEntityTypes?: string[] | null;
+      /** @description Requirements that must be met to use this mode */
+      requirements: components['schemas']['TransitModeRequirements'];
+      /**
+       * Format: decimal
+       * @description Stamina cost per game-hour of travel (0 = no fatigue)
+       */
+      fatigueRatePerGameHour: number;
+      /**
+       * Format: decimal
+       * @description Noise level from 0.0 (silent) to 1.0 (loud) affecting detection risk
+       */
+      noiseLevelNormalized: number;
+      /** @description Realm IDs where this mode is available. Null means available in all realms. */
+      realmRestrictions?: string[] | null;
+      /** @description Whether this mode is deprecated */
+      isDeprecated: boolean;
+      /**
+       * Format: date-time
+       * @description When deprecation occurred. Null if not deprecated.
+       */
+      deprecatedAt?: string | null;
+      /** @description Why this mode was deprecated. Null if not deprecated. */
+      deprecationReason?: string | null;
+      /** @description Freeform classification tags (e.g., "mount", "vehicle", "magical", "aquatic"). Null means no tags. */
+      tags?: string[] | null;
+      /**
+       * Format: date-time
+       * @description When this mode was registered
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this mode was last modified
+       */
+      modifiedAt: string;
+    };
+    /** @description Requirements that must be met to use a transit mode (applies to character entities only) */
+    TransitModeRequirements: {
+      /** @description Item tag required to use this mode (e.g., "mount_horse"). Null means no item needed. */
+      requiredItemTag?: string | null;
+      /** @description Species codes allowed to use this mode. Null means any species. */
+      allowedSpeciesCodes?: string[] | null;
+      /** @description Species codes that cannot use this mode. Null means no exclusions. */
+      excludedSpeciesCodes?: string[] | null;
+      /**
+       * @description Minimum party size required (e.g., ocean_vessel requires crew of 3)
+       * @default 1
+       */
+      minimumPartySize: number;
+      /** @description Maximum entity size category allowed (e.g., "small", "medium", "large"). Category B content code. Null means no size restriction. */
+      maximumEntitySizeCategory?: string | null;
+    };
+    /** @description A computed route option returned by route calculation (not persisted) */
+    TransitRouteOption: {
+      /** @description Ordered location IDs from source to destination */
+      waypoints: string[];
+      /** @description Ordered connection IDs */
+      connections: string[];
+      /** @description Number of legs in this route */
+      legCount: number;
+      /** @description Dominant transit mode for this option */
+      primaryModeCode: string;
+      /** @description Per-leg mode codes (may differ from primary on multi-modal routes) */
+      legModes: string[];
+      /**
+       * Format: decimal
+       * @description Sum of all leg distances in game-kilometers
+       */
+      totalDistanceKm: number;
+      /**
+       * Format: decimal
+       * @description Estimated total travel time in game-hours (includes waypoint transfer times)
+       */
+      totalGameHours: number;
+      /**
+       * Format: decimal
+       * @description Approximate real-time equivalent at current time ratio (may change during travel)
+       */
+      totalRealMinutes: number;
+      /**
+       * Format: decimal
+       * @description Weighted average risk across legs
+       */
+      averageRisk: number;
+      /**
+       * Format: decimal
+       * @description Highest risk on any single leg
+       */
+      maxLegRisk: number;
+      /** @description Whether all legs are currently open */
+      allLegsOpen: boolean;
+      /** @description Warnings for legs with upcoming seasonal closures. Null means no warnings. */
+      seasonalWarnings?: components['schemas']['SeasonalRouteWarning'][] | null;
+      /** @description Rank within results (1 = best option by sort criteria) */
+      rank: number;
     };
     /** @description A condition that must be met for scenario triggering */
     TriggerCondition: {
@@ -33697,6 +35610,11 @@ export interface components {
        */
       factionId: string;
     };
+    /** @description Request to reverse deprecation of a transit mode */
+    UndeprecateModeRequest: {
+      /** @description Mode code to undeprecate */
+      code: string;
+    };
     /** @description Request to restore a deprecated seed type to active status. */
     UndeprecateSeedTypeRequest: {
       /** @description The seed type to restore. */
@@ -33807,8 +35725,21 @@ export interface components {
        * @description When this entry was unlocked
        */
       unlockedAt: string;
-      /** @description Entry instance metadata */
-      metadata?: components['schemas']['EntryMetadata'];
+      /** @description Entry instance metadata (null if no metadata was provided at grant time) */
+      metadata?: components['schemas']['EntryMetadata'] | null;
+    };
+    /** @description Request to unmute a participant in a chat room */
+    UnmuteParticipantRequest: {
+      /**
+       * Format: uuid
+       * @description Room containing the muted participant
+       */
+      roomId: string;
+      /**
+       * Format: uuid
+       * @description Session ID of participant to unmute
+       */
+      targetSessionId: string;
     };
     /** @description Request to unpin a message in a room */
     UnpinMessageRequest: {
@@ -33831,7 +35762,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Slot name */
       slotName: string;
       /** @description Version to unpin */
@@ -33974,7 +35905,7 @@ export interface components {
       /** @description Whether the template is active (can create new board instances) */
       isActive?: boolean | null;
       /** @description Updated allowed owner types. Narrowing checks for existing boards with removed types. */
-      allowedOwnerTypes?: string[] | null;
+      allowedOwnerTypes?: components['schemas']['EntityType'][] | null;
     };
     /** @description Request to update bundle metadata */
     UpdateBundleRequest: {
@@ -33999,8 +35930,6 @@ export interface components {
     };
     /** @description Result of bundle update operation */
     UpdateBundleResponse: {
-      /** @description Human-readable bundle identifier that was updated */
-      bundleId: string;
       /** @description New version number after update */
       version: number;
       /** @description Version number before update */
@@ -34033,6 +35962,59 @@ export interface components {
       /** @description New era label definitions (null = no change, empty array = clear all) */
       eraLabels?: components['schemas']['EraLabel'][] | null;
     };
+    /** @description Request to update a connection's properties. Does not update status. Only provided fields are updated. */
+    UpdateConnectionRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to update
+       */
+      connectionId: string;
+      /**
+       * Format: decimal
+       * @description Updated distance
+       */
+      distanceKm?: number | null;
+      /** @description Updated terrain type */
+      terrainType?: string | null;
+      /** @description Updated mode compatibility list */
+      compatibleModes?: string[] | null;
+      /** @description Updated seasonal availability */
+      seasonalAvailability?: components['schemas']['SeasonalAvailabilityEntry'][] | null;
+      /**
+       * Format: decimal
+       * @description Updated base risk level
+       */
+      baseRiskLevel?: number | null;
+      /** @description Updated risk description */
+      riskDescription?: string | null;
+      /** @description Updated discoverability flag */
+      discoverable?: boolean | null;
+      /** @description Updated connection name */
+      name?: string | null;
+      /** @description Updated connection code */
+      code?: string | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+    };
+    /** @description Request to transition a connection's operational status with optimistic concurrency */
+    UpdateConnectionStatusRequest: {
+      /**
+       * Format: uuid
+       * @description Connection to update
+       */
+      connectionId: string;
+      /** @description What the caller believes the current status is. Required when forceUpdate is false. Ignored when forceUpdate is true. */
+      currentStatus?: components['schemas']['ConnectionStatus'] | null;
+      /** @description Target status for the connection (seasonal_closed is excluded -- managed by the Seasonal Connection Worker) */
+      newStatus: components['schemas']['SettableConnectionStatus'];
+      /** @description Why the status is changing */
+      reason: string;
+      /**
+       * @description When true, currentStatus is ignored and the status is set unconditionally. Use for administrative overrides.
+       * @default false
+       */
+      forceUpdate: boolean;
+    };
     /** @description Request to update container properties */
     UpdateContainerRequest: {
       /**
@@ -34064,8 +36046,10 @@ export interface components {
       allowedTags?: string[] | null;
       /** @description New container tags */
       tags?: string[] | null;
-      /** @description New metadata */
-      metadata?: Record<string, never> | null;
+      /** @description New game-specific container data. Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to update contract metadata */
     UpdateContractMetadataRequest: {
@@ -34249,15 +36233,15 @@ export interface components {
       maxDurability?: number | null;
       /** @description New available realms */
       availableRealms?: string[] | null;
-      /** @description New stats */
+      /** @description New stats. Opaque to Bannou; no plugin reads keys by convention. */
       stats?: Record<string, never> | null;
-      /** @description New effects */
+      /** @description New effects. Opaque to Bannou; no plugin reads keys by convention. */
       effects?: Record<string, never> | null;
-      /** @description New requirements */
+      /** @description New requirements. Opaque to Bannou; no plugin reads keys by convention. */
       requirements?: Record<string, never> | null;
-      /** @description New display properties */
+      /** @description New display properties. Opaque to Bannou; no plugin reads keys by convention. */
       display?: Record<string, never> | null;
-      /** @description New metadata */
+      /** @description New metadata. Opaque to Bannou; no plugin reads keys by convention. */
       metadata?: Record<string, never> | null;
       /** @description Active status */
       isActive?: boolean | null;
@@ -34351,6 +36335,54 @@ export interface components {
      * @enum {string}
      */
     UpdateMode: 'replace' | 'increment' | 'max' | 'min';
+    /** @description Request to update a transit mode. Only provided fields are updated. */
+    UpdateModeRequest: {
+      /** @description Mode code to update (identifier, not updatable) */
+      code: string;
+      /** @description Updated display name */
+      name?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /**
+       * Format: decimal
+       * @description Updated base speed
+       */
+      baseSpeedKmPerGameHour?: number | null;
+      /** @description Updated per-terrain speed multipliers */
+      terrainSpeedModifiers?: components['schemas']['TerrainSpeedModifier'][] | null;
+      /** @description Updated passenger capacity */
+      passengerCapacity?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated cargo capacity
+       */
+      cargoCapacityKg?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated per-mode cargo speed penalty rate
+       */
+      cargoSpeedPenaltyRate?: number | null;
+      /** @description Updated terrain compatibility list */
+      compatibleTerrainTypes?: string[] | null;
+      /** @description Updated entity type restrictions */
+      validEntityTypes?: string[] | null;
+      /** @description Updated mode requirements */
+      requirements?: components['schemas']['TransitModeRequirements'] | null;
+      /**
+       * Format: decimal
+       * @description Updated fatigue rate
+       */
+      fatigueRatePerGameHour?: number | null;
+      /**
+       * Format: decimal
+       * @description Updated noise level
+       */
+      noiseLevelNormalized?: number | null;
+      /** @description Updated realm restrictions */
+      realmRestrictions?: string[] | null;
+      /** @description Updated tags */
+      tags?: string[] | null;
+    };
     /** @description Request to update an existing norm definition */
     UpdateNormRequest: {
       /**
@@ -34461,9 +36493,9 @@ export interface components {
       excludePatterns?: string[] | null;
       /** @description New directory-to-category mapping (null to keep unchanged) */
       categoryMapping?: {
-        [key: string]: string;
+        [key: string]: components['schemas']['DocumentCategory'];
       } | null;
-      /** @description New default category for unmapped documents */
+      /** @description New default category for unmapped documents (null to keep unchanged) */
       defaultCategory?: components['schemas']['DocumentCategory'];
       /** @description Enable or disable archive functionality */
       archiveEnabled?: boolean;
@@ -34690,8 +36722,8 @@ export interface components {
       size: number;
       /** @description MIME content type (e.g., image/png, model/gltf-binary) */
       contentType: string;
-      /** @description Optional metadata for asset categorization */
-      metadata?: components['schemas']['AssetMetadataInput'];
+      /** @description Optional metadata for asset categorization (null to skip) */
+      metadata?: components['schemas']['AssetMetadataInput'] | null;
     };
     /** @description Response containing pre-signed URL and configuration for uploading an asset */
     UploadResponse: {
@@ -34712,10 +36744,10 @@ export interface components {
       expiresAt: string;
       /** @description Configuration for multipart uploads if file size requires it */
       multipart?: components['schemas']['MultipartConfig'];
-      /** @description Headers the client must include when uploading to the pre-signed URL */
+      /** @description Headers the client must include when uploading to the pre-signed URL (null if no special headers needed) */
       requiredHeaders?: {
         [key: string]: string;
-      };
+      } | null;
     };
     /** @description Request to use an item instance by executing its behavior contract */
     UseItemRequest: {
@@ -34729,15 +36761,15 @@ export interface components {
        * @description Unique identifier of the entity using the item (character, account, or actor)
        */
       userId: string;
-      /** @description Type of user entity performing the use action (e.g., character, account, actor) */
-      userType: string;
+      /** @description Type of user entity performing the use action */
+      userType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Optional unique identifier of the target entity for directional item effects
        */
       targetId?: string | null;
       /** @description Type of target entity when targetId is provided */
-      targetType?: string | null;
+      targetType?: components['schemas']['EntityType'];
       /** @description Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention. */
       context?: {
         [key: string]: unknown;
@@ -34745,13 +36777,6 @@ export interface components {
     };
     /** @description Response containing the result of an item use attempt */
     UseItemResponse: {
-      /** @description Whether the item use behavior executed successfully */
-      success: boolean;
-      /**
-       * Format: uuid
-       * @description Unique identifier of the item instance that was used
-       */
-      instanceId: string;
       /**
        * Format: uuid
        * @description Unique identifier of the item template defining the used item
@@ -34784,8 +36809,8 @@ export interface components {
        * @description User performing the step
        */
       userId: string;
-      /** @description Type of user entity (e.g., character, account, actor) */
-      userType: string;
+      /** @description Type of user entity performing the step */
+      userType: components['schemas']['EntityType'];
       /** @description Milestone code to complete in the use behavior contract */
       milestoneCode: string;
       /** @description Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific keys from this field by convention. */
@@ -34799,8 +36824,6 @@ export interface components {
     };
     /** @description Response from completing a multi-step item use milestone */
     UseItemStepResponse: {
-      /** @description Whether the step completed successfully */
-      success: boolean;
       /**
        * Format: uuid
        * @description Item instance ID
@@ -35203,7 +37226,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Type of entity that owns this save slot */
-      ownerType: components['schemas']['OwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /** @description Name of the slot to verify */
       slotName: string;
       /** @description Version to verify (latest if null) */
@@ -35413,11 +37436,6 @@ export interface components {
      * @enum {string}
      */
     VolumeShape: 'box' | 'sphere' | 'capsule' | 'cylinder';
-    /**
-     * @description Type of entity that owns a wallet
-     * @enum {string}
-     */
-    WalletOwnerType: 'account' | 'character' | 'npc' | 'guild' | 'faction' | 'location' | 'system';
     /** @description Wallet details */
     WalletResponse: {
       /**
@@ -35431,7 +37449,7 @@ export interface components {
        */
       ownerId: string;
       /** @description Owner type */
-      ownerType: components['schemas']['WalletOwnerType'];
+      ownerType: components['schemas']['EntityType'];
       /**
        * Format: uuid
        * @description Realm ID
@@ -35514,7 +37532,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  updateProfile: {
+  account_updateProfile: {
     parameters: {
       query?: never;
       header?: never;
@@ -35545,7 +37563,7 @@ export interface operations {
       };
     };
   };
-  updatePasswordHash: {
+  account_updatePasswordHash: {
     parameters: {
       query?: never;
       header?: never;
@@ -35574,7 +37592,7 @@ export interface operations {
       };
     };
   };
-  updateMfa: {
+  account_updateMfa: {
     parameters: {
       query?: never;
       header?: never;
@@ -35610,7 +37628,7 @@ export interface operations {
       };
     };
   };
-  updateVerificationStatus: {
+  account_updateVerificationStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -35639,7 +37657,7 @@ export interface operations {
       };
     };
   };
-  createAchievementDefinition: {
+  achievement_createAchievementDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -35670,7 +37688,7 @@ export interface operations {
       };
     };
   };
-  listAchievementDefinitions: {
+  achievement_listAchievementDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -35694,7 +37712,7 @@ export interface operations {
       };
     };
   };
-  updateAchievementDefinition: {
+  achievement_updateAchievementDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -35725,7 +37743,7 @@ export interface operations {
       };
     };
   };
-  deleteAchievementDefinition: {
+  achievement_deleteAchievementDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -35754,7 +37772,7 @@ export interface operations {
       };
     };
   };
-  getAchievementProgress: {
+  achievement_getAchievementProgress: {
     parameters: {
       query?: never;
       header?: never;
@@ -35778,7 +37796,7 @@ export interface operations {
       };
     };
   };
-  listUnlockedAchievements: {
+  achievement_listUnlockedAchievements: {
     parameters: {
       query?: never;
       header?: never;
@@ -35802,7 +37820,7 @@ export interface operations {
       };
     };
   };
-  CreateActorTemplate: {
+  actor_CreateActorTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -35826,7 +37844,7 @@ export interface operations {
       };
     };
   };
-  UpdateActorTemplate: {
+  actor_UpdateActorTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -35850,7 +37868,7 @@ export interface operations {
       };
     };
   };
-  DeleteActorTemplate: {
+  actor_DeleteActorTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -35874,7 +37892,7 @@ export interface operations {
       };
     };
   };
-  SpawnActor: {
+  actor_SpawnActor: {
     parameters: {
       query?: never;
       header?: never;
@@ -35898,7 +37916,7 @@ export interface operations {
       };
     };
   };
-  StopActor: {
+  actor_StopActor: {
     parameters: {
       query?: never;
       header?: never;
@@ -35922,7 +37940,7 @@ export interface operations {
       };
     };
   };
-  BindActorCharacter: {
+  actor_BindActorCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -35946,7 +37964,7 @@ export interface operations {
       };
     };
   };
-  CleanupByCharacter: {
+  actor_CleanupByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -35970,7 +37988,7 @@ export interface operations {
       };
     };
   };
-  InjectPerception: {
+  actor_InjectPerception: {
     parameters: {
       query?: never;
       header?: never;
@@ -35994,7 +38012,7 @@ export interface operations {
       };
     };
   };
-  StartEncounter: {
+  actor_StartEncounter: {
     parameters: {
       query?: never;
       header?: never;
@@ -36018,7 +38036,7 @@ export interface operations {
       };
     };
   };
-  UpdateEncounterPhase: {
+  actor_UpdateEncounterPhase: {
     parameters: {
       query?: never;
       header?: never;
@@ -36042,7 +38060,7 @@ export interface operations {
       };
     };
   };
-  EndEncounter: {
+  actor_EndEncounter: {
     parameters: {
       query?: never;
       header?: never;
@@ -36066,7 +38084,7 @@ export interface operations {
       };
     };
   };
-  requestUpload: {
+  asset_requestUpload: {
     parameters: {
       query?: never;
       header?: never;
@@ -36111,7 +38129,7 @@ export interface operations {
       };
     };
   };
-  completeUpload: {
+  asset_completeUpload: {
     parameters: {
       query?: never;
       header?: never;
@@ -36149,7 +38167,7 @@ export interface operations {
       };
     };
   };
-  getAsset: {
+  asset_getAsset: {
     parameters: {
       query?: never;
       header?: never;
@@ -36180,7 +38198,7 @@ export interface operations {
       };
     };
   };
-  listAssetVersions: {
+  asset_listAssetVersions: {
     parameters: {
       query?: never;
       header?: never;
@@ -36211,7 +38229,7 @@ export interface operations {
       };
     };
   };
-  searchAssets: {
+  asset_searchAssets: {
     parameters: {
       query?: never;
       header?: never;
@@ -36235,7 +38253,7 @@ export interface operations {
       };
     };
   };
-  createBundle: {
+  asset_createBundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36275,7 +38293,7 @@ export interface operations {
       };
     };
   };
-  getBundle: {
+  asset_getBundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36306,7 +38324,7 @@ export interface operations {
       };
     };
   };
-  requestBundleUpload: {
+  asset_requestBundleUpload: {
     parameters: {
       query?: never;
       header?: never;
@@ -36337,7 +38355,7 @@ export interface operations {
       };
     };
   };
-  createMetabundle: {
+  asset_createMetabundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36382,7 +38400,7 @@ export interface operations {
       };
     };
   };
-  getJobStatus: {
+  asset_getJobStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -36413,7 +38431,7 @@ export interface operations {
       };
     };
   };
-  cancelJob: {
+  asset_cancelJob: {
     parameters: {
       query?: never;
       header?: never;
@@ -36451,7 +38469,7 @@ export interface operations {
       };
     };
   };
-  resolveBundles: {
+  asset_resolveBundles: {
     parameters: {
       query?: never;
       header?: never;
@@ -36482,7 +38500,7 @@ export interface operations {
       };
     };
   };
-  queryBundlesByAsset: {
+  asset_queryBundlesByAsset: {
     parameters: {
       query?: never;
       header?: never;
@@ -36513,7 +38531,7 @@ export interface operations {
       };
     };
   };
-  updateBundle: {
+  asset_updateBundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36558,7 +38576,7 @@ export interface operations {
       };
     };
   };
-  deleteBundle: {
+  asset_deleteBundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36603,7 +38621,7 @@ export interface operations {
       };
     };
   };
-  restoreBundle: {
+  asset_restoreBundle: {
     parameters: {
       query?: never;
       header?: never;
@@ -36655,7 +38673,7 @@ export interface operations {
       };
     };
   };
-  queryBundles: {
+  asset_queryBundles: {
     parameters: {
       query?: never;
       header?: never;
@@ -36686,7 +38704,7 @@ export interface operations {
       };
     };
   };
-  listBundleVersions: {
+  asset_listBundleVersions: {
     parameters: {
       query?: never;
       header?: never;
@@ -36717,7 +38735,7 @@ export interface operations {
       };
     };
   };
-  bulkGetAssets: {
+  asset_bulkGetAssets: {
     parameters: {
       query?: never;
       header?: never;
@@ -36748,7 +38766,7 @@ export interface operations {
       };
     };
   };
-  login: {
+  auth_login: {
     parameters: {
       query?: never;
       header?: never;
@@ -36786,7 +38804,7 @@ export interface operations {
       };
     };
   };
-  register: {
+  auth_register: {
     parameters: {
       query?: never;
       header?: never;
@@ -36824,7 +38842,7 @@ export interface operations {
       };
     };
   };
-  initOAuth: {
+  auth_initOAuth: {
     parameters: {
       query: {
         redirectUri: string;
@@ -36847,7 +38865,7 @@ export interface operations {
       };
     };
   };
-  completeOAuth: {
+  auth_completeOAuth: {
     parameters: {
       query?: never;
       header?: never;
@@ -36873,7 +38891,7 @@ export interface operations {
       };
     };
   };
-  verifySteamAuth: {
+  auth_verifySteamAuth: {
     parameters: {
       query?: never;
       header?: never;
@@ -36911,7 +38929,7 @@ export interface operations {
       };
     };
   };
-  refreshToken: {
+  auth_refreshToken: {
     parameters: {
       query?: never;
       header: {
@@ -36938,7 +38956,7 @@ export interface operations {
       };
     };
   };
-  validateToken: {
+  auth_validateToken: {
     parameters: {
       query?: never;
       header: {
@@ -36975,7 +38993,7 @@ export interface operations {
       };
     };
   };
-  logout: {
+  auth_logout: {
     parameters: {
       query?: never;
       header: {
@@ -37000,7 +39018,7 @@ export interface operations {
       };
     };
   };
-  getSessions: {
+  auth_getSessions: {
     parameters: {
       query?: never;
       header: {
@@ -37023,7 +39041,7 @@ export interface operations {
       };
     };
   };
-  terminateSession: {
+  auth_terminateSession: {
     parameters: {
       query?: never;
       header: {
@@ -37055,7 +39073,7 @@ export interface operations {
       };
     };
   };
-  requestPasswordReset: {
+  auth_requestPasswordReset: {
     parameters: {
       query?: never;
       header?: never;
@@ -37077,7 +39095,7 @@ export interface operations {
       };
     };
   };
-  confirmPasswordReset: {
+  auth_confirmPasswordReset: {
     parameters: {
       query?: never;
       header?: never;
@@ -37099,7 +39117,7 @@ export interface operations {
       };
     };
   };
-  listProviders: {
+  auth_listProviders: {
     parameters: {
       query?: never;
       header?: never;
@@ -37119,7 +39137,7 @@ export interface operations {
       };
     };
   };
-  setupMfa: {
+  auth_setupMfa: {
     parameters: {
       query?: never;
       header: {
@@ -37149,7 +39167,7 @@ export interface operations {
       };
     };
   };
-  enableMfa: {
+  auth_enableMfa: {
     parameters: {
       query?: never;
       header: {
@@ -37188,7 +39206,7 @@ export interface operations {
       };
     };
   };
-  disableMfa: {
+  auth_disableMfa: {
     parameters: {
       query?: never;
       header: {
@@ -37227,7 +39245,7 @@ export interface operations {
       };
     };
   };
-  verifyMfa: {
+  auth_verifyMfa: {
     parameters: {
       query?: never;
       header?: never;
@@ -37265,7 +39283,7 @@ export interface operations {
       };
     };
   };
-  CompileAbmlBehavior: {
+  behavior_CompileAbmlBehavior: {
     parameters: {
       query?: never;
       header?: never;
@@ -37342,7 +39360,7 @@ export interface operations {
       };
     };
   };
-  ValidateAbml: {
+  behavior_ValidateAbml: {
     parameters: {
       query?: never;
       header?: never;
@@ -37367,7 +39385,7 @@ export interface operations {
       };
     };
   };
-  GetCachedBehavior: {
+  behavior_GetCachedBehavior: {
     parameters: {
       query?: never;
       header?: never;
@@ -37398,7 +39416,7 @@ export interface operations {
       };
     };
   };
-  InvalidateCachedBehavior: {
+  behavior_InvalidateCachedBehavior: {
     parameters: {
       query?: never;
       header?: never;
@@ -37427,7 +39445,7 @@ export interface operations {
       };
     };
   };
-  GenerateGoapPlan: {
+  behavior_GenerateGoapPlan: {
     parameters: {
       query?: never;
       header?: never;
@@ -37458,7 +39476,7 @@ export interface operations {
       };
     };
   };
-  ValidateGoapPlan: {
+  behavior_ValidateGoapPlan: {
     parameters: {
       query?: never;
       header?: never;
@@ -37489,7 +39507,7 @@ export interface operations {
       };
     };
   };
-  getCharacter: {
+  character_getCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -37520,7 +39538,7 @@ export interface operations {
       };
     };
   };
-  listCharacters: {
+  character_listCharacters: {
     parameters: {
       query?: never;
       header?: never;
@@ -37544,7 +39562,7 @@ export interface operations {
       };
     };
   };
-  getEnrichedCharacter: {
+  character_getEnrichedCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -37575,7 +39593,7 @@ export interface operations {
       };
     };
   };
-  getCharacterArchive: {
+  character_getCharacterArchive: {
     parameters: {
       query?: never;
       header?: never;
@@ -37606,7 +39624,7 @@ export interface operations {
       };
     };
   };
-  getCharactersByRealm: {
+  character_getCharactersByRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -37630,7 +39648,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  character_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -37668,7 +39686,7 @@ export interface operations {
       };
     };
   };
-  getEncounterType: {
+  characterEncounter_getEncounterType: {
     parameters: {
       query?: never;
       header?: never;
@@ -37699,7 +39717,7 @@ export interface operations {
       };
     };
   };
-  listEncounterTypes: {
+  characterEncounter_listEncounterTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -37723,7 +39741,7 @@ export interface operations {
       };
     };
   };
-  queryByCharacter: {
+  characterEncounter_queryByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -37747,7 +39765,7 @@ export interface operations {
       };
     };
   };
-  queryBetween: {
+  characterEncounter_queryBetween: {
     parameters: {
       query?: never;
       header?: never;
@@ -37771,7 +39789,7 @@ export interface operations {
       };
     };
   };
-  queryByLocation: {
+  characterEncounter_queryByLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -37795,7 +39813,7 @@ export interface operations {
       };
     };
   };
-  hasMet: {
+  characterEncounter_hasMet: {
     parameters: {
       query?: never;
       header?: never;
@@ -37819,7 +39837,7 @@ export interface operations {
       };
     };
   };
-  getSentiment: {
+  characterEncounter_getSentiment: {
     parameters: {
       query?: never;
       header?: never;
@@ -37843,7 +39861,7 @@ export interface operations {
       };
     };
   };
-  getPerspective: {
+  characterEncounter_getPerspective: {
     parameters: {
       query?: never;
       header?: never;
@@ -37874,7 +39892,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  characterEncounter_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -37905,7 +39923,7 @@ export interface operations {
       };
     };
   };
-  getParticipation: {
+  characterHistory_getParticipation: {
     parameters: {
       query?: never;
       header?: never;
@@ -37929,7 +39947,7 @@ export interface operations {
       };
     };
   };
-  getEventParticipants: {
+  characterHistory_getEventParticipants: {
     parameters: {
       query?: never;
       header?: never;
@@ -37953,7 +39971,7 @@ export interface operations {
       };
     };
   };
-  getBackstory: {
+  characterHistory_getBackstory: {
     parameters: {
       query?: never;
       header?: never;
@@ -37984,7 +40002,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  characterHistory_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -38015,7 +40033,7 @@ export interface operations {
       };
     };
   };
-  getPersonality: {
+  characterPersonality_getPersonality: {
     parameters: {
       query?: never;
       header?: never;
@@ -38046,7 +40064,7 @@ export interface operations {
       };
     };
   };
-  getCombatPreferences: {
+  characterPersonality_getCombatPreferences: {
     parameters: {
       query?: never;
       header?: never;
@@ -38077,7 +40095,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  characterPersonality_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -38108,7 +40126,7 @@ export interface operations {
       };
     };
   };
-  cleanupByCharacter: {
+  characterPersonality_cleanupByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -38132,7 +40150,7 @@ export interface operations {
       };
     };
   };
-  RegisterRoomType: {
+  chat_RegisterRoomType: {
     parameters: {
       query?: never;
       header?: never;
@@ -38156,7 +40174,7 @@ export interface operations {
       };
     };
   };
-  GetRoomType: {
+  chat_GetRoomType: {
     parameters: {
       query?: never;
       header?: never;
@@ -38180,7 +40198,7 @@ export interface operations {
       };
     };
   };
-  ListRoomTypes: {
+  chat_ListRoomTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -38204,7 +40222,7 @@ export interface operations {
       };
     };
   };
-  UpdateRoomType: {
+  chat_UpdateRoomType: {
     parameters: {
       query?: never;
       header?: never;
@@ -38228,7 +40246,7 @@ export interface operations {
       };
     };
   };
-  DeprecateRoomType: {
+  chat_DeprecateRoomType: {
     parameters: {
       query?: never;
       header?: never;
@@ -38252,7 +40270,7 @@ export interface operations {
       };
     };
   };
-  CreateRoom: {
+  chat_CreateRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38276,7 +40294,7 @@ export interface operations {
       };
     };
   };
-  GetRoom: {
+  chat_GetRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38300,7 +40318,7 @@ export interface operations {
       };
     };
   };
-  ListRooms: {
+  chat_ListRooms: {
     parameters: {
       query?: never;
       header?: never;
@@ -38324,7 +40342,7 @@ export interface operations {
       };
     };
   };
-  UpdateRoom: {
+  chat_UpdateRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38348,7 +40366,7 @@ export interface operations {
       };
     };
   };
-  DeleteRoom: {
+  chat_DeleteRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38372,7 +40390,7 @@ export interface operations {
       };
     };
   };
-  ArchiveRoom: {
+  chat_ArchiveRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38396,7 +40414,7 @@ export interface operations {
       };
     };
   };
-  JoinRoom: {
+  chat_JoinRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38420,7 +40438,7 @@ export interface operations {
       };
     };
   };
-  LeaveRoom: {
+  chat_LeaveRoom: {
     parameters: {
       query?: never;
       header?: never;
@@ -38444,7 +40462,7 @@ export interface operations {
       };
     };
   };
-  ListParticipants: {
+  chat_ListParticipants: {
     parameters: {
       query?: never;
       header?: never;
@@ -38468,7 +40486,7 @@ export interface operations {
       };
     };
   };
-  KickParticipant: {
+  chat_KickParticipant: {
     parameters: {
       query?: never;
       header?: never;
@@ -38492,7 +40510,7 @@ export interface operations {
       };
     };
   };
-  BanParticipant: {
+  chat_BanParticipant: {
     parameters: {
       query?: never;
       header?: never;
@@ -38516,7 +40534,7 @@ export interface operations {
       };
     };
   };
-  UnbanParticipant: {
+  chat_UnbanParticipant: {
     parameters: {
       query?: never;
       header?: never;
@@ -38540,7 +40558,7 @@ export interface operations {
       };
     };
   };
-  MuteParticipant: {
+  chat_MuteParticipant: {
     parameters: {
       query?: never;
       header?: never;
@@ -38564,7 +40582,55 @@ export interface operations {
       };
     };
   };
-  SendMessage: {
+  chat_UnmuteParticipant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UnmuteParticipantRequest'];
+      };
+    };
+    responses: {
+      /** @description Participant unmuted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  chat_ChangeParticipantRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangeParticipantRoleRequest'];
+      };
+    };
+    responses: {
+      /** @description Role changed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatRoomResponse'];
+        };
+      };
+    };
+  };
+  chat_SendMessage: {
     parameters: {
       query?: never;
       header?: never;
@@ -38588,7 +40654,7 @@ export interface operations {
       };
     };
   };
-  SendMessageBatch: {
+  chat_SendMessageBatch: {
     parameters: {
       query?: never;
       header?: never;
@@ -38612,7 +40678,7 @@ export interface operations {
       };
     };
   };
-  GetMessageHistory: {
+  chat_GetMessageHistory: {
     parameters: {
       query?: never;
       header?: never;
@@ -38636,7 +40702,7 @@ export interface operations {
       };
     };
   };
-  DeleteMessage: {
+  chat_DeleteMessage: {
     parameters: {
       query?: never;
       header?: never;
@@ -38660,7 +40726,7 @@ export interface operations {
       };
     };
   };
-  PinMessage: {
+  chat_PinMessage: {
     parameters: {
       query?: never;
       header?: never;
@@ -38684,7 +40750,7 @@ export interface operations {
       };
     };
   };
-  UnpinMessage: {
+  chat_UnpinMessage: {
     parameters: {
       query?: never;
       header?: never;
@@ -38708,7 +40774,7 @@ export interface operations {
       };
     };
   };
-  SearchMessages: {
+  chat_SearchMessages: {
     parameters: {
       query?: never;
       header?: never;
@@ -38732,7 +40798,7 @@ export interface operations {
       };
     };
   };
-  AdminListRooms: {
+  chat_AdminListRooms: {
     parameters: {
       query?: never;
       header?: never;
@@ -38756,7 +40822,7 @@ export interface operations {
       };
     };
   };
-  AdminGetStats: {
+  chat_AdminGetStats: {
     parameters: {
       query?: never;
       header?: never;
@@ -38780,7 +40846,7 @@ export interface operations {
       };
     };
   };
-  AdminForceCleanup: {
+  chat_AdminForceCleanup: {
     parameters: {
       query?: never;
       header?: never;
@@ -38804,7 +40870,7 @@ export interface operations {
       };
     };
   };
-  createEntryTemplate: {
+  collection_createEntryTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -38849,7 +40915,7 @@ export interface operations {
       };
     };
   };
-  getEntryTemplate: {
+  collection_getEntryTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -38880,7 +40946,7 @@ export interface operations {
       };
     };
   };
-  listEntryTemplates: {
+  collection_listEntryTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -38904,7 +40970,7 @@ export interface operations {
       };
     };
   };
-  updateEntryTemplate: {
+  collection_updateEntryTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -38935,7 +41001,7 @@ export interface operations {
       };
     };
   };
-  deleteEntryTemplate: {
+  collection_deleteEntryTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -38966,7 +41032,7 @@ export interface operations {
       };
     };
   };
-  seedEntryTemplates: {
+  collection_seedEntryTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -38997,7 +41063,7 @@ export interface operations {
       };
     };
   };
-  createCollection: {
+  collection_createCollection: {
     parameters: {
       query?: never;
       header?: never;
@@ -39035,7 +41101,7 @@ export interface operations {
       };
     };
   };
-  getCollection: {
+  collection_getCollection: {
     parameters: {
       query?: never;
       header?: never;
@@ -39066,7 +41132,7 @@ export interface operations {
       };
     };
   };
-  listCollections: {
+  collection_listCollections: {
     parameters: {
       query?: never;
       header?: never;
@@ -39090,7 +41156,7 @@ export interface operations {
       };
     };
   };
-  deleteCollection: {
+  collection_deleteCollection: {
     parameters: {
       query?: never;
       header?: never;
@@ -39121,7 +41187,7 @@ export interface operations {
       };
     };
   };
-  grantEntry: {
+  collection_grantEntry: {
     parameters: {
       query?: never;
       header?: never;
@@ -39159,7 +41225,7 @@ export interface operations {
       };
     };
   };
-  hasEntry: {
+  collection_hasEntry: {
     parameters: {
       query?: never;
       header?: never;
@@ -39183,7 +41249,7 @@ export interface operations {
       };
     };
   };
-  queryEntries: {
+  collection_queryEntries: {
     parameters: {
       query?: never;
       header?: never;
@@ -39214,7 +41280,7 @@ export interface operations {
       };
     };
   };
-  updateEntryMetadata: {
+  collection_updateEntryMetadata: {
     parameters: {
       query?: never;
       header?: never;
@@ -39245,7 +41311,7 @@ export interface operations {
       };
     };
   };
-  getCompletionStats: {
+  collection_getCompletionStats: {
     parameters: {
       query?: never;
       header?: never;
@@ -39276,7 +41342,7 @@ export interface operations {
       };
     };
   };
-  selectContentForArea: {
+  collection_selectContentForArea: {
     parameters: {
       query?: never;
       header?: never;
@@ -39307,7 +41373,7 @@ export interface operations {
       };
     };
   };
-  setAreaContentConfig: {
+  collection_setAreaContentConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -39338,7 +41404,7 @@ export interface operations {
       };
     };
   };
-  getAreaContentConfig: {
+  collection_getAreaContentConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -39369,7 +41435,7 @@ export interface operations {
       };
     };
   };
-  listAreaContentConfigs: {
+  collection_listAreaContentConfigs: {
     parameters: {
       query?: never;
       header?: never;
@@ -39393,7 +41459,7 @@ export interface operations {
       };
     };
   };
-  advanceDiscovery: {
+  collection_advanceDiscovery: {
     parameters: {
       query?: never;
       header?: never;
@@ -39431,7 +41497,31 @@ export interface operations {
       };
     };
   };
-  getClientCapabilities: {
+  collection_cleanupByCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CleanupByCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Cleanup completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CleanupByCharacterResponse'];
+        };
+      };
+    };
+  };
+  connect_getClientCapabilities: {
     parameters: {
       query?: never;
       header?: never;
@@ -39469,7 +41559,7 @@ export interface operations {
       };
     };
   };
-  getContractTemplate: {
+  contract_getContractTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -39507,7 +41597,7 @@ export interface operations {
       };
     };
   };
-  listContractTemplates: {
+  contract_listContractTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -39531,7 +41621,7 @@ export interface operations {
       };
     };
   };
-  createContractInstance: {
+  contract_createContractInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -39569,7 +41659,7 @@ export interface operations {
       };
     };
   };
-  proposeContractInstance: {
+  contract_proposeContractInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -39607,7 +41697,7 @@ export interface operations {
       };
     };
   };
-  consentToContract: {
+  contract_consentToContract: {
     parameters: {
       query?: never;
       header?: never;
@@ -39645,7 +41735,7 @@ export interface operations {
       };
     };
   };
-  getContractInstance: {
+  contract_getContractInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -39676,7 +41766,7 @@ export interface operations {
       };
     };
   };
-  queryContractInstances: {
+  contract_queryContractInstances: {
     parameters: {
       query?: never;
       header?: never;
@@ -39707,7 +41797,7 @@ export interface operations {
       };
     };
   };
-  terminateContractInstance: {
+  contract_terminateContractInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -39745,7 +41835,7 @@ export interface operations {
       };
     };
   };
-  getContractInstanceStatus: {
+  contract_getContractInstanceStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -39776,7 +41866,7 @@ export interface operations {
       };
     };
   };
-  completeMilestone: {
+  contract_completeMilestone: {
     parameters: {
       query?: never;
       header?: never;
@@ -39814,7 +41904,7 @@ export interface operations {
       };
     };
   };
-  failMilestone: {
+  contract_failMilestone: {
     parameters: {
       query?: never;
       header?: never;
@@ -39852,7 +41942,7 @@ export interface operations {
       };
     };
   };
-  getMilestone: {
+  contract_getMilestone: {
     parameters: {
       query?: never;
       header?: never;
@@ -39883,7 +41973,7 @@ export interface operations {
       };
     };
   };
-  reportBreach: {
+  contract_reportBreach: {
     parameters: {
       query?: never;
       header?: never;
@@ -39921,7 +42011,7 @@ export interface operations {
       };
     };
   };
-  cureBreach: {
+  contract_cureBreach: {
     parameters: {
       query?: never;
       header?: never;
@@ -39959,7 +42049,7 @@ export interface operations {
       };
     };
   };
-  getBreach: {
+  contract_getBreach: {
     parameters: {
       query?: never;
       header?: never;
@@ -39990,7 +42080,7 @@ export interface operations {
       };
     };
   };
-  updateContractMetadata: {
+  contract_updateContractMetadata: {
     parameters: {
       query?: never;
       header?: never;
@@ -40021,7 +42111,7 @@ export interface operations {
       };
     };
   };
-  getContractMetadata: {
+  contract_getContractMetadata: {
     parameters: {
       query?: never;
       header?: never;
@@ -40052,7 +42142,7 @@ export interface operations {
       };
     };
   };
-  checkContractConstraint: {
+  contract_checkContractConstraint: {
     parameters: {
       query?: never;
       header?: never;
@@ -40076,7 +42166,7 @@ export interface operations {
       };
     };
   };
-  queryActiveContracts: {
+  contract_queryActiveContracts: {
     parameters: {
       query?: never;
       header?: never;
@@ -40100,7 +42190,7 @@ export interface operations {
       };
     };
   };
-  lockContract: {
+  contract_lockContract: {
     parameters: {
       query?: never;
       header?: never;
@@ -40145,7 +42235,7 @@ export interface operations {
       };
     };
   };
-  unlockContract: {
+  contract_unlockContract: {
     parameters: {
       query?: never;
       header?: never;
@@ -40183,7 +42273,7 @@ export interface operations {
       };
     };
   };
-  transferContractParty: {
+  contract_transferContractParty: {
     parameters: {
       query?: never;
       header?: never;
@@ -40228,7 +42318,7 @@ export interface operations {
       };
     };
   };
-  listClauseTypes: {
+  contract_listClauseTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -40252,7 +42342,7 @@ export interface operations {
       };
     };
   };
-  setContractTemplateValues: {
+  contract_setContractTemplateValues: {
     parameters: {
       query?: never;
       header?: never;
@@ -40290,7 +42380,7 @@ export interface operations {
       };
     };
   };
-  checkAssetRequirements: {
+  contract_checkAssetRequirements: {
     parameters: {
       query?: never;
       header?: never;
@@ -40328,7 +42418,7 @@ export interface operations {
       };
     };
   };
-  executeContract: {
+  contract_executeContract: {
     parameters: {
       query?: never;
       header?: never;
@@ -40366,7 +42456,7 @@ export interface operations {
       };
     };
   };
-  getCurrencyDefinition: {
+  currency_getCurrencyDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -40404,7 +42494,7 @@ export interface operations {
       };
     };
   };
-  listCurrencyDefinitions: {
+  currency_listCurrencyDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -40428,7 +42518,7 @@ export interface operations {
       };
     };
   };
-  createWallet: {
+  currency_createWallet: {
     parameters: {
       query?: never;
       header?: never;
@@ -40459,7 +42549,7 @@ export interface operations {
       };
     };
   };
-  getWallet: {
+  currency_getWallet: {
     parameters: {
       query?: never;
       header?: never;
@@ -40490,7 +42580,7 @@ export interface operations {
       };
     };
   };
-  getOrCreateWallet: {
+  currency_getOrCreateWallet: {
     parameters: {
       query?: never;
       header?: never;
@@ -40514,7 +42604,7 @@ export interface operations {
       };
     };
   };
-  getBalance: {
+  currency_getBalance: {
     parameters: {
       query?: never;
       header?: never;
@@ -40545,7 +42635,7 @@ export interface operations {
       };
     };
   };
-  batchGetBalances: {
+  currency_batchGetBalances: {
     parameters: {
       query?: never;
       header?: never;
@@ -40569,7 +42659,7 @@ export interface operations {
       };
     };
   };
-  creditCurrency: {
+  currency_creditCurrency: {
     parameters: {
       query?: never;
       header?: never;
@@ -40621,7 +42711,7 @@ export interface operations {
       };
     };
   };
-  debitCurrency: {
+  currency_debitCurrency: {
     parameters: {
       query?: never;
       header?: never;
@@ -40666,7 +42756,7 @@ export interface operations {
       };
     };
   };
-  transferCurrency: {
+  currency_transferCurrency: {
     parameters: {
       query?: never;
       header?: never;
@@ -40711,7 +42801,7 @@ export interface operations {
       };
     };
   };
-  batchCreditCurrency: {
+  currency_batchCreditCurrency: {
     parameters: {
       query?: never;
       header?: never;
@@ -40735,7 +42825,31 @@ export interface operations {
       };
     };
   };
-  calculateConversion: {
+  currency_batchDebitCurrency: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchDebitRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch debit processed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchDebitResponse'];
+        };
+      };
+    };
+  };
+  currency_calculateConversion: {
     parameters: {
       query?: never;
       header?: never;
@@ -40773,7 +42887,7 @@ export interface operations {
       };
     };
   };
-  executeConversion: {
+  currency_executeConversion: {
     parameters: {
       query?: never;
       header?: never;
@@ -40811,7 +42925,7 @@ export interface operations {
       };
     };
   };
-  getExchangeRate: {
+  currency_getExchangeRate: {
     parameters: {
       query?: never;
       header?: never;
@@ -40849,7 +42963,7 @@ export interface operations {
       };
     };
   };
-  getTransaction: {
+  currency_getTransaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -40880,7 +42994,7 @@ export interface operations {
       };
     };
   };
-  getTransactionHistory: {
+  currency_getTransactionHistory: {
     parameters: {
       query?: never;
       header?: never;
@@ -40911,7 +43025,7 @@ export interface operations {
       };
     };
   };
-  getTransactionsByReference: {
+  currency_getTransactionsByReference: {
     parameters: {
       query?: never;
       header?: never;
@@ -40935,7 +43049,7 @@ export interface operations {
       };
     };
   };
-  getGlobalSupply: {
+  currency_getGlobalSupply: {
     parameters: {
       query?: never;
       header?: never;
@@ -40966,7 +43080,7 @@ export interface operations {
       };
     };
   };
-  escrowDeposit: {
+  currency_escrowDeposit: {
     parameters: {
       query?: never;
       header?: never;
@@ -41004,7 +43118,7 @@ export interface operations {
       };
     };
   };
-  escrowRelease: {
+  currency_escrowRelease: {
     parameters: {
       query?: never;
       header?: never;
@@ -41035,7 +43149,7 @@ export interface operations {
       };
     };
   };
-  escrowRefund: {
+  currency_escrowRefund: {
     parameters: {
       query?: never;
       header?: never;
@@ -41066,7 +43180,7 @@ export interface operations {
       };
     };
   };
-  createHold: {
+  currency_createHold: {
     parameters: {
       query?: never;
       header?: never;
@@ -41104,7 +43218,7 @@ export interface operations {
       };
     };
   };
-  captureHold: {
+  currency_captureHold: {
     parameters: {
       query?: never;
       header?: never;
@@ -41142,7 +43256,7 @@ export interface operations {
       };
     };
   };
-  releaseHold: {
+  currency_releaseHold: {
     parameters: {
       query?: never;
       header?: never;
@@ -41180,7 +43294,7 @@ export interface operations {
       };
     };
   };
-  getHold: {
+  currency_getHold: {
     parameters: {
       query?: never;
       header?: never;
@@ -41211,7 +43325,7 @@ export interface operations {
       };
     };
   };
-  createDeity: {
+  divine_createDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41249,7 +43363,7 @@ export interface operations {
       };
     };
   };
-  getDeity: {
+  divine_getDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41280,7 +43394,7 @@ export interface operations {
       };
     };
   };
-  getDeityByCode: {
+  divine_getDeityByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -41311,7 +43425,7 @@ export interface operations {
       };
     };
   };
-  listDeities: {
+  divine_listDeities: {
     parameters: {
       query?: never;
       header?: never;
@@ -41335,7 +43449,7 @@ export interface operations {
       };
     };
   };
-  updateDeity: {
+  divine_updateDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41373,7 +43487,7 @@ export interface operations {
       };
     };
   };
-  activateDeity: {
+  divine_activateDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41411,7 +43525,7 @@ export interface operations {
       };
     };
   };
-  deactivateDeity: {
+  divine_deactivateDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41449,7 +43563,7 @@ export interface operations {
       };
     };
   };
-  deleteDeity: {
+  divine_deleteDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41478,7 +43592,7 @@ export interface operations {
       };
     };
   };
-  getDivinityBalance: {
+  divine_getDivinityBalance: {
     parameters: {
       query?: never;
       header?: never;
@@ -41509,7 +43623,7 @@ export interface operations {
       };
     };
   };
-  creditDivinity: {
+  divine_creditDivinity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41540,7 +43654,7 @@ export interface operations {
       };
     };
   };
-  debitDivinity: {
+  divine_debitDivinity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41578,7 +43692,7 @@ export interface operations {
       };
     };
   };
-  getDivinityHistory: {
+  divine_getDivinityHistory: {
     parameters: {
       query?: never;
       header?: never;
@@ -41609,7 +43723,7 @@ export interface operations {
       };
     };
   };
-  grantBlessing: {
+  divine_grantBlessing: {
     parameters: {
       query?: never;
       header?: never;
@@ -41654,7 +43768,7 @@ export interface operations {
       };
     };
   };
-  revokeBlessing: {
+  divine_revokeBlessing: {
     parameters: {
       query?: never;
       header?: never;
@@ -41692,7 +43806,7 @@ export interface operations {
       };
     };
   };
-  listBlessingsByEntity: {
+  divine_listBlessingsByEntity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41716,7 +43830,7 @@ export interface operations {
       };
     };
   };
-  listBlessingsByDeity: {
+  divine_listBlessingsByDeity: {
     parameters: {
       query?: never;
       header?: never;
@@ -41740,7 +43854,7 @@ export interface operations {
       };
     };
   };
-  getBlessing: {
+  divine_getBlessing: {
     parameters: {
       query?: never;
       header?: never;
@@ -41771,7 +43885,7 @@ export interface operations {
       };
     };
   };
-  registerFollower: {
+  divine_registerFollower: {
     parameters: {
       query?: never;
       header?: never;
@@ -41809,7 +43923,7 @@ export interface operations {
       };
     };
   };
-  unregisterFollower: {
+  divine_unregisterFollower: {
     parameters: {
       query?: never;
       header?: never;
@@ -41838,7 +43952,7 @@ export interface operations {
       };
     };
   };
-  getFollowers: {
+  divine_getFollowers: {
     parameters: {
       query?: never;
       header?: never;
@@ -41869,7 +43983,7 @@ export interface operations {
       };
     };
   };
-  cleanupByCharacter: {
+  divine_cleanupByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -41891,7 +44005,7 @@ export interface operations {
       };
     };
   };
-  cleanupByGameService: {
+  divine_cleanupByGameService: {
     parameters: {
       query?: never;
       header?: never;
@@ -41913,7 +44027,7 @@ export interface operations {
       };
     };
   };
-  queryDocumentation: {
+  documentation_queryDocumentation: {
     parameters: {
       query?: never;
       header?: never;
@@ -41951,7 +44065,7 @@ export interface operations {
       };
     };
   };
-  getDocument: {
+  documentation_getDocument: {
     parameters: {
       query?: never;
       header?: never;
@@ -41982,7 +44096,7 @@ export interface operations {
       };
     };
   };
-  searchDocumentation: {
+  documentation_searchDocumentation: {
     parameters: {
       query?: never;
       header?: never;
@@ -42006,7 +44120,7 @@ export interface operations {
       };
     };
   };
-  listDocuments: {
+  documentation_listDocuments: {
     parameters: {
       query?: never;
       header?: never;
@@ -42030,7 +44144,7 @@ export interface operations {
       };
     };
   };
-  suggestRelatedTopics: {
+  documentation_suggestRelatedTopics: {
     parameters: {
       query?: never;
       header?: never;
@@ -42054,7 +44168,7 @@ export interface operations {
       };
     };
   };
-  bindRepository: {
+  documentation_bindRepository: {
     parameters: {
       query?: never;
       header?: never;
@@ -42092,7 +44206,7 @@ export interface operations {
       };
     };
   };
-  syncRepository: {
+  documentation_syncRepository: {
     parameters: {
       query?: never;
       header?: never;
@@ -42130,7 +44244,7 @@ export interface operations {
       };
     };
   };
-  getRepositoryStatus: {
+  documentation_getRepositoryStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -42161,7 +44275,7 @@ export interface operations {
       };
     };
   };
-  listRepositoryBindings: {
+  documentation_listRepositoryBindings: {
     parameters: {
       query?: never;
       header?: never;
@@ -42185,7 +44299,7 @@ export interface operations {
       };
     };
   };
-  updateRepositoryBinding: {
+  documentation_updateRepositoryBinding: {
     parameters: {
       query?: never;
       header?: never;
@@ -42216,7 +44330,7 @@ export interface operations {
       };
     };
   };
-  createDocumentationArchive: {
+  documentation_createDocumentationArchive: {
     parameters: {
       query?: never;
       header?: never;
@@ -42247,7 +44361,7 @@ export interface operations {
       };
     };
   };
-  listDocumentationArchives: {
+  documentation_listDocumentationArchives: {
     parameters: {
       query?: never;
       header?: never;
@@ -42271,7 +44385,7 @@ export interface operations {
       };
     };
   };
-  createEscrow: {
+  escrow_createEscrow: {
     parameters: {
       query?: never;
       header?: never;
@@ -42302,7 +44416,7 @@ export interface operations {
       };
     };
   };
-  getEscrow: {
+  escrow_getEscrow: {
     parameters: {
       query?: never;
       header?: never;
@@ -42333,7 +44447,7 @@ export interface operations {
       };
     };
   };
-  listEscrows: {
+  escrow_listEscrows: {
     parameters: {
       query?: never;
       header?: never;
@@ -42357,7 +44471,7 @@ export interface operations {
       };
     };
   };
-  deposit: {
+  escrow_deposit: {
     parameters: {
       query?: never;
       header?: never;
@@ -42388,7 +44502,7 @@ export interface operations {
       };
     };
   };
-  validateDeposit: {
+  escrow_validateDeposit: {
     parameters: {
       query?: never;
       header?: never;
@@ -42412,7 +44526,7 @@ export interface operations {
       };
     };
   };
-  getDepositStatus: {
+  escrow_getDepositStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -42436,7 +44550,7 @@ export interface operations {
       };
     };
   };
-  recordConsent: {
+  escrow_recordConsent: {
     parameters: {
       query?: never;
       header?: never;
@@ -42467,7 +44581,7 @@ export interface operations {
       };
     };
   };
-  getConsentStatus: {
+  escrow_getConsentStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -42491,7 +44605,7 @@ export interface operations {
       };
     };
   };
-  release: {
+  escrow_release: {
     parameters: {
       query?: never;
       header?: never;
@@ -42522,7 +44636,7 @@ export interface operations {
       };
     };
   };
-  refund: {
+  escrow_refund: {
     parameters: {
       query?: never;
       header?: never;
@@ -42553,7 +44667,7 @@ export interface operations {
       };
     };
   };
-  cancel: {
+  escrow_cancel: {
     parameters: {
       query?: never;
       header?: never;
@@ -42584,7 +44698,7 @@ export interface operations {
       };
     };
   };
-  dispute: {
+  escrow_dispute: {
     parameters: {
       query?: never;
       header?: never;
@@ -42615,7 +44729,7 @@ export interface operations {
       };
     };
   };
-  confirmRelease: {
+  escrow_confirmRelease: {
     parameters: {
       query?: never;
       header?: never;
@@ -42653,7 +44767,7 @@ export interface operations {
       };
     };
   };
-  confirmRefund: {
+  escrow_confirmRefund: {
     parameters: {
       query?: never;
       header?: never;
@@ -42691,7 +44805,7 @@ export interface operations {
       };
     };
   };
-  resolve: {
+  escrow_resolve: {
     parameters: {
       query?: never;
       header?: never;
@@ -42722,7 +44836,7 @@ export interface operations {
       };
     };
   };
-  verifyCondition: {
+  escrow_verifyCondition: {
     parameters: {
       query?: never;
       header?: never;
@@ -42753,7 +44867,7 @@ export interface operations {
       };
     };
   };
-  reaffirm: {
+  escrow_reaffirm: {
     parameters: {
       query?: never;
       header?: never;
@@ -42784,7 +44898,7 @@ export interface operations {
       };
     };
   };
-  createFaction: {
+  faction_createFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -42829,7 +44943,7 @@ export interface operations {
       };
     };
   };
-  getFaction: {
+  faction_getFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -42860,7 +44974,7 @@ export interface operations {
       };
     };
   };
-  getFactionByCode: {
+  faction_getFactionByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -42891,7 +45005,7 @@ export interface operations {
       };
     };
   };
-  listFactions: {
+  faction_listFactions: {
     parameters: {
       query?: never;
       header?: never;
@@ -42915,7 +45029,7 @@ export interface operations {
       };
     };
   };
-  updateFaction: {
+  faction_updateFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -42953,7 +45067,7 @@ export interface operations {
       };
     };
   };
-  deprecateFaction: {
+  faction_deprecateFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -42991,7 +45105,7 @@ export interface operations {
       };
     };
   };
-  undeprecateFaction: {
+  faction_undeprecateFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -43029,7 +45143,7 @@ export interface operations {
       };
     };
   };
-  designateRealmBaseline: {
+  faction_designateRealmBaseline: {
     parameters: {
       query?: never;
       header?: never;
@@ -43067,7 +45181,7 @@ export interface operations {
       };
     };
   };
-  getRealmBaseline: {
+  faction_getRealmBaseline: {
     parameters: {
       query?: never;
       header?: never;
@@ -43098,7 +45212,7 @@ export interface operations {
       };
     };
   };
-  addMember: {
+  faction_addMember: {
     parameters: {
       query?: never;
       header?: never;
@@ -43136,7 +45250,7 @@ export interface operations {
       };
     };
   };
-  removeMember: {
+  faction_removeMember: {
     parameters: {
       query?: never;
       header?: never;
@@ -43165,7 +45279,7 @@ export interface operations {
       };
     };
   };
-  listMembers: {
+  faction_listMembers: {
     parameters: {
       query?: never;
       header?: never;
@@ -43196,7 +45310,7 @@ export interface operations {
       };
     };
   };
-  listMembershipsByCharacter: {
+  faction_listMembershipsByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -43220,7 +45334,7 @@ export interface operations {
       };
     };
   };
-  updateMemberRole: {
+  faction_updateMemberRole: {
     parameters: {
       query?: never;
       header?: never;
@@ -43251,7 +45365,7 @@ export interface operations {
       };
     };
   };
-  checkMembership: {
+  faction_checkMembership: {
     parameters: {
       query?: never;
       header?: never;
@@ -43275,7 +45389,7 @@ export interface operations {
       };
     };
   };
-  claimTerritory: {
+  faction_claimTerritory: {
     parameters: {
       query?: never;
       header?: never;
@@ -43320,7 +45434,7 @@ export interface operations {
       };
     };
   };
-  releaseTerritory: {
+  faction_releaseTerritory: {
     parameters: {
       query?: never;
       header?: never;
@@ -43349,7 +45463,7 @@ export interface operations {
       };
     };
   };
-  listTerritoryClaims: {
+  faction_listTerritoryClaims: {
     parameters: {
       query?: never;
       header?: never;
@@ -43380,7 +45494,7 @@ export interface operations {
       };
     };
   };
-  getControllingFaction: {
+  faction_getControllingFaction: {
     parameters: {
       query?: never;
       header?: never;
@@ -43411,7 +45525,7 @@ export interface operations {
       };
     };
   };
-  defineNorm: {
+  faction_defineNorm: {
     parameters: {
       query?: never;
       header?: never;
@@ -43456,7 +45570,7 @@ export interface operations {
       };
     };
   };
-  updateNorm: {
+  faction_updateNorm: {
     parameters: {
       query?: never;
       header?: never;
@@ -43494,7 +45608,7 @@ export interface operations {
       };
     };
   };
-  deleteNorm: {
+  faction_deleteNorm: {
     parameters: {
       query?: never;
       header?: never;
@@ -43523,7 +45637,7 @@ export interface operations {
       };
     };
   };
-  listNorms: {
+  faction_listNorms: {
     parameters: {
       query?: never;
       header?: never;
@@ -43554,7 +45668,7 @@ export interface operations {
       };
     };
   };
-  cleanupByCharacter: {
+  faction_cleanupByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -43578,7 +45692,7 @@ export interface operations {
       };
     };
   };
-  cleanupByRealm: {
+  faction_cleanupByRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -43602,7 +45716,7 @@ export interface operations {
       };
     };
   };
-  cleanupByLocation: {
+  faction_cleanupByLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -43626,7 +45740,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  faction_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -43657,7 +45771,7 @@ export interface operations {
       };
     };
   };
-  listServices: {
+  gameService_listServices: {
     parameters: {
       query?: never;
       header?: never;
@@ -43681,7 +45795,7 @@ export interface operations {
       };
     };
   };
-  getService: {
+  gameService_getService: {
     parameters: {
       query?: never;
       header?: never;
@@ -43712,7 +45826,7 @@ export interface operations {
       };
     };
   };
-  getGameSession: {
+  gameSession_getGameSession: {
     parameters: {
       query?: never;
       header?: never;
@@ -43743,7 +45857,7 @@ export interface operations {
       };
     };
   };
-  leaveGameSession: {
+  gameSession_leaveGameSession: {
     parameters: {
       query?: never;
       header?: never;
@@ -43772,7 +45886,7 @@ export interface operations {
       };
     };
   };
-  sendChatMessage: {
+  gameSession_sendChatMessage: {
     parameters: {
       query?: never;
       header?: never;
@@ -43801,7 +45915,7 @@ export interface operations {
       };
     };
   };
-  performGameAction: {
+  gameSession_performGameAction: {
     parameters: {
       query?: never;
       header?: never;
@@ -43839,7 +45953,7 @@ export interface operations {
       };
     };
   };
-  leaveGameSessionById: {
+  gameSession_leaveGameSessionById: {
     parameters: {
       query?: never;
       header?: never;
@@ -43868,7 +45982,7 @@ export interface operations {
       };
     };
   };
-  enterGarden: {
+  gardener_enterGarden: {
     parameters: {
       query?: never;
       header?: never;
@@ -43906,7 +46020,7 @@ export interface operations {
       };
     };
   };
-  getGardenState: {
+  gardener_getGardenState: {
     parameters: {
       query?: never;
       header?: never;
@@ -43937,7 +46051,7 @@ export interface operations {
       };
     };
   };
-  updatePosition: {
+  gardener_updatePosition: {
     parameters: {
       query?: never;
       header?: never;
@@ -43968,7 +46082,7 @@ export interface operations {
       };
     };
   };
-  leaveGarden: {
+  gardener_leaveGarden: {
     parameters: {
       query?: never;
       header?: never;
@@ -43999,7 +46113,7 @@ export interface operations {
       };
     };
   };
-  listPois: {
+  gardener_listPois: {
     parameters: {
       query?: never;
       header?: never;
@@ -44030,7 +46144,7 @@ export interface operations {
       };
     };
   };
-  interactWithPoi: {
+  gardener_interactWithPoi: {
     parameters: {
       query?: never;
       header?: never;
@@ -44068,7 +46182,7 @@ export interface operations {
       };
     };
   };
-  declinePoi: {
+  gardener_declinePoi: {
     parameters: {
       query?: never;
       header?: never;
@@ -44106,7 +46220,7 @@ export interface operations {
       };
     };
   };
-  enterScenario: {
+  gardener_enterScenario: {
     parameters: {
       query?: never;
       header?: never;
@@ -44144,7 +46258,7 @@ export interface operations {
       };
     };
   };
-  getScenarioState: {
+  gardener_getScenarioState: {
     parameters: {
       query?: never;
       header?: never;
@@ -44175,7 +46289,7 @@ export interface operations {
       };
     };
   };
-  completeScenario: {
+  gardener_completeScenario: {
     parameters: {
       query?: never;
       header?: never;
@@ -44206,7 +46320,7 @@ export interface operations {
       };
     };
   };
-  abandonScenario: {
+  gardener_abandonScenario: {
     parameters: {
       query?: never;
       header?: never;
@@ -44237,7 +46351,7 @@ export interface operations {
       };
     };
   };
-  chainScenario: {
+  gardener_chainScenario: {
     parameters: {
       query?: never;
       header?: never;
@@ -44275,7 +46389,7 @@ export interface operations {
       };
     };
   };
-  createTemplate: {
+  gardener_createTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -44306,7 +46420,7 @@ export interface operations {
       };
     };
   };
-  getTemplate: {
+  gardener_getTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -44337,7 +46451,7 @@ export interface operations {
       };
     };
   };
-  getTemplateByCode: {
+  gardener_getTemplateByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -44368,7 +46482,7 @@ export interface operations {
       };
     };
   };
-  listTemplates: {
+  gardener_listTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -44392,7 +46506,7 @@ export interface operations {
       };
     };
   };
-  updateTemplate: {
+  gardener_updateTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -44423,7 +46537,7 @@ export interface operations {
       };
     };
   };
-  deprecateTemplate: {
+  gardener_deprecateTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -44454,7 +46568,7 @@ export interface operations {
       };
     };
   };
-  deleteTemplate: {
+  gardener_deleteTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -44492,7 +46606,7 @@ export interface operations {
       };
     };
   };
-  getPhaseConfig: {
+  gardener_getPhaseConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -44516,7 +46630,7 @@ export interface operations {
       };
     };
   };
-  updatePhaseConfig: {
+  gardener_updatePhaseConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -44540,7 +46654,7 @@ export interface operations {
       };
     };
   };
-  getPhaseMetrics: {
+  gardener_getPhaseMetrics: {
     parameters: {
       query?: never;
       header?: never;
@@ -44564,7 +46678,7 @@ export interface operations {
       };
     };
   };
-  enterScenarioTogether: {
+  gardener_enterScenarioTogether: {
     parameters: {
       query?: never;
       header?: never;
@@ -44602,7 +46716,7 @@ export interface operations {
       };
     };
   };
-  getSharedGardenState: {
+  gardener_getSharedGardenState: {
     parameters: {
       query?: never;
       header?: never;
@@ -44633,7 +46747,7 @@ export interface operations {
       };
     };
   };
-  createContainer: {
+  inventory_createContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44664,7 +46778,7 @@ export interface operations {
       };
     };
   };
-  getContainer: {
+  inventory_getContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44695,7 +46809,7 @@ export interface operations {
       };
     };
   };
-  getOrCreateContainer: {
+  inventory_getOrCreateContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44719,7 +46833,7 @@ export interface operations {
       };
     };
   };
-  listContainers: {
+  inventory_listContainers: {
     parameters: {
       query?: never;
       header?: never;
@@ -44743,7 +46857,7 @@ export interface operations {
       };
     };
   };
-  updateContainer: {
+  inventory_updateContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44774,7 +46888,7 @@ export interface operations {
       };
     };
   };
-  addItemToContainer: {
+  inventory_addItemToContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44812,7 +46926,7 @@ export interface operations {
       };
     };
   };
-  removeItemFromContainer: {
+  inventory_removeItemFromContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -44843,7 +46957,7 @@ export interface operations {
       };
     };
   };
-  moveItem: {
+  inventory_moveItem: {
     parameters: {
       query?: never;
       header?: never;
@@ -44881,7 +46995,7 @@ export interface operations {
       };
     };
   };
-  transferItem: {
+  inventory_transferItem: {
     parameters: {
       query?: never;
       header?: never;
@@ -44919,7 +47033,7 @@ export interface operations {
       };
     };
   };
-  splitStack: {
+  inventory_splitStack: {
     parameters: {
       query?: never;
       header?: never;
@@ -44957,7 +47071,7 @@ export interface operations {
       };
     };
   };
-  mergeStacks: {
+  inventory_mergeStacks: {
     parameters: {
       query?: never;
       header?: never;
@@ -44995,7 +47109,7 @@ export interface operations {
       };
     };
   };
-  queryItems: {
+  inventory_queryItems: {
     parameters: {
       query?: never;
       header?: never;
@@ -45019,7 +47133,7 @@ export interface operations {
       };
     };
   };
-  countItems: {
+  inventory_countItems: {
     parameters: {
       query?: never;
       header?: never;
@@ -45043,7 +47157,7 @@ export interface operations {
       };
     };
   };
-  hasItems: {
+  inventory_hasItems: {
     parameters: {
       query?: never;
       header?: never;
@@ -45067,7 +47181,7 @@ export interface operations {
       };
     };
   };
-  findSpace: {
+  inventory_findSpace: {
     parameters: {
       query?: never;
       header?: never;
@@ -45091,7 +47205,7 @@ export interface operations {
       };
     };
   };
-  createItemTemplate: {
+  item_createItemTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45129,7 +47243,7 @@ export interface operations {
       };
     };
   };
-  getItemTemplate: {
+  item_getItemTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45167,7 +47281,7 @@ export interface operations {
       };
     };
   };
-  listItemTemplates: {
+  item_listItemTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -45191,7 +47305,7 @@ export interface operations {
       };
     };
   };
-  updateItemTemplate: {
+  item_updateItemTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45229,7 +47343,7 @@ export interface operations {
       };
     };
   };
-  createItemInstance: {
+  item_createItemInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -45274,7 +47388,7 @@ export interface operations {
       };
     };
   };
-  getItemInstance: {
+  item_getItemInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -45305,7 +47419,7 @@ export interface operations {
       };
     };
   };
-  modifyItemInstance: {
+  item_modifyItemInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -45350,7 +47464,7 @@ export interface operations {
       };
     };
   };
-  bindItemInstance: {
+  item_bindItemInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -45395,7 +47509,7 @@ export interface operations {
       };
     };
   };
-  destroyItemInstance: {
+  item_destroyItemInstance: {
     parameters: {
       query?: never;
       header?: never;
@@ -45433,7 +47547,7 @@ export interface operations {
       };
     };
   };
-  useItem: {
+  item_useItem: {
     parameters: {
       query?: never;
       header?: never;
@@ -45478,7 +47592,7 @@ export interface operations {
       };
     };
   };
-  useItemStep: {
+  item_useItemStep: {
     parameters: {
       query?: never;
       header?: never;
@@ -45530,7 +47644,7 @@ export interface operations {
       };
     };
   };
-  listItemsByContainer: {
+  item_listItemsByContainer: {
     parameters: {
       query?: never;
       header?: never;
@@ -45554,7 +47668,7 @@ export interface operations {
       };
     };
   };
-  batchGetItemInstances: {
+  item_batchGetItemInstances: {
     parameters: {
       query?: never;
       header?: never;
@@ -45578,7 +47692,7 @@ export interface operations {
       };
     };
   };
-  createLeaderboardDefinition: {
+  leaderboard_createLeaderboardDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -45609,7 +47723,7 @@ export interface operations {
       };
     };
   };
-  updateLeaderboardDefinition: {
+  leaderboard_updateLeaderboardDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -45640,7 +47754,7 @@ export interface operations {
       };
     };
   };
-  deleteLeaderboardDefinition: {
+  leaderboard_deleteLeaderboardDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -45669,7 +47783,7 @@ export interface operations {
       };
     };
   };
-  getEntityRank: {
+  leaderboard_getEntityRank: {
     parameters: {
       query?: never;
       header?: never;
@@ -45700,7 +47814,7 @@ export interface operations {
       };
     };
   };
-  getTopRanks: {
+  leaderboard_getTopRanks: {
     parameters: {
       query?: never;
       header?: never;
@@ -45724,7 +47838,7 @@ export interface operations {
       };
     };
   };
-  getRanksAround: {
+  leaderboard_getRanksAround: {
     parameters: {
       query?: never;
       header?: never;
@@ -45755,7 +47869,7 @@ export interface operations {
       };
     };
   };
-  getSeason: {
+  leaderboard_getSeason: {
     parameters: {
       query?: never;
       header?: never;
@@ -45786,7 +47900,7 @@ export interface operations {
       };
     };
   };
-  createBoardTemplate: {
+  license_createBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45824,7 +47938,7 @@ export interface operations {
       };
     };
   };
-  getBoardTemplate: {
+  license_getBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45855,7 +47969,7 @@ export interface operations {
       };
     };
   };
-  listBoardTemplates: {
+  license_listBoardTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -45879,7 +47993,7 @@ export interface operations {
       };
     };
   };
-  updateBoardTemplate: {
+  license_updateBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45910,7 +48024,7 @@ export interface operations {
       };
     };
   };
-  deleteBoardTemplate: {
+  license_deleteBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -45948,7 +48062,7 @@ export interface operations {
       };
     };
   };
-  addLicenseDefinition: {
+  license_addLicenseDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -45993,7 +48107,7 @@ export interface operations {
       };
     };
   };
-  getLicenseDefinition: {
+  license_getLicenseDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46024,7 +48138,7 @@ export interface operations {
       };
     };
   };
-  listLicenseDefinitions: {
+  license_listLicenseDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -46055,7 +48169,7 @@ export interface operations {
       };
     };
   };
-  updateLicenseDefinition: {
+  license_updateLicenseDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46086,7 +48200,7 @@ export interface operations {
       };
     };
   };
-  removeLicenseDefinition: {
+  license_removeLicenseDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46124,7 +48238,7 @@ export interface operations {
       };
     };
   };
-  createBoard: {
+  license_createBoard: {
     parameters: {
       query?: never;
       header?: never;
@@ -46169,7 +48283,7 @@ export interface operations {
       };
     };
   };
-  getBoard: {
+  license_getBoard: {
     parameters: {
       query?: never;
       header?: never;
@@ -46200,7 +48314,7 @@ export interface operations {
       };
     };
   };
-  listBoardsByOwner: {
+  license_listBoardsByOwner: {
     parameters: {
       query?: never;
       header?: never;
@@ -46224,7 +48338,7 @@ export interface operations {
       };
     };
   };
-  deleteBoard: {
+  license_deleteBoard: {
     parameters: {
       query?: never;
       header?: never;
@@ -46255,7 +48369,7 @@ export interface operations {
       };
     };
   };
-  unlockLicense: {
+  license_unlockLicense: {
     parameters: {
       query?: never;
       header?: never;
@@ -46307,7 +48421,7 @@ export interface operations {
       };
     };
   };
-  checkUnlockable: {
+  license_checkUnlockable: {
     parameters: {
       query?: never;
       header?: never;
@@ -46338,7 +48452,7 @@ export interface operations {
       };
     };
   };
-  getBoardState: {
+  license_getBoardState: {
     parameters: {
       query?: never;
       header?: never;
@@ -46369,7 +48483,7 @@ export interface operations {
       };
     };
   };
-  seedBoardTemplate: {
+  license_seedBoardTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -46407,7 +48521,7 @@ export interface operations {
       };
     };
   };
-  cloneBoard: {
+  license_cloneBoard: {
     parameters: {
       query?: never;
       header?: never;
@@ -46452,7 +48566,7 @@ export interface operations {
       };
     };
   };
-  cleanupByOwner: {
+  license_cleanupByOwner: {
     parameters: {
       query?: never;
       header?: never;
@@ -46476,7 +48590,7 @@ export interface operations {
       };
     };
   };
-  getLocation: {
+  location_getLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -46507,7 +48621,7 @@ export interface operations {
       };
     };
   };
-  getLocationByCode: {
+  location_getLocationByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -46538,7 +48652,7 @@ export interface operations {
       };
     };
   };
-  listLocations: {
+  location_listLocations: {
     parameters: {
       query?: never;
       header?: never;
@@ -46562,7 +48676,7 @@ export interface operations {
       };
     };
   };
-  listLocationsByRealm: {
+  location_listLocationsByRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -46586,7 +48700,7 @@ export interface operations {
       };
     };
   };
-  listLocationsByParent: {
+  location_listLocationsByParent: {
     parameters: {
       query?: never;
       header?: never;
@@ -46617,7 +48731,7 @@ export interface operations {
       };
     };
   };
-  listRootLocations: {
+  location_listRootLocations: {
     parameters: {
       query?: never;
       header?: never;
@@ -46641,7 +48755,7 @@ export interface operations {
       };
     };
   };
-  getLocationAncestors: {
+  location_getLocationAncestors: {
     parameters: {
       query?: never;
       header?: never;
@@ -46672,7 +48786,7 @@ export interface operations {
       };
     };
   };
-  validateTerritory: {
+  location_validateTerritory: {
     parameters: {
       query?: never;
       header?: never;
@@ -46703,7 +48817,7 @@ export interface operations {
       };
     };
   };
-  getLocationDescendants: {
+  location_getLocationDescendants: {
     parameters: {
       query?: never;
       header?: never;
@@ -46734,7 +48848,7 @@ export interface operations {
       };
     };
   };
-  locationExists: {
+  location_locationExists: {
     parameters: {
       query?: never;
       header?: never;
@@ -46758,7 +48872,7 @@ export interface operations {
       };
     };
   };
-  queryLocationsByPosition: {
+  location_queryLocationsByPosition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46782,7 +48896,7 @@ export interface operations {
       };
     };
   };
-  reportEntityPosition: {
+  location_reportEntityPosition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46813,7 +48927,7 @@ export interface operations {
       };
     };
   };
-  getEntityLocation: {
+  location_getEntityLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -46837,7 +48951,7 @@ export interface operations {
       };
     };
   };
-  listEntitiesAtLocation: {
+  location_listEntitiesAtLocation: {
     parameters: {
       query?: never;
       header?: never;
@@ -46861,7 +48975,7 @@ export interface operations {
       };
     };
   };
-  clearEntityPosition: {
+  location_clearEntityPosition: {
     parameters: {
       query?: never;
       header?: never;
@@ -46885,7 +48999,7 @@ export interface operations {
       };
     };
   };
-  requestSnapshot: {
+  mapping_requestSnapshot: {
     parameters: {
       query?: never;
       header?: never;
@@ -46916,7 +49030,7 @@ export interface operations {
       };
     };
   };
-  queryPoint: {
+  mapping_queryPoint: {
     parameters: {
       query?: never;
       header?: never;
@@ -46940,7 +49054,7 @@ export interface operations {
       };
     };
   };
-  queryBounds: {
+  mapping_queryBounds: {
     parameters: {
       query?: never;
       header?: never;
@@ -46964,7 +49078,7 @@ export interface operations {
       };
     };
   };
-  queryObjectsByType: {
+  mapping_queryObjectsByType: {
     parameters: {
       query?: never;
       header?: never;
@@ -46988,7 +49102,7 @@ export interface operations {
       };
     };
   };
-  queryAffordance: {
+  mapping_queryAffordance: {
     parameters: {
       query?: never;
       header?: never;
@@ -47012,7 +49126,7 @@ export interface operations {
       };
     };
   };
-  checkoutForAuthoring: {
+  mapping_checkoutForAuthoring: {
     parameters: {
       query?: never;
       header?: never;
@@ -47043,7 +49157,7 @@ export interface operations {
       };
     };
   };
-  commitAuthoring: {
+  mapping_commitAuthoring: {
     parameters: {
       query?: never;
       header?: never;
@@ -47074,7 +49188,7 @@ export interface operations {
       };
     };
   };
-  releaseAuthoring: {
+  mapping_releaseAuthoring: {
     parameters: {
       query?: never;
       header?: never;
@@ -47098,7 +49212,7 @@ export interface operations {
       };
     };
   };
-  createDefinition: {
+  mapping_createDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47129,7 +49243,7 @@ export interface operations {
       };
     };
   };
-  getDefinition: {
+  mapping_getDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47160,7 +49274,7 @@ export interface operations {
       };
     };
   };
-  listDefinitions: {
+  mapping_listDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -47184,7 +49298,7 @@ export interface operations {
       };
     };
   };
-  updateDefinition: {
+  mapping_updateDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47215,7 +49329,7 @@ export interface operations {
       };
     };
   };
-  listQueues: {
+  matchmaking_listQueues: {
     parameters: {
       query?: never;
       header?: never;
@@ -47239,7 +49353,7 @@ export interface operations {
       };
     };
   };
-  getQueue: {
+  matchmaking_getQueue: {
     parameters: {
       query?: never;
       header?: never;
@@ -47270,7 +49384,7 @@ export interface operations {
       };
     };
   };
-  joinMatchmaking: {
+  matchmaking_joinMatchmaking: {
     parameters: {
       query?: never;
       header?: never;
@@ -47308,7 +49422,7 @@ export interface operations {
       };
     };
   };
-  leaveMatchmaking: {
+  matchmaking_leaveMatchmaking: {
     parameters: {
       query?: never;
       header?: never;
@@ -47337,7 +49451,7 @@ export interface operations {
       };
     };
   };
-  getMatchmakingStatus: {
+  matchmaking_getMatchmakingStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -47368,7 +49482,7 @@ export interface operations {
       };
     };
   };
-  acceptMatch: {
+  matchmaking_acceptMatch: {
     parameters: {
       query?: never;
       header?: never;
@@ -47399,7 +49513,7 @@ export interface operations {
       };
     };
   };
-  declineMatch: {
+  matchmaking_declineMatch: {
     parameters: {
       query?: never;
       header?: never;
@@ -47428,7 +49542,7 @@ export interface operations {
       };
     };
   };
-  getMatchmakingStats: {
+  matchmaking_getMatchmakingStats: {
     parameters: {
       query?: never;
       header?: never;
@@ -47452,7 +49566,7 @@ export interface operations {
       };
     };
   };
-  GenerateComposition: {
+  music_GenerateComposition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47490,7 +49604,7 @@ export interface operations {
       };
     };
   };
-  ValidateMidiJson: {
+  music_ValidateMidiJson: {
     parameters: {
       query?: never;
       header?: never;
@@ -47514,7 +49628,7 @@ export interface operations {
       };
     };
   };
-  GetStyle: {
+  music_GetStyle: {
     parameters: {
       query?: never;
       header?: never;
@@ -47545,7 +49659,7 @@ export interface operations {
       };
     };
   };
-  ListStyles: {
+  music_ListStyles: {
     parameters: {
       query?: never;
       header?: never;
@@ -47569,7 +49683,7 @@ export interface operations {
       };
     };
   };
-  GenerateProgression: {
+  music_GenerateProgression: {
     parameters: {
       query?: never;
       header?: never;
@@ -47600,7 +49714,7 @@ export interface operations {
       };
     };
   };
-  GenerateMelody: {
+  music_GenerateMelody: {
     parameters: {
       query?: never;
       header?: never;
@@ -47631,7 +49745,7 @@ export interface operations {
       };
     };
   };
-  ApplyVoiceLeading: {
+  music_ApplyVoiceLeading: {
     parameters: {
       query?: never;
       header?: never;
@@ -47662,7 +49776,7 @@ export interface operations {
       };
     };
   };
-  setActionMapping: {
+  obligation_setActionMapping: {
     parameters: {
       query?: never;
       header?: never;
@@ -47693,7 +49807,7 @@ export interface operations {
       };
     };
   };
-  listActionMappings: {
+  obligation_listActionMappings: {
     parameters: {
       query?: never;
       header?: never;
@@ -47717,7 +49831,7 @@ export interface operations {
       };
     };
   };
-  deleteActionMapping: {
+  obligation_deleteActionMapping: {
     parameters: {
       query?: never;
       header?: never;
@@ -47746,7 +49860,7 @@ export interface operations {
       };
     };
   };
-  queryViolations: {
+  obligation_queryViolations: {
     parameters: {
       query?: never;
       header?: never;
@@ -47770,7 +49884,7 @@ export interface operations {
       };
     };
   };
-  invalidateCache: {
+  obligation_invalidateCache: {
     parameters: {
       query?: never;
       header?: never;
@@ -47794,7 +49908,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  obligation_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -47825,7 +49939,7 @@ export interface operations {
       };
     };
   };
-  cleanupByCharacter: {
+  obligation_cleanupByCharacter: {
     parameters: {
       query?: never;
       header?: never;
@@ -47849,7 +49963,7 @@ export interface operations {
       };
     };
   };
-  startWatcher: {
+  puppetmaster_startWatcher: {
     parameters: {
       query?: never;
       header?: never;
@@ -47873,7 +49987,7 @@ export interface operations {
       };
     };
   };
-  stopWatcher: {
+  puppetmaster_stopWatcher: {
     parameters: {
       query?: never;
       header?: never;
@@ -47897,7 +50011,7 @@ export interface operations {
       };
     };
   };
-  startWatchersForRealm: {
+  puppetmaster_startWatchersForRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -47921,7 +50035,7 @@ export interface operations {
       };
     };
   };
-  createQuestDefinition: {
+  quest_createQuestDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47959,7 +50073,7 @@ export interface operations {
       };
     };
   };
-  getQuestDefinition: {
+  quest_getQuestDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -47990,7 +50104,7 @@ export interface operations {
       };
     };
   };
-  listQuestDefinitions: {
+  quest_listQuestDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -48014,7 +50128,7 @@ export interface operations {
       };
     };
   };
-  updateQuestDefinition: {
+  quest_updateQuestDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -48045,7 +50159,7 @@ export interface operations {
       };
     };
   };
-  deprecateQuestDefinition: {
+  quest_deprecateQuestDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -48076,7 +50190,7 @@ export interface operations {
       };
     };
   };
-  acceptQuest: {
+  quest_acceptQuest: {
     parameters: {
       query?: never;
       header?: never;
@@ -48121,7 +50235,7 @@ export interface operations {
       };
     };
   };
-  abandonQuest: {
+  quest_abandonQuest: {
     parameters: {
       query?: never;
       header?: never;
@@ -48159,7 +50273,7 @@ export interface operations {
       };
     };
   };
-  getQuest: {
+  quest_getQuest: {
     parameters: {
       query?: never;
       header?: never;
@@ -48190,7 +50304,7 @@ export interface operations {
       };
     };
   };
-  listQuests: {
+  quest_listQuests: {
     parameters: {
       query?: never;
       header?: never;
@@ -48214,7 +50328,7 @@ export interface operations {
       };
     };
   };
-  listAvailableQuests: {
+  quest_listAvailableQuests: {
     parameters: {
       query?: never;
       header?: never;
@@ -48238,7 +50352,7 @@ export interface operations {
       };
     };
   };
-  getQuestLog: {
+  quest_getQuestLog: {
     parameters: {
       query?: never;
       header?: never;
@@ -48262,7 +50376,7 @@ export interface operations {
       };
     };
   };
-  reportObjectiveProgress: {
+  quest_reportObjectiveProgress: {
     parameters: {
       query?: never;
       header?: never;
@@ -48293,7 +50407,7 @@ export interface operations {
       };
     };
   };
-  getObjectiveProgress: {
+  quest_getObjectiveProgress: {
     parameters: {
       query?: never;
       header?: never;
@@ -48324,7 +50438,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  quest_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -48355,7 +50469,7 @@ export interface operations {
       };
     };
   };
-  getRealm: {
+  realm_getRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -48386,7 +50500,7 @@ export interface operations {
       };
     };
   };
-  getRealmByCode: {
+  realm_getRealmByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -48417,7 +50531,7 @@ export interface operations {
       };
     };
   };
-  listRealms: {
+  realm_listRealms: {
     parameters: {
       query?: never;
       header?: never;
@@ -48441,7 +50555,7 @@ export interface operations {
       };
     };
   };
-  realmExists: {
+  realm_realmExists: {
     parameters: {
       query?: never;
       header?: never;
@@ -48465,7 +50579,7 @@ export interface operations {
       };
     };
   };
-  realmsExistBatch: {
+  realm_realmsExistBatch: {
     parameters: {
       query?: never;
       header?: never;
@@ -48489,7 +50603,7 @@ export interface operations {
       };
     };
   };
-  getRealmParticipation: {
+  realmHistory_getRealmParticipation: {
     parameters: {
       query?: never;
       header?: never;
@@ -48513,7 +50627,7 @@ export interface operations {
       };
     };
   };
-  getRealmEventParticipants: {
+  realmHistory_getRealmEventParticipants: {
     parameters: {
       query?: never;
       header?: never;
@@ -48537,7 +50651,7 @@ export interface operations {
       };
     };
   };
-  getRealmLore: {
+  realmHistory_getRealmLore: {
     parameters: {
       query?: never;
       header?: never;
@@ -48568,7 +50682,7 @@ export interface operations {
       };
     };
   };
-  getRelationship: {
+  relationship_getRelationship: {
     parameters: {
       query?: never;
       header?: never;
@@ -48599,7 +50713,7 @@ export interface operations {
       };
     };
   };
-  listRelationshipsByEntity: {
+  relationship_listRelationshipsByEntity: {
     parameters: {
       query?: never;
       header?: never;
@@ -48623,7 +50737,7 @@ export interface operations {
       };
     };
   };
-  getRelationshipsBetween: {
+  relationship_getRelationshipsBetween: {
     parameters: {
       query?: never;
       header?: never;
@@ -48647,7 +50761,7 @@ export interface operations {
       };
     };
   };
-  listRelationshipsByType: {
+  relationship_listRelationshipsByType: {
     parameters: {
       query?: never;
       header?: never;
@@ -48671,7 +50785,7 @@ export interface operations {
       };
     };
   };
-  cleanupByEntity: {
+  relationship_cleanupByEntity: {
     parameters: {
       query?: never;
       header?: never;
@@ -48695,7 +50809,7 @@ export interface operations {
       };
     };
   };
-  getRelationshipType: {
+  relationship_getRelationshipType: {
     parameters: {
       query?: never;
       header?: never;
@@ -48726,7 +50840,7 @@ export interface operations {
       };
     };
   };
-  getRelationshipTypeByCode: {
+  relationship_getRelationshipTypeByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -48757,7 +50871,7 @@ export interface operations {
       };
     };
   };
-  listRelationshipTypes: {
+  relationship_listRelationshipTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -48781,7 +50895,7 @@ export interface operations {
       };
     };
   };
-  getChildRelationshipTypes: {
+  relationship_getChildRelationshipTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -48812,7 +50926,7 @@ export interface operations {
       };
     };
   };
-  matchesHierarchy: {
+  relationship_matchesHierarchy: {
     parameters: {
       query?: never;
       header?: never;
@@ -48843,7 +50957,7 @@ export interface operations {
       };
     };
   };
-  getAncestors: {
+  relationship_getAncestors: {
     parameters: {
       query?: never;
       header?: never;
@@ -48874,7 +50988,7 @@ export interface operations {
       };
     };
   };
-  registerReference: {
+  resource_registerReference: {
     parameters: {
       query?: never;
       header?: never;
@@ -48898,7 +51012,7 @@ export interface operations {
       };
     };
   };
-  unregisterReference: {
+  resource_unregisterReference: {
     parameters: {
       query?: never;
       header?: never;
@@ -48922,7 +51036,7 @@ export interface operations {
       };
     };
   };
-  checkReferences: {
+  resource_checkReferences: {
     parameters: {
       query?: never;
       header?: never;
@@ -48946,7 +51060,7 @@ export interface operations {
       };
     };
   };
-  listReferences: {
+  resource_listReferences: {
     parameters: {
       query?: never;
       header?: never;
@@ -48970,7 +51084,7 @@ export interface operations {
       };
     };
   };
-  executeCleanup: {
+  resource_executeCleanup: {
     parameters: {
       query?: never;
       header?: never;
@@ -48994,7 +51108,7 @@ export interface operations {
       };
     };
   };
-  listCleanupCallbacks: {
+  resource_listCleanupCallbacks: {
     parameters: {
       query?: never;
       header?: never;
@@ -49018,7 +51132,7 @@ export interface operations {
       };
     };
   };
-  executeCompress: {
+  resource_executeCompress: {
     parameters: {
       query?: never;
       header?: never;
@@ -49042,7 +51156,7 @@ export interface operations {
       };
     };
   };
-  listCompressCallbacks: {
+  resource_listCompressCallbacks: {
     parameters: {
       query?: never;
       header?: never;
@@ -49066,7 +51180,7 @@ export interface operations {
       };
     };
   };
-  getArchive: {
+  resource_getArchive: {
     parameters: {
       query?: never;
       header?: never;
@@ -49090,7 +51204,7 @@ export interface operations {
       };
     };
   };
-  executeSnapshot: {
+  resource_executeSnapshot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49114,7 +51228,7 @@ export interface operations {
       };
     };
   };
-  getSnapshot: {
+  resource_getSnapshot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49138,7 +51252,7 @@ export interface operations {
       };
     };
   };
-  CreateSlot: {
+  saveLoad_CreateSlot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49176,7 +51290,7 @@ export interface operations {
       };
     };
   };
-  GetSlot: {
+  saveLoad_GetSlot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49207,7 +51321,7 @@ export interface operations {
       };
     };
   };
-  ListSlots: {
+  saveLoad_ListSlots: {
     parameters: {
       query?: never;
       header?: never;
@@ -49231,7 +51345,7 @@ export interface operations {
       };
     };
   };
-  DeleteSlot: {
+  saveLoad_DeleteSlot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49269,7 +51383,7 @@ export interface operations {
       };
     };
   };
-  RenameSlot: {
+  saveLoad_RenameSlot: {
     parameters: {
       query?: never;
       header?: never;
@@ -49307,7 +51421,7 @@ export interface operations {
       };
     };
   };
-  Save: {
+  saveLoad_Save: {
     parameters: {
       query?: never;
       header?: never;
@@ -49352,7 +51466,7 @@ export interface operations {
       };
     };
   };
-  Load: {
+  saveLoad_Load: {
     parameters: {
       query?: never;
       header?: never;
@@ -49390,7 +51504,7 @@ export interface operations {
       };
     };
   };
-  SaveDelta: {
+  saveLoad_SaveDelta: {
     parameters: {
       query?: never;
       header?: never;
@@ -49435,7 +51549,7 @@ export interface operations {
       };
     };
   };
-  LoadWithDeltas: {
+  saveLoad_LoadWithDeltas: {
     parameters: {
       query?: never;
       header?: never;
@@ -49473,7 +51587,7 @@ export interface operations {
       };
     };
   };
-  CollapseDeltas: {
+  saveLoad_CollapseDeltas: {
     parameters: {
       query?: never;
       header?: never;
@@ -49504,7 +51618,7 @@ export interface operations {
       };
     };
   };
-  ListVersions: {
+  saveLoad_ListVersions: {
     parameters: {
       query?: never;
       header?: never;
@@ -49535,7 +51649,7 @@ export interface operations {
       };
     };
   };
-  PinVersion: {
+  saveLoad_PinVersion: {
     parameters: {
       query?: never;
       header?: never;
@@ -49566,7 +51680,7 @@ export interface operations {
       };
     };
   };
-  UnpinVersion: {
+  saveLoad_UnpinVersion: {
     parameters: {
       query?: never;
       header?: never;
@@ -49597,7 +51711,7 @@ export interface operations {
       };
     };
   };
-  DeleteVersion: {
+  saveLoad_DeleteVersion: {
     parameters: {
       query?: never;
       header?: never;
@@ -49635,7 +51749,7 @@ export interface operations {
       };
     };
   };
-  QuerySaves: {
+  saveLoad_QuerySaves: {
     parameters: {
       query?: never;
       header?: never;
@@ -49659,7 +51773,7 @@ export interface operations {
       };
     };
   };
-  CopySave: {
+  saveLoad_CopySave: {
     parameters: {
       query?: never;
       header?: never;
@@ -49697,7 +51811,7 @@ export interface operations {
       };
     };
   };
-  ExportSaves: {
+  saveLoad_ExportSaves: {
     parameters: {
       query?: never;
       header?: never;
@@ -49721,7 +51835,7 @@ export interface operations {
       };
     };
   };
-  VerifyIntegrity: {
+  saveLoad_VerifyIntegrity: {
     parameters: {
       query?: never;
       header?: never;
@@ -49752,7 +51866,7 @@ export interface operations {
       };
     };
   };
-  PromoteVersion: {
+  saveLoad_PromoteVersion: {
     parameters: {
       query?: never;
       header?: never;
@@ -49783,7 +51897,7 @@ export interface operations {
       };
     };
   };
-  MigrateSave: {
+  saveLoad_MigrateSave: {
     parameters: {
       query?: never;
       header?: never;
@@ -49821,7 +51935,7 @@ export interface operations {
       };
     };
   };
-  RegisterSchema: {
+  saveLoad_RegisterSchema: {
     parameters: {
       query?: never;
       header?: never;
@@ -49845,7 +51959,7 @@ export interface operations {
       };
     };
   };
-  ListSchemas: {
+  saveLoad_ListSchemas: {
     parameters: {
       query?: never;
       header?: never;
@@ -49869,7 +51983,7 @@ export interface operations {
       };
     };
   };
-  createScene: {
+  scene_createScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -49907,7 +52021,7 @@ export interface operations {
       };
     };
   };
-  getScene: {
+  scene_getScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -49938,7 +52052,7 @@ export interface operations {
       };
     };
   };
-  listScenes: {
+  scene_listScenes: {
     parameters: {
       query?: never;
       header?: never;
@@ -49962,7 +52076,7 @@ export interface operations {
       };
     };
   };
-  updateScene: {
+  scene_updateScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50007,7 +52121,7 @@ export interface operations {
       };
     };
   };
-  deleteScene: {
+  scene_deleteScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50045,7 +52159,7 @@ export interface operations {
       };
     };
   };
-  validateScene: {
+  scene_validateScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50069,7 +52183,7 @@ export interface operations {
       };
     };
   };
-  checkoutScene: {
+  scene_checkoutScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50107,7 +52221,7 @@ export interface operations {
       };
     };
   };
-  commitScene: {
+  scene_commitScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50145,7 +52259,7 @@ export interface operations {
       };
     };
   };
-  discardCheckout: {
+  scene_discardCheckout: {
     parameters: {
       query?: never;
       header?: never;
@@ -50176,7 +52290,7 @@ export interface operations {
       };
     };
   };
-  heartbeatCheckout: {
+  scene_heartbeatCheckout: {
     parameters: {
       query?: never;
       header?: never;
@@ -50214,7 +52328,7 @@ export interface operations {
       };
     };
   };
-  getSceneHistory: {
+  scene_getSceneHistory: {
     parameters: {
       query?: never;
       header?: never;
@@ -50245,7 +52359,7 @@ export interface operations {
       };
     };
   };
-  getValidationRules: {
+  scene_getValidationRules: {
     parameters: {
       query?: never;
       header?: never;
@@ -50269,7 +52383,7 @@ export interface operations {
       };
     };
   };
-  searchScenes: {
+  scene_searchScenes: {
     parameters: {
       query?: never;
       header?: never;
@@ -50293,7 +52407,7 @@ export interface operations {
       };
     };
   };
-  findReferences: {
+  scene_findReferences: {
     parameters: {
       query?: never;
       header?: never;
@@ -50317,7 +52431,7 @@ export interface operations {
       };
     };
   };
-  findAssetUsage: {
+  scene_findAssetUsage: {
     parameters: {
       query?: never;
       header?: never;
@@ -50341,7 +52455,7 @@ export interface operations {
       };
     };
   };
-  duplicateScene: {
+  scene_duplicateScene: {
     parameters: {
       query?: never;
       header?: never;
@@ -50372,7 +52486,7 @@ export interface operations {
       };
     };
   };
-  CreateSeed: {
+  seed_CreateSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50396,7 +52510,7 @@ export interface operations {
       };
     };
   };
-  GetSeed: {
+  seed_GetSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50420,7 +52534,7 @@ export interface operations {
       };
     };
   };
-  GetSeedsByOwner: {
+  seed_GetSeedsByOwner: {
     parameters: {
       query?: never;
       header?: never;
@@ -50444,7 +52558,7 @@ export interface operations {
       };
     };
   };
-  ListSeeds: {
+  seed_ListSeeds: {
     parameters: {
       query?: never;
       header?: never;
@@ -50468,7 +52582,7 @@ export interface operations {
       };
     };
   };
-  UpdateSeed: {
+  seed_UpdateSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50492,7 +52606,7 @@ export interface operations {
       };
     };
   };
-  ActivateSeed: {
+  seed_ActivateSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50516,7 +52630,7 @@ export interface operations {
       };
     };
   };
-  ArchiveSeed: {
+  seed_ArchiveSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50540,7 +52654,7 @@ export interface operations {
       };
     };
   };
-  GetGrowth: {
+  seed_GetGrowth: {
     parameters: {
       query?: never;
       header?: never;
@@ -50564,7 +52678,7 @@ export interface operations {
       };
     };
   };
-  RecordGrowth: {
+  seed_RecordGrowth: {
     parameters: {
       query?: never;
       header?: never;
@@ -50588,7 +52702,7 @@ export interface operations {
       };
     };
   };
-  RecordGrowthBatch: {
+  seed_RecordGrowthBatch: {
     parameters: {
       query?: never;
       header?: never;
@@ -50612,7 +52726,7 @@ export interface operations {
       };
     };
   };
-  GetGrowthPhase: {
+  seed_GetGrowthPhase: {
     parameters: {
       query?: never;
       header?: never;
@@ -50636,7 +52750,7 @@ export interface operations {
       };
     };
   };
-  GetCapabilityManifest: {
+  seed_GetCapabilityManifest: {
     parameters: {
       query?: never;
       header?: never;
@@ -50660,7 +52774,7 @@ export interface operations {
       };
     };
   };
-  RegisterSeedType: {
+  seed_RegisterSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50684,7 +52798,7 @@ export interface operations {
       };
     };
   };
-  GetSeedType: {
+  seed_GetSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50708,7 +52822,7 @@ export interface operations {
       };
     };
   };
-  ListSeedTypes: {
+  seed_ListSeedTypes: {
     parameters: {
       query?: never;
       header?: never;
@@ -50732,7 +52846,7 @@ export interface operations {
       };
     };
   };
-  UpdateSeedType: {
+  seed_UpdateSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50756,7 +52870,7 @@ export interface operations {
       };
     };
   };
-  DeprecateSeedType: {
+  seed_DeprecateSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50785,16 +52899,9 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Seed type already deprecated */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
     };
   };
-  UndeprecateSeedType: {
+  seed_UndeprecateSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50823,16 +52930,9 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Seed type is not deprecated */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
     };
   };
-  DeleteSeedType: {
+  seed_DeleteSeedType: {
     parameters: {
       query?: never;
       header?: never;
@@ -50875,7 +52975,7 @@ export interface operations {
       };
     };
   };
-  InitiateBond: {
+  seed_InitiateBond: {
     parameters: {
       query?: never;
       header?: never;
@@ -50899,7 +52999,7 @@ export interface operations {
       };
     };
   };
-  ConfirmBond: {
+  seed_ConfirmBond: {
     parameters: {
       query?: never;
       header?: never;
@@ -50923,7 +53023,7 @@ export interface operations {
       };
     };
   };
-  GetBond: {
+  seed_GetBond: {
     parameters: {
       query?: never;
       header?: never;
@@ -50947,7 +53047,7 @@ export interface operations {
       };
     };
   };
-  GetBondForSeed: {
+  seed_GetBondForSeed: {
     parameters: {
       query?: never;
       header?: never;
@@ -50971,7 +53071,7 @@ export interface operations {
       };
     };
   };
-  GetBondPartners: {
+  seed_GetBondPartners: {
     parameters: {
       query?: never;
       header?: never;
@@ -50995,7 +53095,7 @@ export interface operations {
       };
     };
   };
-  getSpecies: {
+  species_getSpecies: {
     parameters: {
       query?: never;
       header?: never;
@@ -51026,7 +53126,7 @@ export interface operations {
       };
     };
   };
-  getSpeciesByCode: {
+  species_getSpeciesByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -51057,7 +53157,7 @@ export interface operations {
       };
     };
   };
-  listSpecies: {
+  species_listSpecies: {
     parameters: {
       query?: never;
       header?: never;
@@ -51081,7 +53181,7 @@ export interface operations {
       };
     };
   };
-  listSpeciesByRealm: {
+  species_listSpeciesByRealm: {
     parameters: {
       query?: never;
       header?: never;
@@ -51112,7 +53212,7 @@ export interface operations {
       };
     };
   };
-  createStatusTemplate: {
+  status_createStatusTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -51157,7 +53257,7 @@ export interface operations {
       };
     };
   };
-  getStatusTemplate: {
+  status_getStatusTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -51188,7 +53288,7 @@ export interface operations {
       };
     };
   };
-  getStatusTemplateByCode: {
+  status_getStatusTemplateByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -51219,7 +53319,7 @@ export interface operations {
       };
     };
   };
-  listStatusTemplates: {
+  status_listStatusTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -51243,7 +53343,7 @@ export interface operations {
       };
     };
   };
-  updateStatusTemplate: {
+  status_updateStatusTemplate: {
     parameters: {
       query?: never;
       header?: never;
@@ -51274,7 +53374,7 @@ export interface operations {
       };
     };
   };
-  seedStatusTemplates: {
+  status_seedStatusTemplates: {
     parameters: {
       query?: never;
       header?: never;
@@ -51305,7 +53405,7 @@ export interface operations {
       };
     };
   };
-  grantStatus: {
+  status_grantStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -51343,7 +53443,7 @@ export interface operations {
       };
     };
   };
-  removeStatus: {
+  status_removeStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -51374,7 +53474,7 @@ export interface operations {
       };
     };
   };
-  removeBySource: {
+  status_removeBySource: {
     parameters: {
       query?: never;
       header?: never;
@@ -51398,7 +53498,7 @@ export interface operations {
       };
     };
   };
-  removeByCategory: {
+  status_removeByCategory: {
     parameters: {
       query?: never;
       header?: never;
@@ -51422,7 +53522,7 @@ export interface operations {
       };
     };
   };
-  hasStatus: {
+  status_hasStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -51446,7 +53546,7 @@ export interface operations {
       };
     };
   };
-  listStatuses: {
+  status_listStatuses: {
     parameters: {
       query?: never;
       header?: never;
@@ -51470,7 +53570,7 @@ export interface operations {
       };
     };
   };
-  getStatus: {
+  status_getStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -51501,7 +53601,7 @@ export interface operations {
       };
     };
   };
-  getEffects: {
+  status_getEffects: {
     parameters: {
       query?: never;
       header?: never;
@@ -51525,7 +53625,7 @@ export interface operations {
       };
     };
   };
-  getSeedEffects: {
+  status_getSeedEffects: {
     parameters: {
       query?: never;
       header?: never;
@@ -51549,7 +53649,7 @@ export interface operations {
       };
     };
   };
-  cleanupByOwner: {
+  status_cleanupByOwner: {
     parameters: {
       query?: never;
       header?: never;
@@ -51573,7 +53673,7 @@ export interface operations {
       };
     };
   };
-  Compose: {
+  storyline_Compose: {
     parameters: {
       query?: never;
       header?: never;
@@ -51611,7 +53711,7 @@ export interface operations {
       };
     };
   };
-  GetPlan: {
+  storyline_GetPlan: {
     parameters: {
       query?: never;
       header?: never;
@@ -51642,7 +53742,7 @@ export interface operations {
       };
     };
   };
-  ListPlans: {
+  storyline_ListPlans: {
     parameters: {
       query?: never;
       header?: never;
@@ -51666,7 +53766,7 @@ export interface operations {
       };
     };
   };
-  CreateScenarioDefinition: {
+  storyline_CreateScenarioDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -51704,7 +53804,7 @@ export interface operations {
       };
     };
   };
-  GetScenarioDefinition: {
+  storyline_GetScenarioDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -51735,7 +53835,7 @@ export interface operations {
       };
     };
   };
-  ListScenarioDefinitions: {
+  storyline_ListScenarioDefinitions: {
     parameters: {
       query?: never;
       header?: never;
@@ -51759,7 +53859,7 @@ export interface operations {
       };
     };
   };
-  UpdateScenarioDefinition: {
+  storyline_UpdateScenarioDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -51797,7 +53897,7 @@ export interface operations {
       };
     };
   };
-  DeprecateScenarioDefinition: {
+  storyline_DeprecateScenarioDefinition: {
     parameters: {
       query?: never;
       header?: never;
@@ -51826,7 +53926,7 @@ export interface operations {
       };
     };
   };
-  TestScenarioTrigger: {
+  storyline_TestScenarioTrigger: {
     parameters: {
       query?: never;
       header?: never;
@@ -51857,7 +53957,7 @@ export interface operations {
       };
     };
   };
-  GetActiveScenarios: {
+  storyline_GetActiveScenarios: {
     parameters: {
       query?: never;
       header?: never;
@@ -51881,7 +53981,7 @@ export interface operations {
       };
     };
   };
-  GetScenarioHistory: {
+  storyline_GetScenarioHistory: {
     parameters: {
       query?: never;
       header?: never;
@@ -51905,7 +54005,7 @@ export interface operations {
       };
     };
   };
-  getCompressData: {
+  storyline_getCompressData: {
     parameters: {
       query?: never;
       header?: never;
@@ -51936,7 +54036,7 @@ export interface operations {
       };
     };
   };
-  getAccountSubscriptions: {
+  subscription_getAccountSubscriptions: {
     parameters: {
       query?: never;
       header?: never;
@@ -51960,7 +54060,7 @@ export interface operations {
       };
     };
   };
-  getSubscription: {
+  subscription_getSubscription: {
     parameters: {
       query?: never;
       header?: never;
@@ -51991,7 +54091,7 @@ export interface operations {
       };
     };
   };
-  cancelSubscription: {
+  subscription_cancelSubscription: {
     parameters: {
       query?: never;
       header?: never;
@@ -52029,7 +54129,1003 @@ export interface operations {
       };
     };
   };
-  answerPeer: {
+  transit_registerMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode registered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_getMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_listModes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListModesRequest'];
+      };
+    };
+    responses: {
+      /** @description Modes listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListModesResponse'];
+        };
+      };
+    };
+  };
+  transit_updateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_deprecateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode deprecated (or already deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_undeprecateMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UndeprecateModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode undeprecated (or was not deprecated) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModeResponse'];
+        };
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_deleteMode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteModeRequest'];
+      };
+    };
+    responses: {
+      /** @description Mode deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteModeResponse'];
+        };
+      };
+      /** @description Mode is not deprecated (must deprecate before deleting) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Mode not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ACTIVE_JOURNEYS_EXIST (active journeys use this mode) or CONNECTIONS_REFERENCE_MODE (connections list this mode in compatibleModes) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_checkModeAvailability: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckModeAvailabilityRequest'];
+      };
+    };
+    responses: {
+      /** @description Availability checked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckModeAvailabilityResponse'];
+        };
+      };
+    };
+  };
+  transit_createConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Same location, invalid mode code, or invalid season key */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description One or both locations not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection already exists between these locations */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_getConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_queryConnections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryConnectionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Connections queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['QueryConnectionsResponse'];
+        };
+      };
+    };
+  };
+  transit_updateConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_updateConnectionStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateConnectionStatusRequest'];
+      };
+    };
+    responses: {
+      /** @description Status updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ConnectionResponse'];
+        };
+      };
+      /** @description Status mismatch — actual status differs from currentStatus (Bad Request forces caller to refresh and retry) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_deleteConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Connection deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteConnectionResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description ACTIVE_JOURNEYS_EXIST (cannot delete while journeys are using this connection) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_bulkSeedConnections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkSeedConnectionsRequest'];
+      };
+    };
+    responses: {
+      /** @description Bulk seed completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkSeedConnectionsResponse'];
+        };
+      };
+    };
+  };
+  transit_createJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey planned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Mode deprecated, requirements not met, or entity type not allowed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Origin, destination, or mode not found; no route available */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_departJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DepartJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey started */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be preparing) or first leg connection closed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_resumeJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResumeJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey resumed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be interrupted) or current leg connection closed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_advanceJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdvanceJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey advanced */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit) or no current leg */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_advanceBatchJourneys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdvanceBatchRequest'];
+      };
+    };
+    responses: {
+      /** @description Batch processed (check individual results for per-journey errors) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdvanceBatchResponse'];
+        };
+      };
+    };
+  };
+  transit_arriveJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ArriveJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey force-arrived */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit or at_waypoint) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_interruptJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InterruptJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey interrupted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be in_transit) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_abandonJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AbandonJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey abandoned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Invalid status (must be preparing, in_transit, at_waypoint, or interrupted) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_getJourney: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetJourneyRequest'];
+      };
+    };
+    responses: {
+      /** @description Journey found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourneyResponse'];
+        };
+      };
+      /** @description Journey not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_queryJourneysByConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryJourneysByConnectionRequest'];
+      };
+    };
+    responses: {
+      /** @description Journeys queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_listJourneys: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListJourneysRequest'];
+      };
+    };
+    responses: {
+      /** @description Journeys listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+    };
+  };
+  transit_queryJourneyArchive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryJourneyArchiveRequest'];
+      };
+    };
+    responses: {
+      /** @description Archived journeys queried */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListJourneysResponse'];
+        };
+      };
+    };
+  };
+  transit_calculateRoute: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CalculateRouteRequest'];
+      };
+    };
+    responses: {
+      /** @description Route options calculated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalculateRouteResponse'];
+        };
+      };
+      /** @description Locations not found or no route available */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_revealDiscovery: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RevealDiscoveryRequest'];
+      };
+    };
+    responses: {
+      /** @description Discovery recorded */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RevealDiscoveryResponse'];
+        };
+      };
+      /** @description Connection is not marked as discoverable */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Connection not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  transit_listDiscoveries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListDiscoveriesRequest'];
+      };
+    };
+    responses: {
+      /** @description Discoveries listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListDiscoveriesResponse'];
+        };
+      };
+    };
+  };
+  transit_checkDiscoveries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckDiscoveriesRequest'];
+      };
+    };
+    responses: {
+      /** @description Discovery status checked */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckDiscoveriesResponse'];
+        };
+      };
+    };
+  };
+  voice_answerPeer: {
     parameters: {
       query?: never;
       header?: never;
@@ -52065,7 +55161,7 @@ export interface operations {
       };
     };
   };
-  requestBroadcastConsent: {
+  voice_requestBroadcastConsent: {
     parameters: {
       query?: never;
       header?: never;
@@ -52103,7 +55199,7 @@ export interface operations {
       };
     };
   };
-  respondBroadcastConsent: {
+  voice_respondBroadcastConsent: {
     parameters: {
       query?: never;
       header?: never;
@@ -52134,7 +55230,7 @@ export interface operations {
       };
     };
   };
-  stopBroadcast: {
+  voice_stopBroadcast: {
     parameters: {
       query?: never;
       header?: never;
@@ -52163,7 +55259,7 @@ export interface operations {
       };
     };
   };
-  getBroadcastStatus: {
+  voice_getBroadcastStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -52194,7 +55290,7 @@ export interface operations {
       };
     };
   };
-  getStatus: {
+  website_getStatus: {
     parameters: {
       query?: never;
       header?: never;
@@ -52214,7 +55310,7 @@ export interface operations {
       };
     };
   };
-  getPageContent: {
+  website_getPageContent: {
     parameters: {
       query?: never;
       header?: never;
@@ -52244,7 +55340,7 @@ export interface operations {
       };
     };
   };
-  getNews: {
+  website_getNews: {
     parameters: {
       query?: {
         /** @description Number of news items to return */
@@ -52269,7 +55365,7 @@ export interface operations {
       };
     };
   };
-  getDownloads: {
+  website_getDownloads: {
     parameters: {
       query?: {
         /** @description Filter by platform */
@@ -52292,7 +55388,7 @@ export interface operations {
       };
     };
   };
-  submitContact: {
+  website_submitContact: {
     parameters: {
       query?: never;
       header?: never;
@@ -52330,7 +55426,7 @@ export interface operations {
       };
     };
   };
-  getAccountProfile: {
+  website_getAccountProfile: {
     parameters: {
       query?: never;
       header?: never;
@@ -52357,7 +55453,7 @@ export interface operations {
       };
     };
   };
-  listPages: {
+  website_listPages: {
     parameters: {
       query?: {
         includeUnpublished?: boolean;
@@ -52379,7 +55475,7 @@ export interface operations {
       };
     };
   };
-  createPage: {
+  website_createPage: {
     parameters: {
       query?: never;
       header?: never;
@@ -52403,7 +55499,7 @@ export interface operations {
       };
     };
   };
-  updatePage: {
+  website_updatePage: {
     parameters: {
       query?: never;
       header?: never;
@@ -52429,7 +55525,7 @@ export interface operations {
       };
     };
   };
-  deletePage: {
+  website_deletePage: {
     parameters: {
       query?: never;
       header?: never;
@@ -52449,7 +55545,7 @@ export interface operations {
       };
     };
   };
-  getSiteSettings: {
+  website_getSiteSettings: {
     parameters: {
       query?: never;
       header?: never;
@@ -52469,7 +55565,7 @@ export interface operations {
       };
     };
   };
-  updateSiteSettings: {
+  website_updateSiteSettings: {
     parameters: {
       query?: never;
       header?: never;
@@ -52493,7 +55589,7 @@ export interface operations {
       };
     };
   };
-  getTheme: {
+  website_getTheme: {
     parameters: {
       query?: never;
       header?: never;
@@ -52513,7 +55609,7 @@ export interface operations {
       };
     };
   };
-  updateTheme: {
+  website_updateTheme: {
     parameters: {
       query?: never;
       header?: never;
@@ -52535,7 +55631,7 @@ export interface operations {
       };
     };
   };
-  getRealmTime: {
+  worldstate_getRealmTime: {
     parameters: {
       query?: never;
       header?: never;
@@ -52566,7 +55662,7 @@ export interface operations {
       };
     };
   };
-  getRealmTimeByCode: {
+  worldstate_getRealmTimeByCode: {
     parameters: {
       query?: never;
       header?: never;
@@ -52597,7 +55693,7 @@ export interface operations {
       };
     };
   };
-  batchGetRealmTimes: {
+  worldstate_batchGetRealmTimes: {
     parameters: {
       query?: never;
       header?: never;
@@ -52621,7 +55717,7 @@ export interface operations {
       };
     };
   };
-  getElapsedGameTime: {
+  worldstate_getElapsedGameTime: {
     parameters: {
       query?: never;
       header?: never;
@@ -52652,7 +55748,7 @@ export interface operations {
       };
     };
   };
-  triggerTimeSync: {
+  worldstate_triggerTimeSync: {
     parameters: {
       query?: never;
       header?: never;
@@ -52683,7 +55779,7 @@ export interface operations {
       };
     };
   };
-  initializeRealmClock: {
+  worldstate_initializeRealmClock: {
     parameters: {
       query?: never;
       header?: never;
@@ -52728,7 +55824,7 @@ export interface operations {
       };
     };
   };
-  setTimeRatio: {
+  worldstate_setTimeRatio: {
     parameters: {
       query?: never;
       header?: never;
@@ -52759,7 +55855,7 @@ export interface operations {
       };
     };
   };
-  advanceClock: {
+  worldstate_advanceClock: {
     parameters: {
       query?: never;
       header?: never;
@@ -52797,7 +55893,7 @@ export interface operations {
       };
     };
   };
-  seedCalendar: {
+  worldstate_seedCalendar: {
     parameters: {
       query?: never;
       header?: never;
@@ -52842,7 +55938,7 @@ export interface operations {
       };
     };
   };
-  getCalendar: {
+  worldstate_getCalendar: {
     parameters: {
       query?: never;
       header?: never;
@@ -52873,7 +55969,7 @@ export interface operations {
       };
     };
   };
-  listCalendars: {
+  worldstate_listCalendars: {
     parameters: {
       query?: never;
       header?: never;
@@ -52897,7 +55993,7 @@ export interface operations {
       };
     };
   };
-  updateCalendar: {
+  worldstate_updateCalendar: {
     parameters: {
       query?: never;
       header?: never;
@@ -52935,7 +56031,7 @@ export interface operations {
       };
     };
   };
-  deleteCalendar: {
+  worldstate_deleteCalendar: {
     parameters: {
       query?: never;
       header?: never;
@@ -52973,7 +56069,7 @@ export interface operations {
       };
     };
   };
-  getRealmConfig: {
+  worldstate_getRealmConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -53004,7 +56100,7 @@ export interface operations {
       };
     };
   };
-  updateRealmConfig: {
+  worldstate_updateRealmConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -53035,7 +56131,7 @@ export interface operations {
       };
     };
   };
-  listRealmClocks: {
+  worldstate_listRealmClocks: {
     parameters: {
       query?: never;
       header?: never;

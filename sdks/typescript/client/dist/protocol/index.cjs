@@ -10,18 +10,19 @@ var MessageFlags = {
    * Message payload is binary data (not JSON)
    */
   Binary: 1,
+  // Bit 0x02 is reserved (originally Encrypted, removed).
+  // Bit 0x08 is reserved (originally HighPriority, removed).
+  // Values are preserved to avoid shifting existing flag assignments.
+  /** Reserved for future use. Do not assign. */
+  Reserved0x02: 2,
   /**
-   * Message payload is encrypted
-   */
-  Encrypted: 2,
-  /**
-   * Message payload is compressed (gzip)
+   * Payload is Brotli-compressed. Client must decompress before parsing.
+   * Only set on server-to-client messages when compression is enabled and
+   * payload exceeds the configured size threshold.
    */
   Compressed: 4,
-  /**
-   * Deliver at high priority, skip to front of queues
-   */
-  HighPriority: 8,
+  /** Reserved for future use. Do not assign. */
+  Reserved0x08: 8,
   /**
    * Fire-and-forget message, no response expected
    */
@@ -56,6 +57,9 @@ function isMeta(flags) {
 }
 function isBinary(flags) {
   return hasFlag(flags, MessageFlags.Binary);
+}
+function isCompressed(flags) {
+  return hasFlag(flags, MessageFlags.Compressed);
 }
 
 // src/protocol/ResponseCodes.ts
@@ -353,9 +357,6 @@ function isResponse2(message) {
 function isClientRouted(message) {
   return hasFlag(message.flags, MessageFlags.Client);
 }
-function isHighPriority(message) {
-  return hasFlag(message.flags, MessageFlags.HighPriority);
-}
 function isSuccess2(message) {
   return isResponse(message.flags) && message.responseCode === 0;
 }
@@ -366,6 +367,54 @@ function isMeta2(message) {
   return hasFlag(message.flags, MessageFlags.Meta);
 }
 
+// src/protocol/PayloadDecompressor.ts
+var _nodeDecompressor = null;
+var _customDecompressor = null;
+var _initialized = false;
+async function initializeDecompressor() {
+  if (_initialized) return;
+  _initialized = true;
+  try {
+    const zlib = await import('zlib');
+    _nodeDecompressor = (data) => {
+      const result = zlib.brotliDecompressSync(data);
+      return new Uint8Array(result.buffer, result.byteOffset, result.byteLength);
+    };
+  } catch {
+  }
+}
+function setPayloadDecompressor(fn) {
+  _customDecompressor = fn;
+}
+function getDecompressor() {
+  return _customDecompressor ?? _nodeDecompressor;
+}
+function decompressPayload(message) {
+  if (!hasFlag(message.flags, MessageFlags.Compressed)) {
+    return message;
+  }
+  if (message.payload.length === 0) {
+    return message;
+  }
+  const decompress = getDecompressor();
+  if (!decompress) {
+    throw new Error(
+      "Received compressed message but no Brotli decompressor is available. In browser environments, call setPayloadDecompressor() with a Brotli implementation."
+    );
+  }
+  const decompressed = decompress(message.payload);
+  return {
+    ...message,
+    flags: message.flags & ~MessageFlags.Compressed,
+    payload: decompressed
+  };
+}
+function resetDecompressor() {
+  _nodeDecompressor = null;
+  _customDecompressor = null;
+  _initialized = false;
+}
+
 exports.EMPTY_GUID = EMPTY_GUID;
 exports.HEADER_SIZE = HEADER_SIZE;
 exports.MessageFlags = MessageFlags;
@@ -373,17 +422,19 @@ exports.RESPONSE_HEADER_SIZE = RESPONSE_HEADER_SIZE;
 exports.ResponseCodes = ResponseCodes;
 exports.createRequest = createRequest;
 exports.createResponse = createResponse;
+exports.decompressPayload = decompressPayload;
 exports.expectsResponse = expectsResponse;
 exports.fromJson = fromJson;
 exports.getJsonPayload = getJsonPayload;
 exports.getResponseCodeName = getResponseCodeName;
 exports.hasFlag = hasFlag;
+exports.initializeDecompressor = initializeDecompressor;
 exports.isBinaryFlag = isBinary;
 exports.isClientRouted = isClientRouted;
+exports.isCompressedFlag = isCompressed;
 exports.isError = isError2;
 exports.isErrorCode = isError;
 exports.isEventFlag = isEvent;
-exports.isHighPriority = isHighPriority;
 exports.isMeta = isMeta2;
 exports.isMetaFlag = isMeta;
 exports.isResponse = isResponse2;
@@ -396,6 +447,8 @@ exports.readGuid = readGuid;
 exports.readUInt16 = readUInt16;
 exports.readUInt32 = readUInt32;
 exports.readUInt64 = readUInt64;
+exports.resetDecompressor = resetDecompressor;
+exports.setPayloadDecompressor = setPayloadDecompressor;
 exports.testNetworkByteOrderCompatibility = testNetworkByteOrderCompatibility;
 exports.toByteArray = toByteArray;
 exports.writeGuid = writeGuid;

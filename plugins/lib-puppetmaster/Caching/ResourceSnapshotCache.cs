@@ -5,6 +5,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -29,6 +30,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ResourceSnapshotCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly TimeSpan _defaultTtl;
 
@@ -38,13 +40,16 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
     /// <param name="scopeFactory">Service scope factory for accessing IResourceClient.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Puppetmaster service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public ResourceSnapshotCache(
         IServiceScopeFactory scopeFactory,
         ILogger<ResourceSnapshotCache> logger,
-        PuppetmasterServiceConfiguration configuration)
+        PuppetmasterServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
         _defaultTtl = TimeSpan.FromSeconds(configuration.SnapshotCacheTtlSeconds);
     }
 
@@ -55,6 +60,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         IReadOnlyList<string>? filterSourceTypes,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "ResourceSnapshotCache.GetOrLoadAsync");
         var cacheKey = GetCacheKey(resourceType, resourceId);
 
         // Check cache first
@@ -94,6 +100,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         IReadOnlyList<string>? filterSourceTypes,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "ResourceSnapshotCache.PrefetchAsync");
         var successCount = 0;
 
         // Prefetch in parallel with bounded concurrency
@@ -159,6 +166,7 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
         Guid resourceId,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "ResourceSnapshotCache.LoadSnapshotAsync");
         // IResourceClient is L1 infrastructure - must be available (fail-fast per TENETS).
         using var scope = _scopeFactory.CreateScope();
         var resourceClient = scope.ServiceProvider.GetRequiredService<IResourceClient>();

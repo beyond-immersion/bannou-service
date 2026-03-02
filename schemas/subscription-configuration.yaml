@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Subscription Service Configuration
   description: |
@@ -20,13 +20,24 @@ x-service-configuration:
       description: Interval in minutes between subscription expiration checks
       env: SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES
       default: 5
+      minimum: 1
     ExpirationGracePeriodSeconds:
       type: integer
       description: Grace period in seconds before expired subscriptions are marked inactive
       env: SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS
       default: 30
+      minimum: 0
     StartupDelaySeconds:
       type: integer
       description: Delay in seconds before background service starts processing
       env: SUBSCRIPTION_STARTUP_DELAY_SECONDS
       default: 30
+      minimum: 0
+
+    # Distributed Locking Configuration
+    LockTimeoutSeconds:
+      type: integer
+      description: Maximum time in seconds to wait for a distributed lock acquisition
+      env: SUBSCRIPTION_LOCK_TIMEOUT_SECONDS
+      default: 10
+      minimum: 1

@@ -4,6 +4,7 @@
 // Part of the Collection->Seed growth pipeline for faction entities.
 // =============================================================================
 
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
@@ -38,6 +39,7 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
     private readonly FactionServiceConfiguration _configuration;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<FactionCollectionUnlockListener> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FactionCollectionUnlockListener"/> class.
@@ -47,25 +49,29 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
     /// <param name="configuration">Faction configuration for seed type code.</param>
     /// <param name="messageBus">Message bus for error publishing.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public FactionCollectionUnlockListener(
         IStateStoreFactory stateStoreFactory,
         ISeedClient seedClient,
         FactionServiceConfiguration configuration,
         IMessageBus messageBus,
-        ILogger<FactionCollectionUnlockListener> logger)
+        ILogger<FactionCollectionUnlockListener> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _seedClient = seedClient;
         _configuration = configuration;
         _messageBus = messageBus;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
     public async Task OnEntryUnlockedAsync(CollectionUnlockNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.faction", "FactionCollectionUnlockListener.OnEntryUnlockedAsync");
         // Only process character-owned collection unlocks (faction growth comes from member activity)
-        if (!string.Equals(notification.OwnerType, "character", StringComparison.OrdinalIgnoreCase))
+        if (notification.OwnerType != EntityType.Character)
         {
             return;
         }

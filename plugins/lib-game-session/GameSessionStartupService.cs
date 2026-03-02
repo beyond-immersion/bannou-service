@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Subscription;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ public class GameSessionStartupService : BackgroundService
     private readonly ISubscriptionClient _subscriptionClient;
     private readonly GameSessionServiceConfiguration _configuration;
     private readonly ILogger<GameSessionStartupService> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new GameSessionStartupService instance.
@@ -21,14 +23,17 @@ public class GameSessionStartupService : BackgroundService
     /// <param name="subscriptionClient">Subscription client for fetching account subscriptions.</param>
     /// <param name="configuration">Game session service configuration.</param>
     /// <param name="logger">Logger for this service.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing spans.</param>
     public GameSessionStartupService(
         ISubscriptionClient subscriptionClient,
         GameSessionServiceConfiguration configuration,
-        ILogger<GameSessionStartupService> logger)
+        ILogger<GameSessionStartupService> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _subscriptionClient = subscriptionClient;
         _configuration = configuration;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -36,6 +41,9 @@ public class GameSessionStartupService : BackgroundService
     /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "GameSessionStartupService.ExecuteAsync");
+
         // Wait for other services to initialize
         await Task.Delay(TimeSpan.FromSeconds(_configuration.StartupServiceDelaySeconds), stoppingToken);
 
@@ -61,6 +69,9 @@ public class GameSessionStartupService : BackgroundService
     /// </summary>
     private async Task InitializeSubscriptionCachesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.game-session", "GameSessionStartupService.InitializeSubscriptionCaches");
+
         // Central validation in PluginLoader ensures non-nullable strings are not empty
         var supportedGameServices = _configuration.SupportedGameServices.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 

@@ -25,7 +25,7 @@ public sealed class SaveSlotMetadata
     /// <summary>
     /// Type of the owning entity
     /// </summary>
-    public required OwnerType OwnerType { get; set; }
+    public required EntityType OwnerType { get; set; }
 
     /// <summary>
     /// Slot name (unique per owner within game namespace)
@@ -94,9 +94,9 @@ public sealed class SaveSlotMetadata
 
     /// <summary>
     /// Generates the state store key for this slot.
-    /// Note: Uses ToString() for composite key generation as state store keys are strings.
+    /// Note: Uses ToString().ToLowerInvariant() for EntityType key composition (accepted breaking change from OwnerType migration).
     /// </summary>
-    public string GetStateKey() => $"slot:{GameId}:{OwnerType}:{OwnerId}:{SlotName}";
+    public string GetStateKey() => $"slot:{GameId}:{OwnerType.ToString().ToLowerInvariant()}:{OwnerId}:{SlotName}";
 
     /// <summary>
     /// Generates the state store key from components.

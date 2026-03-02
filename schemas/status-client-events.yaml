@@ -1,0 +1,94 @@
+openapi: 3.0.4
+info:
+  title: Status Client Events API
+  description: |
+    Server-to-client push events for the Status service.
+    These events notify clients of real-time status effect changes
+    delivered via WebSocket through the Entity Session Registry.
+
+    All events inherit from BaseClientEvent (common-client-events.yaml) and use
+    the "status.{event_type}" naming convention.
+
+    Entity routing uses the entity's own type (e.g., "character") with the entity's ID,
+    so sessions already watching a character for inventory/collection changes also
+    receive status effect updates for that entity.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  contact:
+    name: Bannou Development Team
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    # ============================================
+    # Status Effect Changed Client Event
+    # ============================================
+
+    StatusEffectChangedClientEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Sent to sessions observing an entity when a status effect is granted,
+        removed, expired, stacked, or cleansed. Uses a changeType discriminator
+        to indicate the nature of the change. Batch operations (remove-by-source,
+        remove-by-category) publish one event per removed instance.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - changeType
+        - entityId
+        - entityType
+        - statusTemplateCode
+        - statusInstanceId
+      properties:
+        eventName:
+          type: string
+          default: "status.effect-changed"
+          description: Fixed event type identifier
+        changeType:
+          $ref: 'status-api.yaml#/components/schemas/StatusChangeType'
+          description: Type of status change that occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that the status effect applies to
+        entityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          description: Type of entity (character, account, etc.)
+        statusTemplateCode:
+          type: string
+          description: Template code identifying the status effect type
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Specific status instance that was affected
+        category:
+          $ref: 'status-api.yaml#/components/schemas/StatusCategory'
+          nullable: true
+          description: Status category (buff, debuff, death, etc.) for client-side filtering
+        stackCount:
+          type: integer
+          nullable: true
+          description: Current stack count after the change (for stacking changes)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the status will expire (for granted/stacked changes)
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Source entity that granted the status (for granted changes)

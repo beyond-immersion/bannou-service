@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
+using BeyondImmersion.BannouService.Auth;
 using BeyondImmersion.BannouService.ClientEvents;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
@@ -1453,6 +1454,533 @@ public class PermissionServiceTests
             It.IsAny<Dictionary<string, string>>(),
             It.Is<StateOptions?>(opts => opts != null && opts.Ttl == 3600),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region ClearSessionStateAsync Tests
+
+    [Fact]
+    public async Task ClearSessionStateAsync_NoSessionStates_ReturnsPermissionsNotChanged()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Dictionary<string, string>?)null);
+
+        var request = new ClearSessionStateRequest { SessionId = sessionId };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.PermissionsChanged);
+    }
+
+    [Fact]
+    public async Task ClearSessionStateAsync_EmptyServiceId_ClearsAllStatesAndRecompiles()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ClearSessionStateRequest { SessionId = sessionId, ServiceId = null };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify states were saved (cleared)
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ClearSessionStateAsync_SpecificServiceNotFound_ReturnsPermissionsNotChanged()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        var request = new ClearSessionStateRequest
+        {
+            SessionId = sessionId,
+            ServiceId = "nonexistent-service"
+        };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.PermissionsChanged);
+    }
+
+    [Fact]
+    public async Task ClearSessionStateAsync_SpecificServiceFound_RemovesAndRecompiles()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ClearSessionStateRequest
+        {
+            SessionId = sessionId,
+            ServiceId = "game-session"
+        };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify states were saved after removal
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ClearSessionStateAsync_WithStatesFilterMatching_RemovesState()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var request = new ClearSessionStateRequest
+        {
+            SessionId = sessionId,
+            ServiceId = "game-session",
+            States = new List<string> { "in_game", "lobby" }
+        };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Verify states were saved (the matching state was removed)
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ClearSessionStateAsync_WithStatesFilterNotMatching_ReturnsPermissionsNotChanged()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user",
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        // Filter for "lobby" but current state is "in_game" — no match
+        var request = new ClearSessionStateRequest
+        {
+            SessionId = sessionId,
+            ServiceId = "game-session",
+            States = new List<string> { "lobby" }
+        };
+
+        // Act
+        var (status, response) = await service.ClearSessionStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.False(response.PermissionsChanged);
+    }
+
+    #endregion
+
+    #region GetSessionInfoAsync Tests
+
+    [Fact]
+    public async Task GetSessionInfoAsync_NoStates_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Dictionary<string, string>?)null);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Dictionary<string, object>?)null);
+
+        var request = new SessionInfoRequest { SessionId = sessionId };
+
+        // Act
+        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task GetSessionInfoAsync_WithStatesAndPermissions_ReturnsCompleteInfo()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "admin",
+            ["game-session"] = "in_game"
+        };
+
+        var generatedAt = DateTimeOffset.UtcNow.ToString("O");
+        var permissionsData = new Dictionary<string, object>
+        {
+            ["version"] = 3,
+            ["generated_at"] = generatedAt,
+            ["orchestrator"] = BannouJson.SerializeToElement(new List<string> { "/orchestrator/health" })
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(permissionsData);
+
+        var request = new SessionInfoRequest { SessionId = sessionId };
+
+        // Act
+        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("admin", response.Role);
+        Assert.Equal(3, response.Version);
+        Assert.Equal(2, response.States.Count);
+        Assert.True(response.Permissions.ContainsKey("orchestrator"));
+        Assert.Contains("/orchestrator/health", response.Permissions["orchestrator"]);
+    }
+
+    [Fact]
+    public async Task GetSessionInfoAsync_NoPermissionData_ReturnsEmptyPermissions()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["role"] = "user"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Dictionary<string, object>?)null);
+
+        var request = new SessionInfoRequest { SessionId = sessionId };
+
+        // Act
+        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("user", response.Role);
+        Assert.Empty(response.Permissions);
+        Assert.Equal(0, response.Version);
+    }
+
+    [Fact]
+    public async Task GetSessionInfoAsync_NoRoleInStates_DefaultsToLowestRole()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionId);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionId);
+
+        // States without "role" key
+        var sessionStates = new Dictionary<string, string>
+        {
+            ["game-session"] = "in_game"
+        };
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(sessionStates);
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        var request = new SessionInfoRequest { SessionId = sessionId };
+
+        // Act
+        var (status, response) = await service.GetSessionInfoAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        // Default role is first in hierarchy: "anonymous"
+        Assert.Equal("anonymous", response.Role);
+    }
+
+    #endregion
+
+    #region HandleSessionUpdatedAsync Tests
+
+    [Fact]
+    public async Task HandleSessionUpdatedAsync_WithRolesAndAuthorizations_UpdatesBoth()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        // Setup existing session states
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "anonymous" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var evt = new SessionUpdatedEvent
+        {
+            SessionId = sessionId,
+            AccountId = Guid.NewGuid(),
+            Roles = new List<string> { "user", "admin" },
+            Authorizations = new List<string> { "game-1:authorized", "game-2:registered" },
+            Reason = SessionUpdatedEventReason.RoleChanged
+        };
+
+        // Act
+        await service.HandleSessionUpdatedAsync(evt);
+
+        // Assert — verify states were saved (role update + 2 state updates)
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.AtLeast(1));
+    }
+
+    [Fact]
+    public async Task HandleSessionUpdatedAsync_InvalidAuthorizationFormat_LogsWarningContinues()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string> { ["role"] = "user" });
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object> { ["version"] = 0 });
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        var evt = new SessionUpdatedEvent
+        {
+            SessionId = sessionId,
+            AccountId = Guid.NewGuid(),
+            Roles = new List<string> { "user" },
+            // Mix of valid and invalid authorization formats
+            Authorizations = new List<string> { "invalid-no-colon", "game-1:authorized" },
+            Reason = SessionUpdatedEventReason.RoleChanged
+        };
+
+        // Act — should not throw despite invalid format
+        await service.HandleSessionUpdatedAsync(evt);
+
+        // Assert — valid authorization should still be processed
+        _mockDictStringStore.Verify(s => s.SaveAsync(
+            statesKey,
+            It.IsAny<Dictionary<string, string>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.AtLeast(1));
+    }
+
+    [Fact]
+    public async Task HandleSessionUpdatedAsync_NullRolesAndAuthorizations_DefaultsToAnonymous()
+    {
+        // Arrange
+        var service = CreateService();
+        var sessionId = Guid.NewGuid();
+        var sessionIdStr = sessionId.ToString();
+        var statesKey = string.Format(SESSION_STATES_KEY, sessionIdStr);
+        var permissionsKey = string.Format(SESSION_PERMISSIONS_KEY, sessionIdStr);
+
+        _mockDictStringStore
+            .Setup(s => s.GetAsync(statesKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, string>());
+
+        _mockDictObjectStore
+            .Setup(s => s.GetAsync(permissionsKey, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, object>());
+
+        _mockCacheableStore
+            .Setup(s => s.GetSetAsync<string>(REGISTERED_SERVICES_KEY, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<string>());
+
+        // Track role saved in session states
+        Dictionary<string, string>? savedStates = null;
+        _mockDictStringStore
+            .Setup(s => s.SaveAsync(
+                statesKey,
+                It.IsAny<Dictionary<string, string>>(),
+                It.IsAny<StateOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, Dictionary<string, string>, StateOptions?, CancellationToken>(
+                (key, value, opts, ct) => savedStates = value)
+            .ReturnsAsync("etag");
+
+        var evt = new SessionUpdatedEvent
+        {
+            SessionId = sessionId,
+            AccountId = Guid.NewGuid(),
+            Roles = new List<string>(),
+            Authorizations = new List<string>(),
+            Reason = SessionUpdatedEventReason.RoleChanged
+        };
+
+        // Act
+        await service.HandleSessionUpdatedAsync(evt);
+
+        // Assert — with empty roles, DetermineHighestPriorityRole returns default ("anonymous")
+        Assert.NotNull(savedStates);
+        Assert.Equal("anonymous", savedStates!["role"]);
     }
 
     #endregion

@@ -671,6 +671,8 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             index.LastUpdated = DateTimeOffset.UtcNow;
 
+            // etag is null when index key doesn't exist yet; empty string signals
+            // "create new" to TrySaveAsync (will never conflict on new entries)
             var result = await store.TrySaveAsync(NODE_INDEX_KEY, index, etag ?? string.Empty, ct);
             if (result != null)
             {
@@ -739,6 +741,8 @@ public sealed class ActorPoolManager : IActorPoolManager
 
             index.LastUpdated = DateTimeOffset.UtcNow;
 
+            // etag is null when index key doesn't exist yet; empty string signals
+            // "create new" to TrySaveAsync (will never conflict on new entries)
             var result = await store.TrySaveAsync(ACTOR_INDEX_KEY, index, etag ?? string.Empty, ct);
             if (result != null)
             {

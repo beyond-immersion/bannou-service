@@ -32,6 +32,8 @@ public class VoiceServiceTests
     private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
     private readonly Mock<IPermissionClient> _mockPermissionClient;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IDistributedLockProvider> _mockLockProvider;
 
     public VoiceServiceTests()
     {
@@ -47,6 +49,16 @@ public class VoiceServiceTests
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockPermissionClient = new Mock<IPermissionClient>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockLockProvider = new Mock<IDistributedLockProvider>();
+
+        // Default lock acquisition succeeds
+        var mockLockResponse = new Mock<ILockResponse>();
+        mockLockResponse.Setup(l => l.Success).Returns(true);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockLockResponse.Object);
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<string>(STATE_STORE)).Returns(_mockStringStore.Object);
@@ -71,7 +83,9 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            _mockPermissionClient.Object);
+            _mockPermissionClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockLockProvider.Object);
     }
 
     #region Constructor Tests
@@ -102,7 +116,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6
         };
@@ -120,7 +134,7 @@ public class VoiceServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
         Assert.Equal(sessionId, result.SessionId);
-        Assert.Equal(VoiceTier.P2p, result.Tier);
+        Assert.Equal(VoiceTier.P2P, result.Tier);
         Assert.Equal(VoiceCodec.Opus, result.Codec);
         Assert.Equal(6, result.MaxParticipants);
         Assert.Equal(0, result.CurrentParticipants);
@@ -143,7 +157,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6
         };
@@ -171,7 +185,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 0 // Zero means use default
         };
@@ -209,7 +223,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = sessionId,
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
@@ -231,7 +245,7 @@ public class VoiceServiceTests
         Assert.NotNull(result);
         Assert.Equal(roomId, result.RoomId);
         Assert.Equal(sessionId, result.SessionId);
-        Assert.Equal(VoiceTier.P2p, result.Tier);
+        Assert.Equal(VoiceTier.P2P, result.Tier);
         Assert.Equal(VoiceCodec.Opus, result.Codec);
     }
 
@@ -268,7 +282,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
@@ -347,7 +361,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 2,
             CreatedAt = DateTimeOffset.UtcNow
@@ -392,7 +406,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
@@ -437,7 +451,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerJoinedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerJoinedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -471,7 +485,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
@@ -515,7 +529,9 @@ public class VoiceServiceTests
             _mockScaledTierCoordinator.Object,
             _mockEventConsumer.Object,
             _mockClientEventPublisher.Object,
-            mockPermissionClient.Object);
+            mockPermissionClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockLockProvider.Object);
 
         var roomId = Guid.NewGuid();
         var joiningSessionId = Guid.NewGuid();
@@ -536,7 +552,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 Codec = VoiceCodec.Opus
             });
 
@@ -626,7 +642,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -638,7 +654,7 @@ public class VoiceServiceTests
         // Verify peer left event was published with sessionId (not accountId for privacy)
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.IsAny<IEnumerable<string>>(),
-            It.Is<VoicePeerLeftEvent>(e => e.PeerSessionId == sessionId),
+            It.Is<VoicePeerLeftClientEvent>(e => e.PeerSessionId == sessionId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -672,13 +688,13 @@ public class VoiceServiceTests
         var service = CreateService();
         var roomId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = "session_ended" };
+        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = VoiceRoomDeletedReason.Manual };
 
         var roomData = new VoiceRoomData
         {
             RoomId = roomId,
             SessionId = sessionId,
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             CreatedAt = DateTimeOffset.UtcNow
@@ -699,7 +715,7 @@ public class VoiceServiceTests
             .ReturnsAsync(participants);
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceRoomClosedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceRoomClosedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         // Act
@@ -720,7 +736,7 @@ public class VoiceServiceTests
         // Verify room closed event was published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.IsAny<VoiceRoomClosedEvent>(),
+            It.IsAny<VoiceRoomClosedClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -829,7 +845,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new List<ParticipantRegistration> { targetParticipant, senderParticipant });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerUpdatedEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerUpdatedClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -841,7 +857,7 @@ public class VoiceServiceTests
         // Verify peer updated event was published to the target session with sender info
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Contains(targetSessionId.ToString())),
-            It.Is<VoicePeerUpdatedEvent>(e =>
+            It.Is<VoicePeerUpdatedClientEvent>(e =>
                 e.Peer.PeerSessionId == senderSessionId &&
                 e.Peer.DisplayName == "SenderPlayer" &&
                 e.Peer.SdpOffer == "sdp-answer-content"),
@@ -887,7 +903,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6
         };
@@ -908,7 +924,7 @@ public class VoiceServiceTests
             "voice.room.created",
             It.Is<VoiceRoomCreatedEvent>(e =>
                 e.SessionId == sessionId &&
-                e.Tier == VoiceTier.P2p &&
+                e.Tier == VoiceTier.P2P &&
                 e.MaxParticipants == 6),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
@@ -924,7 +940,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             Password = "secret123"
@@ -963,7 +979,7 @@ public class VoiceServiceTests
         var request = new CreateVoiceRoomRequest
         {
             SessionId = sessionId,
-            PreferredTier = VoiceTier.P2p,
+            PreferredTier = VoiceTier.P2P,
             Codec = VoiceCodec.Opus,
             MaxParticipants = 6,
             AutoCleanup = true
@@ -1082,7 +1098,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 Codec = VoiceCodec.Opus,
                 MaxParticipants = 6,
                 Password = "correct"
@@ -1119,7 +1135,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 Codec = VoiceCodec.Opus,
                 MaxParticipants = 6,
                 Password = "correct"
@@ -1169,7 +1185,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 Codec = VoiceCodec.Opus,
                 MaxParticipants = 6,
                 BroadcastState = BroadcastConsentState.Approved
@@ -1195,7 +1211,6 @@ public class VoiceServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(result);
-        Assert.True(result.IsBroadcasting);
         Assert.Equal(BroadcastConsentState.Approved, result.BroadcastState);
     }
 
@@ -1221,7 +1236,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 Codec = VoiceCodec.Opus,
                 MaxParticipants = 6
             });
@@ -1248,10 +1263,10 @@ public class VoiceServiceTests
 
         // Verify participant joined event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.participant.joined",
-            It.Is<VoiceParticipantJoinedEvent>(e =>
+            "voice.peer.joined",
+            It.Is<VoicePeerJoinedEvent>(e =>
                 e.RoomId == roomId &&
-                e.ParticipantSessionId == sessionId &&
+                e.PeerSessionId == sessionId &&
                 e.CurrentCount == 1),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
@@ -1289,7 +1304,7 @@ public class VoiceServiceTests
             .ReturnsAsync(new VoiceRoomData { RoomId = roomId, SessionId = Guid.NewGuid() });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Act
@@ -1300,10 +1315,10 @@ public class VoiceServiceTests
 
         // Verify participant left event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.participant.left",
-            It.Is<VoiceParticipantLeftEvent>(e =>
+            "voice.peer.left",
+            It.Is<VoicePeerLeftEvent>(e =>
                 e.RoomId == roomId &&
-                e.ParticipantSessionId == sessionId),
+                e.PeerSessionId == sessionId),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
                         It.IsAny<CancellationToken>()), Times.Once);
@@ -1377,7 +1392,7 @@ public class VoiceServiceTests
             });
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoicePeerLeftClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         // Room is broadcasting
@@ -1401,8 +1416,8 @@ public class VoiceServiceTests
 
         // Verify broadcast stopped event was published with ConsentRevoked reason
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.stopped",
-            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+            "voice.broadcast.stopped",
+            It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.ConsentRevoked),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
@@ -1421,7 +1436,7 @@ public class VoiceServiceTests
         var service = CreateService();
         var roomId = Guid.NewGuid();
         var sessionId = Guid.NewGuid();
-        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = "manual" };
+        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = VoiceRoomDeletedReason.Manual };
 
         _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
@@ -1430,7 +1445,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = sessionId,
-                Tier = VoiceTier.P2p
+                Tier = VoiceTier.P2P
             });
 
         _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
@@ -1459,7 +1474,7 @@ public class VoiceServiceTests
         // Arrange
         var service = CreateService();
         var roomId = Guid.NewGuid();
-        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = "manual" };
+        var request = new DeleteVoiceRoomRequest { RoomId = roomId, Reason = VoiceRoomDeletedReason.Manual };
 
         _mockRoomStore.Setup(s => s.GetAsync(
             $"voice:room:{roomId}",
@@ -1468,7 +1483,7 @@ public class VoiceServiceTests
             {
                 RoomId = roomId,
                 SessionId = Guid.NewGuid(),
-                Tier = VoiceTier.P2p,
+                Tier = VoiceTier.P2P,
                 BroadcastState = BroadcastConsentState.Approved,
                 BroadcastConsentedSessions = new HashSet<Guid> { Guid.NewGuid() }
             });
@@ -1484,8 +1499,8 @@ public class VoiceServiceTests
 
         // Verify broadcast stopped event was published with RoomClosed reason BEFORE room deleted
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.stopped",
-            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+            "voice.broadcast.stopped",
+            It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.RoomClosed),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
@@ -1559,7 +1574,7 @@ public class VoiceServiceTests
         // Verify consent request client event was published to all participants
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.IsAny<VoiceBroadcastConsentRequestEvent>(),
+            It.IsAny<VoiceBroadcastConsentRequestClientEvent>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -1642,8 +1657,8 @@ public class VoiceServiceTests
 
         // Verify approved event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.approved",
-            It.Is<VoiceRoomBroadcastApprovedEvent>(e => e.RoomId == roomId),
+            "voice.broadcast.approved",
+            It.Is<VoiceBroadcastApprovedEvent>(e => e.RoomId == roomId),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
                         It.IsAny<CancellationToken>()), Times.Once);
@@ -1693,8 +1708,8 @@ public class VoiceServiceTests
 
         // Verify declined event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.declined",
-            It.Is<VoiceRoomBroadcastDeclinedEvent>(e =>
+            "voice.broadcast.declined",
+            It.Is<VoiceBroadcastDeclinedEvent>(e =>
                 e.RoomId == roomId &&
                 e.DeclinedBySessionId == decliningSession),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
@@ -1752,11 +1767,49 @@ public class VoiceServiceTests
 
         // Verify approved event was NOT published (still waiting)
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.approved",
-            It.IsAny<VoiceRoomBroadcastApprovedEvent>(),
+            "voice.broadcast.approved",
+            It.IsAny<VoiceBroadcastApprovedEvent>(),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
                         It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RespondBroadcastConsent_WhenLockFails_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        // Override default lock setup to fail
+        var failedLock = new Mock<ILockResponse>();
+        failedLock.Setup(l => l.Success).Returns(false);
+        _mockLockProvider.Setup(l => l.LockAsync(
+            It.IsAny<string>(),
+            It.Is<string>(s => s.Contains("broadcast-consent")),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedLock.Object);
+
+        var request = new BroadcastConsentResponse
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            Consented = true
+        };
+
+        // Act
+        var (status, result) = await service.RespondBroadcastConsentAsync(request, CancellationToken.None);
+
+        // Assert — lock failure returns Conflict without touching state
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(result);
+
+        // Verify no state store reads occurred (lock failed before any reads)
+        _mockRoomStore.Verify(s => s.GetAsync(
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1793,8 +1846,8 @@ public class VoiceServiceTests
 
         // Verify broadcast stopped event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.stopped",
-            It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
+            "voice.broadcast.stopped",
+            It.Is<VoiceBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.Manual),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
@@ -1907,7 +1960,7 @@ public class VoiceServiceTests
         {
             RoomId = roomId,
             SessionId = Guid.NewGuid(),
-            Tier = VoiceTier.P2p,
+            Tier = VoiceTier.P2P,
             MaxParticipants = 6,
             BroadcastState = BroadcastConsentState.Inactive
         };
@@ -1947,7 +2000,7 @@ public class VoiceServiceTests
 
         // SIP credential generation for tier upgrade notification
         _mockScaledTierCoordinator.Setup(s => s.GenerateSipCredentials(It.IsAny<Guid>(), roomId))
-            .Returns(new BeyondImmersion.BannouService.Voice.Services.SipCredentials
+            .Returns(new BeyondImmersion.BannouService.Voice.Services.ScaledTierSipCredentials
             {
                 Username = "test-user",
                 Password = "test-pass",
@@ -1983,7 +2036,7 @@ public class VoiceServiceTests
             "voice.room.tier-upgraded",
             It.Is<VoiceRoomTierUpgradedEvent>(e =>
                 e.RoomId == roomId &&
-                e.PreviousTier == VoiceTier.P2p &&
+                e.PreviousTier == VoiceTier.P2P &&
                 e.NewTier == VoiceTier.Scaled &&
                 e.RtpAudioEndpoint == "rtp://media.test:5060"),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
@@ -2009,6 +2062,7 @@ public class ParticipantEvictionWorkerTests
     private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
     private readonly Mock<IStateStore<VoiceRoomData>> _mockRoomStore;
     private readonly Mock<IStateStore<string>> _mockStringStore;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public ParticipantEvictionWorkerTests()
     {
@@ -2024,6 +2078,7 @@ public class ParticipantEvictionWorkerTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockClientEventPublisher = new Mock<IClientEventPublisher>();
         _mockPermissionClient = new Mock<IPermissionClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockStateStoreFactory = new Mock<IStateStoreFactory>();
         _mockRoomStore = new Mock<IStateStore<VoiceRoomData>>();
         _mockStringStore = new Mock<IStateStore<string>>();
@@ -2054,7 +2109,8 @@ public class ParticipantEvictionWorkerTests
             mockServiceProvider.Object,
             _mockEndpointRegistry.Object,
             _mockLogger.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>
@@ -2112,10 +2168,10 @@ public class ParticipantEvictionWorkerTests
 
         // Assert - participant left event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.participant.left",
-            It.Is<VoiceParticipantLeftEvent>(e =>
+            "voice.peer.left",
+            It.Is<VoicePeerLeftEvent>(e =>
                 e.RoomId == roomId &&
-                e.ParticipantSessionId == staleSessionId),
+                e.PeerSessionId == staleSessionId),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -2256,7 +2312,7 @@ public class ParticipantEvictionWorkerTests
             .ReturnsAsync(2);
 
         _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
-            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceBroadcastConsentUpdateEvent>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceBroadcastConsentUpdateClientEvent>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(2);
 
         // Act
@@ -2273,8 +2329,8 @@ public class ParticipantEvictionWorkerTests
 
         // Assert - declined event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "voice.room.broadcast.declined",
-            It.Is<VoiceRoomBroadcastDeclinedEvent>(e => e.RoomId == roomId),
+            "voice.broadcast.declined",
+            It.Is<VoiceBroadcastDeclinedEvent>(e => e.RoomId == roomId),
             It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
             It.IsAny<Guid?>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -2289,7 +2345,7 @@ public class ParticipantEvictionWorkerTests
         // Assert - client event was published
         _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
             It.Is<IEnumerable<string>>(list => list.Count() == 2),
-            It.Is<VoiceBroadcastConsentUpdateEvent>(e =>
+            It.Is<VoiceBroadcastConsentUpdateClientEvent>(e =>
                 e.State == BroadcastConsentState.Inactive &&
                 e.RoomId == roomId),
             It.IsAny<CancellationToken>()), Times.Once);

@@ -61,8 +61,7 @@ public partial class SubscriptionController
             "additionalProperties": false,
             "description": "Response containing list of subscriptions",
             "required": [
-                "subscriptions",
-                "totalCount"
+                "subscriptions"
             ],
             "properties": {
                 "subscriptions": {
@@ -71,10 +70,6 @@ public partial class SubscriptionController
                         "$ref": "#/$defs/SubscriptionInfo"
                     },
                     "description": "List of subscriptions matching the filter criteria"
-                },
-                "totalCount": {
-                    "type": "integer",
-                    "description": "Total number of subscriptions matching the filter"
                 }
             }
         },
@@ -87,6 +82,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -109,6 +105,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -233,6 +230,7 @@ public partial class SubscriptionController
                 "stubName": {
                     "type": "string",
                     "nullable": true,
+                    "minLength": 1,
                     "description": "Stub name of the service to filter by (e.g., \"my-game\"). Returns all accounts subscribed to this service."
                 }
             }
@@ -252,7 +250,7 @@ public partial class SubscriptionController
             "description": "Response from querying current subscriptions.\nReturns subscriptions matching the query criteria (by account, by stub, or both).\n",
             "required": [
                 "subscriptions",
-                "totalCount"
+                "accountIds"
             ],
             "properties": {
                 "subscriptions": {
@@ -261,10 +259,6 @@ public partial class SubscriptionController
                         "$ref": "#/$defs/SubscriptionInfo"
                     },
                     "description": "List of active subscriptions matching the query"
-                },
-                "totalCount": {
-                    "type": "integer",
-                    "description": "Total number of subscriptions returned"
                 },
                 "accountIds": {
                     "type": "array",
@@ -285,6 +279,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -307,6 +302,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -450,6 +446,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -472,6 +469,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -616,6 +614,7 @@ public partial class SubscriptionController
                 "durationDays": {
                     "type": "integer",
                     "nullable": true,
+                    "minimum": 1,
                     "description": "Alternative to expirationDate - number of days from startDate"
                 }
             }
@@ -638,6 +637,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -660,6 +660,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -814,6 +815,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -836,6 +838,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -985,6 +988,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -1007,6 +1011,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {
@@ -1132,6 +1137,8 @@ public partial class SubscriptionController
                 },
                 "extensionDays": {
                     "type": "integer",
+                    "nullable": true,
+                    "minimum": 1,
                     "description": "Number of days to extend the subscription"
                 },
                 "newExpirationDate": {
@@ -1160,6 +1167,7 @@ public partial class SubscriptionController
                 "accountId",
                 "serviceId",
                 "stubName",
+                "displayName",
                 "startDate",
                 "isActive",
                 "createdAt"
@@ -1182,6 +1190,7 @@ public partial class SubscriptionController
                 },
                 "stubName": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Stub name of the service (denormalized for efficiency)"
                 },
                 "displayName": {

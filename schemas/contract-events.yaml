@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Contract Service Events
   description: |
@@ -6,7 +6,7 @@ info:
     Lifecycle events are auto-generated from x-lifecycle definition.
 
     **Event Categories**:
-    - Lifecycle events (auto-generated): contract-template.created/updated/deleted, contract-instance.created/updated/deleted
+    - Lifecycle events (auto-generated): contract.template.created/updated/deleted, contract.instance.created/updated/deleted
     - Contract flow events: proposed, consent-received, accepted, activated, milestone events, breach events, fulfillment, termination
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
@@ -18,23 +18,23 @@ info:
   x-event-subscriptions: []  # Contract service is reactive - no external event subscriptions for v1
   x-event-publications:
     # Lifecycle events (auto-generated from x-lifecycle)
-    - topic: contract-template.created
+    - topic: contract.template.created
       event: ContractTemplateCreatedEvent
       description: Published when a new contract template is created
-    - topic: contract-template.updated
+    - topic: contract.template.updated
       event: ContractTemplateUpdatedEvent
       description: Published when a contract template is updated
-    - topic: contract-template.deleted
+    - topic: contract.template.deleted
       event: ContractTemplateDeletedEvent
       description: Published when a contract template is soft-deleted
 
-    - topic: contract-instance.created
+    - topic: contract.instance.created
       event: ContractInstanceCreatedEvent
       description: Published when a new contract instance is created (draft status)
-    - topic: contract-instance.updated
+    - topic: contract.instance.updated
       event: ContractInstanceUpdatedEvent
       description: Published when a contract instance is updated
-    - topic: contract-instance.deleted
+    - topic: contract.instance.deleted
       event: ContractInstanceDeletedEvent
       description: Published when a contract instance is deleted
 
@@ -110,6 +110,7 @@ info:
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/contract-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: contract
   ContractTemplate:
     model:
       templateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the contract template" }

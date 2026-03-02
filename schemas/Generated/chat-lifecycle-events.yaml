@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Chat Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for chat service.\nDO NOT EDIT - This file is completely overwritten
@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room.created when a chatroom is created
+      description: Published to chat.room.created when a chatroom is created
       required:
       - eventName
       - eventId
@@ -27,8 +27,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room.created
-          description: 'Event type identifier: chat-room.created'
+          default: chat.room.created
+          description: 'Event type identifier: chat.room.created'
         roomId: &id001
           type: string
           format: uuid
@@ -71,7 +71,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room.updated when a chatroom is updated
+      description: Published to chat.room.updated when a chatroom is updated
       required:
       - eventName
       - eventId
@@ -87,8 +87,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room.updated
-          description: 'Event type identifier: chat-room.updated'
+          default: chat.room.updated
+          description: 'Event type identifier: chat.room.updated'
         roomId: *id001
         roomTypeCode: *id002
         sessionId: *id003
@@ -109,7 +109,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room.deleted when a chatroom is deleted
+      description: Published to chat.room.deleted when a chatroom is deleted
       required:
       - eventName
       - eventId
@@ -124,8 +124,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room.deleted
-          description: 'Event type identifier: chat-room.deleted'
+          default: chat.room.deleted
+          description: 'Event type identifier: chat.room.deleted'
         roomId: *id001
         roomTypeCode: *id002
         sessionId: *id003
@@ -145,7 +145,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room-type.created when a chatroomtype is created
+      description: Published to chat.room-type.created when a chatroomtype is created
       required:
       - eventName
       - eventId
@@ -160,8 +160,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room-type.created
-          description: 'Event type identifier: chat-room-type.created'
+          default: chat.room-type.created
+          description: 'Event type identifier: chat.room-type.created'
         code: &id011
           type: string
           description: "Unique room type code within game service scope"
@@ -194,7 +194,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room-type.updated when a chatroomtype is updated
+      description: Published to chat.room-type.updated when a chatroomtype is updated
       required:
       - eventName
       - eventId
@@ -210,8 +210,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room-type.updated
-          description: 'Event type identifier: chat-room-type.updated'
+          default: chat.room-type.updated
+          description: 'Event type identifier: chat.room-type.updated'
         code: *id011
         displayName: *id012
         gameServiceId: *id013
@@ -230,7 +230,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to chat-room-type.deleted when a chatroomtype is deleted
+      description: Published to chat.room-type.deleted when a chatroomtype is deleted
       required:
       - eventName
       - eventId
@@ -245,8 +245,8 @@ components:
       properties:
         eventName:
           type: string
-          default: chat-room-type.deleted
-          description: 'Event type identifier: chat-room-type.deleted'
+          default: chat.room-type.deleted
+          description: 'Event type identifier: chat.room-type.deleted'
         code: *id011
         displayName: *id012
         gameServiceId: *id013

@@ -137,7 +137,7 @@ public partial class AuthLoginSuccessfulEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Username or email used for authentication
+    /// Display name of the authenticated account (never email; "(unknown)" if unavailable)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("username")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -174,7 +174,7 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Username that was attempted
+    /// Display name of the account (never email; "(unknown)" if account not found)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("username")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -191,7 +191,7 @@ public partial class AuthLoginFailedEvent : BaseServiceEvent
     public AuthLoginFailedReason Reason { get; set; } = default!;
 
     /// <summary>
-    /// Account ID if the username exists (null if unknown user)
+    /// Account ID if the account exists (null if unknown user)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     public System.Guid? AccountId { get; set; } = default!;

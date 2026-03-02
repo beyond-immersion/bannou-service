@@ -1,6 +1,8 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Currency;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -196,11 +198,11 @@ public class CurrencyServiceTests
     }
 
     [Fact]
-    public void WalletOwnerType_HasExpectedValues()
+    public void EntityType_HasExpectedValues()
     {
-        // Assert - verify enum values exist
-        Assert.True(Enum.IsDefined(typeof(WalletOwnerType), WalletOwnerType.Account));
-        Assert.True(Enum.IsDefined(typeof(WalletOwnerType), WalletOwnerType.Character));
+        // Assert - verify enum values exist for wallet owner types
+        Assert.True(Enum.IsDefined(typeof(EntityType), EntityType.Account));
+        Assert.True(Enum.IsDefined(typeof(EntityType), EntityType.Character));
     }
 
     #endregion
@@ -234,12 +236,12 @@ public class CurrencyServiceTests
         var request = new CreateWalletRequest
         {
             OwnerId = ownerId,
-            OwnerType = WalletOwnerType.Account
+            OwnerType = EntityType.Account
         };
 
         // Assert
         Assert.Equal(ownerId, request.OwnerId);
-        Assert.Equal(WalletOwnerType.Account, request.OwnerType);
+        Assert.Equal(EntityType.Account, request.OwnerType);
     }
 
     [Fact]
@@ -303,6 +305,8 @@ public class CurrencyConversionConcurrencyTests
     private readonly Mock<ILogger<CurrencyService>> _mockLogger;
     private readonly CurrencyServiceConfiguration _configuration;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     // Typed stores
     private readonly Mock<IStateStore<WalletModel>> _mockWalletStore;
@@ -331,6 +335,8 @@ public class CurrencyConversionConcurrencyTests
         _mockLogger = new Mock<ILogger<CurrencyService>>();
         _configuration = new CurrencyServiceConfiguration();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Initialize stores
         _mockWalletStore = new Mock<IStateStore<WalletModel>>();
@@ -408,7 +414,9 @@ public class CurrencyConversionConcurrencyTests
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             _configuration,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     private WalletModel CreateTestWallet()
@@ -417,7 +425,7 @@ public class CurrencyConversionConcurrencyTests
         {
             WalletId = _walletId,
             OwnerId = _ownerId,
-            OwnerType = WalletOwnerType.Account,
+            OwnerType = EntityType.Account,
             Status = WalletStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
         };
@@ -534,7 +542,7 @@ public class CurrencyConversionConcurrencyTests
         var (status, response) = await service.ExecuteConversionAsync(request);
 
         // Assert - should be rejected before any debit occurs
-        Assert.Equal((StatusCodes)422, status);
+        Assert.Equal(StatusCodes.BadRequest, status);
         Assert.Null(response);
 
         // Verify no balance lock was acquired (debit never started)
@@ -587,7 +595,7 @@ public class CurrencyConversionConcurrencyTests
 
         _mockLockProvider
             .Setup(l => l.LockAsync(
-                "currency-balance",
+                StateStoreDefinitions.CurrencyLock,
                 It.Is<string>(k => k.Contains(_toCurrencyId.ToString())),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failedLock.Object);
@@ -614,7 +622,7 @@ public class CurrencyConversionConcurrencyTests
         // (once for debit, once for compensating credit)
         _mockLockProvider.Verify(
             l => l.LockAsync(
-                "currency-balance",
+                StateStoreDefinitions.CurrencyLock,
                 It.Is<string>(k => k.Contains(_fromCurrencyId.ToString())),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()),
             Times.AtLeast(2));

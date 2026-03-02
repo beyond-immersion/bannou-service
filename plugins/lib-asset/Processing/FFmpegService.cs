@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using FFMpegCore;
 using FFMpegCore.Pipes;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,7 @@ namespace BeyondImmersion.BannouService.Asset.Processing;
 public sealed class FFmpegService : IFFmpegService
 {
     private readonly AssetServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<FFmpegService> _logger;
     private readonly string _workingDirectory;
 
@@ -20,9 +22,12 @@ public sealed class FFmpegService : IFFmpegService
     /// </summary>
     public FFmpegService(
         AssetServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
         ILogger<FFmpegService> logger)
     {
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
 
         // Ensure working directory exists
@@ -59,6 +64,7 @@ public sealed class FFmpegService : IFFmpegService
         bool normalize,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "FFmpegService.ConvertAudioAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -156,6 +162,7 @@ public sealed class FFmpegService : IFFmpegService
         string inputFormat,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "FFmpegService.ProbeAudioAsync");
         var inputTempPath = Path.Combine(_workingDirectory, $"{Guid.NewGuid():N}.{inputFormat}");
 
         try

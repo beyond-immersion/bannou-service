@@ -55,74 +55,55 @@ public class QuestServiceConfiguration : BaseServiceConfiguration
     /// Maximum concurrent active quests per character
     /// Environment variable: QUEST_MAX_ACTIVE_QUESTS_PER_CHARACTER
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
     public int MaxActiveQuestsPerCharacter { get; set; } = 25;
 
     /// <summary>
-    /// Maximum party members per quest instance
-    /// Environment variable: QUEST_MAX_QUESTORS_PER_QUEST
+    /// Maximum slots in quest reward inventory containers
+    /// Environment variable: QUEST_DEFAULT_REWARD_CONTAINER_MAX_SLOTS
     /// </summary>
-    public int MaxQuestorsPerQuest { get; set; } = 5;
-
-    /// <summary>
-    /// Default quest deadline in seconds (7 days)
-    /// Environment variable: QUEST_DEFAULT_DEADLINE_SECONDS
-    /// </summary>
-    public int DefaultDeadlineSeconds { get; set; } = 604800;
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
+    public int DefaultRewardContainerMaxSlots { get; set; } = 100;
 
     /// <summary>
     /// TTL for quest definition cache in Redis
     /// Environment variable: QUEST_DEFINITION_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 86400)]
     public int DefinitionCacheTtlSeconds { get; set; } = 3600;
 
     /// <summary>
     /// TTL for objective progress cache
     /// Environment variable: QUEST_PROGRESS_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int ProgressCacheTtlSeconds { get; set; } = 300;
 
     /// <summary>
     /// TTL for in-memory quest data cache used by actor behavior expressions (2 minutes default)
     /// Environment variable: QUEST_DATA_CACHE_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 3600)]
     public int QuestDataCacheTtlSeconds { get; set; } = 120;
-
-    /// <summary>
-    /// TTL for quest cooldown tracking
-    /// Environment variable: QUEST_COOLDOWN_CACHE_TTL_SECONDS
-    /// </summary>
-    public int CooldownCacheTtlSeconds { get; set; } = 86400;
 
     /// <summary>
     /// Distributed lock expiry for quest mutations
     /// Environment variable: QUEST_LOCK_EXPIRY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
     public int LockExpirySeconds { get; set; } = 30;
-
-    /// <summary>
-    /// Retry attempts when lock acquisition fails
-    /// Environment variable: QUEST_LOCK_RETRY_ATTEMPTS
-    /// </summary>
-    public int LockRetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// ETag concurrency retry attempts
     /// Environment variable: QUEST_MAX_CONCURRENCY_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 20)]
     public int MaxConcurrencyRetries { get; set; } = 5;
 
     /// <summary>
-    /// TTL for idempotency keys (24 hours)
-    /// Environment variable: QUEST_IDEMPOTENCY_TTL_SECONDS
-    /// </summary>
-    public int IdempotencyTtlSeconds { get; set; } = 86400;
-
-    /// <summary>
-    /// Controls prerequisite validation behavior.
-    /// CHECK_ALL (default): Evaluate all prerequisites, return all failures for richer error info.
-    /// FAIL_FAST: Stop on first failure for faster rejection.
+    /// Controls prerequisite validation behavior (FAIL_FAST stops on first failure, CHECK_ALL evaluates all)
     /// Environment variable: QUEST_PREREQUISITE_VALIDATION_MODE
     /// </summary>
-    public string PrerequisiteValidationMode { get; set; } = "CHECK_ALL";
+    public PrerequisiteValidationMode PrerequisiteValidationMode { get; set; } = PrerequisiteValidationMode.CHECK_ALL;
 
 }

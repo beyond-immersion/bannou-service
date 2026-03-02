@@ -31,7 +31,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async requestSnapshotAsync(
+  async mappingRequestSnapshotAsync(
     request: Schemas['RequestSnapshotRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryPointAsync(
+  async mappingQueryPointAsync(
     request: Schemas['QueryPointRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryBoundsAsync(
+  async mappingQueryBoundsAsync(
     request: Schemas['QueryBoundsRequest'],
     channel: number = 0,
     timeout?: number
@@ -89,7 +89,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryObjectsByTypeAsync(
+  async mappingQueryObjectsByTypeAsync(
     request: Schemas['QueryObjectsByTypeRequest'],
     channel: number = 0,
     timeout?: number
@@ -107,7 +107,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryAffordanceAsync(
+  async mappingQueryAffordanceAsync(
     request: Schemas['AffordanceQueryRequest'],
     channel: number = 0,
     timeout?: number
@@ -125,7 +125,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkoutForAuthoringAsync(
+  async mappingCheckoutForAuthoringAsync(
     request: Schemas['AuthoringCheckoutRequest'],
     channel: number = 0,
     timeout?: number
@@ -143,7 +143,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async commitAuthoringAsync(
+  async mappingCommitAuthoringAsync(
     request: Schemas['AuthoringCommitRequest'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async releaseAuthoringAsync(
+  async mappingReleaseAuthoringAsync(
     request: Schemas['AuthoringReleaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -179,7 +179,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createDefinitionAsync(
+  async mappingCreateDefinitionAsync(
     request: Schemas['CreateDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -199,7 +199,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDefinitionAsync(
+  async mappingGetDefinitionAsync(
     request: Schemas['GetDefinitionRequest'],
     channel: number = 0,
     timeout?: number
@@ -219,7 +219,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listDefinitionsAsync(
+  async mappingListDefinitionsAsync(
     request: Schemas['ListDefinitionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -237,7 +237,7 @@ export class MappingProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateDefinitionAsync(
+  async mappingUpdateDefinitionAsync(
     request: Schemas['UpdateDefinitionRequest'],
     channel: number = 0,
     timeout?: number

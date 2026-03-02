@@ -31,7 +31,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createSlotAsync(
+  async saveLoadCreateSlotAsync(
     request: Schemas['CreateSlotRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSlotAsync(
+  async saveLoadGetSlotAsync(
     request: Schemas['GetSlotRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSlotsAsync(
+  async saveLoadListSlotsAsync(
     request: Schemas['ListSlotsRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteSlotAsync(
+  async saveLoadDeleteSlotAsync(
     request: Schemas['DeleteSlotRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async renameSlotAsync(
+  async saveLoadRenameSlotAsync(
     request: Schemas['RenameSlotRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async saveAsync(
+  async saveLoadSaveAsync(
     request: Schemas['SaveRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async loadAsync(
+  async saveLoadLoadAsync(
     request: Schemas['LoadRequest'],
     channel: number = 0,
     timeout?: number
@@ -171,7 +171,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async saveDeltaAsync(
+  async saveLoadSaveDeltaAsync(
     request: Schemas['SaveDeltaRequest'],
     channel: number = 0,
     timeout?: number
@@ -191,7 +191,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async loadWithDeltasAsync(
+  async saveLoadLoadWithDeltasAsync(
     request: Schemas['LoadRequest'],
     channel: number = 0,
     timeout?: number
@@ -211,7 +211,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async collapseDeltasAsync(
+  async saveLoadCollapseDeltasAsync(
     request: Schemas['CollapseDeltasRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listVersionsAsync(
+  async saveLoadListVersionsAsync(
     request: Schemas['ListVersionsRequest'],
     channel: number = 0,
     timeout?: number
@@ -251,7 +251,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async pinVersionAsync(
+  async saveLoadPinVersionAsync(
     request: Schemas['PinVersionRequest'],
     channel: number = 0,
     timeout?: number
@@ -271,7 +271,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unpinVersionAsync(
+  async saveLoadUnpinVersionAsync(
     request: Schemas['UnpinVersionRequest'],
     channel: number = 0,
     timeout?: number
@@ -291,7 +291,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteVersionAsync(
+  async saveLoadDeleteVersionAsync(
     request: Schemas['DeleteVersionRequest'],
     channel: number = 0,
     timeout?: number
@@ -309,7 +309,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async querySavesAsync(
+  async saveLoadQuerySavesAsync(
     request: Schemas['QuerySavesRequest'],
     channel: number = 0,
     timeout?: number
@@ -329,7 +329,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async copySaveAsync(
+  async saveLoadCopySaveAsync(
     request: Schemas['CopySaveRequest'],
     channel: number = 0,
     timeout?: number
@@ -349,7 +349,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async exportSavesAsync(
+  async saveLoadExportSavesAsync(
     request: Schemas['ExportSavesRequest'],
     channel: number = 0,
     timeout?: number
@@ -369,7 +369,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async verifyIntegrityAsync(
+  async saveLoadVerifyIntegrityAsync(
     request: Schemas['VerifyIntegrityRequest'],
     channel: number = 0,
     timeout?: number
@@ -387,7 +387,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async promoteVersionAsync(
+  async saveLoadPromoteVersionAsync(
     request: Schemas['PromoteVersionRequest'],
     channel: number = 0,
     timeout?: number
@@ -407,7 +407,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async migrateSaveAsync(
+  async saveLoadMigrateSaveAsync(
     request: Schemas['MigrateSaveRequest'],
     channel: number = 0,
     timeout?: number
@@ -427,7 +427,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerSchemaAsync(
+  async saveLoadRegisterSchemaAsync(
     request: Schemas['RegisterSchemaRequest'],
     channel: number = 0,
     timeout?: number
@@ -447,7 +447,7 @@ export class SaveLoadProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listSchemasAsync(
+  async saveLoadListSchemasAsync(
     request: Schemas['ListSchemasRequest'],
     channel: number = 0,
     timeout?: number

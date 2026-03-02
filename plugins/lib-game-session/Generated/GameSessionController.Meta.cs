@@ -140,7 +140,8 @@ public partial class GameSessionController
                 "owner": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account ID of the session owner"
+                    "nullable": true,
+                    "description": "Account ID of the session owner (null for system-owned lobby sessions)"
                 },
                 "players": {
                     "type": "array",
@@ -238,12 +239,6 @@ public partial class GameSessionController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
-                },
-                "voiceSessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
         },
@@ -380,6 +375,7 @@ public partial class GameSessionController
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
+                    "nullable": true,
                     "description": "Account ID of the session owner. If not provided, defaults to caller's account."
                 },
                 "gameSettings": {
@@ -389,7 +385,12 @@ public partial class GameSessionController
                     "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sessionType": {
-                    "$ref": "#/$defs/SessionType",
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/SessionType"
+                        }
+                    ],
+                    "nullable": true,
                     "description": "Type of session - lobby (persistent) or matchmade (time-limited with reservations). Defaults to lobby."
                 },
                 "expectedPlayers": {
@@ -480,7 +481,8 @@ public partial class GameSessionController
                 "owner": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account ID of the session owner"
+                    "nullable": true,
+                    "description": "Account ID of the session owner (null for system-owned lobby sessions)"
                 },
                 "players": {
                     "type": "array",
@@ -578,12 +580,6 @@ public partial class GameSessionController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
-                },
-                "voiceSessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
         },
@@ -760,7 +756,8 @@ public partial class GameSessionController
                 "owner": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account ID of the session owner"
+                    "nullable": true,
+                    "description": "Account ID of the session owner (null for system-owned lobby sessions)"
                 },
                 "players": {
                     "type": "array",
@@ -858,12 +855,6 @@ public partial class GameSessionController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
-                },
-                "voiceSessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Voice participant session ID (if player has joined voice)"
                 }
             }
         },
@@ -988,7 +979,7 @@ public partial class GameSessionController
                     "description": "Account ID of the player joining. Provided by shortcut system."
                 },
                 "gameType": {
-                    "type": "string",
+                    "$ref": "#/$defs/GameType",
                     "description": "Game service stub name to join. Determines which lobby to join. Provided by shortcut system."
                 },
                 "password": {
@@ -1001,35 +992,12 @@ public partial class GameSessionController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific character data. No Bannou plugin reads specific keys from this field by convention."
-                },
-                "voiceEndpoint": {
-                    "$ref": "#/$defs/VoiceSipEndpoint",
-                    "nullable": true,
-                    "description": "Client's SIP endpoint for voice communication (null if not using voice)"
                 }
             }
         },
-        "VoiceSipEndpoint": {
-            "type": "object",
-            "description": "Client's SIP/WebRTC endpoint for voice communication",
-            "additionalProperties": false,
-            "required": [
-                "sdpOffer"
-            ],
-            "properties": {
-                "sdpOffer": {
-                    "type": "string",
-                    "description": "SDP offer for WebRTC negotiation"
-                },
-                "iceCandidates": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "ICE candidates for NAT traversal"
-                }
-            }
+        "GameType": {
+            "type": "string",
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         }
     }
 }
@@ -1061,6 +1029,7 @@ public partial class GameSessionController
                 "gameData": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "newPermissions": {
@@ -1068,11 +1037,8 @@ public partial class GameSessionController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Additional permissions granted by joining"
-                },
-                "voice": {
-                    "$ref": "#/$defs/VoiceConnectionInfo",
-                    "description": "Voice connection info (if voice is enabled for this session)"
                 }
             }
         },
@@ -1084,52 +1050,6 @@ public partial class GameSessionController
                 "spectator",
                 "moderator"
             ]
-        },
-        "VoiceConnectionInfo": {
-            "type": "object",
-            "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
-            "additionalProperties": false,
-            "required": [
-                "voiceEnabled"
-            ],
-            "properties": {
-                "voiceEnabled": {
-                    "type": "boolean",
-                    "description": "Whether voice is enabled for this game session"
-                },
-                "roomId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
-                },
-                "tier": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Expected voice tier (may change based on participant count)"
-                },
-                "codec": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Audio codec to use"
-                },
-                "stunServers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "STUN server URIs for NAT traversal (clients should configure these early)"
-                }
-            }
         }
     }
 }
@@ -1217,10 +1137,14 @@ public partial class GameSessionController
                     "description": "Account ID of the player leaving. Provided by shortcut system."
                 },
                 "gameType": {
-                    "type": "string",
+                    "$ref": "#/$defs/GameType",
                     "description": "Game type being left. Determines which lobby to leave. Provided by shortcut system."
                 }
             }
+        },
+        "GameType": {
+            "type": "string",
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         }
     }
 }
@@ -1409,7 +1333,7 @@ public partial class GameSessionController
                     "description": "Account ID of the sender. Provided by shortcut system."
                 },
                 "gameType": {
-                    "type": "string",
+                    "$ref": "#/$defs/GameType",
                     "description": "Game type for the chat. Determines which lobby's players receive the message. Provided by shortcut system."
                 },
                 "message": {
@@ -1433,6 +1357,10 @@ public partial class GameSessionController
                     "description": "For whisper messages"
                 }
             }
+        },
+        "GameType": {
+            "type": "string",
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "ChatMessageType": {
             "type": "string",
@@ -1534,7 +1462,7 @@ public partial class GameSessionController
                     "description": "Account ID of the player. Provided by shortcut system."
                 },
                 "gameType": {
-                    "type": "string",
+                    "$ref": "#/$defs/GameType",
                     "description": "Game type for the action. Determines which lobby to apply the action. Provided by shortcut system."
                 },
                 "actionType": {
@@ -1554,6 +1482,10 @@ public partial class GameSessionController
                     "description": "Target of the action (if applicable)"
                 }
             }
+        },
+        "GameType": {
+            "type": "string",
+            "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
         },
         "GameActionType": {
             "type": "string",
@@ -1702,33 +1634,6 @@ public partial class GameSessionController
                     "additionalProperties": true,
                     "nullable": true,
                     "description": "Game-specific character data. No Bannou plugin reads specific keys from this field by convention."
-                },
-                "voiceEndpoint": {
-                    "$ref": "#/$defs/VoiceSipEndpoint",
-                    "nullable": true,
-                    "description": "Client's SIP endpoint for voice communication (null if not using voice)"
-                }
-            }
-        },
-        "VoiceSipEndpoint": {
-            "type": "object",
-            "description": "Client's SIP/WebRTC endpoint for voice communication",
-            "additionalProperties": false,
-            "required": [
-                "sdpOffer"
-            ],
-            "properties": {
-                "sdpOffer": {
-                    "type": "string",
-                    "description": "SDP offer for WebRTC negotiation"
-                },
-                "iceCandidates": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "ICE candidates for NAT traversal"
                 }
             }
         }
@@ -1762,6 +1667,7 @@ public partial class GameSessionController
                 "gameData": {
                     "type": "object",
                     "additionalProperties": true,
+                    "nullable": true,
                     "description": "Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "newPermissions": {
@@ -1769,11 +1675,8 @@ public partial class GameSessionController
                     "items": {
                         "type": "string"
                     },
+                    "nullable": true,
                     "description": "Additional permissions granted by joining"
-                },
-                "voice": {
-                    "$ref": "#/$defs/VoiceConnectionInfo",
-                    "description": "Voice connection info (if voice is enabled for this session)"
                 }
             }
         },
@@ -1785,52 +1688,6 @@ public partial class GameSessionController
                 "spectator",
                 "moderator"
             ]
-        },
-        "VoiceConnectionInfo": {
-            "type": "object",
-            "description": "Minimal voice metadata returned when joining a session.\n\n**Event-Only Pattern**: Peer connection details are NOT included here.\nClients receive VoicePeerJoinedEvent when other peers join (with their SDP offers).\nThis avoids race conditions between response processing and event handling.\n",
-            "additionalProperties": false,
-            "required": [
-                "voiceEnabled"
-            ],
-            "properties": {
-                "voiceEnabled": {
-                    "type": "boolean",
-                    "description": "Whether voice is enabled for this game session"
-                },
-                "roomId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "nullable": true,
-                    "description": "Voice room ID (null until room is created when 2+ participants join with voice)"
-                },
-                "tier": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Expected voice tier (may change based on participant count)"
-                },
-                "codec": {
-                    "allOf": [
-                        {
-                            "type": "object"
-                        }
-                    ],
-                    "nullable": true,
-                    "description": "Audio codec to use"
-                },
-                "stunServers": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "nullable": true,
-                    "description": "STUN server URIs for NAT traversal (clients should configure these early)"
-                }
-            }
         }
     }
 }
@@ -2021,6 +1878,7 @@ public partial class GameSessionController
                 },
                 "reservationToken": {
                     "type": "string",
+                    "minLength": 1,
                     "description": "Token for this player's reservation"
                 }
             }
@@ -2039,18 +1897,13 @@ public partial class GameSessionController
             "description": "Response after publishing a join shortcut",
             "additionalProperties": false,
             "required": [
-                "success"
+                "shortcutRouteGuid"
             ],
             "properties": {
-                "success": {
-                    "type": "boolean",
-                    "description": "Whether the shortcut was published successfully"
-                },
                 "shortcutRouteGuid": {
                     "type": "string",
                     "format": "uuid",
-                    "nullable": true,
-                    "description": "The route GUID for the published shortcut (null if failed)"
+                    "description": "The route GUID for the published shortcut"
                 }
             }
         }

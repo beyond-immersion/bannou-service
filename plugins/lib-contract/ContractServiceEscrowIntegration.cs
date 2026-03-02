@@ -95,6 +95,8 @@ public partial class ContractService
         model.LockedAt = now;
         model.UpdatedAt = now;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
@@ -175,6 +177,8 @@ public partial class ContractService
         model.LockedAt = null;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
@@ -264,6 +268,8 @@ public partial class ContractService
         party.EntityType = body.ToEntityType;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var savedEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (savedEtag == null)
         {
@@ -917,7 +923,7 @@ public partial class ContractService
 
         // Acquire contract lock for execution
         await using var contractLock = await _lockProvider.LockAsync(
-            "contract-instance", body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+            StateStoreDefinitions.ContractLock, body.ContractInstanceId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
         if (!contractLock.Success)
         {
             _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractInstanceId);
@@ -991,6 +997,8 @@ public partial class ContractService
         model.ExecutionDistributions = distributions;
         model.UpdatedAt = now;
 
+        // GetWithETagAsync returns non-null etag for existing records;
+        // coalesce satisfies compiler's nullable analysis (will never execute)
         var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
         if (newEtag == null)
         {

@@ -21,7 +21,7 @@
 #   - bannou-service/Generated/StateStoreDefinitions.cs
 #   - docs/GENERATED-STATE-STORES.md
 
-openapi: 3.1.0
+openapi: 3.0.4
 info:
   title: Bannou State Store Definitions
   version: 1.0.0
@@ -57,6 +57,12 @@ x-state-stores:
     prefix: permission
     service: Permission
     purpose: Permission cache and session capabilities
+
+  permission-lock:
+    backend: redis
+    prefix: "permission:lock"
+    service: Permission
+    purpose: Distributed locks for session capability compilation
 
   # ============================================================================
   # Chat Stores (L1 AppFoundation Service)
@@ -111,6 +117,12 @@ x-state-stores:
     prefix: voice
     service: Voice
     purpose: Voice room and peer state
+
+  voice-lock:
+    backend: redis
+    prefix: "voice:lock"
+    service: Voice
+    purpose: Distributed locks for broadcast consent and room mutations
 
   asset-statestore:
     backend: redis
@@ -234,6 +246,12 @@ x-state-stores:
     service: Matchmaking
     purpose: Matchmaking queue and ticket state
 
+  matchmaking-lock:
+    backend: redis
+    prefix: "mm:lock"
+    service: Matchmaking
+    purpose: Distributed locks for match processing and queue index modifications
+
   # ============================================================================
   # Analytics Stores
   # ============================================================================
@@ -297,6 +315,12 @@ x-state-stores:
     service: Achievement
     purpose: Player achievement progress
 
+  achievement-lock:
+    backend: redis
+    prefix: "ach:lock"
+    service: Achievement
+    purpose: Distributed locks for achievement progress updates
+
   # ============================================================================
   # Save-Load Stores
   # ============================================================================
@@ -327,6 +351,12 @@ x-state-stores:
     prefix: "saveload:pending"
     service: SaveLoad
     purpose: Pending save operations
+
+  save-load-lock:
+    backend: redis
+    prefix: "saveload:lock"
+    service: SaveLoad
+    purpose: Distributed locks for save slot operations
 
   # ============================================================================
   # MySQL Stores - Durable/Queryable Data
@@ -374,6 +404,12 @@ x-state-stores:
     service: GameSession
     purpose: Game session state and history
 
+  game-session-lock:
+    backend: redis
+    prefix: "game-session:lock"
+    service: GameSession
+    purpose: Distributed locks for session lifecycle and reservation operations
+
   location-statestore:
     backend: mysql
     service: Location
@@ -408,6 +444,12 @@ x-state-stores:
     service: Realm
     purpose: Realm definitions and configuration
 
+  realm-lock:
+    backend: redis
+    prefix: "realm:lock"
+    service: Realm
+    purpose: Distributed locks for realm merge operations
+
   realm-history-statestore:
     backend: mysql
     service: RealmHistory
@@ -429,6 +471,12 @@ x-state-stores:
     service: Relationship
     purpose: Distributed locks for composite uniqueness and index modifications
 
+  game-service-lock:
+    backend: redis
+    prefix: "game-service:lock"
+    service: GameService
+    purpose: Distributed locks for stub name uniqueness
+
   game-service-statestore:
     backend: mysql
     service: GameService
@@ -439,10 +487,22 @@ x-state-stores:
     service: Species
     purpose: Species definitions
 
+  species-lock:
+    backend: redis
+    prefix: "species:lock"
+    service: Species
+    purpose: Distributed locks for species mutations and merge operations
+
   subscription-statestore:
     backend: mysql
     service: Subscription
     purpose: User subscriptions to game services
+
+  subscription-lock:
+    backend: redis
+    prefix: "subscription:lock"
+    service: Subscription
+    purpose: Distributed locks for subscription mutations and index operations
 
   scene-statestore:
     backend: mysql
@@ -468,6 +528,12 @@ x-state-stores:
     prefix: orch
     service: Orchestrator
     purpose: Primary orchestrator state
+
+  orchestrator-lock:
+    backend: redis
+    prefix: "orch:lock"
+    service: Orchestrator
+    purpose: Distributed locks for pool management operations
 
   # ============================================================================
   # Mesh Stores - Service Endpoint Discovery
@@ -523,6 +589,12 @@ x-state-stores:
     purpose: Contract templates, instances, breaches, and indexes
     enableSearch: true
 
+  contract-lock:
+    backend: redis
+    prefix: "contract:lock"
+    service: Contract
+    purpose: Distributed locks for contract instance and index operations
+
   # ============================================================================
   # Currency Stores
   # ============================================================================
@@ -569,6 +641,12 @@ x-state-stores:
     backend: mysql
     service: Currency
     purpose: Authorization hold records
+
+  currency-lock:
+    backend: redis
+    prefix: "currency:lock"
+    service: Currency
+    purpose: Distributed locks for wallet, balance, hold, and index operations
 
   # ============================================================================
   # Item Stores
@@ -705,12 +783,6 @@ x-state-stores:
     service: Quest
     purpose: Per-character quest cooldown tracking
 
-  quest-idempotency:
-    backend: redis
-    prefix: "quest:idem"
-    service: Quest
-    purpose: Idempotency keys for accept/complete operations
-
   # ============================================================================
   # Resource Lifecycle Stores
   # ============================================================================
@@ -801,6 +873,12 @@ x-state-stores:
     prefix: "storyline:scenario:idemp"
     service: Storyline
     purpose: Scenario trigger idempotency keys for deduplication
+
+  storyline-lock:
+    backend: redis
+    prefix: "storyline:lock"
+    service: Storyline
+    purpose: Distributed locks for scenario trigger operations
 
   # ============================================================================
   # Seed Stores - Progressive Growth Entities
@@ -1084,6 +1162,12 @@ x-state-stores:
   # Worldstate Stores (L2 GameFoundation Service)
   # ============================================================================
 
+  worldstate-lock:
+    backend: redis
+    prefix: "worldstate:lock"
+    service: Worldstate
+    purpose: Distributed locks for clock advancement, ratio changes, and calendar mutations
+
   worldstate-realm-clock:
     backend: redis
     prefix: "worldstate:clock"
@@ -1099,3 +1183,51 @@ x-state-stores:
     backend: mysql
     service: Worldstate
     purpose: Time ratio change history per realm for elapsed game-time computation (append-only, compacted)
+
+  # ============================================================================
+  # Transit Stores (L2 GameFoundation Service)
+  # ============================================================================
+
+  transit-modes:
+    backend: mysql
+    service: Transit
+    purpose: Transit mode definitions (durable registry)
+
+  transit-connections:
+    backend: mysql
+    service: Transit
+    purpose: Transit connections between locations (durable graph edges)
+
+  transit-journeys:
+    backend: redis
+    prefix: "transit:journey"
+    service: Transit
+    purpose: Active transit journeys (hot state, archived to MySQL by background worker)
+
+  transit-journeys-archive:
+    backend: mysql
+    service: Transit
+    purpose: Archived completed/abandoned journeys (historical record for Trade velocity, Analytics)
+
+  transit-connection-graph:
+    backend: redis
+    prefix: "transit:graph"
+    service: Transit
+    purpose: Cached per-realm connection adjacency lists for Dijkstra route calculation
+
+  transit-discovery:
+    backend: mysql
+    service: Transit
+    purpose: Per-entity connection discovery tracking (permanent world knowledge)
+
+  transit-discovery-cache:
+    backend: redis
+    prefix: "transit:discovery"
+    service: Transit
+    purpose: Per-entity discovery set cache for fast route calculation filtering
+
+  transit-lock:
+    backend: redis
+    prefix: "transit:lock"
+    service: Transit
+    purpose: Distributed locks for journey state transitions and connection status updates

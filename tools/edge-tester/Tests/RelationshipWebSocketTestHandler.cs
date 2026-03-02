@@ -33,7 +33,26 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
         {
             var entity1Id = Guid.NewGuid();
             var entity2Id = Guid.NewGuid();
-            var relationshipTypeId = Guid.NewGuid();
+
+            // Create relationship type first (service validates type exists)
+            Console.WriteLine("   Creating relationship type...");
+            var typeResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            {
+                Code = $"RT_{GenerateUniqueCode()}",
+                Name = "Test Friendship",
+                Description = "Edge test relationship type",
+                Category = "TEST",
+                IsBidirectional = true
+            });
+
+            if (!typeResponse.IsSuccess || typeResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to create relationship type: {FormatError(typeResponse.Error)}");
+                return false;
+            }
+
+            var relationshipTypeId = typeResponse.Result.RelationshipTypeId;
+            Console.WriteLine($"   Created relationship type: {relationshipTypeId}");
 
             // Create relationship using typed proxy
             Console.WriteLine("   Creating relationship via typed proxy...");
@@ -85,6 +104,22 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
         {
             var entityId = Guid.NewGuid();
 
+            // Create relationship type first (service validates type exists)
+            var typeResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            {
+                Code = $"RT_{GenerateUniqueCode()}",
+                Name = "Test List Type",
+                Description = "Edge test list relationship type",
+                Category = "TEST",
+                IsBidirectional = true
+            });
+
+            if (!typeResponse.IsSuccess || typeResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to create relationship type: {FormatError(typeResponse.Error)}");
+                return false;
+            }
+
             // Create a relationship first using typed proxy
             Console.WriteLine("   Creating test relationship...");
             var createResponse = await adminClient.Relationship.CreateRelationshipAsync(new CreateRelationshipRequest
@@ -93,7 +128,7 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
                 Entity1Type = EntityType.Character,
                 Entity2Id = Guid.NewGuid(),
                 Entity2Type = EntityType.Actor,
-                RelationshipTypeId = Guid.NewGuid(),
+                RelationshipTypeId = typeResponse.Result.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow
             });
 
@@ -133,6 +168,23 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
 
         RunWebSocketTest("Relationship complete lifecycle test", async adminClient =>
         {
+            // Step 0: Create relationship type (service validates type exists)
+            Console.WriteLine("   Step 0: Creating relationship type...");
+            var typeResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            {
+                Code = $"RT_{GenerateUniqueCode()}",
+                Name = "Test Lifecycle Type",
+                Description = "Edge test lifecycle relationship type",
+                Category = "TEST",
+                IsBidirectional = true
+            });
+
+            if (!typeResponse.IsSuccess || typeResponse.Result == null)
+            {
+                Console.WriteLine($"   Failed to create relationship type: {FormatError(typeResponse.Error)}");
+                return false;
+            }
+
             // Step 1: Create relationship
             Console.WriteLine("   Step 1: Creating relationship...");
             var entity1Id = Guid.NewGuid();
@@ -144,7 +196,7 @@ public class RelationshipWebSocketTestHandler : BaseWebSocketTestHandler
                 Entity1Type = EntityType.Character,
                 Entity2Id = entity2Id,
                 Entity2Type = EntityType.Character,
-                RelationshipTypeId = Guid.NewGuid(),
+                RelationshipTypeId = typeResponse.Result.RelationshipTypeId,
                 StartedAt = DateTimeOffset.UtcNow,
                 Metadata = new Dictionary<string, object> { { "testKey", "testValue" } }
             });

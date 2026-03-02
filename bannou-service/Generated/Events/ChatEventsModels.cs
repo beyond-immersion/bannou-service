@@ -381,6 +381,120 @@ public partial class ChatParticipantUnmutedEvent
 }
 
 /// <summary>
+/// Published when a participant's role changes (manual or automatic owner-leave promotion)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatParticipantRoleChangedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the role change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Room where the role change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the participant whose role changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParticipantSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Previous role
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("oldRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatParticipantRole OldRole { get; set; } = default!;
+
+    /// <summary>
+    /// New role
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatParticipantRole NewRole { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of who changed the role (null for automatic promotion)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedBySessionId")]
+    public System.Guid? ChangedBySessionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a participant is unbanned from a chat room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatParticipantUnbannedEvent
+{
+
+    /// <summary>
+    /// Unique identifier for this event
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the unban occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Room the participant was unbanned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the unbanned participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the moderator who removed the ban
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unbannedBySessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid UnbannedBySessionId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Published when a message is sent. Contains metadata only for privacy. Text and custom content are NOT included. Sentiment rooms include sentimentCategory and sentimentIntensity. Emoji rooms include emojiCode.
 /// <br/>
 /// </summary>

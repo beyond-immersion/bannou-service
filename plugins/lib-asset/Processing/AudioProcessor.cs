@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ public sealed class AudioProcessor : IAssetProcessor
 {
     private readonly IAssetStorageProvider _storageProvider;
     private readonly IFFmpegService _ffmpegService;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<AudioProcessor> _logger;
     private readonly AssetServiceConfiguration _configuration;
 
@@ -47,11 +49,14 @@ public sealed class AudioProcessor : IAssetProcessor
     public AudioProcessor(
         IAssetStorageProvider storageProvider,
         IFFmpegService ffmpegService,
+        ITelemetryProvider telemetryProvider,
         ILogger<AudioProcessor> logger,
         AssetServiceConfiguration configuration)
     {
         _storageProvider = storageProvider;
         _ffmpegService = ffmpegService;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         _configuration = configuration;
     }
@@ -67,6 +72,7 @@ public sealed class AudioProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AudioProcessor.ValidateAsync");
         await Task.CompletedTask;
         var warnings = new List<string>();
 
@@ -75,7 +81,7 @@ public sealed class AudioProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"Unsupported content type: {context.ContentType}",
-                ProcessingErrorCode.UnsupportedContentType);
+                ProcessorError.UnsupportedContentType);
         }
 
         // Check file size limits
@@ -84,11 +90,11 @@ public sealed class AudioProcessor : IAssetProcessor
         {
             return AssetValidationResult.Invalid(
                 $"File size {context.SizeBytes} exceeds maximum {maxSizeBytes} bytes",
-                ProcessingErrorCode.FileTooLarge);
+                ProcessorError.FileTooLarge);
         }
 
         // Check for potentially problematic scenarios
-        if (context.SizeBytes > 100 * 1024 * 1024) // > 100MB
+        if (context.SizeBytes > _configuration.AudioLargeFileWarningThresholdMb * 1024L * 1024L)
         {
             warnings.Add("Large audio file may take significant time to process");
         }
@@ -112,6 +118,7 @@ public sealed class AudioProcessor : IAssetProcessor
         AssetProcessingContext context,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "AudioProcessor.ProcessAsync");
         var stopwatch = Stopwatch.StartNew();
 
         try
@@ -149,7 +156,7 @@ public sealed class AudioProcessor : IAssetProcessor
             {
                 return AssetProcessingResult.Failed(
                     "Source file not found in storage",
-                    ProcessingErrorCode.SourceNotFound,
+                    ProcessorError.SourceNotFound,
                     stopwatch.ElapsedMilliseconds);
             }
 
@@ -203,7 +210,7 @@ public sealed class AudioProcessor : IAssetProcessor
             {
                 return AssetProcessingResult.Failed(
                     ffmpegResult.ErrorMessage ?? "Transcoding failed",
-                    ProcessingErrorCode.TranscodingFailed,
+                    ProcessorError.TranscodingFailed,
                     stopwatch.ElapsedMilliseconds);
             }
 
@@ -281,7 +288,7 @@ public sealed class AudioProcessor : IAssetProcessor
 
             return AssetProcessingResult.Failed(
                 ex.Message,
-                ProcessingErrorCode.ProcessingError,
+                ProcessorError.ProcessingError,
                 stopwatch.ElapsedMilliseconds);
         }
     }

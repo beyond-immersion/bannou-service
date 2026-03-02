@@ -465,12 +465,12 @@ public class OAuthProviderService : IOAuthProviderService
                         newAccount = await _accountClient.GetAccountByEmailAsync(
                             new GetAccountByEmailRequest { Email = userInfo.Email },
                             cancellationToken);
-                        _logger.LogInformation("Found existing account by email {Email} for {Provider} user",
-                            userInfo.Email, providerName);
+                        _logger.LogInformation("Found existing account by email for {Provider} user: {AccountId}",
+                            providerName, newAccount?.AccountId);
                     }
                     catch (Exception innerEx)
                     {
-                        _logger.LogError(innerEx, "Email conflict but couldn't find account: {Email}", userInfo.Email);
+                        _logger.LogError(innerEx, "Email conflict but couldn't find account for {Provider} user", providerName);
                         await _messageBus.TryPublishErrorAsync(
                             "auth",
                             "FindOrCreateOAuthAccount",

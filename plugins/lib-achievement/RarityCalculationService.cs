@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Achievement;
 
@@ -15,6 +16,7 @@ public class RarityCalculationService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<RarityCalculationService> _logger;
     private readonly AchievementServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string DEFINITION_INDEX_PREFIX = "achievement-definitions";
     private const string GAME_SERVICE_INDEX_KEY = "achievement-game-services";
@@ -33,11 +35,14 @@ public class RarityCalculationService : BackgroundService
     public RarityCalculationService(
         IServiceProvider serviceProvider,
         ILogger<RarityCalculationService> logger,
-        AchievementServiceConfiguration configuration)
+        AchievementServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -46,6 +51,7 @@ public class RarityCalculationService : BackgroundService
     /// <param name="stoppingToken">Token to signal shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "RarityCalculationService.ExecuteAsync");
         _logger.LogInformation(
             "Rarity calculation service starting, interval: {IntervalMinutes} minutes",
             _configuration.RarityCalculationIntervalMinutes);
@@ -96,6 +102,7 @@ public class RarityCalculationService : BackgroundService
     /// </summary>
     private async Task RecalculateRarityAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.achievement", "RarityCalculationService.RecalculateRarityAsync");
         _logger.LogDebug("Starting rarity recalculation");
 
         try

@@ -789,8 +789,8 @@ public class Program
 
         if (!await WaitForCapabilityManifest(_adminClient, 60, adminExpectedPaths))
         {
-            Console.WriteLine("⚠️ Admin capability manifest check failed - some admin APIs may not be available.");
-            // Don't fail - some tests may still work, and the APIs might appear later
+            Console.WriteLine("❌ Admin capability manifest check failed - expected admin APIs not available.");
+            return false;
         }
 
         Console.WriteLine($"✅ Admin authenticated as: {adminEmail}");

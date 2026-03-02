@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to actor-template.created when a actortemplate is created
+/// Published to actor.template.created when a actortemplate is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorTemplateCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-template.created
+    /// Event type identifier: actor.template.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-template.created";
+    public override string EventName { get; set; } = "actor.template.created";
 
     /// <summary>
     /// Unique identifier for the actor template
@@ -81,19 +81,19 @@ public partial class ActorTemplateCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to actor-template.updated when a actortemplate is updated
+/// Published to actor.template.updated when a actortemplate is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorTemplateUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-template.updated
+    /// Event type identifier: actor.template.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-template.updated";
+    public override string EventName { get; set; } = "actor.template.updated";
 
     /// <summary>
     /// Unique identifier for the actor template
@@ -138,19 +138,19 @@ public partial class ActorTemplateUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to actor-template.deleted when a actortemplate is deleted
+/// Published to actor.template.deleted when a actortemplate is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorTemplateDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-template.deleted
+    /// Event type identifier: actor.template.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-template.deleted";
+    public override string EventName { get; set; } = "actor.template.deleted";
 
     /// <summary>
     /// Unique identifier for the actor template
@@ -193,19 +193,19 @@ public partial class ActorTemplateDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to actor-instance.created when a actorinstance is created
+/// Published to actor.instance.created when a actorinstance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorInstanceCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-instance.created
+    /// Event type identifier: actor.instance.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-instance.created";
+    public override string EventName { get; set; } = "actor.instance.created";
 
     /// <summary>
     /// Unique identifier for the actor instance
@@ -255,19 +255,19 @@ public partial class ActorInstanceCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to actor-instance.updated when a actorinstance is updated
+/// Published to actor.instance.updated when a actorinstance is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-instance.updated
+    /// Event type identifier: actor.instance.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-instance.updated";
+    public override string EventName { get; set; } = "actor.instance.updated";
 
     /// <summary>
     /// Unique identifier for the actor instance
@@ -325,19 +325,19 @@ public partial class ActorInstanceUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to actor-instance.deleted when a actorinstance is deleted
+/// Published to actor.instance.deleted when a actorinstance is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorInstanceDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: actor-instance.deleted
+    /// Event type identifier: actor.instance.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "actor-instance.deleted";
+    public override string EventName { get; set; } = "actor.instance.deleted";
 
     /// <summary>
     /// Unique identifier for the actor instance

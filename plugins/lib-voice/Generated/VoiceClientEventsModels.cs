@@ -37,7 +37,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomStateEvent : BaseClientEvent
+public partial class VoiceRoomStateClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -46,7 +46,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.room_state";
+    public override string EventName { get; set; } = "voice.room.state";
 
     /// <summary>
     /// Voice room ID
@@ -57,7 +57,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Associated game session ID
+    /// Associated WebSocket session ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     public System.Guid? SessionId { get; set; } = default!;
@@ -106,7 +106,7 @@ public partial class VoiceRoomStateEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerJoinedEvent : BaseClientEvent
+public partial class VoicePeerJoinedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -115,7 +115,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_joined";
+    public override string EventName { get; set; } = "voice.peer.joined";
 
     /// <summary>
     /// Voice room ID
@@ -146,7 +146,7 @@ public partial class VoicePeerJoinedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerLeftEvent : BaseClientEvent
+public partial class VoicePeerLeftClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -155,7 +155,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_left";
+    public override string EventName { get; set; } = "voice.peer.left";
 
     /// <summary>
     /// Voice room ID
@@ -193,7 +193,7 @@ public partial class VoicePeerLeftEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerUpdatedEvent : BaseClientEvent
+public partial class VoicePeerUpdatedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -202,7 +202,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.peer_updated";
+    public override string EventName { get; set; } = "voice.peer.updated";
 
     /// <summary>
     /// Voice room ID
@@ -229,7 +229,7 @@ public partial class VoicePeerUpdatedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceTierUpgradeEvent : BaseClientEvent
+public partial class VoiceTierUpgradeClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -238,7 +238,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.tier_upgrade";
+    public override string EventName { get; set; } = "voice.tier-upgrade";
 
     /// <summary>
     /// Voice room ID
@@ -294,7 +294,7 @@ public partial class VoiceTierUpgradeEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceRoomClosedEvent : BaseClientEvent
+public partial class VoiceRoomClosedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -303,7 +303,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.room_closed";
+    public override string EventName { get; set; } = "voice.room.closed";
 
     /// <summary>
     /// Voice room ID that was closed
@@ -329,7 +329,7 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
+public partial class VoiceBroadcastConsentRequestClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -338,7 +338,7 @@ public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.broadcast_consent_request";
+    public override string EventName { get; set; } = "voice.broadcast.consent-request";
 
     /// <summary>
     /// Voice room ID
@@ -367,7 +367,7 @@ public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoiceBroadcastConsentUpdateEvent : BaseClientEvent
+public partial class VoiceBroadcastConsentUpdateClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -376,7 +376,7 @@ public partial class VoiceBroadcastConsentUpdateEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "voice.broadcast_consent_update";
+    public override string EventName { get; set; } = "voice.broadcast.consent-update";
 
     /// <summary>
     /// Voice room ID
@@ -412,91 +412,6 @@ public partial class VoiceBroadcastConsentUpdateEvent : BaseClientEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("declinedByDisplayName")]
     public string? DeclinedByDisplayName { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Peer connection information for P2P voice
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoicePeerInfo
-{
-
-    /// <summary>
-    /// WebSocket session ID for this peer
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("peerSessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid PeerSessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Peer's display name
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
-    public string? DisplayName { get; set; } = default!;
-
-    /// <summary>
-    /// SDP offer for WebRTC negotiation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sdpOffer")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string SdpOffer { get; set; } = default!;
-
-    /// <summary>
-    /// ICE candidates for NAT traversal
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("iceCandidates")]
-    public System.Collections.Generic.ICollection<string>? IceCandidates { get; set; } = default!;
-
-    /// <summary>
-    /// Whether peer is currently muted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("isMuted")]
-    public bool IsMuted { get; set; } = false;
-
-}
-
-/// <summary>
-/// SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
-/// <br/>These credentials are dynamically generated per-user per-room and should be used
-/// <br/>for SIP REGISTER and subsequent INVITE requests.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SipCredentials
-{
-
-    /// <summary>
-    /// SIP username (typically sessionId or a hash-derived identifier)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("username")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Username { get; set; } = default!;
-
-    /// <summary>
-    /// SIP password (dynamically generated, short-lived)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("password")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Password { get; set; } = default!;
-
-    /// <summary>
-    /// SIP domain/realm for authentication (e.g., "voice.bannou.local")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("domain")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Domain { get; set; } = default!;
-
-    /// <summary>
-    /// When these credentials expire (clients should re-authenticate before this)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; } = default!;
 
 }
 

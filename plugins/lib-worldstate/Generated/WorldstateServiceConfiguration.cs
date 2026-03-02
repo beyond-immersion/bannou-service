@@ -70,7 +70,7 @@ public class WorldstateServiceConfiguration : BaseServiceConfiguration
     /// Environment variable: WORLDSTATE_DEFAULT_TIME_RATIO
     /// </summary>
     [ConfigRange(Minimum = 0.1, Maximum = 10000)]
-    public double DefaultTimeRatio { get; set; } = 24.0;
+    public float DefaultTimeRatio { get; set; } = 24.0f;
 
     /// <summary>
     /// Default downtime handling policy for new realm clocks. Advance catches up missed time; Pause resumes from where the clock stopped.
@@ -114,17 +114,17 @@ public class WorldstateServiceConfiguration : BaseServiceConfiguration
     public int MaxCalendarsPerGameService { get; set; } = 10;
 
     /// <summary>
-    /// Days of ratio history to retain. Older segments are compacted (merged into single segments using time-weighted averaging).
-    /// Environment variable: WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS
-    /// </summary>
-    [ConfigRange(Minimum = 7, Maximum = 365)]
-    public int RatioHistoryRetentionDays { get; set; } = 90;
-
-    /// <summary>
     /// Default calendar template code used as fallback when InitializeRealmClock is called without specifying a template. Null means no default and caller must specify.
     /// Environment variable: WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE
     /// </summary>
     public string? DefaultCalendarTemplateCode { get; set; }
+
+    /// <summary>
+    /// Maximum number of realm IDs accepted in a single BatchGetRealmTimes request.
+    /// Environment variable: WORLDSTATE_MAX_BATCH_REALM_TIME_QUERIES
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 500)]
+    public int MaxBatchRealmTimeQueries { get; set; } = 100;
 
     /// <summary>
     /// Timeout in seconds for distributed lock acquisition during clock advancement, ratio changes, and calendar mutations.

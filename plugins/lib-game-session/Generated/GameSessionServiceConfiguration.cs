@@ -55,60 +55,70 @@ public class GameSessionServiceConfiguration : BaseServiceConfiguration
     /// Server salt for GUID generation. Must be shared across all instances for session GUIDs to work correctly. Change in production.
     /// Environment variable: GAME_SESSION_SERVER_SALT
     /// </summary>
+    [ConfigStringLength(MinLength = 16)]
     public string ServerSalt { get; set; } = "bannou-dev-game-session-salt-change-in-production";
 
     /// <summary>
     /// Maximum players allowed per session
     /// Environment variable: GAME_SESSION_MAX_PLAYERS_PER_SESSION
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 1000)]
     public int MaxPlayersPerSession { get; set; } = 16;
 
     /// <summary>
-    /// Default session timeout in seconds (0 = no timeout)
+    /// Default session timeout in seconds. Null means sessions have no expiry.
     /// Environment variable: GAME_SESSION_DEFAULT_SESSION_TIMEOUT_SECONDS
     /// </summary>
-    public int DefaultSessionTimeoutSeconds { get; set; } = 0;
+    [ConfigRange(Minimum = 1)]
+    public int? DefaultSessionTimeoutSeconds { get; set; }
 
     /// <summary>
     /// Default TTL for player reservations when not specified in request
     /// Environment variable: GAME_SESSION_DEFAULT_RESERVATION_TTL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
     public int DefaultReservationTtlSeconds { get; set; } = 60;
 
     /// <summary>
     /// Default maximum players for game lobbies
     /// Environment variable: GAME_SESSION_DEFAULT_LOBBY_MAX_PLAYERS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10000)]
     public int DefaultLobbyMaxPlayers { get; set; } = 100;
 
     /// <summary>
     /// Interval between reservation cleanup cycles
     /// Environment variable: GAME_SESSION_CLEANUP_INTERVAL_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 5)]
     public int CleanupIntervalSeconds { get; set; } = 30;
 
     /// <summary>
     /// Delay before cleanup service starts (allows other services to initialize)
     /// Environment variable: GAME_SESSION_CLEANUP_SERVICE_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int CleanupServiceStartupDelaySeconds { get; set; } = 10;
 
     /// <summary>
     /// Delay before startup service initializes subscription caches
     /// Environment variable: GAME_SESSION_STARTUP_SERVICE_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int StartupServiceDelaySeconds { get; set; } = 2;
 
     /// <summary>
     /// Maximum retry attempts for optimistic concurrency on subscriber session state
     /// Environment variable: GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 10)]
     public int SubscriberSessionRetryMaxAttempts { get; set; } = 3;
 
     /// <summary>
     /// Timeout in seconds for distributed session locks
     /// Environment variable: GAME_SESSION_LOCK_TIMEOUT_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
     public int LockTimeoutSeconds { get; set; } = 60;
 
     /// <summary>

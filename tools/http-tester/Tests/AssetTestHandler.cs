@@ -253,16 +253,13 @@ public class AssetTestHandler : BaseHttpTestHandler
 
             var response = await assetClient.ListAssetVersionsAsync(listRequest);
 
-            if (response.AssetId != uploadedMetadata.AssetId)
-                return TestResult.Failed($"Asset ID mismatch in version list");
-
             if (response.Versions == null || response.Versions.Count == 0)
                 return TestResult.Failed("No versions returned for asset");
 
             if (response.Total < 1)
                 return TestResult.Failed("Total version count should be at least 1");
 
-            return TestResult.Successful($"Listed {response.Versions.Count} version(s) for asset {response.AssetId} (Total: {response.Total})");
+            return TestResult.Successful($"Listed {response.Versions.Count} version(s) (Total: {response.Total})");
         }, "List asset versions");
 
     private static async Task<TestResult> TestSearchAssets(ITestClient client, string[] args) =>
@@ -328,7 +325,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Bundle ID is empty");
 
             // Small bundles should complete immediately (not queued for processing)
-            if (response.Status != CreateBundleResponseStatus.Ready && response.Status != CreateBundleResponseStatus.Queued)
+            if (response.Status != BundleStatus.Ready && response.Status != BundleStatus.Queued)
                 return TestResult.Failed($"Unexpected bundle status: {response.Status}");
 
             return TestResult.Successful($"Bundle created: ID={response.BundleId}, Status={response.Status}, EstimatedSize={response.EstimatedSize}");
@@ -357,7 +354,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             };
 
             var createResponse = await assetClient.CreateBundleAsync(createRequest);
-            if (createResponse.Status == CreateBundleResponseStatus.Failed)
+            if (createResponse.Status == BundleStatus.Failed)
                 return TestResult.Failed("Bundle creation failed");
 
             // Now retrieve the bundle
@@ -529,9 +526,6 @@ public class AssetTestHandler : BaseHttpTestHandler
             };
             var response = await assetClient.DeleteAssetAsync(deleteRequest);
 
-            if (response.AssetId != uploadedMetadata.AssetId)
-                return TestResult.Failed($"Asset ID mismatch in response: expected '{uploadedMetadata.AssetId}', got '{response.AssetId}'");
-
             if (response.VersionsDeleted < 1)
                 return TestResult.Failed($"Expected at least 1 version deleted, got {response.VersionsDeleted}");
 
@@ -686,7 +680,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 AssetIds = new List<string> { asset1.AssetId },
                 Compression = CompressionType.None
             });
-            if (bundle1.Status == CreateBundleResponseStatus.Failed)
+            if (bundle1.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create source bundle 1");
 
             var bundle2Id = $"source-bundle-2-{DateTime.Now.Ticks}";
@@ -698,7 +692,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 AssetIds = new List<string> { asset2.AssetId },
                 Compression = CompressionType.None
             });
-            if (bundle2.Status == CreateBundleResponseStatus.Failed)
+            if (bundle2.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create source bundle 2");
 
             Console.WriteLine($"  Created source bundles: {bundle1Id}, {bundle2Id}");
@@ -718,7 +712,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (metabundle.MetabundleId != metabundleId)
                 return TestResult.Failed($"Metabundle ID mismatch: expected '{metabundleId}', got '{metabundle.MetabundleId}'");
 
-            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+            if (metabundle.Status != BundleStatus.Ready && metabundle.Status != BundleStatus.Queued)
                 return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
 
             if (metabundle.AssetCount != 2)
@@ -773,7 +767,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (metabundle.MetabundleId != metabundleId)
                 return TestResult.Failed($"Metabundle ID mismatch");
 
-            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+            if (metabundle.Status != BundleStatus.Ready && metabundle.Status != BundleStatus.Queued)
                 return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
 
             if (metabundle.AssetCount != 2)
@@ -812,7 +806,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 AssetIds = new List<string> { bundledAsset.AssetId },
                 Compression = CompressionType.None
             });
-            if (sourceBundle.Status == CreateBundleResponseStatus.Failed)
+            if (sourceBundle.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create source bundle");
 
             Console.WriteLine($"  Created source bundle: {sourceBundleId}");
@@ -841,7 +835,7 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (metabundle.MetabundleId != metabundleId)
                 return TestResult.Failed($"Metabundle ID mismatch");
 
-            if (metabundle.Status != CreateMetabundleResponseStatus.Ready && metabundle.Status != CreateMetabundleResponseStatus.Queued)
+            if (metabundle.Status != BundleStatus.Ready && metabundle.Status != BundleStatus.Queued)
                 return TestResult.Failed($"Unexpected metabundle status: {metabundle.Status}");
 
             // Should have 2 total assets (1 from bundle + 1 standalone)
@@ -912,7 +906,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Compression = CompressionType.None,
                 Realm = "test-realm"
             });
-            if (bundleA.Status == CreateBundleResponseStatus.Failed)
+            if (bundleA.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create bundle A");
 
             var bundleBId = $"resolve-bundle-b-{DateTime.Now.Ticks}";
@@ -925,7 +919,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Compression = CompressionType.None,
                 Realm = "test-realm"
             });
-            if (bundleB.Status == CreateBundleResponseStatus.Failed)
+            if (bundleB.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create bundle B");
 
             Console.WriteLine($"  Created bundles: {bundleAId}, {bundleBId}");
@@ -986,7 +980,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 AssetIds = new List<string> { asset1.AssetId, asset2.AssetId },
                 Compression = CompressionType.None
             });
-            if (regularBundle.Status == CreateBundleResponseStatus.Failed)
+            if (regularBundle.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create regular bundle");
 
             // Step 3: Create a metabundle containing the same assets
@@ -1000,7 +994,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Version = "1.0.0",
                 Realm = "test-realm"
             });
-            if (metabundle.Status == CreateMetabundleResponseStatus.Failed)
+            if (metabundle.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create metabundle");
 
             Console.WriteLine($"  Created regular bundle and metabundle with same assets");
@@ -1062,7 +1056,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Compression = CompressionType.None,
                 Realm = "test-realm"
             });
-            if (bundle1.Status == CreateBundleResponseStatus.Failed)
+            if (bundle1.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 1");
 
             var bundle2Id = $"query-bundle-2-{DateTime.Now.Ticks}";
@@ -1075,7 +1069,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 Compression = CompressionType.None,
                 Realm = "test-realm"
             });
-            if (bundle2.Status == CreateBundleResponseStatus.Failed)
+            if (bundle2.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create bundle 2");
 
             Console.WriteLine($"  Created bundles: {bundle1Id}, {bundle2Id}");
@@ -1240,7 +1234,7 @@ public class AssetTestHandler : BaseHttpTestHandler
                 AssetIds = new List<string> { asset.AssetId },
                 Compression = CompressionType.None
             });
-            if (bundle.Status == CreateBundleResponseStatus.Failed)
+            if (bundle.Status == BundleStatus.Failed)
                 return TestResult.Failed("Failed to create source bundle");
 
             Console.WriteLine($"  Created source bundle: {bundleId}");
@@ -1285,7 +1279,7 @@ public class AssetTestHandler : BaseHttpTestHandler
 
                 Console.WriteLine($"  Poll: Status={lastStatus.Status}, Progress={lastStatus.Progress}%");
 
-                if (lastStatus.Status == GetJobStatusResponseStatus.Ready || lastStatus.Status == GetJobStatusResponseStatus.Failed)
+                if (lastStatus.Status == BundleStatus.Ready || lastStatus.Status == BundleStatus.Failed)
                     break;
 
                 await Task.Delay(pollIntervalMs);
@@ -1294,10 +1288,10 @@ public class AssetTestHandler : BaseHttpTestHandler
             if (lastStatus == null)
                 return TestResult.Failed("Failed to get job status");
 
-            if (lastStatus.Status == GetJobStatusResponseStatus.Failed)
+            if (lastStatus.Status == BundleStatus.Failed)
                 return TestResult.Failed($"Job failed: {lastStatus.ErrorCode} - {lastStatus.ErrorMessage}");
 
-            if (lastStatus.Status != GetJobStatusResponseStatus.Ready)
+            if (lastStatus.Status != BundleStatus.Ready)
                 return TestResult.Failed($"Job did not complete within {maxWaitSeconds}s, status={lastStatus.Status}");
 
             // Verify download URL is available for completed job

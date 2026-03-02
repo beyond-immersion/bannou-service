@@ -27,6 +27,37 @@ This is NOT a reference to claude-code's issues or any other repository.
 
 **ALWAYS REFER TO AND FOLLOW THE TENETS WITHOUT EXCEPTION. ANY SITUATION WHICH CALLS INTO QUESTION ONE OF THE TENETS MUST BE EXPLICITLY PRESENTED TO THE USER, CONTEXT PROVIDED, AND THEN APPROVED TO CONTINUE.**
 
+### ⛔ TENET AUDIT INTEGRITY (MANDATORY) ⛔
+
+**When auditing code against tenets, the tenet text is the SOLE AUTHORITY. The codebase is the subject being judged, not a source of counter-evidence.**
+
+**The forbidden pattern**: Reading a tenet rule, searching the codebase for code that contradicts it, finding violations in other files, and concluding "this is an established pattern, so it's not a violation." This is backwards — finding more violations proves the problem is widespread, it does NOT prove the tenet is wrong.
+
+**Rules**:
+1. **NEVER search the codebase to validate or invalidate a tenet finding.** If T16 says `{entity}.{action}` and the code uses `entity.sub.action`, that is a violation. Period. You do not get to grep for other three-part topics to build a case that the tenet "doesn't really mean that."
+2. **If existing code contradicts a tenet, that is an ADDITIONAL violation to report**, not evidence that the original finding is a false positive.
+3. **A "false positive" means the tenet genuinely does not apply to the situation** (e.g., the code is in a category the tenet explicitly exempts). It does NOT mean "other code also does this" or "this seems like it should be okay."
+4. **Do not soften findings.** Do not downgrade violations to "quality improvements" or "informational" or "medium-priority." If the tenet says X and the code does not-X, it is a violation at the severity the tenet defines.
+
+**Why this rule exists:** Claude read T16 ("dot separates entity from action only"), searched the codebase for three-part event topics, found violations in actor/asset/puppetmaster, and concluded "this is clearly the pattern" — dismissing the finding as a false positive. This is using existing tech debt as evidence that a clear rule doesn't apply. The tenets define what the code MUST do, not what it currently does.
+
+---
+
+## ⛔ CHUNKED FILE READING (MANDATORY) ⛔
+
+**Always read files in chunks of 300 lines max using the `limit` and `offset` parameters.** Never call `Read` on a file without specifying `limit`. When a file requires multiple chunks, read them sequentially using `offset`.
+
+**If the Read tool output is truncated and saved to a temp file: NEVER read the temp file.** Go back to the original source file and read it with `offset`/`limit` parameters instead. Temp files contain duplicated line-number prefixes that make them even larger, guaranteeing the same truncation will happen again.
+
+**Why this rule exists:** Claude's Read tool has an output buffer smaller than 2000 lines of dense markdown. When a file exceeds the buffer, the system truncates it, saves the full output to a temp file, and returns only a 2KB preview. Claude then reads the temp file, which also gets truncated, wasting multiple rounds of tool calls and 3x+ the context window on content that should have been read once. This has repeatedly destroyed session context budgets during audit work.
+
+**Rules:**
+1. **Always specify `limit: 300`** (or smaller) on every Read call
+2. **For files you know are small** (< 200 lines), `limit: 300` still works and costs nothing
+3. **For multi-chunk reads**, use parallel Read calls with different offsets when the chunks are independent
+4. **Never re-read temp/persisted output files** — always go back to the original source path
+5. **If you don't know a file's size**, start with `limit: 300` from offset 0 and continue as needed
+
 ---
 
 ## ⛔ FORBIDDEN DESTRUCTIVE COMMANDS ⛔
@@ -80,6 +111,43 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 - Any situation where reality diverged from your expectation
 
 **Principle**: Surprises mean your mental model is wrong. When your model is wrong, more actions based on that model make things worse, not better. Stop, report, and let the human recalibrate.
+
+---
+
+## ⛔ MISSING INFORMATION = HARD STOP ⛔
+
+**If you do not have the information required to perform a task, STOP IMMEDIATELY. Do not attempt to work around it. Do not silently substitute a "best effort" approach. Do not re-derive information that was already produced. Tell the user what you're missing and wait for direction.**
+
+**The trigger is simple**: You were given instructions that depend on specific data (a gap list, a specification, a set of requirements, a prior analysis). You do not have that data. **STOP.**
+
+**What "stop" means**:
+1. Do NOT attempt to "discover" or "re-derive" the missing information on your own
+2. Do NOT launch agents or run searches to reconstruct what was lost
+3. Do NOT silently adjust the task to work without the missing data
+4. Do NOT present a workaround as if it were the original plan
+5. DO state exactly what information you're missing and why you need it
+6. DO explain how the information was lost (compaction, context limit, etc.) if you know
+7. DO wait for the user to provide the data or tell you how to recover it
+
+**This is NOT a judgment call.** You do not get to decide "I can probably figure it out" or "a discovery phase will be quick." If the instructions say "use this list" and you don't have the list, you are blocked. Period. The user decides how to unblock you, not you.
+
+**Why this rule exists**: Claude lost detailed gap lists (produced by audit agents over hours of work) when the conversation context was compacted. Instead of reporting "I no longer have the gap lists needed for these tasks," Claude silently pivoted to giving agents open-ended discovery instructions — re-doing hours of already-completed work, burning 20+ minutes on a single plugin with no useful output, and turning a hardening task into active waste. One sentence — "I lost the gap lists during compaction, how should I recover them?" — would have resolved the problem in under a minute. Instead, the silent workaround wasted time, destroyed trust, and produced nothing.
+
+**The compound damage pattern**:
+- You lack data needed for Step 1
+- Instead of stopping, you substitute Step 0.5 ("let me figure it out first")
+- Step 0.5 takes far longer than expected because you're re-doing prior work
+- The results of Step 0.5 may not match the original data (different gaps found, different priorities)
+- Meanwhile the user believes you're executing the original plan
+- When the user discovers the substitution, all work from Step 0.5 onward is suspect
+
+**This applies to**:
+- Task descriptions that reference data no longer in context (compacted away)
+- Instructions that depend on prior analysis you can no longer see
+- Agent prompts that require specific lists, specifications, or findings you don't have
+- Any situation where you would need to guess, re-derive, or approximate what was explicitly provided before
+
+**Principle**: Executing without required data is worse than not executing at all. Wrong execution wastes time AND produces damage. A hard stop wastes nothing.
 
 ---
 
@@ -177,7 +245,7 @@ These documents provide the high-level architectural north-star context for the 
 | Agent Mission | Must Read Before Starting |
 |---------------|--------------------------|
 | **Investigation** (understanding services, tracing dependencies, exploring architecture) | The layer-specific service details files: `docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md`, `docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md` |
-| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
+| **Code auditing** (reviewing implementations, checking tenet compliance, finding violations) | ALL tenet files in `docs/reference/tenets/`: `FOUNDATION.md`, `IMPLEMENTATION-BEHAVIOR.md`, `IMPLEMENTATION-DATA.md`, `QUALITY.md`, `TESTING-PATTERNS.md` |
 | **Schema auditing** (reviewing OpenAPI schemas, checking schema rules, validating schema design) | `docs/reference/SCHEMA-RULES.md` |
 | **High-level vision** (evaluating how services serve gameplay, cross-cutting feature planning, content flywheel analysis) | `docs/reference/VISION.md` and `docs/reference/PLAYER-VISION.md` (same as Big Brain Mode) |
 

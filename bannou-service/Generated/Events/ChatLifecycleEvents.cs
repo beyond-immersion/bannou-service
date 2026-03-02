@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to chat-room.created when a chatroom is created
+/// Published to chat.room.created when a chatroom is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room.created
+    /// Event type identifier: chat.room.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room.created";
+    public override string EventName { get; set; } = "chat.room.created";
 
     /// <summary>
     /// Unique identifier for the chat room
@@ -118,19 +118,19 @@ public partial class ChatRoomCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to chat-room.updated when a chatroom is updated
+/// Published to chat.room.updated when a chatroom is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room.updated
+    /// Event type identifier: chat.room.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room.updated";
+    public override string EventName { get; set; } = "chat.room.updated";
 
     /// <summary>
     /// Unique identifier for the chat room
@@ -212,19 +212,19 @@ public partial class ChatRoomUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to chat-room.deleted when a chatroom is deleted
+/// Published to chat.room.deleted when a chatroom is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room.deleted
+    /// Event type identifier: chat.room.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room.deleted";
+    public override string EventName { get; set; } = "chat.room.deleted";
 
     /// <summary>
     /// Unique identifier for the chat room
@@ -304,19 +304,19 @@ public partial class ChatRoomDeletedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to chat-room-type.created when a chatroomtype is created
+/// Published to chat.room-type.created when a chatroomtype is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomTypeCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room-type.created
+    /// Event type identifier: chat.room-type.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room-type.created";
+    public override string EventName { get; set; } = "chat.room-type.created";
 
     /// <summary>
     /// Unique room type code within game service scope
@@ -384,19 +384,19 @@ public partial class ChatRoomTypeCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to chat-room-type.updated when a chatroomtype is updated
+/// Published to chat.room-type.updated when a chatroomtype is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomTypeUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room-type.updated
+    /// Event type identifier: chat.room-type.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room-type.updated";
+    public override string EventName { get; set; } = "chat.room-type.updated";
 
     /// <summary>
     /// Unique room type code within game service scope
@@ -472,19 +472,19 @@ public partial class ChatRoomTypeUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to chat-room-type.deleted when a chatroomtype is deleted
+/// Published to chat.room-type.deleted when a chatroomtype is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChatRoomTypeDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: chat-room-type.deleted
+    /// Event type identifier: chat.room-type.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat-room-type.deleted";
+    public override string EventName { get; set; } = "chat.room-type.deleted";
 
     /// <summary>
     /// Unique room type code within game service scope

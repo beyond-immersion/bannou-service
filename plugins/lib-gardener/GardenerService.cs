@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Puppetmaster;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
@@ -41,6 +42,8 @@ public partial class GardenerService : IGardenerService
     private readonly ISeedClient _seedClient;
     private readonly IGameSessionClient _gameSessionClient;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// POI interaction result values are now the generated PoiInteractionResult enum
@@ -59,7 +62,9 @@ public partial class GardenerService : IGardenerService
         IEventConsumer eventConsumer,
         ISeedClient seedClient,
         IGameSessionClient gameSessionClient,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IEntitySessionRegistry entitySessionRegistry,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -69,6 +74,8 @@ public partial class GardenerService : IGardenerService
         _seedClient = seedClient;
         _gameSessionClient = gameSessionClient;
         _serviceProvider = serviceProvider;
+        _entitySessionRegistry = entitySessionRegistry;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -216,7 +223,7 @@ public partial class GardenerService : IGardenerService
             new GetSeedsByOwnerRequest
             {
                 OwnerId = body.AccountId,
-                OwnerType = "account",
+                OwnerType = EntityType.Account,
                 SeedTypeCode = _configuration.SeedTypeCode
             }, cancellationToken);
 
@@ -1625,6 +1632,7 @@ public partial class GardenerService : IGardenerService
     private async Task<IReadOnlyList<PoiModel>> LoadActivePoisAsync(
         GardenInstanceModel garden, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.LoadActivePoisAsync");
         var pois = new List<PoiModel>();
         foreach (var poiId in garden.ActivePoiIds)
         {
@@ -1641,6 +1649,7 @@ public partial class GardenerService : IGardenerService
     internal async Task<DeploymentPhaseConfigModel> GetOrCreatePhaseConfigAsync(
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.GetOrCreatePhaseConfigAsync");
         var config = await PhaseStore.GetAsync(PhaseConfigKey, ct);
         if (config != null)
             return config;
@@ -1669,6 +1678,7 @@ public partial class GardenerService : IGardenerService
         bool fullCompletion,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.CalculateAndAwardGrowthAsync");
         var growthAwarded = GardenerGrowthCalculation.CalculateGrowth(
             scenario, template, _configuration.GrowthAwardMultiplier, fullCompletion,
             (float)_configuration.GrowthFullCompletionMaxRatio,
@@ -1734,6 +1744,7 @@ public partial class GardenerService : IGardenerService
         ScenarioTemplateModel? template,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.WriteScenarioHistoryAsync");
         var primaryParticipant = scenario.Participants.FirstOrDefault();
         if (primaryParticipant == null) return;
 
@@ -1763,6 +1774,7 @@ public partial class GardenerService : IGardenerService
     private async Task TryCleanupGameSessionAsync(
         ScenarioInstanceModel scenario, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerService.TryCleanupGameSessionAsync");
         foreach (var participant in scenario.Participants)
         {
             try

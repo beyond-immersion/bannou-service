@@ -31,6 +31,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<GardenerGardenOrchestratorWorker> _logger;
     private readonly GardenerServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Interval between garden orchestrator evaluation cycles, from configuration.
@@ -48,14 +49,17 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with garden orchestration settings.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public GardenerGardenOrchestratorWorker(
         IServiceProvider serviceProvider,
         ILogger<GardenerGardenOrchestratorWorker> logger,
-        GardenerServiceConfiguration configuration)
+        GardenerServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -129,6 +133,8 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
     /// </summary>
     private async Task ProcessGardenTickAsync(CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ProcessGardenTickAsync");
+
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
         var messageBus = scope.ServiceProvider.GetRequiredService<IMessageBus>();
@@ -199,6 +205,8 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         IMessageBus messageBus,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ProcessGardenTickAsync");
+
         var gardenKey = $"garden:{accountId}";
         var garden = await gardenStore.GetAsync(gardenKey, ct);
         if (garden == null)
@@ -246,6 +254,8 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         DateTimeOffset now,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ExpireStalePoiAsync");
+
         var expired = 0;
         var toRemove = new List<Guid>();
 
@@ -307,6 +317,8 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         DateTimeOffset now,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.ScoreAndSpawnPoisAsync");
+
         var slotsAvailable = _configuration.MaxActivePoisPerGarden - garden.ActivePoiIds.Count;
         if (slotsAvailable <= 0)
             return 0;
@@ -417,6 +429,8 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         Guid accountId,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync");
+
         // Load all active templates
         var templateConditions = new List<QueryCondition>
         {

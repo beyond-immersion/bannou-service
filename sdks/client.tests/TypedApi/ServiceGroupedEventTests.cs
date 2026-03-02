@@ -127,7 +127,7 @@ public class ServiceGroupedEventTests
         var handlerType = parameters[0].ParameterType;
         Assert.True(handlerType.IsGenericType);
         Assert.Equal(typeof(Action<>), handlerType.GetGenericTypeDefinition());
-        Assert.Equal(typeof(SessionChatReceivedEvent), handlerType.GetGenericArguments()[0]);
+        Assert.Equal(typeof(SessionChatReceivedClientEvent), handlerType.GetGenericArguments()[0]);
     }
 
     [Fact]

@@ -227,7 +227,9 @@ internal sealed class ScenarioDefinitionModel
     public Guid? RealmId { get; set; }
     public Guid? GameServiceId { get; set; }
     public string? TagsJson { get; set; }
-    public bool Deprecated { get; set; }
+    public bool IsDeprecated { get; set; }
+    public DateTimeOffset? DeprecatedAt { get; set; }
+    public string? DeprecationReason { get; set; }
     public required DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public required string Etag { get; set; }

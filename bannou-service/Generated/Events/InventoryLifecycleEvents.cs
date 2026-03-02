@@ -32,19 +32,19 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published to inventory-container.created when a inventorycontainer is created
+/// Published to inventory.container.created when a inventorycontainer is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerCreatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.created
+    /// Event type identifier: inventory.container.created
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.created";
+    public override string EventName { get; set; } = "inventory.container.created";
 
     /// <summary>
     /// Container unique identifier
@@ -188,6 +188,24 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
     public int SlotCost { get; set; } = default!;
 
     /// <summary>
+    /// Width this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
+    public int? ParentGridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Height this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
+    public int? ParentGridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Volume this container occupies in parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
+    public double? ParentVolume { get; set; } = default!;
+
+    /// <summary>
     /// Total weight of direct contents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentsWeight")]
@@ -198,6 +216,36 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalWeight")]
     public double TotalWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories allowed in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
+    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories forbidden from this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
+    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Required tags for items in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
+    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
+
+    /// <summary>
+    /// Container tags for categorization
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific container metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Realm ID this container belongs to
@@ -222,19 +270,19 @@ public partial class InventoryContainerCreatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to inventory-container.updated when a inventorycontainer is updated
+/// Published to inventory.container.updated when a inventorycontainer is updated
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.updated
+    /// Event type identifier: inventory.container.updated
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.updated";
+    public override string EventName { get; set; } = "inventory.container.updated";
 
     /// <summary>
     /// Container unique identifier
@@ -378,6 +426,24 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
     public int SlotCost { get; set; } = default!;
 
     /// <summary>
+    /// Width this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
+    public int? ParentGridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Height this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
+    public int? ParentGridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Volume this container occupies in parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
+    public double? ParentVolume { get; set; } = default!;
+
+    /// <summary>
     /// Total weight of direct contents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentsWeight")]
@@ -388,6 +454,36 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalWeight")]
     public double TotalWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories allowed in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
+    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories forbidden from this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
+    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Required tags for items in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
+    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
+
+    /// <summary>
+    /// Container tags for categorization
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific container metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Realm ID this container belongs to
@@ -420,19 +516,19 @@ public partial class InventoryContainerUpdatedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published to inventory-container.deleted when a inventorycontainer is deleted
+/// Published to inventory.container.deleted when a inventorycontainer is deleted
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class InventoryContainerDeletedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Event type identifier: inventory-container.deleted
+    /// Event type identifier: inventory.container.deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "inventory-container.deleted";
+    public override string EventName { get; set; } = "inventory.container.deleted";
 
     /// <summary>
     /// Container unique identifier
@@ -576,6 +672,24 @@ public partial class InventoryContainerDeletedEvent : BaseServiceEvent
     public int SlotCost { get; set; } = default!;
 
     /// <summary>
+    /// Width this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridWidth")]
+    public int? ParentGridWidth { get; set; } = default!;
+
+    /// <summary>
+    /// Height this container occupies in parent grid
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentGridHeight")]
+    public int? ParentGridHeight { get; set; } = default!;
+
+    /// <summary>
+    /// Volume this container occupies in parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parentVolume")]
+    public double? ParentVolume { get; set; } = default!;
+
+    /// <summary>
     /// Total weight of direct contents
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentsWeight")]
@@ -586,6 +700,36 @@ public partial class InventoryContainerDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalWeight")]
     public double TotalWeight { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories allowed in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedCategories")]
+    public System.Collections.Generic.ICollection<string>? AllowedCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Item categories forbidden from this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("forbiddenCategories")]
+    public System.Collections.Generic.ICollection<string>? ForbiddenCategories { get; set; } = default!;
+
+    /// <summary>
+    /// Required tags for items in this container
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("allowedTags")]
+    public System.Collections.Generic.ICollection<string>? AllowedTags { get; set; } = default!;
+
+    /// <summary>
+    /// Container tags for categorization
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
+
+    /// <summary>
+    /// Game-specific container metadata
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
+    public object? Metadata { get; set; } = default!;
 
     /// <summary>
     /// Realm ID this container belongs to

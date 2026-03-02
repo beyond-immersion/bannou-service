@@ -7,6 +7,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents.Actions;
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Puppetmaster.Caching;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using AbmlExecutionContext = BeyondImmersion.BannouService.Abml.Execution.ExecutionContext;
 
@@ -42,18 +43,22 @@ public sealed class PrefetchSnapshotsHandler : IActionHandler
 {
     private readonly IResourceSnapshotCache _cache;
     private readonly ILogger<PrefetchSnapshotsHandler> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new prefetch snapshots handler.
     /// </summary>
     /// <param name="cache">Resource snapshot cache.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public PrefetchSnapshotsHandler(
         IResourceSnapshotCache cache,
-        ILogger<PrefetchSnapshotsHandler> logger)
+        ILogger<PrefetchSnapshotsHandler> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -65,6 +70,7 @@ public sealed class PrefetchSnapshotsHandler : IActionHandler
         AbmlExecutionContext context,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PrefetchSnapshotsHandler.ExecuteAsync");
         var prefetchAction = (PrefetchSnapshotsAction)action;
         var scope = context.CallStack.Current?.Scope ?? context.RootScope;
 

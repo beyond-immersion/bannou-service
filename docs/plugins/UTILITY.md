@@ -465,6 +465,22 @@ Distributed locks for topology mutations.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `networkTypeCode` | B (Content Code) | Opaque string | Game-configurable utility network types (water, power, sewer, magical_conduit, messenger, etc.). New utility types require zero schema changes. Follows same extensibility pattern as seed types and collection types. |
+| `ownerType` (on connection) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a utility connection (organization, faction, realm, system). |
+| `status` (on connection) | C (System State) | Service-specific enum | Finite set of connection states (active, disabled, under_construction, demolished). System-owned; drives flow calculation inclusion/exclusion. |
+| `coverageStatus` | C (System State) | Service-specific enum | Finite set of coverage classifications (full, partial, critical, none). System-owned; computed from coverage rate thresholds. Drives NPC awareness events. |
+| `terrainType` (on connection) | B (Content Code) | Opaque string | Game-configurable terrain classifications for connections (underground, surface, elevated, submerged). |
+| `maintenanceType` | C (System State) | Service-specific enum | Finite set of maintenance request types (repair, upgrade_capacity, upgrade_condition, demolish). System-owned; each type has distinct processing logic. |
+| `status` (on maintenance request) | C (System State) | Service-specific enum | Finite set of maintenance states (open, assigned, in_progress, completed, cancelled). System-owned state machine. |
+| `ownerType` (on source) | A (Entity Reference) | `EntityType` enum (or string pending schema) | Identifies the entity that owns a production source feeding a utility network. |
+| `status` (on source) | C (System State) | Service-specific enum | Finite set of source states (active, paused, depleted). System-owned; drives production rate contribution to flow calculation. |
+
+---
+
 ## Events
 
 ### Published Events

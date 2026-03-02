@@ -28,9 +28,9 @@ public sealed class BundleMetadata
     public required BundleType BundleType { get; init; }
 
     /// <summary>
-    /// Game realm stub name this bundle belongs to.
+    /// Game realm stub name this bundle belongs to. Null for cross-realm bundles.
     /// </summary>
-    public required string Realm { get; init; }
+    public string? Realm { get; init; }
 
     /// <summary>
     /// Human-readable bundle name.
@@ -270,32 +270,6 @@ public sealed class StoredSourceBundleReference
             ContentHash = ContentHash
         };
     }
-}
-
-/// <summary>
-/// Bundle status enumeration.
-/// </summary>
-public enum BundleStatus
-{
-    /// <summary>
-    /// Bundle creation is pending/queued.
-    /// </summary>
-    Pending,
-
-    /// <summary>
-    /// Bundle is being processed.
-    /// </summary>
-    Processing,
-
-    /// <summary>
-    /// Bundle is ready for download.
-    /// </summary>
-    Ready,
-
-    /// <summary>
-    /// Bundle creation failed.
-    /// </summary>
-    Failed
 }
 
 /// <summary>

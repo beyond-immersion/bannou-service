@@ -185,9 +185,9 @@ public class ClientEventTestHandler : IServiceTestHandler
             var manifest = JsonNode.Parse(responseText)?.AsObject();
 
             var messageType = manifest?["eventName"]?.GetValue<string>();
-            if (messageType != "connect.capability_manifest")
+            if (messageType != "connect.capability-manifest")
             {
-                Console.WriteLine($"FAILED Expected connect.capability_manifest but received '{messageType}'");
+                Console.WriteLine($"FAILED Expected connect.capability-manifest but received '{messageType}'");
                 return false;
             }
 
@@ -253,7 +253,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                 var eventName = eventObj?["eventName"]?.GetValue<string>();
 
                 // Accept both schema value and NSwag enum serialization
-                if (IsSystemNotificationEvent(eventName))
+                if (IsSystemNotificationClientEvent(eventName))
                 {
                     var eventMessage = eventObj?["message"]?.GetValue<string>();
                     Console.WriteLine($"OK Received system.notification event: {eventMessage}");
@@ -275,7 +275,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                         eventObj = JsonNode.Parse(responseText)?.AsObject();
                         eventName = eventObj?["eventName"]?.GetValue<string>();
 
-                        if (IsSystemNotificationEvent(eventName))
+                        if (IsSystemNotificationClientEvent(eventName))
                         {
                             Console.WriteLine($"OK Received system.notification event on second message");
                             return true;
@@ -372,7 +372,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             // Step 2: Graceful disconnect to get reconnection token
             Console.WriteLine("Step 2: Requesting graceful disconnect to get reconnection token...");
 
-            // Close the WebSocket gracefully - server should send disconnect_notification with token
+            // Close the WebSocket gracefully - server should send disconnect-notification with token
             await webSocket1.CloseAsync(WebSocketCloseStatus.NormalClosure, "Requesting reconnection token", CancellationToken.None);
 
             // The disconnect notification should have been sent before close completed
@@ -380,7 +380,7 @@ public class ClientEventTestHandler : IServiceTestHandler
             Console.WriteLine($"WebSocket closed with status: {webSocket1.CloseStatus}, description: {webSocket1.CloseStatusDescription}");
 
             // For this test, we'll use the session ID to publish an event
-            // The reconnection token mechanism requires receiving the disconnect_notification
+            // The reconnection token mechanism requires receiving the disconnect-notification
             // which is sent before the connection closes
 
             // Alternative approach: Just test that the infrastructure is set up correctly
@@ -434,7 +434,7 @@ public class ClientEventTestHandler : IServiceTestHandler
         using var webSocket2 = new ClientWebSocket();
         webSocket2.Options.SetRequestHeader("Authorization", "Bearer " + accessToken);
         // Note: Without proper reconnection token, this creates a new session
-        // The full flow would require capturing the disconnect_notification
+        // The full flow would require capturing the disconnect-notification
 
         try
         {
@@ -460,7 +460,7 @@ public class ClientEventTestHandler : IServiceTestHandler
                     var msgType = eventObj?["eventName"]?.GetValue<string>();
                     Console.WriteLine($"OK Received message eventName: {msgType}");
 
-                    if (msgType == "connect.capability_manifest")
+                    if (msgType == "connect.capability-manifest")
                     {
                         receivedCapabilityManifest = true;
 
@@ -533,7 +533,7 @@ public class ClientEventTestHandler : IServiceTestHandler
     /// Check if eventName matches system notification event.
     /// Accepts both schema value ("system.notification") and NSwag enum serialization ("System_notification").
     /// </summary>
-    private static bool IsSystemNotificationEvent(string? eventName)
+    private static bool IsSystemNotificationClientEvent(string? eventName)
     {
         if (string.IsNullOrEmpty(eventName))
             return false;

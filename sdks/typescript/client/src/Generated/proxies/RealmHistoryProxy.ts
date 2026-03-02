@@ -31,7 +31,7 @@ export class RealmHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmParticipationAsync(
+  async realmHistoryGetRealmParticipationAsync(
     request: Schemas['GetRealmParticipationRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class RealmHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmEventParticipantsAsync(
+  async realmHistoryGetRealmEventParticipantsAsync(
     request: Schemas['GetRealmEventParticipantsRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class RealmHistoryProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmLoreAsync(
+  async realmHistoryGetRealmLoreAsync(
     request: Schemas['GetRealmLoreRequest'],
     channel: number = 0,
     timeout?: number

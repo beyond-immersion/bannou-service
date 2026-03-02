@@ -287,6 +287,21 @@ public static class CurrencyPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/currency/batch-debit",
+            Method = ServiceEndpointMethod.POST,
+            Description = "batchDebitCurrency",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/currency/convert/calculate",
             Method = ServiceEndpointMethod.POST,
             Description = "calculateConversion",

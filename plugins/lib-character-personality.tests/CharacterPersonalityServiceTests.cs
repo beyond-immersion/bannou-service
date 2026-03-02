@@ -29,6 +29,7 @@ public class CharacterPersonalityServiceTests
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IPersonalityDataCache> _mockPersonalityCache;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     // Capture lists for verifying published events
     private readonly List<(string Topic, object Event)> _publishedEvents = new();
@@ -44,6 +45,7 @@ public class CharacterPersonalityServiceTests
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockPersonalityCache = new Mock<IPersonalityDataCache>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<PersonalityData>(It.IsAny<string>()))
@@ -109,7 +111,8 @@ public class CharacterPersonalityServiceTests
             _mockMessageBus.Object,
             _mockEventConsumer.Object,
             _mockPersonalityCache.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object);
     }
 
     /// <summary>

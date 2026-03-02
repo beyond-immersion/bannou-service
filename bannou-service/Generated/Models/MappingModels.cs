@@ -616,7 +616,7 @@ public partial class NonAuthorityAlertConfig
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Custom topic for warnings (default map.warnings.unauthorized_publish)
+    /// Custom topic for warnings (default map.warnings.unauthorized-publish)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("alertTopic")]
     public string? AlertTopic { get; set; } = default!;

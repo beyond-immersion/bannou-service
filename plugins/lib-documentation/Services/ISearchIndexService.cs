@@ -32,7 +32,7 @@ public interface ISearchIndexService
     /// <param name="content">The document content for full-text indexing.</param>
     /// <param name="category">The document category.</param>
     /// <param name="tags">The document tags.</param>
-    void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, string category, IEnumerable<string>? tags);
+    void IndexDocument(string namespaceId, Guid documentId, string title, string slug, string? content, DocumentCategory category, IEnumerable<string>? tags);
 
     /// <summary>
     /// Removes a document from the search index.
@@ -50,7 +50,7 @@ public interface ISearchIndexService
     /// <param name="maxResults">Maximum results to return.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of matching document IDs with relevance scores.</returns>
-    Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, string? category = null, int maxResults = 20, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SearchResult>> SearchAsync(string namespaceId, string searchTerm, DocumentCategory? category = null, int maxResults = 20, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Performs a natural language query (more sophisticated than keyword search).
@@ -62,7 +62,7 @@ public interface ISearchIndexService
     /// <param name="minRelevanceScore">Minimum relevance score threshold.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of matching document IDs with relevance scores.</returns>
-    Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, string? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SearchResult>> QueryAsync(string namespaceId, string query, DocumentCategory? category = null, int maxResults = 20, double minRelevanceScore = 0.3, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets suggestions for related topics based on a document or search term.
@@ -83,7 +83,7 @@ public interface ISearchIndexService
     /// <param name="take">Number of results to take.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of document IDs.</returns>
-    Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, string? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Guid>> ListDocumentIdsAsync(string namespaceId, DocumentCategory? category = null, int skip = 0, int take = 100, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets statistics for a namespace.
@@ -109,4 +109,4 @@ public record SearchResult(Guid DocumentId, double RelevanceScore, string Title,
 /// <param name="TotalDocuments">Total number of documents.</param>
 /// <param name="DocumentsByCategory">Document count per category.</param>
 /// <param name="TotalTags">Total unique tags.</param>
-public record NamespaceStats(int TotalDocuments, IReadOnlyDictionary<string, int> DocumentsByCategory, int TotalTags);
+public record NamespaceStats(int TotalDocuments, IReadOnlyDictionary<DocumentCategory, int> DocumentsByCategory, int TotalTags);

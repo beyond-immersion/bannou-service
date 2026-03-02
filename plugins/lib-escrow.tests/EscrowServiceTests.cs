@@ -109,7 +109,8 @@ public class EscrowServiceTests : ServiceTestBase<EscrowServiceConfiguration>
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            Mock.Of<ITelemetryProvider>());
     }
 
     #region Constructor Tests

@@ -441,7 +441,14 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
                 ParentTypeId = parent.RelationshipTypeId
             });
 
-            // Try to delete parent
+            // Deprecate parent first (Category A entities require deprecation before deletion)
+            await typeClient.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
+            {
+                RelationshipTypeId = parent.RelationshipTypeId,
+                Reason = "Testing deletion with children"
+            });
+
+            // Try to delete deprecated parent that still has children
             try
             {
                 await typeClient.DeleteRelationshipTypeAsync(new DeleteRelationshipTypeRequest

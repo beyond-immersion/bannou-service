@@ -47,6 +47,7 @@ public class ActorLocalMemoryStoreTests
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
     private readonly Mock<ILogger<ActorLocalMemoryStore>> _mockLogger;
     private readonly BehaviorServiceConfiguration _configuration;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly ActorLocalMemoryStore _memoryStore;
 
     public ActorLocalMemoryStoreTests()
@@ -56,13 +57,14 @@ public class ActorLocalMemoryStoreTests
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
         _mockLogger = new Mock<ILogger<ActorLocalMemoryStore>>();
         _configuration = new BehaviorServiceConfiguration();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         _mockFactory.Setup(f => f.GetStore<CognitionMemory>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockMemoryStore.Object);
         _mockFactory.Setup(f => f.GetStore<List<string>>(StateStoreDefinitions.AgentMemories))
             .Returns(_mockIndexStore.Object);
 
-        _memoryStore = new ActorLocalMemoryStore(_mockFactory.Object, _configuration, _mockLogger.Object);
+        _memoryStore = new ActorLocalMemoryStore(_mockFactory.Object, _configuration, _mockLogger.Object, _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

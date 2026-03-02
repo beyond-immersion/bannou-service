@@ -1,8 +1,14 @@
+using BeyondImmersion.BannouService.Services;
+using BeyondImmersion.BannouService.State.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
 namespace BeyondImmersion.BannouService.State.Tests;
 
 /// <summary>
 /// Unit tests for RedisDistributedLockProvider.
-/// These tests verify the lock behavior without requiring a Redis connection.
+/// Tests verify the lock behavior without requiring a Redis connection.
 ///
 /// CRITICAL BUG FIXED: The Lua string.find function interprets hyphens (-) as pattern characters.
 /// Lock owner IDs like "auth-abc123" would fail to match during unlock because the hyphen
@@ -15,6 +21,23 @@ namespace BeyondImmersion.BannouService.State.Tests;
 /// </summary>
 public class RedisDistributedLockProviderTests
 {
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<ILogger<RedisDistributedLockProvider>> _mockLogger;
+
+    public RedisDistributedLockProviderTests()
+    {
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockLogger = new Mock<ILogger<RedisDistributedLockProvider>>();
+
+        // Return null for GetRedisOperations → forces in-memory mode
+        _mockStateStoreFactory.Setup(f => f.GetRedisOperations()).Returns((IRedisOperations?)null);
+    }
+
+    private RedisDistributedLockProvider CreateProvider()
+    {
+        return new RedisDistributedLockProvider(_mockStateStoreFactory.Object, _mockLogger.Object);
+    }
+
 
     /// <summary>
     /// Document the lock owner ID formats that should work correctly.
@@ -85,4 +108,115 @@ public class RedisDistributedLockProviderTests
 
         Assert.Equal(shouldMatch, startsWithOwnerAndColon);
     }
+
+    #region InMemory Lock Acquisition Tests
+
+    /// <summary>
+    /// Verifies acquiring an uncontested lock succeeds.
+    /// Each test uses a unique resource ID to avoid static dictionary interference.
+    /// </summary>
+    [Fact]
+    public async Task LockAsync_InMemory_UncontestedKey_Succeeds()
+    {
+        // Arrange
+        await using var provider = CreateProvider();
+        var resourceId = Guid.NewGuid().ToString();
+
+        // Act
+        var result = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    /// <summary>
+    /// Verifies that a second owner cannot acquire a lock held by someone else.
+    /// </summary>
+    [Fact]
+    public async Task LockAsync_InMemory_ContestedByDifferentOwner_Fails()
+    {
+        // Arrange
+        await using var provider = CreateProvider();
+        var resourceId = Guid.NewGuid().ToString();
+
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        Assert.True(first.Success);
+
+        // Act — different owner tries same key
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+
+        // Assert
+        Assert.False(second.Success);
+    }
+
+    /// <summary>
+    /// Verifies that disposing a lock releases it, allowing re-acquisition.
+    /// </summary>
+    [Fact]
+    public async Task LockAsync_InMemory_AfterDisposal_CanReacquire()
+    {
+        // Arrange
+        await using var provider = CreateProvider();
+        var resourceId = Guid.NewGuid().ToString();
+
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        Assert.True(first.Success);
+
+        // Act — dispose the first lock, then try again
+        await first.DisposeAsync();
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+
+        // Assert — should succeed since previous lock was released
+        Assert.True(second.Success);
+    }
+
+    /// <summary>
+    /// Verifies that an expired lock can be acquired by a new owner.
+    /// Uses 1-second expiry with a short delay to trigger expiration detection.
+    /// </summary>
+    [Fact]
+    public async Task LockAsync_InMemory_ExpiredLock_CanBeAcquiredByNewOwner()
+    {
+        // Arrange
+        await using var provider = CreateProvider();
+        var resourceId = Guid.NewGuid().ToString();
+
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 1);
+        Assert.True(first.Success);
+
+        // Wait for expiration
+        await Task.Delay(1100);
+
+        // Act — different owner tries after expiry
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+
+        // Assert — succeeds because previous lock expired
+        Assert.True(second.Success);
+    }
+
+    /// <summary>
+    /// Verifies that a failed lock response does not release the lock on disposal.
+    /// </summary>
+    [Fact]
+    public async Task LockAsync_InMemory_FailedLockDisposal_DoesNotRelease()
+    {
+        // Arrange
+        await using var provider = CreateProvider();
+        var resourceId = Guid.NewGuid().ToString();
+
+        var first = await provider.LockAsync("test-store", resourceId, "owner-a", 30);
+        Assert.True(first.Success);
+
+        var second = await provider.LockAsync("test-store", resourceId, "owner-b", 30);
+        Assert.False(second.Success);
+
+        // Act — dispose the failed lock response
+        await second.DisposeAsync();
+
+        // Assert — original lock still held, third attempt by different owner fails
+        var third = await provider.LockAsync("test-store", resourceId, "owner-c", 30);
+        Assert.False(third.Success);
+    }
+
+    #endregion
 }

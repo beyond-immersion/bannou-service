@@ -87,6 +87,7 @@ public partial class GameServiceController
                 "stubName",
                 "displayName",
                 "isActive",
+                "autoLobbyEnabled",
                 "createdAt"
             ],
             "properties": {
@@ -111,6 +112,10 @@ public partial class GameServiceController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the service is currently active"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "description": "Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect"
                 },
                 "createdAt": {
                     "type": "string",
@@ -226,6 +231,7 @@ public partial class GameServiceController
                 "stubName",
                 "displayName",
                 "isActive",
+                "autoLobbyEnabled",
                 "createdAt"
             ],
             "properties": {
@@ -250,6 +256,10 @@ public partial class GameServiceController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the service is currently active"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "description": "Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect"
                 },
                 "createdAt": {
                     "type": "string",
@@ -361,6 +371,11 @@ public partial class GameServiceController
                     "type": "boolean",
                     "default": true,
                     "description": "Whether the service is currently active"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether GameSession should auto-create lobby sessions and publish join shortcuts for this game service on player connect. When false, entry is managed by higher-layer orchestration (e.g., Gardener)."
                 }
             }
         }
@@ -382,6 +397,7 @@ public partial class GameServiceController
                 "stubName",
                 "displayName",
                 "isActive",
+                "autoLobbyEnabled",
                 "createdAt"
             ],
             "properties": {
@@ -406,6 +422,10 @@ public partial class GameServiceController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the service is currently active"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "description": "Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect"
                 },
                 "createdAt": {
                     "type": "string",
@@ -514,6 +534,11 @@ public partial class GameServiceController
                     "type": "boolean",
                     "nullable": true,
                     "description": "New active status"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "New auto-lobby enabled status"
                 }
             }
         }
@@ -535,6 +560,7 @@ public partial class GameServiceController
                 "stubName",
                 "displayName",
                 "isActive",
+                "autoLobbyEnabled",
                 "createdAt"
             ],
             "properties": {
@@ -559,6 +585,10 @@ public partial class GameServiceController
                 "isActive": {
                     "type": "boolean",
                     "description": "Whether the service is currently active"
+                },
+                "autoLobbyEnabled": {
+                    "type": "boolean",
+                    "description": "Whether GameSession auto-creates lobby sessions and publishes join shortcuts for this game service on player connect"
                 },
                 "createdAt": {
                     "type": "string",

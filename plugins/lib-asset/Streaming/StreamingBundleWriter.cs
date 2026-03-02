@@ -1,9 +1,11 @@
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.Storage;
 using K4os.Compression.LZ4;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
+using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace BeyondImmersion.BannouService.Asset.Streaming;
@@ -29,6 +31,7 @@ namespace BeyondImmersion.BannouService.Asset.Streaming;
 public sealed class StreamingBundleWriter : IAsyncDisposable
 {
     private readonly IAssetStorageProvider _storageProvider;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ServerMultipartUploadSession _uploadSession;
     private readonly StreamingBundleWriterOptions _options;
     private readonly ILogger? _logger;
@@ -55,16 +58,20 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
     /// </summary>
     /// <param name="uploadSession">The multipart upload session from storage provider.</param>
     /// <param name="storageProvider">Storage provider for uploading parts.</param>
+    /// <param name="telemetryProvider">Telemetry provider for distributed tracing.</param>
     /// <param name="options">Streaming configuration options.</param>
     /// <param name="logger">Optional logger.</param>
     public StreamingBundleWriter(
         ServerMultipartUploadSession uploadSession,
         IAssetStorageProvider storageProvider,
+        ITelemetryProvider telemetryProvider,
         StreamingBundleWriterOptions options,
         ILogger? logger = null)
     {
         _uploadSession = uploadSession ?? throw new ArgumentNullException(nameof(uploadSession));
         _storageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _logger = logger;
 
@@ -98,6 +105,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         ReadOnlyMemory<byte> data,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.AddAssetAsync");
         ThrowIfDisposedOrFinalized();
 
         var index = _assetEntries.Count;
@@ -170,6 +178,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         Stream dataStream,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.AddAssetFromStreamAsync");
         ThrowIfDisposedOrFinalized();
 
         // Read stream into memory for compression
@@ -202,6 +211,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         string contentType,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.AddAssetFromBundleAsync");
         ThrowIfDisposedOrFinalized();
 
         // Read and decompress the asset from source bundle
@@ -225,6 +235,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         ReadOnlyMemory<byte> data,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.WriteToBufferAsync");
         var offset = _totalDataBytesWritten;
 
         // First, fill the header reserve buffer (first ~5MB of data)
@@ -274,6 +285,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
     /// </summary>
     private async Task FlushPartBufferAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.FlushPartBufferAsync");
         if (_partBuffer.Length == 0)
         {
             return;
@@ -320,6 +332,7 @@ public sealed class StreamingBundleWriter : IAsyncDisposable
         IReadOnlyDictionary<string, string>? tags = null,
         CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.asset", "StreamingBundleWriter.FinalizeAsync");
         ThrowIfDisposedOrFinalized();
         _finalized = true;
 

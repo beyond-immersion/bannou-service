@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
 
@@ -27,6 +28,7 @@ public class MemoryDecaySchedulerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MemoryDecaySchedulerService> _logger;
     private readonly CharacterEncounterServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string ENCOUNTER_MEMORY_FADED_TOPIC = "encounter.memory.faded";
     private const string PERSPECTIVE_KEY_PREFIX = "pers-";
@@ -52,11 +54,14 @@ public class MemoryDecaySchedulerService : BackgroundService
     public MemoryDecaySchedulerService(
         IServiceProvider serviceProvider,
         ILogger<MemoryDecaySchedulerService> logger,
-        CharacterEncounterServiceConfiguration configuration)
+        CharacterEncounterServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -66,6 +71,7 @@ public class MemoryDecaySchedulerService : BackgroundService
     /// <param name="stoppingToken">Cancellation token for graceful shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "MemoryDecaySchedulerService.ExecuteAsync");
         // Skip startup entirely if not in scheduled mode
         if (!_configuration.MemoryDecayEnabled || _configuration.MemoryDecayMode != MemoryDecayMode.Scheduled)
         {
@@ -142,6 +148,7 @@ public class MemoryDecaySchedulerService : BackgroundService
     /// </summary>
     private async Task ProcessScheduledDecayAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "MemoryDecaySchedulerService.ProcessScheduledDecayAsync");
         _logger.LogDebug("Starting scheduled memory decay processing");
 
         using var scope = _serviceProvider.CreateScope();
@@ -207,6 +214,7 @@ public class MemoryDecaySchedulerService : BackgroundService
         IMessageBus messageBus,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "MemoryDecaySchedulerService.ProcessCharacterDecayAsync");
         var characterIndex = await indexStore.GetAsync($"{CHAR_INDEX_PREFIX}{characterId}", cancellationToken);
         if (characterIndex == null || characterIndex.PerspectiveIds.Count == 0)
         {
@@ -235,6 +243,8 @@ public class MemoryDecaySchedulerService : BackgroundService
             perspective.MemoryStrength = (float)Math.Max(0, previousStrength - decayAmount);
             perspective.LastDecayedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
             var saveResult = await perspectiveStore.TrySaveAsync(perspectiveKey, perspective, etag ?? string.Empty, cancellationToken);
             if (saveResult == null)
             {

@@ -60,6 +60,7 @@ import { SpeciesProxy } from './proxies/SpeciesProxy.js';
 import { StatusProxy } from './proxies/StatusProxy.js';
 import { StorylineProxy } from './proxies/StorylineProxy.js';
 import { SubscriptionProxy } from './proxies/SubscriptionProxy.js';
+import { TransitProxy } from './proxies/TransitProxy.js';
 import { ValidateProxy } from './proxies/ValidateProxy.js';
 import { VoiceProxy } from './proxies/VoiceProxy.js';
 import { WebsiteProxy } from './proxies/WebsiteProxy.js';
@@ -118,6 +119,7 @@ interface ProxyCache {
   status?: StatusProxy;
   storyline?: StorylineProxy;
   subscription?: SubscriptionProxy;
+  transit?: TransitProxy;
   validate?: ValidateProxy;
   voice?: VoiceProxy;
   website?: WebsiteProxy;
@@ -704,6 +706,18 @@ Object.defineProperty(BannouClient.prototype, 'subscription', {
 });
 
 /**
+ * Add lazy-initialized transit proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'transit', {
+  get(this: BannouClientWithCache): TransitProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.transit ??= new TransitProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
  * Add lazy-initialized validate proxy property to BannouClient.
  */
 Object.defineProperty(BannouClient.prototype, 'validate', {
@@ -946,6 +960,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Subscription API endpoints.
      */
     readonly subscription: SubscriptionProxy;
+    /**
+     * Typed proxy for Transit API endpoints.
+     */
+    readonly transit: TransitProxy;
     /**
      * Typed proxy for Validate API endpoints.
      */

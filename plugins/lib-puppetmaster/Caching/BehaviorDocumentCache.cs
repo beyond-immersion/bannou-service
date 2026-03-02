@@ -2,6 +2,7 @@ using BeyondImmersion.Bannou.BehaviorCompiler.Documents;
 using BeyondImmersion.Bannou.BehaviorCompiler.Parser;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Asset;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -18,6 +19,7 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<BehaviorDocumentCache> _logger;
     private readonly PuppetmasterServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly DocumentParser _parser = new();
     private readonly TimeSpan _ttl;
 
@@ -28,16 +30,19 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
     /// <param name="httpClientFactory">HTTP client factory for downloading assets.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="configuration">Puppetmaster service configuration.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public BehaviorDocumentCache(
         IServiceScopeFactory scopeFactory,
         IHttpClientFactory httpClientFactory,
         ILogger<BehaviorDocumentCache> logger,
-        PuppetmasterServiceConfiguration configuration)
+        PuppetmasterServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _ttl = TimeSpan.FromSeconds(_configuration.BehaviorCacheTtlSeconds);
     }
 
@@ -54,6 +59,7 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
     /// <returns>The loaded document, or null if loading fails.</returns>
     public async Task<AbmlDocument?> GetOrLoadAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "BehaviorDocumentCache.GetOrLoadAsync");
         if (_cache.TryGetValue(behaviorRef, out var cached))
         {
             if (!cached.IsExpired)
@@ -153,6 +159,7 @@ public sealed class BehaviorDocumentCache : IBehaviorDocumentCache
 
     private async Task<string?> DownloadBehaviorYamlAsync(string behaviorRef, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "BehaviorDocumentCache.DownloadBehaviorYamlAsync");
         if (!Guid.TryParse(behaviorRef, out _))
         {
             _logger.LogWarning("Invalid behavior reference format (not a GUID): {BehaviorRef}", behaviorRef);

@@ -317,6 +317,36 @@ public static class ChatPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/chat/room/participant/unmute",
+            Method = ServiceEndpointMethod.POST,
+            Description = "UnmuteParticipant",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"chat", "in_room"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/chat/room/participant/change-role",
+            Method = ServiceEndpointMethod.POST,
+            Description = "ChangeParticipantRole",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"chat", "in_room"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/chat/message/send",
             Method = ServiceEndpointMethod.POST,
             Description = "SendMessage",

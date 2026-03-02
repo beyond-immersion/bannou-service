@@ -34,6 +34,39 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 
 ---
 
+## Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `partyType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies the type of entity acting as a party (account, character, guild, etc.); all valid values are first-class Bannou entities |
+| `ownerType` | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type for token ownership lookup; same entity reference pattern as `partyType` |
+| `disputedByType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the disputing party |
+| `arbiterType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the resolving arbiter |
+| `cancelledByType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type that cancelled the escrow |
+| `reaffirmedByType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the reaffirming party |
+| `recipientPartyType` (events) | A (Entity Reference) | `EntityType` enum (from `common-api.yaml`) | Identifies entity type of the release recipient |
+| `escrowType` | C (System State/Mode) | `EscrowType` enum (`two_party`, `multi_party`, `conditional`, `auction`) | Structural agreement type determining deposit/consent rules; service-specific classification |
+| `trustMode` | C (System State/Mode) | `EscrowTrustMode` enum (`full_consent`, `initiator_trusted`, `single_party_trusted`) | Trust model governing consent requirements; service-specific classification |
+| `status` | C (System State/Mode) | `EscrowStatus` enum (13 values) | Position in the 13-state escrow finite state machine |
+| `role` | C (System State/Mode) | `EscrowPartyRole` enum (`depositor`, `recipient`, `depositor_recipient`, `arbiter`, `observer`) | Party's functional role within the escrow; service-specific classification |
+| `consentType` | C (System State/Mode) | `EscrowConsentType` enum (`release`, `refund`, `dispute`, `reaffirm`) | Type of consent action being taken; service-specific state transition trigger |
+| `resolution` | C (System State/Mode) | `EscrowResolution` enum (6 values) | How the escrow was resolved; terminal state classification |
+| `assetType` | C (System State/Mode) | `AssetType` enum (`currency`, `item`, `item_stack`, `contract`, `custom`) | Classifies the kind of asset held in escrow; determines which downstream service handles the asset (Currency, Inventory, Contract, or custom handler) |
+| `releaseMode` | C (System State/Mode) | `ReleaseMode` enum (`immediate`, `service_only`, `party_required`, `service_and_party`) | Confirmation flow configuration for releases |
+| `refundMode` | C (System State/Mode) | `RefundMode` enum (`immediate`, `service_only`, `party_required`) | Confirmation flow configuration for refunds |
+| `failureType` | C (System State/Mode) | `ValidationFailureType` enum (`asset_missing`, `asset_mutated`, `asset_expired`, `balance_mismatch`) | Classifies what went wrong during periodic validation |
+| `tokenType` | C (System State/Mode) | `TokenType` enum (`deposit`, `release`) | Distinguishes deposit tokens from release tokens; system authentication classification |
+| `confirmationTimeoutBehavior` | C (System State/Mode) | `ConfirmationTimeoutBehavior` enum (`auto_confirm`, `dispute`, `refund`) | Configured behavior when confirmation deadline expires |
+| `referenceType` | B (Game Content Type) | Opaque string | What this escrow is for (e.g., `"trade"`, `"auction"`, `"contract"`); callers provide context-specific labels without schema changes |
+| `customAssetType` | B (Game Content Type) | Opaque string | Registered handler type for `assetType=custom`; plugin-extensible asset types via handler registry |
+
+**Notes**:
+- Escrow has the most `EntityType` usages of any service due to its multi-party, polymorphic nature -- every party, depositor, recipient, arbiter, and disputer is identified by `entityId` + `EntityType`.
+- `assetType` (Escrow's own enum) is Category C, not Category B, because the values map to specific downstream service integrations (Currency, Inventory, Contract) rather than being game-configurable. The `custom` value bridges to Category B via the handler registry pattern.
+- `referenceType` is a plain string with no enum constraint, used as a caller-provided label for contextual categorization.
+
+---
+
 ## State Storage
 
 **Stores**: 7 state stores

@@ -35,16 +35,24 @@ using System = global::System;
 /// Published when a game-hour boundary is crossed during clock advancement
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateHourChangedEvent : BaseServiceEvent
+public partial class WorldstateHourChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.hour_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed an hour boundary
@@ -82,16 +90,24 @@ public partial class WorldstateHourChangedEvent : BaseServiceEvent
 /// Published when a day-period boundary is crossed (e.g., dawn to morning)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstatePeriodChangedEvent : BaseServiceEvent
+public partial class WorldstatePeriodChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.period_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed a period boundary
@@ -105,7 +121,7 @@ public partial class WorldstatePeriodChangedEvent : BaseServiceEvent
     /// Day period code before the transition (e.g., "night")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousPeriod")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousPeriod { get; set; } = default!;
 
@@ -113,7 +129,7 @@ public partial class WorldstatePeriodChangedEvent : BaseServiceEvent
     /// Day period code after the transition (e.g., "dawn")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPeriod")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CurrentPeriod { get; set; } = default!;
 
@@ -131,16 +147,24 @@ public partial class WorldstatePeriodChangedEvent : BaseServiceEvent
 /// Published when a game-day boundary is crossed. During catch-up, daysCrossed may be greater than 1.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateDayChangedEvent : BaseServiceEvent
+public partial class WorldstateDayChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.day_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed a day boundary
@@ -191,16 +215,24 @@ public partial class WorldstateDayChangedEvent : BaseServiceEvent
 /// Published when a month boundary is crossed
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateMonthChangedEvent : BaseServiceEvent
+public partial class WorldstateMonthChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.month_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed a month boundary
@@ -214,7 +246,7 @@ public partial class WorldstateMonthChangedEvent : BaseServiceEvent
     /// Month code before the transition (e.g., "frostmere")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousMonth")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousMonth { get; set; } = default!;
 
@@ -222,7 +254,7 @@ public partial class WorldstateMonthChangedEvent : BaseServiceEvent
     /// Month code after the transition (e.g., "greenleaf")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentMonth")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CurrentMonth { get; set; } = default!;
 
@@ -232,6 +264,12 @@ public partial class WorldstateMonthChangedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("monthsCrossed")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int MonthsCrossed { get; set; } = default!;
+
+    /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
 
     /// <summary>
     /// Full game time snapshot at the time of the event
@@ -247,16 +285,24 @@ public partial class WorldstateMonthChangedEvent : BaseServiceEvent
 /// Published when a season boundary is crossed
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
+public partial class WorldstateSeasonChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.season_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed a season boundary
@@ -270,7 +316,7 @@ public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
     /// Season code before the transition (e.g., "winter")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousSeason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string PreviousSeason { get; set; } = default!;
 
@@ -278,7 +324,7 @@ public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
     /// Season code after the transition (e.g., "spring")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentSeason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CurrentSeason { get; set; } = default!;
 
@@ -286,7 +332,14 @@ public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
     /// Current game year at the time of the season change
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentYear")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentYear { get; set; } = default!;
+
+    /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
 
     /// <summary>
     /// Full game time snapshot at the time of the event
@@ -302,16 +355,24 @@ public partial class WorldstateSeasonChangedEvent : BaseServiceEvent
 /// Published when a year boundary is crossed
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateYearChangedEvent : BaseServiceEvent
+public partial class WorldstateYearChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.year_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock crossed a year boundary
@@ -325,12 +386,14 @@ public partial class WorldstateYearChangedEvent : BaseServiceEvent
     /// Game year before the transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("previousYear")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int PreviousYear { get; set; } = default!;
 
     /// <summary>
     /// Game year after the transition
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentYear")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int CurrentYear { get; set; } = default!;
 
     /// <summary>
@@ -339,6 +402,12 @@ public partial class WorldstateYearChangedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonPropertyName("yearsCrossed")]
     [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int YearsCrossed { get; set; } = default!;
+
+    /// <summary>
+    /// True if this event was generated during post-downtime catch-up processing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCatchUp")]
+    public bool IsCatchUp { get; set; } = default!;
 
     /// <summary>
     /// Full game time snapshot at the time of the event
@@ -354,16 +423,24 @@ public partial class WorldstateYearChangedEvent : BaseServiceEvent
 /// Published when a realm's time ratio is changed via SetTimeRatio
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateRatioChangedEvent : BaseServiceEvent
+public partial class WorldstateRatioChangedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.ratio_changed";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose time ratio was changed
@@ -397,19 +474,60 @@ public partial class WorldstateRatioChangedEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published when a realm clock is initialized for the first time via InitializeRealmClock
+/// Published when a realm clock is advanced via AdvanceClock. Used for cross-node clock cache invalidation.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class WorldstateRealmClockInitializedEvent : BaseServiceEvent
+public partial class WorldstateClockAdvancedEvent
 {
 
     /// <summary>
-    /// Fixed event type identifier
+    /// Unique event identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "worldstate.realm_clock.initialized";
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Realm whose clock was advanced
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a realm clock is initialized for the first time via InitializeRealmClock
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class WorldstateRealmClockInitializedEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
     /// Realm whose clock was initialized
@@ -423,7 +541,7 @@ public partial class WorldstateRealmClockInitializedEvent : BaseServiceEvent
     /// Calendar template code assigned to this realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("calendarTemplateCode")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string CalendarTemplateCode { get; set; } = default!;
 

@@ -31,7 +31,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createSceneAsync(
+  async sceneCreateSceneAsync(
     request: Schemas['CreateSceneRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSceneAsync(
+  async sceneGetSceneAsync(
     request: Schemas['GetSceneRequest'],
     channel: number = 0,
     timeout?: number
@@ -71,7 +71,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listScenesAsync(
+  async sceneListScenesAsync(
     request: Schemas['ListScenesRequest'],
     channel: number = 0,
     timeout?: number
@@ -91,7 +91,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateSceneAsync(
+  async sceneUpdateSceneAsync(
     request: Schemas['UpdateSceneRequest'],
     channel: number = 0,
     timeout?: number
@@ -111,7 +111,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteSceneAsync(
+  async sceneDeleteSceneAsync(
     request: Schemas['DeleteSceneRequest'],
     channel: number = 0,
     timeout?: number
@@ -131,7 +131,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateSceneAsync(
+  async sceneValidateSceneAsync(
     request: Schemas['ValidateSceneRequest'],
     channel: number = 0,
     timeout?: number
@@ -151,7 +151,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkoutSceneAsync(
+  async sceneCheckoutSceneAsync(
     request: Schemas['CheckoutRequest'],
     channel: number = 0,
     timeout?: number
@@ -171,7 +171,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async commitSceneAsync(
+  async sceneCommitSceneAsync(
     request: Schemas['CommitRequest'],
     channel: number = 0,
     timeout?: number
@@ -191,7 +191,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async discardCheckoutAsync(
+  async sceneDiscardCheckoutAsync(
     request: Schemas['DiscardRequest'],
     channel: number = 0,
     timeout?: number
@@ -211,7 +211,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async heartbeatCheckoutAsync(
+  async sceneHeartbeatCheckoutAsync(
     request: Schemas['HeartbeatRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSceneHistoryAsync(
+  async sceneGetSceneHistoryAsync(
     request: Schemas['HistoryRequest'],
     channel: number = 0,
     timeout?: number
@@ -251,7 +251,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getValidationRulesAsync(
+  async sceneGetValidationRulesAsync(
     request: Schemas['GetValidationRulesRequest'],
     channel: number = 0,
     timeout?: number
@@ -269,7 +269,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async searchScenesAsync(
+  async sceneSearchScenesAsync(
     request: Schemas['SearchScenesRequest'],
     channel: number = 0,
     timeout?: number
@@ -289,7 +289,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async findReferencesAsync(
+  async sceneFindReferencesAsync(
     request: Schemas['FindReferencesRequest'],
     channel: number = 0,
     timeout?: number
@@ -307,7 +307,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async findAssetUsageAsync(
+  async sceneFindAssetUsageAsync(
     request: Schemas['FindAssetUsageRequest'],
     channel: number = 0,
     timeout?: number
@@ -325,7 +325,7 @@ export class SceneProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async duplicateSceneAsync(
+  async sceneDuplicateSceneAsync(
     request: Schemas['DuplicateSceneRequest'],
     channel: number = 0,
     timeout?: number

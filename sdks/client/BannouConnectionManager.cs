@@ -359,21 +359,21 @@ public sealed class BannouConnectionManager : IAsyncDisposable
     {
         if (_client == null) return;
 
-        _client.OnEvent("connect.capability_manifest", OnCapabilityManifestReceived);
-        _client.OnEvent("connect.session_invalidated", OnSessionInvalidated);
+        _client.OnEvent("connect.capability-manifest", OnCapabilityManifestReceived);
+        _client.OnEvent("connect.session-invalidated", OnSessionInvalidated);
     }
 
     private void OnCapabilityManifestReceived(string json)
     {
         _logger?.LogDebug("Received capability manifest update");
-        DispatchEvent("connect.capability_manifest", json);
+        DispatchEvent("connect.capability-manifest", json);
     }
 
     private void OnSessionInvalidated(string json)
     {
         _logger?.LogWarning("Session invalidated by server");
         SetStatus(ConnectionStatus.Disconnected);
-        DispatchEvent("connect.session_invalidated", json);
+        DispatchEvent("connect.session-invalidated", json);
     }
 
     // ==========================================================================

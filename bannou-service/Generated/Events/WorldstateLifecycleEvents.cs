@@ -368,6 +368,12 @@ public partial class RealmConfigCreatedEvent : BaseServiceEvent
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RealmEpoch { get; set; } = default!;
 
+    /// <summary>
+    /// Whether the realm clock is initialized and active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -431,6 +437,12 @@ public partial class RealmConfigUpdatedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RealmEpoch { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the realm clock is initialized and active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
 
     /// <summary>
     /// List of field names that were modified
@@ -503,6 +515,12 @@ public partial class RealmConfigDeletedEvent : BaseServiceEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.DateTimeOffset RealmEpoch { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the realm clock is initialized and active
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isActive")]
+    public bool IsActive { get; set; } = default!;
 
     /// <summary>
     /// Optional reason for deletion (e.g., "Merged into {targetId}")

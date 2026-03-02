@@ -87,7 +87,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "minItems": 1,
                     "description": "Owner types allowed to create boards from this template. Each must map to a supported container owner type (e.g., character, account, location, guild)."
@@ -194,7 +194,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Owner types allowed to create boards from this template"
                 },
@@ -395,7 +395,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Owner types allowed to create boards from this template"
                 },
@@ -635,7 +635,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Owner types allowed to create boards from this template"
                 },
@@ -780,7 +780,7 @@ public partial class LicenseController
                     "type": "array",
                     "nullable": true,
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "minItems": 1,
                     "description": "Updated allowed owner types. Narrowing checks for existing boards with removed types."
@@ -860,7 +860,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Owner types allowed to create boards from this template"
                 },
@@ -1061,7 +1061,7 @@ public partial class LicenseController
                 "allowedOwnerTypes": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "object"
                     },
                     "description": "Owner types allowed to create boards from this template"
                 },
@@ -2185,7 +2185,7 @@ public partial class LicenseController
             ],
             "properties": {
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board (e.g., character, account, realm, guild)"
                 },
                 "ownerId": {
@@ -2240,7 +2240,7 @@ public partial class LicenseController
                     "description": "Unique board instance identifier"
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board"
                 },
                 "ownerId": {
@@ -2385,7 +2385,7 @@ public partial class LicenseController
                     "description": "Unique board instance identifier"
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board"
                 },
                 "ownerId": {
@@ -2496,7 +2496,7 @@ public partial class LicenseController
             ],
             "properties": {
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns the boards"
                 },
                 "ownerId": {
@@ -2558,7 +2558,7 @@ public partial class LicenseController
                     "description": "Unique board instance identifier"
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board"
                 },
                 "ownerId": {
@@ -2703,7 +2703,7 @@ public partial class LicenseController
                     "description": "Unique board instance identifier"
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board"
                 },
                 "ownerId": {
@@ -3131,7 +3131,7 @@ public partial class LicenseController
                     "description": "Board instance identifier"
                 },
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that owns this board (e.g., character, account, guild)"
                 },
                 "ownerId": {
@@ -3617,7 +3617,7 @@ public partial class LicenseController
                     "description": "Source board instance to clone unlock state from"
                 },
                 "targetOwnerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity to clone the board to (must be in template's allowedOwnerTypes)"
                 },
                 "targetOwnerId": {
@@ -3666,7 +3666,7 @@ public partial class LicenseController
                     "description": "New board instance created for the target"
                 },
                 "targetOwnerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity the board was cloned to"
                 },
                 "targetOwnerId": {
@@ -3760,7 +3760,7 @@ public partial class LicenseController
             ],
             "properties": {
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity whose boards should be cleaned up"
                 },
                 "ownerId": {
@@ -3790,7 +3790,7 @@ public partial class LicenseController
             ],
             "properties": {
                 "ownerType": {
-                    "type": "string",
+                    "type": "object",
                     "description": "Type of entity that was cleaned up"
                 },
                 "ownerId": {

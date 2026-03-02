@@ -152,8 +152,9 @@ public class InventoryTestHandler : BaseHttpTestHandler
 
     /// <summary>
     /// Creates an item instance and adds it to a container.
+    /// Returns the instance ID and the add response.
     /// </summary>
-    private static async Task<AddItemResponse> CreateAndAddItemAsync(
+    private static async Task<(Guid InstanceId, AddItemResponse Response)> CreateAndAddItemAsync(
         Guid templateId,
         Guid containerId,
         Guid realmId,
@@ -172,11 +173,13 @@ public class InventoryTestHandler : BaseHttpTestHandler
         });
 
         // Add to container via lib-inventory
-        return await inventoryClient.AddItemToContainerAsync(new AddItemRequest
+        var addResponse = await inventoryClient.AddItemToContainerAsync(new AddItemRequest
         {
             InstanceId = instance.InstanceId,
             ContainerId = containerId
         });
+
+        return (instance.InstanceId, addResponse);
     }
 
     // =========================================================================
@@ -512,8 +515,8 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 TargetContainerId = dest.ContainerId
             });
 
-            if (moveResult.InstanceId != addResult.InstanceId)
-                return TestResult.Failed("Move returned different instance ID");
+            if (moveResult.SourceContainerId != source.ContainerId)
+                return TestResult.Failed("Move returned wrong source container ID");
 
             // Verify item is in destination
             var destContents = await inventoryClient.GetContainerAsync(new GetContainerRequest
@@ -639,8 +642,9 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 ContainerId = container.ContainerId
             });
 
-            if (!deleted.Deleted)
-                return TestResult.Failed("Delete returned deleted=false");
+            // Empty container, so itemsHandled should be 0
+            if (deleted.ItemsHandled != 0)
+                return TestResult.Failed($"Expected 0 items handled for empty container, got: {deleted.ItemsHandled}");
 
             // Verify it's gone - should return 404
             return await ExecuteExpectingAnyStatusAsync(
@@ -671,8 +675,8 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 InstanceId = addResult.InstanceId
             });
 
-            if (removeResult.InstanceId != addResult.InstanceId)
-                return TestResult.Failed("Remove returned wrong instance ID");
+            if (removeResult.PreviousContainerId != container.ContainerId)
+                return TestResult.Failed("Remove returned wrong previous container ID");
 
             // Verify container is empty
             var contents = await inventoryClient.GetContainerAsync(new GetContainerRequest
@@ -685,7 +689,7 @@ public class InventoryTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Container still has {contents.Items.Count} items after remove");
 
             return TestResult.Successful(
-                $"Removed item {addResult.InstanceId} from container {container.ContainerId}");
+                $"Removed item from container {container.ContainerId} (previous={removeResult.PreviousContainerId})");
         }, "Remove item from container");
 
     private static async Task<TestResult> TestQueryItems(ITestClient client, string[] args) =>

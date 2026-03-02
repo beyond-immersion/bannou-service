@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Game Service Configuration
   description: |
@@ -13,4 +13,11 @@ info:
   version: 1.0.0
 paths: {}
 x-service-configuration:
-  properties: {}
+  properties:
+    ServiceListRetryAttempts:
+      type: integer
+      default: 3
+      minimum: 1
+      maximum: 10
+      env: GAME_SERVICE_SERVICE_LIST_RETRY_ATTEMPTS
+      description: Maximum number of optimistic concurrency retry attempts for service list mutations

@@ -150,7 +150,7 @@ public interface IBannouClient : IAsyncDisposable
     /// <summary>
     /// Registers a handler for server-pushed events.
     /// </summary>
-    /// <param name="eventType">Event type to handle (e.g., "capability_manifest")</param>
+    /// <param name="eventType">Event type to handle (e.g., "capability-manifest")</param>
     /// <param name="handler">Handler function receiving the JSON payload</param>
     void OnEvent(string eventType, Action<string> handler);
 
@@ -164,7 +164,7 @@ public interface IBannouClient : IAsyncDisposable
     /// Subscribe to a typed event with automatic deserialization.
     /// The event type must be a generated client event class inheriting from <see cref="BaseClientEvent"/>.
     /// </summary>
-    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedEvent)</typeparam>
+    /// <typeparam name="TEvent">Event type to subscribe to (e.g., ChatMessageReceivedClientEvent)</typeparam>
     /// <param name="handler">Handler to invoke when event is received, with the deserialized event object</param>
     /// <returns>Subscription handle - call <see cref="IDisposable.Dispose"/> to unsubscribe</returns>
     /// <exception cref="ArgumentException">Thrown if TEvent is not a registered client event type</exception>

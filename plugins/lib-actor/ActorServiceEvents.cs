@@ -45,7 +45,7 @@ public partial class ActorService
             async (svc, evt) => await ((ActorService)svc).HandleActorCompletedAsync(evt));
 
         eventConsumer.RegisterHandler<IActorService, ActorTemplateUpdatedEvent>(
-            "actor-template.updated",
+            "actor.template.updated",
             async (svc, evt) => await ((ActorService)svc).HandleActorTemplateUpdatedAsync(evt));
     }
 
@@ -260,7 +260,7 @@ public partial class ActorService
     #region Template Update Event Handlers
 
     /// <summary>
-    /// Handles actor-template.updated events.
+    /// Handles actor.template.updated events.
     /// When a template's BehaviorRef changes, invalidates the behavior document cache
     /// and signals running actors on this node to reload on their next tick.
     /// </summary>

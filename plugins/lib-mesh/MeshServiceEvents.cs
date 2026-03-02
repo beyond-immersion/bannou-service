@@ -203,15 +203,15 @@ public partial class MeshService
     /// <summary>
     /// Map heartbeat status enum to endpoint status enum.
     /// </summary>
-    private static EndpointStatus MapHeartbeatStatus(ServiceHeartbeatEventStatus? status)
+    private static EndpointStatus MapHeartbeatStatus(InstanceHealthStatus? status)
     {
         return status switch
         {
-            ServiceHeartbeatEventStatus.Healthy => EndpointStatus.Healthy,
-            ServiceHeartbeatEventStatus.Degraded => EndpointStatus.Degraded,
-            ServiceHeartbeatEventStatus.Overloaded => EndpointStatus.Degraded,
-            ServiceHeartbeatEventStatus.Unavailable => EndpointStatus.Unavailable,
-            ServiceHeartbeatEventStatus.Shutting_down => EndpointStatus.ShuttingDown,
+            InstanceHealthStatus.Healthy => EndpointStatus.Healthy,
+            InstanceHealthStatus.Degraded => EndpointStatus.Degraded,
+            InstanceHealthStatus.Overloaded => EndpointStatus.Degraded,
+            InstanceHealthStatus.Unavailable => EndpointStatus.Unavailable,
+            InstanceHealthStatus.Shutting_down => EndpointStatus.ShuttingDown,
             _ => EndpointStatus.Healthy
         };
     }

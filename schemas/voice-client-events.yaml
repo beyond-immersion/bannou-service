@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Voice Client Events API
   description: |
@@ -31,7 +31,7 @@ components:
     # Room State Events
     # ============================================
 
-    VoiceRoomStateEvent:
+    VoiceRoomStateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -50,7 +50,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.room_state"
+          default: "voice.room.state"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -60,7 +60,7 @@ components:
           type: string
           format: uuid
           nullable: true  # NRT: Optional property MUST be nullable
-          description: Associated game session ID
+          description: Associated WebSocket session ID
         tier:
           $ref: 'voice-api.yaml#/components/schemas/VoiceTier'
           description: Current voice tier
@@ -72,7 +72,7 @@ components:
         peers:
           type: array
           items:
-            $ref: '#/components/schemas/VoicePeerInfo'
+            $ref: 'voice-api.yaml#/components/schemas/VoicePeerInfo'
           description: List of peers to connect to (P2P mode)
         rtpServerUri:
           type: string
@@ -89,7 +89,7 @@ components:
     # Peer Events
     # ============================================
 
-    VoicePeerJoinedEvent:
+    VoicePeerJoinedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -104,23 +104,24 @@ components:
         - timestamp
         - roomId
         - peer
+        - currentParticipantCount
       properties:
         eventName:
           type: string
-          default: "voice.peer_joined"
+          default: "voice.peer.joined"
           description: Fixed event type identifier
         roomId:
           type: string
           format: uuid
           description: Voice room ID
         peer:
-          $ref: '#/components/schemas/VoicePeerInfo'
+          $ref: 'voice-api.yaml#/components/schemas/VoicePeerInfo'
           description: New peer's connection details
         currentParticipantCount:
           type: integer
           description: Total participants after join
 
-    VoicePeerLeftEvent:
+    VoicePeerLeftClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -134,10 +135,11 @@ components:
         - timestamp
         - roomId
         - peerSessionId
+        - remainingParticipantCount
       properties:
         eventName:
           type: string
-          default: "voice.peer_left"
+          default: "voice.peer.left"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -155,7 +157,7 @@ components:
           type: integer
           description: Participants remaining after departure
 
-    VoicePeerUpdatedEvent:
+    VoicePeerUpdatedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -173,21 +175,21 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.peer_updated"
+          default: "voice.peer.updated"
           description: Fixed event type identifier
         roomId:
           type: string
           format: uuid
           description: Voice room ID
         peer:
-          $ref: '#/components/schemas/VoicePeerInfo'
+          $ref: 'voice-api.yaml#/components/schemas/VoicePeerInfo'
           description: Updated peer connection details
 
     # ============================================
     # Tier Events
     # ============================================
 
-    VoiceTierUpgradeEvent:
+    VoiceTierUpgradeClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -208,7 +210,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.tier_upgrade"
+          default: "voice.tier-upgrade"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -226,7 +228,7 @@ components:
           type: string
           description: RTP server URI to connect to
         sipCredentials:
-          $ref: '#/components/schemas/SipCredentials'
+          $ref: 'voice-api.yaml#/components/schemas/SipCredentials'
           description: Credentials for SIP registration with Kamailio
         migrationDeadlineMs:
           type: integer
@@ -237,7 +239,7 @@ components:
     # Room Lifecycle Events
     # ============================================
 
-    VoiceRoomClosedEvent:
+    VoiceRoomClosedClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -255,7 +257,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.room_closed"
+          default: "voice.room.closed"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -269,7 +271,7 @@ components:
     # Broadcast Consent Events
     # ============================================
 
-    VoiceBroadcastConsentRequestEvent:
+    VoiceBroadcastConsentRequestClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -286,7 +288,7 @@ components:
       properties:
         eventName:
           type: string
-          default: "voice.broadcast_consent_request"
+          default: "voice.broadcast.consent-request"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -302,7 +304,7 @@ components:
           nullable: true
           description: Display name of requester for UI
 
-    VoiceBroadcastConsentUpdateEvent:
+    VoiceBroadcastConsentUpdateClientEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object
@@ -317,10 +319,12 @@ components:
         - timestamp
         - roomId
         - state
+        - consentedCount
+        - totalCount
       properties:
         eventName:
           type: string
-          default: "voice.broadcast_consent_update"
+          default: "voice.broadcast.consent-update"
           description: Fixed event type identifier
         roomId:
           type: string
@@ -340,63 +344,3 @@ components:
           nullable: true
           description: If declined, who declined (for UI feedback)
 
-    # ============================================
-    # Supporting Types
-    # ============================================
-
-    VoicePeerInfo:
-      type: object
-      additionalProperties: false
-      description: Peer connection information for P2P voice
-      required:
-        - peerSessionId
-        - sdpOffer
-      properties:
-        peerSessionId:
-          type: string
-          format: uuid
-          description: WebSocket session ID for this peer
-        displayName:
-          type: string
-          nullable: true
-          description: Peer's display name
-        sdpOffer:
-          type: string
-          description: SDP offer for WebRTC negotiation
-        iceCandidates:
-          type: array
-          items:
-            type: string
-          nullable: true
-          description: ICE candidates for NAT traversal
-        isMuted:
-          type: boolean
-          default: false
-          description: Whether peer is currently muted
-
-    SipCredentials:
-      type: object
-      additionalProperties: false
-      description: |
-        SIP credentials for authenticating with the Kamailio SIP proxy in scaled tier mode.
-        These credentials are dynamically generated per-user per-room and should be used
-        for SIP REGISTER and subsequent INVITE requests.
-      required:
-        - username
-        - password
-        - domain
-      properties:
-        username:
-          type: string
-          description: SIP username (typically sessionId or a hash-derived identifier)
-        password:
-          type: string
-          description: SIP password (dynamically generated, short-lived)
-        domain:
-          type: string
-          description: SIP domain/realm for authentication (e.g., "voice.bannou.local")
-        expiresAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When these credentials expire (clients should re-authenticate before this)

@@ -17,6 +17,7 @@ public class EntityPresenceCleanupWorker : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EntityPresenceCleanupWorker> _logger;
     private readonly LocationServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string ENTITY_LOCATION_PREFIX = "entity-location:";
     private const string LOCATION_ENTITIES_PREFIX = "location-entities:";
@@ -35,11 +36,13 @@ public class EntityPresenceCleanupWorker : BackgroundService
     public EntityPresenceCleanupWorker(
         IServiceProvider serviceProvider,
         ILogger<EntityPresenceCleanupWorker> logger,
-        LocationServiceConfiguration configuration)
+        LocationServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -108,6 +111,9 @@ public class EntityPresenceCleanupWorker : BackgroundService
     /// </summary>
     private async Task CleanupStalePresenceEntriesAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity(
+            "bannou.location", "EntityPresenceCleanupWorker.CleanupStalePresenceEntries");
+
         _logger.LogDebug("Starting entity presence cleanup cycle");
 
         using var scope = _serviceProvider.CreateScope();

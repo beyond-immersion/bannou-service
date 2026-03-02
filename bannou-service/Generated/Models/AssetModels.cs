@@ -143,6 +143,328 @@ public enum BundleType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Result of a deletion operation:
+/// <br/>- deleted: Soft-deleted (within retention period, can be restored)
+/// <br/>- permanently_deleted: Permanently removed (unrecoverable)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum DeletionStatus
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
+    Deleted = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"permanently_deleted")]
+    PermanentlyDeleted = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Fields available for sorting bundle query results
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BundleSortField
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
+    CreatedAt = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
+    UpdatedAt = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"name")]
+    Name = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"size")]
+    Size = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Sort direction for query results
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SortOrder
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
+    Asc = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
+    Desc = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Storage backend type for asset persistence
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum StorageProvider
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"minio")]
+    Minio = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"s3")]
+    S3 = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"r2")]
+    R2 = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"azure")]
+    Azure = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"filesystem")]
+    Filesystem = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Service mode for asset processing:
+/// <br/>- api: Only handle API requests (no processing)
+/// <br/>- worker: Only process queued jobs (no API)
+/// <br/>- both: Handle API requests and process jobs
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ProcessingMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"api")]
+    Api = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"worker")]
+    Worker = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"both")]
+    Both = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Default audio transcoding output format
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum AudioOutputFormat
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"mp3")]
+    Mp3 = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"opus")]
+    Opus = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"aac")]
+    Aac = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Type of processing to be performed on an asset
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ProcessingType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"mipmaps")]
+    Mipmaps = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"lod_generation")]
+    LodGeneration = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"transcode")]
+    Transcode = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"compression")]
+    Compression = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"validation")]
+    Validation = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"behavior_compile")]
+    BehaviorCompile = 5,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error codes for asset upload failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum UploadErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"VALIDATION_FAILED")]
+    VALIDATION_FAILED = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
+    HASH_MISMATCH = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
+    SIZE_EXCEEDED = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
+    STORAGE_ERROR = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
+    TIMEOUT = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error codes for asset processing failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ProcessingErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSING_FAILED")]
+    PROCESSING_FAILED = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_FORMAT")]
+    INVALID_FORMAT = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RESOURCE_EXHAUSTED")]
+    RESOURCE_EXHAUSTED = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
+    TIMEOUT = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PROCESSOR_UNAVAILABLE")]
+    PROCESSOR_UNAVAILABLE = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error codes for bundle validation failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ValidationErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_ARCHIVE")]
+    INVALID_ARCHIVE = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_MANIFEST")]
+    MISSING_MANIFEST = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INVALID_MANIFEST")]
+    INVALID_MANIFEST = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HASH_MISMATCH")]
+    HASH_MISMATCH = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PATH_TRAVERSAL")]
+    PATH_TRAVERSAL = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SIZE_EXCEEDED")]
+    SIZE_EXCEEDED = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DUPLICATE_ASSET_ID")]
+    DUPLICATE_ASSET_ID = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"MISSING_DEPENDENCY")]
+    MISSING_DEPENDENCY = 7,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Error codes for metabundle creation failures
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum MetabundleErrorCode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_FOUND")]
+    SOURCE_BUNDLE_NOT_FOUND = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SOURCE_BUNDLE_NOT_READY")]
+    SOURCE_BUNDLE_NOT_READY = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_FOUND")]
+    STANDALONE_ASSET_NOT_FOUND = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STANDALONE_ASSET_NOT_READY")]
+    STANDALONE_ASSET_NOT_READY = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"REALM_MISMATCH")]
+    REALM_MISMATCH = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ASSET_CONFLICT")]
+    ASSET_CONFLICT = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"STORAGE_ERROR")]
+    STORAGE_ERROR = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"TIMEOUT")]
+    TIMEOUT = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"CANCELLED")]
+    CANCELLED = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"INTERNAL_ERROR")]
+    INTERNAL_ERROR = 9,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Information about a generated derivative asset from processing
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ProcessingOutput
+{
+
+    /// <summary>
+    /// Type of output (e.g., "mipmap_level_1", "lod_2")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("outputType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string OutputType { get; set; } = default!;
+
+    /// <summary>
+    /// Storage key for the output (service-to-service context)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    public string? Key { get; set; } = default!;
+
+    /// <summary>
+    /// Asset identifier for the generated output (client context)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
+    public string? AssetId { get; set; } = default!;
+
+    /// <summary>
+    /// Size of the output in bytes
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("size")]
+    public long? Size { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Request to initiate an asset upload and receive a pre-signed URL
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -156,7 +478,7 @@ public partial class UploadRequest
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("owner")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string Owner { get; set; } = default!;
 
@@ -164,29 +486,31 @@ public partial class UploadRequest
     /// Original filename with extension
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("filename")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string Filename { get; set; } = default!;
 
     /// <summary>
     /// File size in bytes
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("size")]
+    [System.ComponentModel.DataAnnotations.Range(1L, long.MaxValue)]
     public long Size { get; set; } = default!;
 
     /// <summary>
     /// MIME content type (e.g., image/png, model/gltf-binary)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("contentType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string ContentType { get; set; } = default!;
 
     /// <summary>
-    /// Optional metadata for asset categorization
+    /// Optional metadata for asset categorization (null to skip)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public AssetMetadataInput Metadata { get; set; } = default!;
+    public AssetMetadataInput? Metadata { get; set; } = default!;
 
 }
 
@@ -228,10 +552,10 @@ public partial class UploadResponse
     public MultipartConfig Multipart { get; set; } = default!;
 
     /// <summary>
-    /// Headers the client must include when uploading to the pre-signed URL
+    /// Headers the client must include when uploading to the pre-signed URL (null if no special headers needed)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requiredHeaders")]
-    public System.Collections.Generic.IDictionary<string, string> RequiredHeaders { get; set; } = default!;
+    public System.Collections.Generic.IDictionary<string, string>? RequiredHeaders { get; set; } = default!;
 
 }
 
@@ -357,23 +681,24 @@ public partial class AssetMetadataInput
 {
 
     /// <summary>
-    /// Type classification for the asset
+    /// Type classification for the asset (null to omit)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public AssetType AssetType { get; set; } = default!;
+    public AssetType? AssetType { get; set; } = default!;
 
     /// <summary>
-    /// Game realm the asset belongs to
+    /// Game realm the asset belongs to (null for unscoped)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
-    /// Searchable tags for the asset
+    /// Searchable tags for the asset (null to omit)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tags")]
-    public System.Collections.Generic.ICollection<string> Tags { get; set; } = default!;
+    public System.Collections.Generic.ICollection<string>? Tags { get; set; } = default!;
 
 }
 
@@ -432,12 +757,11 @@ public partial class AssetMetadata
     public AssetType AssetType { get; set; } = default!;
 
     /// <summary>
-    /// Game realm the asset belongs to
+    /// Game realm the asset belongs to. Null for cross-realm assets.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// Searchable tags for the asset
@@ -488,18 +812,19 @@ public partial class GetAssetRequest
 {
 
     /// <summary>
-    /// Asset identifier
+    /// Asset identifier ({content-type-prefix}-{hash-prefix} format, e.g. application-f7a0c71edb19)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
-    /// Version ID or 'latest'
+    /// Version ID to retrieve (null for latest version)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public string Version { get; set; } = "latest";
+    public string? Version { get; set; } = default!;
 
 }
 
@@ -578,11 +903,12 @@ public partial class DeleteAssetRequest
 {
 
     /// <summary>
-    /// Asset identifier to delete
+    /// Asset identifier to delete ({content-type-prefix}-{hash-prefix} format)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
@@ -602,14 +928,6 @@ public partial class DeleteAssetResponse
 {
 
     /// <summary>
-    /// Deleted asset identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
-
-    /// <summary>
     /// Number of versions deleted
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionsDeleted")]
@@ -625,23 +943,26 @@ public partial class ListVersionsRequest
 {
 
     /// <summary>
-    /// Asset identifier to list versions for
+    /// Asset identifier to list versions for ({content-type-prefix}-{hash-prefix} format)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(256, MinimumLength = 1)]
     public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Maximum number of versions to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Limit { get; set; } = 50;
 
     /// <summary>
     /// Number of versions to skip for pagination
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
 }
@@ -652,14 +973,6 @@ public partial class ListVersionsRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class AssetVersionList
 {
-
-    /// <summary>
-    /// Asset identifier
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// List of asset versions
@@ -697,12 +1010,10 @@ public partial class AssetVersion
 {
 
     /// <summary>
-    /// Unique version identifier
+    /// Unique version identifier. Null when object storage versioning is not enabled.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("versionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string VersionId { get; set; } = default!;
+    public string? VersionId { get; set; } = default!;
 
     /// <summary>
     /// Timestamp when this version was created
@@ -754,6 +1065,7 @@ public partial class AssetSearchRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string Realm { get; set; } = default!;
 
     /// <summary>
@@ -766,12 +1078,14 @@ public partial class AssetSearchRequest
     /// Maximum number of results to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Limit { get; set; } = 50;
 
     /// <summary>
     /// Number of results to skip for pagination
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
 }
@@ -833,8 +1147,9 @@ public partial class CreateBundleRequest
     /// Human-readable bundle identifier (e.g., "synty/polygon-adventure", "my-bundle-v1")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -845,10 +1160,11 @@ public partial class CreateBundleRequest
 
     /// <summary>
     /// Game realm this bundle belongs to.
-    /// <br/>Defaults to 'shared' if not specified.
+    /// <br/>Null for realm-agnostic bundles available across all realms.
     /// <br/>
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string? Realm { get; set; } = default!;
 
     /// <summary>
@@ -857,6 +1173,7 @@ public partial class CreateBundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
@@ -896,7 +1213,7 @@ public partial class CreateBundleResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CreateBundleResponseStatus Status { get; set; } = default!;
+    public BundleStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Estimated bundle size in bytes
@@ -917,8 +1234,9 @@ public partial class GetBundleRequest
     /// Human-readable bundle identifier to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -1218,6 +1536,7 @@ public partial class CreateMetabundleRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string Realm { get; set; } = default!;
 
     /// <summary>
@@ -1282,7 +1601,7 @@ public partial class CreateMetabundleResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CreateMetabundleResponseStatus Status { get; set; } = default!;
+    public BundleStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Pre-signed download URL (only present when status is 'ready')
@@ -1309,10 +1628,10 @@ public partial class CreateMetabundleResponse
     public long SizeBytes { get; set; } = default!;
 
     /// <summary>
-    /// Provenance data for the metabundle
+    /// Provenance data for the metabundle (null when status is not ready)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sourceBundles")]
-    public System.Collections.Generic.ICollection<SourceBundleReference> SourceBundles { get; set; } = default!;
+    public System.Collections.Generic.ICollection<SourceBundleReference>? SourceBundles { get; set; } = default!;
 
     /// <summary>
     /// Present if creation failed due to asset conflicts
@@ -1377,7 +1696,7 @@ public partial class GetJobStatusResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public GetJobStatusResponseStatus Status { get; set; } = default!;
+    public BundleStatus Status { get; set; } = default!;
 
     /// <summary>
     /// Progress percentage (0-100) when status is 'processing'
@@ -1420,7 +1739,8 @@ public partial class GetJobStatusResponse
     /// Error code (when status is 'failed')
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("errorCode")]
-    public string? ErrorCode { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public MetabundleErrorCode? ErrorCode { get; set; } = default!;
 
     /// <summary>
     /// Human-readable error description (when status is 'failed')
@@ -1481,25 +1801,13 @@ public partial class CancelJobResponse
     public System.Guid JobId { get; set; } = default!;
 
     /// <summary>
-    /// Whether the job was successfully cancelled
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("cancelled")]
-    public bool Cancelled { get; set; } = default!;
-
-    /// <summary>
     /// Current job status after cancellation attempt
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CancelJobResponseStatus Status { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context about the cancellation result
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("message")]
-    public string? Message { get; set; } = default!;
+    public BundleStatus Status { get; set; } = default!;
 
 }
 
@@ -1516,6 +1824,7 @@ public partial class ResolveBundlesRequest
     [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
     public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
@@ -1524,6 +1833,7 @@ public partial class ResolveBundlesRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string Realm { get; set; } = default!;
 
     /// <summary>
@@ -1752,6 +2062,7 @@ public partial class QueryBundlesByAssetRequest
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string Realm { get; set; } = default!;
 
     /// <summary>
@@ -1781,14 +2092,6 @@ public partial class QueryBundlesByAssetRequest
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class QueryBundlesByAssetResponse
 {
-
-    /// <summary>
-    /// The queried asset ID
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("assetId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string AssetId { get; set; } = default!;
 
     /// <summary>
     /// Bundles containing this asset
@@ -1863,12 +2166,11 @@ public partial class BundleSummary
     public long? SizeBytes { get; set; } = default!;
 
     /// <summary>
-    /// Game realm
+    /// Game realm. Null for cross-realm bundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// When the bundle was created
@@ -1891,6 +2193,8 @@ public partial class BulkGetAssetsRequest
     [System.Text.Json.Serialization.JsonPropertyName("assetIds")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.MinLength(1)]
+    [System.ComponentModel.DataAnnotations.MaxLength(100)]
     public System.Collections.Generic.ICollection<string> AssetIds { get; set; } = new System.Collections.ObjectModel.Collection<string>();
 
     /// <summary>
@@ -1928,10 +2232,11 @@ public partial class BulkGetAssetsResponse
 
 /// <summary>
 /// Bundle processing status:
-/// <br/>- pending: Bundle creation is pending/queued
+/// <br/>- queued: Bundle creation is queued for processing
 /// <br/>- processing: Bundle is being processed
 /// <br/>- ready: Bundle is ready for download
 /// <br/>- failed: Bundle creation failed
+/// <br/>- cancelled: Bundle creation was cancelled
 /// <br/>
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -1939,8 +2244,8 @@ public partial class BulkGetAssetsResponse
 public enum BundleStatus
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"pending")]
-    Pending = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
+    Queued = 0,
 
     [System.Runtime.Serialization.EnumMember(Value = @"processing")]
     Processing = 1,
@@ -1950,6 +2255,9 @@ public enum BundleStatus
 
     [System.Runtime.Serialization.EnumMember(Value = @"failed")]
     Failed = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 4,
 
 }
 #pragma warning restore CS1591
@@ -2035,12 +2343,11 @@ public partial class BundleInfo
     public string? Owner { get; set; } = default!;
 
     /// <summary>
-    /// Game realm this bundle belongs to
+    /// Game realm this bundle belongs to. Null for cross-realm bundles.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string Realm { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
+    public string? Realm { get; set; } = default!;
 
     /// <summary>
     /// Key-value tags for categorization and filtering
@@ -2102,8 +2409,9 @@ public partial class UpdateBundleRequest
     /// Human-readable bundle identifier to update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -2152,14 +2460,6 @@ public partial class UpdateBundleResponse
 {
 
     /// <summary>
-    /// Human-readable bundle identifier that was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
-
-    /// <summary>
     /// New version number after update
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("version")]
@@ -2198,8 +2498,9 @@ public partial class DeleteBundleRequest
     /// Human-readable bundle identifier to delete
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -2224,21 +2525,13 @@ public partial class DeleteBundleResponse
 {
 
     /// <summary>
-    /// Human-readable bundle identifier that was deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
-
-    /// <summary>
     /// Deletion status
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public DeleteBundleResponseStatus Status { get; set; } = default!;
+    public DeletionStatus Status { get; set; } = default!;
 
     /// <summary>
     /// When the bundle was deleted
@@ -2267,8 +2560,9 @@ public partial class RestoreBundleRequest
     /// Human-readable bundle identifier to restore
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
@@ -2287,28 +2581,13 @@ public partial class RestoreBundleResponse
 {
 
     /// <summary>
-    /// Human-readable bundle identifier that was restored
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string BundleId { get; set; } = default!;
-
-    /// <summary>
-    /// Current bundle status (should be "active")
+    /// Current bundle lifecycle status after restoration (should be "active")
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("status")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public string Status { get; set; } = default!;
-
-    /// <summary>
-    /// When the bundle was restored
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("restoredAt")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset RestoredAt { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BundleLifecycle Status { get; set; } = default!;
 
     /// <summary>
     /// Version number the bundle was restored from
@@ -2378,6 +2657,7 @@ public partial class QueryBundlesRequest
     /// Filter by realm
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("realm")]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string? Realm { get; set; } = default!;
 
     /// <summary>
@@ -2392,14 +2672,14 @@ public partial class QueryBundlesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortField")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QueryBundlesRequestSortField? SortField { get; set; } = default!;
+    public BundleSortField? SortField { get; set; } = default!;
 
     /// <summary>
     /// Sort order (default desc)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sortOrder")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public QueryBundlesRequestSortOrder? SortOrder { get; set; } = default!;
+    public SortOrder? SortOrder { get; set; } = default!;
 
     /// <summary>
     /// Maximum results to return (max 1000)
@@ -2467,20 +2747,23 @@ public partial class ListBundleVersionsRequest
     /// Human-readable bundle identifier to get history for
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bundleId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(255, MinimumLength = 1)]
     public string BundleId { get; set; } = default!;
 
     /// <summary>
     /// Maximum versions to return
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("limit")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int Limit { get; set; } = 50;
 
     /// <summary>
     /// Pagination offset
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("offset")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
     public int Offset { get; set; } = 0;
 
 }
@@ -2572,140 +2855,6 @@ public partial class BundleVersionRecord
     public BundleInfo? Snapshot { get; set; } = default!;
 
 }
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CreateBundleResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
-    Queued = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
-    Processing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
-    Ready = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CreateMetabundleResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
-    Queued = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
-    Processing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
-    Ready = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum GetJobStatusResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
-    Queued = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
-    Processing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
-    Ready = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
-    Cancelled = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum CancelJobResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"queued")]
-    Queued = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"processing")]
-    Processing = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ready")]
-    Ready = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"failed")]
-    Failed = 3,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
-    Cancelled = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum DeleteBundleResponseStatus
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"deleted")]
-    Deleted = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"permanently_deleted")]
-    PermanentlyDeleted = 1,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum QueryBundlesRequestSortField
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"created_at")]
-    CreatedAt = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"updated_at")]
-    UpdatedAt = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"name")]
-    Name = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"size")]
-    Size = 3,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum QueryBundlesRequestSortOrder
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"asc")]
-    Asc = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"desc")]
-    Desc = 1,
-
-}
-#pragma warning restore CS1591
 
 
 

@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Realm Service API
   description: |
@@ -31,6 +31,9 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
 x-service-layer: GameFoundation
+x-resource-lifecycle:
+  resourceType: realm
+  cleanupPolicy: BEST_EFFORT
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -214,34 +217,35 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmListResponse\": {\n            \"description\": \"Paginated list of realms with
         metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n    \
         \        \"required\": [\n                \"realms\",\n                \"totalCount\",\n                \"page\",\n\
-        \                \"pageSize\"\n            ],\n            \"properties\": {\n                \"realms\": {\n    \
-        \                \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmResponse\"\
-        \n                    },\n                    \"description\": \"List of realms matching the query criteria\"\n  \
-        \              },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n               \
-        \     \"description\": \"Total number of realms matching the query (before pagination)\"\n                },\n   \
-        \             \"page\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Current
-        page number (1-indexed)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of realms per page\"\n                },\n                \"hasNextPage\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are more realms
-        available on the next page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether there are realms available on the previous page\"\n\
-        \                }\n            }\n        },\n        \"RealmResponse\": {\n            \"description\": \"Complete
-        realm information returned from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\",\n                \"code\",\n                \"\
-        name\",\n                \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n  \
-        \              \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n\
-        \            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n  \
-        \              },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n      \
-        \          \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name for the realm\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm
-        belongs to\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\
-        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n               \
-        \ },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        \                \"pageSize\",\n                \"hasNextPage\",\n                \"hasPreviousPage\"\n          \
+        \  ],\n            \"properties\": {\n                \"realms\": {\n                    \"type\": \"array\",\n  \
+        \                  \"items\": {\n                        \"$ref\": \"#/$defs/RealmResponse\"\n                   \
+        \ },\n                    \"description\": \"List of realms matching the query criteria\"\n                },\n  \
+        \              \"totalCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Total number of realms matching the query (before pagination)\"\n                },\n                \"page\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Current page number (1-indexed)\"\
+        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
+        \      \"description\": \"Number of realms per page\"\n                },\n                \"hasNextPage\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether there are more realms available
+        on the next page\"\n                },\n                \"hasPreviousPage\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether there are realms available on the previous page\"\n            \
+        \    }\n            }\n        },\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information
+        returned from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n\
+        \                \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n          \
+        \      \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n        \
+        \    \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n          \
+        \      },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique code for the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\
+        \n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs
+        to\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n   \
+        \             },\n                \"category\": {\n                    \"type\": \"string\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n                },\n\
+        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
         : \"Whether the realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n\
         \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system
         infrastructure realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n             \
@@ -302,16 +306,16 @@ paths:
         service this realm belongs to\"\n                },\n                \"description\": {\n                    \"type\"\
         : \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\": true,\n               \
         \     \"description\": \"Description of the realm\"\n                },\n                \"category\": {\n       \
-        \             \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Category for grouping (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\")\"\n          \
-        \      },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : true,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n           \
-        \     },\n                \"isSystemType\": {\n                    \"type\": \"boolean\",\n                    \"\
-        default\": false,\n                    \"description\": \"Whether this realm is a system infrastructure realm (e.g.,
-        VOID). System realms cannot be merged as source.\"\n                },\n                \"metadata\": {\n        \
-        \            \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
-        field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        \             \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 50,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Category for grouping (e.g., \\\"\
+        MAIN\\\", \\\"SPECIAL\\\")\"\n                },\n                \"isActive\": {\n                    \"type\": \"\
+        boolean\",\n                    \"default\": true,\n                    \"description\": \"Whether the realm is currently
+        active for gameplay\"\n                },\n                \"isSystemType\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"Whether this realm is a system
+        infrastructure realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n             \
+        \   \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -387,16 +391,16 @@ paths:
         : \"Display name for the realm\"\n                },\n                \"description\": {\n                    \"type\"\
         : \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\": true,\n               \
         \     \"description\": \"Description of the realm\"\n                },\n                \"category\": {\n       \
-        \             \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Category for grouping\"\n                },\n                \"isActive\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether the realm is currently active\"\n                },\n                \"isSystemType\": {\n           \
-        \         \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.\"\n  \
-        \              },\n                \"metadata\": {\n                    \"type\": \"object\",\n                  \
-        \  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\":
-        \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \             \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 50,\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Category for grouping\"\n       \
+        \         },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Whether the realm is currently active\"\n              \
+        \  },\n                \"isSystemType\": {\n                    \"type\": \"boolean\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Whether this realm is a system infrastructure realm (e.g., VOID).
+        System realms cannot be merged as source.\"\n                },\n                \"metadata\": {\n               \
+        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -502,17 +506,16 @@ paths:
                 $ref: '#/components/schemas/RealmResponse'
         '404':
           description: Realm not found
-        '409':
-          description: Realm is already deprecated
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeprecateRealmRequest\"\
         ,\n    \"$defs\": {\n        \"DeprecateRealmRequest\": {\n            \"description\": \"Request to mark a realm
         as deprecated, preventing new entity creation\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"realmId\"\n            ],\n            \"properties\": {\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the realm to deprecate\"\n                },\n                \"reason\"\
-        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 500,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation (for audit purposes)\"\n         \
-        \       }\n            }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"realmId\",\n                \"reason\"\n            ],\n\
+        \            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"ID of the realm to deprecate\"\n    \
+        \            },\n                \"reason\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 500,\n                    \"description\": \"Reason for deprecation
+        (mandatory for Category A world-building definitions per FOUNDATION TENETS)\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -578,8 +581,6 @@ paths:
                 $ref: '#/components/schemas/RealmResponse'
         '404':
           description: Realm not found
-        '400':
-          description: Realm is not deprecated
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UndeprecateRealmRequest\"\
         ,\n    \"$defs\": {\n        \"UndeprecateRealmRequest\": {\n            \"description\": \"Request to restore a deprecated
         realm to active status\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
@@ -675,27 +676,22 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MergeRealmsResponse\"\
         ,\n    \"$defs\": {\n        \"MergeRealmsResponse\": {\n            \"description\": \"Result of a realm merge operation
         including per-entity-type migration statistics\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"sourceRealmId\",\n                \"targetRealmId\",\n  \
-        \              \"speciesMigrated\",\n                \"speciesFailed\",\n                \"locationsMigrated\",\n\
-        \                \"locationsFailed\",\n                \"charactersMigrated\",\n                \"charactersFailed\"\
-        ,\n                \"sourceDeleted\"\n            ],\n            \"properties\": {\n                \"sourceRealmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the source realm that was merged from\"\n                },\n                \"targetRealmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the target realm that entities were merged into\"\n                },\n                \"speciesMigrated\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of species successfully
-        added to target realm and removed from source\"\n                },\n                \"speciesFailed\": {\n      \
-        \              \"type\": \"integer\",\n                    \"description\": \"Number of species that failed to migrate\"\
-        \n                },\n                \"locationsMigrated\": {\n                    \"type\": \"integer\",\n     \
-        \               \"description\": \"Number of locations successfully transferred to target realm\"\n              \
-        \  },\n                \"locationsFailed\": {\n                    \"type\": \"integer\",\n                    \"\
-        description\": \"Number of locations that failed to transfer\"\n                },\n                \"charactersMigrated\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of characters successfully
-        transferred to target realm\"\n                },\n                \"charactersFailed\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"Number of characters that failed to transfer\"\n    \
-        \            },\n                \"sourceDeleted\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether the source realm was hard-deleted after merge\"\n                }\n           \
-        \ }\n        }\n    }\n}"
+        : false,\n            \"required\": [\n                \"speciesMigrated\",\n                \"speciesFailed\",\n\
+        \                \"locationsMigrated\",\n                \"locationsFailed\",\n                \"charactersMigrated\"\
+        ,\n                \"charactersFailed\",\n                \"sourceDeleted\"\n            ],\n            \"properties\"\
+        : {\n                \"speciesMigrated\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of species successfully added to target realm and removed from source\"\n                },\n         \
+        \       \"speciesFailed\": {\n                    \"type\": \"integer\",\n                    \"description\": \"\
+        Number of species that failed to migrate\"\n                },\n                \"locationsMigrated\": {\n       \
+        \             \"type\": \"integer\",\n                    \"description\": \"Number of locations successfully transferred
+        to target realm\"\n                },\n                \"locationsFailed\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"description\": \"Number of locations that failed to transfer\"\n                },\n    \
+        \            \"charactersMigrated\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Number of characters successfully transferred to target realm\"\n                },\n                \"charactersFailed\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of characters that
+        failed to transfer\"\n                },\n                \"sourceDeleted\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether the source realm was hard-deleted after merge\"\n              \
+        \  }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Merge a deprecated realm into another realm\",\n    \"description\": \"\
         Migrates all entities (species, locations, characters) from a deprecated\\nsource realm into a target realm. Migration
         order: species first (add target\\nrealm association), then locations (root-first tree moves), then characters\\n(bulk
@@ -786,29 +782,30 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmsExistBatchResponse\"\
         ,\n    \"$defs\": {\n        \"RealmsExistBatchResponse\": {\n            \"description\": \"Batch validation results
         for multiple realms\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
-        \    \"required\": [\n                \"results\",\n                \"allExist\",\n                \"allActive\"\n\
-        \            ],\n            \"properties\": {\n                \"results\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/RealmExistsResponse\"\n         \
-        \           },\n                    \"description\": \"Validation result for each requested realm ID (in same order
-        as request)\"\n                },\n                \"allExist\": {\n                    \"type\": \"boolean\",\n \
-        \                   \"description\": \"True if all requested realms exist\"\n                },\n                \"\
-        allActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"True if all requested
-        realms exist AND are active (not deprecated)\"\n                },\n                \"invalidRealmIds\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
-        ,\n                        \"format\": \"uuid\"\n                    },\n                    \"description\": \"List
-        of realm IDs that do not exist (empty if all exist)\"\n                },\n                \"deprecatedRealmIds\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
-        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"List of realm IDs that exist but are deprecated (empty if none deprecated)\"\n                }\n            }\n\
-        \        },\n        \"RealmExistsResponse\": {\n            \"description\": \"Response indicating whether a realm
-        exists and its active status\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"exists\",\n                \"isActive\"\n            ],\n        \
-        \    \"properties\": {\n                \"exists\": {\n                    \"type\": \"boolean\",\n              \
-        \      \"description\": \"Whether the realm exists\"\n                },\n                \"isActive\": {\n      \
-        \              \"type\": \"boolean\",\n                    \"description\": \"Whether the realm is active (false if
-        deprecated or not found)\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"The realm ID if found\"\n                }\n            }\n        }\n    }\n}"
+        \    \"required\": [\n                \"results\",\n                \"allExist\",\n                \"allActive\",\n\
+        \                \"invalidRealmIds\",\n                \"deprecatedRealmIds\"\n            ],\n            \"properties\"\
+        : {\n                \"results\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/RealmExistsResponse\"\n                    },\n                    \"\
+        description\": \"Validation result for each requested realm ID (in same order as request)\"\n                },\n\
+        \                \"allExist\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"True if all requested realms exist\"\n                },\n                \"allActive\": {\n                 \
+        \   \"type\": \"boolean\",\n                    \"description\": \"True if all requested realms exist AND are active
+        (not deprecated)\"\n                },\n                \"invalidRealmIds\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"List of realm IDs that do not exist (empty
+        if all exist)\"\n                },\n                \"deprecatedRealmIds\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
+        : \"uuid\"\n                    },\n                    \"description\": \"List of realm IDs that exist but are deprecated
+        (empty if none deprecated)\"\n                }\n            }\n        },\n        \"RealmExistsResponse\": {\n \
+        \           \"description\": \"Response indicating whether a realm exists and its active status\",\n            \"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
+        exists\",\n                \"isActive\"\n            ],\n            \"properties\": {\n                \"exists\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the realm exists\"\
+        \n                },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n              \
+        \      \"description\": \"Whether the realm is active (false if deprecated or not found)\"\n                },\n \
+        \               \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"The realm ID if found\"\n     \
+        \           }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Check if multiple realms exist and are active\",\n    \"description\":
         \"Batch validation endpoint for services creating multi-realm entities.\\nReturns validation results for each realm
         ID in a single call, avoiding\\nN+1 API calls when validating multiple realms.\\n\",\n    \"tags\": [\n        \"\
@@ -853,23 +850,26 @@ paths:
         data used for seeding operations during service initialization\",\n            \"type\": \"object\",\n           \
         \ \"additionalProperties\": false,\n            \"required\": [\n                \"code\",\n                \"name\"\
         ,\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n                \"code\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique code for the realm\"\n \
-        \               },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"\
-        description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"ID of the game service this realm belongs to\"\n                },\n                \"description\": {\n     \
-        \               \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm and its characteristics\"\n                },\n                \"category\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Category for grouping realms (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\", \\\"TEST\\\")\"\n                },\n     \
-        \           \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
-        \                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isSystemType\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
-        : false,\n                    \"description\": \"Whether this realm is a system infrastructure realm (e.g., VOID).
-        System realms cannot be merged as source.\"\n                },\n                \"metadata\": {\n               \
-        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
-        field by convention.\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 50,\n                    \"pattern\": \"^[A-Z][A-Z0-9_]*$\",\n                    \"description\": \"Unique code
+        for the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n      \
+        \              \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 100,\n\
+        \                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
+        : {\n                    \"type\": \"string\",\n                    \"maxLength\": 2000,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Detailed description of the realm and its characteristics\"\n    \
+        \            },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"\
+        minLength\": 1,\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n               \
+        \     \"description\": \"Category for grouping realms (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\", \\\"TEST\\\")\"\n    \
+        \            },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                   \
+        \ \"default\": true,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n\
+        \                },\n                \"isSystemType\": {\n                    \"type\": \"boolean\",\n           \
+        \         \"default\": false,\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"metadata\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads
+        specific keys from this field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedRealmsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedRealmsResponse\": {\n            \"description\": \"Summary of a realm seeding
         operation including counts and errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -972,6 +972,7 @@ components:
           description: Description of the realm
         category:
           type: string
+          minLength: 1
           maxLength: 50
           nullable: true
           description: Category for grouping (e.g., "MAIN", "SPECIAL")
@@ -1018,6 +1019,7 @@ components:
           description: Description of the realm
         category:
           type: string
+          minLength: 1
           maxLength: 50
           nullable: true
           description: Category for grouping
@@ -1052,6 +1054,7 @@ components:
       additionalProperties: false
       required:
       - realmId
+      - reason
       properties:
         realmId:
           type: string
@@ -1059,9 +1062,10 @@ components:
           description: ID of the realm to deprecate
         reason:
           type: string
+          minLength: 1
           maxLength: 500
-          nullable: true
-          description: Optional reason for deprecation (for audit purposes)
+          description: Reason for deprecation (mandatory for Category A world-building definitions per FOUNDATION 
+            TENETS)
     UndeprecateRealmRequest:
       description: Request to restore a deprecated realm to active status
       type: object
@@ -1126,6 +1130,8 @@ components:
       - results
       - allExist
       - allActive
+      - invalidRealmIds
+      - deprecatedRealmIds
       properties:
         results:
           type: array
@@ -1177,9 +1183,14 @@ components:
       properties:
         code:
           type: string
-          description: Unique code for the realm
+          minLength: 1
+          maxLength: 50
+          pattern: '^[A-Z][A-Z0-9_]*$'
+          description: Unique code for the realm (e.g., "REALM_1", "REALM_2")
         name:
           type: string
+          minLength: 1
+          maxLength: 100
           description: Display name for the realm
         gameServiceId:
           type: string
@@ -1187,10 +1198,13 @@ components:
           description: ID of the game service this realm belongs to
         description:
           type: string
+          maxLength: 2000
           nullable: true
           description: Detailed description of the realm and its characteristics
         category:
           type: string
+          minLength: 1
+          maxLength: 50
           nullable: true
           description: Category for grouping realms (e.g., "MAIN", "SPECIAL", "TEST")
         isActive:
@@ -1285,6 +1299,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         realms:
           type: array
@@ -1355,8 +1371,6 @@ components:
       type: object
       additionalProperties: false
       required:
-      - sourceRealmId
-      - targetRealmId
       - speciesMigrated
       - speciesFailed
       - locationsMigrated
@@ -1365,14 +1379,6 @@ components:
       - charactersFailed
       - sourceDeleted
       properties:
-        sourceRealmId:
-          type: string
-          format: uuid
-          description: ID of the source realm that was merged from
-        targetRealmId:
-          type: string
-          format: uuid
-          description: ID of the target realm that entities were merged into
         speciesMigrated:
           type: integer
           description: Number of species successfully added to target realm and removed from source

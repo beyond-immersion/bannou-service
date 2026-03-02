@@ -31,7 +31,7 @@ export class GoapProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async generateGoapPlanAsync(
+  async behaviorGenerateGoapPlanAsync(
     request: Schemas['GoapPlanRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class GoapProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async validateGoapPlanAsync(
+  async behaviorValidateGoapPlanAsync(
     request: Schemas['ValidateGoapPlanRequest'],
     channel: number = 0,
     timeout?: number

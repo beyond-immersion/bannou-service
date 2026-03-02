@@ -81,6 +81,7 @@ public partial class QueryCurrentSubscriptionsRequest
     /// Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this service.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
+    [System.ComponentModel.DataAnnotations.StringLength(int.MaxValue, MinimumLength = 1)]
     public string? StubName { get; set; } = default!;
 
 }
@@ -141,6 +142,7 @@ public partial class CreateSubscriptionRequest
     /// Alternative to expirationDate - number of days from startDate
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("durationDays")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
     public int? DurationDays { get; set; } = default!;
 
 }
@@ -217,7 +219,8 @@ public partial class RenewSubscriptionRequest
     /// Number of days to extend the subscription
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("extensionDays")]
-    public int ExtensionDays { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int? ExtensionDays { get; set; } = default!;
 
     /// <summary>
     /// Alternative to extensionDays - set specific new expiration
@@ -262,7 +265,7 @@ public partial class SubscriptionInfo
     /// Stub name of the service (denormalized for efficiency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("stubName")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public string StubName { get; set; } = default!;
 
@@ -270,6 +273,8 @@ public partial class SubscriptionInfo
     /// Display name of the service (denormalized for efficiency)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
     public string DisplayName { get; set; } = default!;
 
     /// <summary>
@@ -321,6 +326,32 @@ public partial class SubscriptionInfo
 }
 
 /// <summary>
+/// The type of action that triggered a subscription state change
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SubscriptionAction
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"created")]
+    Created = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"updated")]
+    Updated = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"cancelled")]
+    Cancelled = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"expired")]
+    Expired = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"renewed")]
+    Renewed = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Response from querying current subscriptions.
 /// <br/>Returns subscriptions matching the query criteria (by account, by stub, or both).
 /// <br/>
@@ -338,16 +369,12 @@ public partial class QuerySubscriptionsResponse
     public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = new System.Collections.ObjectModel.Collection<SubscriptionInfo>();
 
     /// <summary>
-    /// Total number of subscriptions returned
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
-    public int TotalCount { get; set; } = default!;
-
-    /// <summary>
     /// Unique account IDs in the result set (useful when querying by stubName)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountIds")]
-    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = default!;
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<System.Guid> AccountIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
 }
 
@@ -365,12 +392,6 @@ public partial class SubscriptionListResponse
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Collections.Generic.ICollection<SubscriptionInfo> Subscriptions { get; set; } = new System.Collections.ObjectModel.Collection<SubscriptionInfo>();
-
-    /// <summary>
-    /// Total number of subscriptions matching the filter
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
-    public int TotalCount { get; set; } = default!;
 
 }
 

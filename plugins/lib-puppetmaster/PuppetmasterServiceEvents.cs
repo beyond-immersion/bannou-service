@@ -73,6 +73,7 @@ public partial class PuppetmasterService
     /// </summary>
     private async Task SubscribeToLifecycleTopicAsync(string topic)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.SubscribeToLifecycleTopicAsync");
         try
         {
             // SubscribeDynamicRawAsync gives us raw bytes which we can parse to JsonElement
@@ -111,6 +112,7 @@ public partial class PuppetmasterService
         JsonElement eventData,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleLifecycleEventAsync");
         // Find all source types that use this topic
         var sourceTypes = _resourceEventMapping.GetSourceTypesForTopic(eventTopic).ToList();
 
@@ -192,6 +194,7 @@ public partial class PuppetmasterService
         WatchPerception perception,
         CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.InjectWatchPerceptionAsync");
         try
         {
             // IActorClient is L2 (GameFoundation) - must be available per FOUNDATION TENETS.
@@ -248,6 +251,7 @@ public partial class PuppetmasterService
     /// </summary>
     public async Task HandleBehaviorUpdatedAsync(BehaviorUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleBehaviorUpdatedAsync");
         _logger.LogInformation("Received behavior.updated event for {BehaviorId}", evt.BehaviorId);
 
         try
@@ -313,6 +317,7 @@ public partial class PuppetmasterService
     private async Task InjectBehaviorUpdatePerceptionAsync(
         IActorClient actorClient, string actorId, string behaviorId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.InjectBehaviorUpdatePerceptionAsync");
         try
         {
             var request = new InjectPerceptionRequest
@@ -372,6 +377,7 @@ public partial class PuppetmasterService
     /// <param name="evt">The event data.</param>
     public async Task HandleRealmDeletedAsync(RealmDeletedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleRealmDeletedAsync");
         _logger.LogInformation(
             "Received realm.deleted event for realm {RealmId} ({Code}), reason: {Reason}",
             evt.RealmId,
@@ -396,6 +402,7 @@ public partial class PuppetmasterService
     /// <param name="evt">The event data.</param>
     public async Task HandleRealmUpdatedAsync(RealmUpdatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleRealmUpdatedAsync");
         // Only react when isActive was changed
         if (!evt.ChangedFields.Contains("isActive"))
             return;
@@ -446,6 +453,7 @@ public partial class PuppetmasterService
     /// <returns>The number of watchers stopped.</returns>
     private async Task<int> StopAllWatchersForRealmAsync(Guid realmId, string reason)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.StopAllWatchersForRealmAsync");
         // Find all watchers for this realm
         var realmWatchers = _activeWatchers.Values
             .Where(w => w.RealmId == realmId)
@@ -490,6 +498,7 @@ public partial class PuppetmasterService
     /// <param name="evt">The event data.</param>
     public async Task HandleRealmCreatedAsync(RealmCreatedEvent evt)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.puppetmaster", "PuppetmasterService.HandleRealmCreatedAsync");
         _logger.LogInformation(
             "Received realm.created event for realm {RealmId} ({RealmCode})",
             evt.RealmId,

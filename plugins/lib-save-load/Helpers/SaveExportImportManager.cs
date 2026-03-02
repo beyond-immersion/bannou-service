@@ -24,10 +24,19 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
     private readonly IVersionDataLoader _versionDataLoader;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<SaveExportImportManager> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SaveExportImportManager"/> class.
     /// </summary>
+    /// <param name="stateStoreFactory">State store factory for save data access.</param>
+    /// <param name="configuration">Save-load service configuration.</param>
+    /// <param name="assetClient">Asset client for archive storage.</param>
+    /// <param name="httpClientFactory">HTTP client factory for presigned URL operations.</param>
+    /// <param name="versionDataLoader">Version data loader for save data retrieval.</param>
+    /// <param name="messageBus">Message bus for error event publishing.</param>
+    /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     public SaveExportImportManager(
         IStateStoreFactory stateStoreFactory,
         SaveLoadServiceConfiguration configuration,
@@ -35,7 +44,8 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         IHttpClientFactory httpClientFactory,
         IVersionDataLoader versionDataLoader,
         IMessageBus messageBus,
-        ILogger<SaveExportImportManager> logger)
+        ILogger<SaveExportImportManager> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
@@ -44,6 +54,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         _versionDataLoader = versionDataLoader;
         _messageBus = messageBus;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc />
@@ -51,6 +62,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         ExportSavesRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveExportImportManager.ExportSavesAsync");
         _logger.LogDebug(
             "Exporting saves for owner {OwnerId} ({OwnerType}) game {GameId}",
             body.OwnerId, body.OwnerType, body.GameId);
@@ -58,7 +70,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         try
         {
             var ownerIdStr = body.OwnerId.ToString();
-            var ownerTypeStr = body.OwnerType.ToString();
+            var ownerTypeStr = body.OwnerType.ToString().ToLowerInvariant();
 
             // Query slots for this owner
             // SaveSlotMetadata.OwnerId and OwnerType are now Guid and enum
@@ -232,7 +244,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
 
             return (StatusCodes.OK, new ExportSavesResponse
             {
-                DownloadUrl = getAssetResponse.DownloadUrl,
+                DownloadUrl = getAssetResponse.DownloadUrl.ToString(),
                 ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
                 SizeBytes = archiveData.Length
             });
@@ -259,6 +271,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
         ImportSavesRequest body,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.save-load", "SaveExportImportManager.ImportSavesAsync");
         _logger.LogDebug(
             "Importing saves from archive {AssetId} for owner {OwnerId} ({OwnerType})",
             body.ArchiveAssetId, body.TargetOwnerId, body.TargetOwnerType);
@@ -326,7 +339,7 @@ public sealed class SaveExportImportManager : ISaveExportImportManager
             }
 
             var targetOwnerIdStr = body.TargetOwnerId.ToString();
-            var targetOwnerTypeStr = body.TargetOwnerType.ToString();
+            var targetOwnerTypeStr = body.TargetOwnerType.ToString().ToLowerInvariant();
             var slotStore = _stateStoreFactory.GetStore<SaveSlotMetadata>(StateStoreDefinitions.SaveLoadSlots);
             var versionStore = _stateStoreFactory.GetStore<SaveVersionManifest>(StateStoreDefinitions.SaveLoadVersions);
 

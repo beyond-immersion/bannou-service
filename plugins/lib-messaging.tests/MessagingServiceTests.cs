@@ -778,6 +778,197 @@ public class MessagingServiceTests : IDisposable
     }
 
     #endregion
+
+    #region RecoverExternalSubscriptionsAsync Tests
+
+    [Fact]
+    public async Task RecoverExternalSubscriptionsAsync_WithNoPersistedSubs_ReturnsZero()
+    {
+        // Arrange - mock returns empty list (default setup)
+
+        // Act
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(0, recovered);
+    }
+
+    [Fact]
+    public async Task RecoverExternalSubscriptionsAsync_WithPersistedSubs_RecoversThem()
+    {
+        // Arrange
+        var sub1 = new ExternalSubscriptionData(
+            Guid.NewGuid(), "topic1", "http://localhost:8080/cb1", DateTimeOffset.UtcNow);
+        var sub2 = new ExternalSubscriptionData(
+            Guid.NewGuid(), "topic2", "http://localhost:8080/cb2", DateTimeOffset.UtcNow);
+
+        _mockSubscriptionStore
+            .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSubscriptionData> { sub1, sub2 });
+
+        _mockHttpClientFactory
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(CreateTrackedHttpClient);
+
+        var mockHandle = new Mock<IAsyncDisposable>();
+        _mockMessageSubscriber
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
+                It.IsAny<string>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockHandle.Object);
+
+        // Act
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(2, recovered);
+
+        // Verify TTL was refreshed
+        _mockSubscriptionStore.Verify(
+            x => x.RefreshSetTtlAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RecoverExternalSubscriptionsAsync_WhenSubFails_RemovesFromPersistedSet()
+    {
+        // Arrange
+        var sub = new ExternalSubscriptionData(
+            Guid.NewGuid(), "topic1", "http://localhost:8080/cb1", DateTimeOffset.UtcNow);
+
+        _mockSubscriptionStore
+            .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSubscriptionData> { sub });
+
+        _mockHttpClientFactory
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(CreateTrackedHttpClient);
+
+        _mockMessageSubscriber
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
+                It.IsAny<string>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Cannot subscribe"));
+
+        // Act
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+
+        // Assert
+        Assert.Equal(0, recovered);
+
+        // Verify failed sub was removed from persisted set
+        _mockSubscriptionStore.Verify(
+            x => x.RemoveFromSetAsync(
+                It.IsAny<string>(),
+                sub,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RecoverExternalSubscriptionsAsync_SkipsAlreadyActiveSub()
+    {
+        // Arrange - First create an active subscription with a known ID
+        var subId = Guid.NewGuid();
+        var createRequest = new CreateSubscriptionRequest
+        {
+            Topic = "test.topic",
+            CallbackUrl = new Uri("http://localhost:8080/callback")
+        };
+
+        var mockHandle = new Mock<IAsyncDisposable>();
+        _mockMessageSubscriber
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
+                It.IsAny<string>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockHandle.Object);
+
+        // Create a subscription first so it's in activeSubscriptions
+        var (_, createResponse) = await _service.CreateSubscriptionAsync(createRequest, CancellationToken.None);
+        Assert.NotNull(createResponse);
+
+        // Now set up recovery to return a sub with the same ID that was just created
+        var persistedSub = new ExternalSubscriptionData(
+            createResponse.SubscriptionId, "test.topic", "http://localhost:8080/callback", DateTimeOffset.UtcNow);
+
+        _mockSubscriptionStore
+            .Setup(x => x.GetSetAsync<ExternalSubscriptionData>(
+                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ExternalSubscriptionData> { persistedSub });
+
+        // Act
+        var recovered = await _service.RecoverExternalSubscriptionsAsync(CancellationToken.None);
+
+        // Assert - should skip the already-active subscription (0 newly recovered)
+        Assert.Equal(0, recovered);
+    }
+
+    #endregion
+
+    #region RefreshSubscriptionTtlAsync Tests
+
+    [Fact]
+    public async Task RefreshSubscriptionTtlAsync_WithActiveSubscriptions_RefreshesTtl()
+    {
+        // Arrange - Create a subscription so _activeSubscriptions is non-empty
+        var mockHandle = new Mock<IAsyncDisposable>();
+        _mockMessageSubscriber
+            .Setup(x => x.SubscribeDynamicAsync<Services.GenericMessageEnvelope>(
+                It.IsAny<string>(),
+                It.IsAny<Func<Services.GenericMessageEnvelope, CancellationToken, Task>>(),
+                It.IsAny<string?>(),
+                It.IsAny<SubscriptionExchangeType>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockHandle.Object);
+
+        await _service.CreateSubscriptionAsync(new CreateSubscriptionRequest
+        {
+            Topic = "test.topic",
+            CallbackUrl = new Uri("http://localhost:8080/callback")
+        }, CancellationToken.None);
+
+        // Act
+        await _service.RefreshSubscriptionTtlAsync(CancellationToken.None);
+
+        // Assert
+        _mockSubscriptionStore.Verify(
+            x => x.RefreshSetTtlAsync(
+                It.IsAny<string>(),
+                _configuration.ExternalSubscriptionTtlSeconds,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RefreshSubscriptionTtlAsync_WithNoSubscriptions_DoesNotCallStore()
+    {
+        // Act
+        await _service.RefreshSubscriptionTtlAsync(CancellationToken.None);
+
+        // Assert - no store call when no active subscriptions
+        _mockSubscriptionStore.Verify(
+            x => x.RefreshSetTtlAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    #endregion
 }
 
 public class MessagingConfigurationTests

@@ -115,6 +115,8 @@ AffixDefinition:
   # Metadata
   isActive: bool
   isDeprecated: bool
+  deprecatedAt: DateTimeOffset?
+  deprecationReason: string?
 ```
 
 **Key design decisions**:
@@ -403,8 +405,7 @@ This is the T29-compliant alternative to the metadata convention. lib-affix owns
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
 | `affix-definition.created` | `AffixDefinitionCreatedEvent` | Affix definition created (lifecycle) |
-| `affix-definition.updated` | `AffixDefinitionUpdatedEvent` | Affix definition updated (lifecycle); includes `ChangedFields` |
-| `affix-definition.deprecated` | `AffixDefinitionDeprecatedEvent` | Affix definition deprecated (lifecycle) |
+| `affix-definition.updated` | `AffixDefinitionUpdatedEvent` | Affix definition updated (lifecycle); includes `ChangedFields` (covers deprecation via `isDeprecated`, `deprecatedAt`, `deprecationReason` in changedFields) |
 | `affix.initialized` | `AffixInitializedEvent` | Affix instance created for an item (full affix set attached) |
 | `affix.applied` | `AffixAppliedEvent` | Single affix added to an item instance; includes definition code, rolled values, slot type |
 | `affix.removed` | `AffixRemovedEvent` | Single affix removed from an item instance; includes definition code, slot type |
@@ -496,11 +497,11 @@ All endpoints require `developer` role.
 
 - **GetDefinition** (`/affix/definition/get`): Cache read-through (Redis -> MySQL -> populate cache). Supports lookup by definitionId or by gameServiceId + code.
 
-- **ListDefinitions** (`/affix/definition/list`): Paged JSON query with required gameServiceId filter. Optional filters: slotType, modGroup, category, tags (any match), tier range, requiredInfluence, isActive. Sorted by modGroup then tier ascending.
+- **ListDefinitions** (`/affix/definition/list`): Paged JSON query with required gameServiceId filter. Optional filters: slotType, modGroup, category, tags (any match), tier range, requiredInfluence, isActive, includeDeprecated (boolean, default: false). Sorted by modGroup then tier ascending.
 
 - **UpdateDefinition** (`/affix/definition/update`): Acquires distributed lock. Partial update -- only non-null fields applied. **Cannot change**: code, gameServiceId, slotType, modGroup (these are identity-level properties). Invalidates definition and pool caches. Publishes `affix-definition.updated` with `changedFields`.
 
-- **DeprecateDefinition** (`/affix/definition/deprecate`): Marks inactive. Optional `migrationTargetCode` for directing future generation to a replacement. Existing items with this affix are unaffected. Invalidates caches. Publishes `affix-definition.deprecated`.
+- **DeprecateDefinition** (`/affix/definition/deprecate`): Sets `isDeprecated: true`, `deprecatedAt` to current timestamp, and `deprecationReason` from the request. Marks inactive. Optional `migrationTargetCode` for directing future generation to a replacement. Existing items with this affix are unaffected. Idempotent: returns OK if already deprecated. Invalidates caches. Publishes `affix-definition.updated` with `changedFields` containing the deprecation fields.
 
 - **SeedDefinitions** (`/affix/definition/seed`): Bulk creation, skipping definitions whose code already exists (idempotent). Validates game service once. Returns created/skipped counts. Invalidates pool cache once at end.
 

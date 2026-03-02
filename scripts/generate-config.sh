@@ -133,6 +133,7 @@ try:
 
         for prop_name, prop_info in properties_dict.items():
             prop_type = prop_info.get('type', 'string')
+            prop_format = prop_info.get('format', None)
             prop_default = prop_info.get('default', None)
             prop_description = prop_info.get('description', f'{prop_name} configuration property')
             prop_env_var = prop_info.get('env', prop_name.upper())
@@ -194,14 +195,24 @@ try:
                     })
                     csharp_type = enum_type_name
             else:
-                # Convert type to C# type
-                csharp_type = {
-                    'string': 'string',
-                    'integer': 'int',
-                    'number': 'double',
-                    'boolean': 'bool',
-                    'array': 'string[]'
-                }.get(prop_type, 'string')
+                # Check OpenAPI format for type refinement before base type mapping
+                if prop_format == 'uuid':
+                    csharp_type = 'Guid'
+                elif prop_format == 'int64':
+                    csharp_type = 'long'
+                elif prop_format == 'date-time':
+                    csharp_type = 'DateTime'
+                elif prop_format == 'float':
+                    csharp_type = 'float'
+                else:
+                    # Fall back to base type mapping
+                    csharp_type = {
+                        'string': 'string',
+                        'integer': 'int',
+                        'number': 'double',
+                        'boolean': 'bool',
+                        'array': 'string[]'
+                    }.get(prop_type, 'string')
 
             # Handle nullable types and defaults for properties
             # For strings: add ? suffix if explicitly nullable in schema
@@ -233,6 +244,12 @@ try:
                         default_value = f' = [{array_items}];'
                     else:
                         default_value = f' = {prop_default};'
+                elif csharp_type == 'long':
+                    default_value = f' = {prop_default}L;'
+                elif csharp_type == 'Guid':
+                    default_value = f' = Guid.Parse(\"{prop_default}\");'
+                elif csharp_type == 'float':
+                    default_value = f' = {prop_default}f;'
                 else:
                     default_value = f' = {prop_default};'
             elif csharp_type == 'string' and not prop_nullable:

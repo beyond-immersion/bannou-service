@@ -36,14 +36,14 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CapabilityManifestEvent : BaseClientEvent
+public partial class CapabilityManifestClientEvent : BaseClientEvent
 {
 
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "connect.capability_manifest";
+    public override string EventName { get; set; } = "connect.capability-manifest";
 
     /// <summary>
     /// Session ID this manifest applies to
@@ -131,14 +131,14 @@ public partial class ClientCapabilityEntry
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class DisconnectNotificationEvent : BaseClientEvent
+public partial class DisconnectNotificationClientEvent : BaseClientEvent
 {
 
     /// <summary>
     /// Fixed event type identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "connect.disconnect_notification";
+    public override string EventName { get; set; } = "connect.disconnect-notification";
 
     /// <summary>
     /// Token for reconnecting to the same session (valid for 5 minutes)
@@ -179,7 +179,7 @@ public partial class DisconnectNotificationEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SystemErrorEvent : BaseClientEvent
+public partial class SystemErrorClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -232,7 +232,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
     /// Fixed event type identifier (internal, not forwarded to client)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "permission.session_capabilities";
+    public override string EventName { get; set; } = "permission.session-capabilities";
 
     /// <summary>
     /// Session ID these capabilities apply to
@@ -264,7 +264,7 @@ public partial class SessionCapabilitiesEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SystemNotificationEvent : BaseClientEvent
+public partial class SystemNotificationClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -280,7 +280,7 @@ public partial class SystemNotificationEvent : BaseClientEvent
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public SystemNotificationEventNotificationType NotificationType { get; set; } = default!;
+    public SystemNotificationClientEventNotificationType NotificationType { get; set; } = default!;
 
     /// <summary>
     /// Human-readable notification message
@@ -324,7 +324,7 @@ public partial class ShortcutPublishedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "session.shortcut_published";
+    public override string EventName { get; set; } = "session.shortcut-published";
 
     /// <summary>
     /// Target session for this shortcut.
@@ -367,7 +367,7 @@ public partial class ShortcutRevokedEvent : BaseClientEvent
     /// Fixed event type identifier.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
-    public override string EventName { get; set; } = "session.shortcut_revoked";
+    public override string EventName { get; set; } = "session.shortcut-revoked";
 
     /// <summary>
     /// Target session for revocation.
@@ -537,7 +537,7 @@ public partial class SessionShortcutMetadata
 
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum SystemNotificationEventNotificationType
+public enum SystemNotificationClientEventNotificationType
 {
 
     [System.Runtime.Serialization.EnumMember(Value = @"info")]

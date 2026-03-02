@@ -67,6 +67,7 @@ public class VoiceServiceConfiguration : BaseServiceConfiguration
     /// Migration deadline in milliseconds when upgrading tiers
     /// Environment variable: VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS
     /// </summary>
+    [ConfigRange(Minimum = 1000, Maximum = 120000)]
     public int TierUpgradeMigrationDeadlineMs { get; set; } = 30000;
 
     /// <summary>
@@ -108,12 +109,6 @@ public class VoiceServiceConfiguration : BaseServiceConfiguration
     public string KamailioHost { get; set; } = "localhost";
 
     /// <summary>
-    /// Kamailio JSON-RPC port (typically 5080, not SIP port 5060)
-    /// Environment variable: VOICE_KAMAILIO_RPC_PORT
-    /// </summary>
-    public int KamailioRpcPort { get; set; } = 5080;
-
-    /// <summary>
     /// Kamailio SIP signaling port for client registration
     /// Environment variable: VOICE_KAMAILIO_SIP_PORT
     /// </summary>
@@ -140,16 +135,10 @@ public class VoiceServiceConfiguration : BaseServiceConfiguration
     public int RtpEngineTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
-    /// Timeout in seconds for Kamailio service requests
-    /// Environment variable: VOICE_KAMAILIO_REQUEST_TIMEOUT_SECONDS
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 300)]
-    public int KamailioRequestTimeoutSeconds { get; set; } = 5;
-
-    /// <summary>
     /// Hours until SIP credentials expire (clients should re-authenticate before expiration)
     /// Environment variable: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 720)]
     public int SipCredentialExpirationHours { get; set; } = 24;
 
     /// <summary>
@@ -172,6 +161,13 @@ public class VoiceServiceConfiguration : BaseServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 5, Maximum = 120)]
     public int ParticipantEvictionCheckIntervalSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition
+    /// Environment variable: VOICE_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int LockTimeoutSeconds { get; set; } = 30;
 
     /// <summary>
     /// Seconds to wait for all participants to respond before auto-declining

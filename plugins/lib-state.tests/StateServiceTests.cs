@@ -825,6 +825,328 @@ public class StateServiceTests
 
     #endregion
 
+    #region BulkSaveStateAsync Tests
+
+    [Fact]
+    public async Task BulkSaveStateAsync_WithValidRequest_ReturnsOkWithResults()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkSaveStateRequest
+        {
+            StoreName = "test-store",
+            Items = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = "key1", Value = new Dictionary<string, object> { ["name"] = "Value1" } },
+                new BulkSaveItem { Key = "key2", Value = new Dictionary<string, object> { ["name"] = "Value2" } }
+            }
+        };
+
+        var returnedEtags = new Dictionary<string, string>
+        {
+            { "key1", "etag-1" },
+            { "key2", "etag-2" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.SaveBulkAsync(
+            It.IsAny<IEnumerable<KeyValuePair<string, object>>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(returnedEtags);
+
+        // Act
+        var (status, response) = await service.BulkSaveStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Results.Count);
+        Assert.Contains(response.Results, r => r.Key == "key1" && r.Etag == "etag-1");
+        Assert.Contains(response.Results, r => r.Key == "key2" && r.Etag == "etag-2");
+    }
+
+    [Fact]
+    public async Task BulkSaveStateAsync_WithNonExistingStore_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkSaveStateRequest
+        {
+            StoreName = "non-existing-store",
+            Items = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = "key1", Value = new Dictionary<string, object> { ["name"] = "Value1" } }
+            }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
+
+        // Act
+        var (status, response) = await service.BulkSaveStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BulkSaveStateAsync_PassesOptionsToStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var options = new BeyondImmersion.BannouService.State.StateOptions { Ttl = 600 };
+        var request = new BulkSaveStateRequest
+        {
+            StoreName = "test-store",
+            Items = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = "key1", Value = new Dictionary<string, object> { ["name"] = "Value1" } }
+            },
+            Options = options
+        };
+
+        StateOptions? capturedOptions = null;
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.SaveBulkAsync(
+            It.IsAny<IEnumerable<KeyValuePair<string, object>>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .Callback<IEnumerable<KeyValuePair<string, object>>, StateOptions?, CancellationToken>((_, opts, _) => capturedOptions = opts)
+            .ReturnsAsync(new Dictionary<string, string> { { "key1", "etag-1" } });
+
+        // Act
+        await service.BulkSaveStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(capturedOptions);
+        Assert.Equal(600, capturedOptions.Ttl);
+    }
+
+    [Fact]
+    public async Task BulkSaveStateAsync_WhenExceptionThrown_ShouldThrow()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkSaveStateRequest
+        {
+            StoreName = "test-store",
+            Items = new List<BulkSaveItem>
+            {
+                new BulkSaveItem { Key = "key1", Value = new Dictionary<string, object> { ["name"] = "Value1" } }
+            }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.SaveBulkAsync(
+            It.IsAny<IEnumerable<KeyValuePair<string, object>>>(),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Bulk save failed"));
+
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.BulkSaveStateAsync(request, CancellationToken.None));
+    }
+
+    #endregion
+
+    #region BulkExistsStateAsync Tests
+
+    [Fact]
+    public async Task BulkExistsStateAsync_WithValidRequest_ReturnsOkWithExistingKeys()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkExistsStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "key1", "key2", "key3" }
+        };
+
+        var existingKeys = new HashSet<string> { "key1", "key3" };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.ExistsBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingKeys);
+
+        // Act
+        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.ExistingKeys.Count);
+        Assert.Contains("key1", response.ExistingKeys);
+        Assert.Contains("key3", response.ExistingKeys);
+    }
+
+    [Fact]
+    public async Task BulkExistsStateAsync_WithNonExistingStore_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkExistsStateRequest
+        {
+            StoreName = "non-existing-store",
+            Keys = new List<string> { "key1" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
+
+        // Act
+        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BulkExistsStateAsync_WithNoKeysExisting_ReturnsEmptyList()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkExistsStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "key1", "key2" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.ExistsBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HashSet<string>());
+
+        // Act
+        var (status, response) = await service.BulkExistsStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.ExistingKeys);
+    }
+
+    [Fact]
+    public async Task BulkExistsStateAsync_WhenExceptionThrown_ShouldThrow()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkExistsStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "key1" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.ExistsBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Bulk exists failed"));
+
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.BulkExistsStateAsync(request, CancellationToken.None));
+    }
+
+    #endregion
+
+    #region BulkDeleteStateAsync Tests
+
+    [Fact]
+    public async Task BulkDeleteStateAsync_WithValidRequest_ReturnsOkWithDeletedCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkDeleteStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "key1", "key2", "key3" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        // Act
+        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.DeletedCount);
+    }
+
+    [Fact]
+    public async Task BulkDeleteStateAsync_WithNonExistingStore_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkDeleteStateRequest
+        {
+            StoreName = "non-existing-store",
+            Keys = new List<string> { "key1" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("non-existing-store")).Returns(false);
+
+        // Act
+        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task BulkDeleteStateAsync_WithNoKeysDeleted_ReturnsZeroCount()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkDeleteStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "nonexistent1", "nonexistent2" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Act
+        var (status, response) = await service.BulkDeleteStateAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(0, response.DeletedCount);
+    }
+
+    [Fact]
+    public async Task BulkDeleteStateAsync_WhenExceptionThrown_ShouldThrow()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new BulkDeleteStateRequest
+        {
+            StoreName = "test-store",
+            Keys = new List<string> { "key1" }
+        };
+
+        _mockStateStoreFactory.Setup(f => f.HasStore("test-store")).Returns(true);
+        _mockStateStoreFactory.Setup(f => f.GetStore<object>("test-store")).Returns(_mockStateStore.Object);
+        _mockStateStore.Setup(s => s.DeleteBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Bulk delete failed"));
+
+        // Act & Assert - exceptions propagate to generated controller for error handling
+        await Assert.ThrowsAsync<Exception>(() => service.BulkDeleteStateAsync(request, CancellationToken.None));
+    }
+
+    #endregion
+
     #region ListStoresAsync Tests
 
     [Fact]
@@ -921,6 +1243,61 @@ public class StateServiceTests
 
         // Act & Assert - exceptions propagate to generated controller for error handling
         await Assert.ThrowsAsync<Exception>(() => service.ListStoresAsync(null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ListStoresAsync_WithIncludeStats_ReturnsKeyCountsForEachStore()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListStoresRequest { IncludeStats = true };
+
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(new[] { "store-a", "store-b" });
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-a")).Returns(StateBackend.Redis);
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-b")).Returns(StateBackend.MySql);
+        _mockStateStoreFactory.Setup(f => f.GetKeyCountAsync("store-a", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(42L);
+        _mockStateStoreFactory.Setup(f => f.GetKeyCountAsync("store-b", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(100L);
+
+        // Act
+        var (status, response) = await service.ListStoresAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Stores.Count);
+
+        var storeA = response.Stores.First(s => s.Name == "store-a");
+        Assert.Equal(42, storeA.KeyCount);
+
+        var storeB = response.Stores.First(s => s.Name == "store-b");
+        Assert.Equal(100, storeB.KeyCount);
+    }
+
+    [Fact]
+    public async Task ListStoresAsync_WithoutIncludeStats_ReturnsNullKeyCounts()
+    {
+        // Arrange
+        var service = CreateService();
+
+        _mockStateStoreFactory.Setup(f => f.GetStoreNames()).Returns(new[] { "store-a" });
+        _mockStateStoreFactory.Setup(f => f.GetBackendType("store-a")).Returns(StateBackend.Redis);
+
+        // Act
+        var (status, response) = await service.ListStoresAsync(
+            new ListStoresRequest { IncludeStats = false }, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Stores);
+        Assert.Null(response.Stores.First().KeyCount);
+
+        // GetKeyCountAsync should NOT have been called
+        _mockStateStoreFactory.Verify(
+            f => f.GetKeyCountAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     #endregion

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Relationship Service Events
   description: |
@@ -27,23 +27,24 @@ info:
       event: RelationshipDeletedEvent
       description: Published when a relationship is soft-deleted
     # Relationship Type lifecycle events (auto-generated from x-lifecycle)
-    - topic: relationship-type.created
+    - topic: relationship.type.created
       event: RelationshipTypeCreatedEvent
       description: Published when a new relationship type is created
-    - topic: relationship-type.updated
+    - topic: relationship.type.updated
       event: RelationshipTypeUpdatedEvent
       description: Published when a relationship type is updated
-    - topic: relationship-type.deleted
+    - topic: relationship.type.deleted
       event: RelationshipTypeDeletedEvent
       description: Published when a relationship type is deleted
     # Manually-defined merge summary event (not a lifecycle event)
-    - topic: relationship-type.merged
+    - topic: relationship.type.merged
       event: RelationshipTypeMergedEvent
       description: Published when a relationship type merge operation completes
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/relationship-lifecycle-events.yaml
 x-lifecycle:
+  topic_prefix: relationship
   Relationship:
     model:
       relationshipId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship" }
@@ -56,7 +57,7 @@ x-lifecycle:
       endedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship ended, if applicable" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention." }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the relationship record was created" }
-      updatedAt: { type: string, format: date-time, description: "Timestamp when the relationship record was last updated" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the relationship record was last updated, null if never updated" }
   RelationshipType:
     model:
       relationshipTypeId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the relationship type" }
@@ -84,10 +85,13 @@ paths: {}  # Events don't have HTTP paths
 components:
   schemas:
     RelationshipTypeMergedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a relationship type merge operation completes, replacing N individual relationship.updated events with a single summary event
       required:
+        - eventName
         - eventId
         - timestamp
         - sourceTypeId
@@ -96,14 +100,10 @@ components:
         - failedCount
         - sourceDeleted
       properties:
-        eventId:
+        eventName:
           type: string
-          format: uuid
-          description: Unique identifier for this event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the merge operation completed
+          default: "relationship.type.merged"
+          description: Event type identifier
         sourceTypeId:
           type: string
           format: uuid

@@ -1,3 +1,4 @@
+using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Documentation.Services;
 using BeyondImmersion.BannouService.TestUtilities;
 using Microsoft.Extensions.Logging;
@@ -304,68 +305,68 @@ public class ContentTransformServiceTests
     public void DetermineCategory_WithFrontmatterCategory_ShouldUseFrontmatter()
     {
         // Arrange
-        var frontmatter = new DocumentFrontmatter { Category = "Custom Category" };
-        var categoryMapping = new Dictionary<string, string> { { "guides/", "Guide" } };
+        var frontmatter = new DocumentFrontmatter { Category = "Tutorials" };
+        var categoryMapping = new Dictionary<string, DocumentCategory> { { "guides/", DocumentCategory.GettingStarted } };
 
         // Act
-        var result = _service.DetermineCategory("guides/test.md", frontmatter, categoryMapping, "Other");
+        var result = _service.DetermineCategory("guides/test.md", frontmatter, categoryMapping, DocumentCategory.Other);
 
         // Assert
-        Assert.Equal("Custom Category", result);
+        Assert.Equal(DocumentCategory.Tutorials, result);
     }
 
     [Fact]
     public void DetermineCategory_WithCategoryMapping_ShouldUseMapping()
     {
         // Arrange
-        var categoryMapping = new Dictionary<string, string>
+        var categoryMapping = new Dictionary<string, DocumentCategory>
         {
-            { "guides/", "Guide" },
-            { "api/", "Reference" }
+            { "guides/", DocumentCategory.GettingStarted },
+            { "api/", DocumentCategory.ApiReference }
         };
 
         // Act
-        var result = _service.DetermineCategory("guides/getting-started.md", null, categoryMapping, "Other");
+        var result = _service.DetermineCategory("guides/getting-started.md", null, categoryMapping, DocumentCategory.Other);
 
         // Assert
-        Assert.Equal("Guide", result);
+        Assert.Equal(DocumentCategory.GettingStarted, result);
     }
 
     [Fact]
     public void DetermineCategory_WithDirectoryInference_ShouldInferFromDirectory()
     {
         // Arrange & Act
-        var result = _service.DetermineCategory("tutorials/my-tutorial.md", null, null, "Other");
+        var result = _service.DetermineCategory("tutorials/my-tutorial.md", null, null, DocumentCategory.Other);
 
         // Assert
-        Assert.Equal("Tutorial", result);
+        Assert.Equal(DocumentCategory.Tutorials, result);
     }
 
     [Fact]
     public void DetermineCategory_WithNoMatch_ShouldReturnDefault()
     {
         // Arrange & Act
-        var result = _service.DetermineCategory("random/document.md", null, null, "Default Category");
+        var result = _service.DetermineCategory("random/document.md", null, null, DocumentCategory.WorldLore);
 
         // Assert
-        Assert.Equal("Default Category", result);
+        Assert.Equal(DocumentCategory.WorldLore, result);
     }
 
     [Fact]
     public void DetermineCategory_WithLongestPrefixMatch_ShouldMatchLongest()
     {
         // Arrange
-        var categoryMapping = new Dictionary<string, string>
+        var categoryMapping = new Dictionary<string, DocumentCategory>
         {
-            { "guides/", "Guide" },
-            { "guides/advanced/", "Advanced Guide" }
+            { "guides/", DocumentCategory.GettingStarted },
+            { "guides/advanced/", DocumentCategory.Architecture }
         };
 
         // Act
-        var result = _service.DetermineCategory("guides/advanced/complex-topic.md", null, categoryMapping, "Other");
+        var result = _service.DetermineCategory("guides/advanced/complex-topic.md", null, categoryMapping, DocumentCategory.Other);
 
         // Assert
-        Assert.Equal("Advanced Guide", result);
+        Assert.Equal(DocumentCategory.Architecture, result);
     }
 
     #endregion
@@ -380,7 +381,7 @@ public class ContentTransformServiceTests
             ---
             title: Complete Document
             slug: complete-doc
-            category: Guide
+            category: Tutorials
             summary: A complete test document
             voiceSummary: A summary for voice
             tags:
@@ -393,12 +394,12 @@ public class ContentTransformServiceTests
             """;
 
         // Act
-        var result = _service.TransformFile("test.md", content, null, "Other");
+        var result = _service.TransformFile("test.md", content, null, DocumentCategory.Other);
 
         // Assert
         Assert.Equal("complete-doc", result.Slug);
         Assert.Equal("Complete Document", result.Title);
-        Assert.Equal("Guide", result.Category);
+        Assert.Equal(DocumentCategory.Tutorials, result.Category);
         Assert.Equal("A complete test document", result.Summary);
         Assert.Equal("A summary for voice", result.VoiceSummary);
         Assert.Contains("test", result.Tags);
@@ -419,7 +420,7 @@ public class ContentTransformServiceTests
             """;
 
         // Act
-        var result = _service.TransformFile("draft.md", content, null, "Other");
+        var result = _service.TransformFile("draft.md", content, null, DocumentCategory.Other);
 
         // Assert
         Assert.True(result.IsDraft);
@@ -436,7 +437,7 @@ public class ContentTransformServiceTests
             """;
 
         // Act
-        var result = _service.TransformFile("test/my-document.md", content, null, "Other");
+        var result = _service.TransformFile("test/my-document.md", content, null, DocumentCategory.Other);
 
         // Assert
         Assert.Equal("test/my-document", result.Slug);
@@ -448,7 +449,7 @@ public class ContentTransformServiceTests
     public void TransformFile_WithNullContent_ShouldHandleGracefully()
     {
         // Arrange & Act
-        var result = _service.TransformFile("test.md", "", null, "Other");
+        var result = _service.TransformFile("test.md", "", null, DocumentCategory.Other);
 
         // Assert
         Assert.Equal("test", result.Slug);
@@ -459,7 +460,7 @@ public class ContentTransformServiceTests
     public void TransformFile_WithEmptyFilePath_ShouldThrow()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentException>(() => _service.TransformFile("", "content", null, "Other"));
+        Assert.Throws<ArgumentException>(() => _service.TransformFile("", "content", null, DocumentCategory.Other));
     }
 
     #endregion

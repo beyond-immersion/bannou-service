@@ -60,7 +60,7 @@ internal class BoardTemplateModel
     public AdjacencyMode AdjacencyMode { get; set; }
 
     /// <summary>Owner types allowed to create boards from this template.</summary>
-    public List<string> AllowedOwnerTypes { get; set; } = new();
+    public List<EntityType> AllowedOwnerTypes { get; set; } = new();
 
     /// <summary>Whether this template is available for new board creation.</summary>
     public bool IsActive { get; set; } = true;
@@ -121,8 +121,8 @@ internal class BoardInstanceModel
     /// <summary>Unique identifier for the board instance.</summary>
     public Guid BoardId { get; set; }
 
-    /// <summary>Type of entity that owns this board (e.g., character, account, guild).</summary>
-    public string OwnerType { get; set; } = string.Empty;
+    /// <summary>Type of entity that owns this board.</summary>
+    public EntityType OwnerType { get; set; }
 
     /// <summary>Entity that owns this board.</summary>
     public Guid OwnerId { get; set; }

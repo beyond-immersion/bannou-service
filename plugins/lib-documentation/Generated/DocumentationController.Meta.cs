@@ -174,11 +174,13 @@ public partial class DocumentationController
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Optional session ID for conversational context"
+                    "nullable": true,
+                    "description": "Optional session ID for conversational context (null if not tracking)"
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Filter results to a specific category"
+                    "nullable": true,
+                    "description": "Filter results to a specific category (null for all categories)"
                 },
                 "maxResults": {
                     "type": "integer",
@@ -239,19 +241,9 @@ public partial class DocumentationController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "namespace",
-                "query",
                 "results"
             ],
             "properties": {
-                "namespace": {
-                    "type": "string",
-                    "description": "The namespace that was searched"
-                },
-                "query": {
-                    "type": "string",
-                    "description": "The original query string"
-                },
                 "results": {
                     "type": "array",
                     "items": {
@@ -261,22 +253,26 @@ public partial class DocumentationController
                 },
                 "totalResults": {
                     "type": "integer",
-                    "description": "Total number of matching documents"
+                    "nullable": true,
+                    "description": "Total number of matching documents (null if count unavailable)"
                 },
                 "voiceSummary": {
                     "type": "string",
-                    "description": "Concise spoken summary for voice AI"
+                    "nullable": true,
+                    "description": "Concise spoken summary for voice AI (null if not generated)"
                 },
                 "suggestedFollowups": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     },
-                    "description": "Suggested follow-up queries"
+                    "nullable": true,
+                    "description": "Suggested follow-up queries (null if none available)"
                 },
                 "noResultsMessage": {
                     "type": "string",
-                    "description": "User-friendly message when no results found"
+                    "nullable": true,
+                    "description": "User-friendly message when no results found (null when results exist)"
                 }
             }
         },
@@ -306,7 +302,8 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Category of the document"
+                    "nullable": true,
+                    "description": "Category of the document (null if uncategorized)"
                 },
                 "summary": {
                     "type": "string",
@@ -333,7 +330,8 @@ public partial class DocumentationController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Text snippets showing where matches occurred"
+                    "nullable": true,
+                    "description": "Text snippets showing where matches occurred (null if not computed)"
                 }
             }
         },
@@ -503,16 +501,13 @@ public partial class DocumentationController
                     "items": {
                         "$ref": "#/$defs/DocumentSummary"
                     },
-                    "description": "List of related documents based on includeRelated depth"
+                    "nullable": true,
+                    "description": "List of related documents based on includeRelated depth (null if not requested)"
                 },
                 "contentFormat": {
-                    "type": "string",
-                    "enum": [
-                        "markdown",
-                        "html",
-                        "none"
-                    ],
-                    "description": "Format of the content field in the response"
+                    "$ref": "#/$defs/ContentFormat",
+                    "nullable": true,
+                    "description": "Format of the content field in the response (null if content not included)"
                 }
             }
         },
@@ -553,7 +548,8 @@ public partial class DocumentationController
                 },
                 "content": {
                     "type": "string",
-                    "description": "Full markdown content of the document"
+                    "nullable": true,
+                    "description": "Full markdown content of the document (null if content not requested)"
                 },
                 "summary": {
                     "type": "string",
@@ -570,7 +566,8 @@ public partial class DocumentationController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Tags for filtering and search"
+                    "nullable": true,
+                    "description": "Tags for filtering and search (null if no tags)"
                 },
                 "relatedDocuments": {
                     "type": "array",
@@ -578,12 +575,14 @@ public partial class DocumentationController
                         "type": "string",
                         "format": "uuid"
                     },
-                    "description": "IDs of related documents"
+                    "nullable": true,
+                    "description": "IDs of related documents (null if none linked)"
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention."
+                    "nullable": true,
+                    "description": "Client-provided custom metadata (null if none set). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -656,9 +655,19 @@ public partial class DocumentationController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Tags associated with the document"
+                    "nullable": true,
+                    "description": "Tags associated with the document (null if no tags)"
                 }
             }
+        },
+        "ContentFormat": {
+            "type": "string",
+            "enum": [
+                "markdown",
+                "html",
+                "none"
+            ],
+            "description": "Format of the content field in a document response"
         }
     }
 }
@@ -773,13 +782,7 @@ public partial class DocumentationController
                     "description": "Fields to search within (null for default fields)"
                 },
                 "sortBy": {
-                    "type": "string",
-                    "enum": [
-                        "relevance",
-                        "recency",
-                        "alphabetical"
-                    ],
-                    "default": "relevance",
+                    "$ref": "#/$defs/SearchSortBy",
                     "description": "How to sort the search results"
                 },
                 "includeContent": {
@@ -814,6 +817,16 @@ public partial class DocumentationController
                 "summary"
             ],
             "description": "Fields that can be searched within documents"
+        },
+        "SearchSortBy": {
+            "type": "string",
+            "enum": [
+                "relevance",
+                "recency",
+                "alphabetical"
+            ],
+            "default": "relevance",
+            "description": "How to sort search results"
         }
     }
 }
@@ -829,14 +842,9 @@ public partial class DocumentationController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "namespace",
                 "results"
             ],
             "properties": {
-                "namespace": {
-                    "type": "string",
-                    "description": "The namespace that was searched"
-                },
                 "results": {
                     "type": "array",
                     "items": {
@@ -846,11 +854,8 @@ public partial class DocumentationController
                 },
                 "totalResults": {
                     "type": "integer",
-                    "description": "Total number of matching documents"
-                },
-                "searchTerm": {
-                    "type": "string",
-                    "description": "The original search term"
+                    "nullable": true,
+                    "description": "Total number of matching documents (null if count unavailable)"
                 }
             }
         },
@@ -880,7 +885,8 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Category of the document"
+                    "nullable": true,
+                    "description": "Category of the document (null if uncategorized)"
                 },
                 "summary": {
                     "type": "string",
@@ -907,7 +913,8 @@ public partial class DocumentationController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Text snippets showing where matches occurred"
+                    "nullable": true,
+                    "description": "Text snippets showing where matches occurred (null if not computed)"
                 }
             }
         },
@@ -1008,7 +1015,8 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Filter to a specific category"
+                    "nullable": true,
+                    "description": "Filter to a specific category (null for all categories)"
                 },
                 "tags": {
                     "type": "array",
@@ -1019,33 +1027,32 @@ public partial class DocumentationController
                     "description": "Filter by tags (null to skip tag filtering)"
                 },
                 "tagsMatch": {
-                    "type": "string",
-                    "enum": [
-                        "all",
-                        "any"
-                    ],
-                    "default": "all",
+                    "$ref": "#/$defs/TagMatchMode",
                     "description": "Whether documents must match all tags or any tag"
                 },
                 "createdAfter": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Filter to documents created after this timestamp"
+                    "nullable": true,
+                    "description": "Filter to documents created after this timestamp (null to skip)"
                 },
                 "createdBefore": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Filter to documents created before this timestamp"
+                    "nullable": true,
+                    "description": "Filter to documents created before this timestamp (null to skip)"
                 },
                 "updatedAfter": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Filter to documents updated after this timestamp"
+                    "nullable": true,
+                    "description": "Filter to documents updated after this timestamp (null to skip)"
                 },
                 "updatedBefore": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Filter to documents updated before this timestamp"
+                    "nullable": true,
+                    "description": "Filter to documents updated before this timestamp (null to skip)"
                 },
                 "titlesOnly": {
                     "type": "boolean",
@@ -1070,12 +1077,7 @@ public partial class DocumentationController
                     "description": "Field to sort results by"
                 },
                 "sortOrder": {
-                    "type": "string",
-                    "enum": [
-                        "asc",
-                        "desc"
-                    ],
-                    "default": "desc",
+                    "$ref": "#/$defs/SortOrder",
                     "description": "Sort order direction"
                 }
             }
@@ -1096,6 +1098,15 @@ public partial class DocumentationController
             ],
             "description": "Fixed categories for type-safe filtering"
         },
+        "TagMatchMode": {
+            "type": "string",
+            "enum": [
+                "all",
+                "any"
+            ],
+            "default": "all",
+            "description": "Whether documents must match all specified tags or any tag"
+        },
         "ListSortField": {
             "type": "string",
             "enum": [
@@ -1105,6 +1116,15 @@ public partial class DocumentationController
             ],
             "default": "updated_at",
             "description": "Fields available for sorting document lists"
+        },
+        "SortOrder": {
+            "type": "string",
+            "enum": [
+                "asc",
+                "desc"
+            ],
+            "default": "desc",
+            "description": "Sort order direction"
         }
     }
 }
@@ -1120,14 +1140,9 @@ public partial class DocumentationController
             "type": "object",
             "additionalProperties": false,
             "required": [
-                "namespace",
                 "documents"
             ],
             "properties": {
-                "namespace": {
-                    "type": "string",
-                    "description": "The namespace that was listed"
-                },
                 "documents": {
                     "type": "array",
                     "items": {
@@ -1138,14 +1153,6 @@ public partial class DocumentationController
                 "totalCount": {
                     "type": "integer",
                     "description": "Total number of documents matching filters"
-                },
-                "page": {
-                    "type": "integer",
-                    "description": "Current page number"
-                },
-                "pageSize": {
-                    "type": "integer",
-                    "description": "Number of documents per page"
                 },
                 "totalPages": {
                     "type": "integer",
@@ -1196,7 +1203,8 @@ public partial class DocumentationController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Tags associated with the document"
+                    "nullable": true,
+                    "description": "Tags associated with the document (null if no tags)"
                 }
             }
         },
@@ -1302,12 +1310,14 @@ public partial class DocumentationController
                 },
                 "sourceValue": {
                     "type": "string",
-                    "description": "The value for the suggestion source (document ID, slug, topic, or category)"
+                    "nullable": true,
+                    "description": "The value for the suggestion source (document ID, slug, topic, or category; null if source is context-based)"
                 },
                 "sessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Optional session ID for personalized suggestions"
+                    "nullable": true,
+                    "description": "Optional session ID for personalized suggestions (null if not tracking)"
                 },
                 "maxSuggestions": {
                     "type": "integer",
@@ -1364,7 +1374,8 @@ public partial class DocumentationController
                 },
                 "voicePrompt": {
                     "type": "string",
-                    "description": "Voice-friendly prompt for presenting suggestions"
+                    "nullable": true,
+                    "description": "Voice-friendly prompt for presenting suggestions (null if not generated)"
                 },
                 "sessionInfluenced": {
                     "type": "boolean",
@@ -1388,7 +1399,8 @@ public partial class DocumentationController
                 },
                 "slug": {
                     "type": "string",
-                    "description": "URL-friendly slug of the suggested document"
+                    "nullable": true,
+                    "description": "URL-friendly slug of the suggested document (null if unavailable)"
                 },
                 "title": {
                     "type": "string",
@@ -1396,11 +1408,13 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Category of the suggested document"
+                    "nullable": true,
+                    "description": "Category of the suggested document (null if uncategorized)"
                 },
                 "relevanceReason": {
                     "type": "string",
-                    "description": "Explanation of why this document is relevant"
+                    "nullable": true,
+                    "description": "Explanation of why this document is relevant (null if not computed)"
                 }
             }
         },
@@ -1590,7 +1604,8 @@ public partial class DocumentationController
             "additionalProperties": false,
             "required": [
                 "documentId",
-                "slug"
+                "slug",
+                "createdAt"
             ],
             "properties": {
                 "documentId": {
@@ -2130,7 +2145,8 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "New category to apply to all documents"
+                    "nullable": true,
+                    "description": "New category to apply to all documents (null to keep unchanged)"
                 },
                 "addTags": {
                     "type": "array",
@@ -2454,13 +2470,7 @@ public partial class DocumentationController
                     "description": "List of documents to import"
                 },
                 "onConflict": {
-                    "type": "string",
-                    "enum": [
-                        "skip",
-                        "update",
-                        "fail"
-                    ],
-                    "default": "skip",
+                    "$ref": "#/$defs/ConflictResolution",
                     "description": "How to handle documents with existing slugs"
                 }
             }
@@ -2478,10 +2488,13 @@ public partial class DocumentationController
             "properties": {
                 "slug": {
                     "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "maxLength": 100,
                     "description": "URL-friendly unique identifier for the document"
                 },
                 "title": {
                     "type": "string",
+                    "maxLength": 200,
                     "description": "Display title of the document"
                 },
                 "category": {
@@ -2490,7 +2503,7 @@ public partial class DocumentationController
                 },
                 "content": {
                     "type": "string",
-                    "description": "Markdown content of the document"
+                    "description": "Markdown content of the document (max 500KB)"
                 },
                 "summary": {
                     "type": "string",
@@ -2533,6 +2546,16 @@ public partial class DocumentationController
                 "other"
             ],
             "description": "Fixed categories for type-safe filtering"
+        },
+        "ConflictResolution": {
+            "type": "string",
+            "enum": [
+                "skip",
+                "update",
+                "fail"
+            ],
+            "default": "skip",
+            "description": "How to handle documents with existing slugs during import"
         }
     }
 }
@@ -2681,11 +2704,14 @@ public partial class DocumentationController
                 "page": {
                     "type": "integer",
                     "default": 1,
+                    "minimum": 1,
                     "description": "Page number for pagination"
                 },
                 "pageSize": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 1,
+                    "maximum": 100,
                     "description": "Number of items per page"
                 }
             }
@@ -2743,7 +2769,8 @@ public partial class DocumentationController
                 },
                 "slug": {
                     "type": "string",
-                    "description": "URL-friendly slug of the deleted document"
+                    "nullable": true,
+                    "description": "URL-friendly slug of the deleted document (null if slug was reused)"
                 },
                 "title": {
                     "type": "string",
@@ -2751,7 +2778,8 @@ public partial class DocumentationController
                 },
                 "category": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "Category of the deleted document"
+                    "nullable": true,
+                    "description": "Category of the deleted document (null if uncategorized)"
                 },
                 "deletedAt": {
                     "type": "string",
@@ -2866,7 +2894,8 @@ public partial class DocumentationController
                         "type": "string",
                         "format": "uuid"
                     },
-                    "description": "If empty, purges all trashcan items"
+                    "nullable": true,
+                    "description": "Specific document IDs to purge (null purges all trashcan items)"
                 }
             }
         }
@@ -3001,11 +3030,12 @@ public partial class DocumentationController
                     "description": "Total number of documents in the namespace"
                 },
                 "categoryCounts": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "integer"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CategoryCount"
                     },
-                    "description": "Document count per category"
+                    "nullable": true,
+                    "description": "Document count per category (null if not computed)"
                 },
                 "trashcanCount": {
                     "type": "integer",
@@ -3018,9 +3048,45 @@ public partial class DocumentationController
                 "lastUpdated": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Timestamp of most recent document update"
+                    "nullable": true,
+                    "description": "Timestamp of most recent document update (null if no documents exist)"
                 }
             }
+        },
+        "CategoryCount": {
+            "description": "Document count for a specific category",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "category",
+                "count"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/$defs/DocumentCategory",
+                    "description": "The document category"
+                },
+                "count": {
+                    "type": "integer",
+                    "description": "Number of documents in this category"
+                }
+            }
+        },
+        "DocumentCategory": {
+            "type": "string",
+            "enum": [
+                "getting-started",
+                "api-reference",
+                "architecture",
+                "deployment",
+                "troubleshooting",
+                "tutorials",
+                "game-systems",
+                "world-lore",
+                "npc-ai",
+                "other"
+            ],
+            "description": "Fixed categories for type-safe filtering"
         }
     }
 }
@@ -3151,7 +3217,7 @@ public partial class DocumentationController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": {
-                        "type": "string"
+                        "$ref": "#/$defs/DocumentCategory"
                     },
                     "description": "Map directory prefixes to categories (empty mapping if not provided)"
                 },
@@ -3203,7 +3269,10 @@ public partial class DocumentationController
             "required": [
                 "bindingId",
                 "namespace",
-                "status"
+                "repositoryUrl",
+                "branch",
+                "status",
+                "createdAt"
             ],
             "properties": {
                 "bindingId": {
@@ -3610,11 +3679,13 @@ public partial class DocumentationController
             "properties": {
                 "binding": {
                     "$ref": "#/$defs/RepositoryBindingInfo",
-                    "description": "Current binding configuration and status"
+                    "nullable": true,
+                    "description": "Current binding configuration and status (null if no binding exists)"
                 },
                 "lastSync": {
                     "$ref": "#/$defs/SyncInfo",
-                    "description": "Information about the most recent sync"
+                    "nullable": true,
+                    "description": "Information about the most recent sync (null if no sync has occurred)"
                 }
             }
         },
@@ -3626,7 +3697,10 @@ public partial class DocumentationController
                 "bindingId",
                 "namespace",
                 "repositoryUrl",
-                "status"
+                "branch",
+                "status",
+                "createdAt",
+                "owner"
             ],
             "properties": {
                 "bindingId": {
@@ -3692,25 +3766,30 @@ public partial class DocumentationController
                 "syncId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier of the sync operation"
+                    "nullable": true,
+                    "description": "Unique identifier of the sync operation (null if no sync has occurred)"
                 },
                 "status": {
                     "$ref": "#/$defs/SyncStatus",
-                    "description": "Result status of the sync"
+                    "nullable": true,
+                    "description": "Result status of the sync (null if no sync has occurred)"
                 },
                 "triggeredBy": {
                     "$ref": "#/$defs/SyncTrigger",
-                    "description": "What triggered the sync"
+                    "nullable": true,
+                    "description": "What triggered the sync (null if no sync has occurred)"
                 },
                 "startedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Timestamp when sync started"
+                    "nullable": true,
+                    "description": "Timestamp when sync started (null if no sync has occurred)"
                 },
                 "completedAt": {
                     "type": "string",
                     "format": "date-time",
-                    "description": "Timestamp when sync completed"
+                    "nullable": true,
+                    "description": "Timestamp when sync completed (null if sync is in progress or none occurred)"
                 },
                 "commitHash": {
                     "type": "string",
@@ -3879,7 +3958,10 @@ public partial class DocumentationController
                 "bindingId",
                 "namespace",
                 "repositoryUrl",
-                "status"
+                "branch",
+                "status",
+                "createdAt",
+                "owner"
             ],
             "properties": {
                 "bindingId": {
@@ -4045,14 +4127,15 @@ public partial class DocumentationController
                 "categoryMapping": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "string"
+                        "$ref": "#/$defs/DocumentCategory"
                     },
                     "nullable": true,
                     "description": "New directory-to-category mapping (null to keep unchanged)"
                 },
                 "defaultCategory": {
                     "$ref": "#/$defs/DocumentCategory",
-                    "description": "New default category for unmapped documents"
+                    "nullable": true,
+                    "description": "New default category for unmapped documents (null to keep unchanged)"
                 },
                 "archiveEnabled": {
                     "type": "boolean",
@@ -4111,7 +4194,10 @@ public partial class DocumentationController
                 "bindingId",
                 "namespace",
                 "repositoryUrl",
-                "status"
+                "branch",
+                "status",
+                "createdAt",
+                "owner"
             ],
             "properties": {
                 "bindingId": {
@@ -4290,7 +4376,8 @@ public partial class DocumentationController
                 "bundleAssetId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Asset ID in Asset Service"
+                    "nullable": true,
+                    "description": "Asset ID in Asset Service (null if bundle upload failed or Asset Service unavailable)"
                 },
                 "documentCount": {
                     "type": "integer",
@@ -4459,7 +4546,8 @@ public partial class DocumentationController
                 "bundleAssetId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Asset ID in Asset Service"
+                    "nullable": true,
+                    "description": "Asset ID in Asset Service (null if bundle creation failed)"
                 },
                 "description": {
                     "type": "string",
@@ -4486,7 +4574,8 @@ public partial class DocumentationController
                 },
                 "owner": {
                     "type": "string",
-                    "description": "Owner of this archive. NOT a session ID.\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
+                    "nullable": true,
+                    "description": "Owner of this archive. NOT a session ID (null if owner unknown).\nContains either an accountId (UUID format) for user-initiated archives\nor a service name for service-initiated archives.\n"
                 }
             }
         }
@@ -4572,7 +4661,8 @@ public partial class DocumentationController
                     "type": "string",
                     "pattern": "^[a-z0-9-]+$",
                     "maxLength": 50,
-                    "description": "If not provided, restores to original namespace"
+                    "nullable": true,
+                    "description": "Namespace to restore to (null restores to original namespace)"
                 }
             }
         }
@@ -4701,15 +4791,7 @@ public partial class DocumentationController
             "description": "Response confirming archive deletion",
             "type": "object",
             "additionalProperties": false,
-            "required": [
-                "deleted"
-            ],
-            "properties": {
-                "deleted": {
-                    "type": "boolean",
-                    "description": "Whether the archive was successfully deleted"
-                }
-            }
+            "properties": {}
         }
     }
 }

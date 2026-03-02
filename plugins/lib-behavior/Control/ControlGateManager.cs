@@ -4,8 +4,10 @@
 // =============================================================================
 
 using BeyondImmersion.BannouService.Behavior;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Behavior.Control;
 
@@ -17,16 +19,19 @@ public sealed class ControlGateManager : IControlGateRegistry
     private readonly ConcurrentDictionary<Guid, IControlGate> _gates;
     private readonly ILoggerFactory? _loggerFactory;
     private readonly ILogger<ControlGateManager>? _logger;
+    private readonly ITelemetryProvider? _telemetryProvider;
 
     /// <summary>
     /// Creates a new control gate manager.
     /// </summary>
     /// <param name="loggerFactory">Optional logger factory for creating gate loggers.</param>
-    public ControlGateManager(ILoggerFactory? loggerFactory = null)
+    /// <param name="telemetryProvider">Optional telemetry provider for span instrumentation.</param>
+    public ControlGateManager(ILoggerFactory? loggerFactory = null, ITelemetryProvider? telemetryProvider = null)
     {
         _gates = new ConcurrentDictionary<Guid, IControlGate>();
         _loggerFactory = loggerFactory;
         _logger = loggerFactory?.CreateLogger<ControlGateManager>();
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
@@ -35,7 +40,7 @@ public sealed class ControlGateManager : IControlGateRegistry
         return _gates.GetOrAdd(entityId, id =>
         {
             var gateLogger = _loggerFactory?.CreateLogger<ControlGate>();
-            var gate = new ControlGate(id, gateLogger);
+            var gate = new ControlGate(id, gateLogger, _telemetryProvider);
 
             _logger?.LogDebug("Created control gate for entity {EntityId}", id);
 
@@ -108,6 +113,7 @@ public sealed class ControlGateManager : IControlGateRegistry
         IReadOnlySet<string>? allowBehaviorChannels = null,
         TimeSpan? duration = null)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ControlGateManager.TakeCinematicControlAsync");
         var options = ControlOptions.ForCinematic(cinematicId, allowBehaviorChannels, duration);
         var allSuccess = true;
 
@@ -138,6 +144,7 @@ public sealed class ControlGateManager : IControlGateRegistry
         IEnumerable<Guid> entityIds,
         ControlHandoff handoff)
     {
+        using var activity = _telemetryProvider?.StartActivity("bannou.behavior", "ControlGateManager.ReturnCinematicControlAsync");
         foreach (var entityId in entityIds)
         {
             var gate = Get(entityId);

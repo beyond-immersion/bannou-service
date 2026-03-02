@@ -222,7 +222,7 @@ public class ActorServiceTests
         // Assert - verify the convenience overload was called (topic, event, cancellationToken)
         _mockMessageBus.Verify(
             mb => mb.TryPublishAsync(
-                "actor-template.created",
+                "actor.template.created",
                 It.IsAny<ActorTemplateCreatedEvent>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);

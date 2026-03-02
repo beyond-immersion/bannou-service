@@ -31,7 +31,7 @@ export class AccountProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateProfileAsync(
+  async accountUpdateProfileAsync(
     request: Schemas['UpdateProfileRequest'],
     channel: number = 0,
     timeout?: number
@@ -50,7 +50,7 @@ export class AccountProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async updatePasswordHashEventAsync(
+  async accountUpdatePasswordHashEventAsync(
     request: Schemas['UpdatePasswordRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -67,7 +67,7 @@ export class AccountProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async updateMfaEventAsync(
+  async accountUpdateMfaEventAsync(
     request: Schemas['UpdateMfaRequest'],
     channel: number = 0
   ): Promise<void> {
@@ -84,7 +84,7 @@ export class AccountProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async updateVerificationStatusEventAsync(
+  async accountUpdateVerificationStatusEventAsync(
     request: Schemas['UpdateVerificationRequest'],
     channel: number = 0
   ): Promise<void> {

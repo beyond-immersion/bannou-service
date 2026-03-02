@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Save-Load Service API
   version: 1.0.0
@@ -757,11 +757,6 @@ components:
     # ENUMS
     # ═══════════════════════════════════════════════════════════════════════════
 
-    OwnerType:
-      type: string
-      enum: [ACCOUNT, CHARACTER, SESSION, REALM]
-      description: Type of entity that owns this save slot
-
     SaveCategory:
       type: string
       enum: [QUICK_SAVE, AUTO_SAVE, MANUAL_SAVE, CHECKPOINT, STATE_SNAPSHOT]
@@ -824,7 +819,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -882,7 +877,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -904,7 +899,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the save slots to list
         category:
           allOf:
@@ -932,7 +927,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -952,7 +947,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1042,7 +1037,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1128,7 +1123,6 @@ components:
           description: Checkpoint name if pinned
         thumbnailUrl:
           type: string
-          format: uri
           nullable: true
           description: Pre-signed URL to retrieve thumbnail (if provided)
         conflictDetected:
@@ -1173,7 +1167,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1249,7 +1243,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1340,7 +1334,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1363,7 +1357,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1382,7 +1376,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1419,7 +1413,7 @@ components:
           description: Filter by owner ID
         ownerType:
           allOf:
-          - $ref: '#/components/schemas/OwnerType'
+          - $ref: 'common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Filter by owner type
         category:
@@ -1502,7 +1496,7 @@ components:
           format: uuid
           description: Owner ID
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         category:
           $ref: '#/components/schemas/SaveCategory'
@@ -1553,7 +1547,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1691,7 +1685,7 @@ components:
           type: integer
           description: Only cleanup versions older than N days
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Filter cleanup to specific owner type
         category:
           $ref: '#/components/schemas/SaveCategory'
@@ -1785,7 +1779,7 @@ components:
           format: uuid
           description: Entity ID that owns the slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -1839,7 +1833,7 @@ components:
           format: uuid
           description: Entity ID that owns the source save
         sourceOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the source save
         sourceSlotName:
           type: string
@@ -1856,7 +1850,7 @@ components:
           format: uuid
           description: Entity ID that will own the copied save
         targetOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that will own the copied save
         targetSlotName:
           type: string
@@ -1878,7 +1872,7 @@ components:
           format: uuid
           description: Entity ID that owns the saves to export
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns the saves to export
         slotNames:
           type: array
@@ -1893,7 +1887,6 @@ components:
       properties:
         downloadUrl:
           type: string
-          format: uri
           description: Pre-signed URL to download export archive
         expiresAt:
           type: string
@@ -1921,7 +1914,7 @@ components:
           format: uuid
           description: Entity ID that will own the imported saves
         targetOwnerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that will own the imported saves
         conflictResolution:
           $ref: '#/components/schemas/ConflictResolution'
@@ -1960,7 +1953,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2006,7 +1999,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2046,7 +2039,7 @@ components:
           format: uuid
           description: ID of the owning entity
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string
@@ -2133,7 +2126,7 @@ components:
           format: uuid
           description: Entity ID that owns the save slot
         ownerType:
-          $ref: '#/components/schemas/OwnerType'
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Type of entity that owns this save slot
         slotName:
           type: string

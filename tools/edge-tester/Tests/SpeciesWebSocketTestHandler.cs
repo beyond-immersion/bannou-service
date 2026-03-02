@@ -152,7 +152,7 @@ public class SpeciesWebSocketTestHandler : BaseWebSocketTestHandler
             var deprecateResponse = await adminClient.Species.DeprecateSpeciesAsync(new DeprecateSpeciesRequest
             {
                 SpeciesId = species.SpeciesId,
-                Reason = "WebSocket lifecycle test"
+                DeprecationReason = "WebSocket lifecycle test"
             });
 
             if (!deprecateResponse.IsSuccess || deprecateResponse.Result == null)

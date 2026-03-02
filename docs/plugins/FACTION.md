@@ -124,6 +124,22 @@ Over simulated time, factions should undergo recognizable arcs. A street gang gr
 
 Used for faction create/update/delete, membership add/remove/role-change, territory claim/release, norm define/update/delete, and realm baseline designation.
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `violationType` | B (Game Content Type) | Opaque string | Norm violation type code (e.g., `"theft"`, `"deception"`, `"violence"`, `"contraband"`). Vocabulary defined externally by contract templates and lib-obligation's action tag mappings. New violation types require no schema changes. |
+| `seedTypeCode` | B (Game Content Type) | Opaque string | Seed type identifier for faction growth tracking (default: `"faction"`). Configured per game via `FACTION_SEED_TYPE_CODE`. Follows the Seed service's opaque code pattern. |
+| `currentPhase` | B (Game Content Type) | Opaque string (nullable) | Current seed growth phase label (e.g., `"nascent"`, `"established"`, `"influential"`, `"dominant"`). Phase labels are defined per seed type in lib-seed configuration, not by lib-faction. |
+| `status` (on `FactionResponse`) | C (System State/Mode) | `FactionStatus` enum | Faction lifecycle state (`Active`, `Deprecated`, `Dissolved`). Controls whether the faction accepts new members and operations. |
+| `role` | C (System State/Mode) | `FactionMemberRole` enum | Membership role hierarchy (`Leader`, `Officer`, `Member`, `Recruit`). Determines permissions within the faction. |
+| `severity` | C (System State/Mode) | `NormSeverity` enum | Norm enforcement intensity (`Advisory`, `Standard`, `Strict`). Controls how strongly a norm is enforced. |
+| `scope` | C (System State/Mode) | `NormScope` enum | Norm applicability (`Internal`, `External`). Whether a norm applies to faction members only or to all entities in territory. |
+| `source` (on `ApplicableNormResponse`) | C (System State/Mode) | `NormSource` enum | Resolution hierarchy layer (`Membership`, `Territory`, `RealmBaseline`). Indicates which resolution tier produced this norm. |
+| `claimStatus` | C (System State/Mode) | `TerritoryClaimStatus` enum | Territory claim lifecycle (`Active`, `Contested`, `Released`). Note: `Contested` exists in schema for future dispute mechanics but is not currently used. |
+
+---
+
 ## Events
 
 ### Published Events

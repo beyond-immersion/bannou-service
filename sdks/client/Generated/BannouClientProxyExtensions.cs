@@ -65,6 +65,7 @@ public partial class BannouClient
     private StorylineProxy? _storyline;
     private SubscriptionProxy? _subscription;
     private TelemetryProxy? _telemetry;
+    private TransitProxy? _transit;
     private VoiceProxy? _voice;
     private WebsiteProxy? _website;
     private WorldstateProxy? _worldstate;
@@ -374,6 +375,12 @@ public partial class BannouClient
     /// </summary>
     public TelemetryProxy Telemetry =>
         _telemetry ??= new TelemetryProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Transit Service API operations.
+    /// </summary>
+    public TransitProxy Transit =>
+        _transit ??= new TransitProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Bannou Voice Service API operations.

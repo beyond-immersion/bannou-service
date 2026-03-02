@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Status Service API
   version: 1.0.0
@@ -18,9 +18,8 @@ info:
     simple TTL-based statuses use lib-item's native decay system (#407).
 
     **Ownership Model**: Statuses use polymorphic ownership (entityId + entityType),
-    following the Collection/License/Seed pattern. Entity types are opaque strings
-    (e.g., "character", "account") -- NOT enums, per SCHEMA-RULES.md guidance on
-    not enumerating entity types from other layers.
+    following the Collection/License/Seed pattern. Entity types use the shared
+    EntityType enum from common-api.yaml for type-safe polymorphic references.
 
     **Seed Integration**: Implements ISeedEvolutionListener for capability change
     notifications and queries ISeedClient for passive effects. Unified queries
@@ -716,7 +715,7 @@ paths:
         \                \"statusTemplateCode\"\n            ],\n            \"properties\": {\n                \"entityId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Entity to receive the status effect\"\n                },\n                \"entityType\": {\n  \
-        \                  \"type\": \"string\",\n                    \"description\": \"Entity type discriminator (e.g.,
+        \                  \"type\": \"object\",\n                    \"description\": \"Entity type discriminator (e.g.,
         character, account)\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope for
         template lookup\"\n                },\n                \"statusTemplateCode\": {\n                    \"type\": \"\
@@ -818,7 +817,7 @@ paths:
         ,\n                    \"description\": \"Unique status instance identifier\"\n                },\n              \
         \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"Entity this status is applied to\"\n                },\n                \"entityType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Entity type discriminator\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
         \n                },\n                \"statusTemplateCode\": {\n                    \"type\": \"string\",\n     \
         \               \"description\": \"Status template code\"\n                },\n                \"category\": {\n \
         \                   \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Status category\"\
@@ -880,7 +879,7 @@ paths:
         \    \"sourceId\"\n            ],\n            \"properties\": {\n                \"entityId\": {\n              \
         \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity
         to remove statuses from\"\n                },\n                \"entityType\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Entity type discriminator\"\n                },\n              \
+        object\",\n                    \"description\": \"Entity type discriminator\"\n                },\n              \
         \  \"sourceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"Source that originally granted the statuses\"\n                }\n            }\n\
         \        }\n    }\n}"
@@ -925,7 +924,7 @@ paths:
         \      \"category\",\n                \"reason\"\n            ],\n            \"properties\": {\n                \"\
         entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
         \        \"description\": \"Entity to cleanse statuses from\"\n                },\n                \"entityType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Entity type discriminator\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
         \n                },\n                \"category\": {\n                    \"$ref\": \"#/$defs/StatusCategory\",\n\
         \                    \"description\": \"Category of statuses to remove\"\n                },\n                \"reason\"\
         : {\n                    \"$ref\": \"#/$defs/StatusRemoveReason\",\n                    \"description\": \"Why these
@@ -982,7 +981,7 @@ paths:
         \     \"required\": [\n                \"entityId\",\n                \"entityType\",\n                \"statusCode\"\
         \n            ],\n            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"\
         string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Entity to check\"\n \
-        \               },\n                \"entityType\": {\n                    \"type\": \"string\",\n               \
+        \               },\n                \"entityType\": {\n                    \"type\": \"object\",\n               \
         \     \"description\": \"Entity type discriminator\"\n                },\n                \"statusCode\": {\n    \
         \                \"type\": \"string\",\n                    \"description\": \"Status template code to check for\"\
         \n                }\n            }\n        }\n    }\n}"
@@ -1031,7 +1030,7 @@ paths:
         required\": [\n                \"entityId\",\n                \"entityType\"\n            ],\n            \"properties\"\
         : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Entity to list statuses for\"\n                },\n              \
-        \  \"entityType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Entity type
+        \  \"entityType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type
         discriminator\"\n                },\n                \"category\": {\n                    \"nullable\": true,\n  \
         \                  \"description\": \"Optional filter by status category\",\n                    \"allOf\": [\n  \
         \                      {\n                            \"$ref\": \"#/$defs/StatusCategory\"\n                     \
@@ -1140,7 +1139,7 @@ paths:
         ,\n                    \"description\": \"Unique status instance identifier\"\n                },\n              \
         \  \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n       \
         \             \"description\": \"Entity this status is applied to\"\n                },\n                \"entityType\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Entity type discriminator\"\
+        : {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
         \n                },\n                \"statusTemplateCode\": {\n                    \"type\": \"string\",\n     \
         \               \"description\": \"Status template code\"\n                },\n                \"category\": {\n \
         \                   \"$ref\": \"#/$defs/StatusCategory\",\n                    \"description\": \"Status category\"\
@@ -1202,7 +1201,7 @@ paths:
         required\": [\n                \"entityId\",\n                \"entityType\"\n            ],\n            \"properties\"\
         : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Entity to get effects for\"\n                },\n                \"\
-        entityType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Entity type discriminator\"\
+        entityType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity type discriminator\"\
         \n                },\n                \"includePassive\": {\n                    \"type\": \"boolean\",\n        \
         \            \"default\": true,\n                    \"description\": \"Whether to include seed-derived passive effects.
         Defaults to true because GetEffects is the unified query endpoint designed to return all active effects. Set to false
@@ -1214,7 +1213,7 @@ paths:
         ,\n                \"seedDerivedCount\",\n                \"effects\"\n            ],\n            \"properties\"\
         : {\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
         uuid\",\n                    \"description\": \"Entity these effects belong to\"\n                },\n           \
-        \     \"entityType\": {\n                    \"type\": \"string\",\n                    \"description\": \"Entity
+        \     \"entityType\": {\n                    \"type\": \"object\",\n                    \"description\": \"Entity
         type discriminator\"\n                },\n                \"itemBasedCount\": {\n                    \"type\": \"\
         integer\",\n                    \"description\": \"Number of item-based status effects\"\n                },\n   \
         \             \"seedDerivedCount\": {\n                    \"type\": \"integer\",\n                    \"description\"\
@@ -1289,7 +1288,7 @@ paths:
         \           \"required\": [\n                \"entityId\",\n                \"entityType\"\n            ],\n     \
         \       \"properties\": {\n                \"entityId\": {\n                    \"type\": \"string\",\n          \
         \          \"format\": \"uuid\",\n                    \"description\": \"Entity to get seed effects for\"\n      \
-        \          },\n                \"entityType\": {\n                    \"type\": \"string\",\n                    \"\
+        \          },\n                \"entityType\": {\n                    \"type\": \"object\",\n                    \"\
         description\": \"Entity type discriminator\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedEffectsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedEffectsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
@@ -1297,7 +1296,7 @@ paths:
         : [\n                \"entityId\",\n                \"entityType\",\n                \"effects\"\n            ],\n\
         \            \"properties\": {\n                \"entityId\": {\n                    \"type\": \"string\",\n     \
         \               \"format\": \"uuid\",\n                    \"description\": \"Entity these effects belong to\"\n \
-        \               },\n                \"entityType\": {\n                    \"type\": \"string\",\n               \
+        \               },\n                \"entityType\": {\n                    \"type\": \"object\",\n               \
         \     \"description\": \"Entity type discriminator\"\n                },\n                \"effects\": {\n       \
         \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/SeedEffectEntry\"\
         \n                    },\n                    \"description\": \"Seed-derived passive effects\"\n                }\n\
@@ -1349,7 +1348,7 @@ paths:
         ,\n    \"$defs\": {\n        \"CleanupByOwnerRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to remove all statuses and containers for an owner entity\",\n            \"additionalProperties\": false,\n\
         \            \"required\": [\n                \"ownerType\",\n                \"ownerId\"\n            ],\n      \
-        \      \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"string\",\n          \
+        \      \"properties\": {\n                \"ownerType\": {\n                    \"type\": \"object\",\n          \
         \          \"description\": \"Owner entity type (e.g., character, account)\"\n                },\n               \
         \ \"ownerId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
         \           \"description\": \"Owner entity identifier\"\n                }\n            }\n        }\n    }\n}"
@@ -1454,6 +1453,21 @@ components:
       - stacked
       - refreshed
       - replaced
+    StatusChangeType:
+      type: string
+      description: |
+        Type of status effect change for client event push notification.
+        - granted: new status effect applied to entity
+        - removed: status explicitly removed (by source, admin, or cancellation)
+        - expired: status TTL elapsed (lazy expiration during cache rebuild)
+        - stacked: stack count increased or duration refreshed on existing status
+        - cleansed: status removed by category cleanse mechanic
+      enum:
+      - granted
+      - removed
+      - expired
+      - stacked
+      - cleansed
     StatusEffectSummary:
       type: object
       description: Unified summary of an active effect from any source (item-based or seed-derived)
@@ -1837,7 +1851,7 @@ components:
           format: uuid
           description: Entity to receive the status effect
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator (e.g., character, account)
         gameServiceId:
           type: string
@@ -1892,7 +1906,7 @@ components:
           format: uuid
           description: Entity to remove statuses from
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         sourceId:
           type: string
@@ -1913,7 +1927,7 @@ components:
           format: uuid
           description: Entity to cleanse statuses from
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           $ref: '#/components/schemas/StatusCategory'
@@ -1935,7 +1949,7 @@ components:
           format: uuid
           description: Entity to check
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusCode:
           type: string
@@ -1953,7 +1967,7 @@ components:
           format: uuid
           description: Entity to list statuses for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         category:
           nullable: true
@@ -2088,7 +2102,7 @@ components:
           format: uuid
           description: Entity this status is applied to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         statusTemplateCode:
           type: string
@@ -2174,7 +2188,7 @@ components:
           format: uuid
           description: Entity to get effects for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         includePassive:
           type: boolean
@@ -2195,7 +2209,7 @@ components:
           format: uuid
           description: Entity to get seed effects for
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
     GetEffectsResponse:
       type: object
@@ -2213,7 +2227,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         itemBasedCount:
           type: integer
@@ -2240,7 +2254,7 @@ components:
           format: uuid
           description: Entity these effects belong to
         entityType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Entity type discriminator
         effects:
           type: array
@@ -2256,7 +2270,7 @@ components:
       - ownerId
       properties:
         ownerType:
-          type: string
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
           description: Owner entity type (e.g., character, account)
         ownerId:
           type: string

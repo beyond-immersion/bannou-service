@@ -38,8 +38,9 @@ The Character service (L2 GameFoundation) manages game world characters for Arca
 | lib-contract (`IContractClient`) | Queries contracts where character is a party (L1 - allowed) |
 | lib-resource (`IResourceClient`) | Queries L4 references (Actor, Encounter) via event-driven pattern (L1 - allowed) |
 | lib-resource (`IResourceTemplateRegistry`) | Registers `CharacterBaseTemplate` for ABML compile-time path validation (e.g., `${candidate.character.name}`) |
+| `IEntitySessionRegistry` | Publishes client events to connected WebSocket sessions observing a character (L1 - allowed) |
 
-> **Refactoring Consideration**: This plugin injects 9 service clients individually in the service constructor (10 including `IEventConsumer`). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
+> **Refactoring Consideration**: This plugin has 13 constructor parameters (6 service clients: IRealmClient, ISpeciesClient, IRelationshipClient, IContractClient, IResourceClient, IEntitySessionRegistry; plus 7 infrastructure: IStateStoreFactory, IDistributedLockProvider, IMessageBus, IEventConsumer, ILogger, configuration, ITelemetryProvider). Consider whether `IServiceNavigator` would reduce constructor complexity, trading explicit dependencies for cleaner signatures. Currently favoring explicit injection for dependency clarity.
 
 ---
 
@@ -95,6 +96,15 @@ Used by `IDistributedLockProvider` to ensure multi-instance safety for character
 
 This plugin does not consume external events.
 
+### Client Events (WebSocket Push)
+
+Published to connected WebSocket sessions via `IEntitySessionRegistry` using the `("character", characterId)` entity mapping. Sessions are registered by Gardener when a player's character enters gameplay.
+
+| Event Name | Event Type | Trigger |
+|------------|-----------|---------|
+| `character.updated` | `CharacterUpdatedClientEvent` | Character state changes (death, name change, status transitions). Includes `changedFields` list and only the changed field values (`name?`, `status?`, `deathDate?`) so the client can re-render without a full model fetch. |
+| `character.realm_transferred` | `CharacterRealmTransferredClientEvent` | Character transferred to a different realm. Distinct from the updated event because realm transfer requires a full UI context switch (loading screen, realm assets, UI reconfiguration). Only published for transfers, not initial realm joins. |
+
 ---
 
 ## Configuration
@@ -124,6 +134,7 @@ This plugin does not consume external events.
 | `IRelationshipClient` | Scoped | Family tree, reference counting, and type code lookup |
 | `IContractClient` | Scoped | Contract reference counting (L1 - allowed) |
 | `IResourceClient` | Scoped | L4 reference counting via event-driven pattern |
+| `IEntitySessionRegistry` | Scoped | Client event publishing to WebSocket sessions observing a character |
 | `ITelemetryProvider` | Singleton | Telemetry span instrumentation for async helpers |
 | `IEventConsumer` | Scoped | Event registration (no handlers defined) |
 
@@ -271,7 +282,7 @@ None currently tracked.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**MapToArchiveModel loses null semantics for L4 fields**~~: **FIXED** (2026-02-23) - Made `CharacterArchiveModel.KeyBackstoryPoints` and `MajorLifeEvents` nullable (`List<string>?`) and removed `?? new()` coalescing in `MapToArchiveModel`. Null now round-trips correctly through storage, preserving the null vs empty list semantic distinction (null = "compression did not include this data", empty = "included but no entries").
+None currently tracked.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -286,7 +297,7 @@ None currently tracked.
 ### Design Considerations (Requires Planning)
 
 1. **Delete flow O(N) reference unregistration**: When Character is deleted, cleanup callbacks fire on 4 L4 services (CharacterPersonality, CharacterHistory, CharacterEncounter, Actor). Each entity deletion in those services publishes an individual `resource.reference.unregistered` event. For characters with rich data (hundreds of encounters, many history entries), this creates O(N) message bus traffic. A batch unregistration endpoint in lib-resource would reduce this to a single operation.
-<!-- AUDIT:TRACKED:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-23:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 
 ---
@@ -302,8 +313,8 @@ No active work items.
 ### Historical
 
 See git history for full changelog. Key milestones:
-- **2026-02-23**: Fixed MapToArchiveModel null semantics bug — `KeyBackstoryPoints` and `MajorLifeEvents` now preserve null through storage round-trip
-- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on all 13 async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
+- **2026-03-01**: Issue #498 — Added client events for real-time character state updates (`CharacterUpdatedClientEvent`, `CharacterRealmTransferredClientEvent`) via Entity Session Registry. Added `IEntitySessionRegistry` dependency. Updated T16 naming convention to codify `*ClientEvent` suffix.
+- **2026-02-23**: L3 hardening pass — schema NRT compliance (3 critical, 7 major fixes), event types moved to events schema with proper uuid format and enum reason, telemetry spans on async helpers, config validation keywords, RefCountUpdateMaxRetries config property, misleading comments fixed. Post-review fixes: missing fields in CharacterCreatedEvent, CompressCharacterAsync null vs empty list, referenceTypes description corrected. Removed L4-owned snapshot types from L2 schema (PersonalitySnapshot, BackstorySnapshot, CombatPreferencesSnapshot) per T29/T2
 - **2026-02-09**: Fixed ApiException wrapping in validation helpers (T7 compliance)
 - **2026-02-07**: Server-side MySQL JSON queries, plural `spouses`, removed dead config, schema extensions
 - **2026-02-03**: Centralized compression via Resource service (L1), delete flow with `ExecuteCleanupAsync`

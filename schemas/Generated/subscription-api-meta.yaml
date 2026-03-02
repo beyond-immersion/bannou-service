@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Subscription Service API
   description: |
@@ -57,40 +57,39 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionListResponse\"\
         ,\n    \"$defs\": {\n        \"SubscriptionListResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing list of subscriptions\",\n            \"required\": [\n\
-        \                \"subscriptions\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n\
-        \                \"subscriptions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"$ref\": \"#/$defs/SubscriptionInfo\"\n                    },\n                    \"description\"\
-        : \"List of subscriptions matching the filter criteria\"\n                },\n                \"totalCount\": {\n\
-        \                    \"type\": \"integer\",\n                    \"description\": \"Total number of subscriptions
-        matching the filter\"\n                }\n            }\n        },\n        \"SubscriptionInfo\": {\n           \
-        \ \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Information
+        \                \"subscriptions\"\n            ],\n            \"properties\": {\n                \"subscriptions\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/SubscriptionInfo\"\n                    },\n                    \"description\": \"List of subscriptions
+        matching the filter criteria\"\n                }\n            }\n        },\n        \"SubscriptionInfo\": {\n  \
+        \          \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Information
         about a subscription\",\n            \"required\": [\n                \"subscriptionId\",\n                \"accountId\"\
-        ,\n                \"serviceId\",\n                \"stubName\",\n                \"startDate\",\n               \
-        \ \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"\
-        subscriptionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
-        \              \"description\": \"Unique identifier for the subscription\"\n                },\n                \"\
-        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"ID of the account this subscription belongs to\"\n                },\n              \
-        \  \"serviceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
-        \              \"description\": \"ID of the subscribed service (game)\"\n                },\n                \"stubName\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Stub name of the service (denormalized
-        for efficiency)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name of the service (denormalized for efficiency)\"\n          \
-        \      },\n                \"startDate\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the subscription started\"\n                },\n   \
-        \             \"expirationDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        expires (null for unlimited)\"\n                },\n                \"isActive\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the subscription is currently active\"\n          \
-        \      },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        ,\n                \"serviceId\",\n                \"stubName\",\n                \"displayName\",\n             \
+        \   \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\"\
+        : {\n                \"subscriptionId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for the subscription\"\n                },\n\
+        \                \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the account this subscription belongs to\"\n                },\n \
+        \               \"serviceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the subscribed service (game)\"\n                },\n            \
+        \    \"stubName\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n         \
+        \           \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n    \
+        \            \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        Display name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the subscription started\"\n                },\n                \"expirationDate\": {\n    \
+        \                \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the subscription expires (null for unlimited)\"\n           \
+        \     },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
+        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
+        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
+        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
+        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
         : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was cancelled (if applicable)\"\n                },\n                \"cancellationReason\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Reason
-        for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the subscription was last updated\"\n                }\n            }\n        }\n    }\n}"
+        was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get subscriptions for an account\",\n    \"description\": \"Returns all
         subscriptions for a given account, with optional filtering.\",\n    \"tags\": [\n        \"Subscription Management\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getAccountSubscriptions\"\n}"
@@ -132,50 +131,50 @@ paths:
         \                   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"ID of the account to get current subscriptions for. Optional if stubName
         is provided.\"\n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n \
-        \                   \"nullable\": true,\n                    \"description\": \"Stub name of the service to filter
-        by (e.g., \\\"my-game\\\"). Returns all accounts subscribed to this service.\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        \                   \"nullable\": true,\n                    \"minLength\": 1,\n                    \"description\"\
+        : \"Stub name of the service to filter by (e.g., \\\"my-game\\\"). Returns all accounts subscribed to this service.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QuerySubscriptionsResponse\"\
         ,\n    \"$defs\": {\n        \"QuerySubscriptionsResponse\": {\n            \"type\": \"object\",\n            \"\
         additionalProperties\": false,\n            \"description\": \"Response from querying current subscriptions.\\nReturns
         subscriptions matching the query criteria (by account, by stub, or both).\\n\",\n            \"required\": [\n   \
-        \             \"subscriptions\",\n                \"totalCount\"\n            ],\n            \"properties\": {\n\
+        \             \"subscriptions\",\n                \"accountIds\"\n            ],\n            \"properties\": {\n\
         \                \"subscriptions\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
         \                        \"$ref\": \"#/$defs/SubscriptionInfo\"\n                    },\n                    \"description\"\
-        : \"List of active subscriptions matching the query\"\n                },\n                \"totalCount\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"description\": \"Total number of subscriptions returned\"\
-        \n                },\n                \"accountIds\": {\n                    \"type\": \"array\",\n              \
-        \      \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n\
-        \                    },\n                    \"description\": \"Unique account IDs in the result set (useful when
-        querying by stubName)\"\n                }\n            }\n        },\n        \"SubscriptionInfo\": {\n         \
-        \   \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Information
-        about a subscription\",\n            \"required\": [\n                \"subscriptionId\",\n                \"accountId\"\
-        ,\n                \"serviceId\",\n                \"stubName\",\n                \"startDate\",\n               \
-        \ \"isActive\",\n                \"createdAt\"\n            ],\n            \"properties\": {\n                \"\
-        subscriptionId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
-        \              \"description\": \"Unique identifier for the subscription\"\n                },\n                \"\
-        accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n           \
-        \         \"description\": \"ID of the account this subscription belongs to\"\n                },\n              \
-        \  \"serviceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
-        \              \"description\": \"ID of the subscribed service (game)\"\n                },\n                \"stubName\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Stub name of the service (denormalized
-        for efficiency)\"\n                },\n                \"displayName\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name of the service (denormalized for efficiency)\"\n          \
-        \      },\n                \"startDate\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When the subscription started\"\n                },\n   \
-        \             \"expirationDate\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        expires (null for unlimited)\"\n                },\n                \"isActive\": {\n                    \"type\"\
-        : \"boolean\",\n                    \"description\": \"Whether the subscription is currently active\"\n          \
-        \      },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was cancelled (if applicable)\"\n                },\n                \"cancellationReason\": {\n                 \
-        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Reason
-        for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When the subscription was last updated\"\n                }\n            }\n        }\n    }\n}"
+        : \"List of active subscriptions matching the query\"\n                },\n                \"accountIds\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"format\": \"uuid\"\n                    },\n                    \"description\": \"Unique
+        account IDs in the result set (useful when querying by stubName)\"\n                }\n            }\n        },\n\
+        \        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"Information about a subscription\",\n            \"required\": [\n               \
+        \ \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"stubName\"\
+        ,\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n             \
+        \   \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query current (active, non-expired) subscriptions\",\n    \"description\"\
         : \"Returns active, non-expired subscriptions. Can query by:\\n- accountId: Get subscriptions for a specific account\\
         n- stubName: Get all accounts subscribed to a specific service\\n- Both: Check if a specific account is subscribed
@@ -216,32 +215,33 @@ paths:
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
         \          \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"\
-        stubName\",\n                \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
-        the subscription\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account this subscription
-        belongs to\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the subscribed service (game)\"\
-        \n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the subscription started\"\n                },\n                \"expirationDate\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the subscription expires (null for unlimited)\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
-        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
-        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
-        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was last updated\"\n                }\n            }\n        }\n    }\n}"
+        stubName\",\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a specific subscription by ID\",\n    \"description\": \"\",\n    \"\
         tags\": [\n        \"Subscription Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSubscription\"\
         \n}"
@@ -287,39 +287,40 @@ paths:
         to now)\"\n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n\
         \                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"When the subscription expires (null for unlimited)\"\n                },\n                \"durationDays\": {\n\
-        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Alternative to expirationDate - number of days from startDate\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        \                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Alternative to expirationDate - number of days from startDate\"\n   \
+        \             }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionInfo\"\
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
         \          \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"\
-        stubName\",\n                \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
-        the subscription\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account this subscription
-        belongs to\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the subscribed service (game)\"\
-        \n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the subscription started\"\n                },\n                \"expirationDate\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the subscription expires (null for unlimited)\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
-        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
-        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
-        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was last updated\"\n                }\n            }\n        }\n    }\n}"
+        stubName\",\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a new subscription\",\n    \"description\": \"Admin-only endpoint
         to create a new subscription for an account.\",\n    \"tags\": [\n        \"Subscription Management\"\n    ],\n  \
         \  \"deprecated\": false,\n    \"operationId\": \"createSubscription\"\n}"
@@ -362,32 +363,33 @@ paths:
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
         \          \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"\
-        stubName\",\n                \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
-        the subscription\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account this subscription
-        belongs to\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the subscribed service (game)\"\
-        \n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the subscription started\"\n                },\n                \"expirationDate\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the subscription expires (null for unlimited)\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
-        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
-        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
-        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was last updated\"\n                }\n            }\n        }\n    }\n}"
+        stubName\",\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a subscription\",\n    \"description\": \"Admin-only endpoint to
         update an existing subscription.\",\n    \"tags\": [\n        \"Subscription Management\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"updateSubscription\"\n}"
@@ -433,32 +435,33 @@ paths:
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
         \          \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"\
-        stubName\",\n                \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
-        the subscription\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account this subscription
-        belongs to\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the subscribed service (game)\"\
-        \n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the subscription started\"\n                },\n                \"expirationDate\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the subscription expires (null for unlimited)\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
-        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
-        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
-        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was last updated\"\n                }\n            }\n        }\n    }\n}"
+        stubName\",\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Cancel a subscription\",\n    \"description\": \"Cancels a subscription.
         Users can cancel their own subscriptions,\\nadmins can cancel any subscription.\\n\",\n    \"tags\": [\n        \"\
         Subscription Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"cancelSubscription\"\n}"
@@ -493,41 +496,42 @@ paths:
         \                \"subscriptionId\"\n            ],\n            \"properties\": {\n                \"subscriptionId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"ID of the subscription to renew\"\n                },\n                \"extensionDays\": {\n   \
-        \                 \"type\": \"integer\",\n                    \"description\": \"Number of days to extend the subscription\"\
-        \n                },\n                \"newExpirationDate\": {\n                    \"type\": \"string\",\n      \
-        \              \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Alternative to extensionDays - set specific new expiration\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        \                 \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"minimum\"\
+        : 1,\n                    \"description\": \"Number of days to extend the subscription\"\n                },\n   \
+        \             \"newExpirationDate\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"Alternative to extensionDays
+        - set specific new expiration\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SubscriptionInfo\"\
         ,\n    \"$defs\": {\n        \"SubscriptionInfo\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Information about a subscription\",\n            \"required\": [\n      \
         \          \"subscriptionId\",\n                \"accountId\",\n                \"serviceId\",\n                \"\
-        stubName\",\n                \"startDate\",\n                \"isActive\",\n                \"createdAt\"\n      \
-        \      ],\n            \"properties\": {\n                \"subscriptionId\": {\n                    \"type\": \"\
-        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
-        the subscription\"\n                },\n                \"accountId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the account this subscription
-        belongs to\"\n                },\n                \"serviceId\": {\n                    \"type\": \"string\",\n  \
-        \                  \"format\": \"uuid\",\n                    \"description\": \"ID of the subscribed service (game)\"\
-        \n                },\n                \"stubName\": {\n                    \"type\": \"string\",\n               \
-        \     \"description\": \"Stub name of the service (denormalized for efficiency)\"\n                },\n          \
-        \      \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the service (denormalized for efficiency)\"\n                },\n                \"startDate\": {\n      \
-        \              \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When the subscription started\"\n                },\n                \"expirationDate\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"When the subscription expires (null for unlimited)\"\n                },\n\
-        \                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether the subscription is currently active\"\n                },\n                \"cancelledAt\": {\n     \
-        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"When the subscription was cancelled (if applicable)\"\n          \
-        \      },\n                \"cancellationReason\": {\n                    \"type\": \"string\",\n                \
-        \    \"nullable\": true,\n                    \"description\": \"Reason for cancellation (if applicable)\"\n     \
-        \           },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"\
-        format\": \"date-time\",\n                    \"description\": \"When the subscription was created\"\n           \
-        \     },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When the subscription
-        was last updated\"\n                }\n            }\n        }\n    }\n}"
+        stubName\",\n                \"displayName\",\n                \"startDate\",\n                \"isActive\",\n   \
+        \             \"createdAt\"\n            ],\n            \"properties\": {\n                \"subscriptionId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for the subscription\"\n                },\n                \"accountId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        ID of the account this subscription belongs to\"\n                },\n                \"serviceId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the subscribed service (game)\"\n                },\n                \"stubName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"description\": \"Stub name
+        of the service (denormalized for efficiency)\"\n                },\n                \"displayName\": {\n         \
+        \           \"type\": \"string\",\n                    \"description\": \"Display name of the service (denormalized
+        for efficiency)\"\n                },\n                \"startDate\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the subscription started\"\
+        \n                },\n                \"expirationDate\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription expires (null for unlimited)\"\n                },\n                \"isActive\": {\n  \
+        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the subscription is currently
+        active\"\n                },\n                \"cancelledAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the subscription was cancelled (if applicable)\"\n                },\n                \"cancellationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Reason for cancellation (if applicable)\"\n                },\n                \"createdAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When the subscription was created\"\n                },\n                \"updatedAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"When the subscription was last updated\"\n                }\n            }\n\
+        \        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Renew or extend a subscription\",\n    \"description\": \"Admin-only endpoint
         to renew or extend an existing subscription.\",\n    \"tags\": [\n        \"Subscription Management\"\n    ],\n  \
         \  \"deprecated\": false,\n    \"operationId\": \"renewSubscription\"\n}"
@@ -570,6 +574,7 @@ components:
         stubName:
           type: string
           nullable: true
+          minLength: 1
           description: Stub name of the service to filter by (e.g., "my-game"). Returns all accounts subscribed to this 
             service.
     GetSubscriptionRequest:
@@ -612,6 +617,7 @@ components:
         durationDays:
           type: integer
           nullable: true
+          minimum: 1
           description: Alternative to expirationDate - number of days from startDate
     UpdateSubscriptionRequest:
       type: object
@@ -662,6 +668,8 @@ components:
           description: ID of the subscription to renew
         extensionDays:
           type: integer
+          nullable: true
+          minimum: 1
           description: Number of days to extend the subscription
         newExpirationDate:
           type: string
@@ -677,6 +685,7 @@ components:
       - accountId
       - serviceId
       - stubName
+      - displayName
       - startDate
       - isActive
       - createdAt
@@ -695,6 +704,7 @@ components:
           description: ID of the subscribed service (game)
         stubName:
           type: string
+          minLength: 1
           description: Stub name of the service (denormalized for efficiency)
         displayName:
           type: string
@@ -729,6 +739,15 @@ components:
           format: date-time
           nullable: true
           description: When the subscription was last updated
+    SubscriptionAction:
+      type: string
+      enum:
+      - created
+      - updated
+      - cancelled
+      - expired
+      - renewed
+      description: The type of action that triggered a subscription state change
     QuerySubscriptionsResponse:
       type: object
       additionalProperties: false
@@ -737,16 +756,13 @@ components:
         Returns subscriptions matching the query criteria (by account, by stub, or both).
       required:
       - subscriptions
-      - totalCount
+      - accountIds
       properties:
         subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionInfo'
           description: List of active subscriptions matching the query
-        totalCount:
-          type: integer
-          description: Total number of subscriptions returned
         accountIds:
           type: array
           items:
@@ -759,13 +775,9 @@ components:
       description: Response containing list of subscriptions
       required:
       - subscriptions
-      - totalCount
       properties:
         subscriptions:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionInfo'
           description: List of subscriptions matching the filter criteria
-        totalCount:
-          type: integer
-          description: Total number of subscriptions matching the filter

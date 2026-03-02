@@ -31,7 +31,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async registerReferenceAsync(
+  async resourceRegisterReferenceAsync(
     request: Schemas['RegisterReferenceRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unregisterReferenceAsync(
+  async resourceUnregisterReferenceAsync(
     request: Schemas['UnregisterReferenceRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkReferencesAsync(
+  async resourceCheckReferencesAsync(
     request: Schemas['CheckReferencesRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listReferencesAsync(
+  async resourceListReferencesAsync(
     request: Schemas['ListReferencesRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async executeCleanupAsync(
+  async resourceExecuteCleanupAsync(
     request: Schemas['ExecuteCleanupRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCleanupCallbacksAsync(
+  async resourceListCleanupCallbacksAsync(
     request: Schemas['ListCleanupCallbacksRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async executeCompressAsync(
+  async resourceExecuteCompressAsync(
     request: Schemas['ExecuteCompressRequest'],
     channel: number = 0,
     timeout?: number
@@ -157,7 +157,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCompressCallbacksAsync(
+  async resourceListCompressCallbacksAsync(
     request: Schemas['ListCompressCallbacksRequest'],
     channel: number = 0,
     timeout?: number
@@ -175,7 +175,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getArchiveAsync(
+  async resourceGetArchiveAsync(
     request: Schemas['GetArchiveRequest'],
     channel: number = 0,
     timeout?: number
@@ -195,7 +195,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async executeSnapshotAsync(
+  async resourceExecuteSnapshotAsync(
     request: Schemas['ExecuteSnapshotRequest'],
     channel: number = 0,
     timeout?: number
@@ -213,7 +213,7 @@ export class ResourceProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSnapshotAsync(
+  async resourceGetSnapshotAsync(
     request: Schemas['GetSnapshotRequest'],
     channel: number = 0,
     timeout?: number

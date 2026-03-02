@@ -1,0 +1,244 @@
+openapi: 3.0.4
+info:
+  title: Transit Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for transit service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: transit-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    TransitConnectionCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.connection.created when a transitconnection is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - id
+      - fromLocationId
+      - toLocationId
+      - bidirectional
+      - distanceKm
+      - terrainType
+      - compatibleModes
+      - baseRiskLevel
+      - status
+      - statusChangedAt
+      - discoverable
+      - fromRealmId
+      - toRealmId
+      - crossRealm
+      - createdAt
+      - modifiedAt
+      properties:
+        eventName:
+          type: string
+          default: transit.connection.created
+          description: 'Event type identifier: transit.connection.created'
+        id: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the connection"
+        fromLocationId: &id002
+          type: string
+          format: uuid
+          description: "Origin location of the connection"
+        toLocationId: &id003
+          type: string
+          format: uuid
+          description: "Destination location of the connection"
+        bidirectional: &id004
+          type: boolean
+          description: "Whether the connection can be traversed in both directions"
+        distanceKm: &id005
+          type: number
+          format: decimal
+          description: "Distance of the connection in kilometers"
+        terrainType: &id006
+          type: string
+          description: "Terrain classification code for the connection path"
+        compatibleModes: &id007
+          type: array
+          items:
+            type: string
+          description: "Transit mode codes that can traverse this connection"
+        seasonalAvailability: &id008
+          type: array
+          nullable: true
+          items:
+            $ref: '../transit-api.yaml#/components/schemas/SeasonalAvailabilityEntry'
+          description: "Seasonal availability overrides, null if available year-round"
+        baseRiskLevel: &id009
+          type: number
+          format: decimal
+          description: "Base risk level for traversing this connection"
+        riskDescription: &id010
+          type: string
+          nullable: true
+          description: "Human-readable description of the risk, if any"
+        status: &id011
+          $ref: ../transit-api.yaml#/components/schemas/ConnectionStatus
+          description: "Current operational status of the connection"
+        statusReason: &id012
+          type: string
+          nullable: true
+          description: "Reason for the current status, if any"
+        statusChangedAt: &id013
+          type: string
+          format: date-time
+          description: "Timestamp when the status was last changed"
+        discoverable: &id014
+          type: boolean
+          description: "Whether the connection must be discovered before use"
+        name: &id015
+          type: string
+          nullable: true
+          description: "Optional display name for the connection"
+        code: &id016
+          type: string
+          nullable: true
+          description: "Optional machine-readable code for the connection"
+        tags: &id017
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: "Optional tags for categorization and filtering"
+        fromRealmId: &id018
+          type: string
+          format: uuid
+          description: "Realm of the origin location"
+        toRealmId: &id019
+          type: string
+          format: uuid
+          description: "Realm of the destination location"
+        crossRealm: &id020
+          type: boolean
+          description: "Whether this connection spans realm boundaries"
+        createdAt: &id021
+          type: string
+          format: date-time
+          description: "Timestamp when the connection was created"
+        modifiedAt: &id022
+          type: string
+          format: date-time
+          description: "Timestamp when the connection was last modified"
+    TransitConnectionUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.connection.updated when a transitconnection is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - id
+      - fromLocationId
+      - toLocationId
+      - bidirectional
+      - distanceKm
+      - terrainType
+      - compatibleModes
+      - baseRiskLevel
+      - status
+      - statusChangedAt
+      - discoverable
+      - fromRealmId
+      - toRealmId
+      - crossRealm
+      - createdAt
+      - modifiedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: transit.connection.updated
+          description: 'Event type identifier: transit.connection.updated'
+        id: *id001
+        fromLocationId: *id002
+        toLocationId: *id003
+        bidirectional: *id004
+        distanceKm: *id005
+        terrainType: *id006
+        compatibleModes: *id007
+        seasonalAvailability: *id008
+        baseRiskLevel: *id009
+        riskDescription: *id010
+        status: *id011
+        statusReason: *id012
+        statusChangedAt: *id013
+        discoverable: *id014
+        name: *id015
+        code: *id016
+        tags: *id017
+        fromRealmId: *id018
+        toRealmId: *id019
+        crossRealm: *id020
+        createdAt: *id021
+        modifiedAt: *id022
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    TransitConnectionDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to transit.connection.deleted when a transitconnection is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - id
+      - fromLocationId
+      - toLocationId
+      - bidirectional
+      - distanceKm
+      - terrainType
+      - compatibleModes
+      - baseRiskLevel
+      - status
+      - statusChangedAt
+      - discoverable
+      - fromRealmId
+      - toRealmId
+      - crossRealm
+      - createdAt
+      - modifiedAt
+      properties:
+        eventName:
+          type: string
+          default: transit.connection.deleted
+          description: 'Event type identifier: transit.connection.deleted'
+        id: *id001
+        fromLocationId: *id002
+        toLocationId: *id003
+        bidirectional: *id004
+        distanceKm: *id005
+        terrainType: *id006
+        compatibleModes: *id007
+        seasonalAvailability: *id008
+        baseRiskLevel: *id009
+        riskDescription: *id010
+        status: *id011
+        statusReason: *id012
+        statusChangedAt: *id013
+        discoverable: *id014
+        name: *id015
+        code: *id016
+        tags: *id017
+        fromRealmId: *id018
+        toRealmId: *id019
+        crossRealm: *id020
+        createdAt: *id021
+        modifiedAt: *id022
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

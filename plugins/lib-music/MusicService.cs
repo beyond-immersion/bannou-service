@@ -31,6 +31,7 @@ public partial class MusicService : IMusicService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<MusicService> _logger;
     private readonly MusicServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     /// <summary>
     /// Creates a new MusicService instance.
@@ -39,12 +40,14 @@ public partial class MusicService : IMusicService
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<MusicService> logger,
-        MusicServiceConfiguration configuration)
+        MusicServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <summary>
@@ -1061,6 +1064,7 @@ public partial class MusicService : IMusicService
         string cacheKey,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.TryGetCachedCompositionAsync");
         try
         {
             var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(
@@ -1084,6 +1088,7 @@ public partial class MusicService : IMusicService
         GenerateCompositionResponse response,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.music", "MusicService.CacheCompositionAsync");
         try
         {
             var cache = _stateStoreFactory.GetStore<GenerateCompositionResponse>(

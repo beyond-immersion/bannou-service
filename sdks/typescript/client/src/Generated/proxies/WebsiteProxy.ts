@@ -30,7 +30,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getStatusAsync(
+  async websiteGetStatusAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['StatusResponse']>> {
@@ -48,7 +48,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getPageContentAsync(
+  async websiteGetPageContentAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['PageContent']>> {
@@ -66,7 +66,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getNewsAsync(
+  async websiteGetNewsAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['NewsResponse']>> {
@@ -84,7 +84,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getDownloadsAsync(
+  async websiteGetDownloadsAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['DownloadsResponse']>> {
@@ -103,7 +103,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async submitContactAsync(
+  async websiteSubmitContactAsync(
     request: Schemas['ContactRequest'],
     channel: number = 0,
     timeout?: number
@@ -122,7 +122,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAccountProfileAsync(
+  async websiteGetAccountProfileAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['AccountProfile']>> {
@@ -141,7 +141,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createPageAsync(
+  async websiteCreatePageAsync(
     request: Schemas['PageContent'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updatePageAsync(
+  async websiteUpdatePageAsync(
     request: Schemas['PageContent'],
     channel: number = 0,
     timeout?: number
@@ -180,7 +180,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSiteSettingsAsync(
+  async websiteGetSiteSettingsAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['SiteSettings']>> {
@@ -199,7 +199,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateSiteSettingsAsync(
+  async websiteUpdateSiteSettingsAsync(
     request: Schemas['SiteSettings'],
     channel: number = 0,
     timeout?: number
@@ -218,7 +218,7 @@ export class WebsiteProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getThemeAsync(
+  async websiteGetThemeAsync(
     channel: number = 0,
     timeout?: number
   ): Promise<ApiResponse<Schemas['ThemeConfig']>> {
@@ -236,7 +236,10 @@ export class WebsiteProxy {
    * @param channel - Message channel for ordering (default 0).
    * @returns Promise that completes when the event is sent.
    */
-  async updateThemeEventAsync(request: Schemas['ThemeConfig'], channel: number = 0): Promise<void> {
+  async websiteUpdateThemeEventAsync(
+    request: Schemas['ThemeConfig'],
+    channel: number = 0
+  ): Promise<void> {
     return this.client.sendEventAsync<Schemas['ThemeConfig']>(
       '/website/cms/theme',
       request,

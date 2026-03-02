@@ -32,8 +32,7 @@ public partial class AuthService
     /// <param name="evt">The event data.</param>
     public async Task HandleAccountDeletedAsync(AccountDeletedEvent evt)
     {
-        _logger.LogInformation("Processing account.deleted event for AccountId: {AccountId}, Email: {Email}",
-            evt.AccountId, evt.Email);
+        _logger.LogInformation("Processing account.deleted event for AccountId: {AccountId}", evt.AccountId);
 
         await InvalidateAccountSessionsAsync(evt.AccountId);
         await _oauthService.CleanupOAuthLinksForAccountAsync(evt.AccountId);

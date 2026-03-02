@@ -31,7 +31,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmTimeAsync(
+  async worldstateGetRealmTimeAsync(
     request: Schemas['GetRealmTimeRequest'],
     channel: number = 0,
     timeout?: number
@@ -51,7 +51,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmTimeByCodeAsync(
+  async worldstateGetRealmTimeByCodeAsync(
     request: Schemas['GetRealmTimeByCodeRequest'],
     channel: number = 0,
     timeout?: number
@@ -69,7 +69,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async batchGetRealmTimesAsync(
+  async worldstateBatchGetRealmTimesAsync(
     request: Schemas['BatchGetRealmTimesRequest'],
     channel: number = 0,
     timeout?: number
@@ -87,7 +87,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getElapsedGameTimeAsync(
+  async worldstateGetElapsedGameTimeAsync(
     request: Schemas['GetElapsedGameTimeRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async triggerTimeSyncAsync(
+  async worldstateTriggerTimeSyncAsync(
     request: Schemas['TriggerTimeSyncRequest'],
     channel: number = 0,
     timeout?: number
@@ -123,7 +123,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async initializeRealmClockAsync(
+  async worldstateInitializeRealmClockAsync(
     request: Schemas['InitializeRealmClockRequest'],
     channel: number = 0,
     timeout?: number
@@ -141,7 +141,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setTimeRatioAsync(
+  async worldstateSetTimeRatioAsync(
     request: Schemas['SetTimeRatioRequest'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async advanceClockAsync(
+  async worldstateAdvanceClockAsync(
     request: Schemas['AdvanceClockRequest'],
     channel: number = 0,
     timeout?: number
@@ -181,7 +181,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async seedCalendarAsync(
+  async worldstateSeedCalendarAsync(
     request: Schemas['SeedCalendarRequest'],
     channel: number = 0,
     timeout?: number
@@ -199,7 +199,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getCalendarAsync(
+  async worldstateGetCalendarAsync(
     request: Schemas['GetCalendarRequest'],
     channel: number = 0,
     timeout?: number
@@ -217,7 +217,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listCalendarsAsync(
+  async worldstateListCalendarsAsync(
     request: Schemas['ListCalendarsRequest'],
     channel: number = 0,
     timeout?: number
@@ -235,7 +235,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateCalendarAsync(
+  async worldstateUpdateCalendarAsync(
     request: Schemas['UpdateCalendarRequest'],
     channel: number = 0,
     timeout?: number
@@ -253,7 +253,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteCalendarAsync(
+  async worldstateDeleteCalendarAsync(
     request: Schemas['DeleteCalendarRequest'],
     channel: number = 0,
     timeout?: number
@@ -271,7 +271,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getRealmConfigAsync(
+  async worldstateGetRealmConfigAsync(
     request: Schemas['GetRealmConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -289,7 +289,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateRealmConfigAsync(
+  async worldstateUpdateRealmConfigAsync(
     request: Schemas['UpdateRealmConfigRequest'],
     channel: number = 0,
     timeout?: number
@@ -307,7 +307,7 @@ export class WorldstateProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listRealmClocksAsync(
+  async worldstateListRealmClocksAsync(
     request: Schemas['ListRealmClocksRequest'],
     channel: number = 0,
     timeout?: number

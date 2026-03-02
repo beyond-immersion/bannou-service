@@ -141,7 +141,7 @@ public partial interface IVoiceClient
     /// </summary>
     /// <remarks>
     /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
-    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline events.
     /// </remarks>
     /// <returns>Consent request sent to all participants</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -153,7 +153,7 @@ public partial interface IVoiceClient
     /// Respond to a broadcast consent request
     /// </summary>
     /// <remarks>
-    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved. If any participant declines, lib-voice publishes voice.broadcast.declined.
     /// </remarks>
     /// <returns>Consent response recorded</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -165,7 +165,7 @@ public partial interface IVoiceClient
     /// Stop broadcasting from a voice room
     /// </summary>
     /// <remarks>
-    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped with reason ConsentRevoked.
     /// </remarks>
     /// <returns>Broadcast stopped</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -971,7 +971,7 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// </summary>
     /// <remarks>
     /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
-    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-broadcast subscribes to the resulting approval/decline events.
     /// </remarks>
     /// <returns>Consent request sent to all participants</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -1066,7 +1066,7 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// Respond to a broadcast consent request
     /// </summary>
     /// <remarks>
-    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.broadcast.approved. If any participant declines, lib-voice publishes voice.broadcast.declined.
     /// </remarks>
     /// <returns>Consent response recorded</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -1155,7 +1155,7 @@ public partial class VoiceClient : IVoiceClient, BeyondImmersion.BannouService.S
     /// Stop broadcasting from a voice room
     /// </summary>
     /// <remarks>
-    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.broadcast.stopped with reason ConsentRevoked.
     /// </remarks>
     /// <returns>Broadcast stopped</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>

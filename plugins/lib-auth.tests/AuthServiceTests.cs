@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -38,6 +39,8 @@ public class AuthServiceTests
     private readonly Mock<ICacheableStateStore<SessionDataModel>> _mockCacheableStore;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IMfaService> _mockMfaService;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public AuthServiceTests()
     {
@@ -84,6 +87,8 @@ public class AuthServiceTests
         _mockCacheableStore = new Mock<ICacheableStateStore<SessionDataModel>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockMfaService = new Mock<IMfaService>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup default behavior for edge revocation service (disabled by default)
         _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
@@ -123,6 +128,8 @@ public class AuthServiceTests
             _configuration,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -551,6 +558,8 @@ public class AuthServiceTests
             emptyConfig,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -975,6 +984,8 @@ public class AuthServiceTests
             realConfig,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1062,6 +1073,8 @@ public class AuthServiceTests
             configWithoutSteam,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1104,6 +1117,8 @@ public class AuthServiceTests
             realConfig,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1155,6 +1170,8 @@ public class AuthServiceTests
             realConfig,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,
@@ -1587,6 +1604,633 @@ public class AuthServiceTests
             It.Is<StateOptions>(o => o.Ttl == 1800),
             It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    #endregion
+
+    #region MFA Setup Tests
+
+    [Fact]
+    public async Task SetupMfaAsync_ValidJwt_ReturnsSetupResponse()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+        var jwt = "valid-jwt";
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync(jwt, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.Is<GetAccountRequest>(r => r.AccountId == accountId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = false });
+
+        _mockMfaService.Setup(m => m.GenerateSecret()).Returns("TESTSECRET");
+        _mockMfaService.Setup(m => m.GenerateRecoveryCodes(It.IsAny<int>())).Returns(new List<string> { "CODE1", "CODE2" });
+        _mockMfaService.Setup(m => m.EncryptSecret("TESTSECRET")).Returns("encrypted-secret");
+        _mockMfaService.Setup(m => m.HashRecoveryCodes(It.IsAny<List<string>>())).Returns(new List<string> { "hashed1", "hashed2" });
+        _mockMfaService.Setup(m => m.BuildTotpUri("TESTSECRET", It.IsAny<string>())).Returns("otpauth://totp/...");
+        _mockMfaService
+            .Setup(m => m.CreateMfaSetupAsync(accountId, "encrypted-secret", It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("setup-token-123");
+
+        // Act
+        var (status, response) = await service.SetupMfaAsync(jwt);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal("setup-token-123", response.SetupToken);
+        Assert.Equal("otpauth://totp/...", response.TotpUri);
+        Assert.Contains("CODE1", response.RecoveryCodes);
+    }
+
+    [Fact]
+    public async Task SetupMfaAsync_InvalidJwt_ReturnsUnauthorized()
+    {
+        // Arrange
+        var service = CreateAuthService();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("bad-jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.Unauthorized, (ValidateTokenResponse?)null));
+
+        // Act
+        var (status, response) = await service.SetupMfaAsync("bad-jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SetupMfaAsync_MfaAlreadyEnabled_ReturnsConflict()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.Is<GetAccountRequest>(r => r.AccountId == accountId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = true });
+
+        // Act
+        var (status, response) = await service.SetupMfaAsync("jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.Conflict, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task SetupMfaAsync_AccountNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ApiException("Not found", 404));
+
+        // Act
+        var (status, response) = await service.SetupMfaAsync("jwt");
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+        Assert.Null(response);
+    }
+
+    #endregion
+
+    #region MFA Enable Tests
+
+    [Fact]
+    public async Task EnableMfaAsync_ValidSetupTokenAndTotp_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaSetupAsync("setup-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MfaSetupData
+            {
+                AccountId = accountId,
+                EncryptedSecret = "encrypted",
+                HashedRecoveryCodes = new List<string> { "h1", "h2" }
+            });
+
+        _mockMfaService.Setup(m => m.DecryptSecret("encrypted")).Returns("raw-secret");
+        _mockMfaService.Setup(m => m.ValidateTotp("raw-secret", "123456")).Returns(true);
+
+        var request = new MfaEnableRequest { SetupToken = "setup-token", TotpCode = "123456" };
+
+        // Act
+        var status = await service.EnableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        _mockAccountClient.Verify(c => c.UpdateMfaAsync(
+            It.Is<UpdateMfaRequest>(r => r.AccountId == accountId && r.MfaEnabled == true),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EnableMfaAsync_InvalidSetupToken_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaSetupAsync("bad-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MfaSetupData?)null);
+
+        var request = new MfaEnableRequest { SetupToken = "bad-token", TotpCode = "123456" };
+
+        // Act
+        var status = await service.EnableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task EnableMfaAsync_SetupTokenAccountMismatch_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+        var differentAccountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaSetupAsync("token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MfaSetupData
+            {
+                AccountId = differentAccountId, // Different account
+                EncryptedSecret = "encrypted",
+                HashedRecoveryCodes = new List<string>()
+            });
+
+        var request = new MfaEnableRequest { SetupToken = "token", TotpCode = "123456" };
+
+        // Act
+        var status = await service.EnableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task EnableMfaAsync_InvalidTotpCode_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaSetupAsync("token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MfaSetupData
+            {
+                AccountId = accountId,
+                EncryptedSecret = "encrypted",
+                HashedRecoveryCodes = new List<string>()
+            });
+
+        _mockMfaService.Setup(m => m.DecryptSecret("encrypted")).Returns("raw-secret");
+        _mockMfaService.Setup(m => m.ValidateTotp("raw-secret", "wrong")).Returns(false);
+
+        var request = new MfaEnableRequest { SetupToken = "token", TotpCode = "wrong" };
+
+        // Act
+        var status = await service.EnableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    #endregion
+
+    #region MFA Disable Tests
+
+    [Fact]
+    public async Task DisableMfaAsync_ValidTotpCode_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted-secret"
+            });
+
+        _mockMfaService.Setup(m => m.DecryptSecret("encrypted-secret")).Returns("raw-secret");
+        _mockMfaService.Setup(m => m.ValidateTotp("raw-secret", "123456")).Returns(true);
+
+        var request = new MfaDisableRequest { TotpCode = "123456" };
+
+        // Act
+        var status = await service.DisableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        _mockAccountClient.Verify(c => c.UpdateMfaAsync(
+            It.Is<UpdateMfaRequest>(r => r.AccountId == accountId && r.MfaEnabled == false),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisableMfaAsync_ValidRecoveryCode_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted",
+                MfaRecoveryCodes = new List<string> { "hashed1", "hashed2" }
+            });
+
+        _mockMfaService.Setup(m => m.VerifyRecoveryCode("RECOVERY-CODE", It.IsAny<List<string>>()))
+            .Returns((true, 0));
+
+        var request = new MfaDisableRequest { RecoveryCode = "RECOVERY-CODE" };
+
+        // Act
+        var status = await service.DisableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+    }
+
+    [Fact]
+    public async Task DisableMfaAsync_MfaNotEnabled_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = false });
+
+        var request = new MfaDisableRequest { TotpCode = "123456" };
+
+        // Act
+        var status = await service.DisableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    [Fact]
+    public async Task DisableMfaAsync_NeitherCodeProvided_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockTokenService
+            .Setup(t => t.ValidateTokenAsync("jwt", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StatusCodes.OK, new ValidateTokenResponse { AccountId = accountId, SessionKey = Guid.NewGuid() }));
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = true, MfaSecret = "enc" });
+
+        var request = new MfaDisableRequest(); // No code provided
+
+        // Act
+        var status = await service.DisableMfaAsync("jwt", request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+    }
+
+    [Fact]
+    public async Task AdminDisableMfaAsync_MfaEnabled_ReturnsOK()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = true });
+
+        var request = new AdminDisableMfaRequest { AccountId = accountId, Reason = "User requested via support" };
+
+        // Act
+        var status = await service.AdminDisableMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Admin disable bypasses TOTP validation — goes straight to UpdateMfaAsync
+        _mockAccountClient.Verify(c => c.UpdateMfaAsync(
+            It.Is<UpdateMfaRequest>(r => r.AccountId == accountId && r.MfaEnabled == false),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // MFA service should NOT be called for validation
+        _mockMfaService.Verify(m => m.ValidateTotp(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AdminDisableMfaAsync_MfaNotEnabled_ReturnsNotFound()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = false });
+
+        var request = new AdminDisableMfaRequest { AccountId = accountId };
+
+        // Act
+        var status = await service.AdminDisableMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.NotFound, status);
+    }
+
+    #endregion
+
+    #region MFA Verify Tests
+
+    [Fact]
+    public async Task VerifyMfaAsync_ValidTotpCode_ReturnsAuthResponse()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("challenge-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId);
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted-secret"
+            });
+
+        _mockMfaService.Setup(m => m.DecryptSecret("encrypted-secret")).Returns("raw-secret");
+        _mockMfaService.Setup(m => m.ValidateTotp("raw-secret", "123456")).Returns(true);
+
+        _mockTokenService
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("access-token", sessionId));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
+
+        var request = new MfaVerifyRequest { ChallengeToken = "challenge-token", TotpCode = "123456" };
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(accountId, response.AccountId);
+        Assert.Equal("access-token", response.AccessToken);
+        Assert.Equal("refresh-token", response.RefreshToken);
+    }
+
+    [Fact]
+    public async Task VerifyMfaAsync_ValidRecoveryCode_ReturnsAuthResponseAndConsumesCode()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("challenge-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId);
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted",
+                MfaRecoveryCodes = new List<string> { "hashed1", "hashed2", "hashed3" }
+            });
+
+        _mockMfaService
+            .Setup(m => m.VerifyRecoveryCode("MY-RECOVERY", It.IsAny<List<string>>()))
+            .Returns((true, 1)); // matches index 1
+
+        _mockTokenService
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("access-token", sessionId));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
+
+        var request = new MfaVerifyRequest { ChallengeToken = "challenge-token", RecoveryCode = "MY-RECOVERY" };
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+
+        // Recovery code should be removed from the list and account updated
+        _mockAccountClient.Verify(c => c.UpdateMfaAsync(
+            It.Is<UpdateMfaRequest>(r =>
+                r.AccountId == accountId &&
+                r.MfaEnabled == true &&
+                r.MfaRecoveryCodes != null &&
+                r.MfaRecoveryCodes.Count == 2), // one code consumed
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task VerifyMfaAsync_InvalidChallengeToken_ReturnsUnauthorized()
+    {
+        // Arrange
+        var service = CreateAuthService();
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("bad-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid?)null);
+
+        var request = new MfaVerifyRequest { ChallengeToken = "bad-token", TotpCode = "123456" };
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.Unauthorized, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task VerifyMfaAsync_InvalidTotpCode_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId);
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted"
+            });
+
+        _mockMfaService.Setup(m => m.DecryptSecret("encrypted")).Returns("raw");
+        _mockMfaService.Setup(m => m.ValidateTotp("raw", "wrong")).Returns(false);
+
+        var request = new MfaVerifyRequest { ChallengeToken = "token", TotpCode = "wrong" };
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task VerifyMfaAsync_NeitherCodeProvided_ReturnsBadRequest()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId);
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse { AccountId = accountId, MfaEnabled = true, MfaSecret = "enc" });
+
+        var request = new MfaVerifyRequest { ChallengeToken = "token" }; // No code
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.BadRequest, status);
+        Assert.Null(response);
+    }
+
+    [Fact]
+    public async Task VerifyMfaAsync_RecoveryCode_ConflictRetry_SucceedsOnRetry()
+    {
+        // Arrange
+        var service = CreateAuthService();
+        var accountId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var callCount = 0;
+
+        _mockMfaService
+            .Setup(m => m.ConsumeMfaChallengeAsync("token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(accountId);
+
+        _mockAccountClient
+            .Setup(c => c.GetAccountAsync(It.IsAny<GetAccountRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new AccountResponse
+            {
+                AccountId = accountId,
+                MfaEnabled = true,
+                MfaSecret = "encrypted",
+                MfaRecoveryCodes = new List<string> { "h1", "h2" }
+            });
+
+        _mockMfaService
+            .Setup(m => m.VerifyRecoveryCode("RECOVERY", It.IsAny<List<string>>()))
+            .Returns((true, 0));
+
+        // First UpdateMfaAsync call throws 409 Conflict, second succeeds
+        _mockAccountClient
+            .Setup(c => c.UpdateMfaAsync(It.IsAny<UpdateMfaRequest>(), It.IsAny<CancellationToken>()))
+            .Returns((UpdateMfaRequest _, CancellationToken _) =>
+            {
+                callCount++;
+                if (callCount == 1)
+                    throw new ApiException("Conflict", 409);
+                return Task.CompletedTask;
+            });
+
+        _mockTokenService
+            .Setup(t => t.GenerateAccessTokenAsync(It.IsAny<AccountResponse>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(("access-token", sessionId));
+        _mockTokenService.Setup(t => t.GenerateRefreshToken()).Returns("refresh-token");
+
+        var request = new MfaVerifyRequest { ChallengeToken = "token", RecoveryCode = "RECOVERY" };
+
+        // Act
+        var (status, response) = await service.VerifyMfaAsync(request);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, callCount); // First attempt failed, second succeeded
     }
 
     #endregion

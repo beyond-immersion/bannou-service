@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Messaging.Services;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -37,6 +38,8 @@ public class AuthServiceEventsTests
     private readonly Mock<ICacheableStateStore<SessionDataModel>> _mockCacheableStore;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IMfaService> _mockMfaService;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public AuthServiceEventsTests()
     {
@@ -80,6 +83,8 @@ public class AuthServiceEventsTests
         _mockCacheableStore = new Mock<ICacheableStateStore<SessionDataModel>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockMfaService = new Mock<IMfaService>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
 
         // Setup default behavior for edge revocation service (disabled by default)
         _mockEdgeRevocationService.Setup(e => e.IsEnabled).Returns(false);
@@ -115,6 +120,8 @@ public class AuthServiceEventsTests
             _configuration,
             _appConfiguration,
             _mockLogger.Object,
+            _mockEntitySessionRegistry.Object,
+            _mockTelemetryProvider.Object,
             _mockTokenService.Object,
             _mockSessionService.Object,
             _mockOAuthService.Object,

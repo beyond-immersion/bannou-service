@@ -5,10 +5,10 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Realm;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Species;
 
@@ -20,12 +20,17 @@ namespace BeyondImmersion.BannouService.Species;
 [BannouService("species", typeof(ISpeciesService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFoundation)]
 public partial class SpeciesService : ISpeciesService
 {
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IStateStore<SpeciesModel> _speciesStore;
+    private readonly IStateStore<string> _codeIndexStore;
+    private readonly IStateStore<List<Guid>> _idListStore;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly IMessageBus _messageBus;
     private readonly ILogger<SpeciesService> _logger;
     private readonly SpeciesServiceConfiguration _configuration;
     private readonly ICharacterClient _characterClient;
     private readonly IRealmClient _realmClient;
+    private readonly IResourceClient _resourceClient;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private const string SPECIES_KEY_PREFIX = "species:";
     private const string CODE_INDEX_PREFIX = "code-index:";
@@ -34,19 +39,27 @@ public partial class SpeciesService : ISpeciesService
 
     public SpeciesService(
         IStateStoreFactory stateStoreFactory,
+        IDistributedLockProvider lockProvider,
         IMessageBus messageBus,
         ILogger<SpeciesService> logger,
+        ITelemetryProvider telemetryProvider,
         SpeciesServiceConfiguration configuration,
         ICharacterClient characterClient,
         IRealmClient realmClient,
+        IResourceClient resourceClient,
         IEventConsumer eventConsumer)
     {
-        _stateStoreFactory = stateStoreFactory;
+        _speciesStore = stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species);
+        _codeIndexStore = stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species);
+        _idListStore = stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species);
+        _lockProvider = lockProvider;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
         _characterClient = characterClient;
         _realmClient = realmClient;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (SpeciesServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
@@ -67,6 +80,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task<(bool exists, bool isActive)> ValidateRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.ValidateRealmAsync");
         try
         {
             var response = await _realmClient.RealmExistsAsync(
@@ -93,6 +107,7 @@ public partial class SpeciesService : ISpeciesService
         IEnumerable<Guid> realmIds,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.ValidateRealmsAsync");
         var realmIdList = realmIds.ToList();
         var validationTasks = realmIdList.Select(async realmId =>
         {
@@ -131,7 +146,7 @@ public partial class SpeciesService : ISpeciesService
         _logger.LogDebug("Getting species by ID: {SpeciesId}", body.SpeciesId);
 
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -149,7 +164,7 @@ public partial class SpeciesService : ISpeciesService
         _logger.LogDebug("Getting species by code: {Code}", body.Code);
 
         var codeIndexKey = BuildCodeIndexKey(body.Code);
-        var speciesIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+        var speciesIdStr = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
         if (string.IsNullOrEmpty(speciesIdStr) || !Guid.TryParse(speciesIdStr, out var speciesId))
         {
@@ -158,7 +173,7 @@ public partial class SpeciesService : ISpeciesService
         }
 
         var speciesKey = BuildSpeciesKey(speciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -176,16 +191,14 @@ public partial class SpeciesService : ISpeciesService
         _logger.LogDebug("Listing all species with filters - Category: {Category}, IsPlayable: {IsPlayable}",
             body.Category, body.IsPlayable);
 
-        var allSpeciesIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
+        var allSpeciesIds = await _idListStore.GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken);
 
         if (allSpeciesIds == null || allSpeciesIds.Count == 0)
         {
             return (StatusCodes.OK, new SpeciesListResponse
             {
                 Species = new List<SpeciesResponse>(),
-                TotalCount = 0,
-                Page = body.Page,
-                PageSize = body.PageSize
+                TotalCount = 0
             });
         }
 
@@ -225,9 +238,7 @@ public partial class SpeciesService : ISpeciesService
         return (StatusCodes.OK, new SpeciesListResponse
         {
             Species = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
+            TotalCount = totalCount
         });
     }
 
@@ -246,16 +257,14 @@ public partial class SpeciesService : ISpeciesService
         }
 
         var realmIndexKey = BuildRealmIndexKey(body.RealmId);
-        var speciesIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken);
+        var speciesIds = await _idListStore.GetAsync(realmIndexKey, cancellationToken: cancellationToken);
 
         if (speciesIds == null || speciesIds.Count == 0)
         {
             return (StatusCodes.OK, new SpeciesListResponse
             {
                 Species = new List<SpeciesResponse>(),
-                TotalCount = 0,
-                Page = body.Page,
-                PageSize = body.PageSize
+                TotalCount = 0
             });
         }
 
@@ -263,6 +272,12 @@ public partial class SpeciesService : ISpeciesService
 
         // Apply filters
         var filtered = speciesList.AsEnumerable();
+
+        // Filter out deprecated unless explicitly included
+        if (body.IncludeDeprecated != true)
+        {
+            filtered = filtered.Where(s => !s.IsDeprecated);
+        }
 
         if (body.IsPlayable.HasValue)
         {
@@ -284,9 +299,7 @@ public partial class SpeciesService : ISpeciesService
         return (StatusCodes.OK, new SpeciesListResponse
         {
             Species = pagedList,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
+            TotalCount = totalCount
         });
     }
 
@@ -302,9 +315,17 @@ public partial class SpeciesService : ISpeciesService
 
         var code = body.Code.ToUpperInvariant();
 
+        // Acquire distributed lock to prevent duplicate code creation (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            $"create:{code}",
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         // Check if code already exists
         var codeIndexKey = BuildCodeIndexKey(code);
-        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+        var existingId = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
         if (!string.IsNullOrEmpty(existingId))
         {
@@ -354,18 +375,17 @@ public partial class SpeciesService : ISpeciesService
 
         // Save the model
         var speciesKey = BuildSpeciesKey(speciesId);
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+        await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
         // Update code index
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).SaveAsync(codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
+        await _codeIndexStore.SaveAsync(codeIndexKey, speciesId.ToString(), cancellationToken: cancellationToken);
 
         // Update all-species list
-        var allSpeciesStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species);
-        var allSpeciesIds = await allSpeciesStore.GetAsync(ALL_SPECIES_KEY, cancellationToken) ?? new List<Guid>();
+        var allSpeciesIds = await _idListStore.GetAsync(ALL_SPECIES_KEY, cancellationToken) ?? new List<Guid>();
         if (!allSpeciesIds.Contains(speciesId))
         {
             allSpeciesIds.Add(speciesId);
-            await allSpeciesStore.SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
+            await _idListStore.SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
         }
 
         // Update realm indexes
@@ -387,8 +407,16 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Updating species: {SpeciesId}", body.SpeciesId);
 
+        // Acquire distributed lock to prevent concurrent update races (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -406,7 +434,7 @@ public partial class SpeciesService : ISpeciesService
         if (changedFields.Count > 0)
         {
             model.UpdatedAt = DateTimeOffset.UtcNow;
-            await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+            await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
             // Publish species updated event
             await PublishSpeciesUpdatedEventAsync(model, changedFields, cancellationToken);
@@ -422,8 +450,16 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Deleting species: {SpeciesId}", body.SpeciesId);
 
+        // Acquire distributed lock for index modification (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -438,7 +474,7 @@ public partial class SpeciesService : ISpeciesService
             return StatusCodes.BadRequest;
         }
 
-        // Check if species is in use by characters
+        // Check if species is in use by characters (same-layer L2 direct check)
         try
         {
             var charactersResponse = await _characterClient.ListCharactersAsync(
@@ -466,18 +502,73 @@ public partial class SpeciesService : ISpeciesService
             throw new InvalidOperationException($"Cannot verify character usage for species {model.Code}: CharacterService unavailable", ex);
         }
 
+        // Check for external references via lib-resource (L1) for higher-layer (L3/L4) consumers
+        try
+        {
+            var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                new Resource.CheckReferencesRequest
+                {
+                    ResourceType = "species",
+                    ResourceId = body.SpeciesId
+                }, cancellationToken);
+
+            if (resourceCheck != null && resourceCheck.RefCount > 0)
+            {
+                var sourceTypes = resourceCheck.Sources != null
+                    ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                    : "unknown";
+                _logger.LogWarning(
+                    "Cannot delete species {Code} - has {RefCount} external references from: {SourceTypes}",
+                    model.Code, resourceCheck.RefCount, sourceTypes);
+
+                var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                    new Resource.ExecuteCleanupRequest
+                    {
+                        ResourceType = "species",
+                        ResourceId = body.SpeciesId,
+                        CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
+                    }, cancellationToken);
+
+                if (!cleanupResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Cleanup blocked for species {Code}: {Reason}",
+                        model.Code, cleanupResult.AbortReason ?? "cleanup failed");
+                    return StatusCodes.Conflict;
+                }
+            }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // No references registered - this is normal for species without higher-layer consumers
+            _logger.LogDebug("No lib-resource references found for species {Code}", model.Code);
+        }
+        catch (ApiException ex)
+        {
+            // lib-resource unavailable - fail closed to protect referential integrity
+            _logger.LogError(ex,
+                "lib-resource unavailable when checking references for species {Code}, blocking deletion for safety",
+                model.Code);
+            await _messageBus.TryPublishErrorAsync(
+                "species", "DeleteSpecies", "resource_service_unavailable",
+                $"lib-resource unavailable when checking references for species {body.SpeciesId}",
+                dependency: "resource", endpoint: "post:/resource/check-references",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return StatusCodes.ServiceUnavailable;
+        }
+
         // Delete the model
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).DeleteAsync(speciesKey, cancellationToken);
+        await _speciesStore.DeleteAsync(speciesKey, cancellationToken);
 
         // Delete code index
         var codeIndexKey = BuildCodeIndexKey(model.Code);
-        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).DeleteAsync(codeIndexKey, cancellationToken);
+        await _codeIndexStore.DeleteAsync(codeIndexKey, cancellationToken);
 
         // Remove from all-species list
-        var allSpeciesIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<Guid>();
+        var allSpeciesIds = await _idListStore.GetAsync(ALL_SPECIES_KEY, cancellationToken: cancellationToken) ?? new List<Guid>();
         if (allSpeciesIds.Remove(body.SpeciesId))
         {
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
+            await _idListStore.SaveAsync(ALL_SPECIES_KEY, allSpeciesIds, cancellationToken: cancellationToken);
         }
 
         // Remove from realm indexes
@@ -503,6 +594,14 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Adding species {SpeciesId} to realm {RealmId}", body.SpeciesId, body.RealmId);
 
+        // Acquire distributed lock for realm index modification (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         // Validate realm exists and is active
         var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
         if (!realmExists)
@@ -518,7 +617,7 @@ public partial class SpeciesService : ISpeciesService
         }
 
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -535,7 +634,7 @@ public partial class SpeciesService : ISpeciesService
         model.RealmIds.Add(body.RealmId);
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+        await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
         await AddToRealmIndexAsync(body.SpeciesId, body.RealmId, cancellationToken);
 
         await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -550,8 +649,16 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Removing species {SpeciesId} from realm {RealmId}", body.SpeciesId, body.RealmId);
 
+        // Acquire distributed lock for realm index modification (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -603,7 +710,7 @@ public partial class SpeciesService : ISpeciesService
         model.RealmIds.Remove(body.RealmId);
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+        await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
         await RemoveFromRealmIndexAsync(body.SpeciesId, body.RealmId, cancellationToken);
 
         await PublishSpeciesUpdatedEventAsync(model, new[] { "realmIds" }, cancellationToken);
@@ -634,7 +741,7 @@ public partial class SpeciesService : ISpeciesService
             {
                 var code = seedSpecies.Code.ToUpperInvariant();
                 var codeIndexKey = BuildCodeIndexKey(code);
-                var existingIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Species).GetAsync(codeIndexKey, cancellationToken: cancellationToken);
+                var existingIdStr = await _codeIndexStore.GetAsync(codeIndexKey, cancellationToken: cancellationToken);
 
                 if (!string.IsNullOrEmpty(existingIdStr) && Guid.TryParse(existingIdStr, out var existingId))
                 {
@@ -642,7 +749,7 @@ public partial class SpeciesService : ISpeciesService
                     {
                         // Update existing
                         var speciesKey = BuildSpeciesKey(existingId);
-                        var existingModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+                        var existingModel = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
                         if (existingModel != null)
                         {
@@ -655,7 +762,7 @@ public partial class SpeciesService : ISpeciesService
                             if (changedFields.Count > 0)
                             {
                                 existingModel.UpdatedAt = DateTimeOffset.UtcNow;
-                                await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
+                                await _speciesStore.SaveAsync(speciesKey, existingModel, cancellationToken: cancellationToken);
 
                                 // Publish updated event for changed species
                                 await PublishSpeciesUpdatedEventAsync(existingModel, changedFields, cancellationToken);
@@ -760,8 +867,16 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Deprecating species: {SpeciesId}", body.SpeciesId);
 
+        // Acquire distributed lock for species mutation (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -769,18 +884,19 @@ public partial class SpeciesService : ISpeciesService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (deprecate) is already satisfied
         if (model.IsDeprecated)
         {
-            _logger.LogDebug("Species already deprecated: {SpeciesId}", body.SpeciesId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Species {SpeciesId} already deprecated, returning OK (idempotent)", body.SpeciesId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = true;
         model.DeprecatedAt = DateTimeOffset.UtcNow;
-        model.DeprecationReason = body.Reason;
+        model.DeprecationReason = body.DeprecationReason;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+        await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
         // Publish species updated event with deprecation fields
         await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -795,8 +911,16 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Undeprecating species: {SpeciesId}", body.SpeciesId);
 
+        // Acquire distributed lock for species mutation (per IMPLEMENTATION TENETS)
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            body.SpeciesId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         var speciesKey = BuildSpeciesKey(body.SpeciesId);
-        var model = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(speciesKey, cancellationToken: cancellationToken);
+        var model = await _speciesStore.GetAsync(speciesKey, cancellationToken: cancellationToken);
 
         if (model == null)
         {
@@ -804,10 +928,11 @@ public partial class SpeciesService : ISpeciesService
             return (StatusCodes.NotFound, null);
         }
 
+        // Idempotent per IMPLEMENTATION TENETS — caller's intent (undeprecate) is already satisfied
         if (!model.IsDeprecated)
         {
-            _logger.LogDebug("Species not deprecated: {SpeciesId}", body.SpeciesId);
-            return (StatusCodes.Conflict, null);
+            _logger.LogDebug("Species {SpeciesId} not deprecated, returning OK (idempotent)", body.SpeciesId);
+            return (StatusCodes.OK, MapToResponse(model));
         }
 
         model.IsDeprecated = false;
@@ -815,7 +940,7 @@ public partial class SpeciesService : ISpeciesService
         model.DeprecationReason = null;
         model.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
+        await _speciesStore.SaveAsync(speciesKey, model, cancellationToken: cancellationToken);
 
         // Publish species updated event with deprecation fields cleared
         await PublishSpeciesUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
@@ -830,9 +955,27 @@ public partial class SpeciesService : ISpeciesService
     {
         _logger.LogDebug("Merging species {SourceId} into {TargetId}", body.SourceSpeciesId, body.TargetSpeciesId);
 
+        // Acquire distributed locks in deterministic order to prevent deadlocks (per IMPLEMENTATION TENETS)
+        var firstId = body.SourceSpeciesId.CompareTo(body.TargetSpeciesId) < 0 ? body.SourceSpeciesId : body.TargetSpeciesId;
+        var secondId = firstId == body.SourceSpeciesId ? body.TargetSpeciesId : body.SourceSpeciesId;
+
+        await using var lockFirst = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            firstId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        await using var lockSecond = await _lockProvider.LockAsync(
+            StateStoreDefinitions.SpeciesLock,
+            secondId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
         // Verify source exists and is deprecated
         var sourceKey = BuildSpeciesKey(body.SourceSpeciesId);
-        var sourceModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(sourceKey, cancellationToken: cancellationToken);
+        var sourceModel = await _speciesStore.GetAsync(sourceKey, cancellationToken: cancellationToken);
 
         if (sourceModel == null)
         {
@@ -848,7 +991,7 @@ public partial class SpeciesService : ISpeciesService
 
         // Verify target exists
         var targetKey = BuildSpeciesKey(body.TargetSpeciesId);
-        var targetModel = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetAsync(targetKey, cancellationToken: cancellationToken);
+        var targetModel = await _speciesStore.GetAsync(targetKey, cancellationToken: cancellationToken);
 
         if (targetModel == null)
         {
@@ -856,9 +999,16 @@ public partial class SpeciesService : ISpeciesService
             return (StatusCodes.NotFound, null);
         }
 
+        // Per IMPLEMENTATION TENETS: merge target must not be deprecated
+        if (targetModel.IsDeprecated)
+        {
+            _logger.LogDebug("Target species is deprecated, cannot merge into: {SpeciesId}", body.TargetSpeciesId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Migrate all characters from source species to target species
         var migratedCount = 0;
-        var failedCount = 0;
+        var failedEntityIds = new List<Guid>();
         var page = 1;
         var pageSize = _configuration.MergePageSize;
         var hasMorePages = true;
@@ -895,13 +1045,13 @@ public partial class SpeciesService : ISpeciesService
                     {
                         _logger.LogWarning(charEx, "Character service error migrating character {CharacterId}: {StatusCode}",
                             character.CharacterId, charEx.StatusCode);
-                        failedCount++;
+                        failedEntityIds.Add(character.CharacterId);
                     }
                     catch (Exception charEx)
                     {
                         _logger.LogWarning(charEx, "Failed to migrate character {CharacterId} from species {SourceId} to {TargetId}",
                             character.CharacterId, body.SourceSpeciesId, body.TargetSpeciesId);
-                        failedCount++;
+                        failedEntityIds.Add(character.CharacterId);
                     }
                 }
 
@@ -915,7 +1065,7 @@ public partial class SpeciesService : ISpeciesService
                 await _messageBus.TryPublishErrorAsync(
                     "species", "MergeSpecies", "page_fetch_failed", ex.Message,
                     dependency: "character", endpoint: "post:/character/list",
-                    details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedCount}",
+                    details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedEntityIds.Count}",
                     stack: ex.StackTrace, cancellationToken: cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
@@ -926,19 +1076,19 @@ public partial class SpeciesService : ISpeciesService
                 await _messageBus.TryPublishErrorAsync(
                     "species", "MergeSpecies", "page_fetch_failed", ex.Message,
                     dependency: "character", endpoint: "post:/character/list",
-                    details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedCount}",
+                    details: $"Page={page}, MigratedSoFar={migratedCount}, FailedSoFar={failedEntityIds.Count}",
                     stack: ex.StackTrace, cancellationToken: cancellationToken);
                 return (StatusCodes.InternalServerError, null);
             }
         }
 
-        if (failedCount > 0)
+        if (failedEntityIds.Count > 0)
         {
-            _logger.LogWarning("Species merge completed with {FailedCount} failed character migrations", failedCount);
+            _logger.LogWarning("Species merge completed with {FailedCount} failed character migrations", failedEntityIds.Count);
         }
 
         _logger.LogInformation("Merged species {SourceId} into {TargetId}, migrated {MigratedCount} characters (failed: {FailedCount})",
-            body.SourceSpeciesId, body.TargetSpeciesId, migratedCount, failedCount);
+            body.SourceSpeciesId, body.TargetSpeciesId, migratedCount, failedEntityIds.Count);
 
         // Publish species merged event for downstream services (analytics, achievements)
         await PublishSpeciesMergedEventAsync(sourceModel, targetModel, migratedCount, cancellationToken);
@@ -947,10 +1097,10 @@ public partial class SpeciesService : ISpeciesService
         var sourceDeleted = false;
         if (body.DeleteAfterMerge)
         {
-            if (failedCount > 0)
+            if (failedEntityIds.Count > 0)
             {
                 _logger.LogWarning("Skipping delete-after-merge for species {SourceId}: {FailedCount} character migrations failed",
-                    body.SourceSpeciesId, failedCount);
+                    body.SourceSpeciesId, failedEntityIds.Count);
             }
             else
             {
@@ -972,10 +1122,9 @@ public partial class SpeciesService : ISpeciesService
 
         return (StatusCodes.OK, new MergeSpeciesResponse
         {
-            SourceSpeciesId = body.SourceSpeciesId,
-            TargetSpeciesId = body.TargetSpeciesId,
             CharactersMigrated = migratedCount,
-            SourceDeleted = sourceDeleted
+            SourceDeleted = sourceDeleted,
+            FailedEntityIds = failedEntityIds.Count > 0 ? failedEntityIds : null
         });
     }
 
@@ -1047,13 +1196,14 @@ public partial class SpeciesService : ISpeciesService
 
     private async Task<List<SpeciesModel>> LoadSpeciesByIdsAsync(List<Guid> speciesIds, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.LoadSpeciesByIdsAsync");
         if (speciesIds.Count == 0)
         {
             return new List<SpeciesModel>();
         }
 
         var keys = speciesIds.Select(BuildSpeciesKey).ToList();
-        var bulkResults = await _stateStoreFactory.GetStore<SpeciesModel>(StateStoreDefinitions.Species).GetBulkAsync(keys, cancellationToken);
+        var bulkResults = await _speciesStore.GetBulkAsync(keys, cancellationToken);
 
         var speciesList = new List<SpeciesModel>();
         foreach (var (key, model) in bulkResults)
@@ -1069,24 +1219,26 @@ public partial class SpeciesService : ISpeciesService
 
     private async Task AddToRealmIndexAsync(Guid speciesId, Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.AddToRealmIndexAsync");
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<Guid>();
+        var speciesIds = await _idListStore.GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<Guid>();
 
         if (!speciesIds.Contains(speciesId))
         {
             speciesIds.Add(speciesId);
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _idListStore.SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 
     private async Task RemoveFromRealmIndexAsync(Guid speciesId, Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.RemoveFromRealmIndexAsync");
         var realmIndexKey = BuildRealmIndexKey(realmId);
-        var speciesIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<Guid>();
+        var speciesIds = await _idListStore.GetAsync(realmIndexKey, cancellationToken: cancellationToken) ?? new List<Guid>();
 
         if (speciesIds.Remove(speciesId))
         {
-            await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Species).SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
+            await _idListStore.SaveAsync(realmIndexKey, speciesIds, cancellationToken: cancellationToken);
         }
     }
 
@@ -1122,6 +1274,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesCreatedEventAsync(SpeciesModel model, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.PublishSpeciesCreatedEventAsync");
         try
         {
             var eventModel = new SpeciesCreatedEvent
@@ -1137,10 +1290,10 @@ public partial class SpeciesService : ISpeciesService
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
-                BaseLifespan = model.BaseLifespan ?? 0,
-                MaturityAge = model.MaturityAge ?? 0,
-                TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
-                RealmIds = model.RealmIds?.ToList() ?? [],
+                BaseLifespan = model.BaseLifespan,
+                MaturityAge = model.MaturityAge,
+                TraitModifiers = model.TraitModifiers,
+                RealmIds = model.RealmIds?.ToList(),
                 Metadata = model.Metadata,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt
@@ -1161,6 +1314,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesUpdatedEventAsync(SpeciesModel model, IEnumerable<string> changedFields, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.PublishSpeciesUpdatedEventAsync");
         try
         {
             var eventModel = new SpeciesUpdatedEvent
@@ -1176,10 +1330,10 @@ public partial class SpeciesService : ISpeciesService
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
-                BaseLifespan = model.BaseLifespan ?? 0,
-                MaturityAge = model.MaturityAge ?? 0,
-                TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
-                RealmIds = model.RealmIds?.ToList() ?? [],
+                BaseLifespan = model.BaseLifespan,
+                MaturityAge = model.MaturityAge,
+                TraitModifiers = model.TraitModifiers,
+                RealmIds = model.RealmIds?.ToList(),
                 Metadata = model.Metadata,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
@@ -1201,6 +1355,7 @@ public partial class SpeciesService : ISpeciesService
     /// </summary>
     private async Task PublishSpeciesDeletedEventAsync(SpeciesModel model, string? deletedReason, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.PublishSpeciesDeletedEventAsync");
         try
         {
             var eventModel = new SpeciesDeletedEvent
@@ -1216,10 +1371,10 @@ public partial class SpeciesService : ISpeciesService
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
-                BaseLifespan = model.BaseLifespan ?? 0,
-                MaturityAge = model.MaturityAge ?? 0,
-                TraitModifiers = model.TraitModifiers ?? new Dictionary<string, object>(),
-                RealmIds = model.RealmIds?.ToList() ?? [],
+                BaseLifespan = model.BaseLifespan,
+                MaturityAge = model.MaturityAge,
+                TraitModifiers = model.TraitModifiers,
+                RealmIds = model.RealmIds?.ToList(),
                 Metadata = model.Metadata,
                 CreatedAt = model.CreatedAt,
                 UpdatedAt = model.UpdatedAt,
@@ -1244,6 +1399,7 @@ public partial class SpeciesService : ISpeciesService
         int migratedCharacterCount,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.species", "SpeciesService.PublishSpeciesMergedEventAsync");
         try
         {
             var eventModel = new SpeciesMergedEvent
@@ -1273,27 +1429,4 @@ public partial class SpeciesService : ISpeciesService
     #region Permission Registration
 
     #endregion
-}
-
-/// <summary>
-/// Internal storage model for species data.
-/// </summary>
-internal class SpeciesModel
-{
-    public Guid SpeciesId { get; set; }
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public string? Category { get; set; }
-    public bool IsPlayable { get; set; } = true;
-    public int? BaseLifespan { get; set; }
-    public int? MaturityAge { get; set; }
-    public object? TraitModifiers { get; set; }
-    public List<Guid> RealmIds { get; set; } = new();
-    public object? Metadata { get; set; }
-    public bool IsDeprecated { get; set; }
-    public DateTimeOffset? DeprecatedAt { get; set; }
-    public string? DeprecationReason { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
 }

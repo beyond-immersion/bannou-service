@@ -252,7 +252,7 @@ public class AssetWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   Metabundle created: status={result.Status}, assetCount={result.AssetCount}, standaloneCount={result.StandaloneAssetCount}");
 
             // For metabundle with standalone assets, we expect Ready or Queued status
-            return result.Status == CreateMetabundleResponseStatus.Ready || result.Status == CreateMetabundleResponseStatus.Queued;
+            return result.Status == BundleStatus.Ready || result.Status == BundleStatus.Queued;
         });
     }
 

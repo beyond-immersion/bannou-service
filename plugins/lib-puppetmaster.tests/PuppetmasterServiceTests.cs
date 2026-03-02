@@ -51,6 +51,7 @@ public class PuppetmasterServiceTests
             _watchRegistry,
             _resourceEventMapping,
             _mockScopeFactory.Object,
+            Mock.Of<ITelemetryProvider>(),
             _mockEventConsumer.Object);
     }
 

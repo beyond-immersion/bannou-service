@@ -31,7 +31,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createActorTemplateAsync(
+  async actorCreateActorTemplateAsync(
     request: Schemas['CreateActorTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateActorTemplateAsync(
+  async actorUpdateActorTemplateAsync(
     request: Schemas['UpdateActorTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async deleteActorTemplateAsync(
+  async actorDeleteActorTemplateAsync(
     request: Schemas['DeleteActorTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async spawnActorAsync(
+  async actorSpawnActorAsync(
     request: Schemas['SpawnActorRequest'],
     channel: number = 0,
     timeout?: number
@@ -105,7 +105,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async stopActorAsync(
+  async actorStopActorAsync(
     request: Schemas['StopActorRequest'],
     channel: number = 0,
     timeout?: number
@@ -125,7 +125,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async bindActorCharacterAsync(
+  async actorBindActorCharacterAsync(
     request: Schemas['BindActorCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -143,7 +143,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cleanupByCharacterAsync(
+  async actorCleanupByCharacterAsync(
     request: Schemas['CleanupByCharacterRequest'],
     channel: number = 0,
     timeout?: number
@@ -161,7 +161,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async injectPerceptionAsync(
+  async actorInjectPerceptionAsync(
     request: Schemas['InjectPerceptionRequest'],
     channel: number = 0,
     timeout?: number
@@ -179,7 +179,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async startEncounterAsync(
+  async actorStartEncounterAsync(
     request: Schemas['StartEncounterRequest'],
     channel: number = 0,
     timeout?: number
@@ -197,7 +197,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateEncounterPhaseAsync(
+  async actorUpdateEncounterPhaseAsync(
     request: Schemas['UpdateEncounterPhaseRequest'],
     channel: number = 0,
     timeout?: number
@@ -215,7 +215,7 @@ export class ActorProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async endEncounterAsync(
+  async actorEndEncounterAsync(
     request: Schemas['EndEncounterRequest'],
     channel: number = 0,
     timeout?: number

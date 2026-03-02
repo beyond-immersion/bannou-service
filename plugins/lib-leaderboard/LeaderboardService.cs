@@ -37,6 +37,7 @@ public partial class LeaderboardService : ILeaderboardService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<LeaderboardService> _logger;
     private readonly LeaderboardServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes
     private const string DEFINITION_INDEX_PREFIX = "leaderboard-definitions";
@@ -50,12 +51,14 @@ public partial class LeaderboardService : ILeaderboardService
         IStateStoreFactory stateStoreFactory,
         ILogger<LeaderboardService> logger,
         LeaderboardServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }

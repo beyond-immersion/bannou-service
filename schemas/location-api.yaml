@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.0.4
 info:
   title: Bannou Location Service API
   description: |
@@ -37,6 +37,11 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
+  # Resource lifecycle configuration (see SCHEMA-RULES.md "x-resource-lifecycle")
+  x-resource-lifecycle:
+    resourceType: location
+    gracePeriodSeconds: 604800              # 7 days
+    cleanupPolicy: ALL_REQUIRED            # Abort deletion if any cleanup callback fails
 x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
@@ -768,6 +773,13 @@ components:
       - exclusive
       - inclusive
 
+    PresenceChangeType:
+      type: string
+      description: Type of entity presence change at a location
+      enum:
+      - Arrived
+      - Departed
+
     ValidateTerritoryRequest:
       type: object
       description: Request to validate a location against territory boundaries
@@ -1255,11 +1267,6 @@ components:
         isActive:
           type: boolean
           description: Whether the location is active (false if deprecated or not found)
-        locationId:
-          type: string
-          format: uuid
-          nullable: true
-          description: The location ID if found
         realmId:
           type: string
           format: uuid
@@ -1295,22 +1302,34 @@ components:
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Unique code for the location within realm
         name:
           type: string
+          minLength: 1
+          maxLength: 200
           description: Display name
         description:
           type: string
+          maxLength: 2000
           nullable: true
           description: Description
         realmCode:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
           description: Code of the realm (resolved during seeding)
         locationType:
           $ref: '#/components/schemas/LocationType'
           description: Type classification for this location
         parentLocationCode:
           type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
           nullable: true
           description: Code of the parent location (resolved during seeding)
         bounds:
@@ -1385,6 +1404,8 @@ components:
       - locationType
       - depth
       - isDeprecated
+      - boundsPrecision
+      - coordinateMode
       - createdAt
       - updatedAt
       properties:
@@ -1472,6 +1493,8 @@ components:
       - totalCount
       - page
       - pageSize
+      - hasNextPage
+      - hasPreviousPage
       properties:
         locations:
           type: array
@@ -1555,15 +1578,10 @@ components:
           description: Identifier of the reporter (service name or session ID)
 
     ReportEntityPositionResponse:
-      description: Result of reporting entity presence
+      description: Result of reporting entity presence. HTTP 200 confirms the position was recorded.
       type: object
       additionalProperties: false
-      required:
-      - recorded
       properties:
-        recorded:
-          type: boolean
-          description: Whether the position was successfully recorded
         arrivedAt:
           type: string
           format: uuid
@@ -1592,34 +1610,20 @@ components:
           description: ID of the entity to look up
 
     GetEntityLocationResponse:
-      description: Result of querying an entity's current location
+      description: Result of querying an entity's current location. All fields are null if no active presence exists.
       type: object
       additionalProperties: false
-      required:
-      - found
       properties:
-        found:
-          type: boolean
-          description: Whether a non-expired presence binding exists for this entity
         locationId:
           type: string
           format: uuid
           nullable: true
-          description: ID of the location the entity is currently at
+          description: ID of the location the entity is currently at (null if no active presence)
         realmId:
           type: string
           format: uuid
           nullable: true
           description: ID of the realm the location belongs to
-        entityType:
-          type: string
-          nullable: true
-          description: Type of entity (echoed back)
-        entityId:
-          type: string
-          format: uuid
-          nullable: true
-          description: ID of the entity (echoed back)
         reportedAt:
           type: string
           format: date-time
@@ -1647,10 +1651,13 @@ components:
           description: Optional filter by entity type (opaque string)
         page:
           type: integer
+          minimum: 1
           default: 1
           description: Page number (1-indexed)
         pageSize:
           type: integer
+          minimum: 1
+          maximum: 100
           default: 50
           description: Number of entities per page
 
@@ -1718,15 +1725,10 @@ components:
           description: ID of the entity to clear
 
     ClearEntityPositionResponse:
-      description: Result of clearing entity presence
+      description: Result of clearing entity presence. HTTP 200 confirms the operation completed.
       type: object
       additionalProperties: false
-      required:
-      - cleared
       properties:
-        cleared:
-          type: boolean
-          description: Whether the entity had an active presence that was cleared
         previousLocationId:
           type: string
           format: uuid

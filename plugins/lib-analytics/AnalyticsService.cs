@@ -12,6 +12,7 @@ using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -49,6 +50,7 @@ public partial class AnalyticsService : IAnalyticsService
     private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<AnalyticsService> _logger;
     private readonly AnalyticsServiceConfiguration _configuration;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // State store key prefixes (controller index prefix removed - MySQL handles queries natively)
     private const string EVENT_BUFFER_INDEX_KEY = "analytics-event-buffer-index";
@@ -78,7 +80,8 @@ public partial class AnalyticsService : IAnalyticsService
         IDistributedLockProvider lockProvider,
         ILogger<AnalyticsService> logger,
         AnalyticsServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -89,6 +92,8 @@ public partial class AnalyticsService : IAnalyticsService
         _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
 
         // Parse milestone thresholds from configuration
         _milestoneThresholds = ParseMilestoneThresholds(configuration.MilestoneThresholds);
@@ -1001,6 +1006,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task<bool> EnsureSummaryStoreRedisAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.EnsureSummaryStoreRedisAsync");
         try
         {
             var backend = _stateStoreFactory.GetBackendType(StateStoreDefinitions.AnalyticsSummary);
@@ -1046,6 +1052,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task<Guid?> ResolveGameServiceIdAsync(string gameType, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdAsync");
         if (string.IsNullOrWhiteSpace(gameType))
         {
             var message = "Game type is required to resolve game service ID";
@@ -1128,6 +1135,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task<Guid?> ResolveGameServiceIdForSessionAsync(Guid sessionId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdForSessionAsync");
         try
         {
             var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
@@ -1215,6 +1223,7 @@ public partial class AnalyticsService : IAnalyticsService
         Guid gameServiceId,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.SaveGameSessionMappingAsync");
         var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         var cacheOptions = BuildSessionMappingCacheOptions();
@@ -1229,6 +1238,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task RemoveGameSessionMappingAsync(Guid sessionId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.RemoveGameSessionMappingAsync");
         var mappingStore = _stateStoreFactory.GetStore<GameSessionMappingData>(StateStoreDefinitions.AnalyticsSummary);
         var mappingKey = GetSessionMappingKey(sessionId);
         await mappingStore.DeleteAsync(mappingKey, cancellationToken);
@@ -1240,6 +1250,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private async Task<Guid?> ResolveGameServiceIdForRealmAsync(Guid realmId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdForRealmAsync");
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
@@ -1309,6 +1320,7 @@ public partial class AnalyticsService : IAnalyticsService
     /// </summary>
     private async Task<Guid?> ResolveGameServiceIdForCharacterAsync(Guid characterId, CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.ResolveGameServiceIdForCharacterAsync");
         var cacheOptions = BuildResolutionCacheOptions();
         if (cacheOptions != null)
         {
@@ -1376,6 +1388,7 @@ public partial class AnalyticsService : IAnalyticsService
         CancellationToken cancellationToken,
         bool flushAfterEnqueue = true)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.BufferAnalyticsEventAsync");
         if (!await EnsureSummaryStoreRedisAsync(cancellationToken))
         {
             return false;
@@ -1452,6 +1465,7 @@ public partial class AnalyticsService : IAnalyticsService
 
     private async Task FlushBufferedEventsIfNeededAsync(CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.FlushBufferedEventsIfNeededAsync");
         if (!await EnsureSummaryStoreRedisAsync(cancellationToken))
         {
             return;
@@ -1591,6 +1605,7 @@ public partial class AnalyticsService : IAnalyticsService
         IStateStore<BufferedAnalyticsEvent> bufferStore,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.FlushBufferedEventsBatchAsync");
         var summaryStore = _stateStoreFactory.GetStore<EntitySummaryData>(StateStoreDefinitions.AnalyticsSummaryData);
         var batchSize = Math.Max(1, _configuration.EventBufferSize);
 
@@ -1795,6 +1810,7 @@ public partial class AnalyticsService : IAnalyticsService
         double newValue,
         CancellationToken cancellationToken)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.analytics", "AnalyticsService.CheckAndPublishMilestoneAsync");
         foreach (var milestone in _milestoneThresholds)
         {
             // Check if we just crossed this milestone: was below, now at or above

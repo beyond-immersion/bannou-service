@@ -20,9 +20,10 @@ Variable providers supply entity data to behavior expressions via the
 | `${personality.*}` | CharacterPersonality | Personality trait values for ABML expressions (${personality.*}) |
 | `${quest.*}` | Quest | Active quest data for ABML expressions (${quest.*}) |
 | `${seed.*}` | Seed | Seed growth and capability data for ABML expressions (${seed.*}) |
+| `${transit.*}` | Transit | Transit mode availability, journey state, and route data for ABML expressions (${transit.*}) |
 | `${world.*}` | Worldstate | Game time, calendar, and season data for ABML expressions (${world.*}) |
 
-**Total**: 10 providers
+**Total**: 11 providers
 
 ## How Providers Work
 

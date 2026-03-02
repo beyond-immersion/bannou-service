@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Location Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for location service.\nDO NOT EDIT - This file is completely overwritten
@@ -92,7 +92,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom metadata associated with the location"
+          description: "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt: &id017
           type: string
           format: date-time

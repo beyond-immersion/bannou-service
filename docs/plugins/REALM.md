@@ -18,9 +18,11 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Persistence for realm definitions and indexes |
+| lib-state (`IStateStoreFactory`) | Persistence for realm definitions and indexes (3 typed stores resolved in constructor) |
+| lib-state (`IDistributedLockProvider`) | Distributed locks for realm merge operations |
 | lib-messaging (`IMessageBus`) | Publishing lifecycle events and error events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
+| lib-telemetry (`ITelemetryProvider`) | Distributed tracing spans on all async helper methods |
 | lib-resource (`IResourceClient`) | Reference checking before deletion to verify no external dependencies |
 | lib-species (`ISpeciesClient`) | Species migration during realm merge (add to target, remove from source) |
 | lib-location (`ILocationClient`) | Location tree migration during realm merge (transfer + re-parent) |
@@ -35,8 +37,9 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | lib-location | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before location creation |
 | lib-species | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before species operations |
 | lib-character | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before character creation |
+| lib-faction | Calls `RealmExistsAsync` via `IRealmClient` to validate realm before faction operations |
 | lib-analytics | Subscribes to `realm.updated` event for cache invalidation (realm-to-gameService resolution cache) |
-| lib-puppetmaster | Subscribes to `realm.created` event to auto-start regional watchers for newly created realms |
+| lib-puppetmaster | Subscribes to `realm.created`, `realm.updated`, and `realm.deleted` events for regional watcher lifecycle management |
 
 ---
 
@@ -49,6 +52,12 @@ The Realm service (L2 GameFoundation) manages top-level persistent worlds in the
 | `realm:{realmId}` | `RealmModel` | Full realm definition (name, code, game service, deprecation state) |
 | `code-index:{CODE}` | `string` | Code → realm ID lookup (uppercase normalized) |
 | `all-realms` | `List<Guid>` | Master list of all realm IDs |
+
+**Store**: `realm-lock` (Backend: Redis)
+
+| Key Pattern | Purpose |
+|-------------|---------|
+| `merge:{smallerId}:{largerId}` | Distributed lock for realm merge operations (deterministic key ordering prevents deadlocks) |
 
 ---
 
@@ -76,6 +85,8 @@ This plugin does not consume external events.
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `MergePageSize` | `REALM_MERGE_PAGE_SIZE` | `50` | Page size for paginated entity migration during realm merge (1-100) |
+| `OptimisticRetryAttempts` | `REALM_OPTIMISTIC_RETRY_ATTEMPTS` | `3` | Retry count for ETag-based optimistic concurrency operations (1-10) |
+| `MergeLockTimeoutSeconds` | `REALM_MERGE_LOCK_TIMEOUT_SECONDS` | `120` | Timeout for distributed lock during realm merge (10-600) |
 
 ---
 
@@ -84,8 +95,10 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<RealmService>` | Scoped | Structured logging |
-| `RealmServiceConfiguration` | Singleton | Service config (MergePageSize) |
-| `IStateStoreFactory` | Singleton | State store access |
+| `RealmServiceConfiguration` | Singleton | Service config (MergePageSize, OptimisticRetryAttempts, MergeLockTimeoutSeconds) |
+| `IStateStoreFactory` | Singleton | State store access (3 typed stores resolved in constructor) |
+| `IDistributedLockProvider` | Singleton | Distributed locks for merge operations |
+| `ITelemetryProvider` | Singleton | Distributed tracing spans |
 | `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
 | `IResourceClient` | Scoped | Reference checking before deletion |
@@ -106,13 +119,13 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 ### Write Operations (3 endpoints)
 
 - **Create**: Codes normalized to uppercase (`ToUpperInvariant()`). Validates code uniqueness via index. Stores realm data, code index, and appends to master list. Publishes `realm.created`.
-- **Update**: Smart field tracking — only modifies fields where the new value differs from current. Tracks changed field names. Does not publish event if nothing changed. `GameServiceId` is mutable (can be updated).
-- **Delete**: Three-step safety — realm MUST be deprecated first (returns 409 Conflict otherwise), then checks external references via `IResourceClient` (returns 409 Conflict if active references with RESTRICT policy exist), executes cleanup callbacks for CASCADE/DETACH sources, and only then removes all three keys (data, code index, list entry). Publishes `realm.deleted`. Fails closed if lib-resource is unavailable (returns 503 ServiceUnavailable).
+- **Update**: Smart field tracking — only modifies fields where the new value differs from current. Tracks changed field names. Does not publish event if nothing changed. `GameServiceId` is mutable (can be updated). Uses ETag-based optimistic concurrency with configurable retry count (`OptimisticRetryAttempts`).
+- **Delete**: Three-step safety — realm MUST be deprecated first (returns 400 BadRequest otherwise, per IMPLEMENTATION TENETS deprecation lifecycle), then checks external references via `IResourceClient` (returns 409 Conflict if active references with RESTRICT policy exist), executes cleanup callbacks for CASCADE/DETACH sources, and only then removes all three keys (data, code index, list entry). Publishes `realm.deleted`. Fails closed if lib-resource is unavailable (returns 503 ServiceUnavailable).
 
 ### Deprecation Operations (2 endpoints)
 
-- **Deprecate**: Sets `isDeprecated = true`, records timestamp and optional reason. Publishes `realm.updated` with deprecation fields in `changedFields`.
-- **Undeprecate**: Clears deprecation state. Returns 400 Bad Request if realm is not currently deprecated.
+- **Deprecate**: Sets `isDeprecated = true`, records timestamp and mandatory reason. Idempotent — returns OK with current state if already deprecated. Publishes `realm.updated` with deprecation fields in `changedFields`. Uses ETag-based optimistic concurrency with configurable retry count.
+- **Undeprecate**: Clears deprecation state. Idempotent — returns OK with current state if not deprecated. Uses ETag-based optimistic concurrency with configurable retry count.
 
 ### Merge Operation (1 endpoint)
 
@@ -122,6 +135,7 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
   3. **Characters**: Paginated via `GetCharactersByRealm`. Each character transferred via `TransferCharacterToRealm`.
 
   **Validation**: Source must be deprecated, source != target, source must not be a system realm (`isSystemType`). Target must exist.
+  **Concurrency**: Entire merge is protected by a distributed lock via `IDistributedLockProvider` with deterministic key ordering (`merge:{smallerId}:{largerId}`) to prevent deadlocks. Lock timeout is configurable via `MergeLockTimeoutSeconds`.
   **Failure policy**: Continue on individual failures. Failed entity IDs are tracked to prevent infinite retry loops. Returns per-entity-type migrated/failed counts.
   **Optional deletion**: If `deleteAfterMerge=true` and zero total failures, calls `DeleteRealmAsync` on source realm. Skipped if any failures occurred.
   **Pagination**: All paginated queries use `MergePageSize` from configuration (default 50). Always re-queries page 1 since successful migrations remove entities from source.
@@ -129,7 +143,7 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
 
 ### Seed Operation (1 endpoint)
 
-Idempotent bulk creation with optional `updateExisting` flag. Processes each realm independently with per-item error handling (failures don't stop the batch). Returns counts of created, updated, skipped, and error messages.
+Idempotent bulk creation with optional `updateExisting` flag. Processes each realm independently with per-item error handling (failures don't stop the batch). Returns counts of created, updated, skipped, and error messages. When `updateExisting=true`, seed updates now publish `realm.updated` events with proper `changedFields` tracking (same as regular Update).
 
 ---
 
@@ -160,7 +174,7 @@ Realm Deletion Safety Chain
    - code-index:{CODE} removed
    - all-realms list updated
 
-  [Active Realm] ─── POST /realm/delete ──► 409 Conflict
+  [Active Realm] ─── POST /realm/delete ──► 400 BadRequest
                      (cannot skip deprecation step)
 
 
@@ -209,7 +223,7 @@ None identified. Realm merge has been implemented (see [#167](https://github.com
 
 ### Bugs
 
-None identified.
+1. ~~**Seed creation omits `IsSystemType`**~~: **FIXED** (2026-02-28) - Added `IsSystemType = seedRealm.IsSystemType` to the `CreateRealmRequest` initializer in `SeedRealmsAsync`. System realms seeded on first run now correctly propagate their `IsSystemType` flag.
 
 ### Intentional Quirks
 
@@ -221,13 +235,9 @@ None identified.
 
 4. **Metadata update has no equality check**: Unlike Name/Description/Category which check `body.X != model.X`, Metadata only checks `body.Metadata != null`. Sending identical metadata still triggers an update event with "metadata" in changedFields.
 
-5. **Seed updates are silent (no events)**: When `UpdateExisting=true`, seed operations directly update the model without calling `PublishRealmUpdatedEventAsync`. Regular updates publish events; seed updates don't.
+5. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
 
-6. **LoadRealmsByIdsAsync silently drops missing realms**: If the all-realms list contains an ID that doesn't exist in data store, it's silently excluded from results.
-
-7. **Deprecate is not idempotent**: Returns `StatusCodes.Conflict` if realm is already deprecated. Calling deprecate twice fails the second time rather than being a no-op.
-
-8. **Event publishing uses aggressive retry with fail-loud crash semantics**: State store writes and event publishing are separate operations (no transactional outbox). However, lib-messaging's `TryPublishAsync` implements a sophisticated retry system via `MessageRetryBuffer`:
+6. **Event publishing uses aggressive retry with fail-loud crash semantics**: State store writes and event publishing are separate operations (no transactional outbox). However, lib-messaging's `TryPublishAsync` implements a sophisticated retry system via `MessageRetryBuffer`:
    - **On publish failure**: Messages are buffered in-memory and `TryPublishAsync` returns `true` (because delivery WILL be retried)
    - **Retry processing**: Every 5 seconds (configurable), the buffer is processed and failed messages are re-attempted
    - **Fail-loud thresholds**: If RabbitMQ stays down too long, the node **intentionally crashes** via `Environment.FailFast()`:
@@ -240,11 +250,11 @@ None identified.
    - Clean shutdown with non-empty buffer (logged as warning)
    - Serialization failure (programming error, not retryable)
 
-   The `PublishRealm*EventAsync` wrapper methods add an extra try/catch that logs warnings, but the underlying `TryPublishAsync` handles retry automatically. This is the **standard Bannou architecture** used by all services.
+   The `PublishRealm*EventAsync` helper methods delegate directly to `TryPublishAsync` without redundant try/catch wrappers (per QUALITY TENETS error handling — `TryPublishAsync` is internally safe). This is the **standard Bannou architecture** used by all services.
 
-9. **GameServiceId is mutable**: `UpdateRealmRequest` allows changing `GameServiceId`, which reassigns the realm to a different game service. This is intentional - realms can be reorganized (e.g., game service consolidation, re-branding). Dependent services handle this via event-driven cache invalidation: Analytics subscribes to `realm.updated` and invalidates its `realm-to-gameService` cache, ensuring subsequent lookups fetch the new `GameServiceId`. Other services (Location, Species, Character) validate realm existence on creation but don't cache `GameServiceId`, so they're unaffected.
+7. **GameServiceId is mutable**: `UpdateRealmRequest` allows changing `GameServiceId`, which reassigns the realm to a different game service. This is intentional - realms can be reorganized (e.g., game service consolidation, re-branding). Dependent services handle this via event-driven cache invalidation: Analytics subscribes to `realm.updated` and invalidates its `realm-to-gameService` cache, ensuring subsequent lookups fetch the new `GameServiceId`. Other services (Location, Species, Character) validate realm existence on creation but don't cache `GameServiceId`, so they're unaffected.
 
-10. **All-realms list stored as single key**: The `all-realms` key stores a `List<Guid>` of all realm IDs. Create/Delete operations read the entire list, modify it, and write it back. This is intentional: realms are top-level game worlds (expected count: single-digit to ~50 max), not high-volume entities. The list serializes to <5KB even at 100 realms, and realm creation/deletion are rare administrative operations. Alternative patterns (Redis SCAN, secondary index tables) would add complexity without benefit at this scale. The pattern matches game-service which has similar constraints.
+8. **All-realms list stored as single key**: The `all-realms` key stores a `List<Guid>` of all realm IDs. Create/Delete operations read the entire list, modify it, and write it back. This is intentional: realms are top-level game worlds (expected count: single-digit to ~50 max), not high-volume entities. The list serializes to <5KB even at 100 realms, and realm creation/deletion are rare administrative operations. Alternative patterns (Redis SCAN, secondary index tables) would add complexity without benefit at this scale. The pattern matches game-service which has similar constraints.
 
 ### Design Considerations
 
@@ -261,6 +271,9 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-08**: Reference counting for safe deletion implemented via lib-resource integration. See [#170](https://github.com/beyond-immersion/bannou-service/issues/170) (closed). DeleteRealm now checks references and executes cleanup callbacks before proceeding.
 - **2026-02-08**: Realm statistics evaluated and closed — entity count tracking belongs in Analytics (L4), not Realm (L2). See [#169](https://github.com/beyond-immersion/bannou-service/issues/169) (closed).
 - **2026-02-08**: Realm merge feature implemented. Three-phase migration (species → locations root-first → characters) with continue-on-individual-failure policy, configurable page size, and optional post-merge deletion. See [#167](https://github.com/beyond-immersion/bannou-service/issues/167) (closed). Also added `/location/transfer-realm` endpoint as prerequisite.
+- **2026-02-26**: T31 deprecation lifecycle compliance — Deprecate and Undeprecate are now idempotent per IMPLEMENTATION TENETS.
+- **2026-02-28**: Production hardening audit — comprehensive tenet compliance pass (schema, T6, T7, T8, T9, T21, T30) and post-audit code review fixes (ETag concurrency for seed update, ApiException handling in migration helpers).
+- **2026-02-28**: Fixed `SeedRealmsAsync` creation path omitting `IsSystemType` — system realms now correctly seeded on first run.
 
 ### Ready for Implementation
 

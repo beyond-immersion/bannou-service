@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Seed Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for seed service.\nDO NOT EDIT - This file is completely overwritten
@@ -39,10 +39,11 @@ components:
           format: uuid
           description: "Entity that owns this seed"
         ownerType: &id003
-          type: string
+          $ref: ../common-api.yaml#/components/schemas/EntityType
           description: "Owner entity type discriminator"
         seedTypeCode: &id004
           type: string
+          minLength: 1
           description: "Registered seed type code"
         gameServiceId: &id005
           type: string
@@ -51,6 +52,7 @@ components:
           description: "Game service this seed is scoped to. Null for cross-game seed types."
         growthPhase: &id006
           type: string
+          minLength: 1
           description: "Current computed growth phase code"
         totalGrowth: &id007
           type: number
@@ -58,6 +60,7 @@ components:
           description: "Aggregate growth across all domains"
         displayName: &id008
           type: string
+          minLength: 1
           description: "Human-readable seed name"
         status: &id009
           $ref: ../seed-api.yaml#/components/schemas/SeedStatus
@@ -148,7 +151,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.created when a seedtype is created
+      description: Published to seed.type.created when a seedtype is created
       required:
       - eventName
       - eventId
@@ -164,10 +167,11 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.created
-          description: 'Event type identifier: seed-type.created'
+          default: seed.type.created
+          description: 'Event type identifier: seed.type.created'
         seedTypeCode: &id011
           type: string
+          minLength: 1
           description: "Unique seed type code"
         gameServiceId: &id012
           type: string
@@ -176,9 +180,11 @@ components:
           description: "Game service this type is scoped to. Null for cross-game seed types."
         displayName: &id013
           type: string
+          minLength: 1
           description: "Human-readable name"
         description: &id014
           type: string
+          minLength: 1
           description: "Description of what this seed type represents"
         maxPerOwner: &id015
           type: integer
@@ -210,7 +216,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.updated when a seedtype is updated
+      description: Published to seed.type.updated when a seedtype is updated
       required:
       - eventName
       - eventId
@@ -227,8 +233,8 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.updated
-          description: 'Event type identifier: seed-type.updated'
+          default: seed.type.updated
+          description: 'Event type identifier: seed.type.updated'
         seedTypeCode: *id011
         gameServiceId: *id012
         displayName: *id013
@@ -250,7 +256,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to seed-type.deleted when a seedtype is deleted
+      description: Published to seed.type.deleted when a seedtype is deleted
       required:
       - eventName
       - eventId
@@ -266,8 +272,8 @@ components:
       properties:
         eventName:
           type: string
-          default: seed-type.deleted
-          description: 'Event type identifier: seed-type.deleted'
+          default: seed.type.deleted
+          description: 'Event type identifier: seed.type.deleted'
         seedTypeCode: *id011
         gameServiceId: *id012
         displayName: *id013

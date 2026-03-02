@@ -282,6 +282,23 @@ public interface ICollectionController : BeyondImmersion.BannouService.Controlle
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<AdvanceDiscoveryResponse>> AdvanceDiscoveryAsync(AdvanceDiscoveryRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
+    /// <summary>
+    /// Cleanup all collections for a deleted character
+    /// </summary>
+
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a character is deleted.
+    /// <br/>Removes all collections owned by the specified characterId, including
+    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
+    /// <br/>lifecycle events.
+    /// <br/>This endpoint is designed for internal service-to-service calls during
+    /// <br/>cascading resource cleanup.
+    /// </remarks>
+
+    /// <returns>Cleanup completed</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacterAsync(CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
 }
 
 [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1297,6 +1314,59 @@ public partial class CollectionController : Microsoft.AspNetCore.Mvc.ControllerB
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:collection/discovery/advance",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Cleanup all collections for a deleted character
+    /// </summary>
+    /// <remarks>
+    /// Called by lib-resource cleanup coordination when a character is deleted.
+    /// <br/>Removes all collections owned by the specified characterId, including
+    /// <br/>their inventory containers, cache entries, and publishes collection.deleted
+    /// <br/>lifecycle events.
+    /// <br/>This endpoint is designed for internal service-to-service calls during
+    /// <br/>cascading resource cleanup.
+    /// </remarks>
+    /// <returns>Cleanup completed</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("collection/cleanup-by-character")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<CleanupByCharacterResponse>> CleanupByCharacter([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] CleanupByCharacterRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        using var activity_ = _telemetryProvider.StartActivity(
+            "bannou.collection",
+            "CollectionController.CleanupByCharacter",
+            System.Diagnostics.ActivityKind.Server);
+        activity_?.SetTag("http.route", "collection/cleanup-by-character");
+        try
+        {
+
+            var (statusCode, result) = await _implementation.CleanupByCharacterAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:collection/cleanup-by-character");
+            activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Dependency error");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<CollectionController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:collection/cleanup-by-character");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "collection",
+                "CleanupByCharacter",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:collection/cleanup-by-character",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             activity_?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex_.Message);

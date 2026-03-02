@@ -19,6 +19,7 @@ public class MinioStorageProviderTests
 {
     private readonly Mock<IMinioClient> _mockMinioClient;
     private readonly Mock<IAmazonS3> _mockS3Client;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
     private readonly Mock<ILogger<MinioStorageProvider>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
 
@@ -26,6 +27,7 @@ public class MinioStorageProviderTests
     {
         _mockMinioClient = new Mock<IMinioClient>();
         _mockS3Client = new Mock<IAmazonS3>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _mockLogger = new Mock<ILogger<MinioStorageProvider>>();
         _mockMessageBus = new Mock<IMessageBus>();
     }
@@ -36,6 +38,7 @@ public class MinioStorageProviderTests
             _mockMinioClient.Object,
             _mockS3Client.Object,
             Options.Create(options),
+            _mockTelemetryProvider.Object,
             _mockLogger.Object,
             _mockMessageBus.Object);
     }

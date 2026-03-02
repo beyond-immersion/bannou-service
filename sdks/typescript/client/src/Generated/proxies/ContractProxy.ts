@@ -31,7 +31,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getContractTemplateAsync(
+  async contractGetContractTemplateAsync(
     request: Schemas['GetContractTemplateRequest'],
     channel: number = 0,
     timeout?: number
@@ -49,7 +49,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listContractTemplatesAsync(
+  async contractListContractTemplatesAsync(
     request: Schemas['ListContractTemplatesRequest'],
     channel: number = 0,
     timeout?: number
@@ -67,7 +67,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async createContractInstanceAsync(
+  async contractCreateContractInstanceAsync(
     request: Schemas['CreateContractInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -85,7 +85,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async proposeContractInstanceAsync(
+  async contractProposeContractInstanceAsync(
     request: Schemas['ProposeContractInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -103,7 +103,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async consentToContractAsync(
+  async contractConsentToContractAsync(
     request: Schemas['ConsentToContractRequest'],
     channel: number = 0,
     timeout?: number
@@ -121,7 +121,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getContractInstanceAsync(
+  async contractGetContractInstanceAsync(
     request: Schemas['GetContractInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -139,7 +139,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryContractInstancesAsync(
+  async contractQueryContractInstancesAsync(
     request: Schemas['QueryContractInstancesRequest'],
     channel: number = 0,
     timeout?: number
@@ -157,7 +157,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async terminateContractInstanceAsync(
+  async contractTerminateContractInstanceAsync(
     request: Schemas['TerminateContractInstanceRequest'],
     channel: number = 0,
     timeout?: number
@@ -175,7 +175,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getContractInstanceStatusAsync(
+  async contractGetContractInstanceStatusAsync(
     request: Schemas['GetContractInstanceStatusRequest'],
     channel: number = 0,
     timeout?: number
@@ -193,7 +193,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async completeMilestoneAsync(
+  async contractCompleteMilestoneAsync(
     request: Schemas['CompleteMilestoneRequest'],
     channel: number = 0,
     timeout?: number
@@ -211,7 +211,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async failMilestoneAsync(
+  async contractFailMilestoneAsync(
     request: Schemas['FailMilestoneRequest'],
     channel: number = 0,
     timeout?: number
@@ -231,7 +231,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getMilestoneAsync(
+  async contractGetMilestoneAsync(
     request: Schemas['GetMilestoneRequest'],
     channel: number = 0,
     timeout?: number
@@ -251,7 +251,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async reportBreachAsync(
+  async contractReportBreachAsync(
     request: Schemas['ReportBreachRequest'],
     channel: number = 0,
     timeout?: number
@@ -271,7 +271,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async cureBreachAsync(
+  async contractCureBreachAsync(
     request: Schemas['CureBreachRequest'],
     channel: number = 0,
     timeout?: number
@@ -291,7 +291,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getBreachAsync(
+  async contractGetBreachAsync(
     request: Schemas['GetBreachRequest'],
     channel: number = 0,
     timeout?: number
@@ -311,7 +311,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async updateContractMetadataAsync(
+  async contractUpdateContractMetadataAsync(
     request: Schemas['UpdateContractMetadataRequest'],
     channel: number = 0,
     timeout?: number
@@ -329,7 +329,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getContractMetadataAsync(
+  async contractGetContractMetadataAsync(
     request: Schemas['GetContractMetadataRequest'],
     channel: number = 0,
     timeout?: number
@@ -347,7 +347,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkContractConstraintAsync(
+  async contractCheckContractConstraintAsync(
     request: Schemas['CheckConstraintRequest'],
     channel: number = 0,
     timeout?: number
@@ -365,7 +365,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async queryActiveContractsAsync(
+  async contractQueryActiveContractsAsync(
     request: Schemas['QueryActiveContractsRequest'],
     channel: number = 0,
     timeout?: number
@@ -383,7 +383,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async lockContractAsync(
+  async contractLockContractAsync(
     request: Schemas['LockContractRequest'],
     channel: number = 0,
     timeout?: number
@@ -403,7 +403,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async unlockContractAsync(
+  async contractUnlockContractAsync(
     request: Schemas['UnlockContractRequest'],
     channel: number = 0,
     timeout?: number
@@ -421,7 +421,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async transferContractPartyAsync(
+  async contractTransferContractPartyAsync(
     request: Schemas['TransferContractPartyRequest'],
     channel: number = 0,
     timeout?: number
@@ -439,7 +439,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listClauseTypesAsync(
+  async contractListClauseTypesAsync(
     request: Schemas['ListClauseTypesRequest'],
     channel: number = 0,
     timeout?: number
@@ -457,7 +457,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setContractTemplateValuesAsync(
+  async contractSetContractTemplateValuesAsync(
     request: Schemas['SetTemplateValuesRequest'],
     channel: number = 0,
     timeout?: number
@@ -475,7 +475,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async checkAssetRequirementsAsync(
+  async contractCheckAssetRequirementsAsync(
     request: Schemas['CheckAssetRequirementsRequest'],
     channel: number = 0,
     timeout?: number
@@ -493,7 +493,7 @@ export class ContractProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async executeContractAsync(
+  async contractExecuteContractAsync(
     request: Schemas['ExecuteContractRequest'],
     channel: number = 0,
     timeout?: number

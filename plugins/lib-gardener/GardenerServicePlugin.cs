@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
@@ -70,7 +71,7 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
                 DisplayName = "Guardian Spirit",
                 Description = "Player guardian spirit that grows through garden exploration and scenario completion",
                 MaxPerOwner = 1,
-                AllowedOwnerTypes = new List<string> { "account" },
+                AllowedOwnerTypes = new List<EntityType> { EntityType.Account },
                 GrowthPhases = new List<GrowthPhaseDefinition>
                 {
                     new() { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },

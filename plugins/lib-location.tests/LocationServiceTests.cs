@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
@@ -32,9 +33,10 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<LocationService>> _mockLogger;
     private readonly Mock<IRealmClient> _mockRealmClient;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<IResourceClient> _mockResourceClient;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
+    private readonly Mock<IEntitySessionRegistry> _mockEntitySessionRegistry;
 
     private const string STATE_STORE = "location-statestore";
     private const string CACHE_STORE = "location-cache";
@@ -55,9 +57,10 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<LocationService>>();
         _mockRealmClient = new Mock<IRealmClient>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockResourceClient = new Mock<IResourceClient>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
+        _mockEntitySessionRegistry = new Mock<IEntitySessionRegistry>();
 
         // Default lock provider behavior - always succeed with proper disposable
         var mockLockResponse = new Mock<ILockResponse>();
@@ -117,9 +120,10 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
             _mockLogger.Object,
             Configuration,
             _mockRealmClient.Object,
-            _mockEventConsumer.Object,
             _mockLockProvider.Object,
-            _mockResourceClient.Object);
+            _mockResourceClient.Object,
+            _mockTelemetryProvider.Object,
+            _mockEntitySessionRegistry.Object);
     }
 
     /// <summary>
@@ -532,7 +536,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task DeprecateLocationAsync_WhenAlreadyDeprecated_ShouldReturnConflict()
+    public async Task DeprecateLocationAsync_WhenAlreadyDeprecated_ShouldReturnOkIdempotent()
     {
         // Arrange
         var service = CreateService();
@@ -548,9 +552,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Act
         var (status, response) = await service.DeprecateLocationAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.Conflict, status);
-        Assert.Null(response);
+        // Assert - IMPLEMENTATION TENETS: deprecation must be idempotent (return OK when already deprecated)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]
@@ -605,7 +609,7 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
     }
 
     [Fact]
-    public async Task UndeprecateLocationAsync_WhenNotDeprecated_ShouldReturnBadRequest()
+    public async Task UndeprecateLocationAsync_WhenNotDeprecated_ShouldReturnOkIdempotent()
     {
         // Arrange
         var service = CreateService();
@@ -621,9 +625,9 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         // Act
         var (status, response) = await service.UndeprecateLocationAsync(request);
 
-        // Assert
-        Assert.Equal(StatusCodes.BadRequest, status);
-        Assert.Null(response);
+        // Assert - IMPLEMENTATION TENETS: undeprecation must be idempotent (return OK when not deprecated)
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
     }
 
     [Fact]

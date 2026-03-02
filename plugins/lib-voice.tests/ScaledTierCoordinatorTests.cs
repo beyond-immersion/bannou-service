@@ -15,19 +15,20 @@ public class ScaledTierCoordinatorTests
     private readonly Mock<ILogger<ScaledTierCoordinator>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly VoiceServiceConfiguration _configuration;
+    private readonly Mock<ITelemetryProvider> _mockTelemetryProvider;
 
     public ScaledTierCoordinatorTests()
     {
         _mockRtpEngineClient = new Mock<IRtpEngineClient>();
         _mockLogger = new Mock<ILogger<ScaledTierCoordinator>>();
         _mockMessageBus = new Mock<IMessageBus>();
+        _mockTelemetryProvider = new Mock<ITelemetryProvider>();
         _configuration = new VoiceServiceConfiguration
         {
             ScaledMaxParticipants = 100,
             SipDomain = "voice.bannou",
             SipPasswordSalt = "test-salt-12345",
             KamailioHost = "localhost",
-            KamailioRpcPort = 5080,
             RtpEngineHost = "localhost",
             RtpEnginePort = 22222,
             StunServers = "stun:stun.l.google.com:19302,stun:stun2.l.google.com:19302"
@@ -40,7 +41,8 @@ public class ScaledTierCoordinatorTests
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
             _mockMessageBus.Object,
-            _configuration);
+            _configuration,
+            _mockTelemetryProvider.Object);
     }
 
     #region Constructor Tests

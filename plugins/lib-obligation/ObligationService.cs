@@ -40,6 +40,7 @@ public partial class ObligationService : IObligationService
     private readonly ILogger<ObligationService> _logger;
     private readonly ObligationServiceConfiguration _configuration;
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     private readonly IStateStore<ObligationManifestModel> _cacheStore;
     private readonly IStateStore<ActionMappingModel> _actionMappingStore;
@@ -61,7 +62,8 @@ public partial class ObligationService : IObligationService
         ILogger<ObligationService> logger,
         ObligationServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IEnumerable<IVariableProviderFactory> providerFactories)
+        IEnumerable<IVariableProviderFactory> providerFactories,
+        ITelemetryProvider telemetryProvider)
     {
         ArgumentNullException.ThrowIfNull(stateStoreFactory, nameof(stateStoreFactory));
         ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
@@ -81,6 +83,7 @@ public partial class ObligationService : IObligationService
         _logger = logger;
         _configuration = configuration;
         _providerFactories = providerFactories;
+        _telemetryProvider = telemetryProvider;
 
         _cacheStore = stateStoreFactory.GetStore<ObligationManifestModel>(StateStoreDefinitions.ObligationCache);
         _actionMappingStore = stateStoreFactory.GetStore<ActionMappingModel>(StateStoreDefinitions.ObligationActionMappings);
@@ -689,6 +692,7 @@ public partial class ObligationService : IObligationService
     internal async Task<ObligationManifestModel> RebuildObligationCacheAsync(
         Guid characterId, string trigger, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.RebuildObligationCacheAsync");
         await using var lockResponse = await _lockProvider.LockAsync(
             storeName: StateStoreDefinitions.ObligationLock,
             resourceId: $"cache:{characterId}",
@@ -877,6 +881,7 @@ public partial class ObligationService : IObligationService
     /// </summary>
     private async Task<List<string>> ResolveViolationTypesAsync(string actionTag, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.ResolveViolationTypesAsync");
         var mapping = await _actionMappingStore.GetAsync($"mapping:{actionTag}", ct);
         if (mapping != null)
         {
@@ -898,6 +903,7 @@ public partial class ObligationService : IObligationService
     private async Task<Dictionary<string, float>?> TryGetPersonalityTraitsAsync(
         Guid characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.obligation", "ObligationService.TryGetPersonalityTraitsAsync");
         try
         {
             var personalityFactory = _providerFactories

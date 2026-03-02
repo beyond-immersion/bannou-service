@@ -27,6 +27,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 public class GardenerSeedEvolutionListener : ISeedEvolutionListener
 {
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ILogger<GardenerSeedEvolutionListener> _logger;
 
     /// <summary>
@@ -34,13 +35,16 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for garden data access.</param>
     /// <param name="configuration">Gardener configuration for seed type code.</param>
+    /// <param name="telemetryProvider">Telemetry provider for span instrumentation.</param>
     /// <param name="logger">Logger instance.</param>
     public GardenerSeedEvolutionListener(
         IStateStoreFactory stateStoreFactory,
         GardenerServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider,
         ILogger<GardenerSeedEvolutionListener> logger)
     {
         _stateStoreFactory = stateStoreFactory;
+        _telemetryProvider = telemetryProvider;
         _logger = logger;
         InterestedSeedTypes = new HashSet<string> { configuration.SeedTypeCode };
     }
@@ -54,6 +58,8 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerSeedEvolutionListener.OnGrowthRecordedAsync");
+
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
@@ -75,6 +81,8 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerSeedEvolutionListener.OnPhaseChangedAsync");
+
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
@@ -96,6 +104,8 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     /// </summary>
     public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.gardener", "GardenerSeedEvolutionListener.OnCapabilitiesChangedAsync");
+
         await Task.CompletedTask;
     }
 }

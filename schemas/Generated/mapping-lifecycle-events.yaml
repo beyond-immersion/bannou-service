@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Mapping Service Events Lifecycle Events
   description: "Auto-generated lifecycle event schemas for mapping service.\nDO NOT EDIT - This file is completely overwritten
@@ -12,7 +12,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to mapping-channel.created when a mappingchannel is created
+      description: Published to mapping.channel.created when a mappingchannel is created
       required:
       - eventName
       - eventId
@@ -27,8 +27,8 @@ components:
       properties:
         eventName:
           type: string
-          default: mapping-channel.created
-          description: 'Event type identifier: mapping-channel.created'
+          default: mapping.channel.created
+          description: 'Event type identifier: mapping.channel.created'
         channelId: &id001
           type: string
           format: uuid
@@ -73,7 +73,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to mapping-channel.updated when a mappingchannel is updated
+      description: Published to mapping.channel.updated when a mappingchannel is updated
       required:
       - eventName
       - eventId
@@ -89,8 +89,8 @@ components:
       properties:
         eventName:
           type: string
-          default: mapping-channel.updated
-          description: 'Event type identifier: mapping-channel.updated'
+          default: mapping.channel.updated
+          description: 'Event type identifier: mapping.channel.updated'
         channelId: *id001
         regionId: *id002
         kind: *id003
@@ -111,7 +111,7 @@ components:
       - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
       type: object
       additionalProperties: false
-      description: Published to mapping-channel.deleted when a mappingchannel is deleted
+      description: Published to mapping.channel.deleted when a mappingchannel is deleted
       required:
       - eventName
       - eventId
@@ -126,8 +126,8 @@ components:
       properties:
         eventName:
           type: string
-          default: mapping-channel.deleted
-          description: 'Event type identifier: mapping-channel.deleted'
+          default: mapping.channel.deleted
+          description: 'Event type identifier: mapping.channel.deleted'
         channelId: *id001
         regionId: *id002
         kind: *id003

@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Species Service Configuration
   description: |
@@ -20,3 +20,8 @@ x-service-configuration:
       description: Number of characters to process per page during species merge character migration
       env: SPECIES_MERGE_PAGE_SIZE
       default: 100
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed lock acquisition on species mutations
+      env: SPECIES_LOCK_TIMEOUT_SECONDS
+      default: 30

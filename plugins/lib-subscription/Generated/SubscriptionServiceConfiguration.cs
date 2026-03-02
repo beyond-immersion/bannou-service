@@ -55,18 +55,28 @@ public class SubscriptionServiceConfiguration : BaseServiceConfiguration
     /// Interval in minutes between subscription expiration checks
     /// Environment variable: SUBSCRIPTION_EXPIRATION_CHECK_INTERVAL_MINUTES
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int ExpirationCheckIntervalMinutes { get; set; } = 5;
 
     /// <summary>
     /// Grace period in seconds before expired subscriptions are marked inactive
     /// Environment variable: SUBSCRIPTION_EXPIRATION_GRACE_PERIOD_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int ExpirationGracePeriodSeconds { get; set; } = 30;
 
     /// <summary>
     /// Delay in seconds before background service starts processing
     /// Environment variable: SUBSCRIPTION_STARTUP_DELAY_SECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int StartupDelaySeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum time in seconds to wait for a distributed lock acquisition
+    /// Environment variable: SUBSCRIPTION_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int LockTimeoutSeconds { get; set; } = 10;
 
 }

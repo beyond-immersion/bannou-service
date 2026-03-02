@@ -74,11 +74,11 @@ public class RepositoryBindingTestHandler : BaseHttpTestHandler
                 Branch = "main",
                 FilePatterns = new List<string> { "**/*.md" },
                 ExcludePatterns = new List<string> { "drafts/**" },
-                CategoryMapping = new Dictionary<string, string>
+                CategoryMapping = new Dictionary<string, DocumentCategory>
                 {
-                    { "guides/", "Guide" },
-                    { "api/", "Reference" },
-                    { "tutorials/", "Tutorial" }
+                    { "guides/", DocumentCategory.GettingStarted },
+                    { "api/", DocumentCategory.ApiReference },
+                    { "tutorials/", DocumentCategory.Tutorials }
                 },
                 DefaultCategory = DocumentCategory.Other
             });

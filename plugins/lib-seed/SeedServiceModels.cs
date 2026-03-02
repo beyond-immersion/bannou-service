@@ -26,14 +26,14 @@ internal class SeedModel
     /// <summary>The entity that owns this seed.</summary>
     public Guid OwnerId { get; set; }
 
-    /// <summary>Owner entity type discriminator (e.g., "account", "actor", "realm").</summary>
-    public string OwnerType { get; set; } = string.Empty;
+    /// <summary>Owner entity type discriminator.</summary>
+    public EntityType OwnerType { get; set; }
 
     /// <summary>Registered seed type code.</summary>
     public string SeedTypeCode { get; set; } = string.Empty;
 
-    /// <summary>Game service this seed is scoped to. Guid.Empty for cross-game seed types.</summary>
-    public Guid GameServiceId { get; set; }
+    /// <summary>Game service this seed is scoped to. Null for cross-game seed types.</summary>
+    public Guid? GameServiceId { get; set; }
 
     /// <summary>When the seed was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
@@ -90,15 +90,15 @@ internal class SeedGrowthModel
 
 /// <summary>
 /// Internal storage model for seed type definitions. Stored in seed-type-definitions-statestore (MySQL).
-/// Key pattern: type:{gameServiceId}:{seedTypeCode} (Guid.Empty for cross-game)
+/// Key pattern: type:{gameServiceId}:{seedTypeCode} ("cross-game" for cross-game)
 /// </summary>
 internal class SeedTypeDefinitionModel
 {
     /// <summary>Unique type code (e.g., "guardian", "dungeon_core").</summary>
     public string SeedTypeCode { get; set; } = string.Empty;
 
-    /// <summary>Game service this type is scoped to. Guid.Empty for cross-game seed types.</summary>
-    public Guid GameServiceId { get; set; }
+    /// <summary>Game service this type is scoped to. Null for cross-game seed types.</summary>
+    public Guid? GameServiceId { get; set; }
 
     /// <summary>Human-readable name.</summary>
     public string DisplayName { get; set; } = string.Empty;
@@ -110,7 +110,7 @@ internal class SeedTypeDefinitionModel
     public int MaxPerOwner { get; set; }
 
     /// <summary>Entity types that can own seeds of this type.</summary>
-    public List<string> AllowedOwnerTypes { get; set; } = new();
+    public List<EntityType> AllowedOwnerTypes { get; set; } = new();
 
     /// <summary>Ordered growth phase definitions with thresholds.</summary>
     public List<GrowthPhaseDefinition> GrowthPhases { get; set; } = new();

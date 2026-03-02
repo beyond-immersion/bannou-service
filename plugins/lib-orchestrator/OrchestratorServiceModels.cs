@@ -32,6 +32,26 @@ public partial class OrchestratorService
 }
 
 // ============================================================================
+// RESTART MODELS (internal signaling between SmartRestartManager and service)
+// ============================================================================
+
+/// <summary>
+/// Internal result from SmartRestartManager, separate from the API response model.
+/// Carries success/failure signaling that the service method uses to choose the HTTP status code.
+/// </summary>
+/// <param name="Succeeded">Whether the restart completed and the service became healthy.</param>
+/// <param name="DeclineReason">Non-null if the restart was declined or failed. Used by the service to distinguish 409 (declined) from 500 (failed).</param>
+/// <param name="Duration">Formatted duration of the restart operation.</param>
+/// <param name="PreviousStatus">Service health status before the restart attempt.</param>
+/// <param name="CurrentStatus">Service health status after the restart attempt.</param>
+public record RestartOutcome(
+    bool Succeeded,
+    string? DeclineReason,
+    string Duration,
+    InstanceHealthStatus? PreviousStatus,
+    InstanceHealthStatus? CurrentStatus);
+
+// ============================================================================
 // PRESET MODELS (used by PresetLoader for YAML-based deployment presets)
 // ============================================================================
 
@@ -254,4 +274,128 @@ public class PresetMetadata
     /// Required backends.
     /// </summary>
     public List<string> RequiredBackends { get; set; } = new();
+}
+
+// ============================================================================
+// PROCESSING POOL MODELS (state store models for pool management)
+// ============================================================================
+
+/// <summary>
+/// Status of a processor instance in the pool.
+/// </summary>
+public enum ProcessorStatus
+{
+    /// <summary>Processor is ready to handle requests.</summary>
+    Available,
+    /// <summary>Processor is starting up and not yet ready.</summary>
+    Pending
+}
+
+/// <summary>
+/// Represents a processor instance in the pool.
+/// </summary>
+public sealed class ProcessorInstance
+{
+    /// <summary>Unique identifier for this processor instance.</summary>
+    public string ProcessorId { get; set; } = string.Empty;
+
+    /// <summary>Dapr app-id of the processor container.</summary>
+    public string AppId { get; set; } = string.Empty;
+
+    /// <summary>Pool type this processor belongs to (e.g., "actor-shared", "asset-image").</summary>
+    public string PoolType { get; set; } = string.Empty;
+
+    /// <summary>Current availability status of the processor.</summary>
+    public ProcessorStatus Status { get; set; } = ProcessorStatus.Available;
+
+    /// <summary>When the processor instance was created.</summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>When the processor instance was last updated.</summary>
+    public DateTimeOffset LastUpdated { get; set; }
+}
+
+/// <summary>
+/// Represents an active lease for a processor.
+/// </summary>
+public sealed class ProcessorLease
+{
+    /// <summary>Unique identifier for this lease.</summary>
+    public Guid LeaseId { get; set; }
+
+    /// <summary>Identifier of the leased processor instance.</summary>
+    public string ProcessorId { get; set; } = string.Empty;
+
+    /// <summary>Dapr app-id of the leased processor container.</summary>
+    public string AppId { get; set; } = string.Empty;
+
+    /// <summary>Pool type the leased processor belongs to.</summary>
+    public string PoolType { get; set; } = string.Empty;
+
+    /// <summary>When the lease was acquired.</summary>
+    public DateTimeOffset AcquiredAt { get; set; }
+
+    /// <summary>When the lease expires.</summary>
+    public DateTimeOffset ExpiresAt { get; set; }
+
+    /// <summary>Lease priority for ordering when multiple leases compete.</summary>
+    public int Priority { get; set; }
+
+    /// <summary>Caller-provided opaque metadata associated with the lease.</summary>
+    public object? Metadata { get; set; }
+}
+
+/// <summary>
+/// Pool configuration stored in state store.
+/// Contains all settings needed to spawn pool worker containers.
+/// </summary>
+public sealed class PoolConfiguration
+{
+    /// <summary>Pool type identifier (e.g., "actor-shared", "asset-image").</summary>
+    public string PoolType { get; set; } = string.Empty;
+
+    /// <summary>Service/plugin name to enable on pool workers.</summary>
+    public string ServiceName { get; set; } = string.Empty;
+
+    /// <summary>Docker image for pool workers. If empty, uses default bannou image.</summary>
+    public string? Image { get; set; }
+
+    /// <summary>Environment variables for pool worker containers.</summary>
+    public Dictionary<string, string>? Environment { get; set; }
+
+    /// <summary>Minimum number of instances to maintain.</summary>
+    public int MinInstances { get; set; } = 1;
+
+    /// <summary>Maximum number of instances allowed.</summary>
+    public int MaxInstances { get; set; } = 5;
+
+    /// <summary>Scale up when utilization exceeds this threshold (0.0-1.0).</summary>
+    public double ScaleUpThreshold { get; set; } = 0.8;
+
+    /// <summary>Scale down when utilization drops below this threshold (0.0-1.0).</summary>
+    public double ScaleDownThreshold { get; set; } = 0.2;
+
+    /// <summary>Time in minutes before idle workers are cleaned up.</summary>
+    public int IdleTimeoutMinutes { get; set; } = 5;
+}
+
+/// <summary>
+/// Pool metrics data stored in state store.
+/// </summary>
+public sealed class PoolMetricsData
+{
+    /// <summary>Number of jobs completed in the last hour.</summary>
+    public int JobsCompleted1h { get; set; }
+
+    /// <summary>Number of jobs failed in the last hour.</summary>
+    public int JobsFailed1h { get; set; }
+
+    /// <summary>Average processing time in milliseconds over the metrics window.</summary>
+    public int AvgProcessingTimeMs { get; set; }
+
+    /// <summary>When the last scaling event occurred.</summary>
+    public DateTimeOffset LastScaleEvent { get; set; }
+
+    /// <summary>Start of the current metrics aggregation window.</summary>
+    public DateTimeOffset WindowStart { get; set; }
 }

@@ -31,29 +31,6 @@ namespace BeyondImmersion.BannouService.SaveLoad;
 using System = global::System;
 
 /// <summary>
-/// Type of entity that owns this save slot
-/// </summary>
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum OwnerType
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"ACCOUNT")]
-    ACCOUNT = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"CHARACTER")]
-    CHARACTER = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"SESSION")]
-    SESSION = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"REALM")]
-    REALM = 3,
-
-}
-#pragma warning restore CS1591
-
-/// <summary>
 /// Category of save with predefined behaviors.
 /// <br/>QUICK_SAVE: Single-slot fast save, overwritten frequently (max 1 version).
 /// <br/>AUTO_SAVE: System-triggered periodic saves (max 5 versions, rolling).
@@ -212,7 +189,7 @@ public partial class CreateSlotRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name (lowercase alphanumeric with hyphens, single char like "q" allowed)
@@ -313,7 +290,7 @@ public partial class GetSlotRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -369,7 +346,7 @@ public partial class ListSlotsRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Optional filter by save category
@@ -430,7 +407,7 @@ public partial class DeleteSlotRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -484,7 +461,7 @@ public partial class SlotResponse
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -678,7 +655,7 @@ public partial class SaveRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name (auto-created if doesn't exist)
@@ -824,7 +801,7 @@ public partial class SaveResponse
     /// Pre-signed URL to retrieve thumbnail (if provided)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("thumbnailUrl")]
-    public System.Uri? ThumbnailUrl { get; set; } = default!;
+    public string? ThumbnailUrl { get; set; } = default!;
 
     /// <summary>
     /// True if this save overwrote a version from a different device.
@@ -914,7 +891,7 @@ public partial class LoadRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -1065,7 +1042,7 @@ public partial class ListVersionsRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -1256,7 +1233,7 @@ public partial class PinVersionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -1315,7 +1292,7 @@ public partial class UnpinVersionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -1367,7 +1344,7 @@ public partial class DeleteVersionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -1448,7 +1425,7 @@ public partial class QuerySavesRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType? OwnerType { get; set; } = default!;
+    public EntityType? OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter by save category
@@ -1601,7 +1578,7 @@ public partial class QueryResultItem
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Save category of the slot
@@ -1698,7 +1675,7 @@ public partial class MigrateSaveRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Slot name
@@ -2013,7 +1990,7 @@ public partial class AdminCleanupRequest
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("ownerType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Filter cleanup to specific save category
@@ -2237,7 +2214,7 @@ public partial class RenameSlotRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Current slot name
@@ -2371,7 +2348,7 @@ public partial class CopySaveRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType SourceOwnerType { get; set; } = default!;
+    public EntityType SourceOwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the source slot to copy from
@@ -2410,7 +2387,7 @@ public partial class CopySaveRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType TargetOwnerType { get; set; } = default!;
+    public EntityType TargetOwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the target slot to copy to
@@ -2471,7 +2448,7 @@ public partial class ExportSavesRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Specific slots to export (all if null)
@@ -2506,7 +2483,7 @@ public partial class ExportSavesResponse
     [System.Text.Json.Serialization.JsonPropertyName("downloadUrl")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Uri DownloadUrl { get; set; } = default!;
+    public string DownloadUrl { get; set; } = default!;
 
     /// <summary>
     /// When the download URL expires
@@ -2574,7 +2551,7 @@ public partial class ImportSavesRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType TargetOwnerType { get; set; } = default!;
+    public EntityType TargetOwnerType { get; set; } = default!;
 
     /// <summary>
     /// How to handle existing slots
@@ -2672,7 +2649,7 @@ public partial class VerifyIntegrityRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the slot to verify
@@ -2783,7 +2760,7 @@ public partial class PromoteVersionRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the slot containing the version to promote
@@ -2873,7 +2850,7 @@ public partial class SaveDeltaRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the slot to save the delta to
@@ -3048,7 +3025,7 @@ public partial class CollapseDeltasRequest
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public OwnerType OwnerType { get; set; } = default!;
+    public EntityType OwnerType { get; set; } = default!;
 
     /// <summary>
     /// Name of the slot containing deltas to collapse

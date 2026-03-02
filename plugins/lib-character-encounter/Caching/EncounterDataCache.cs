@@ -5,9 +5,11 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter.Caching;
 
@@ -19,6 +21,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EncounterDataCache> _logger;
+    private readonly ITelemetryProvider _telemetryProvider;
     private readonly ConcurrentDictionary<Guid, CachedEncounterList> _encounterListCache = new();
     private readonly ConcurrentDictionary<string, CachedSentiment> _sentimentCache = new();
     private readonly ConcurrentDictionary<string, CachedHasMet> _hasMetCache = new();
@@ -33,10 +36,13 @@ public sealed class EncounterDataCache : IEncounterDataCache
     public EncounterDataCache(
         IServiceScopeFactory scopeFactory,
         ILogger<EncounterDataCache> logger,
-        CharacterEncounterServiceConfiguration configuration)
+        CharacterEncounterServiceConfiguration configuration,
+        ITelemetryProvider telemetryProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        ArgumentNullException.ThrowIfNull(telemetryProvider, nameof(telemetryProvider));
+        _telemetryProvider = telemetryProvider;
         _cacheTtl = TimeSpan.FromMinutes(configuration.EncounterCacheTtlMinutes);
         _maxEncounterResultsPerQuery = configuration.EncounterCacheMaxResultsPerQuery;
     }
@@ -44,6 +50,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<EncounterListResponse?> GetEncountersOrLoadAsync(Guid characterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetEncountersOrLoadAsync");
         // Check cache first
         if (_encounterListCache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {
@@ -92,6 +99,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<SentimentResponse?> GetSentimentOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetSentimentOrLoadAsync");
         var cacheKey = GetPairKey(characterId, targetCharacterId);
 
         // Check cache first
@@ -145,6 +153,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<HasMetResponse?> HasMetOrLoadAsync(Guid characterId, Guid targetCharacterId, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.HasMetOrLoadAsync");
         var cacheKey = GetPairKey(characterId, targetCharacterId);
 
         // Check cache first
@@ -198,6 +207,7 @@ public sealed class EncounterDataCache : IEncounterDataCache
     /// <inheritdoc/>
     public async Task<EncounterListResponse?> GetEncountersBetweenOrLoadAsync(Guid characterIdA, Guid characterIdB, CancellationToken ct = default)
     {
+        using var activity = _telemetryProvider.StartActivity("bannou.character-encounter", "EncounterDataCache.GetEncountersBetweenOrLoadAsync");
         var cacheKey = GetPairKey(characterIdA, characterIdB);
 
         // Check cache first

@@ -40,7 +40,7 @@ using System = global::System;
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatMessageReceivedEvent : BaseClientEvent
+public partial class ChatMessageReceivedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -49,7 +49,7 @@ public partial class ChatMessageReceivedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.message_received";
+    public override string EventName { get; set; } = "chat.message.received";
 
     /// <summary>
     /// Room the message was sent to
@@ -149,7 +149,7 @@ public partial class ChatMessageDeletedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.message_deleted";
+    public override string EventName { get; set; } = "chat.message.deleted";
 
     /// <summary>
     /// Room the message was deleted from
@@ -181,7 +181,7 @@ public partial class ChatMessageDeletedClientEvent : BaseClientEvent
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class ChatMessagePinnedEvent : BaseClientEvent
+public partial class ChatMessagePinnedClientEvent : BaseClientEvent
 {
 
     /// <summary>
@@ -190,7 +190,7 @@ public partial class ChatMessagePinnedEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.message_pinned";
+    public override string EventName { get; set; } = "chat.message.pinned";
 
     /// <summary>
     /// Room containing the message
@@ -231,7 +231,7 @@ public partial class ChatParticipantJoinedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_joined";
+    public override string EventName { get; set; } = "chat.participant.joined";
 
     /// <summary>
     /// Room the participant joined
@@ -298,7 +298,7 @@ public partial class ChatParticipantLeftClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_left";
+    public override string EventName { get; set; } = "chat.participant.left";
 
     /// <summary>
     /// Room the participant left
@@ -345,7 +345,7 @@ public partial class ChatParticipantKickedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_kicked";
+    public override string EventName { get; set; } = "chat.participant.kicked";
 
     /// <summary>
     /// Room the participant was kicked from
@@ -392,7 +392,7 @@ public partial class ChatParticipantBannedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_banned";
+    public override string EventName { get; set; } = "chat.participant.banned";
 
     /// <summary>
     /// Room the participant was banned from
@@ -438,7 +438,7 @@ public partial class ChatParticipantMutedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_muted";
+    public override string EventName { get; set; } = "chat.participant.muted";
 
     /// <summary>
     /// Room where the participant was muted
@@ -472,6 +472,7 @@ public partial class ChatParticipantMutedClientEvent : BaseClientEvent
 
 /// <summary>
 /// Sent to all room participants when someone is unmuted.
+/// <br/>Fires on both explicit moderator unmute and lazy auto-unmute on message send.
 /// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -484,7 +485,7 @@ public partial class ChatParticipantUnmutedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.participant_unmuted";
+    public override string EventName { get; set; } = "chat.participant.unmuted";
 
     /// <summary>
     /// Room where the participant was unmuted
@@ -511,6 +512,201 @@ public partial class ChatParticipantUnmutedClientEvent : BaseClientEvent
 }
 
 /// <summary>
+/// Sent to room participants when a participant's role changes.
+/// <br/>Covers both manual role changes and automatic owner promotion on owner departure.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatParticipantRoleChangedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.participant.role-changed";
+
+    /// <summary>
+    /// Room where the role change occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the participant whose role changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ParticipantSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the participant whose role changed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Previous role
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("oldRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatParticipantRole OldRole { get; set; } = default!;
+
+    /// <summary>
+    /// New role
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("newRole")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatParticipantRole NewRole { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of who changed the role (null for automatic promotion)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedBySessionId")]
+    public System.Guid? ChangedBySessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of who changed the role (null for automatic promotion)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedByDisplayName")]
+    public string? ChangedByDisplayName { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Sent to room participants when a ban is lifted.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatParticipantUnbannedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.participant.unbanned";
+
+    /// <summary>
+    /// Room the participant was unbanned from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Connect session ID of the unbanned participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetSessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid TargetSessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of the moderator who removed the ban
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("unbannedByDisplayName")]
+    public string? UnbannedByDisplayName { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Sent to room participants when room settings change.
+/// <br/>Includes full room state plus changedFields list for efficient UI updates.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ChatRoomUpdatedClientEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "chat.room.updated";
+
+    /// <summary>
+    /// Room that was updated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Room type code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomTypeCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string RoomTypeCode { get; set; } = default!;
+
+    /// <summary>
+    /// Current room display name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("displayName")]
+    public string? DisplayName { get; set; } = default!;
+
+    /// <summary>
+    /// Current room lifecycle status
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("status")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ChatRoomStatus Status { get; set; } = default!;
+
+    /// <summary>
+    /// Current number of participants
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("participantCount")]
+    public int ParticipantCount { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum allowed participants
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxParticipants")]
+    public int MaxParticipants { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the room has been archived
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isArchived")]
+    public bool IsArchived { get; set; } = default!;
+
+    /// <summary>
+    /// When the room was created
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("createdAt")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset CreatedAt { get; set; } = default!;
+
+    /// <summary>
+    /// List of field names that changed in this update
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("changedFields")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<string> ChangedFields { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+
+}
+
+/// <summary>
 /// Sent to room participants when the room is locked.
 /// <br/>No further messages can be sent. Clients should disable input.
 /// <br/>
@@ -525,7 +721,7 @@ public partial class ChatRoomLockedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.room_locked";
+    public override string EventName { get; set; } = "chat.room.locked";
 
     /// <summary>
     /// Room that was locked
@@ -561,7 +757,7 @@ public partial class ChatRoomDeletedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.room_deleted";
+    public override string EventName { get; set; } = "chat.room.deleted";
 
     /// <summary>
     /// Room that is being deleted
@@ -594,7 +790,7 @@ public partial class ChatTypingStartedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.typing_started";
+    public override string EventName { get; set; } = "chat.typing-started";
 
     /// <summary>
     /// Room where typing is occurring
@@ -636,7 +832,7 @@ public partial class ChatTypingStoppedClientEvent : BaseClientEvent
     [System.Text.Json.Serialization.JsonPropertyName("eventName")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public override string EventName { get; set; } = "chat.typing_stopped";
+    public override string EventName { get; set; } = "chat.typing-stopped";
 
     /// <summary>
     /// Room where typing stopped

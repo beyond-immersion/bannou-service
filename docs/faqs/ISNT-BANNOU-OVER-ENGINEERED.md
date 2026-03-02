@@ -33,7 +33,7 @@ The solo developer context is not a flex. It's an explanation. Specifically, it 
 
 **Why the discipline is so strict.** A 200-person company can afford some convention drift because different teams own different services and tribal knowledge distributes across people. A solo developer has exactly one brain. If a convention isn't generated or validated automatically, it will drift. If a dependency isn't enforced by a compiler or validator, it will form. If documentation isn't structured and maintained alongside code, it will rot. The strictness isn't perfectionism -- it's survival.
 
-**Why the tooling investment is so high.** 139+ YAML schemas, custom code generators, a `ServiceHierarchyValidator`, 48 deep dive documents, four tiers of testing, generated clients -- this looks like massive overhead. For a team, it might be. For one person, it's the only reason the system works. The upfront investment in automation pays back every single day because there is nobody else to catch mistakes.
+**Why the tooling investment is so high.** 184 maintained YAML schemas, custom code generators, a `ServiceHierarchyValidator`, 48 deep dive documents, four tiers of testing, generated clients -- this looks like massive overhead. For a team, it might be. For one person, it's the only reason the system works. The upfront investment in automation pays back every single day because there is nobody else to catch mistakes.
 
 ---
 
@@ -101,7 +101,7 @@ The hierarchy transforms 48 services from a fully connected graph into a directe
 
 ### 2. Schema-First Development (Kills Convention Drift and Schema Drift)
 
-Every service starts as an OpenAPI YAML specification. The schema defines endpoints, models, configuration, events, and permissions. Code generation produces controllers, interfaces, models, clients, and configuration classes. **139+ YAML schemas generate 536+ files with a 5:1 amplification ratio.**
+Every service starts as an OpenAPI YAML specification. The schema defines endpoints, models, configuration, events, and permissions. Code generation produces controllers, interfaces, models, clients, and configuration classes. **184 maintained YAML schemas generate 400+ files with a ~5:1 line amplification ratio** (~114K lines of YAML produce ~579K lines of generated code).
 
 This means:
 
@@ -109,7 +109,7 @@ This means:
 - **Every AccountId is a GUID everywhere** because the schema says `format: uuid` and the generator enforces it.
 - **Every error response has the same structure** because the shared error model is defined once in `common-api.yaml`.
 - **Every configuration class loads from environment variables the same way** because the config generator produces identical loading patterns.
-- **You can understand the entire system by reading 139 YAML files** without touching a single line of C#. The schemas ARE the system contract.
+- **You can understand the entire system by reading 184 YAML files** without touching a single line of C#. The schemas ARE the system contract.
 
 Convention drift is impossible when convention is generated, not hand-written.
 

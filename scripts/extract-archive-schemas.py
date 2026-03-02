@@ -252,7 +252,7 @@ def main():
 
     # Create consolidated archive schema
     archive_schema = {
-        'openapi': '3.0.0',
+        'openapi': '3.0.4',
         'info': {
             'title': 'Storyline Archive Types',
             'version': '1.0.0',

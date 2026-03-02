@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * const flags = MessageFlags.Binary | MessageFlags.HighPriority;
+ * const flags = MessageFlags.Binary | MessageFlags.Event;
  * ```
  */
 declare const MessageFlags: {
@@ -18,18 +18,16 @@ declare const MessageFlags: {
      * Message payload is binary data (not JSON)
      */
     readonly Binary: 1;
+    /** Reserved for future use. Do not assign. */
+    readonly Reserved0x02: 2;
     /**
-     * Message payload is encrypted
-     */
-    readonly Encrypted: 2;
-    /**
-     * Message payload is compressed (gzip)
+     * Payload is Brotli-compressed. Client must decompress before parsing.
+     * Only set on server-to-client messages when compression is enabled and
+     * payload exceeds the configured size threshold.
      */
     readonly Compressed: 4;
-    /**
-     * Deliver at high priority, skip to front of queues
-     */
-    readonly HighPriority: 8;
+    /** Reserved for future use. Do not assign. */
+    readonly Reserved0x08: 8;
     /**
      * Fire-and-forget message, no response expected
      */
@@ -71,6 +69,10 @@ declare function isMeta$1(flags: number): boolean;
  * Check if payload is binary (not JSON).
  */
 declare function isBinary(flags: number): boolean;
+/**
+ * Check if payload is Brotli-compressed.
+ */
+declare function isCompressed(flags: number): boolean;
 
 /**
  * Response codes used in the binary WebSocket protocol for success/error indication.
@@ -298,10 +300,6 @@ declare function isResponse(message: BinaryMessage): boolean;
  */
 declare function isClientRouted(message: BinaryMessage): boolean;
 /**
- * Returns true if this message has high priority.
- */
-declare function isHighPriority(message: BinaryMessage): boolean;
-/**
  * Returns true if this is a successful response (ResponseCode is 0).
  */
 declare function isSuccess(message: BinaryMessage): boolean;
@@ -314,4 +312,40 @@ declare function isError(message: BinaryMessage): boolean;
  */
 declare function isMeta(message: BinaryMessage): boolean;
 
-export { type BinaryMessage, EMPTY_GUID, HEADER_SIZE, MessageFlags, type MessageFlagsType, RESPONSE_HEADER_SIZE, ResponseCodes, type ResponseCodesType, createRequest, createResponse, expectsResponse, fromJson, getJsonPayload, getResponseCodeName, hasFlag, isBinary as isBinaryFlag, isClientRouted, isError, isError$1 as isErrorCode, isEvent as isEventFlag, isHighPriority, isMeta, isMeta$1 as isMetaFlag, isResponse, isResponse$1 as isResponseFlag, isSuccess, isSuccess$1 as isSuccessCode, mapToHttpStatus, parse, readGuid, readUInt16, readUInt32, readUInt64, testNetworkByteOrderCompatibility, toByteArray, writeGuid, writeUInt16, writeUInt32, writeUInt64 };
+/**
+ * Brotli decompression for inbound WebSocket payloads.
+ * Used when the server sends messages with the Compressed flag (0x04) set,
+ * indicating the payload has been Brotli-compressed above a size threshold.
+ *
+ * In Node.js environments, automatically uses the built-in zlib module.
+ * In browser environments, call {@link setPayloadDecompressor} to provide
+ * a Brotli decompressor (e.g. from a WASM-based library).
+ */
+
+type DecompressFn = (data: Uint8Array) => Uint8Array;
+/**
+ * Initializes the decompressor by attempting to load Node.js zlib.
+ * Call this once during client setup (e.g. in connect()).
+ * Safe to call multiple times; only initializes once.
+ */
+declare function initializeDecompressor(): Promise<void>;
+/**
+ * Sets a custom Brotli decompressor function.
+ * Use this in browser environments where Node.js zlib is not available.
+ * The function must accept compressed bytes and return decompressed bytes.
+ */
+declare function setPayloadDecompressor(fn: DecompressFn): void;
+/**
+ * Decompresses the payload of a message that has the Compressed flag set.
+ * Returns the message unchanged if the Compressed flag is not set or payload is empty.
+ * Returns a new BinaryMessage with the decompressed payload and the Compressed flag cleared.
+ *
+ * @throws Error if the message is compressed but no decompressor is available
+ */
+declare function decompressPayload(message: BinaryMessage): BinaryMessage;
+/**
+ * Resets the decompressor state. Used for testing only.
+ */
+declare function resetDecompressor(): void;
+
+export { type BinaryMessage, EMPTY_GUID, HEADER_SIZE, MessageFlags, type MessageFlagsType, RESPONSE_HEADER_SIZE, ResponseCodes, type ResponseCodesType, createRequest, createResponse, decompressPayload, expectsResponse, fromJson, getJsonPayload, getResponseCodeName, hasFlag, initializeDecompressor, isBinary as isBinaryFlag, isClientRouted, isCompressed as isCompressedFlag, isError, isError$1 as isErrorCode, isEvent as isEventFlag, isMeta, isMeta$1 as isMetaFlag, isResponse, isResponse$1 as isResponseFlag, isSuccess, isSuccess$1 as isSuccessCode, mapToHttpStatus, parse, readGuid, readUInt16, readUInt32, readUInt64, resetDecompressor, setPayloadDecompressor, testNetworkByteOrderCompatibility, toByteArray, writeGuid, writeUInt16, writeUInt32, writeUInt64 };

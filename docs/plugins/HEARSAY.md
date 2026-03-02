@@ -422,6 +422,7 @@ The god creates narrative opportunities by manipulating social information. If m
 | lib-storyline (L4, planned) | Storyline can query hearsay for dramatic irony detection (belief vs. reality deltas) and use belief saturation as scenario preconditions |
 | lib-puppetmaster (L4, planned) | Regional watcher god actors inject rumors via hearsay API and monitor belief saturation for narrative opportunities |
 | lib-gardener (L4, planned) | Player experience orchestration can use hearsay to surface "what your character has heard" as a player-facing information feed |
+| lib-director *(planned)* | During directed events, Director injects rumors about upcoming events into NPC social networks near target players via Hearsay's rumor management APIs, causing NPCs to organically discuss and react to approaching events. This is one of several player targeting methods Director uses to draw players toward event regions without breaking immersion. See [DIRECTOR.md](DIRECTOR.md) Player Targeting Methods |
 
 ---
 

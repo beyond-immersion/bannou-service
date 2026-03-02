@@ -37,6 +37,17 @@ No services subscribe to relationship events.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `entity1Type` / `entity2Type` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Identifies which first-class Bannou entity participates in the relationship. All valid values are Bannou entities (character, account, realm, etc.) |
+| `sourceEntityType` / `targetEntityType` | A (Entity Reference) | `EntityType` enum (via `$ref` to `common-api.yaml`) | Same as above, used in query/filter contexts to find relationships involving a specific entity type |
+| `relationshipTypeCode` | B (Content Code) | Opaque string | Game-configurable taxonomy codes (PARENT, FRIEND, RIVAL, WEAPON_WIELDER, etc.). Registered via API, not hardcoded. Uppercase-normalized. New codes added without schema changes |
+| `category` | B (Content Code) | Opaque string | Grouping label for relationship types (e.g., "FAMILY", "SOCIAL", "POLITICAL"). Game-configurable, used for filtering |
+
+---
+
 ## State Storage
 
 ### Relationship Store
@@ -72,10 +83,10 @@ No services subscribe to relationship events.
 | `relationship.created` | `RelationshipCreatedEvent` | New relationship established |
 | `relationship.updated` | `RelationshipUpdatedEvent` | Metadata or relationship type changed (includes `changedFields`) |
 | `relationship.deleted` | `RelationshipDeletedEvent` | Relationship ended (soft-delete) |
-| `relationship-type.created` | `RelationshipTypeCreatedEvent` | New type created |
-| `relationship-type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
-| `relationship-type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
-| `relationship-type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
+| `relationship.type.created` | `RelationshipTypeCreatedEvent` | New type created |
+| `relationship.type.updated` | `RelationshipTypeUpdatedEvent` | Type fields changed (includes `ChangedFields`) |
+| `relationship.type.deleted` | `RelationshipTypeDeletedEvent` | Type hard-deleted |
+| `relationship.type.merged` | `RelationshipTypeMergedEvent` | Merge operation completed (summary event replacing N individual updates) |
 
 Lifecycle events are auto-generated from `x-lifecycle` in `relationship-events.yaml`. The `RelationshipTypeMergedEvent` is manually defined in the same schema's `components/schemas` section.
 
@@ -143,11 +154,11 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 #### Write Operations (7 endpoints)
 
-- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship-type.created`.
+- **CreateRelationshipType** (`/relationship-type/create`): Normalizes code to uppercase. Validates parent exists (if specified). Resolves inverse type ID by code. Calculates depth from parent. Updates all indexes (code, parent, all-types). Publishes `relationship.type.created`.
 - **UpdateRelationshipType** (`/relationship-type/update`): Partial update with `changedFields` tracking. Code is immutable. Parent reassignment validates no cycle via `WouldCreateCycleAsync`, updates parent indexes, and recalculates depth. Publishes update event only if changes detected.
-- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship-type.deleted`.
-- **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Returns Conflict if already deprecated.
-- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Returns BadRequest if not deprecated.
+- **DeleteRelationshipType** (`/relationship-type/delete`): Requires deprecation (Conflict if not deprecated). Checks for existing relationships via internal type index lookup (Conflict if any, including ended). Checks no child types exist (Conflict if any). Removes from all indexes (code, parent, all-types). Publishes `relationship.type.deleted`.
+- **DeprecateRelationshipType** (`/relationship-type/deprecate`): Sets `IsDeprecated=true` with timestamp and optional reason. Idempotent — returns OK with current state if already deprecated.
+- **UndeprecateRelationshipType** (`/relationship-type/undeprecate`): Clears `IsDeprecated`, `DeprecatedAt`, and `DeprecationReason`. Idempotent — returns OK with current state if not deprecated.
 - **MergeRelationshipType** (`/relationship-type/merge`): Source must be deprecated (BadRequest otherwise). Target must not be deprecated (Conflict otherwise). Acquires distributed locks on both source and target type indexes (source first for deterministic ordering). Reads both type indexes directly from state store, bulk-loads all source relationships via `GetBulkAsync`. Per-relationship migration under individual lock: deletes old composite key, checks for target composite key collision (ends relationship as duplicate if collision detected), creates new composite key for active relationships. Batch-updates both type indexes after all migrations. Partial failures tracked (max `MaxMigrationErrorsToTrack` error details). Publishes error event via `TryPublishErrorAsync` if any failures. Publishes single `RelationshipTypeMergedEvent` summary event. Optional `deleteAfterMerge` deletes source if all migrations succeed.
 - **SeedRelationshipTypes** (`/relationship-type/seed`): Dependency-ordered bulk creation. Multi-pass algorithm: in each pass, processes types whose parents are already created or have no parent. Max iterations = `pending.Count * 2`. Resolves parent/inverse types by code. Supports `updateExisting` flag. Returns created/updated/skipped/error counts.
 
@@ -307,15 +318,15 @@ State Store Layout
 ## Potential Extensions
 
 1. **Relationship strength/weight**: Numeric field for weighted relationship graphs (e.g., closeness scores).
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/335 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/504 -->
 2. **Bidirectional asymmetric metadata**: Allow entity1 and entity2 to have independent metadata perspectives on the same relationship.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/336 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/505 -->
 3. **Type constraints**: Define which entity types can participate in each relationship type (e.g., PARENT only between characters, not guilds).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/338 -->
 4. **Relationship strength modifiers**: Associate default strength/weight values per type for relationship scoring.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/339 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/504 -->
 5. **Category-based permissions**: Allow different roles to create relationships of different categories.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/340 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/507 -->
 
 ---
 
@@ -355,16 +366,17 @@ State Store Layout
 
 14. **Seed multi-pass iteration limit is `2*N`**: The dependency resolution algorithm uses `maxIterations = pending.Count * 2`. This limit is provably unreachable: each iteration processes at least one type (or the loop breaks early with unresolvable parent errors), so N types require at most N iterations. The `2*N` limit exists as an infinite loop guard but cannot be hit in practice.
 
+15. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This is doubly-safe: the merge itself skips deletion when `failedCount > 0`, AND `DeleteRelationshipTypeAsync` independently rejects deletion when any relationships still reference the type. The response includes `SourceDeleted = false`, exact failure counts, and per-relationship error details. Recovery path: retry the merge (idempotent for already-migrated relationships), manually end problematic relationships via `/relationship/end`, then delete the source type.
+
 ### Design Considerations (Requires Planning)
 
 1. **In-memory filtering before pagination**: All list operations load the full index, bulk-fetch all relationship models, filter in memory, then paginate. For entities with thousands of relationships, this loads everything into memory before applying page limits.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/341 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/509 -->
 
 2. **No index cleanup**: Entity and type indexes accumulate relationship IDs indefinitely (both active and ended). Over time, indexes grow large with ended relationships that must be filtered on every query.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/342 -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-28:https://github.com/beyond-immersion/bannou-service/issues/510 -->
 
-3. **Delete-after-merge skipped on partial failure**: When `deleteAfterMerge=true` but some relationships failed to migrate, the source type is NOT deleted. This prevents data loss but leaves the deprecated type with remaining relationships that need manual cleanup.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/345 -->
+3. ~~**Delete-after-merge skipped on partial failure**~~: **FIXED** (2026-02-28) - Moved to Intentional Quirks #15. Behavior is correct and intentional — doubly-safe (merge skips delete on failure AND DeleteRelationshipTypeAsync independently rejects deletion when relationships still exist). Recovery path: retry merge, manually end remaining relationships, then delete source type.
 
 ---
 
@@ -374,4 +386,10 @@ State Store Layout
 
 ### Pending Issues
 
-- [#345](https://github.com/beyond-immersion/bannou-service/issues/345): Design question on merge behavior during partial migration failure (Design Consideration #3)
+- [#147](https://github.com/beyond-immersion/bannou-service/issues/147): Implement RelationshipProviderFactory (`IVariableProviderFactory`) for ABML `${relationship.*}` variable namespace — cache, factory, and provider classes
+- [#338](https://github.com/beyond-immersion/bannou-service/issues/338): Type constraints — define which entity types can participate in each relationship type (Potential Extension #3)
+- [#504](https://github.com/beyond-immersion/bannou-service/issues/504): Relationship strength/weight field design — field naming, data type/range, interaction with extensions #2 and #4 (Potential Extension #1)
+- [#505](https://github.com/beyond-immersion/bannou-service/issues/505): Bidirectional asymmetric metadata design — per-entity metadata perspectives, replace vs augment unified field, migration (Potential Extension #2)
+- [#507](https://github.com/beyond-immersion/bannou-service/issues/507): Category-based permissions design — data-conditional permission enforcement approach, category→role mapping, manifest implications (Potential Extension #5)
+- [#509](https://github.com/beyond-immersion/bannou-service/issues/509): In-memory filtering before pagination — list operations load full indexes into memory before paginating, need to evaluate IQueryableStateStore migration (Design Consideration #1)
+- [#510](https://github.com/beyond-immersion/bannou-service/issues/510): Unbounded index growth from ended relationships — entity and type indexes accumulate IDs indefinitely, includes orphaned entity-idx after cascade deletion (Design Consideration #2)

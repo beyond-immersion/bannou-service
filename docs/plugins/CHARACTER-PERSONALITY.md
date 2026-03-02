@@ -49,6 +49,19 @@ Both types share the same state store, distinguished by key prefix.
 
 ---
 
+### Type Field Classification
+
+| Field | Category | Type | Rationale |
+|-------|----------|------|-----------|
+| `axis` (TraitAxis) | C (System State) | `TraitAxis` enum | Finite set of personality dimensions (OPENNESS, CONSCIENTIOUSNESS, EXTRAVERSION, AGREEABLENESS, NEUROTICISM, HONESTY, AGGRESSION, LOYALTY). System-owned; each axis has hardcoded evolution logic mapping experience types to trait shifts. |
+| `experienceType` | C (System State) | `ExperienceType` enum | Finite set of experience categories (TRAUMA, BETRAYAL, LOSS, VICTORY, FRIENDSHIP, REDEMPTION, CORRUPTION, ENLIGHTENMENT, SACRIFICE). System-owned; each type maps to specific affected traits with signed direction weights. |
+| `style` (CombatStyle) | C (System State) | `CombatStyle` enum | Finite set of combat approaches (DEFENSIVE, BALANCED, AGGRESSIVE, BERSERKER, TACTICAL). System-owned; transition logic between styles is hardcoded with probabilistic rules. |
+| `preferredRange` | C (System State) | `PreferredRange` enum | Finite set of engagement distances (MELEE, CLOSE, MEDIUM, RANGED). System-owned operational mode for combat positioning. |
+| `groupRole` | C (System State) | `GroupRole` enum | Finite set of group combat roles (FRONTLINE, SUPPORT, FLANKER, LEADER, SOLO). System-owned; transition logic tied to specific combat experience types. |
+| `experienceType` (CombatExperienceType) | C (System State) | `CombatExperienceType` enum | Finite set of combat experience categories (DECISIVE_VICTORY, NARROW_VICTORY, DEFEAT, NEAR_DEATH, ALLY_SAVED, ALLY_LOST, SUCCESSFUL_RETREAT, FAILED_RETREAT, AMBUSH_SUCCESS, AMBUSH_SURVIVED). System-owned; each type has hardcoded preference evolution effects. |
+
+---
+
 ## Events
 
 ### Published Events

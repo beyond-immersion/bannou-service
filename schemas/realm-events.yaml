@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.4
 info:
   title: Realm Service Events
   description: |
@@ -22,7 +22,7 @@ info:
       description: Published when a realm is updated
     - topic: realm.deleted
       event: RealmDeletedEvent
-      description: Published when a realm is soft-deleted
+      description: Published when a realm is permanently deleted
     - topic: realm.merged
       event: RealmMergedEvent
       description: Published when a realm is merged into another realm

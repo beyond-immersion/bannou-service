@@ -129,4 +129,9 @@ public partial interface ICollectionService : IBannouService
         /// </summary>
         Task<(StatusCodes, AdvanceDiscoveryResponse?)> AdvanceDiscoveryAsync(AdvanceDiscoveryRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// CleanupByCharacter operation
+        /// </summary>
+        Task<(StatusCodes, CleanupByCharacterResponse?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

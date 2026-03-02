@@ -16,6 +16,7 @@ The Auth plugin is the internet-facing authentication and session management ser
 |------------|-------|
 | lib-state (IStateStoreFactory) | All session data, refresh tokens, OAuth links, password reset tokens, and edge revocation entries in Redis |
 | lib-messaging (IMessageBus) | Publishing session lifecycle events and audit events |
+| IEntitySessionRegistry | Publishing client events to account WebSocket sessions via Entity Session Registry |
 | lib-account (IAccountClient) | Account CRUD: lookup by email, create, get by ID, update password, add auth methods |
 | AppConfiguration (DI singleton) | JWT secret, issuer, audience, and ServiceDomain via constructor-injected config |
 | IHttpClientFactory | HTTP calls to OAuth providers (Discord, Google, Twitch, Steam) and CloudFlare KV API |
@@ -93,6 +94,29 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `account.deleted` | `HandleAccountDeletedAsync` | Invalidates all sessions, cleans up OAuth links via reverse index, pushes edge revocations if enabled, and publishes `session.invalidated` |
 | `account.updated` | `HandleAccountUpdatedAsync` | If `changedFields` contains "roles", propagates new roles to all active sessions and publishes `session.updated` per session. If `changedFields` contains "email", propagates new email to all active sessions (no `session.updated` event since email doesn't affect permissions). |
 
+### Client Events (Multi-Device Security Notifications)
+
+Real-time security notifications pushed to all of a player's connected WebSocket sessions via `IEntitySessionRegistry.PublishToEntitySessionsAsync("account", accountId, event)`. Published inline in existing event helper methods alongside service events.
+
+**Schema**: `schemas/auth-client-events.yaml`
+
+| Event Name | Event Type | Trigger | Payload |
+|-----------|-----------|---------|---------|
+| `auth.device_login` | `AuthDeviceLoginClientEvent` | Successful login (email/password, OAuth, Steam) | loginSessionId, ipAddress?, userAgent? |
+| `auth.password_changed` | `AuthPasswordChangedClientEvent` | Password reset completed | (timestamp only) |
+| `auth.mfa_enabled` | `AuthMfaEnabledClientEvent` | MFA successfully enabled | (timestamp only) |
+| `auth.mfa_disabled` | `AuthMfaDisabledClientEvent` | MFA disabled (self or admin) | disabledBy (enum) |
+| `auth.suspicious_login` | `AuthSuspiciousLoginClientEvent` | Failed login with known accountId | ipAddress?, userAgent?, attemptCount? |
+| `auth.external_account_linked` | `AuthExternalAccountLinkedClientEvent` | New OAuth provider linked (new account creation) | provider (enum) |
+| `auth.session_terminated` | `AuthSessionTerminatedClientEvent` | Session remotely terminated or bulk logout | terminatedSessionId?, reason (enum) |
+
+**Notes:**
+- `auth.device_login` targets EXISTING sessions (the new session hasn't connected to WebSocket yet).
+- `auth.suspicious_login` only fires when `accountId` is known (non-null) to avoid leaking account existence.
+- `auth.external_account_linked` fires when `isNewAccount` is true during OAuth/Steam login (new provider linked).
+- `auth.session_terminated` uses `terminatedSessionId = null` for bulk invalidation (all-sessions logout).
+- `ipAddress` and `userAgent` are nullable placeholders pending DeviceInfo capture (#449).
+
 ## Configuration
 
 | Property | Env Var | Default | Purpose |
@@ -157,6 +181,7 @@ All keys use the `auth` prefix and have explicit TTLs since the data is ephemera
 | `IAccountClient` | Service mesh client for account CRUD operations |
 | `IStateStoreFactory` | Redis state store access (sessions, password resets, account-session indexes, edge revocations) |
 | `IMessageBus` | Audit event publishing |
+| `IEntitySessionRegistry` | Publishing client events to all account WebSocket sessions (multi-device security notifications) |
 | `ITokenService` | JWT generation, refresh token management, token validation |
 | `ISessionService` | Session CRUD, account-session indexing, invalidation, session lifecycle event publishing, edge revocation coordination |
 | `IOAuthProviderService` | OAuth URL construction, code exchange, user info retrieval, account linking, Steam ticket validation |
@@ -281,7 +306,7 @@ Auth publishes 10 audit event types (login successful/failed, registration, OAut
 
 ## Potential Extensions
 
-None identified.
+No extensions currently planned.
 
 ## Known Quirks & Caveats
 
